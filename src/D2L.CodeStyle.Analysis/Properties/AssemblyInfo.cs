@@ -2,7 +2,8 @@
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("D2L.CodeStyle.Analysis")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Build integrations")]
+[assembly: AssemblyCompany("D2L")]
 [assembly: AssemblyProduct("D2L.CodeStyle.Analysis")]
 [assembly: AssemblyCopyright("Copyright © D2L 2016")]
 

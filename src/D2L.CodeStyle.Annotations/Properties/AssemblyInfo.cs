@@ -2,7 +2,8 @@
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("D2L.CodeStyle.Annotations")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Annotations")]
+[assembly: AssemblyCompany("D2L")]
 [assembly: AssemblyProduct("D2L.CodeStyle.Annotations")]
 [assembly: AssemblyCopyright("Copyright © D2L 2016")]
 
