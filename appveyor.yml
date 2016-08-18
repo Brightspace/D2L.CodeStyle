@@ -1,0 +1,16 @@
+version: 5.2.0.{build}
+pull_requests:
+  do_not_increment_build_number: true
+skip_tags: true
+clone_depth: 5
+nuget:
+  account_feed: true
+  project_feed: true
+build:
+  publish_nuget: true
+  publish_nuget_symbols: true
+  parallel: true
+  verbosity: minimal
+configuration:
+- Debug
+- Release
