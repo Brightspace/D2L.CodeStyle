@@ -6,6 +6,8 @@ clone_depth: 5
 nuget:
   account_feed: true
   project_feed: true
+before_build:
+  - nuget restore
 build:
   publish_nuget: true
   publish_nuget_symbols: true
