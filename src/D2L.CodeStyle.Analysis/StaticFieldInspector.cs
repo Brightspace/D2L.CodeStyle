@@ -11,15 +11,19 @@ namespace D2L.CodeStyle.Analysis {
 		/// <param name="field">The field to inspect</param>
 		/// <param name="concern">A diagnostic message</param>
 		/// <returns>true if the field is safe</returns>
-		public static bool IsMultiTenantSafe( SemanticModel model, FieldDeclarationSyntax field, out string concern ) {
-			if ( !field.Modifiers.Any( SyntaxKind.StaticKeyword) ) {
+		public static bool IsMultiTenantSafe(
+			SemanticModel model,
+			FieldDeclarationSyntax field,
+			out string concern
+		) {
+			if( !field.Modifiers.Any( SyntaxKind.StaticKeyword ) ) {
 				concern = null;
 				return true;
 			}
 
 			var typeInfo = model.GetTypeInfo( field.Declaration.Type );
 
-			if (typeInfo.Type.IsValueType ) {
+			if( typeInfo.Type.IsValueType ) {
 				concern = null;
 				return true;
 			}
