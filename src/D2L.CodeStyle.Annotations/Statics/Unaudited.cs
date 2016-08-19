@@ -5,7 +5,7 @@ namespace D2L {
 	public static partial class CodeStyle {
 		public static partial class Statics {
 			[Obsolete( "Static variables marked as unaudited require auditing. Only use this attribute as a temporary measure in assemblies." )]
-			[AttributeUsage( validOn: AttributeTargets.Field, Inherited = false )]
+			[AttributeUsage( validOn: AttributeTargets.Field )]
 			public sealed class Unaudited : Attribute {
 			}
 		}
