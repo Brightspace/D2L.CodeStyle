@@ -11,14 +11,19 @@ namespace D2L.CodeStyle.Analysis {
 		/// <param name="field">The field to inspect</param>
 		/// <param name="concern">A diagnostic message</param>
 		/// <returns>true if the field is safe</returns>
-		public static bool IsMultiTenantSafe(
+		internal static bool IsMultiTenantSafe(
 			SemanticModel model,
 			FieldDeclarationSyntax field,
-			out string concern
+			out BadStaticReason? concern
 		) {
 			if( !field.Modifiers.Any( SyntaxKind.StaticKeyword ) ) {
 				concern = null;
 				return true;
+			}
+
+			if ( !field.Modifiers.Any( SyntaxKind.ReadOnlyKeyword ) ) {
+				concern = BadStaticReason.NonReadonly;
+				return false;
 			}
 
 			var typeInfo = model.GetTypeInfo( field.Declaration.Type );
@@ -28,7 +33,7 @@ namespace D2L.CodeStyle.Analysis {
 				return true;
 			}
 
-			concern = "Static reference-type fields are scary";
+			concern = BadStaticReason.NonImmutable;
 			return false;
 		}
 	}
