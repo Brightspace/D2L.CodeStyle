@@ -8,8 +8,8 @@
     <ProjectGuid>{1C54E78A-E12B-45C3-BA6E-31DB5C63B389}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>D2L.CodeStyle.Analyzers.Test</RootNamespace>
-    <AssemblyName>D2L.CodeStyle.Analyzers.Test</AssemblyName>
+    <RootNamespace>D2L.CodeStyle.Analyzers</RootNamespace>
+    <AssemblyName>D2L.CodeStyle.Analyzers.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
