@@ -11,9 +11,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{3873E5AD-A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D2L.CodeStyle.Analyzers", "src\D2L.CodeStyle.Analyzers\D2L.CodeStyle.Analyzers.csproj", "{FE7608CD-C8B1-43DD-BBCC-9B1917C9CA73}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D2L.CodeStyle.Analyzers.Tests", "src\D2L.CodeStyle.Analyzers.Test\D2L.CodeStyle.Analyzers.Tests.csproj", "{1C54E78A-E12B-45C3-BA6E-31DB5C63B389}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D2L.CodeStyle.Analyzers.Tests", "tests\D2L.CodeStyle.Analyzers.Test\D2L.CodeStyle.Analyzers.Tests.csproj", "{1C54E78A-E12B-45C3-BA6E-31DB5C63B389}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D2L.CodeStyle.Analysis.UnitTests", "D2L.CodeStyle.Analysis.UnitTests\D2L.CodeStyle.Analysis.UnitTests.csproj", "{E5E9D471-BB72-4F77-88F8-3B4F77A7D23B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D2L.CodeStyle.Analysis.UnitTests", "tests\D2L.CodeStyle.Analysis.UnitTests\D2L.CodeStyle.Analysis.UnitTests.csproj", "{E5E9D471-BB72-4F77-88F8-3B4F77A7D23B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -40,7 +40,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\D2L.CodeStyle.Analyzers\D2L.CodeStyle.Analyzers.csproj">
+    <ProjectReference Include="..\..\src\D2L.CodeStyle.Analyzers\D2L.CodeStyle.Analyzers.csproj">
       <Project>{FE7608CD-C8B1-43DD-BBCC-9B1917C9CA73}</Project>
       <Name>D2L.CodeStyle.Analyzers</Name>
     </ProjectReference>
