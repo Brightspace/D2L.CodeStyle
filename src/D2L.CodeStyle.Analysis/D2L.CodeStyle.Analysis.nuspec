@@ -12,8 +12,8 @@
 		<description>$description$</description>
 		<copyright>$copyright$</copyright>
 
-    <dependencies>
-      <dependency id="D2L.CodeStyle.Annotations" version="$version$" />
-    </dependencies>
+		<dependencies>
+			<dependency id="D2L.CodeStyle.Annotations" version="$version$" />
+		</dependencies>
 	</metadata>
 </package>
