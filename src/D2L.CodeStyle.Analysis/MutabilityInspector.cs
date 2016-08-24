@@ -15,10 +15,10 @@ namespace D2L.CodeStyle.Analysis {
 		}.ToImmutableHashSet();
 
 		/// <summary>
-		/// Determine if a given type is immutable.
+		/// Determine if a given type is mutable.
 		/// </summary>
-		/// <param name="type">The type to determine immutability for.</param>
-		/// <returns>Whether the type is immutable.</returns>
+		/// <param name="type">The type to determine mutability for.</param>
+		/// <returns>Whether the type is mutable.</returns>
 		public bool IsTypeMutable(
 			ITypeSymbol type
 		) {
@@ -48,11 +48,11 @@ namespace D2L.CodeStyle.Analysis {
 		}
 
 		/// <summary>
-		/// Determine if a property is externally immutable (private properties are considered immutable).
-		/// This does not check if the type of the property is also immutable; use <see cref="MutabilityInspector.IsTypeMutable"/> for that.
+		/// Determine if a property is mutable.
+		/// This does not check if the type of the property is also mutable; use <see cref="IsTypeMutable"/> for that.
 		/// </summary>
 		/// <param name="prop">The property to check for mutability.</param>
-		/// <returns>Determines whether the property is immutable.</returns>
+		/// <returns>Determines whether the property is mutable.</returns>
 		public bool IsPropertyMutable( IPropertySymbol prop ) {
 			if( prop.DeclaredAccessibility == Accessibility.Private ) {
 				return false;
@@ -67,11 +67,11 @@ namespace D2L.CodeStyle.Analysis {
 		}
 
 		/// <summary>
-		/// Determine if a field is externally immutable (private fields are considered immutable).
-		/// This does not check if the type of the field is also immutable; use <see cref="MutabilityInspector.IsTypeMutable"/> for that.
+		/// Determine if a field is mutable.
+		/// This does not check if the type of the field is also mutable; use <see cref="IsTypeMutable"/> for that.
 		/// </summary>
 		/// <param name="field">The field to check for mutability.</param>
-		/// <returns>Determines whether the property is immutable.</returns>
+		/// <returns>Determines whether the property is mutable.</returns>
 		public bool IsFieldMutable( IFieldSymbol field ) {
 			if( field.DeclaredAccessibility == Accessibility.Private ) {
 				return false;
