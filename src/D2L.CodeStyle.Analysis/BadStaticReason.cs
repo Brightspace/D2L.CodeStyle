@@ -1,6 +1,6 @@
 ﻿namespace D2L.CodeStyle.Analysis {
-	internal enum BadStaticReason {
-		NonReadonly,
-		NonImmutable
+	public enum BadStaticReason {
+		StaticIsMutable,
+		TypeOfStaticIsMutable
 	}
 }

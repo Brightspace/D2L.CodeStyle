@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers {
     [DiagnosticAnalyzer( LanguageNames.CSharp )]
-    public class ParallelizableTestsAnalyzer : DiagnosticAnalyzer {
+    public sealed class ParallelizableTestsAnalyzer : DiagnosticAnalyzer {
         public const string DiagnosticId = "D2L0001";
         private const string Category = "Safety";
 
