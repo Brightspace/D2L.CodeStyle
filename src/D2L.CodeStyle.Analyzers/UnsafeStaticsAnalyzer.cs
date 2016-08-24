@@ -19,7 +19,10 @@ namespace D2L.CodeStyle.Analyzers {
         internal const string MessageFormat = "This static is unsafe because: '{0}'.";
 
         private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
-            DiagnosticId, Title, MessageFormat, Category,
+            DiagnosticId, 
+            Title, 
+            MessageFormat, 
+            Category,
             DiagnosticSeverity.Error,
             isEnabledByDefault: true,
             description: Description
