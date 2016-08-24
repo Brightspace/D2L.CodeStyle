@@ -54,13 +54,7 @@ namespace D2L.CodeStyle.Analysis {
 		/// <param name="prop">The property to check for mutability.</param>
 		/// <returns>Determines whether the property is mutable.</returns>
 		public bool IsPropertyMutable( IPropertySymbol prop ) {
-			if( prop.DeclaredAccessibility == Accessibility.Private ) {
-				return false;
-			}
 			if( prop.IsReadOnly ) {
-				return false;
-			}
-			if( prop.SetMethod.DeclaredAccessibility == Accessibility.Private ) {
 				return false;
 			}
 			return true;
@@ -73,9 +67,6 @@ namespace D2L.CodeStyle.Analysis {
 		/// <param name="field">The field to check for mutability.</param>
 		/// <returns>Determines whether the property is mutable.</returns>
 		public bool IsFieldMutable( IFieldSymbol field ) {
-			if( field.DeclaredAccessibility == Accessibility.Private ) {
-				return false;
-			}
 			if( field.IsReadOnly ) {
 				return false;
 			}

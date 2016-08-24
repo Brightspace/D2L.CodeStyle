@@ -184,7 +184,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 
         [Test]
-        public void DocumentWithStaticProperty_PrivateSetterImmutable_NoDiag() {
+        public void DocumentWithStaticProperty_PrivateSetterImmutable_Diag() {
             const string test = @"
     using System;
 
@@ -199,7 +199,7 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertNoDiagnostic( test );
+            AssertSingleDiagnostic( test, 11, 13, BadStaticReason.StaticIsMutable );
         }
 
         private void AssertNoDiagnostic( string file ) {

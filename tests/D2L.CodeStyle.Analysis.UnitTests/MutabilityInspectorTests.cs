@@ -48,22 +48,15 @@ namespace D2L.CodeStyle.Analysis {
 		}
 
 		[Test]
-		public void IsFieldMutable_Private_False() {
+		public void IsFieldMutable_Private_True() {
 			var field = Field( "private int[] random" );
 
-			Assert.IsFalse( m_inspector.IsFieldMutable( field ) );
+			Assert.IsTrue( m_inspector.IsFieldMutable( field ) );
 		}
 
 		[Test]
 		public void IsFieldMutable_Readonly_False() {
 			var field = Field( "readonly int[] random" );
-
-			Assert.IsFalse( m_inspector.IsFieldMutable( field ) );
-		}
-
-		[Test]
-		public void IsFieldMutable_PrivateAndReadonly_False() {
-			var field = Field( "private readonly int[] random" );
 
 			Assert.IsFalse( m_inspector.IsFieldMutable( field ) );
 		}
@@ -83,10 +76,10 @@ namespace D2L.CodeStyle.Analysis {
 		}
 
 		[Test]
-		public void IsPropertyMutable_Private_False() {
+		public void IsPropertyMutable_Private_True() {
 			var prop = Property( "private int random { get; set; }" );
 
-			Assert.IsFalse( m_inspector.IsPropertyMutable( prop ) );
+			Assert.IsTrue( m_inspector.IsPropertyMutable( prop ) );
 		}
 
 		[Test]
@@ -97,10 +90,10 @@ namespace D2L.CodeStyle.Analysis {
 		}
 
 		[Test]
-		public void IsPropertyMutable_PrivateSetter_False() {
+		public void IsPropertyMutable_PrivateSetter_True() {
 			var prop = Property( "int random { get; private set; }" );
 
-			Assert.IsFalse( m_inspector.IsPropertyMutable( prop ) );
+			Assert.IsTrue( m_inspector.IsPropertyMutable( prop ) );
 		}
 
 		[Test]
