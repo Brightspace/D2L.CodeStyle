@@ -17,7 +17,7 @@ namespace D2L.CodeStyle.Analyzers {
 
         private const string Title = "Ensure that static field is safe in undifferentiated servers.";
         private const string Description = "Static fields should not have client-specific or mutable data, otherwise they will not be safe in undifferentiated servers.";
-        internal const string MessageFormat = "This static is unsafe because: '{0}'.";
+        internal const string MessageFormat = "The static field or property {0} is unsafe because {1} is mutable.";
 
         private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
             DiagnosticId, 
@@ -79,7 +79,7 @@ namespace D2L.CodeStyle.Analyzers {
                 }
 
                 if( m_immutabilityInspector.IsFieldMutable( symbol ) ) {
-                    var diagnostic = Diagnostic.Create( Rule, variable.GetLocation(), BadStaticReason.StaticIsMutable );
+                    var diagnostic = Diagnostic.Create( Rule, variable.GetLocation(), variable.Identifier.ValueText, "it" );
                     context.ReportDiagnostic( diagnostic );
                 }
 
@@ -89,7 +89,7 @@ namespace D2L.CodeStyle.Analyzers {
                 }
 
                 if( m_immutabilityInspector.IsTypeMutable( symbol.Type ) ) {
-                    var diagnostic = Diagnostic.Create( Rule, variable.GetLocation(), BadStaticReason.TypeOfStaticIsMutable );
+                    var diagnostic = Diagnostic.Create( Rule, variable.GetLocation(), variable.Identifier.ValueText, symbol.Type.GetFullTypeName() );
                     context.ReportDiagnostic( diagnostic );
                 }
             }
@@ -124,7 +124,7 @@ namespace D2L.CodeStyle.Analyzers {
             }
 
             if( m_immutabilityInspector.IsPropertyMutable( prop ) ) {
-                var diagnostic = Diagnostic.Create( Rule, root.GetLocation(), BadStaticReason.StaticIsMutable );
+                var diagnostic = Diagnostic.Create( Rule, root.GetLocation(), prop.Name, "it" );
                 context.ReportDiagnostic( diagnostic );
             }
 
@@ -134,7 +134,7 @@ namespace D2L.CodeStyle.Analyzers {
             }
 
             if( m_immutabilityInspector.IsTypeMutable( prop.Type ) ) {
-                var diagnostic = Diagnostic.Create( Rule, root.GetLocation(), BadStaticReason.TypeOfStaticIsMutable );
+                var diagnostic = Diagnostic.Create( Rule, root.GetLocation(), prop.Name, prop.Type.GetFullTypeName() );
                 context.ReportDiagnostic( diagnostic );
             }
         }

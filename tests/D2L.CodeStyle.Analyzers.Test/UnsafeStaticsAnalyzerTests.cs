@@ -54,7 +54,7 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertSingleDiagnostic( test, 11, 31, BadStaticReason.StaticIsMutable );
+            AssertSingleDiagnostic( test, 11, 31, "bad", "it" );
         }
 
         [Test]
@@ -114,7 +114,7 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertSingleDiagnostic( test, 11, 40, BadStaticReason.TypeOfStaticIsMutable );
+            AssertSingleDiagnostic( test, 11, 40, "bad", "test.Tests.Foo" );
         }
 
         [Test]
@@ -187,7 +187,7 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertSingleDiagnostic( test, 11, 13, BadStaticReason.StaticIsMutable );
+            AssertSingleDiagnostic( test, 11, 13, "bad", "it" );
         }
 
 
@@ -247,7 +247,7 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertSingleDiagnostic( test, 11, 13, BadStaticReason.TypeOfStaticIsMutable );
+            AssertSingleDiagnostic( test, 11, 13, "bad", "test.Tests.Foo" );
         }
 
         [Test]
@@ -301,7 +301,7 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertSingleDiagnostic( test, 11, 13, BadStaticReason.StaticIsMutable );
+            AssertSingleDiagnostic( test, 11, 13, "bad", "it" );
         }
 
         [Test]
@@ -328,10 +328,10 @@ namespace D2L.CodeStyle.Analyzers {
             VerifyCSharpDiagnostic( file );
         }
 
-        private void AssertSingleDiagnostic( string file, int line, int column, BadStaticReason reason ) {
+        private void AssertSingleDiagnostic( string file, int line, int column, string fieldOrProp, string badFieldOrType ) {
             var expected = new DiagnosticResult {
                 Id = UnsafeStaticsAnalyzer.DiagnosticId,
-                Message = string.Format( UnsafeStaticsAnalyzer.MessageFormat, reason ),
+                Message = string.Format( UnsafeStaticsAnalyzer.MessageFormat, fieldOrProp, badFieldOrType ),
                 Severity = DiagnosticSeverity.Error,
                 Locations = new[] {
                     new DiagnosticResultLocation( "Test0.cs", line, column )
