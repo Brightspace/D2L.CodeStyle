@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
+using System.Linq;
+using D2L.CodeStyle.Annotations;
 
 namespace D2L.CodeStyle.Analysis {
 
@@ -64,6 +66,19 @@ namespace D2L.CodeStyle.Analysis {
 				return true;
 			}
 
+			return false;
+		}
+
+		public bool IsTypeMarkedImmutable( ITypeSymbol symbol ) {
+			if( symbol.GetAttributes().Any( a => a.AttributeClass.Name == nameof( Objects.Immutable ) ) ) {
+				return true;
+			}
+			if( symbol.Interfaces.Any( IsTypeMarkedImmutable ) ) {
+				return true;
+			}
+			if( symbol.BaseType != null && IsTypeMarkedImmutable( symbol.BaseType ) ) {
+				return true;
+			}
 			return false;
 		}
 

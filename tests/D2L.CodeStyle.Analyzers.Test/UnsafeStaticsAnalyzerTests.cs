@@ -152,6 +152,26 @@ namespace D2L.CodeStyle.Analyzers {
         }
 
         [Test]
+        public void DocumentWithStaticField_ImmutableFieldWithImmutableMarkedType_NoDiag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            [Immutable] // yes, this isn't actually immutable, that's the point
+            internal class Foo {
+                public string ClientsName = ""YOLO"";
+            }
+
+            public static readonly Foo good;
+
+        }
+    }";
+            AssertNoDiagnostic( test );
+        }
+
+        [Test]
         public void DocumentWithStaticProperty_NonReadonly_Diag() {
             const string test = @"
     using System;
@@ -282,6 +302,26 @@ namespace D2L.CodeStyle.Analyzers {
         }
     }";
             AssertSingleDiagnostic( test, 11, 13, BadStaticReason.StaticIsMutable );
+        }
+
+        [Test]
+        public void DocumentWithStaticProperty_ImmutablePropertyWithImmutableMarkedType_NoDiag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            [Immutable] // yes, this isn't actually immutable, that's the point
+            internal class Foo {
+                public string ClientsName = ""YOLO"";
+            }
+
+            public static Foo good { get; }
+
+        }
+    }";
+            AssertNoDiagnostic( test );
         }
 
         private void AssertNoDiagnostic( string file ) {

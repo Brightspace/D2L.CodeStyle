@@ -83,6 +83,11 @@ namespace D2L.CodeStyle.Analyzers {
                     context.ReportDiagnostic( diagnostic );
                 }
 
+                if( m_immutabilityInspector.IsTypeMarkedImmutable( symbol.Type ) ) {
+                    // if the type is marked immutable, skip checking it, to avoid reporting a diagnostic for each usage of non-immutable types that are marked immutable (another analyzer catches this already)
+                    continue;
+                }
+
                 if( m_immutabilityInspector.IsTypeMutable( symbol.Type ) ) {
                     var diagnostic = Diagnostic.Create( Rule, variable.GetLocation(), BadStaticReason.TypeOfStaticIsMutable );
                     context.ReportDiagnostic( diagnostic );
@@ -121,6 +126,11 @@ namespace D2L.CodeStyle.Analyzers {
             if( m_immutabilityInspector.IsPropertyMutable( prop ) ) {
                 var diagnostic = Diagnostic.Create( Rule, root.GetLocation(), BadStaticReason.StaticIsMutable );
                 context.ReportDiagnostic( diagnostic );
+            }
+
+            if( m_immutabilityInspector.IsTypeMarkedImmutable( prop.Type ) ) {
+                // if the type is marked immutable, skip checking it, to avoid reporting a diagnostic for each usage of non-immutable types that are marked immutable (another analyzer catches this already)
+                return;
             }
 
             if( m_immutabilityInspector.IsTypeMutable( prop.Type ) ) {

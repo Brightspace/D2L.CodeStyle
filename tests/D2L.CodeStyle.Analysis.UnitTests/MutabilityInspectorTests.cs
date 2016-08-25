@@ -163,5 +163,70 @@ namespace D2L.CodeStyle.Analysis {
 			Assert.IsTrue( m_inspector.IsTypeMutable( type ) );
 		}
 
+		[Test]
+		public void IsTypeMarkedImmutable_No_ReturnsFalse() {
+			var type = Type( "class Foo {}" );
+
+			Assert.IsFalse( m_inspector.IsTypeMarkedImmutable( type ) );
+		}
+
+		[Test]
+		public void IsTypeMarkedImmutable_Yes_ReturnsTrue() {
+			var type = Type( "[Immutable] class Foo {}" );
+
+			Assert.IsTrue( m_inspector.IsTypeMarkedImmutable( type ) );
+		}
+
+		[Test]
+		public void IsTypeMarkedImmutable_InterfaceIs_ReturnsTrue() {
+			var type = Type( @"
+				class Foo : IFoo {} 
+				[Immutable] interface IFoo {} " 
+			);
+
+			// we have multiple types defined, so ensure that we're asserting on the correct one first.
+			Assert.AreEqual( "Foo", type.MetadataName );
+			Assert.IsTrue( m_inspector.IsTypeMarkedImmutable( type ) );
+		}
+
+		[Test]
+		public void IsTypeMarkedImmutable_SomeTopLevelInterfaceIs_ReturnsTrue() {
+			var type = Type( @"
+				class Foo : IFoo {} 
+				interface IFoo : IFooTop {} 
+				[Immutable] interface IFooTop {}"
+			);
+
+			// we have multiple types defined, so ensure that we're asserting on the correct one first.
+			Assert.AreEqual( "Foo", type.MetadataName );
+			Assert.IsTrue( m_inspector.IsTypeMarkedImmutable( type ) );
+		}
+
+
+		[Test]
+		public void IsTypeMarkedImmutable_ParentClassIs_ReturnsTrue() {
+			var type = Type( @"
+				class Foo : FooBase {} 
+				[Immutable] class FooBase {}"
+			);
+
+			// we have multiple types defined, so ensure that we're asserting on the correct one first.
+			Assert.AreEqual( "Foo", type.MetadataName );
+			Assert.IsTrue( m_inspector.IsTypeMarkedImmutable( type ) );
+		}
+
+		[Test]
+		public void IsTypeMarkedImmutable_SomeTopLevelParentClassIs_ReturnsTrue() {
+			var type = Type( @"
+				class Foo : FooBase {} 
+				class FooBase : FooBaseOfBase {}
+				[Immutable] class FooBaseOfBase { }"
+			);
+
+			// we have multiple types defined, so ensure that we're asserting on the correct one first.
+			Assert.AreEqual( "Foo", type.MetadataName );
+			Assert.IsTrue( m_inspector.IsTypeMarkedImmutable( type ) );
+		}
+
 	}
 }
