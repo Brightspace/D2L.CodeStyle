@@ -13,8 +13,17 @@ namespace D2L.CodeStyle.Analysis {
 		/// A list of known non-valuetype immutable types
 		/// </summary>
 		private static readonly ImmutableHashSet<string> KnownImmutableTypes = new HashSet<string> {
-			nameof(String)
+			"System.String",
 		}.ToImmutableHashSet();
+
+		private string GetFullTypeName( ITypeSymbol type ) {
+			var symbolDisplayFormat = new SymbolDisplayFormat(
+				typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces 
+			);
+
+			var fullyQualifiedName = type.ToDisplayString( symbolDisplayFormat );
+			return fullyQualifiedName;
+		}
 
 		/// <summary>
 		/// Determine if a given type is mutable.
@@ -32,7 +41,7 @@ namespace D2L.CodeStyle.Analysis {
 				return true;
 			}
 
-			if( KnownImmutableTypes.Contains( type.Name ) ) {
+			if( KnownImmutableTypes.Contains( GetFullTypeName( type ) ) ) {
 				return false;
 			}
 
