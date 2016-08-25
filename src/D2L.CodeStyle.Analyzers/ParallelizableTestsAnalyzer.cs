@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers {
     [DiagnosticAnalyzer( LanguageNames.CSharp )]
-    public class ParallelizableTestsAnalyzer : DiagnosticAnalyzer {
+    public sealed class ParallelizableTestsAnalyzer : DiagnosticAnalyzer {
         public const string DiagnosticId = "D2L0001";
         private const string Category = "Safety";
 
@@ -18,7 +18,10 @@ namespace D2L.CodeStyle.Analyzers {
         internal const string MessageFormat = "'{0}' is not safe for use outside of isolated tests. Consider marking this test as isolated, or use `{1}` instead.";
 
         private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
-            DiagnosticId, Title, MessageFormat, Category,
+            DiagnosticId, 
+            Title, 
+            MessageFormat, 
+            Category,
             DiagnosticSeverity.Error,
             isEnabledByDefault: true,
             description: Description
