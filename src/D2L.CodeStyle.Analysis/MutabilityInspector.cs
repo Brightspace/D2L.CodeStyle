@@ -35,13 +35,33 @@ namespace D2L.CodeStyle.Analysis {
 			}
 
 			foreach( var member in type.GetMembers() ) {
-				if( member is IPropertySymbol && IsPropertyMutable( member as IPropertySymbol ) ) {
+				if( member is IPropertySymbol ) {
+					var prop = member as IPropertySymbol;
+					if( IsPropertyMutable( prop ) || IsTypeMutable( prop.Type ) ) {
+						return true;
+					}
+					continue;
+				}
+				if( member is IFieldSymbol ) {
+					var field = member as IFieldSymbol;
+					if( IsFieldMutable( field ) || IsTypeMutable( field.Type ) ) {
+						return true;
+					}
+					continue;
+				}
+				if( member is IMethodSymbol ) {
+					var method = member as IMethodSymbol;
+					if( method.MethodKind == MethodKind.Constructor ) {
+						// constructors are mutating by definition
+						continue;
+					}
+
+					// we can't yet be smarter by methods being "pure"
 					return true;
 				}
-				if( member is IFieldSymbol && IsFieldMutable( member as IFieldSymbol ) ) {
-					return true;
-				}
-				// skip methods, events, ctors, etc.
+
+				// we've got a member (event, etc.) that we can't currently be smart about, so fail
+				return true;
 			}
 
 			return false;
