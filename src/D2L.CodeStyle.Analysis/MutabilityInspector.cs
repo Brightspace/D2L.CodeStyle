@@ -16,15 +16,6 @@ namespace D2L.CodeStyle.Analysis {
 			"System.String",
 		}.ToImmutableHashSet();
 
-		private string GetFullTypeName( ITypeSymbol type ) {
-			var symbolDisplayFormat = new SymbolDisplayFormat(
-				typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces 
-			);
-
-			var fullyQualifiedName = type.ToDisplayString( symbolDisplayFormat );
-			return fullyQualifiedName;
-		}
-
 		/// <summary>
 		/// Determine if a given type is mutable.
 		/// </summary>
@@ -41,7 +32,7 @@ namespace D2L.CodeStyle.Analysis {
 				return true;
 			}
 
-			if( KnownImmutableTypes.Contains( GetFullTypeName( type ) ) ) {
+			if( KnownImmutableTypes.Contains( type.GetFullTypeName() ) ) {
 				return false;
 			}
 
