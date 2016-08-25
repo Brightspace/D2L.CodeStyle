@@ -181,7 +181,20 @@ namespace D2L.CodeStyle.Analysis {
 		public void IsTypeMarkedImmutable_InterfaceIs_ReturnsTrue() {
 			var type = Type( @"
 				class Foo : IFoo {} 
-				[Immutable] interface IFoo {} " 
+				[Immutable] interface IFoo {} "
+			);
+
+			// we have multiple types defined, so ensure that we're asserting on the correct one first.
+			Assert.AreEqual( "Foo", type.MetadataName );
+			Assert.IsTrue( m_inspector.IsTypeMarkedImmutable( type ) );
+		}
+
+		[Test]
+		public void IsTypeMarkedImmutable_OneOfTheInterfaceIs_ReturnsTrue() {
+			var type = Type( @"
+				class Foo : IFoo1, IFoo2 {} 
+				interface IFoo1 {}
+				[Immutable] interface IFoo2 { } "
 			);
 
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
