@@ -133,11 +133,34 @@ namespace D2L.CodeStyle.Analysis {
 		}
 
 		[Test]
+		public void IsTypeMutable_LooksAtMutabilityOfTypeOfField() {
+			var field = Field( "public readonly System.Text.StringBuilder random" );
+			Assert.IsFalse( m_inspector.IsFieldMutable( field ) );
+
+			Assert.IsTrue( m_inspector.IsTypeMutable( field.ContainingType ) );
+		}
+
+		[Test]
 		public void IsTypeMutable_LooksAtPropertiesInType() {
 			var prop = Property( "public string random { get; set; }" );
 			Assert.IsTrue( m_inspector.IsPropertyMutable( prop ) );
 
 			Assert.IsTrue( m_inspector.IsTypeMutable( prop.ContainingType ) );
+		}
+
+		[Test]
+		public void IsTypeMutable_LooksAtMutabilityOfTypeOfProperty() {
+			var property = Property( "public System.Text.StringBuilder random { get; }" );
+			Assert.IsFalse( m_inspector.IsPropertyMutable( property ) );
+
+			Assert.IsTrue( m_inspector.IsTypeMutable( property.Type ) );
+		}
+
+		[Test]
+		public void IsTypeMutable_NonExistentType_ThrowsException() {
+			var type = Property( "public System.Text.StringBuilder random { get; }" ).Type;
+
+			Assert.IsTrue( m_inspector.IsTypeMutable( type ) );
 		}
 
 	}
