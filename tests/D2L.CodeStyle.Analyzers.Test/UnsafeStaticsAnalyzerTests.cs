@@ -58,6 +58,47 @@ namespace D2L.CodeStyle.Analyzers {
         }
 
         [Test]
+        public void DocumentWithStaticField_NonReadonlyUnaudited_NoDiag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            internal class Foo {
+                public readonly string ClientsName = ""YOLO"";
+            }
+
+            [CodeStyle.Statics.Unaudited]
+            public static Foo bad = new Foo();
+
+        }
+    }";
+            AssertNoDiagnostic( test );
+        }
+
+
+        [Test]
+        public void DocumentWithStaticField_NonReadonlyAudited_NoDiag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            internal class Foo {
+                public readonly string ClientsName = ""YOLO"";
+            }
+
+            [CodeStyle.Statics.Audited]
+            public static Foo bad = new Foo();
+
+        }
+    }";
+            AssertNoDiagnostic( test );
+        }
+
+        [Test]
         public void DocumentWithStaticField_ReadonlyButMutable_Diag() {
             const string test = @"
     using System;
@@ -127,6 +168,47 @@ namespace D2L.CodeStyle.Analyzers {
         }
     }";
             AssertSingleDiagnostic( test, 11, 13, BadStaticReason.StaticIsMutable );
+        }
+
+
+        [Test]
+        public void DocumentWithStaticProperty_NonReadonlyUnaudited_NoDiag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            internal class Foo {
+                public readonly string ClientsName = ""YOLO"";
+            }
+
+            [CodeStyle.Statics.Unaudited]
+            public static Foo bad { get; set; }
+
+        }
+    }";
+            AssertNoDiagnostic( test );
+        }
+
+        [Test]
+        public void DocumentWithStaticProperty_NonReadonlyAudited_NoDiag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            internal class Foo {
+                public readonly string ClientsName = ""YOLO"";
+            }
+
+            [CodeStyle.Statics.Audited]
+            public static Foo bad { get; set; }
+
+        }
+    }";
+            AssertNoDiagnostic( test );
         }
 
         [Test]

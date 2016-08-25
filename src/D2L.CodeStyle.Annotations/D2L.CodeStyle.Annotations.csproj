@@ -7,7 +7,7 @@
     <ProjectGuid>{1812AF7E-59B1-4764-8090-F84446A71C4E}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>D2L.CodeStyle</RootNamespace>
+    <RootNamespace>D2L.CodeStyle.Annotations</RootNamespace>
     <AssemblyName>D2L.CodeStyle.Annotations</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

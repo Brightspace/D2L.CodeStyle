@@ -2,6 +2,7 @@
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analysis;
+using D2L.CodeStyle.Annotations;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -65,6 +66,18 @@ namespace D2L.CodeStyle.Analyzers {
                     continue;
                 }
 
+#pragma warning disable CS0618 // Type or member is obsolete
+                if( symbol.GetAttributes().Any( a => a.AttributeClass.MetadataName == nameof( Statics.Unaudited ) ) ) {
+                    // anyhing marked unaudited should not break the build, it's temporary
+                    return;
+                }
+#pragma warning restore CS0618 // Type or member is obsolete
+
+                if( symbol.GetAttributes().Any( a => a.AttributeClass.MetadataName == nameof( Statics.Audited ) ) ) {
+                    // anything marked audited has been explicitly marked as a safe static
+                    return;
+                }
+
                 if( m_immutabilityInspector.IsFieldMutable( symbol ) ) {
                     var diagnostic = Diagnostic.Create( Rule, variable.GetLocation(), BadStaticReason.StaticIsMutable );
                     context.ReportDiagnostic( diagnostic );
@@ -90,6 +103,18 @@ namespace D2L.CodeStyle.Analyzers {
 
             var prop = context.SemanticModel.GetDeclaredSymbol( root );
             if( prop == null ) {
+                return;
+            }
+
+#pragma warning disable CS0618 // Type or member is obsolete
+            if( prop.GetAttributes().Any( a => a.AttributeClass.MetadataName == nameof( Statics.Unaudited ) ) ) {
+                              // anyhing marked unaudited should not break the build, it's temporary
+                return;
+            }
+#pragma warning restore CS0618 // Type or member is obsolete
+
+            if( prop.GetAttributes().Any( a => a.AttributeClass.MetadataName == nameof( Statics.Audited ) ) ) {
+                // anything marked audited has been explicitly marked as a safe static
                 return;
             }
 

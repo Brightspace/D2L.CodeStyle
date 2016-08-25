@@ -56,6 +56,10 @@
       <Project>{76c3649d-ee9f-45bd-851c-8657ee1cd415}</Project>
       <Name>D2L.CodeStyle.Analysis</Name>
     </ProjectReference>
+    <ProjectReference Include="..\D2L.CodeStyle.Annotations\D2L.CodeStyle.Annotations.csproj">
+      <Project>{1812af7e-59b1-4764-8090-f84446a71c4e}</Project>
+      <Name>D2L.CodeStyle.Annotations</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CodeAnalysis, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
