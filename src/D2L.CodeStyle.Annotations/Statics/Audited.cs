@@ -6,7 +6,7 @@ namespace D2L.CodeStyle.Annotations {
         /// <summary>
         /// Indicates that a static variable is safe in a multi-tenant process
         /// </summary>
-        [AttributeUsage( validOn: AttributeTargets.Field )]
+        [AttributeUsage( validOn: AttributeTargets.Field | AttributeTargets.Property )]
         public sealed class Audited : Attribute {
             /// <summary>
             /// Mark a static variable as safe in a multi-tenant process
