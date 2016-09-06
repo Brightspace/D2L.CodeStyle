@@ -16,6 +16,19 @@ namespace D2L.CodeStyle.Analysis {
 			"System.String",
 		}.ToImmutableHashSet();
 
+		private static readonly ImmutableHashSet<string> ImmutableCollectionTypes = new HashSet<string> {
+			"System.Collections.Immutable.ImmutableArray",
+			"System.Collections.Immutable.ImmutableDictionary",
+			"System.Collections.Immutable.ImmutableHashSet",
+			"System.Collections.Immutable.ImmutableList",
+			"System.Collections.Immutable.ImmutableQueue",
+			"System.Collections.Immutable.ImmutableSortedDictionary",
+			"System.Collections.Immutable.ImmutableSortedSet",
+			"System.Collections.Immutable.ImmutableStack",
+			"System.Collections.Generic.IReadOnlyList",
+			"System.Collections.Generic.IEnumerable",
+		}.ToImmutableHashSet();
+
 		/// <summary>
 		/// Determine if a given type is mutable.
 		/// </summary>
@@ -34,6 +47,29 @@ namespace D2L.CodeStyle.Analysis {
 
 			if( KnownImmutableTypes.Contains( type.GetFullTypeName() ) ) {
 				return false;
+			}
+
+			if( ImmutableCollectionTypes.Contains( type.GetFullTypeName() ) ) {
+				var namedType = type as INamedTypeSymbol;
+				if( namedType == null ) {
+					// problem getting generic type argument
+					return true;
+				}
+
+				var collectionElementType = namedType.TypeArguments;
+				if( collectionElementType.IsEmpty) {
+					// we're looking at a non-generic collection -- it cannot be deterministically immutable
+					return true;
+				}
+				if( collectionElementType.Length > 1 ) {
+					// collections should only have one; if we have > 1, this isn't a collection
+					return true;
+				}
+
+
+				if( IsTypeMutable( collectionElementType[0] ) ) {
+					return true;
+				}
 			}
 
 			foreach( var member in type.GetMembers() ) {

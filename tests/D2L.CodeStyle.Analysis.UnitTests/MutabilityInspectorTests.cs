@@ -164,6 +164,28 @@ namespace D2L.CodeStyle.Analysis {
 		}
 
 		[Test]
+		public void IsTypeMutable_ImmutableNonGenericCollection_ReturnsTrue() {
+			var type = Field( "private readonly System.Collections.Immutable.ImmutableArray random" ).Type;
+
+			Assert.IsTrue( m_inspector.IsTypeMutable( type ) );
+		}
+
+		[Test]
+		public void IsTypeMutable_ImmutableGenericCollection_CaresAboutTypeOfElementInCollection() {
+			var type = Field( "private readonly System.Collections.Immutable.ImmutableArray<object> random" ).Type;
+
+			Assert.IsTrue( m_inspector.IsTypeMutable( type ) );
+		}
+
+
+		[Test]
+		public void IsTypeMutable_ImmutableGenericCollectionWithValueTypeElement_ReturnsFalse() {
+			var type = Field( "private readonly System.Collections.Immutable.ImmutableArray<int> random" ).Type;
+
+			Assert.IsFalse( m_inspector.IsTypeMutable( type ) );
+		}
+
+		[Test]
 		public void IsTypeMarkedImmutable_No_ReturnsFalse() {
 			var type = Type( "class Foo {}" );
 
