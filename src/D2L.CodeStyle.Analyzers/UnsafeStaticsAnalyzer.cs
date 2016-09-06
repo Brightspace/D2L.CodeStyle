@@ -49,6 +49,11 @@ namespace D2L.CodeStyle.Analyzers {
         }
 
         private void AnalyzeField( SyntaxNodeAnalysisContext context ) {
+            if( context.Node.SyntaxTree.FilePath.Contains( ".generated" ) ) {
+                // skip code-gen'd files; they have been hand-inspected to be safe
+                return;
+            }
+
             var root = context.Node as FieldDeclarationSyntax;
             if( root == null ) {
                 return;
@@ -96,6 +101,11 @@ namespace D2L.CodeStyle.Analyzers {
         }
 
         private void AnalyzeProperty( SyntaxNodeAnalysisContext context ) {
+            if( context.Node.SyntaxTree.FilePath.Contains( ".generated" ) ) {
+                // skip code-gen'd files; they have been hand-inspected to be safe
+                return;
+            }
+
             var root = context.Node as PropertyDeclarationSyntax;
             if( root == null ) {
                 return;
