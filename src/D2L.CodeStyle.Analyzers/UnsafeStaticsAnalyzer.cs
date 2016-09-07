@@ -32,6 +32,7 @@ namespace D2L.CodeStyle.Analyzers {
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( Rule );
 
         private readonly MutabilityInspector m_immutabilityInspector = new MutabilityInspector();
+        private readonly Utils m_utils = new Utils();
 
         public override void Initialize( AnalysisContext context ) {
             context.RegisterCompilationStartAction( RegisterIfNotTestAssembly );
@@ -49,6 +50,11 @@ namespace D2L.CodeStyle.Analyzers {
         }
 
         private void AnalyzeField( SyntaxNodeAnalysisContext context ) {
+            if( m_utils.IsGeneratedCodefile( context.Node.SyntaxTree.FilePath ) ) {
+                // skip code-gen'd files; they have been hand-inspected to be safe
+                return;
+            }
+
             var root = context.Node as FieldDeclarationSyntax;
             if( root == null ) {
                 return;
@@ -96,6 +102,11 @@ namespace D2L.CodeStyle.Analyzers {
         }
 
         private void AnalyzeProperty( SyntaxNodeAnalysisContext context ) {
+            if( m_utils.IsGeneratedCodefile( context.Node.SyntaxTree.FilePath ) ) {
+                // skip code-gen'd files; they have been hand-inspected to be safe
+                return;
+            }
+
             var root = context.Node as PropertyDeclarationSyntax;
             if( root == null ) {
                 return;
