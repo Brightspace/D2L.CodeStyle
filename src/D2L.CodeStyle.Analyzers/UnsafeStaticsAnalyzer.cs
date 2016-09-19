@@ -98,6 +98,21 @@ namespace D2L.CodeStyle.Analyzers {
                     var diagnostic = Diagnostic.Create( Rule, variable.GetLocation(), variable.Identifier.ValueText, symbol.Type.GetFullTypeName() );
                     context.ReportDiagnostic( diagnostic );
                 }
+
+                if( symbol.Type.IsImmutableCollectionType() ) {
+                    var elementType = symbol.Type.GetCollectionElementType();
+
+                    // non-generic collections
+                    if( elementType == null ) {
+                        var diagnostic = Diagnostic.Create( Rule, variable.GetLocation(), variable.Identifier.ValueText, symbol.Type.GetFullTypeName() );
+                        context.ReportDiagnostic( diagnostic );
+                    } else {
+                        if( !m_immutabilityInspector.IsTypeMarkedImmutable( elementType ) && m_immutabilityInspector.IsTypeMutable( elementType ) ) {
+                            var diagnostic = Diagnostic.Create( Rule, variable.GetLocation(), variable.Identifier.ValueText, elementType.GetFullTypeName() );
+                            context.ReportDiagnostic( diagnostic );
+                        }
+                    }
+                }
             }
         }
 

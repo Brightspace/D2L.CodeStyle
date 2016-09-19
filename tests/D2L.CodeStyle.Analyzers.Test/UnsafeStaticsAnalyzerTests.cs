@@ -172,6 +172,96 @@ namespace D2L.CodeStyle.Analyzers {
         }
 
         [Test]
+        public void DocumentWithStaticCollectionField_NonGeneric_Diag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+            public static readonly System.Collections.IList bad;
+
+        }
+    }";
+            AssertSingleDiagnostic( test, 6, 61, "bad", "System.Collections.IList" );
+        }
+
+        [Test]
+        public void DocumentWithStaticCollectionField_GenericObject_Diag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+            public static readonly System.Collections.Generic.List<object> bad;
+
+        }
+    }";
+            AssertSingleDiagnostic( test, 6, 76, "bad", "System.Collections.Generic.List" );
+        }
+
+        [Test]
+        public void DocumentWithStaticImmutableCollectionField_NonGeneric_Diag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+            public static readonly System.Collections.Immutable.ImmutableList bad;
+
+        }
+    }";
+            AssertSingleDiagnostic( test, 6, 79, "bad", "System.Collections.Immutable.ImmutableList" );
+        }
+
+        [Test]
+        public void DocumentWithStaticImmutableCollectionField_GenericObject_Diag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+            public static readonly System.Collections.Immutable.ImmutableList<object> bad;
+
+        }
+    }";
+            AssertSingleDiagnostic( test, 6, 87, "bad", "System.Object" );
+        }
+
+        [Test]
+        public void DocumentWithStaticImmutableCollectionField_GenericImmutableObject_Diag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+            public static readonly System.Collections.Immutable.ImmutableList<int> good;
+
+        }
+    }";
+            AssertNoDiagnostic( test );
+        }
+
+
+        [Test]
+        public void DocumentWithStaticImmutableCollectionField_GenericImmutableMarkedObject_Diag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+            [Objects.Immutable]
+            class Foo {
+                void MethodsMakesMeNotDeterministicallyImmutable() {}
+            }
+            public static readonly System.Collections.Immutable.ImmutableList<Foo> good;
+
+        }
+    }";
+            AssertNoDiagnostic( test );
+        }
+
+
+        [Test]
         public void DocumentWithStaticProperty_NonReadonly_Diag() {
             const string test = @"
     using System;
