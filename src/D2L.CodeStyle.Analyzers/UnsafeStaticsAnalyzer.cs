@@ -94,25 +94,7 @@ namespace D2L.CodeStyle.Analyzers {
                     continue;
                 }
 
-                if( m_immutabilityInspector.IsTypeMutable( symbol.Type ) ) {
-                    var diagnostic = Diagnostic.Create( Rule, variable.GetLocation(), variable.Identifier.ValueText, symbol.Type.GetFullTypeName() );
-                    context.ReportDiagnostic( diagnostic );
-                }
-
-                if( symbol.Type.IsImmutableCollectionType() ) {
-                    var elementType = symbol.Type.GetCollectionElementType();
-
-                    // non-generic collections
-                    if( elementType == null ) {
-                        var diagnostic = Diagnostic.Create( Rule, variable.GetLocation(), variable.Identifier.ValueText, symbol.Type.GetFullTypeName() );
-                        context.ReportDiagnostic( diagnostic );
-                    } else {
-                        if( !m_immutabilityInspector.IsTypeMarkedImmutable( elementType ) && m_immutabilityInspector.IsTypeMutable( elementType ) ) {
-                            var diagnostic = Diagnostic.Create( Rule, variable.GetLocation(), variable.Identifier.ValueText, elementType.GetFullTypeName() );
-                            context.ReportDiagnostic( diagnostic );
-                        }
-                    }
-                }
+                InspectType( context, symbol.Type, variable.GetLocation(), variable.Identifier.ValueText );
             }
         }
 
@@ -154,14 +136,30 @@ namespace D2L.CodeStyle.Analyzers {
                 context.ReportDiagnostic( diagnostic );
             }
 
-            if( m_immutabilityInspector.IsTypeMarkedImmutable( prop.Type ) ) {
+            InspectType( context, prop.Type, root.GetLocation(), prop.Name );
+        }
+
+        private void InspectType( SyntaxNodeAnalysisContext context, ITypeSymbol type, Location location, string fieldOrPropName ) {
+            if( m_immutabilityInspector.IsTypeMarkedImmutable( type ) ) {
                 // if the type is marked immutable, skip checking it, to avoid reporting a diagnostic for each usage of non-immutable types that are marked immutable (another analyzer catches this already)
                 return;
             }
 
-            if( m_immutabilityInspector.IsTypeMutable( prop.Type ) ) {
-                var diagnostic = Diagnostic.Create( Rule, root.GetLocation(), prop.Name, prop.Type.GetFullTypeName() );
+            if( m_immutabilityInspector.IsTypeMutable( type ) ) {
+                var diagnostic = Diagnostic.Create( Rule, location, fieldOrPropName, type.GetFullTypeName() );
                 context.ReportDiagnostic( diagnostic );
+            }
+
+            if( type.IsImmutableCollectionType() ) {
+                var elementType = type.GetCollectionElementType();
+
+                // non-generic collections
+                if( elementType == null ) {
+                    var diagnostic = Diagnostic.Create( Rule, location, fieldOrPropName, type.GetFullTypeName() );
+                    context.ReportDiagnostic( diagnostic );
+                } else {
+                    InspectType( context, elementType, location, fieldOrPropName );
+                }
             }
         }
 
