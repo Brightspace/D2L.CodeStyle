@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 
 namespace D2L.CodeStyle.Analysis {
     public static class TypeSymbolExtensions {
@@ -8,47 +9,54 @@ namespace D2L.CodeStyle.Analysis {
             typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
         );
 
-        private static readonly ImmutableHashSet<string> ImmutableCollectionTypes = new HashSet<string> {
-            "System.Collections.Immutable.ImmutableArray",
-            "System.Collections.Immutable.ImmutableDictionary",
-            "System.Collections.Immutable.ImmutableHashSet",
-            "System.Collections.Immutable.ImmutableList",
-            "System.Collections.Immutable.ImmutableQueue",
-            "System.Collections.Immutable.ImmutableSortedDictionary",
-            "System.Collections.Immutable.ImmutableSortedSet",
-            "System.Collections.Immutable.ImmutableStack",
-            "System.Collections.Generic.IReadOnlyList",
-            "System.Collections.Generic.IEnumerable",
-        }.ToImmutableHashSet();
-
         public static string GetFullTypeName( this ITypeSymbol symbol ) {
             var fullyQualifiedName = symbol.ToDisplayString( FullTypeDisplayFormat );
             return fullyQualifiedName;
         }
 
-        public static bool IsImmutableCollectionType( this ITypeSymbol type ) {
-            return ImmutableCollectionTypes.Contains( type.GetFullTypeName() );
+
+        public static string GetFullTypeNameWithGenericArguments( this ITypeSymbol symbol ) {
+            var fullyQualifiedName = symbol.ToDisplayString( FullTypeDisplayFormat );
+
+            var generics = symbol.GetGenericArguments();
+            if( generics != null && generics.Any() ) {
+                return string.Format(
+                    "{0}<{1}>",
+                    fullyQualifiedName,
+                    string.Join( ",", generics.Select( g => g.GetFullTypeNameWithGenericArguments() ) )
+                );
+            }
+
+            return fullyQualifiedName;
         }
 
-        public static ITypeSymbol GetCollectionElementType( this ITypeSymbol type ) {
+        public static ITypeSymbol GetGenericArgumentOrDefault( this ITypeSymbol type ) {
             var namedType = type as INamedTypeSymbol;
             if( namedType == null ) {
                 // problem getting generic type argument
                 return null;
             }
 
-            var collectionElementType = namedType.TypeArguments;
-            if( collectionElementType.IsEmpty ) {
-                // we're looking at a non-generic collection -- it cannot be deterministically immutable
-                return null;
+            var args = namedType.TypeArguments;
+            if( args.IsEmpty ) {
+                return default(ITypeSymbol);
             }
-            if( collectionElementType.Length > 1 ) {
-                // collections should only have one; if we have > 1, this isn't a collection
-                return null;
+            if( args.Length > 1 ) {
+                return default( ITypeSymbol );
             }
 
-            return collectionElementType[0];
+            return args[0];
         }
 
+        public static IEnumerable<ITypeSymbol> GetGenericArguments( this ITypeSymbol type ) {
+            var namedType = type as INamedTypeSymbol;
+            if( namedType == null ) {
+                // problem getting generic type argument
+                return null;
+            }
+
+            var args = namedType.TypeArguments;
+            return args;
+        }
     }
 }

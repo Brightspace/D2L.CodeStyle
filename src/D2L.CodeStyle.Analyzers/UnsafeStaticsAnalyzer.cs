@@ -146,20 +146,8 @@ namespace D2L.CodeStyle.Analyzers {
             }
 
             if( m_immutabilityInspector.IsTypeMutable( type ) ) {
-                var diagnostic = Diagnostic.Create( Rule, location, fieldOrPropName, type.GetFullTypeName() );
+                var diagnostic = Diagnostic.Create( Rule, location, fieldOrPropName, type.GetFullTypeNameWithGenericArguments() );
                 context.ReportDiagnostic( diagnostic );
-            }
-
-            if( type.IsImmutableCollectionType() ) {
-                var elementType = type.GetCollectionElementType();
-
-                // non-generic collections
-                if( elementType == null ) {
-                    var diagnostic = Diagnostic.Create( Rule, location, fieldOrPropName, type.GetFullTypeName() );
-                    context.ReportDiagnostic( diagnostic );
-                } else {
-                    InspectType( context, elementType, location, fieldOrPropName );
-                }
             }
         }
 

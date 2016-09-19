@@ -56,12 +56,25 @@ namespace D2L.CodeStyle.Analysis {
 			"System.String",
 		}.ToImmutableHashSet();
 
-		/// <summary>
-		/// Determine if a given type is mutable.
-		/// </summary>
-		/// <param name="type">The type to determine mutability for.</param>
-		/// <returns>Whether the type is mutable.</returns>
-		public bool IsTypeMutable(
+        private static readonly ImmutableHashSet<string> ImmutableCollectionTypes = new HashSet<string> {
+            "System.Collections.Immutable.ImmutableArray",
+            "System.Collections.Immutable.ImmutableDictionary",
+            "System.Collections.Immutable.ImmutableHashSet",
+            "System.Collections.Immutable.ImmutableList",
+            "System.Collections.Immutable.ImmutableQueue",
+            "System.Collections.Immutable.ImmutableSortedDictionary",
+            "System.Collections.Immutable.ImmutableSortedSet",
+            "System.Collections.Immutable.ImmutableStack",
+            "System.Collections.Generic.IReadOnlyList",
+            "System.Collections.Generic.IEnumerable",
+        }.ToImmutableHashSet();
+
+        /// <summary>
+        /// Determine if a given type is mutable.
+        /// </summary>
+        /// <param name="type">The type to determine mutability for.</param>
+        /// <returns>Whether the type is mutable.</returns>
+        public bool IsTypeMutable(
 			ITypeSymbol type
 		) {
 			if( type.IsValueType ) {
@@ -76,17 +89,35 @@ namespace D2L.CodeStyle.Analysis {
 				return false;
 			}
 
+            if( IsTypeMarkedImmutable( type ) ) {
+                return false;
+            }
+
+            if( ImmutableCollectionTypes.Contains( type.GetFullTypeName() ) ) {
+                var elementType = type.GetGenericArgumentOrDefault();
+                if( elementType == null ) {
+                    return true;
+                }
+                return IsTypeMutable( elementType );
+            }
+
 			foreach( var member in type.GetMembers() ) {
 				if( member is IPropertySymbol ) {
 					var prop = member as IPropertySymbol;
-					if( IsPropertyMutable( prop ) || IsTypeMutable( prop.Type ) ) {
+                    if( IsPropertyMutable( prop ) ) {
+                        return true;
+                    }
+                    if ( !IsTypeMarkedImmutable( prop.Type ) && IsTypeMutable( prop.Type ) ) {
 						return true;
 					}
 					continue;
 				}
 				if( member is IFieldSymbol ) {
 					var field = member as IFieldSymbol;
-					if( IsFieldMutable( field ) || IsTypeMutable( field.Type ) ) {
+                    if( IsFieldMutable( field ) ) {
+                        return true;
+                    }
+                    if ( !IsTypeMarkedImmutable( field.Type ) && IsTypeMutable( field.Type ) ) {
 						return true;
 					}
 					continue;
