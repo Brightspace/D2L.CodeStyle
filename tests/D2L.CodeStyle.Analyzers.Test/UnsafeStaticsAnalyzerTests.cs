@@ -196,7 +196,6 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertSingleDiagnostic( test, 6, 76, "bad", "System.Collections.Generic.List" );
             AssertSingleDiagnostic( test, 6, 76, "bad", "System.Collections.Generic.List<System.Object>" );
         }
 
@@ -225,7 +224,6 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertSingleDiagnostic( test, 6, 87, "bad", "System.Object" );
             AssertSingleDiagnostic( test, 6, 87, "bad", "System.Collections.Immutable.ImmutableList<System.Object>" );
         }
 
