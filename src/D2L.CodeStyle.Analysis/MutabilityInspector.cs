@@ -89,6 +89,15 @@ namespace D2L.CodeStyle.Analysis {
 				return false;
 			}
 
+
+			// make sure we're dealing with the concrete implementation
+			if( type.TypeKind == TypeKind.Interface ) {
+				return true;
+			}
+			if( type.TypeKind == TypeKind.Class && ( !type.IsSealed || type.IsAbstract ) ) {
+				return true;
+			}
+
 			if( ImmutableCollectionTypes.Contains( type.GetFullTypeName() ) ) {
 				var namedType = type as INamedTypeSymbol;
 				if( namedType == null ) {
@@ -128,14 +137,8 @@ namespace D2L.CodeStyle.Analysis {
 					continue;
 				}
 				if( member is IMethodSymbol ) {
-					var method = member as IMethodSymbol;
-					if( method.MethodKind == MethodKind.Constructor ) {
-						// constructors are mutating by definition
-						continue;
-					}
-
-					// we can't yet be smarter by methods being "pure"
-					return true;
+					// ignore these symbols, because they do not contribute to immutability
+					continue;
 				}
 
 				// we've got a member (event, etc.) that we can't currently be smart about, so fail

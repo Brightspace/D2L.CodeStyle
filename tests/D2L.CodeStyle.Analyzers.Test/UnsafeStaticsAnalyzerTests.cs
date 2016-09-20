@@ -46,7 +46,7 @@ namespace D2L.CodeStyle.Analyzers {
     namespace test {
         class Tests {
 
-            internal class Foo {
+            internal sealed class Foo {
                 public readonly string ClientsName = ""YOLO"";
             }
 
@@ -133,7 +133,7 @@ namespace D2L.CodeStyle.Analyzers {
         }
 
         [Test]
-        public void DocumentWithStaticField_ReadonlyImmutable_NoDiag() {
+        public void DocumentWithStaticField_ReadonlyNotSealedImmutable_NoDiag() {
             const string test = @"
     using System;
 
@@ -141,6 +141,26 @@ namespace D2L.CodeStyle.Analyzers {
         class Tests {
 
             internal class Foo {
+                public readonly string ClientsName = ""YOLO"";
+            }
+
+            public static readonly Foo bad = new Foo();
+
+        }
+    }";
+
+            AssertSingleDiagnostic( test, 11, 40, "bad", "test.Tests.Foo" );
+        }
+
+        [Test]
+        public void DocumentWithStaticField_ReadonlySealedImmutable_NoDiag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            internal sealed class Foo {
                 public readonly string ClientsName = ""YOLO"";
             }
 
@@ -179,7 +199,7 @@ namespace D2L.CodeStyle.Analyzers {
     namespace test {
         class Tests {
 
-            internal class Foo {
+            internal sealed class Foo {
                 public readonly string ClientsName = ""YOLO"";
             }
 
@@ -273,7 +293,7 @@ namespace D2L.CodeStyle.Analyzers {
     namespace test {
         class Tests {
 
-            internal class Foo {
+            internal sealed class Foo {
                 public readonly string ClientsName = ""YOLO"";
             }
 
@@ -293,7 +313,7 @@ namespace D2L.CodeStyle.Analyzers {
     namespace test {
         class Tests {
 
-            internal class Foo {
+            internal sealed class Foo {
                 public readonly string ClientsName = ""YOLO"";
             }
 

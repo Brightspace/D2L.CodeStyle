@@ -32,7 +32,7 @@ namespace D2L.CodeStyle.Analysis {
 		}
 
 		private IFieldSymbol Field( string text ) {
-			var type = Type( "class Fake { " + text + "; }" );
+			var type = Type( "sealed class Fake { " + text + "; }" );
 
 			var toReturn = type.GetMembers().OfType<IFieldSymbol>().FirstOrDefault();
 			Assert.IsNotNull( toReturn );
@@ -40,7 +40,7 @@ namespace D2L.CodeStyle.Analysis {
 		}
 
 		private IPropertySymbol Property( string text ) {
-			var type = Type( "class Fake { " + text + "; }" );
+			var type = Type( "sealed class Fake { " + text + "; }" );
 
 			var toReturn = type.GetMembers().OfType<IPropertySymbol>().FirstOrDefault();
 			Assert.IsNotNull( toReturn );
@@ -122,6 +122,34 @@ namespace D2L.CodeStyle.Analysis {
 			var type = Field( "string random" ).Type;
 
 			Assert.IsFalse( m_inspector.IsTypeMutable( type ) );
+		}
+
+		[Test]
+		public void IsTypeMutable_Interface_True() {
+			var type = Type( "interface foo {}" );
+
+			Assert.IsTrue( m_inspector.IsTypeMutable( type ) );
+		}
+
+		[Test]
+		public void IsTypeMutable_NonSealedClass_True() {
+			var type = Type( "class foo {}" );
+
+			Assert.IsTrue( m_inspector.IsTypeMutable( type ) );
+		}
+
+		[Test]
+		public void IsTypeMutable_SealedClass_False() {
+			var type = Type( "sealed class foo {}" );
+
+			Assert.IsFalse( m_inspector.IsTypeMutable( type ) );
+		}
+
+		[Test]
+		public void IsTypeMutable_AbstractClass_True() {
+			var type = Type( "abstract class foo {}" );
+
+			Assert.IsTrue( m_inspector.IsTypeMutable( type ) );
 		}
 
 		[Test]
