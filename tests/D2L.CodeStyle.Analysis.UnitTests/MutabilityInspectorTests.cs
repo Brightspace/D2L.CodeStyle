@@ -146,13 +146,6 @@ namespace D2L.CodeStyle.Analysis {
 		}
 
 		[Test]
-		public void IsTypeMutable_AbstractClass_True() {
-			var type = Type( "abstract class foo {}" );
-
-			Assert.IsTrue( m_inspector.IsTypeMutable( type ) );
-		}
-
-		[Test]
 		public void IsTypeMutable_LooksAtFieldsInType() {
 			var field = Field( "public string random" );
 			Assert.IsTrue( m_inspector.IsFieldMutable( field ) );
