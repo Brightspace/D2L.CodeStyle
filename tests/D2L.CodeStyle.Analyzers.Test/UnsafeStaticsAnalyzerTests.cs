@@ -192,6 +192,26 @@ namespace D2L.CodeStyle.Analyzers {
 		}
 
 		[Test]
+        public void DocumentWithStaticField_InterfaceWithImmutableConcreteInitializer_NoDiag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            interface IFoo {}
+            internal sealed class Foo : IFoo {
+                public readonly string ClientsName = ""YOLO"";
+            }
+
+            public readonly static IFoo good = new Foo();
+
+        }
+    }";
+            AssertNoDiagnostic( test );
+        }
+
+        [Test]
 		public void DocumentWithStaticProperty_NonReadonly_Diag() {
 			const string test = @"
     using System;
@@ -345,6 +365,26 @@ namespace D2L.CodeStyle.Analyzers {
 		}
 
 		[Test]
+        public void DocumentWithStaticProperty_InterfaceWithImmutableConcreteInitializer_NoDiag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            interface IFoo {}
+            internal sealed class Foo : IFoo {
+                public readonly string ClientsName = ""YOLO"";
+            }
+
+            public static IFoo good { get; } = new Foo();
+
+        }
+    }";
+            AssertNoDiagnostic( test );
+        }
+
+        [Test]
 		public void DocumentWithRecurrsiveTypes() {
 			const string test = @"
 	using System;

@@ -89,13 +89,24 @@ namespace D2L.CodeStyle.Analyzers {
                     context.ReportDiagnostic( diagnostic );
                 }
 
-                if( m_immutabilityInspector.IsTypeMarkedImmutable( symbol.Type ) ) {
+                var type = symbol.Type;
+
+                // try to use the concrete type if we have it (via a constructor)
+                var initializer = variable.Initializer?.Value;
+                if( initializer != null ) {
+                    var initializerSymbol = context.SemanticModel.GetSymbolInfo( initializer ).Symbol as IMethodSymbol;
+                    if( initializerSymbol?.MethodKind == MethodKind.Constructor ) {
+                        type = initializerSymbol.ContainingType;
+                    }
+                }
+
+                if( m_immutabilityInspector.IsTypeMarkedImmutable( type ) ) {
                     // if the type is marked immutable, skip checking it, to avoid reporting a diagnostic for each usage of non-immutable types that are marked immutable (another analyzer catches this already)
                     continue;
                 }
 
-                if( m_immutabilityInspector.IsTypeMutable( symbol.Type ) ) {
-                    var diagnostic = Diagnostic.Create( Rule, variable.GetLocation(), variable.Identifier.ValueText, symbol.Type.GetFullTypeName() );
+                if( m_immutabilityInspector.IsTypeMutable( type ) ) {
+                    var diagnostic = Diagnostic.Create( Rule, variable.GetLocation(), variable.Identifier.ValueText, type.GetFullTypeName() );
                     context.ReportDiagnostic( diagnostic );
                 }
             }
@@ -144,8 +155,19 @@ namespace D2L.CodeStyle.Analyzers {
                 return;
             }
 
-            if( m_immutabilityInspector.IsTypeMutable( prop.Type ) ) {
-                var diagnostic = Diagnostic.Create( Rule, root.GetLocation(), prop.Name, prop.Type.GetFullTypeName() );
+            var type = prop.Type;
+            
+            // try to use the concrete type if we have it (via a constructor)
+            var initializer = root.Initializer?.Value;
+            if( initializer != null ) {
+                var initializerSymbol = context.SemanticModel.GetSymbolInfo( initializer ).Symbol as IMethodSymbol;
+                if( initializerSymbol?.MethodKind == MethodKind.Constructor ) {
+                    type = initializerSymbol.ContainingType;
+                }
+            }
+
+            if( m_immutabilityInspector.IsTypeMutable( type ) ) {
+                var diagnostic = Diagnostic.Create( Rule, root.GetLocation(), prop.Name, type.GetFullTypeName() );
                 context.ReportDiagnostic( diagnostic );
             }
         }
