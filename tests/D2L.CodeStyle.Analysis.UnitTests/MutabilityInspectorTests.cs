@@ -1,9 +1,11 @@
-﻿using System.Linq;
+﻿using System.Collections.Immutable;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
 
 namespace D2L.CodeStyle.Analysis {
+
 	[TestFixture]
 	public class MutabilityInspectorTests {
 
@@ -14,7 +16,10 @@ namespace D2L.CodeStyle.Analysis {
 			var compilation = CSharpCompilation.Create(
 				assemblyName: "TestAssembly",
 				syntaxTrees: new[] { tree },
-				references: new[] { MetadataReference.CreateFromFile( typeof( object ).Assembly.Location ) }
+				references: new[] {
+					MetadataReference.CreateFromFile( typeof( object ).Assembly.Location ),
+					MetadataReference.CreateFromFile( typeof( ImmutableArray ).Assembly.Location )
+				}
 			);
 			return compilation;
 		}
@@ -23,11 +28,12 @@ namespace D2L.CodeStyle.Analysis {
 			var source = $"namespace D2L {{ {text} }}";
 			var compilation = Compile( source );
 
-			var toReturn = compilation.GetSymbolsWithName( 
-				predicate: n => true, 
-				filter: SymbolFilter.Type 
+			var toReturn = compilation.GetSymbolsWithName(
+				predicate: n => true,
+				filter: SymbolFilter.Type
 			).OfType<ITypeSymbol>().FirstOrDefault();
 			Assert.IsNotNull( toReturn );
+			Assert.AreNotEqual( TypeKind.Error, toReturn.TypeKind );
 			return toReturn;
 		}
 
@@ -36,6 +42,7 @@ namespace D2L.CodeStyle.Analysis {
 
 			var toReturn = type.GetMembers().OfType<IFieldSymbol>().FirstOrDefault();
 			Assert.IsNotNull( toReturn );
+			Assert.AreNotEqual( TypeKind.Error, toReturn.Type.TypeKind );
 			return toReturn;
 		}
 
@@ -44,6 +51,7 @@ namespace D2L.CodeStyle.Analysis {
 
 			var toReturn = type.GetMembers().OfType<IPropertySymbol>().FirstOrDefault();
 			Assert.IsNotNull( toReturn );
+			Assert.AreNotEqual( TypeKind.Error, toReturn.Type.TypeKind );
 			return toReturn;
 		}
 
@@ -185,19 +193,11 @@ namespace D2L.CodeStyle.Analysis {
 		}
 
 		[Test]
-		public void IsTypeMutable_ImmutableNonGenericCollection_ReturnsTrue() {
-			var type = Field( "private readonly System.Collections.Immutable.ImmutableArray random" ).Type;
-
-			Assert.IsTrue( m_inspector.IsTypeMutable( type ) );
-		}
-
-		[Test]
 		public void IsTypeMutable_ImmutableGenericCollection_CaresAboutTypeOfElementInCollection() {
 			var type = Field( "private readonly System.Collections.Immutable.ImmutableArray<object> random" ).Type;
 
 			Assert.IsTrue( m_inspector.IsTypeMutable( type ) );
 		}
-
 
 		[Test]
 		public void IsTypeMutable_ImmutableGenericCollectionWithValueTypeElement_ReturnsFalse() {

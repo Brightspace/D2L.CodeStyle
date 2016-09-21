@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.Immutable;
-using Microsoft.CodeAnalysis;
 using System.Linq;
 using D2L.CodeStyle.Annotations;
+using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analysis {
 
@@ -86,71 +85,99 @@ namespace D2L.CodeStyle.Analysis {
 			ITypeSymbol type,
 			HashSet<ITypeSymbol> typeStack
 		) {
-			if( typeStack.Contains( type )  ) {
+			if( typeStack.Contains( type ) ) {
 				// we've got a cycle, fail
 				return true;
 			}
 
-			bool isMutable = false;
 			typeStack.Add( type );
+			try {
 
-			if( type.IsValueType ) {
-				isMutable = false;
-			} else if( type.TypeKind == TypeKind.Array ) {
-				isMutable = true;
-			} else if( KnownImmutableTypes.Contains( type.GetFullTypeName() ) ) {
-				isMutable = false;
-			} else if( ImmutableCollectionTypes.Contains( type.GetFullTypeName() ) ) {
-				var namedType = type as INamedTypeSymbol;
-				var collectionElementType = namedType?.TypeArguments;
-				switch( collectionElementType?.Length ) {
-					case 1:
-						// simple element collection
-						isMutable = IsTypeMutableRecursive( collectionElementType?[0], typeStack );
-						break;
-					case 2:
-						// dictionary/pair collection
-						isMutable = IsTypeMutableRecursive( collectionElementType?[0], typeStack ) 
-							|| IsTypeMutableRecursive( collectionElementType?[1], typeStack );
-						break;
-					default:
-						// unrecognized generic collection type
-						isMutable = true;
-						break;
+				if( type.IsValueType ) {
+					return false;
 				}
-			} else if( IsTypeMarkedImmutable( type ) ) {
-				isMutable = false;
-			} else if( type.TypeKind == TypeKind.Interface ) {
-				isMutable = true;
-			} else if( type.TypeKind == TypeKind.Class && !type.IsSealed ) {
-				isMutable = true;
-			}  else {
-				foreach( var member in type.GetMembers() ) {
-					if( member is IPropertySymbol ) {
-						var prop = member as IPropertySymbol;
-						if( IsPropertyMutable( prop ) || IsTypeMutableRecursive( prop.Type, typeStack ) ) {
-							isMutable = true;
-							break;
+
+				if( type.TypeKind == TypeKind.Array ) {
+					return true;
+				}
+
+				if( KnownImmutableTypes.Contains( type.GetFullTypeName() ) ) {
+					return false;
+				}
+
+				if( ImmutableCollectionTypes.Contains( type.GetFullTypeName() ) ) {
+					var namedType = type as INamedTypeSymbol;
+					bool isMutable = namedType.TypeArguments.Any( t => IsTypeMutableRecursive( t, typeStack ) );
+					return isMutable;
+				}
+
+				if( IsTypeMarkedImmutable( type ) ) {
+					return false;
+				}
+
+				if( type.TypeKind == TypeKind.Interface ) {
+					return true;
+				}
+
+				if( type.TypeKind == TypeKind.Class && !type.IsStatic && !type.IsSealed ) {
+					return true;
+				}
+
+				{
+					foreach( ISymbol member in type.GetMembers() ) {
+						if( IsMemberMutableRecursive( member, typeStack ) ) {
+							return true;
 						}
-					} else if( member is IFieldSymbol ) {
-						var field = member as IFieldSymbol;
-						if( IsFieldMutable( field ) || IsTypeMutableRecursive( field.Type, typeStack ) ) {
-							isMutable = true;
-							break;
-						}
-					} else if( member is IMethodSymbol ) {
-						// ignore these symbols, because they do not contribute to immutability
-						isMutable = false;
-					} else {
-						// we've got a member (event, etc.) that we can't currently be smart about, so fail
-						isMutable = true;
-						break;
 					}
+
+					return false;
 				}
+
+			} finally {
+				typeStack.Remove( type );
+			}
+		}
+
+		private bool IsMemberMutableRecursive(
+			ISymbol symbol,
+			HashSet<ITypeSymbol> typeStack
+		) {
+
+			var prop = symbol as IPropertySymbol;
+			if( prop != null ) {
+
+				if( IsPropertyMutable( prop ) ) {
+					return true;
+				}
+				
+				if( IsTypeMutableRecursive( prop.Type, typeStack ) ) {
+					return true;
+				}
+
+				return false;
 			}
 
-			typeStack.Remove( type );
-			return isMutable;
+			var field = symbol as IFieldSymbol;
+			if( field != null ) {
+
+				if( IsFieldMutable( field ) ) {
+					return true;
+				}
+
+				if( IsTypeMutableRecursive( field.Type, typeStack ) ) {
+					return true;
+				}
+
+				return false;
+			}
+
+			if( symbol is IMethodSymbol ) {
+				// ignore these symbols, because they do not contribute to immutability
+				return false;
+			}
+
+			// we've got a member (event, etc.) that we can't currently be smart about, so fail
+			return true;
 		}
 
 		public bool IsTypeMarkedImmutable( ITypeSymbol symbol ) {
