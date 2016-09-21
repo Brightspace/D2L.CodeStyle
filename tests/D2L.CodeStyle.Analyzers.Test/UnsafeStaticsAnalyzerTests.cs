@@ -10,21 +10,21 @@ using NUnit.Framework;
 
 namespace D2L.CodeStyle.Analyzers {
 
-    internal sealed class UnsafeStaticsAnalyzerTests : DiagnosticVerifier {
-        protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer() {
-            return new UnsafeStaticsAnalyzer();
-        }
+	internal sealed class UnsafeStaticsAnalyzerTests : DiagnosticVerifier {
+		protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer() {
+			return new UnsafeStaticsAnalyzer();
+		}
 
-        [Test]
-        public void EmptyDocument_NoDiag() {
-            const string test = @"";
+		[Test]
+		public void EmptyDocument_NoDiag() {
+			const string test = @"";
 
-            VerifyCSharpDiagnostic( test );
-        }
+			VerifyCSharpDiagnostic( test );
+		}
 
-        [Test]
-        public void DocumentWithoutStatic_NoDiag() {
-            const string test = @"
+		[Test]
+		public void DocumentWithoutStatic_NoDiag() {
+			const string test = @"
     using System;
 
     namespace test {
@@ -35,18 +35,18 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertNoDiagnostic( test );
-        }
+			AssertNoDiagnostic( test );
+		}
 
-        [Test]
-        public void DocumentWithStaticField_NonReadonly_Diag() {
-            const string test = @"
+		[Test]
+		public void DocumentWithStaticField_NonReadonly_Diag() {
+			const string test = @"
     using System;
 
     namespace test {
         class Tests {
 
-            internal class Foo {
+            internal sealed class Foo {
                 public readonly string ClientsName = ""YOLO"";
             }
 
@@ -54,12 +54,12 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertSingleDiagnostic( test, 11, 31, "bad", "it" );
-        }
+			AssertSingleDiagnostic( test, 11, 31, "bad", "it" );
+		}
 
-        [Test]
-        public void DocumentWithStaticField_NonReadonlyUnaudited_NoDiag() {
-            const string test = @"
+		[Test]
+		public void DocumentWithStaticField_NonReadonlyUnaudited_NoDiag() {
+			const string test = @"
     using System;
 
     namespace test {
@@ -74,13 +74,13 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertNoDiagnostic( test );
-        }
+			AssertNoDiagnostic( test );
+		}
 
 
-        [Test]
-        public void DocumentWithStaticField_NonReadonlyAudited_NoDiag() {
-            const string test = @"
+		[Test]
+		public void DocumentWithStaticField_NonReadonlyAudited_NoDiag() {
+			const string test = @"
     using System;
 
     namespace test {
@@ -95,12 +95,12 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertNoDiagnostic( test );
-        }
+			AssertNoDiagnostic( test );
+		}
 
-        [Test]
-        public void DocumentWithStaticField_ReadonlyButMutable_Diag() {
-            const string test = @"
+		[Test]
+		public void DocumentWithStaticField_ReadonlyButMutable_Diag() {
+			const string test = @"
     using System;
 
     namespace test {
@@ -114,12 +114,12 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertSingleDiagnostic( test, 11, 40, "bad", "test.Tests.Foo" );
-        }
+			AssertSingleDiagnostic( test, 11, 40, "bad", "test.Tests.Foo" );
+		}
 
-        [Test]
-        public void DocumentWithStaticField_ReadonlyValueType_NoDiag() {
-            const string test = @"
+		[Test]
+		public void DocumentWithStaticField_ReadonlyValueType_NoDiag() {
+			const string test = @"
     using System;
 
     namespace test {
@@ -129,12 +129,12 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertNoDiagnostic( test );
-        }
+			AssertNoDiagnostic( test );
+		}
 
-        [Test]
-        public void DocumentWithStaticField_ReadonlyImmutable_NoDiag() {
-            const string test = @"
+		[Test]
+		public void DocumentWithStaticField_ReadonlyNotSealedImmutable_NoDiag() {
+			const string test = @"
     using System;
 
     namespace test {
@@ -148,12 +148,32 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertNoDiagnostic( test );
-        }
 
-        [Test]
-        public void DocumentWithStaticField_ImmutableFieldWithImmutableMarkedType_NoDiag() {
-            const string test = @"
+			AssertSingleDiagnostic( test, 11, 40, "bad", "test.Tests.Foo" );
+		}
+
+		[Test]
+		public void DocumentWithStaticField_ReadonlySealedImmutable_NoDiag() {
+			const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            internal sealed class Foo {
+                public readonly string ClientsName = ""YOLO"";
+            }
+
+            public static readonly Foo bad = new Foo();
+
+        }
+    }";
+			AssertNoDiagnostic( test );
+		}
+
+		[Test]
+		public void DocumentWithStaticField_ImmutableFieldWithImmutableMarkedType_NoDiag() {
+			const string test = @"
     using System;
 
     namespace test {
@@ -168,10 +188,10 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertNoDiagnostic( test );
-        }
+			AssertNoDiagnostic( test );
+		}
 
-        [Test]
+		[Test]
         public void DocumentWithStaticCollectionField_NonGeneric_Diag() {
             const string test = @"
     using System;
@@ -262,14 +282,14 @@ namespace D2L.CodeStyle.Analyzers {
 
 
         [Test]
-        public void DocumentWithStaticProperty_NonReadonly_Diag() {
-            const string test = @"
+		public void DocumentWithStaticProperty_NonReadonly_Diag() {
+			const string test = @"
     using System;
 
     namespace test {
         class Tests {
 
-            internal class Foo {
+            internal sealed class Foo {
                 public readonly string ClientsName = ""YOLO"";
             }
 
@@ -277,13 +297,13 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertSingleDiagnostic( test, 11, 13, "bad", "it" );
-        }
+			AssertSingleDiagnostic( test, 11, 13, "bad", "it" );
+		}
 
 
-        [Test]
-        public void DocumentWithStaticProperty_NonReadonlyUnaudited_NoDiag() {
-            const string test = @"
+		[Test]
+		public void DocumentWithStaticProperty_NonReadonlyUnaudited_NoDiag() {
+			const string test = @"
     using System;
 
     namespace test {
@@ -298,12 +318,12 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertNoDiagnostic( test );
-        }
+			AssertNoDiagnostic( test );
+		}
 
-        [Test]
-        public void DocumentWithStaticProperty_NonReadonlyAudited_NoDiag() {
-            const string test = @"
+		[Test]
+		public void DocumentWithStaticProperty_NonReadonlyAudited_NoDiag() {
+			const string test = @"
     using System;
 
     namespace test {
@@ -318,12 +338,12 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertNoDiagnostic( test );
-        }
+			AssertNoDiagnostic( test );
+		}
 
-        [Test]
-        public void DocumentWithStaticProperty_ReadonlyButMutable_Diag() {
-            const string test = @"
+		[Test]
+		public void DocumentWithStaticProperty_ReadonlyButMutable_Diag() {
+			const string test = @"
     using System;
 
     namespace test {
@@ -337,12 +357,12 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertSingleDiagnostic( test, 11, 13, "bad", "test.Tests.Foo" );
-        }
+			AssertSingleDiagnostic( test, 11, 13, "bad", "test.Tests.Foo" );
+		}
 
-        [Test]
-        public void DocumentWithStaticProperty_ReadonlyValueType_NoDiag() {
-            const string test = @"
+		[Test]
+		public void DocumentWithStaticProperty_ReadonlyValueType_NoDiag() {
+			const string test = @"
     using System;
 
     namespace test {
@@ -352,18 +372,18 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertNoDiagnostic( test );
-        }
+			AssertNoDiagnostic( test );
+		}
 
-        [Test]
-        public void DocumentWithStaticProperty_ReadonlyImmutable_NoDiag() {
-            const string test = @"
+		[Test]
+		public void DocumentWithStaticProperty_ReadonlyImmutable_NoDiag() {
+			const string test = @"
     using System;
 
     namespace test {
         class Tests {
 
-            internal class Foo {
+            internal sealed class Foo {
                 public readonly string ClientsName = ""YOLO"";
             }
 
@@ -371,19 +391,19 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertNoDiagnostic( test );
-        }
+			AssertNoDiagnostic( test );
+		}
 
 
-        [Test]
-        public void DocumentWithStaticProperty_PrivateSetterImmutable_Diag() {
-            const string test = @"
+		[Test]
+		public void DocumentWithStaticProperty_PrivateSetterImmutable_Diag() {
+			const string test = @"
     using System;
 
     namespace test {
         class Tests {
 
-            internal class Foo {
+            internal sealed class Foo {
                 public readonly string ClientsName = ""YOLO"";
             }
 
@@ -391,12 +411,12 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertSingleDiagnostic( test, 11, 13, "bad", "it" );
-        }
+			AssertSingleDiagnostic( test, 11, 13, "bad", "it" );
+		}
 
-        [Test]
-        public void DocumentWithStaticProperty_ImmutablePropertyWithImmutableMarkedType_NoDiag() {
-            const string test = @"
+		[Test]
+		public void DocumentWithStaticProperty_ImmutablePropertyWithImmutableMarkedType_NoDiag() {
+			const string test = @"
     using System;
 
     namespace test {
@@ -411,24 +431,51 @@ namespace D2L.CodeStyle.Analyzers {
 
         }
     }";
-            AssertNoDiagnostic( test );
-        }
+			AssertNoDiagnostic( test );
+		}
 
-        private void AssertNoDiagnostic( string file ) {
-            VerifyCSharpDiagnostic( file );
-        }
+		[Test]
+		public void DocumentWithRecurrsiveTypes() {
+			const string test = @"
+	using System;
 
-        private void AssertSingleDiagnostic( string file, int line, int column, string fieldOrProp, string badFieldOrType ) {
-            var expected = new DiagnosticResult {
-                Id = UnsafeStaticsAnalyzer.DiagnosticId,
-                Message = string.Format( UnsafeStaticsAnalyzer.MessageFormat, fieldOrProp, badFieldOrType ),
-                Severity = DiagnosticSeverity.Error,
-                Locations = new[] {
-                    new DiagnosticResultLocation( "Test0.cs", line, column )
-                }
-            };
+	namespace test {
+		class Tests {
 
-            VerifyCSharpDiagnostic( file, expected );
-        }
-    }
+			internal static class Foo {
+				public static readonly Bar Bar = null;
+			}
+
+			internal static class Bar {
+				public static readonly Foo Foo = null;
+			}
+		}
+	}";
+
+			DiagnosticResult result1 = CreateDiagnosticResult( 8, 32, "Bar", "test.Tests.Bar" );
+			DiagnosticResult result2 = CreateDiagnosticResult( 12, 32, "Foo", "test.Tests.Foo" );
+			VerifyCSharpDiagnostic( test, result1, result2 );
+		}
+
+		private void AssertNoDiagnostic( string file ) {
+			VerifyCSharpDiagnostic( file );
+		}
+
+		private void AssertSingleDiagnostic( string file, int line, int column, string fieldOrProp, string badFieldOrType ) {
+
+			DiagnosticResult result = CreateDiagnosticResult( line, column, fieldOrProp, badFieldOrType );
+			VerifyCSharpDiagnostic( file, result );
+		}
+
+		private static DiagnosticResult CreateDiagnosticResult( int line, int column, string fieldOrProp, string badFieldOrType ) {
+			return new DiagnosticResult {
+				Id = UnsafeStaticsAnalyzer.DiagnosticId,
+				Message = string.Format( UnsafeStaticsAnalyzer.MessageFormat, fieldOrProp, badFieldOrType ),
+				Severity = DiagnosticSeverity.Error,
+				Locations = new[] {
+					new DiagnosticResultLocation( "Test0.cs", line, column )
+				}
+			};
+		}
+	}
 }

@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.Immutable;
-using Microsoft.CodeAnalysis;
 using System.Linq;
 using D2L.CodeStyle.Annotations;
+using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analysis {
 
@@ -77,67 +76,114 @@ namespace D2L.CodeStyle.Analysis {
 		public bool IsTypeMutable(
 			ITypeSymbol type
 		) {
-			if( type.IsValueType ) {
-				return false;
-			}
+			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
+			var result = IsTypeMutableRecursive( type, typesInCurrentCycle );
+			return result;
+		}
 
-			if( type.TypeKind == TypeKind.Array ) {
+		private bool IsTypeMutableRecursive(
+			ITypeSymbol type,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			if( typeStack.Contains( type ) ) {
+				// we've got a cycle, fail
 				return true;
 			}
 
-			if( KnownImmutableTypes.Contains( type.GetFullTypeName() ) ) {
-				return false;
-			}
+			typeStack.Add( type );
+			try {
 
-			if( IsTypeMarkedImmutable( type ) ) {
-				return false;
-			}
+				if( type.IsValueType ) {
+					return false;
+				}
 
-			if( ImmutableCollectionTypes.Contains( type.GetFullTypeName() ) ) {
-				var elementType = type.GetGenericArgumentOrDefault();
-				if( elementType == null ) {
+				if( type.TypeKind == TypeKind.Array ) {
 					return true;
 				}
-				return IsTypeMutable( elementType );
+
+				if( KnownImmutableTypes.Contains( type.GetFullTypeName() ) ) {
+					return false;
+				}
+
+				if( ImmutableCollectionTypes.Contains( type.GetFullTypeName() ) ) {
+					var namedType = type as INamedTypeSymbol;
+					bool isMutable = namedType.TypeArguments.Any( t => IsTypeMutableRecursive( t, typeStack ) );
+					return isMutable;
+				if( IsTypeMarkedImmutable( type ) ) {
+					return false;
+
+				if( type.TypeKind == TypeKind.Interface ) {
 			}
 
-			foreach( var member in type.GetMembers() ) {
-				if( member is IPropertySymbol ) {
-					var prop = member as IPropertySymbol;
+				if( type.TypeKind == TypeKind.Class && !type.IsStatic && !type.IsSealed ) {
+					return true;
+				}
+				{
+					foreach( ISymbol member in type.GetMembers() ) {
+						if( IsMemberMutableRecursive( member, typeStack ) ) {
+							return true;
+						}
+				return IsTypeMutable( elementType );
+					}
+
+					return false;
 					if( IsPropertyMutable( prop ) ) {
 						return true;
 					}
 					if ( !IsTypeMarkedImmutable( prop.Type ) && IsTypeMutable( prop.Type ) ) {
-						return true;
-					}
-					continue;
 				}
-				if( member is IFieldSymbol ) {
-					var field = member as IFieldSymbol;
-					if( IsFieldMutable( field ) ) {
+
+			} finally {
+				typeStack.Remove( type );
+			}
 						return true;
 					}
 					if ( !IsTypeMarkedImmutable( field.Type ) && IsTypeMutable( field.Type ) ) {
+		}
+
+		private bool IsMemberMutableRecursive(
+			ISymbol symbol,
+			HashSet<ITypeSymbol> typeStack
+		) {
+
+			switch( symbol.Kind ) {
+
+				case SymbolKind.Property:
+
+					var prop = (IPropertySymbol)symbol;
+
+					if( IsPropertyMutable( prop ) ) {
 						return true;
 					}
-					continue;
-				}
-				if( member is IMethodSymbol ) {
-					var method = member as IMethodSymbol;
-					if( method.MethodKind == MethodKind.Constructor ) {
-						// constructors are mutating by definition
-						continue;
+
+					if( IsTypeMutableRecursive( prop.Type, typeStack ) ) {
+						return true;
 					}
 
-					// we can't yet be smarter by methods being "pure"
+					return false;
+
+				case SymbolKind.Field:
+
+					var field = (IFieldSymbol)symbol;
+
+					if( IsFieldMutable( field ) ) {
+						return true;
+					}
+
+					if( IsTypeMutableRecursive( field.Type, typeStack ) ) {
+						return true;
+					}
+
+					return false;
+
+				case SymbolKind.Method:
+					// ignore these symbols, because they do not contribute to immutability
+					return false;
+
+				default:
+					// we've got a member (event, etc.) that we can't currently be smart about, so fail
 					return true;
-				}
-
-				// we've got a member (event, etc.) that we can't currently be smart about, so fail
-				return true;
 			}
-
-			return false;
 		}
 
 		public bool IsTypeMarkedImmutable( ITypeSymbol symbol ) {

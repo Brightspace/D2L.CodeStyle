@@ -1,9 +1,11 @@
-﻿using System.Linq;
+﻿using System.Collections.Immutable;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
 
 namespace D2L.CodeStyle.Analysis {
+
 	[TestFixture]
 	public class MutabilityInspectorTests {
 
@@ -14,7 +16,10 @@ namespace D2L.CodeStyle.Analysis {
 			var compilation = CSharpCompilation.Create(
 				assemblyName: "TestAssembly",
 				syntaxTrees: new[] { tree },
-				references: new[] { MetadataReference.CreateFromFile( typeof( object ).Assembly.Location ) }
+				references: new[] {
+					MetadataReference.CreateFromFile( typeof( object ).Assembly.Location ),
+					MetadataReference.CreateFromFile( typeof( ImmutableArray ).Assembly.Location )
+				}
 			);
 			return compilation;
 		}
@@ -23,27 +28,30 @@ namespace D2L.CodeStyle.Analysis {
 			var source = $"namespace D2L {{ {text} }}";
 			var compilation = Compile( source );
 
-			var toReturn = compilation.GetSymbolsWithName( 
-				predicate: n => true, 
-				filter: SymbolFilter.Type 
+			var toReturn = compilation.GetSymbolsWithName(
+				predicate: n => true,
+				filter: SymbolFilter.Type
 			).OfType<ITypeSymbol>().FirstOrDefault();
 			Assert.IsNotNull( toReturn );
+			Assert.AreNotEqual( TypeKind.Error, toReturn.TypeKind );
 			return toReturn;
 		}
 
 		private IFieldSymbol Field( string text ) {
-			var type = Type( "class Fake { " + text + "; }" );
+			var type = Type( "sealed class Fake { " + text + "; }" );
 
 			var toReturn = type.GetMembers().OfType<IFieldSymbol>().FirstOrDefault();
 			Assert.IsNotNull( toReturn );
+			Assert.AreNotEqual( TypeKind.Error, toReturn.Type.TypeKind );
 			return toReturn;
 		}
 
 		private IPropertySymbol Property( string text ) {
-			var type = Type( "class Fake { " + text + "; }" );
+			var type = Type( "sealed class Fake { " + text + "; }" );
 
 			var toReturn = type.GetMembers().OfType<IPropertySymbol>().FirstOrDefault();
 			Assert.IsNotNull( toReturn );
+			Assert.AreNotEqual( TypeKind.Error, toReturn.Type.TypeKind );
 			return toReturn;
 		}
 
@@ -120,6 +128,27 @@ namespace D2L.CodeStyle.Analysis {
 		[Test]
 		public void IsTypeMutable_KnownImmutableType_False() {
 			var type = Field( "string random" ).Type;
+
+			Assert.IsFalse( m_inspector.IsTypeMutable( type ) );
+		}
+
+		[Test]
+		public void IsTypeMutable_Interface_True() {
+			var type = Type( "interface foo {}" );
+
+			Assert.IsTrue( m_inspector.IsTypeMutable( type ) );
+		}
+
+		[Test]
+		public void IsTypeMutable_NonSealedClass_True() {
+			var type = Type( "class foo {}" );
+
+			Assert.IsTrue( m_inspector.IsTypeMutable( type ) );
+		}
+
+		[Test]
+		public void IsTypeMutable_SealedClass_False() {
+			var type = Type( "sealed class foo {}" );
 
 			Assert.IsFalse( m_inspector.IsTypeMutable( type ) );
 		}
