@@ -30,24 +30,6 @@ namespace D2L.CodeStyle.Analysis {
             return fullyQualifiedName;
         }
 
-        public static ITypeSymbol GetGenericArgumentOrDefault( this ITypeSymbol type ) {
-            var namedType = type as INamedTypeSymbol;
-            if( namedType == null ) {
-                // problem getting generic type argument
-                return null;
-            }
-
-            var args = namedType.TypeArguments;
-            if( args.IsEmpty ) {
-                return default(ITypeSymbol);
-            }
-            if( args.Length > 1 ) {
-                return default( ITypeSymbol );
-            }
-
-            return args[0];
-        }
-
         public static IEnumerable<ITypeSymbol> GetGenericArguments( this ITypeSymbol type ) {
             var namedType = type as INamedTypeSymbol;
             if( namedType == null ) {

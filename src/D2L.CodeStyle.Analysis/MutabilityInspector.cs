@@ -122,12 +122,14 @@ namespace D2L.CodeStyle.Analysis {
 				if( type.TypeKind == TypeKind.Class && !type.IsStatic && !type.IsSealed ) {
 					return true;
 				}
+
 				{
 					foreach( ISymbol member in type.GetMembers() ) {
 						if( IsMemberMutableRecursive( member, typeStack ) ) {
 							return true;
 						}
 					}
+
 					return false;
 				}
 
