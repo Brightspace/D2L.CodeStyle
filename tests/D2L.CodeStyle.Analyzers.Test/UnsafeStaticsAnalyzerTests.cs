@@ -191,7 +191,7 @@ namespace D2L.CodeStyle.Analyzers {
 			AssertNoDiagnostic( test );
 		}
 
-		[Test]
+        [Test]
         public void DocumentWithStaticField_InterfaceWithImmutableConcreteInitializer_NoDiag() {
             const string test = @"
     using System;
@@ -209,6 +209,26 @@ namespace D2L.CodeStyle.Analyzers {
         }
     }";
             AssertNoDiagnostic( test );
+        }
+
+        [Test]
+        public void DocumentWithStaticField_InterfaceWithMutableConcreteInitializer_NoDiag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            interface IFoo {}
+            internal sealed class Foo : IFoo {
+                public string ClientsName = ""YOLO"";
+            }
+
+            public readonly static IFoo bad = new Foo();
+
+        }
+    }";
+            AssertSingleDiagnostic( test, 12, 41, "bad", "test.Tests.Foo" );
         }
 
         [Test]
@@ -458,6 +478,26 @@ namespace D2L.CodeStyle.Analyzers {
         }
     }";
             AssertNoDiagnostic( test );
+        }
+
+        [Test]
+        public void DocumentWithStaticProperty_InterfaceWithMutableConcreteInitializer_Diag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            interface IFoo {}
+            internal sealed class Foo : IFoo {
+                public string ClientsName = ""YOLO"";
+            }
+
+            public static IFoo bad { get; } = new Foo();
+
+        }
+    }";
+            AssertSingleDiagnostic( test, 12, 13, "bad", "test.Tests.Foo" );
         }
 
         [Test]
