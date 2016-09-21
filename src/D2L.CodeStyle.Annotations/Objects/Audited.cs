@@ -6,7 +6,7 @@ namespace D2L.CodeStyle.Annotations {
         /// <summary>
         /// Indicates that a static variable is safe in a multi-tenant process
         /// </summary>
-        [AttributeUsage( validOn: AttributeTargets.Class )]
+        [AttributeUsage( validOn: AttributeTargets.Class | AttributeTargets.Interface )]
         public sealed class Immutable : Attribute {
 
         }
