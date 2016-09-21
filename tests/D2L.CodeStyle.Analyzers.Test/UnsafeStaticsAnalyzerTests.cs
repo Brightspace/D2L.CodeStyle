@@ -220,20 +220,6 @@ namespace D2L.CodeStyle.Analyzers {
         }
 
         [Test]
-        public void DocumentWithStaticImmutableCollectionField_NonGeneric_Diag() {
-            const string test = @"
-    using System;
-
-    namespace test {
-        class Tests {
-            public static readonly System.Collections.Immutable.ImmutableList bad;
-
-        }
-    }";
-            AssertSingleDiagnostic( test, 6, 79, "bad", "System.Collections.Immutable.ImmutableList" );
-        }
-
-        [Test]
         public void DocumentWithStaticImmutableCollectionField_GenericObject_Diag() {
             const string test = @"
     using System;

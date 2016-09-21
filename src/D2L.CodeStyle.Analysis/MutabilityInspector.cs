@@ -109,11 +109,15 @@ namespace D2L.CodeStyle.Analysis {
 					var namedType = type as INamedTypeSymbol;
 					bool isMutable = namedType.TypeArguments.Any( t => IsTypeMutableRecursive( t, typeStack ) );
 					return isMutable;
+				}
+
 				if( IsTypeMarkedImmutable( type ) ) {
 					return false;
+				}
 
 				if( type.TypeKind == TypeKind.Interface ) {
-			}
+					return true;
+				}
 
 				if( type.TypeKind == TypeKind.Class && !type.IsStatic && !type.IsSealed ) {
 					return true;
@@ -123,22 +127,13 @@ namespace D2L.CodeStyle.Analysis {
 						if( IsMemberMutableRecursive( member, typeStack ) ) {
 							return true;
 						}
-				return IsTypeMutable( elementType );
 					}
-
 					return false;
-					if( IsPropertyMutable( prop ) ) {
-						return true;
-					}
-					if ( !IsTypeMarkedImmutable( prop.Type ) && IsTypeMutable( prop.Type ) ) {
 				}
 
 			} finally {
 				typeStack.Remove( type );
 			}
-						return true;
-					}
-					if ( !IsTypeMarkedImmutable( field.Type ) && IsTypeMutable( field.Type ) ) {
 		}
 
 		private bool IsMemberMutableRecursive(
@@ -156,7 +151,7 @@ namespace D2L.CodeStyle.Analysis {
 						return true;
 					}
 
-					if( IsTypeMutableRecursive( prop.Type, typeStack ) ) {
+					if( !IsTypeMarkedImmutable( prop.Type ) && IsTypeMutableRecursive( prop.Type, typeStack ) ) {
 						return true;
 					}
 
@@ -170,7 +165,7 @@ namespace D2L.CodeStyle.Analysis {
 						return true;
 					}
 
-					if( IsTypeMutableRecursive( field.Type, typeStack ) ) {
+					if( !IsTypeMarkedImmutable( field.Type ) && IsTypeMutableRecursive( field.Type, typeStack ) ) {
 						return true;
 					}
 
