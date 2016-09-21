@@ -143,41 +143,44 @@ namespace D2L.CodeStyle.Analysis {
 			HashSet<ITypeSymbol> typeStack
 		) {
 
-			var prop = symbol as IPropertySymbol;
-			if( prop != null ) {
+			switch( symbol.Kind ) {
 
-				if( IsPropertyMutable( prop ) ) {
-					return true;
-				}
-				
-				if( IsTypeMutableRecursive( prop.Type, typeStack ) ) {
-					return true;
-				}
+				case SymbolKind.Property:
 
-				return false;
+					var prop = (IPropertySymbol)symbol;
+
+					if( IsPropertyMutable( prop ) ) {
+						return true;
+					}
+
+					if( IsTypeMutableRecursive( prop.Type, typeStack ) ) {
+						return true;
+					}
+
+					return false;
+
+				case SymbolKind.Field:
+
+					var field = (IFieldSymbol)symbol;
+
+					if( IsFieldMutable( field ) ) {
+						return true;
+					}
+
+					if( IsTypeMutableRecursive( field.Type, typeStack ) ) {
+						return true;
+					}
+
+					return false;
+
+				case SymbolKind.Method:
+					// ignore these symbols, because they do not contribute to immutability
+					return false;
+
+				default:
+					// we've got a member (event, etc.) that we can't currently be smart about, so fail
+					return true;
 			}
-
-			var field = symbol as IFieldSymbol;
-			if( field != null ) {
-
-				if( IsFieldMutable( field ) ) {
-					return true;
-				}
-
-				if( IsTypeMutableRecursive( field.Type, typeStack ) ) {
-					return true;
-				}
-
-				return false;
-			}
-
-			if( symbol is IMethodSymbol ) {
-				// ignore these symbols, because they do not contribute to immutability
-				return false;
-			}
-
-			// we've got a member (event, etc.) that we can't currently be smart about, so fail
-			return true;
 		}
 
 		public bool IsTypeMarkedImmutable( ITypeSymbol symbol ) {
