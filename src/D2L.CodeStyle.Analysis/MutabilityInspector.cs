@@ -153,7 +153,7 @@ namespace D2L.CodeStyle.Analysis {
 						return true;
 					}
 
-					if( IsTypeMutableRecursive( prop.Type, typeStack ) ) {
+					if( !IsTypeMarkedImmutable( prop.Type ) && IsTypeMutableRecursive( prop.Type, typeStack ) ) {
 						return true;
 					}
 
@@ -167,7 +167,7 @@ namespace D2L.CodeStyle.Analysis {
 						return true;
 					}
 
-					if( IsTypeMutableRecursive( field.Type, typeStack ) ) {
+					if( !IsTypeMarkedImmutable( field.Type ) && IsTypeMutableRecursive( field.Type, typeStack ) ) {
 						return true;
 					}
 
