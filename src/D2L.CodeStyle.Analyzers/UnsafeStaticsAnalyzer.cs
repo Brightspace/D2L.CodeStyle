@@ -89,16 +89,9 @@ namespace D2L.CodeStyle.Analyzers {
                     context.ReportDiagnostic( diagnostic );
                 }
 
-                var type = symbol.Type;
-
                 // try to use the concrete type if we have it (via a constructor)
-                var initializer = variable.Initializer?.Value;
-                if( initializer != null ) {
-                    var initializerSymbol = context.SemanticModel.GetSymbolInfo( initializer ).Symbol as IMethodSymbol;
-                    if( initializerSymbol?.MethodKind == MethodKind.Constructor ) {
-                        type = initializerSymbol.ContainingType;
-                    }
-                }
+                var type = GetConstructedType( context, variable.Initializer?.Value ) ?? symbol.Type;
+
 
                 if( m_immutabilityInspector.IsTypeMarkedImmutable( type ) ) {
                     // if the type is marked immutable, skip checking it, to avoid reporting a diagnostic for each usage of non-immutable types that are marked immutable (another analyzer catches this already)
@@ -155,21 +148,23 @@ namespace D2L.CodeStyle.Analyzers {
                 return;
             }
 
-            var type = prop.Type;
-            
             // try to use the concrete type if we have it (via a constructor)
-            var initializer = root.Initializer?.Value;
-            if( initializer != null ) {
-                var initializerSymbol = context.SemanticModel.GetSymbolInfo( initializer ).Symbol as IMethodSymbol;
-                if( initializerSymbol?.MethodKind == MethodKind.Constructor ) {
-                    type = initializerSymbol.ContainingType;
-                }
-            }
+            var type = GetConstructedType( context, root.Initializer?.Value ) ?? prop.Type;            
 
             if( m_immutabilityInspector.IsTypeMutable( type ) ) {
                 var diagnostic = Diagnostic.Create( Rule, root.GetLocation(), prop.Name, type.GetFullTypeName() );
                 context.ReportDiagnostic( diagnostic );
             }
+        }
+
+        private ITypeSymbol GetConstructedType( SyntaxNodeAnalysisContext context, ExpressionSyntax exp ) {
+            if( exp != null ) {
+                var initializerSymbol = context.SemanticModel.GetSymbolInfo( exp ).Symbol as IMethodSymbol;
+                if( initializerSymbol?.MethodKind == MethodKind.Constructor ) {
+                    return initializerSymbol.ContainingType;
+                }
+            }
+            return null;
         }
 
     }
