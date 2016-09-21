@@ -89,19 +89,7 @@ namespace D2L.CodeStyle.Analyzers {
                     context.ReportDiagnostic( diagnostic );
                 }
 
-                // try to use the concrete type if we have it (via a constructor)
-                var type = GetConstructedType( context, variable.Initializer?.Value ) ?? symbol.Type;
-
-
-                if( m_immutabilityInspector.IsTypeMarkedImmutable( type ) ) {
-                    // if the type is marked immutable, skip checking it, to avoid reporting a diagnostic for each usage of non-immutable types that are marked immutable (another analyzer catches this already)
-                    continue;
-                }
-
-                if( m_immutabilityInspector.IsTypeMutable( type ) ) {
-                    var diagnostic = Diagnostic.Create( Rule, variable.GetLocation(), variable.Identifier.ValueText, type.GetFullTypeName() );
-                    context.ReportDiagnostic( diagnostic );
-                }
+                InspectType( context, symbol.Type, variable.Initializer?.Value, variable.GetLocation(), variable.Identifier.ValueText );
             }
         }
 
@@ -143,16 +131,20 @@ namespace D2L.CodeStyle.Analyzers {
                 context.ReportDiagnostic( diagnostic );
             }
 
-            if( m_immutabilityInspector.IsTypeMarkedImmutable( prop.Type ) ) {
+            InspectType( context, prop.Type, root.Initializer?.Value, root.GetLocation(), prop.Name );
+        }
+
+        private void InspectType( SyntaxNodeAnalysisContext context, ITypeSymbol type, ExpressionSyntax exp, Location location, string fieldOrPropName ) {
+            if( m_immutabilityInspector.IsTypeMarkedImmutable( type ) ) {
                 // if the type is marked immutable, skip checking it, to avoid reporting a diagnostic for each usage of non-immutable types that are marked immutable (another analyzer catches this already)
                 return;
             }
 
             // try to use the concrete type if we have it (via a constructor)
-            var type = GetConstructedType( context, root.Initializer?.Value ) ?? prop.Type;            
+            type = GetConstructedType( context, exp ) ?? type;            
 
             if( m_immutabilityInspector.IsTypeMutable( type ) ) {
-                var diagnostic = Diagnostic.Create( Rule, root.GetLocation(), prop.Name, type.GetFullTypeName() );
+                var diagnostic = Diagnostic.Create( Rule, location, fieldOrPropName, type.GetFullTypeNameWithGenericArguments() );
                 context.ReportDiagnostic( diagnostic );
             }
         }
