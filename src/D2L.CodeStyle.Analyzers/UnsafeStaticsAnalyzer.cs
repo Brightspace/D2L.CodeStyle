@@ -87,6 +87,7 @@ namespace D2L.CodeStyle.Analyzers {
                 if( m_immutabilityInspector.IsFieldMutable( symbol ) ) {
                     var diagnostic = Diagnostic.Create( Rule, variable.GetLocation(), variable.Identifier.ValueText, "it" );
                     context.ReportDiagnostic( diagnostic );
+                    return;
                 }
 
                 if( m_immutabilityInspector.IsTypeMarkedImmutable( symbol.Type ) ) {
@@ -134,6 +135,7 @@ namespace D2L.CodeStyle.Analyzers {
             if( m_immutabilityInspector.IsPropertyMutable( prop ) ) {
                 var diagnostic = Diagnostic.Create( Rule, root.GetLocation(), prop.Name, "it" );
                 context.ReportDiagnostic( diagnostic );
+                return;
             }
 
             InspectType( context, prop.Type, root.GetLocation(), prop.Name );
