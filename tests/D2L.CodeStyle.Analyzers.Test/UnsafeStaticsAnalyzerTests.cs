@@ -467,19 +467,19 @@ namespace D2L.CodeStyle.Analyzers {
 	namespace test {
 		class Tests {
 
-			internal static class Foo {
-				public static readonly Bar Bar = null;
+            private readonly static Foo foo = new Foo();
+
+			internal class Foo {
+				public readonly Bar Bar = null;
 			}
 
-			internal static class Bar {
-				public static readonly Foo Foo = null;
+			internal class Bar {
+				public readonly Foo Foo = new Foo();
 			}
 		}
 	}";
 
-			DiagnosticResult result1 = CreateDiagnosticResult( 8, 32, "Bar", "test.Tests.Bar" );
-			DiagnosticResult result2 = CreateDiagnosticResult( 12, 32, "Foo", "test.Tests.Foo" );
-			VerifyCSharpDiagnostic( test, result1, result2 );
+			AssertSingleDiagnostic( test, 7, 41, "foo", "test.Tests.Foo" );
 		}
 
 		private void AssertNoDiagnostic( string file ) {
