@@ -39,6 +39,45 @@ namespace D2L.CodeStyle.Analyzers {
 		}
 
 		[Test]
+        public void DocumentWithStatic_ReadonlySelfReferencingStatic_NoDiag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            public sealed class Foo {
+                public static readonly Foo Default = new Foo();
+            }
+            public static readonly Foo good = new Foo();
+
+        }
+    }";
+            AssertNoDiagnostic( test );
+        }
+
+        [Test]
+        public void DocumentWithStatic_ReadonlySelfReferencingStaticOfMutableType_Diag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            public sealed class Foo {
+                private int uhoh = 1;
+                public static readonly Foo Default = new Foo();
+            }
+            public static readonly Foo good = new Foo();
+
+        }
+    }";
+            var diag1 = CreateDiagnosticResult( 9, 44, "Default", "test.Tests.Foo" );
+            var diag2 = CreateDiagnosticResult( 11, 40, "good", "test.Tests.Foo" );
+            VerifyCSharpDiagnostic( test, diag1, diag2 );
+        }
+
+        [Test]
 		public void DocumentWithStaticField_NonReadonly_Diag() {
 			const string test = @"
     using System;
