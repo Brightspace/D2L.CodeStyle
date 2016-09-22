@@ -141,9 +141,14 @@ namespace D2L.CodeStyle.Analyzers {
             }
 
             // try to use the concrete type if we have it (via a constructor)
-            type = GetConstructedType( context, exp ) ?? type;            
+            var flags = MutabilityInspectionFlags.Default;
+            var constructedType = GetConstructedType( context, exp );
+            if( constructedType != null ) {
+                type = constructedType;
+                flags |= MutabilityInspectionFlags.AllowUnsealed;
+            }
 
-            if( m_immutabilityInspector.IsTypeMutable( type ) ) {
+            if( m_immutabilityInspector.IsTypeMutable( type, flags ) ) {
                 var diagnostic = Diagnostic.Create( Rule, location, fieldOrPropName, type.GetFullTypeNameWithGenericArguments() );
                 context.ReportDiagnostic( diagnostic );
             }

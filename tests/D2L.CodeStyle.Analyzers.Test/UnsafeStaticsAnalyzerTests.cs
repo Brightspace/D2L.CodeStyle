@@ -132,9 +132,34 @@ namespace D2L.CodeStyle.Analyzers {
 			AssertNoDiagnostic( test );
 		}
 
-		[Test]
-		public void DocumentWithStaticField_ReadonlyNotSealedImmutable_NoDiag() {
-			const string test = @"
+        [Test]
+        public void DocumentWithStaticField_ReadonlyNotSealedImmutableUnknownConcreteType_NoDiag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            internal class Foo {
+                public readonly string ClientsName = ""YOLO"";
+            }
+
+            public static readonly Foo bad = GetFoo();
+
+            private static Foo GetFoo() {
+                return new Foo();
+            }
+
+        }
+    }";
+
+            AssertSingleDiagnostic( test, 11, 40, "bad", "test.Tests.Foo" );
+        }
+
+
+        [Test]
+        public void DocumentWithStaticField_ReadonlyNotSealedImmutableKnownConcreteType_NoDiag() {
+            const string test = @"
     using System;
 
     namespace test {
@@ -149,8 +174,8 @@ namespace D2L.CodeStyle.Analyzers {
         }
     }";
 
-			AssertSingleDiagnostic( test, 11, 40, "bad", "test.Tests.Foo" );
-		}
+            AssertNoDiagnostic( test );
+        }
 
 		[Test]
 		public void DocumentWithStaticField_ReadonlySealedImmutable_NoDiag() {
