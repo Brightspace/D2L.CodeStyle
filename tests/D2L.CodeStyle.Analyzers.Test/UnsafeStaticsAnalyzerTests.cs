@@ -39,6 +39,45 @@ namespace D2L.CodeStyle.Analyzers {
 		}
 
 		[Test]
+        public void DocumentWithStatic_ReadonlySelfReferencingStatic_NoDiag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            public sealed class Foo {
+                public static readonly Foo Default = new Foo();
+            }
+            public static readonly Foo good = new Foo();
+
+        }
+    }";
+            AssertNoDiagnostic( test );
+        }
+
+        [Test]
+        public void DocumentWithStatic_ReadonlySelfReferencingStaticOfMutableType_Diag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            public sealed class Foo {
+                private int uhoh = 1;
+                public static readonly Foo Default = new Foo();
+            }
+            public static readonly Foo good = new Foo();
+
+        }
+    }";
+            var diag1 = CreateDiagnosticResult( 9, 44, "Default", "test.Tests.Foo" );
+            var diag2 = CreateDiagnosticResult( 11, 40, "good", "test.Tests.Foo" );
+            VerifyCSharpDiagnostic( test, diag1, diag2 );
+        }
+
+        [Test]
 		public void DocumentWithStaticField_NonReadonly_Diag() {
 			const string test = @"
     using System;
@@ -533,19 +572,19 @@ namespace D2L.CodeStyle.Analyzers {
 	namespace test {
 		class Tests {
 
-			internal static class Foo {
-				public static readonly Bar Bar = null;
+            private readonly static Foo foo = new Foo();
+
+			internal class Foo {
+				public readonly Bar Bar = null;
 			}
 
-			internal static class Bar {
-				public static readonly Foo Foo = null;
+			internal class Bar {
+				public readonly Foo Foo = new Foo();
 			}
 		}
 	}";
 
-			DiagnosticResult result1 = CreateDiagnosticResult( 8, 32, "Bar", "test.Tests.Bar" );
-			DiagnosticResult result2 = CreateDiagnosticResult( 12, 32, "Foo", "test.Tests.Foo" );
-			VerifyCSharpDiagnostic( test, result1, result2 );
+			AssertSingleDiagnostic( test, 7, 41, "foo", "test.Tests.Foo" );
 		}
 
 		private void AssertNoDiagnostic( string file ) {
