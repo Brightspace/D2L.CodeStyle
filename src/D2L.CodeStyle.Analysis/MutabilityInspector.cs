@@ -125,7 +125,7 @@ namespace D2L.CodeStyle.Analysis {
 
 				{
 					foreach( ISymbol member in type.GetMembers() ) {
-						if( IsMemberMutableRecursive( member, typeStack ) ) {
+						if( !member.IsStatic && IsMemberMutableRecursive( member, typeStack ) ) {
 							return true;
 						}
 					}
