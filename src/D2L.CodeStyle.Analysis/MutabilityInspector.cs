@@ -150,15 +150,15 @@ namespace D2L.CodeStyle.Analysis {
 
 					var prop = (IPropertySymbol)symbol;
 
-                    var sourceTree = prop.DeclaringSyntaxReferences.FirstOrDefault();
-                    var declarationSyntax = sourceTree?.GetSyntax() as PropertyDeclarationSyntax;
-                    if( declarationSyntax != null && declarationSyntax.IsPropertyGetterImplemented() ) {
-                        // property has getter with body; it is either backed by a field, or is a static function; ignore
-                        return false;
-                    }
+					var sourceTree = prop.DeclaringSyntaxReferences.FirstOrDefault();
+					var declarationSyntax = sourceTree?.GetSyntax() as PropertyDeclarationSyntax;
+					if( declarationSyntax != null && declarationSyntax.IsPropertyGetterImplemented() ) {
+						// property has getter with body; it is either backed by a field, or is a static function; ignore
+						return false;
+					}
 
-                    if( IsPropertyMutable( prop ) ) {
-                        return true;
+					if( IsPropertyMutable( prop ) ) {
+						return true;
 					}
 
 					if( !IsTypeMarkedImmutable( prop.Type ) && IsTypeMutableRecursive( prop.Type, typeStack ) ) {
