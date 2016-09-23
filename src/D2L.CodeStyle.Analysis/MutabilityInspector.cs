@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Annotations;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analysis {
 
@@ -149,8 +150,15 @@ namespace D2L.CodeStyle.Analysis {
 
 					var prop = (IPropertySymbol)symbol;
 
-					if( IsPropertyMutable( prop ) ) {
-						return true;
+                    var sourceTree = prop.DeclaringSyntaxReferences.FirstOrDefault();
+                    var declarationSyntax = sourceTree?.GetSyntax() as PropertyDeclarationSyntax;
+                    if( declarationSyntax != null && declarationSyntax.IsPropertyGetterImplemented() ) {
+                        // property has getter with body; it is either backed by a field, or is a static function; ignore
+                        return false;
+                    }
+
+                    if( IsPropertyMutable( prop ) ) {
+                        return true;
 					}
 
 					if( !IsTypeMarkedImmutable( prop.Type ) && IsTypeMutableRecursive( prop.Type, typeStack ) ) {

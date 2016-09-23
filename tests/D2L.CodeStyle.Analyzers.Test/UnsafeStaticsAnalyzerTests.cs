@@ -440,6 +440,30 @@ namespace D2L.CodeStyle.Analyzers {
 		}
 
 		[Test]
+        public void DocumentWithStaticProperty_ImplementedGetter_NoDiag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            internal class Foo { 
+                private string m_mutable = null;
+            }
+
+            // safe, because it's not a static variable at all
+            public static Foo good { 
+                get { 
+                    return new Foo(); 
+                } 
+            }
+
+        }
+    }";
+            AssertNoDiagnostic( test );
+        }
+
+        [Test]
 		public void DocumentWithStaticProperty_ImmutablePropertyWithImmutableMarkedType_NoDiag() {
 			const string test = @"
     using System;
