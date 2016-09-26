@@ -20,9 +20,9 @@ namespace D2L.CodeStyle.Analyzers {
         internal const string MessageFormat = "The static field or property {0} is unsafe because {1} is mutable.";
 
         private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
-            DiagnosticId, 
-            Title, 
-            MessageFormat, 
+            DiagnosticId,
+            Title,
+            MessageFormat,
             Category,
             DiagnosticSeverity.Error,
             isEnabledByDefault: true,
@@ -90,12 +90,13 @@ namespace D2L.CodeStyle.Analyzers {
                     return;
                 }
 
-                if( m_immutabilityInspector.IsTypeMarkedImmutable( symbol.Type ) ) {
-                    // if the type is marked immutable, skip checking it, to avoid reporting a diagnostic for each usage of non-immutable types that are marked immutable (another analyzer catches this already)
-                    continue;
-                }
-
-                InspectType( context, symbol.Type, variable.GetLocation(), variable.Identifier.ValueText );
+                InspectType(
+                    context,
+                    symbol.Type,
+                    variable.Initializer?.Value,
+                    variable.GetLocation(),
+                    variable.Identifier.ValueText
+                );
             }
         }
 
@@ -122,7 +123,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 #pragma warning disable CS0618 // Type or member is obsolete
             if( prop.GetAttributes().Any( a => a.AttributeClass.MetadataName == nameof( Statics.Unaudited ) ) ) {
-                              // anyhing marked unaudited should not break the build, it's temporary
+                // anyhing marked unaudited should not break the build, it's temporary
                 return;
             }
 #pragma warning restore CS0618 // Type or member is obsolete
@@ -138,19 +139,54 @@ namespace D2L.CodeStyle.Analyzers {
                 return;
             }
 
-            InspectType( context, prop.Type, root.GetLocation(), prop.Name );
+            InspectType( context, prop.Type, root.Initializer?.Value, root.GetLocation(), prop.Name );
         }
 
-        private void InspectType( SyntaxNodeAnalysisContext context, ITypeSymbol type, Location location, string fieldOrPropName ) {
+        private void InspectType(
+            SyntaxNodeAnalysisContext context,
+            ITypeSymbol type,
+            ExpressionSyntax exp,
+            Location location,
+            string fieldOrPropName
+        ) {
             if( m_immutabilityInspector.IsTypeMarkedImmutable( type ) ) {
                 // if the type is marked immutable, skip checking it, to avoid reporting a diagnostic for each usage of non-immutable types that are marked immutable (another analyzer catches this already)
                 return;
             }
 
-            if( m_immutabilityInspector.IsTypeMutable( type ) ) {
+            // try to use the concrete type if we have it (via a constructor)
+            var flags = MutabilityInspectionFlags.Default;
+            var constructedType = GetConstructedType( context, exp );
+            if( constructedType != null ) {
+                type = constructedType;
+                flags |= MutabilityInspectionFlags.AllowUnsealed;
+            }
+
+            if( m_immutabilityInspector.IsTypeMutable( type, flags ) ) {
                 var diagnostic = Diagnostic.Create( Rule, location, fieldOrPropName, type.GetFullTypeNameWithGenericArguments() );
                 context.ReportDiagnostic( diagnostic );
             }
+        }
+
+        private ITypeSymbol GetConstructedType(
+            SyntaxNodeAnalysisContext context,
+            ExpressionSyntax exp
+        ) {
+
+            if( exp == null ) {
+                return null;
+            }
+
+            var initializerSymbol = context.SemanticModel.GetSymbolInfo( exp ).Symbol as IMethodSymbol;
+            if( initializerSymbol == null ) {
+                return null;
+            }
+
+            if( initializerSymbol.MethodKind != MethodKind.Constructor ) {
+                return null;
+            }
+
+            return initializerSymbol.ContainingType;
         }
 
     }

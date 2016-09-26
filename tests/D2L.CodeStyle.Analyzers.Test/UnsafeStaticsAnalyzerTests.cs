@@ -171,9 +171,34 @@ namespace D2L.CodeStyle.Analyzers {
 			AssertNoDiagnostic( test );
 		}
 
-		[Test]
-		public void DocumentWithStaticField_ReadonlyNotSealedImmutable_NoDiag() {
-			const string test = @"
+        [Test]
+        public void DocumentWithStaticField_ReadonlyNotSealedImmutableUnknownConcreteType_NoDiag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            internal class Foo {
+                public readonly string ClientsName = ""YOLO"";
+            }
+
+            public static readonly Foo bad = GetFoo();
+
+            private static Foo GetFoo() {
+                return new Foo();
+            }
+
+        }
+    }";
+
+            AssertSingleDiagnostic( test, 11, 40, "bad", "test.Tests.Foo" );
+        }
+
+
+        [Test]
+        public void DocumentWithStaticField_ReadonlyNotSealedImmutableKnownConcreteType_NoDiag() {
+            const string test = @"
     using System;
 
     namespace test {
@@ -188,8 +213,8 @@ namespace D2L.CodeStyle.Analyzers {
         }
     }";
 
-			AssertSingleDiagnostic( test, 11, 40, "bad", "test.Tests.Foo" );
-		}
+            AssertNoDiagnostic( test );
+        }
 
 		[Test]
 		public void DocumentWithStaticField_ReadonlySealedImmutable_NoDiag() {
@@ -230,7 +255,47 @@ namespace D2L.CodeStyle.Analyzers {
 			AssertNoDiagnostic( test );
 		}
 
-		[Test]
+        [Test]
+        public void DocumentWithStaticField_InterfaceWithImmutableConcreteInitializer_NoDiag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            interface IFoo {}
+            internal sealed class Foo : IFoo {
+                public readonly string ClientsName = ""YOLO"";
+            }
+
+            public readonly static IFoo good = new Foo();
+
+        }
+    }";
+            AssertNoDiagnostic( test );
+        }
+
+        [Test]
+        public void DocumentWithStaticField_InterfaceWithMutableConcreteInitializer_NoDiag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            interface IFoo {}
+            internal sealed class Foo : IFoo {
+                public string ClientsName = ""YOLO"";
+            }
+
+            public readonly static IFoo bad = new Foo();
+
+        }
+    }";
+            AssertSingleDiagnostic( test, 12, 41, "bad", "test.Tests.Foo" );
+        }
+
+        [Test]
         public void DocumentWithStaticCollectionField_NonGeneric_Diag() {
             const string test = @"
     using System;
@@ -460,6 +525,46 @@ namespace D2L.CodeStyle.Analyzers {
 		}
 
 		[Test]
+        public void DocumentWithStaticProperty_InterfaceWithImmutableConcreteInitializer_NoDiag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            interface IFoo {}
+            internal sealed class Foo : IFoo {
+                public readonly string ClientsName = ""YOLO"";
+            }
+
+            public static IFoo good { get; } = new Foo();
+
+        }
+    }";
+            AssertNoDiagnostic( test );
+        }
+
+        [Test]
+        public void DocumentWithStaticProperty_InterfaceWithMutableConcreteInitializer_Diag() {
+            const string test = @"
+    using System;
+
+    namespace test {
+        class Tests {
+
+            interface IFoo {}
+            internal sealed class Foo : IFoo {
+                public string ClientsName = ""YOLO"";
+            }
+
+            public static IFoo bad { get; } = new Foo();
+
+        }
+    }";
+            AssertSingleDiagnostic( test, 12, 13, "bad", "test.Tests.Foo" );
+        }
+
+        [Test]
 		public void DocumentWithRecurrsiveTypes() {
 			const string test = @"
 	using System;
