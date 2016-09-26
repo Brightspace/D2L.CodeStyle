@@ -20,38 +20,12 @@ namespace D2L.CodeStyle.Analysis {
 		/// A list of known non-valuetype immutable types
 		/// </summary>
 		private static readonly ImmutableHashSet<string> KnownImmutableTypes = new HashSet<string> {
-			"D2L.Core.Images.IImage",
-			"D2L.Core.JobManagement.Legacy.JobStatusType",
-			"D2L.LE.Content.Data.OverdueSortOrderField",
-			"D2L.LE.CopyCourse.Domain.Logging.Terms.BasicLogTerm",
-			"D2L.LE.CopyCourse.Domain.Logging.Terms.SingleParameterLogTerm",
-			"D2L.LP.Diagnostics.Performance.Metric",
-			"D2L.LP.ImageProcessing.IImage",
-			"D2L.LP.ImageProcessing.ImageTerm",
+			// types that we own
 			"D2L.LP.Logging.ILogger",
-			"D2L.LP.OrgUnits.OrgId",
-			"D2L.LP.OrgUnits.OrgUnitId",
-			"D2L.LP.Security.Authorization.Roles.RoleId",
-			"D2L.LP.Text.IText",
-			"D2L.LP.TextProcessing.IText",
 			"D2L.LP.TextProcessing.LangTerm",
-			"D2L.LP.Users.UserId",
-			"D2L.LP.Web.Http.ILocation",
-			"D2L.LP.Web.Mvc.RouteLocation",
-			"D2L.LP.Web.Routing.IRoutePattern",
 			"D2L.LP.Web.Routing.RoutePattern",
-			"D2L.LP.Web.UI.Html.AbsoluteHtmlId",
-			"D2L.LP.Web.UI.Html.IHtmlId",
-			"D2L.LP.Web.UI.Html.RelativeHtmlId",
-			"D2L.LP.Web.UI.Html.Style.Background.IBackgroundStyle",
-			"D2L.LP.Web.UI.Html.Style.Borders.IBorderStyle",
-			"D2L.LP.Web.UI.Html.Style.Colour.IColour",
-			"D2L.LP.Web.UI.Html.Style.Length.ILength",
-			"D2L.LP.Web.UI.Html.Style.Spacing.ISpacing",
-			"D2L.LP.WebExtensibility.Versioning.RestWebServiceVersion",
-			"D2L.Services.Monitoring.HealthCheck.Contract.IStatus",
-			"D2L.UtcDateTime",
-			"D2L.UtcTimezone",
+
+			// types that we don't own
 			"System.DateTime",
 			"System.Guid",
 			"System.Lazy",
@@ -195,6 +169,7 @@ namespace D2L.CodeStyle.Analysis {
 					return false;
 
 				case SymbolKind.Method:
+				case SymbolKind.NamedType:
 					// ignore these symbols, because they do not contribute to immutability
 					return false;
 
