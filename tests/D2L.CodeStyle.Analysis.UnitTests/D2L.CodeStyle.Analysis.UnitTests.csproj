@@ -33,6 +33,8 @@
   <ItemGroup>
     <Compile Include="MutabilityInspectorTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestBase.cs" />
+    <Compile Include="TypeSymbolExtensionsTests.cs" />
     <Compile Include="UtilsTests.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -1,0 +1,35 @@
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace D2L.CodeStyle.Analysis {
+
+    [TestFixture]
+    internal sealed class SyntaxNodeExtensionTests : TestBase {
+
+        [Test]
+        public void IsPropertyGetterImplemented_Yes_ReturnsTrue() {
+            var prop = Property( "private string random { get { return \"\"; } }" );
+            var syntax = prop.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as PropertyDeclarationSyntax;
+            Assert.IsNotNull( syntax );
+
+            var isGetterImplemented = SyntaxNodeExtension.IsPropertyGetterImplemented( syntax );
+
+            Assert.IsTrue( isGetterImplemented );
+        }
+
+        [Test]
+        public void IsPropertyGetterImplemented_No_ReturnsFalse() {
+            var prop = Property( "private string random { get; }" );
+            var syntax = prop.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as PropertyDeclarationSyntax;
+            Assert.IsNotNull( syntax );
+
+            var isGetterImplemented = SyntaxNodeExtension.IsPropertyGetterImplemented( syntax );
+
+            Assert.IsFalse( isGetterImplemented );
+        }
+    }
+}
