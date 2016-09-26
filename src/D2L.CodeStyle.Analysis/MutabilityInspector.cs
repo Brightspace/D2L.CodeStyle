@@ -20,10 +20,6 @@ namespace D2L.CodeStyle.Analysis {
 		/// A list of known non-valuetype immutable types
 		/// </summary>
 		private static readonly ImmutableHashSet<string> KnownImmutableTypes = new HashSet<string> {
-			// types that we own
-			"D2L.LP.Logging.ILogger",
-
-			// types that we don't own
 			"System.DateTime",
 			"System.Guid",
 			"System.Lazy",
