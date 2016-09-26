@@ -22,8 +22,6 @@ namespace D2L.CodeStyle.Analysis {
 		private static readonly ImmutableHashSet<string> KnownImmutableTypes = new HashSet<string> {
 			// types that we own
 			"D2L.LP.Logging.ILogger",
-			"D2L.LP.TextProcessing.LangTerm",
-			"D2L.LP.Web.Routing.RoutePattern",
 
 			// types that we don't own
 			"System.DateTime",
