@@ -1,17 +1,14 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Text;
 
 namespace D2L.CodeStyle.Analysis {
 
-    public class TestBase {
+    public static class RoslynSymbolFactory {
 
-        protected static CSharpCompilation Compile( string source ) {
+        public static CSharpCompilation Compile( string source ) {
             var tree = CSharpSyntaxTree.ParseText( source );
             var compilation = CSharpCompilation.Create(
                 assemblyName: "TestAssembly",
@@ -24,7 +21,7 @@ namespace D2L.CodeStyle.Analysis {
             return compilation;
         }
 
-        protected ITypeSymbol Type( string text ) {
+        public static ITypeSymbol Type( string text ) {
             var source = $"namespace D2L {{ {text} }}";
             var compilation = Compile( source );
 
@@ -37,7 +34,7 @@ namespace D2L.CodeStyle.Analysis {
             return toReturn;
         }
 
-        protected IFieldSymbol Field( string text ) {
+        public static IFieldSymbol Field( string text ) {
             var type = Type( "sealed class Fake { " + text + "; }" );
 
             var toReturn = type.GetMembers().OfType<IFieldSymbol>().FirstOrDefault();
@@ -46,7 +43,7 @@ namespace D2L.CodeStyle.Analysis {
             return toReturn;
         }
 
-        protected IPropertySymbol Property( string text ) {
+        public static IPropertySymbol Property( string text ) {
             var type = Type( "sealed class Fake { " + text + "; }" );
 
             var toReturn = type.GetMembers().OfType<IPropertySymbol>().FirstOrDefault();

@@ -1,13 +1,10 @@
-﻿using System.Collections.Immutable;
-using System.Linq;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using NUnit.Framework;
+﻿using NUnit.Framework;
+using static D2L.CodeStyle.Analysis.RoslynSymbolFactory;
 
 namespace D2L.CodeStyle.Analysis {
 
 	[TestFixture]
-	public class MutabilityInspectorTests : TestBase {
+	public class MutabilityInspectorTests {
 
 		private readonly MutabilityInspector m_inspector = new MutabilityInspector();
 

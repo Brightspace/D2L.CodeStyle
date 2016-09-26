@@ -1,14 +1,12 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using static D2L.CodeStyle.Analysis.RoslynSymbolFactory;
 
 namespace D2L.CodeStyle.Analysis {
 
     [TestFixture]
-    internal sealed class SyntaxNodeExtensionTests : TestBase {
+    internal sealed class SyntaxNodeExtensionTests {
 
         [Test]
         public void IsPropertyGetterImplemented_Yes_ReturnsTrue() {
