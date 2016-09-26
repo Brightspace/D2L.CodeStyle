@@ -32,7 +32,6 @@
   <ItemGroup>
     <Compile Include="ParallelizableTestsAnalyzer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ImmutabilityAnalyzer.cs" />
     <Compile Include="UnsafeStaticsAnalyzer.cs" />
   </ItemGroup>
   <ItemGroup>

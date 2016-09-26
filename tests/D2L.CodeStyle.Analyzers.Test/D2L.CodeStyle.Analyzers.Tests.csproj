@@ -35,7 +35,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ParallelizableTestsAnalyzerTests.cs" />
-    <Compile Include="ImmutabilityAnalyzerTests.cs" />
     <Compile Include="UnsafeStaticsAnalyzerTests.cs" />
     <Compile Include="Verifiers\DiagnosticResult.cs" />
     <Compile Include="Verifiers\DiagnosticVerifier.cs" />

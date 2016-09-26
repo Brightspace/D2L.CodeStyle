@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D2L.CodeStyle.Annotations", "src\D2L.CodeStyle.Annotations\D2L.CodeStyle.Annotations.csproj", "{1812AF7E-59B1-4764-8090-F84446A71C4E}"
 EndProject
