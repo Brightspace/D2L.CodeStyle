@@ -3,11 +3,8 @@ using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Annotations;
 using Microsoft.CodeAnalysis;
-<<<<<<< HEAD
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-=======
 using System;
->>>>>>> master
 
 namespace D2L.CodeStyle.Analysis {
 
