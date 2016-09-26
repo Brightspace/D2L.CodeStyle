@@ -138,6 +138,10 @@ namespace D2L.CodeStyle.Analyzers {
                 context.ReportDiagnostic( diagnostic );
                 return;
             }
+            if( root.IsPropertyGetterImplemented() ) {
+                // property has getter with body; it is either backed by a field, or is a static function; ignore
+                return;
+            }
 
             InspectType( context, prop.Type, root.Initializer?.Value, root.GetLocation(), prop.Name );
         }
