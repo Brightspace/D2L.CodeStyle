@@ -128,13 +128,16 @@ namespace D2L.CodeStyle.Analysis {
 					return true;
 				}
 
-				if( !flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed ) && type.TypeKind == TypeKind.Class && !type.IsSealed ) {
+				if( !flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed )
+						&& type.TypeKind == TypeKind.Class
+						&& !type.IsSealed
+					) {
 					return true;
 				}
 
 				{
-					foreach( ISymbol member in type.GetMembers() ) {
-						if( !member.IsStatic && IsMemberMutableRecursive( member, MutabilityInspectionFlags.Default, typeStack ) ) {
+					foreach( ISymbol member in type.GetNonStaticMembers() ) {
+						if( IsMemberMutableRecursive( member, MutabilityInspectionFlags.Default, typeStack ) ) {
 							return true;
 						}
 					}
@@ -163,7 +166,7 @@ namespace D2L.CodeStyle.Analysis {
 						return true;
 					}
 
-					if( !IsTypeMarkedImmutable( prop.Type ) && IsTypeMutableRecursive( prop.Type, flags, typeStack ) ) {
+					if( IsTypeMutableRecursive( prop.Type, flags, typeStack ) ) {
 						return true;
 					}
 
@@ -177,7 +180,7 @@ namespace D2L.CodeStyle.Analysis {
 						return true;
 					}
 
-					if( !IsTypeMarkedImmutable( field.Type ) && IsTypeMutableRecursive( field.Type, flags, typeStack ) ) {
+					if( IsTypeMutableRecursive( field.Type, flags, typeStack ) ) {
 						return true;
 					}
 
