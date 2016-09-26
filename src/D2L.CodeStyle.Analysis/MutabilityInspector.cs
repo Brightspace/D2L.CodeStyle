@@ -3,9 +3,19 @@ using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Annotations;
 using Microsoft.CodeAnalysis;
+<<<<<<< HEAD
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+=======
+using System;
+>>>>>>> master
 
 namespace D2L.CodeStyle.Analysis {
+
+	[Flags]
+	public enum MutabilityInspectionFlags {
+		Default = 0,
+		AllowUnsealed = 1,
+	}
 
 	public sealed class MutabilityInspector {
 
@@ -75,15 +85,17 @@ namespace D2L.CodeStyle.Analysis {
 		/// <param name="type">The type to determine mutability for.</param>
 		/// <returns>Whether the type is mutable.</returns>
 		public bool IsTypeMutable(
-			ITypeSymbol type
+			ITypeSymbol type,
+			MutabilityInspectionFlags flags = MutabilityInspectionFlags.Default
 		) {
 			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
-			var result = IsTypeMutableRecursive( type, typesInCurrentCycle );
+			var result = IsTypeMutableRecursive( type, flags, typesInCurrentCycle );
 			return result;
 		}
 
 		private bool IsTypeMutableRecursive(
 			ITypeSymbol type,
+			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
 			if( typeStack.Contains( type ) ) {
@@ -108,7 +120,7 @@ namespace D2L.CodeStyle.Analysis {
 
 				if( ImmutableCollectionTypes.Contains( type.GetFullTypeName() ) ) {
 					var namedType = type as INamedTypeSymbol;
-					bool isMutable = namedType.TypeArguments.Any( t => IsTypeMutableRecursive( t, typeStack ) );
+					bool isMutable = namedType.TypeArguments.Any( t => IsTypeMutableRecursive( t, MutabilityInspectionFlags.Default, typeStack ) );
 					return isMutable;
 				}
 
@@ -120,13 +132,16 @@ namespace D2L.CodeStyle.Analysis {
 					return true;
 				}
 
-				if( type.TypeKind == TypeKind.Class && !type.IsStatic && !type.IsSealed ) {
+				if( !flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed )
+						&& type.TypeKind == TypeKind.Class
+						&& !type.IsSealed
+					) {
 					return true;
 				}
 
 				{
-					foreach( ISymbol member in type.GetMembers() ) {
-						if( !member.IsStatic && IsMemberMutableRecursive( member, typeStack ) ) {
+					foreach( ISymbol member in type.GetNonStaticMembers() ) {
+						if( IsMemberMutableRecursive( member, MutabilityInspectionFlags.Default, typeStack ) ) {
 							return true;
 						}
 					}
@@ -141,6 +156,7 @@ namespace D2L.CodeStyle.Analysis {
 
 		private bool IsMemberMutableRecursive(
 			ISymbol symbol,
+			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
 
@@ -161,7 +177,7 @@ namespace D2L.CodeStyle.Analysis {
 						return true;
 					}
 
-					if( !IsTypeMarkedImmutable( prop.Type ) && IsTypeMutableRecursive( prop.Type, typeStack ) ) {
+					if( IsTypeMutableRecursive( prop.Type, flags, typeStack ) ) {
 						return true;
 					}
 
@@ -175,7 +191,7 @@ namespace D2L.CodeStyle.Analysis {
 						return true;
 					}
 
-					if( !IsTypeMarkedImmutable( field.Type ) && IsTypeMutableRecursive( field.Type, typeStack ) ) {
+					if( IsTypeMutableRecursive( field.Type, flags, typeStack ) ) {
 						return true;
 					}
 

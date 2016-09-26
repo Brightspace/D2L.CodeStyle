@@ -53,7 +53,12 @@ namespace D2L.CodeStyle.Analyzers.Test.Verifiers {
 
             var diagnostics = new List<Diagnostic>();
             foreach( var project in projects ) {
-                var compilationWithAnalyzers = project.GetCompilationAsync().Result.WithAnalyzers( ImmutableArray.Create( analyzer ) );
+                var compilation = project.GetCompilationAsync().Result;
+
+                // ensure no compilation errors
+                //CollectionAssert.IsEmpty( compilation.GetDiagnostics().Where( d => d.Severity == DiagnosticSeverity.Error ) );
+
+                var compilationWithAnalyzers = compilation.WithAnalyzers( ImmutableArray.Create( analyzer ) );
                 var diags = compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync().Result;
                 foreach( var diag in diags ) {
                     if( diag.Location == Location.None || diag.Location.IsInMetadata ) {
