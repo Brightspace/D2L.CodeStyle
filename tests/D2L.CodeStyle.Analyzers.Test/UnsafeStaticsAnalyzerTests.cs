@@ -588,8 +588,27 @@ namespace D2L.CodeStyle.Analyzers {
             AssertSingleDiagnostic( test, 12, 13, "bad", "test.Tests.Foo" );
         }
 
-        [Test]
-		public void DocumentWithRecurrsiveTypes() {
+		[Test]
+		public void DocumentWithOneLevelRecurrsiveTypes_Immutable_NoDiag() {
+			const string test = @"
+	using System;
+
+	namespace test {
+		class Tests {
+
+            private readonly static Foo foo = new Foo();
+
+			internal sealed class Foo {
+				public readonly Foo Instance;
+			}
+		}
+	}";
+
+			AssertNoDiagnostic( test );
+		}
+
+		[Test]
+		public void DocumentWithOneLevelRecurrsiveTypes_Mutable_Diag() {
 			const string test = @"
 	using System;
 
@@ -599,7 +618,50 @@ namespace D2L.CodeStyle.Analyzers {
             private readonly static Foo foo = new Foo();
 
 			internal class Foo {
+				public Foo Instance;
+			}
+		}
+	}";
+
+			AssertSingleDiagnostic( test, 7, 41, "foo", "test.Tests.Foo" );
+		}
+
+		[Test]
+		public void DocumentWithMultiLevelRecurrsiveTypes_Immutable_NoDiag() {
+			const string test = @"
+	using System;
+
+	namespace test {
+		class Tests {
+
+            private readonly static Foo foo = new Foo();
+
+			internal sealed class Foo {
 				public readonly Bar Bar = null;
+			}
+
+			internal sealed class Bar {
+				public readonly Foo Foo = new Foo();
+			}
+		}
+	}";
+
+			AssertNoDiagnostic( test );
+		}
+
+
+		[Test]
+		public void DocumentWithMultiLevelRecurrsiveTypes_Mutable_Diag() {
+			const string test = @"
+	using System;
+
+	namespace test {
+		class Tests {
+
+            private readonly static Foo foo = new Foo();
+
+			internal sealed class Foo {
+				public readonly Bar Bar = null; // Bar is not sealed, so this is not immutable
 			}
 
 			internal class Bar {
