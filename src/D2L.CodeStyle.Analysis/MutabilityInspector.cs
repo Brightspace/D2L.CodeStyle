@@ -41,6 +41,7 @@ namespace D2L.CodeStyle.Analysis {
 			"System.Collections.Immutable.ImmutableSortedSet",
 			"System.Collections.Immutable.ImmutableStack",
 			"System.Collections.Generic.IReadOnlyList",
+			"System.Collections.Generic.IReadOnlyDictionary",
 			"System.Collections.Generic.IEnumerable",
 		}.ToImmutableHashSet();
 
