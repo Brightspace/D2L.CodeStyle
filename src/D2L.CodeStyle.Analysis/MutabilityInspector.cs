@@ -80,17 +80,6 @@ namespace D2L.CodeStyle.Analysis {
 				return false;
 			}
 
-			if( type.TypeKind == TypeKind.Interface ) {
-				return true;
-			}
-
-			if( !flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed )
-					&& type.TypeKind == TypeKind.Class
-					&& !type.IsSealed
-				) {
-				return true;
-			}
-
 			if( typeStack.Contains( type ) ) {
 				// We have a cycle. If we're here, it means that either some read-only member causes the cycle (via IsMemberMutableRecursive), 
 				// or a generic parameter to a type causes the cycle (via IsTypeMutableRecursive). This is safe if the checks above have 
@@ -106,6 +95,17 @@ namespace D2L.CodeStyle.Analysis {
 					var namedType = type as INamedTypeSymbol;
 					bool isMutable = namedType.TypeArguments.Any( t => IsTypeMutableRecursive( t, MutabilityInspectionFlags.Default, typeStack ) );
 					return isMutable;
+				}
+
+				if( type.TypeKind == TypeKind.Interface ) {
+					return true;
+				}
+
+				if( !flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed )
+						&& type.TypeKind == TypeKind.Class
+						&& !type.IsSealed
+					) {
+					return true;
 				}
 
 				foreach( ISymbol member in type.GetNonStaticMembers() ) {
