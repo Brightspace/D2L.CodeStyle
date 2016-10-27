@@ -153,6 +153,13 @@ namespace D2L.CodeStyle.Analysis {
 		}
 
 		[Test]
+		public void IsTypeMutable_IEnumerableGenericCollectionWithImmutableElement_ReturnsFalse() {
+			var type = Field( "private readonly System.Collections.Generic.IEnumerable<int> random" ).Type;
+
+			Assert.IsFalse( m_inspector.IsTypeMutable( type ) );
+		}
+
+		[Test]
 		public void IsTypeMarkedImmutable_No_ReturnsFalse() {
 			var type = Type( "class Foo {}" );
 

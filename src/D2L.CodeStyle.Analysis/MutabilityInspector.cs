@@ -64,34 +64,37 @@ namespace D2L.CodeStyle.Analysis {
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
-			if( typeStack.Contains( type ) ) {
-				// we've got a cycle, fail
+			if( type.IsValueType ) {
+				return false;
+			}
+
+			if( type.TypeKind == TypeKind.Array ) {
 				return true;
+			}
+
+			if( KnownImmutableTypes.Contains( type.GetFullTypeName() ) ) {
+				return false;
+			}
+
+			if( IsTypeMarkedImmutable( type ) ) {
+				return false;
+			}
+
+			if( typeStack.Contains( type ) ) {
+				// We have a cycle. If we're here, it means that either some read-only member causes the cycle (via IsMemberMutableRecursive), 
+				// or a generic parameter to a type causes the cycle (via IsTypeMutableRecursive). This is safe if the checks above have 
+				// passed and the remaining members are read-only immutable. So we can skip the current check, and allow the type to continue 
+				// to be evaluated.
+				return false;
 			}
 
 			typeStack.Add( type );
 			try {
 
-				if( type.IsValueType ) {
-					return false;
-				}
-
-				if( type.TypeKind == TypeKind.Array ) {
-					return true;
-				}
-
-				if( KnownImmutableTypes.Contains( type.GetFullTypeName() ) ) {
-					return false;
-				}
-
 				if( ImmutableCollectionTypes.Contains( type.GetFullTypeName() ) ) {
 					var namedType = type as INamedTypeSymbol;
 					bool isMutable = namedType.TypeArguments.Any( t => IsTypeMutableRecursive( t, MutabilityInspectionFlags.Default, typeStack ) );
 					return isMutable;
-				}
-
-				if( IsTypeMarkedImmutable( type ) ) {
-					return false;
 				}
 
 				if( type.TypeKind == TypeKind.Interface ) {
@@ -105,15 +108,13 @@ namespace D2L.CodeStyle.Analysis {
 					return true;
 				}
 
-				{
-					foreach( ISymbol member in type.GetNonStaticMembers() ) {
-						if( IsMemberMutableRecursive( member, MutabilityInspectionFlags.Default, typeStack ) ) {
-							return true;
-						}
+				foreach( ISymbol member in type.GetNonStaticMembers() ) {
+					if( IsMemberMutableRecursive( member, MutabilityInspectionFlags.Default, typeStack ) ) {
+						return true;
 					}
-
-					return false;
 				}
+
+				return false;
 
 			} finally {
 				typeStack.Remove( type );
