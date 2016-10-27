@@ -22,7 +22,7 @@ namespace D2L.CodeStyle.Analysis {
         }
 
         public static ITypeSymbol Type( string text ) {
-            var source = $"namespace D2L {{ {text} }}";
+            var source = $"using System; namespace D2L {{ {text} }}";
             var compilation = Compile( source );
 
             var toReturn = compilation.GetSymbolsWithName(
