@@ -1,33 +1,35 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
-using NUnit.Framework;
-using System.Linq;
+﻿using NUnit.Framework;
 using static D2L.CodeStyle.Analysis.RoslynSymbolFactory;
 
 namespace D2L.CodeStyle.Analysis {
 
-    [TestFixture]
-    internal sealed class SyntaxNodeExtensionTests {
+	[TestFixture]
+	internal sealed class TypeSymbolExtensionsTests {
 
-        [Test]
-        public void IsPropertyGetterImplemented_Yes_ReturnsTrue() {
-            var prop = Property( "private string random { get { return \"\"; } }" );
-            var syntax = prop.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as PropertyDeclarationSyntax;
-            Assert.IsNotNull( syntax );
+		[Test]
+		[TestCase( "string", "System.String", Description = "special non-generic type" )]
+		[TestCase( "String", "System.String", Description = "non-special non-generic type" )]
+		[TestCase( "Lazy<string>", "System.Lazy", Description = "special generic type" )]
+		[TestCase( "Lazy<String>", "System.Lazy", Description = "non-special generic type" )]
+		public void GetFullTypeName_ReturnsCorrectValue( string typeName, string expected ) {
+			var type = Field( typeName + " name;" ).Type;
 
-            var isGetterImplemented = SyntaxNodeExtension.IsPropertyGetterImplemented( syntax );
+			var actual = TypeSymbolExtensions.GetFullTypeName( type );
 
-            Assert.IsTrue( isGetterImplemented );
-        }
+			Assert.AreEqual( expected, actual );
+		}
 
-        [Test]
-        public void IsPropertyGetterImplemented_No_ReturnsFalse() {
-            var prop = Property( "private string random { get; }" );
-            var syntax = prop.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as PropertyDeclarationSyntax;
-            Assert.IsNotNull( syntax );
+		[Test]
+		[TestCase( "string", "System.String", Description = "special non-generic type" )]
+		[TestCase( "String", "System.String", Description = "non-special non-generic type" )]
+		[TestCase( "Lazy<string>", "System.Lazy<System.String>", Description = "special generic type" )]
+		[TestCase( "Lazy<String>", "System.Lazy<System.String>", Description = "non-special generic type" )]
+		public void GetFullTypeNameWithGenericArguments_ReturnsCorrectValue( string typeName, string expected ) {
+			var type = Field( typeName + " name;" ).Type;
 
-            var isGetterImplemented = SyntaxNodeExtension.IsPropertyGetterImplemented( syntax );
+			var actual = TypeSymbolExtensions.GetFullTypeNameWithGenericArguments( type );
 
-            Assert.IsFalse( isGetterImplemented );
-        }
-    }
+			Assert.AreEqual( expected, actual );
+		}
+	}
 }

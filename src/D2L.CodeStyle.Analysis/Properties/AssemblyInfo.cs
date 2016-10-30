@@ -12,7 +12,7 @@ using System.Runtime.InteropServices;
 
 [assembly: Guid("76c3649d-ee9f-45bd-851c-8657ee1cd415")]
 
-[assembly: AssemblyVersion("0.4.3.0")]
-[assembly: AssemblyFileVersion("0.4.3.0")]
+[assembly: AssemblyVersion("0.4.4.0")]
+[assembly: AssemblyFileVersion("0.4.4.0")]
 
 [assembly: InternalsVisibleTo("D2L.CodeStyle.Analysis.UnitTests")]

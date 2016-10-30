@@ -20,6 +20,7 @@ namespace D2L.CodeStyle.Analysis {
 		/// A list of known non-valuetype immutable types
 		/// </summary>
 		private static readonly ImmutableHashSet<string> KnownImmutableTypes = new HashSet<string> {
+			"System.ComponentModel.TypeConverter",
 			"System.DateTime",
 			"System.Guid",
 			"System.Lazy",
