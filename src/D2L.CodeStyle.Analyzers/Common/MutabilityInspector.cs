@@ -1,12 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using D2L.CodeStyle.Annotations;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 
-namespace D2L.CodeStyle.Analysis {
+namespace D2L.CodeStyle.Analyzers.Common {
 
 	[Flags]
 	public enum MutabilityInspectionFlags {
@@ -177,7 +176,7 @@ namespace D2L.CodeStyle.Analysis {
 		}
 
 		public bool IsTypeMarkedImmutable( ITypeSymbol symbol ) {
-			if( symbol.GetAttributes().Any( a => a.AttributeClass.Name == nameof( Objects.Immutable ) ) ) {
+			if( symbol.GetAttributes().Any( a => a.AttributeClass.Name == "Immutable" ) ) {
 				return true;
 			}
 			if( symbol.Interfaces.Any( IsTypeMarkedImmutable ) ) {

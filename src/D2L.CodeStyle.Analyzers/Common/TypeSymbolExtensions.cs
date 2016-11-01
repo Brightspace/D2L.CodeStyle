@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace D2L.CodeStyle.Analysis {
+namespace D2L.CodeStyle.Analyzers.Common {
 
 	public static class SyntaxNodeExtension {
 		public static bool IsPropertyGetterImplemented(this PropertyDeclarationSyntax syntax) {

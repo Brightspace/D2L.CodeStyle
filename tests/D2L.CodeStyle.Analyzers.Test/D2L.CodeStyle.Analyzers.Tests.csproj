@@ -34,17 +34,18 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="ParallelizableTestsAnalyzerTests.cs" />
-    <Compile Include="UnsafeStaticsAnalyzerTests.cs" />
+    <Compile Include="Common\MutabilityInspectorTests.cs" />
+    <Compile Include="Common\SyntaxNodeExtensionTests.cs" />
+    <Compile Include="Common\TestBase.cs" />
+    <Compile Include="Common\TypeSymbolExtensionsTests.cs" />
+    <Compile Include="Common\UtilsTests.cs" />
+    <Compile Include="ParallelizableTests\ParallelizableTestsAnalyzerTests.cs" />
+    <Compile Include="UnsafeStatics\UnsafeStaticsAnalyzerTests.cs" />
     <Compile Include="Verifiers\DiagnosticResult.cs" />
     <Compile Include="Verifiers\DiagnosticVerifier.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\D2L.CodeStyle.Analysis\D2L.CodeStyle.Analysis.csproj">
-      <Project>{76c3649d-ee9f-45bd-851c-8657ee1cd415}</Project>
-      <Name>D2L.CodeStyle.Analysis</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\src\D2L.CodeStyle.Analyzers\D2L.CodeStyle.Analyzers.csproj">
       <Project>{FE7608CD-C8B1-43DD-BBCC-9B1917C9CA73}</Project>
       <Name>D2L.CodeStyle.Analyzers</Name>

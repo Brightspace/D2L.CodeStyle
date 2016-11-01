@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using NUnit.Framework;
 
-namespace D2L.CodeStyle.Analyzers {
+namespace D2L.CodeStyle.Analyzers.ParallelizableTests {
     [TestFixture]
     public class ParallelizableTestsAnalyzerTests : DiagnosticVerifier {
 

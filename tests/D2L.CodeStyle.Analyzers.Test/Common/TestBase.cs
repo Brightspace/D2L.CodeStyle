@@ -4,7 +4,7 @@ using NUnit.Framework;
 using System.Collections.Immutable;
 using System.Linq;
 
-namespace D2L.CodeStyle.Analysis {
+namespace D2L.CodeStyle.Analyzers.Common {
 
     public static class RoslynSymbolFactory {
 

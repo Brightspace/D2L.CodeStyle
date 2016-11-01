@@ -2,13 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using D2L.CodeStyle.Analysis;
 using D2L.CodeStyle.Analyzers.Test.Verifiers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using NUnit.Framework;
 
-namespace D2L.CodeStyle.Analyzers {
+namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 
 	internal sealed class UnsafeStaticsAnalyzerTests : DiagnosticVerifier {
 		protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer() {
