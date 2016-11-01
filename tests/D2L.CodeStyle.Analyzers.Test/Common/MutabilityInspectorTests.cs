@@ -1,7 +1,7 @@
 ﻿using NUnit.Framework;
-using static D2L.CodeStyle.Analysis.RoslynSymbolFactory;
+using static D2L.CodeStyle.Analyzers.Common.RoslynSymbolFactory;
 
-namespace D2L.CodeStyle.Analysis {
+namespace D2L.CodeStyle.Analyzers.Common {
 
 	[TestFixture]
 	public class MutabilityInspectorTests {

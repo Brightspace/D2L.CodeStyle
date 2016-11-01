@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-namespace D2L.CodeStyle.Analysis {
+namespace D2L.CodeStyle.Analyzers.Common {
 
 	internal sealed class UtilsTests {
 

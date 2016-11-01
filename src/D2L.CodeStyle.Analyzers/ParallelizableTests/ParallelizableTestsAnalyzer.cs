@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace D2L.CodeStyle.Analyzers {
+namespace D2L.CodeStyle.Analyzers.ParallelizableTests {
     [DiagnosticAnalyzer( LanguageNames.CSharp )]
     public sealed class ParallelizableTestsAnalyzer : DiagnosticAnalyzer {
         public const string DiagnosticId = "D2L0001";

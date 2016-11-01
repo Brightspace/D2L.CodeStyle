@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace D2L.CodeStyle.Analysis {
+namespace D2L.CodeStyle.Analyzers.Common {
 
 	public sealed class Utils {
 
