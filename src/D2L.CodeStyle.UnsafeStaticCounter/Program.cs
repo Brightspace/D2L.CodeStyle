@@ -30,12 +30,12 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			Console.Error.WriteLine( e.ToString() );
 		}
 
-		private static Options ParseOptions( string[] args ) {
-			string path = @"c:\d2l\instances\all\checkout";
+		private static Options ParseOptions( IEnumerable<string> args ) {
+			string path = null;
 			int concurrency = DEFAULT_MAX_CONCURRENCY;
 			string outputFile = "statics.json";
 
-			var enumerator = ( (IEnumerable<string>)args ).GetEnumerator(); // Array has non-generic enumerator only :facepalm:
+			var enumerator = args.GetEnumerator();
 			while( enumerator.MoveNext() ) {
 				switch( enumerator.Current ) {
 					case "-n":
