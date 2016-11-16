@@ -27,17 +27,7 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 		}
 
 		static void LogException( Exception e ) {
-			while( e != null ) {
-				if( e is AggregateException ) {
-					var ae = e as AggregateException;
-					foreach( var ie in ae.InnerExceptions ) {
-						LogException( ie );
-					}
-				} else {
-					Console.WriteLine( $"error: {e.Message}" );
-				}
-				e = e.InnerException;
-			}
+			Console.Error.WriteLine( e.ToString() );
 		}
 
 		private static Options ParseOptions( string[] args ) {
