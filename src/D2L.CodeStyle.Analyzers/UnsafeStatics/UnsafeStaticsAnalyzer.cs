@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Common;
 using Microsoft.CodeAnalysis;
@@ -9,6 +10,9 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class UnsafeStaticsAnalyzer : DiagnosticAnalyzer {
+
+		public const string PROPERTY_FIELDORPROPNAME = "FieldOrProprName";
+		public const string PROPERTY_OFFENDINGTYPE = "OffendingType";
 
 		public const string DiagnosticId = "D2L0002";
 		private const string Category = "Safety";
@@ -83,7 +87,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				}
 
 				if( m_immutabilityInspector.IsFieldMutable( symbol ) ) {
-					var diagnostic = Diagnostic.Create( Rule, variable.GetLocation(), variable.Identifier.ValueText, "it" );
+					var diagnostic = CreateDiagnostic( variable.GetLocation(), variable.Identifier.ValueText, "it" );
 					context.ReportDiagnostic( diagnostic );
 					return;
 				}
@@ -132,7 +136,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			}
 
 			if( m_immutabilityInspector.IsPropertyMutable( prop ) ) {
-				var diagnostic = Diagnostic.Create( Rule, root.GetLocation(), prop.Name, "it" );
+				var diagnostic = CreateDiagnostic( root.GetLocation(), prop.Name, "it" );
 				context.ReportDiagnostic( diagnostic );
 				return;
 			}
@@ -165,7 +169,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			}
 
 			if( m_immutabilityInspector.IsTypeMutable( type, flags ) ) {
-				var diagnostic = Diagnostic.Create( Rule, location, fieldOrPropName, type.GetFullTypeNameWithGenericArguments() );
+				var diagnostic = CreateDiagnostic( location, fieldOrPropName, type.GetFullTypeNameWithGenericArguments() );
 				context.ReportDiagnostic( diagnostic );
 			}
 		}
@@ -189,6 +193,23 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			}
 
 			return initializerSymbol.ContainingType;
+		}
+
+
+		private Diagnostic CreateDiagnostic( Location location, string fieldOrPropName, string offendingType ) {
+			var builder = ImmutableDictionary.CreateBuilder<string, string>();
+			builder[PROPERTY_FIELDORPROPNAME] = fieldOrPropName;
+			builder[PROPERTY_OFFENDINGTYPE] = offendingType;
+			var properties = builder.ToImmutable();
+
+			var diagnostic = Diagnostic.Create(
+				Rule,
+				location,
+				fieldOrPropName,
+				offendingType,
+				properties
+			);
+			return diagnostic;
 		}
 
 	}
