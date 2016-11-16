@@ -14,10 +14,10 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 
 	internal sealed class Counter {
 
-		private string _rootDir;
-		private string _outputFile;
-		ImmutableArray<DiagnosticAnalyzer> _analyzers;
-		SemaphoreSlim _semaphore;
+		private readonly string _rootDir;
+		private readonly string _outputFile;
+		private readonly ImmutableArray<DiagnosticAnalyzer> _analyzers;
+		private readonly SemaphoreSlim _semaphore;
 
 		public Counter( Options options ) {
 			_analyzers = ImmutableArray.Create<DiagnosticAnalyzer>( new UnsafeStaticsAnalyzer() );
