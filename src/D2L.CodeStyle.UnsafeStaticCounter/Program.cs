@@ -50,6 +50,8 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 						enumerator.MoveNext();
 						outputFile = enumerator.Current;
 						break;
+					default:
+						throw new InvalidOperationException( $"unknown option: {enumerator.Current}" );
 				}
 			}
 
