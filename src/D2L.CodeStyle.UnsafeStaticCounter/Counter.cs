@@ -27,7 +27,12 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 		}
 
 		internal async Task Run() {
+			var results = await AnalyzeProjects();
+			WriteOutputFile( results );
+			Console.WriteLine( "done" );
+		}
 
+		async Task<AnalyzedResults> AnalyzeProjects() {
 			var projectFiles = Directory.EnumerateFiles( _rootDir, "*.csproj", SearchOption.AllDirectories );
 
 			var tasks = projectFiles.Select( AnalyzeProject );
@@ -38,13 +43,17 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 				.ToArray();
 
 			var finalResult = new AnalyzedResults( combinedResult );
+			return finalResult;
+		}
 
-			var serializer = new JsonSerializer();
+		void WriteOutputFile( AnalyzedResults results ) {
+			var serializer = JsonSerializer.Create( new JsonSerializerSettings {
+				Formatting = Formatting.Indented
+			} );
 			using( var file = File.Open( _outputFile, FileMode.Create ) )
 			using( var stream = new StreamWriter( file ) ) {
-				serializer.Serialize( stream, finalResult );
+				serializer.Serialize( stream, results );
 			}
-			Console.WriteLine( "done" );
 		}
 
 		async Task<AnalyzedStatic[]> AnalyzeProject( string projectFile ) {
