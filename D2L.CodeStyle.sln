@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D2L.CodeStyle.Analyzers", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D2L.CodeStyle.Analyzers.Tests", "tests\D2L.CodeStyle.Analyzers.Test\D2L.CodeStyle.Analyzers.Tests.csproj", "{1C54E78A-E12B-45C3-BA6E-31DB5C63B389}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D2L.CodeStyle.UnsafeStaticCounter", "src\D2L.CodeStyle.UnsafeStaticCounter\D2L.CodeStyle.UnsafeStaticCounter.csproj", "{9BBEB2F8-0D57-426A-A34B-6E8D30A92EEF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,6 +31,10 @@ Global
 		{1C54E78A-E12B-45C3-BA6E-31DB5C63B389}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1C54E78A-E12B-45C3-BA6E-31DB5C63B389}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1C54E78A-E12B-45C3-BA6E-31DB5C63B389}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9BBEB2F8-0D57-426A-A34B-6E8D30A92EEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9BBEB2F8-0D57-426A-A34B-6E8D30A92EEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9BBEB2F8-0D57-426A-A34B-6E8D30A92EEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9BBEB2F8-0D57-426A-A34B-6E8D30A92EEF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
