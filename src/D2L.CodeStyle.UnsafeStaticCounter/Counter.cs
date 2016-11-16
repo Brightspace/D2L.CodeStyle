@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using D2L.CodeStyle.Analyzers.UnsafeStatics;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.MSBuild;
 using Newtonsoft.Json;
@@ -52,6 +53,13 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 				using( var workspace = MSBuildWorkspace.Create() ) {
 					var proj = await workspace.OpenProjectAsync( projectFile );
 					Console.WriteLine( $"Analyzing: ${proj.FilePath}" );
+
+					// ignore projects with analyzer already included -- there are no unsafe statics by definition
+					if( ProjectAlreadyAnalyzed( proj)) {
+						Console.WriteLine( $"...skipping ${proj.FilePath}" );
+						return new AnalyzedStatic[0];
+					}
+
 					var compilation = await proj.GetCompilationAsync();
 					var compilationWithAnalzer = compilation.WithAnalyzers( _analyzers );
 
@@ -63,6 +71,18 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			} finally {
 				_semaphore.Release();
 			}
+		}
+
+		static bool ProjectAlreadyAnalyzed( Project proj ) {
+			var analyzers = proj.AnalyzerReferences
+				.SelectMany( r => r.GetAnalyzers( LanguageNames.CSharp ) );
+
+			// we use the name because UnsafeStaticsAnalyzer is not assembly neutral, so `is` might not work
+			if( analyzers.Any( a => a.GetType().Name == nameof( UnsafeStaticsAnalyzer ) ) ) {
+				return true;
+			}
+
+			return false;
 		}
 	}
 }
