@@ -7,23 +7,27 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 		const int DEFAULT_MAX_CONCURRENCY = 4;
 
 		static void Main( string[] args ) {
-			Task.Run( async () => await AsyncMain( args ) )
+			var exitCode = Task.Run( async () => await AsyncMain( args ) )
 				.GetAwaiter()
 				.GetResult();
+			Environment.Exit( exitCode );
 		}
 
-		static async Task AsyncMain( string[] args ) {
+		static async Task<int> AsyncMain( string[] args ) {
 			try {
-				await AsyncThrowableMain( args );
+				return await AsyncThrowableMain( args );
 			} catch( Exception e ) {
 				LogException( e );
+				return -1;
+
 			}
 		}
 
-		static async Task AsyncThrowableMain( string[] args ) {
+		static async Task<int> AsyncThrowableMain( string[] args ) {
 			var options = ParseOptions( args );
 			var prog = new Counter( options );
-			await prog.Run();
+			var result = await prog.Run();
+			return result;
 		}
 
 		static void LogException( Exception e ) {

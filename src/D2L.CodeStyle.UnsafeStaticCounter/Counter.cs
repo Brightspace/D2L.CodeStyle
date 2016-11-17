@@ -26,10 +26,11 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			_outputFile = options.OutputFile;
 		}
 
-		internal async Task Run() {
+		internal async Task<int> Run() {
 			var results = await AnalyzeProjects();
 			WriteOutputFile( results );
 			Console.WriteLine( "done" );
+			return 0;
 		}
 
 		async Task<AnalyzedResults> AnalyzeProjects() {
