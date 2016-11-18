@@ -20,24 +20,27 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			foreach( var result in rawResults ) {
 
 				// increment per project
-				if( !unsafeStaticsPerProject.ContainsKey( result.ProjectName ) ) {
-					unsafeStaticsPerProject[result.ProjectName] = new AnalyzedProject( result.ProjectName );
-				}
-				unsafeStaticsPerProject[result.ProjectName].UnsafeStaticsCount++;
-
+				var project = unsafeStaticsPerProject.GetOrAdd(
+						result.ProjectName,
+						() => new AnalyzedProject( result.ProjectName )
+					);
+				project.UnsafeStaticsCount++;
 
 				// increment per-type
 				if( result.FieldOrPropType != null ) {
-					if( !unsafeStaticsPerType.ContainsKey( result.FieldOrPropType ) ) {
-						unsafeStaticsPerType[result.FieldOrPropType] = new AnalyzedType( result.FieldOrPropType );
-					}
-					unsafeStaticsPerType[result.FieldOrPropType].UnsafeStaticsCount++;
+
+					var analyzedType = unsafeStaticsPerType.GetOrAdd(
+							result.FieldOrPropType,
+							() => new AnalyzedType( result.FieldOrPropType )
+						);
+					analyzedType.UnsafeStaticsCount++;
 				}
 			}
 
 			// move `it` to readonly count
-			if( unsafeStaticsPerType.ContainsKey( "it" ) ) {
-				UnsafeNonReadonlyStaticsCount = unsafeStaticsPerType["it"].UnsafeStaticsCount;
+			AnalyzedType itType;
+			if( unsafeStaticsPerType.TryGetValue( "it", out itType ) ) {
+				UnsafeNonReadonlyStaticsCount = itType.UnsafeStaticsCount;
 				unsafeStaticsPerType.Remove( "it" );
 			}
 
