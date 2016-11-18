@@ -62,11 +62,11 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 				_semaphore.Wait();
 				using( var workspace = MSBuildWorkspace.Create() ) {
 					var proj = await workspace.OpenProjectAsync( projectFile );
-					Console.WriteLine( $"Analyzing: ${proj.FilePath}" );
+					Console.WriteLine( $"Analyzing: {proj.FilePath}" );
 
 					// ignore projects with analyzer already included -- there are no unsafe statics by definition
 					if( ProjectAlreadyAnalyzed( proj)) {
-						Console.WriteLine( $"...skipping ${proj.FilePath}" );
+						Console.WriteLine( $"...skipping {proj.FilePath}" );
 						return new AnalyzedStatic[0];
 					}
 
