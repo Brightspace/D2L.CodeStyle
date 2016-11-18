@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace D2L.CodeStyle.UnsafeStaticCounter {
 
@@ -26,22 +27,27 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 					);
 				project.UnsafeStaticsCount++;
 
-				// increment per-type
-				if( result.FieldOrPropType != null ) {
+				switch( result.Cause ) {
 
-					var analyzedType = unsafeStaticsPerType.GetOrAdd(
+					// increment per-type
+					case AnalyzedStatic.CAUSE_MUTABLE_TYPE:
+						var analyzedType = unsafeStaticsPerType.GetOrAdd(
 							result.FieldOrPropType,
 							() => new AnalyzedType( result.FieldOrPropType )
 						);
-					analyzedType.UnsafeStaticsCount++;
-				}
-			}
+						analyzedType.UnsafeStaticsCount++;
+						break;
 
-			// move `it` to readonly count
-			AnalyzedType itType;
-			if( unsafeStaticsPerType.TryGetValue( "it", out itType ) ) {
-				UnsafeNonReadonlyStaticsCount = itType.UnsafeStaticsCount;
-				unsafeStaticsPerType.Remove( "it" );
+					// increment readonly count
+					case AnalyzedStatic.CAUSE_MUTABLE_DECLARATION:
+						UnsafeNonReadonlyStaticsCount++;
+						break;
+
+					default:
+						throw new InvalidOperationException( $"unknown cause{result.Cause}" );
+
+				}
+
 			}
 
 			UnsafeStaticsPerProject = unsafeStaticsPerProject.Values;
