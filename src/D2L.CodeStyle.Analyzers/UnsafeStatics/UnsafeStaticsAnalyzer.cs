@@ -205,9 +205,10 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			var diagnostic = Diagnostic.Create(
 				Rule,
 				location,
+				properties,
 				fieldOrPropName,
-				offendingType,
-				properties
+				offendingType
+				
 			);
 			return diagnostic;
 		}
