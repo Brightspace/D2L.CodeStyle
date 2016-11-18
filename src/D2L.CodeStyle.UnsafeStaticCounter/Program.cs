@@ -17,7 +17,7 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			try {
 				return await AsyncThrowableMain( args );
 			} catch( Exception e ) {
-				LogException( e );
+				Console.Error.WriteLine( e.ToString() );
 				return -1;
 			}
 		}
@@ -27,10 +27,6 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			var prog = new Counter( options );
 			var result = await prog.Run();
 			return result;
-		}
-
-		private static void LogException( Exception e ) {
-			Console.Error.WriteLine( e.ToString() );
 		}
 
 		private static Options ParseOptions( IEnumerable<string> args ) {
