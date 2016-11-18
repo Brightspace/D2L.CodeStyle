@@ -18,6 +18,6 @@
   </metadata>
   
   <files>
-    <file src="*.dll,*.exe" target="tools" />
+    <file src="bin\$configuration$\*" target="tools\" />
   </files>
 </package>
