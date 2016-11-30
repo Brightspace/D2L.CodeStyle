@@ -23,7 +23,7 @@ namespace D2L.CodeStyle.Analyzers.Test.Verifiers {
         internal static string DefaultFilePathPrefix = "Test";
         internal static string CSharpDefaultFileExt = "cs";
         internal static string VisualBasicDefaultExt = "vb";
-        internal static string TestProjectName = "TestProject";
+        internal static string TestProjectName = "StubProject";
 
         #region  Get Diagnostics
 

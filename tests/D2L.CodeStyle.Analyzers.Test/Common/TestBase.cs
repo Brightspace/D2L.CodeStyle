@@ -3,54 +3,57 @@ using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
 using System.Collections.Immutable;
 using System.Linq;
+using D2L.CodeStyle.Analyzers.Test.Verifiers;
 
 namespace D2L.CodeStyle.Analyzers.Common {
 
-    public static class RoslynSymbolFactory {
+	public static class RoslynSymbolFactory {
 
-        public static CSharpCompilation Compile( string source ) {
-            var tree = CSharpSyntaxTree.ParseText( source );
-            var compilation = CSharpCompilation.Create(
-                assemblyName: "TestAssembly",
-                syntaxTrees: new[] { tree },
-                references: new[] {
-                    MetadataReference.CreateFromFile( typeof( object ).Assembly.Location ),
-                    MetadataReference.CreateFromFile( typeof( ImmutableArray ).Assembly.Location )
-                }
-            );
-            return compilation;
-        }
+		internal static string TestAssemblyName = DiagnosticVerifier.TestProjectName;
 
-        public static ITypeSymbol Type( string text ) {
-            var source = $"using System; namespace D2L {{ {text} }}";
-            var compilation = Compile( source );
+		public static CSharpCompilation Compile( string source ) {
+			var tree = CSharpSyntaxTree.ParseText( source );
+			var compilation = CSharpCompilation.Create(
+				assemblyName: TestAssemblyName,
+				syntaxTrees: new[] { tree },
+				references: new[] {
+					MetadataReference.CreateFromFile( typeof( object ).Assembly.Location ),
+					MetadataReference.CreateFromFile( typeof( ImmutableArray ).Assembly.Location )
+				}
+			);
+			return compilation;
+		}
 
-            var toReturn = compilation.GetSymbolsWithName(
-                predicate: n => true,
-                filter: SymbolFilter.Type
-            ).OfType<ITypeSymbol>().FirstOrDefault();
-            Assert.IsNotNull( toReturn );
-            Assert.AreNotEqual( TypeKind.Error, toReturn.TypeKind );
-            return toReturn;
-        }
+		public static ITypeSymbol Type( string text ) {
+			var source = $"using System; namespace D2L {{ {text} }}";
+			var compilation = Compile( source );
 
-        public static IFieldSymbol Field( string text ) {
-            var type = Type( "sealed class Fake { " + text + "; }" );
+			var toReturn = compilation.GetSymbolsWithName(
+				predicate: n => true,
+				filter: SymbolFilter.Type
+			).OfType<ITypeSymbol>().FirstOrDefault();
+			Assert.IsNotNull( toReturn );
+			Assert.AreNotEqual( TypeKind.Error, toReturn.TypeKind );
+			return toReturn;
+		}
 
-            var toReturn = type.GetMembers().OfType<IFieldSymbol>().FirstOrDefault();
-            Assert.IsNotNull( toReturn );
-            Assert.AreNotEqual( TypeKind.Error, toReturn.Type.TypeKind );
-            return toReturn;
-        }
+		public static IFieldSymbol Field( string text ) {
+			var type = Type( "sealed class Fake { " + text + "; }" );
 
-        public static IPropertySymbol Property( string text ) {
-            var type = Type( "sealed class Fake { " + text + "; }" );
+			var toReturn = type.GetMembers().OfType<IFieldSymbol>().FirstOrDefault();
+			Assert.IsNotNull( toReturn );
+			Assert.AreNotEqual( TypeKind.Error, toReturn.Type.TypeKind );
+			return toReturn;
+		}
 
-            var toReturn = type.GetMembers().OfType<IPropertySymbol>().FirstOrDefault();
-            Assert.IsNotNull( toReturn );
-            Assert.AreNotEqual( TypeKind.Error, toReturn.Type.TypeKind );
-            return toReturn;
-        }
-    }
+		public static IPropertySymbol Property( string text ) {
+			var type = Type( "sealed class Fake { " + text + "; }" );
+
+			var toReturn = type.GetMembers().OfType<IPropertySymbol>().FirstOrDefault();
+			Assert.IsNotNull( toReturn );
+			Assert.AreNotEqual( TypeKind.Error, toReturn.Type.TypeKind );
+			return toReturn;
+		}
+	}
 
 }
