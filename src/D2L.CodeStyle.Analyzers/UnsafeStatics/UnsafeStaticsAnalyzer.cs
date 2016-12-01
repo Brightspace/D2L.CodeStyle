@@ -37,18 +37,27 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 		private readonly Utils m_utils = new Utils();
 
 		public override void Initialize( AnalysisContext context ) {
-			context.RegisterCompilationStartAction( RegisterIfNotTestAssembly );
+			context.RegisterCompilationStartAction( ctx => {
+				if( ShouldAnalyzeCompilation( ctx.Compilation ) ) {
+					ctx.RegisterSyntaxNodeAction( AnalyzeField, SyntaxKind.FieldDeclaration );
+					ctx.RegisterSyntaxNodeAction( AnalyzeProperty, SyntaxKind.PropertyDeclaration );
+				}
+			} );
 		}
 
-		private void RegisterIfNotTestAssembly( CompilationStartAnalysisContext compilation ) {
-			var references = compilation.Compilation.ReferencedAssemblyNames;
+		private bool ShouldAnalyzeCompilation( Compilation compilation ) {
+			var assemblyName = compilation.AssemblyName;
+			if( assemblyName.Contains( "Test" ) ) {
+				// Compilation is a test assembly, skip
+				return false;
+			}
+			var references = compilation.ReferencedAssemblyNames;
 			if( references.Any( r => r.Name.ToUpper().Contains( "NUNIT" ) ) ) {
 				// Compilation is a test assembly, skip
-				return;
+				return false;
 			}
 
-			compilation.RegisterSyntaxNodeAction( AnalyzeField, SyntaxKind.FieldDeclaration );
-			compilation.RegisterSyntaxNodeAction( AnalyzeProperty, SyntaxKind.PropertyDeclaration );
+			return true;
 		}
 
 		private void AnalyzeField( SyntaxNodeAnalysisContext context ) {
