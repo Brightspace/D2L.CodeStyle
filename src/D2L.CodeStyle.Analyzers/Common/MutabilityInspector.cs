@@ -19,16 +19,21 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		/// A list of known non-valuetype immutable types
 		/// </summary>
 		private static readonly ImmutableHashSet<string> KnownImmutableTypes = new HashSet<string> {
+			"Newtonsoft.Json.JsonSerializer",
 			"System.ComponentModel.TypeConverter",
 			"System.DateTime",
 			"System.Guid",
+			"System.IEqualityComparer",
 			"System.Lazy",
 			"System.Reflection.MethodInfo",
+			"System.Reflection.PropertyInfo",
 			"System.Text.RegularExpressions.Regex",
 			"System.TimeSpan",
 			"System.Type",
 			"System.Uri",
 			"System.String",
+			"System.StringComparer",
+			"System.Xml.Serialization.XmlSerializer"
 		}.ToImmutableHashSet();
 
 		private static readonly ImmutableHashSet<string> ImmutableCollectionTypes = new HashSet<string> {
