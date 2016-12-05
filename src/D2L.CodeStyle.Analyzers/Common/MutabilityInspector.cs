@@ -23,7 +23,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			"System.ComponentModel.TypeConverter",
 			"System.DateTime",
 			"System.Guid",
-			"System.IEqualityComparer",
 			"System.Lazy",
 			"System.Reflection.MethodInfo",
 			"System.Reflection.PropertyInfo",
