@@ -9,6 +9,7 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 
 		public readonly string ProjectName;
 		public readonly string FilePath;
+		public readonly int LineNumber;
 		public readonly string FieldOrPropName;
 		public readonly string FieldOrPropType;
 		public readonly string Cause;
@@ -16,6 +17,7 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 		public AnalyzedStatic( string projectName, Diagnostic diag ) {
 			ProjectName = projectName;
 			FilePath = diag.Location.SourceTree.FilePath;
+			LineNumber = diag.Location.GetMappedLineSpan().Span.Start.Line;
 			FieldOrPropName = diag.Properties[UnsafeStaticsAnalyzer.PROPERTY_FIELDORPROPNAME];
 			FieldOrPropType = diag.Properties[UnsafeStaticsAnalyzer.PROPERTY_OFFENDINGTYPE];
 
