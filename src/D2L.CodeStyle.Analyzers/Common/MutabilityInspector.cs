@@ -24,7 +24,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			"System.DateTime",
 			"System.Guid",
 			"System.Lazy",
-			"System.Net.IPAddress",
 			"System.Reflection.ConstructorInfo",
 			"System.Reflection.FieldInfo",
 			"System.Reflection.MemberInfo",
