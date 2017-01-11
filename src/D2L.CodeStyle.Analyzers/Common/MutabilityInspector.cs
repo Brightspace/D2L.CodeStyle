@@ -11,6 +11,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 	public enum MutabilityInspectionFlags {
 		Default = 0,
 		AllowUnsealed = 1,
+		IgnoreImmutabilityAttribute = 2,
 	}
 
 	public sealed class MutabilityInspector {
@@ -83,7 +84,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return false;
 			}
 
-			if( IsTypeMarkedImmutable( type ) ) {
+			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && IsTypeMarkedImmutable( type ) ) {
 				return false;
 			}
 
