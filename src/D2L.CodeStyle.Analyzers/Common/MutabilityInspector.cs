@@ -17,7 +17,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 	public sealed class MutabilityInspector {
 
 		/// <summary>
-		/// A list of known non-valuetype immutable types
+		/// A list of known immutable types
 		/// </summary>
 		private static readonly ImmutableHashSet<string> KnownImmutableTypes = new HashSet<string> {
 			"Newtonsoft.Json.JsonSerializer",
@@ -35,10 +35,20 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			"System.Type",
 			"System.Uri",
 			"System.String",
-			"System.StringComparer",
 			"System.Xml.Serialization.XmlSerializer"
 		}.ToImmutableHashSet();
 
+		/// <summary>
+		/// A list of marked immutable types owned externally.
+		/// </summary>
+		private static readonly ImmutableHashSet<string> MarkedImmutableTypes = new HashSet<string> {
+			"System.StringComparer"
+		}.ToImmutableHashSet();
+
+
+		/// <summary>
+		/// A list of immutable collections types (i.e., safe collection types)
+		/// </summary>
 		private static readonly ImmutableHashSet<string> ImmutableCollectionTypes = new HashSet<string> {
 			"System.Collections.Immutable.ImmutableArray",
 			"System.Collections.Immutable.ImmutableDictionary",
@@ -184,6 +194,9 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}
 
 		public bool IsTypeMarkedImmutable( ITypeSymbol symbol ) {
+			if( MarkedImmutableTypes.Contains( symbol.GetFullTypeName() ) ) {
+				return true;
+			}
 			if( symbol.GetAttributes().Any( a => a.AttributeClass.Name == "Immutable" ) ) {
 				return true;
 			}

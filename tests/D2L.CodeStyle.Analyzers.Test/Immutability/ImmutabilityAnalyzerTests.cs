@@ -6,50 +6,104 @@ using NUnit.Framework;
 
 namespace D2L.CodeStyle.Analyzers {
 
-    internal sealed class ImmutabilityAnalyzerTests : DiagnosticVerifier {
-        protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer() {
-            return new ImmutabilityAnalyzer();
-        }
+	internal sealed class ImmutabilityAnalyzerTests : DiagnosticVerifier {
+		protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer() {
+			return new ImmutabilityAnalyzer();
+		}
 
-        [Test]
-        public void EmptyDocument_NoDiag() {
-            const string test = @"";
+		[Test]
+		public void EmptyDocument_NoDiag() {
+			const string test = @"";
 
-            VerifyCSharpDiagnostic( test );
-        }
+			VerifyCSharpDiagnostic( test );
+		}
 
-        [Test]
-        public void DocumentWithImmutableClass_ClassIsNotImmutable_Diag() {
-            const string test = @"
-    using System;
+		[Test]
+		public void DocumentWithStatic_ClassIsNotImmutableButIsMarkedImmutable_Diag() {
+			const string test = @"
+	using System;
 
-    namespace test {
-        [Immutable]
-        class Test {
+	namespace test {
+		[Immutable]
+		class Test {
 
-            public DateTime bad = DateTime.Now;
-            public DateTime badToo { get; set; }
+			public DateTime bad = DateTime.Now;
+			public DateTime badToo { get; set; }
 
-        }
-    }";
-            AssertSingleDiagnostic( test, 5, 9 );
-        }
+		}
+	}";
+			AssertSingleDiagnostic( test, 5, 3 );
+		}
 
-        private void AssertNoDiagnostic( string file ) {
-            VerifyCSharpDiagnostic( file );
-        }
 
-        private void AssertSingleDiagnostic( string file, int line, int column ) {
-            var expected = new DiagnosticResult {
-                Id = ImmutabilityAnalyzer.DiagnosticId,
-                Message = ImmutabilityAnalyzer.MessageFormat,
-                Severity = DiagnosticSeverity.Error,
-                Locations = new[] {
-                    new DiagnosticResultLocation( "Test0.cs", line, column )
-                }
-            };
+		[Test]
+		public void DocumentWithStatic_ClassIsNotImmutableButImplementsImmutableInterface_Diag() {
+			const string test = @"
+	using System;
 
-            VerifyCSharpDiagnostic( file, expected );
-        }
-    }
+	namespace test {
+		[Immutable] interface IFoo {} 
+		class Test : IFoo {
+
+			public DateTime bad = DateTime.Now;
+			public DateTime badToo { get; set; }
+
+		}
+	}";
+			AssertSingleDiagnostic( test, 6, 3 );
+		}
+
+		[Test]
+		public void DocumentWithStatic_ClassIsNotImmutableButImplementsImmutableInterfaceInChain_Diag() {
+			const string test = @"
+	using System;
+
+	namespace test {
+		[Immutable] interface IFooBase {} 
+		interface IFoo : IFooBase {} 
+		class Test : IFoo {
+
+			public DateTime bad = DateTime.Now;
+			public DateTime badToo { get; set; }
+
+		}
+	}";
+			AssertSingleDiagnostic( test, 7, 3 );
+		}
+
+		[Test]
+		public void DocumentWithStatic_ClassIsImmutableAndImplementsImmutableInterface_NoDiag() {
+			const string test = @"
+	using System;
+
+	namespace test {
+		[Immutable] interface IFooBase {} 
+		interface IFoo : IFooBase {} 
+		class Test : IFoo {
+
+			public readonly DateTime bad = DateTime.Now;
+			public DateTime badToo { get; }
+
+		}
+	}";
+			AssertNoDiagnostic( test );
+		}
+
+		private void AssertNoDiagnostic( string file ) {
+			VerifyCSharpDiagnostic( file );
+		}
+
+		private void AssertSingleDiagnostic( string file, int line, int column ) {
+			var expected = new DiagnosticResult {
+				Id = ImmutabilityAnalyzer.DiagnosticId,
+				Message = ImmutabilityAnalyzer.MessageFormat,
+				Severity = DiagnosticSeverity.Error,
+				Locations = new[] {
+					new DiagnosticResultLocation( "Test0.cs", line, column )
+				}
+			};
+
+			VerifyCSharpDiagnostic( file, expected );
+		}
+	}
 }

@@ -62,7 +62,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
-			if( m_immutabilityInspector.IsTypeMutable( symbol, MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) ) {
+
+			var flags = MutabilityInspectionFlags.Default 
+				| MutabilityInspectionFlags.AllowUnsealed // `symbol` is the concrete type
+				| MutabilityInspectionFlags.IgnoreImmutabilityAttribute; // we're _validating_ the attribute
+
+			if( m_immutabilityInspector.IsTypeMutable( symbol, flags ) ) {
 				var diagnostic = Diagnostic.Create( Rule, root.GetLocation() );
 				context.ReportDiagnostic( diagnostic );
 			}
