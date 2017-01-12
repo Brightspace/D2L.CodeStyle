@@ -38,7 +38,7 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			return 0;
 		}
 
-		async Task<AnalyzedResults> AnalyzeProjects() {
+		private async Task<AnalyzedResults> AnalyzeProjects() {
 			var projectFiles = Directory.EnumerateFiles( _rootDir, "*.csproj", SearchOption.AllDirectories );
 
 			var tasks = projectFiles.Select( AnalyzeProject );
@@ -52,7 +52,7 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			return finalResult;
 		}
 
-		void WriteOutputFile( AnalyzedResults results ) {
+		private void WriteOutputFile( AnalyzedResults results ) {
 			var serializer = JsonSerializer.Create( new JsonSerializerSettings {
 				Formatting = Formatting.Indented
 			} );
@@ -62,7 +62,7 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			}
 		}
 
-		async Task<AnalyzedStatic[]> AnalyzeProject( string projectFile ) {
+		private async Task<AnalyzedStatic[]> AnalyzeProject( string projectFile ) {
 			if( ShouldIgnoreProject( projectFile)) {
 				Console.WriteLine( $"...skipping {projectFile}" );
 				return new AnalyzedStatic[0];
@@ -93,7 +93,7 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			}
 		}
 
-		static bool ProjectAlreadyAnalyzed( Project proj ) {
+		private static bool ProjectAlreadyAnalyzed( Project proj ) {
 			var analyzers = proj.AnalyzerReferences
 				.SelectMany( r => r.GetAnalyzers( LanguageNames.CSharp ) );
 
@@ -105,9 +105,11 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			return false;
 		}
 
-		static bool ShouldIgnoreProject( string csProjFile ) {
-			if( s_assemblyPatternsToIgnore.Any( p => p.IsMatch( csProjFile) ) ) {
-				return true;
+		private static bool ShouldIgnoreProject( string csProjFile ) {
+			foreach( var pattern in s_assemblyPatternsToIgnore ) {
+				if( pattern.IsMatch( csProjFile ) ) {
+					return true;
+				}
 			}
 
 			return false;
