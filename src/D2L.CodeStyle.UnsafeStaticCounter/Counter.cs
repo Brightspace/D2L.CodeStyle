@@ -2,6 +2,7 @@
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using D2L.CodeStyle.Analyzers.UnsafeStatics;
@@ -13,6 +14,10 @@ using Newtonsoft.Json;
 namespace D2L.CodeStyle.UnsafeStaticCounter {
 
 	internal sealed class Counter {
+
+		private static readonly ImmutableHashSet<Regex> s_assemblyPatternsToIgnore = ImmutableHashSet.Create(
+			new Regex( @"D2L\.Automation\.UI.*", RegexOptions.Compiled )
+		);
 
 		private readonly string _rootDir;
 		private readonly string _outputFile;
@@ -58,6 +63,11 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 		}
 
 		async Task<AnalyzedStatic[]> AnalyzeProject( string projectFile ) {
+			if( ShouldIgnoreProject( projectFile)) {
+				Console.WriteLine( $"...skipping {projectFile}" );
+				return new AnalyzedStatic[0];
+			}
+
 			try {
 				_semaphore.Wait();
 				using( var workspace = MSBuildWorkspace.Create() ) {
@@ -89,6 +99,14 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 
 			// we use the name because UnsafeStaticsAnalyzer is not assembly neutral, so `is` might not work
 			if( analyzers.Any( a => a.GetType().Name == nameof( UnsafeStaticsAnalyzer ) ) ) {
+				return true;
+			}
+
+			return false;
+		}
+
+		static bool ShouldIgnoreProject( string csProjFile ) {
+			if( s_assemblyPatternsToIgnore.Any( p => p.IsMatch( csProjFile) ) ) {
 				return true;
 			}
 
