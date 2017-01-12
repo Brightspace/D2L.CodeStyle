@@ -729,6 +729,28 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			AssertNoDiagnostic( test );
 		}
 
+		[Ignore( "This is an unlikely-to-be-used hole in the analyzer that we need to fix regardless" )]
+		public void DocumentWithStaticField_TypeIsUnsafeInitializerIsImplicitConversionFromSafeValue_Diag() {
+			const string test = @"
+	using System;
+	namespace test {
+		class Tests {
+			sealed class Foo {
+				public Foo(int xx) { x = xx; }
+
+				public static implicit operator Foo(int x) {
+					return new Foo(x);
+				}
+
+				public int x; // makes Foo mutable
+			}
+
+			private static readonly Foo foo = 3;
+		}
+	}";
+			AssertSingleDiagnostic( test, 15, 32, "foo", "test.Tests.Foo" );
+		}
+
 		private void AssertNoDiagnostic( string file ) {
 			VerifyCSharpDiagnostic( file );
 		}
