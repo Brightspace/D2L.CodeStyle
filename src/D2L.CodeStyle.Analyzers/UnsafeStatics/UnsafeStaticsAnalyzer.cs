@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Common;
@@ -176,11 +177,11 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			if( exp != null ) {
 				var typeInfo = context.SemanticModel.GetTypeInfo( exp );
 
-				if( typeInfo.Type is IErrorTypeSymbol ) {
-					return;
+				// Fall back to the declaration type if we can't get a type for
+				// the initializer
+				if( typeInfo.Type != null && !( typeInfo.Type is IErrorTypeSymbol ) ) {
+					type = typeInfo.Type;
 				}
-
-				type = typeInfo.Type;
 			}
 
 			// When we know the concrete type as in "new T()" we don't have to
