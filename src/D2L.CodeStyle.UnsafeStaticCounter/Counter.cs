@@ -2,6 +2,7 @@
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using D2L.CodeStyle.Analyzers.UnsafeStatics;
@@ -13,6 +14,10 @@ using Newtonsoft.Json;
 namespace D2L.CodeStyle.UnsafeStaticCounter {
 
 	internal sealed class Counter {
+
+		private static readonly ImmutableHashSet<Regex> s_assemblyPatternsToIgnore = ImmutableHashSet.Create(
+			new Regex( @"D2L\.Automation\.UI.*", RegexOptions.Compiled )
+		);
 
 		private readonly string _rootDir;
 		private readonly string _outputFile;
@@ -33,7 +38,7 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			return 0;
 		}
 
-		async Task<AnalyzedResults> AnalyzeProjects() {
+		private async Task<AnalyzedResults> AnalyzeProjects() {
 			var projectFiles = Directory.EnumerateFiles( _rootDir, "*.csproj", SearchOption.AllDirectories );
 
 			var tasks = projectFiles.Select( AnalyzeProject );
@@ -47,7 +52,7 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			return finalResult;
 		}
 
-		void WriteOutputFile( AnalyzedResults results ) {
+		private void WriteOutputFile( AnalyzedResults results ) {
 			var serializer = JsonSerializer.Create( new JsonSerializerSettings {
 				Formatting = Formatting.Indented
 			} );
@@ -57,7 +62,12 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			}
 		}
 
-		async Task<AnalyzedStatic[]> AnalyzeProject( string projectFile ) {
+		private async Task<AnalyzedStatic[]> AnalyzeProject( string projectFile ) {
+			if( ShouldIgnoreProject( projectFile)) {
+				Console.WriteLine( $"...skipping {projectFile}" );
+				return new AnalyzedStatic[0];
+			}
+
 			try {
 				_semaphore.Wait();
 				using( var workspace = MSBuildWorkspace.Create() ) {
@@ -83,13 +93,23 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			}
 		}
 
-		static bool ProjectAlreadyAnalyzed( Project proj ) {
+		private static bool ProjectAlreadyAnalyzed( Project proj ) {
 			var analyzers = proj.AnalyzerReferences
 				.SelectMany( r => r.GetAnalyzers( LanguageNames.CSharp ) );
 
 			// we use the name because UnsafeStaticsAnalyzer is not assembly neutral, so `is` might not work
 			if( analyzers.Any( a => a.GetType().Name == nameof( UnsafeStaticsAnalyzer ) ) ) {
 				return true;
+			}
+
+			return false;
+		}
+
+		private static bool ShouldIgnoreProject( string csProjFile ) {
+			foreach( var pattern in s_assemblyPatternsToIgnore ) {
+				if( pattern.IsMatch( csProjFile ) ) {
+					return true;
+				}
 			}
 
 			return false;
