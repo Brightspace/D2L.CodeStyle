@@ -169,11 +169,23 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				return;
 			}
 
-			// try to use the concrete type if we have it (via a constructor)
 			var flags = MutabilityInspectionFlags.Default;
-			var constructedType = GetConstructedType( context, exp );
-			if( constructedType != null ) {
-				type = constructedType;
+
+			// Always prefer the type from the initializer if it exists because
+			// it may be more specific.
+			if( exp != null ) {
+				var typeInfo = context.SemanticModel.GetTypeInfo( exp );
+
+				if( typeInfo.Type is IErrorTypeSymbol ) {
+					return;
+				}
+
+				type = typeInfo.Type;
+			}
+
+			// When we know the concrete type as in "new T()" we don't have to
+			// be paranoid about mutable derived classes
+			if ( exp is ObjectCreationExpressionSyntax ) {
 				flags |= MutabilityInspectionFlags.AllowUnsealed;
 			}
 
@@ -182,28 +194,6 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				context.ReportDiagnostic( diagnostic );
 			}
 		}
-
-		private ITypeSymbol GetConstructedType(
-			SyntaxNodeAnalysisContext context,
-			ExpressionSyntax exp
-		) {
-
-			if( exp == null ) {
-				return null;
-			}
-
-			var initializerSymbol = context.SemanticModel.GetSymbolInfo( exp ).Symbol as IMethodSymbol;
-			if( initializerSymbol == null ) {
-				return null;
-			}
-
-			if( initializerSymbol.MethodKind != MethodKind.Constructor ) {
-				return null;
-			}
-
-			return initializerSymbol.ContainingType;
-		}
-
 
 		private Diagnostic CreateDiagnostic( Location location, string fieldOrPropName, string offendingType ) {
 			var builder = ImmutableDictionary.CreateBuilder<string, string>();

@@ -191,9 +191,11 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
         }
     }";
 
-            AssertSingleDiagnostic( test, 11, 40, "bad", "test.Tests.Foo" );
-        }
-
+			// Although a concrete instance of Foo is safe, we don't look
+			// inside GetFoo to see that its returning a concrete Foo and
+			// not some derived class.
+			AssertSingleDiagnostic( test, 11, 40, "bad", "test.Tests.Foo" );
+		}
 
         [Test]
         public void DocumentWithStaticField_ReadonlyNotSealedImmutableKnownConcreteType_NoDiag() {
@@ -670,6 +672,61 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 	}";
 
 			AssertSingleDiagnostic( test, 7, 41, "foo", "test.Tests.Foo" );
+		}
+
+		[Test]
+		public void DocumentWithStaticField_ReadonlyUnsafeBaseClassWithNonConstructorInitializerOfUnsealedType_Diag() {
+			const string test = @"
+	using System;
+	namespace test {
+		class Tests {
+			interface IUnsafe { void Magic(); } // could be anythinggggggg
+
+			class Safe : IUnsafe {
+				void IUnsafe.Magic() {} // looks safe to me
+				public static readonly Safe Instance { get; } = new Safe();
+			}
+
+			private readonly static IUnsafe foo = Safe.Instance;
+		}
+	}";
+
+			// Safe isn't sealed
+			AssertSingleDiagnostic( test, 12, 36, "foo", "test.Tests.Safe" );
+		}
+
+		[Test]
+		public void DocumentWithStaticField_ReadonlyUnsafeBaseClassWithNonConstructorInitializerOfSealedType_NoDiag() {
+			const string test = @"
+	using System;
+	namespace test {
+		class Tests {
+			interface IUnsafe { void Magic(); } // could be anythinggggggg
+
+			sealed class Safe : IUnsafe {
+				void IUnsafe.Magic() {} // looks safe to me
+				public static readonly Safe Instance { get; } = new Safe();
+			}
+
+			private readonly static IUnsafe foo = Safe.Instance;
+		}
+	}";
+
+			AssertNoDiagnostic( test );
+		}
+
+		[Test]
+		public void DocumentWithStaticField_ReadonlyUnsafeBaseClassWithSafeInitializer_NoDiag2() {
+			const string test = @"
+	using System;
+	using System.Collections.Generic;
+	namespace test {
+		class Tests {
+			private readonly static IEqualityComparer<string> foo = StringComparer.Ordinal;
+		}
+	}";
+
+			AssertNoDiagnostic( test );
 		}
 
 		private void AssertNoDiagnostic( string file ) {
