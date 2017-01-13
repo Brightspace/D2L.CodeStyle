@@ -19,6 +19,7 @@ namespace D2L.CodeStyle.Analyzers.Test.Verifiers {
         private static readonly MetadataReference SystemCoreReference = MetadataReference.CreateFromFile( typeof( Enumerable ).Assembly.Location );
         private static readonly MetadataReference CSharpSymbolsReference = MetadataReference.CreateFromFile( typeof( CSharpCompilation ).Assembly.Location );
         private static readonly MetadataReference CodeAnalysisReference = MetadataReference.CreateFromFile( typeof( Compilation ).Assembly.Location );
+		private static readonly MetadataReference ImmutableCollectionsReference = MetadataReference.CreateFromFile( typeof( ImmutableArray ).Assembly.Location );
 
         internal static string DefaultFilePathPrefix = "Test";
         internal static string CSharpDefaultFileExt = "cs";
@@ -136,7 +137,8 @@ namespace D2L.CodeStyle.Analyzers.Test.Verifiers {
                 .AddMetadataReference( projectId, CorlibReference )
                 .AddMetadataReference( projectId, SystemCoreReference )
                 .AddMetadataReference( projectId, CSharpSymbolsReference )
-                .AddMetadataReference( projectId, CodeAnalysisReference );
+				.AddMetadataReference( projectId, CodeAnalysisReference )
+                .AddMetadataReference( projectId, ImmutableCollectionsReference );
 
             var additionalReferences = this.GetAdditionalReferences();
             if( additionalReferences != null ) {
