@@ -89,18 +89,16 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 					var compilation = await proj.GetCompilationAsync();
 					var compilationWithAnalzer = compilation.WithAnalyzers( _analyzers );
 
-					var toReturn = new List<AnalyzedStatic>();
-
 					var diags = await compilationWithAnalzer.GetAnalyzerDiagnosticsAsync();
 					foreach( var diag in diags ) {
 						if( diag.Id != UnsafeStaticsAnalyzer.DiagnosticId) {
 							throw new Exception( $"error processing project {proj.Name} ({diag.Location.SourceTree.FilePath}): {diag}" );
 						}
-						var analyzedStatic = new AnalyzedStatic( proj.Name, diag );
-						toReturn.Add( analyzedStatic );
 					}
 
-					return toReturn.ToArray();
+					return diags
+						.Select( d => new AnalyzedStatic( proj.Name, d ) )
+						.ToArray();
 				}
 			} finally {
 				_semaphore.Release();
