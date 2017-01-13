@@ -83,6 +83,11 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
+			if( type is IErrorTypeSymbol  || type == null ) {
+				// type can't be resolved; the project is either not configured correctly, or there's a typo
+				return false;
+			}
+
 			if( type.IsValueType ) {
 				return false;
 			}
