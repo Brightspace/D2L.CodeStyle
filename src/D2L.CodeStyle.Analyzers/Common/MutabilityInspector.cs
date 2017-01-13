@@ -84,8 +84,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			HashSet<ITypeSymbol> typeStack
 		) {
 			if( type is IErrorTypeSymbol  || type == null ) {
-				// type can't be resolved; the project is either not configured correctly, or there's a typo
-				return false;
+				throw new Exception( $"Type '{type}' cannot be resolved. Please ensure all dependencies " 
+					+ "are referenced, including transitive dependencies." );
 			}
 
 			if( type.IsValueType ) {
