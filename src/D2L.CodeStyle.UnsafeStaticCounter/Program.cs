@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace D2L.CodeStyle.UnsafeStaticCounter {
@@ -33,6 +34,7 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			string path = null;
 			int concurrency = DEFAULT_MAX_CONCURRENCY;
 			string outputFile = "statics.json";
+			string binDir = null;
 
 			var enumerator = args.GetEnumerator();
 			while( enumerator.MoveNext() ) {
@@ -49,22 +51,33 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 						enumerator.MoveNext();
 						outputFile = enumerator.Current;
 						break;
+					case "-b":
+						enumerator.MoveNext();
+						binDir = enumerator.Current;
+						break;
 					default:
 						throw new InvalidOperationException( $"unknown option: {enumerator.Current}" );
 				}
 			}
 
 			if( string.IsNullOrWhiteSpace( path ) ) {
-				throw new InvalidOperationException( "usage: UnsafeStaticsCounter.exe -d {rootDir} [-n {concurrency} -o {outputFile}]" );
+				throw new InvalidOperationException( "usage: UnsafeStaticsCounter.exe -d {rootDir} -b {binDir} [-n {concurrency} -o {outputFile}]" );
 			}
+			path = Path.GetFullPath( path );
+
+			if( string.IsNullOrWhiteSpace( binDir ) ) {
+				throw new InvalidOperationException( "usage: UnsafeStaticsCounter.exe -d {rootDir} -b {binDir} [-n {concurrency} -o {outputFile}]" );
+			}
+			binDir = Path.GetFullPath( binDir );
 
 			Console.WriteLine( "Using options:" );
 			Console.WriteLine( $"\tPath = {path}" );
 			Console.WriteLine( $"\tMaxConcurrency = {concurrency}" );
 			Console.WriteLine( $"\tOutputFile = {outputFile}" );
+			Console.WriteLine( $"\tBinDir = {binDir}" );
 			Console.WriteLine();
 
-			return new Options( path, concurrency, outputFile );
+			return new Options( path, concurrency, outputFile, binDir );
 		}
 	}
 
@@ -72,10 +85,12 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 		public readonly string RootDir;
 		public readonly int MaxConcurrency;
 		public readonly string OutputFile;
-		public Options( string rootDir, int maxConcurrency, string outputFile ) {
+		public readonly string BinDir;
+		public Options( string rootDir, int maxConcurrency, string outputFile, string binDir ) {
 			RootDir = rootDir;
 			MaxConcurrency = maxConcurrency;
 			OutputFile = outputFile;
+			BinDir = binDir;
 		}
 	}
 
