@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
@@ -23,12 +24,17 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 		private readonly string _outputFile;
 		private readonly ImmutableArray<DiagnosticAnalyzer> _analyzers;
 		private readonly SemaphoreSlim _semaphore;
+		private readonly ImmutableDictionary<string, string> _msbuildOptions;
 
 		public Counter( Options options ) {
 			_analyzers = ImmutableArray.Create<DiagnosticAnalyzer>( new UnsafeStaticsAnalyzer() );
 			_semaphore = new SemaphoreSlim( options.MaxConcurrency );
 			_rootDir = options.RootDir;
 			_outputFile = options.OutputFile;
+			_msbuildOptions = new Dictionary<string, string> {
+				{ "ReferencePath", options.BinDir },
+				{ "OutputPath", options.BinDir }
+			}.ToImmutableDictionary();
 		}
 
 		internal async Task<int> Run() {
@@ -70,7 +76,7 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 
 			try {
 				_semaphore.Wait();
-				using( var workspace = MSBuildWorkspace.Create() ) {
+				using( var workspace = MSBuildWorkspace.Create( _msbuildOptions ) ) {
 					var proj = await workspace.OpenProjectAsync( projectFile );
 					Console.WriteLine( $"Analyzing: {proj.FilePath}" );
 
@@ -84,6 +90,12 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 					var compilationWithAnalzer = compilation.WithAnalyzers( _analyzers );
 
 					var diags = await compilationWithAnalzer.GetAnalyzerDiagnosticsAsync();
+					foreach( var diag in diags ) {
+						if( diag.Id != UnsafeStaticsAnalyzer.DiagnosticId) {
+							throw new Exception( $"error processing project {proj.Name} ({diag.Location.SourceTree.FilePath}): {diag}" );
+						}
+					}
+
 					return diags
 						.Select( d => new AnalyzedStatic( proj.Name, d ) )
 						.ToArray();

@@ -83,6 +83,11 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
+			if( type is IErrorTypeSymbol  || type == null ) {
+				throw new Exception( $"Type '{type}' cannot be resolved. Please ensure all dependencies " 
+					+ "are referenced, including transitive dependencies." );
+			}
+
 			if( type.IsValueType ) {
 				return false;
 			}
