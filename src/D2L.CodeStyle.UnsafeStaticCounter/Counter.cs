@@ -69,7 +69,7 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 		}
 
 		private async Task<AnalyzedStatic[]> AnalyzeProject( string projectFile ) {
-			if( ShouldIgnoreProject( projectFile)) {
+			if( ShouldIgnoreProject( projectFile ) ) {
 				Console.WriteLine( $"...skipping {projectFile}" );
 				return new AnalyzedStatic[0];
 			}
@@ -81,7 +81,7 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 					Console.WriteLine( $"Analyzing: {proj.FilePath}" );
 
 					// ignore projects with analyzer already included -- there are no unsafe statics by definition
-					if( ProjectAlreadyAnalyzed( proj)) {
+					if( ProjectAlreadyAnalyzed( proj ) ) {
 						Console.WriteLine( $"...skipping {proj.FilePath}" );
 						return new AnalyzedStatic[0];
 					}
@@ -91,8 +91,9 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 
 					var diags = await compilationWithAnalzer.GetAnalyzerDiagnosticsAsync();
 					foreach( var diag in diags ) {
-						if( diag.Id != UnsafeStaticsAnalyzer.DiagnosticId) {
-							throw new Exception( $"error processing project {proj.Name} ({diag.Location.SourceTree.FilePath}): {diag}" );
+						if( diag.Id != UnsafeStaticsAnalyzer.DiagnosticId ) {
+							var location = diag.Location.SourceTree?.FilePath ?? "no location";
+							throw new Exception( $"error processing project {proj.Name} ({location}): {diag}" );
 						}
 					}
 
@@ -100,6 +101,8 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 						.Select( d => new AnalyzedStatic( proj.Name, d ) )
 						.ToArray();
 				}
+			} catch( Exception e ) {
+				throw new Exception( $"Exception analyzing project {projectFile}", e );
 			} finally {
 				_semaphore.Release();
 			}
