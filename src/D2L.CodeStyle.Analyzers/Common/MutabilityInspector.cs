@@ -48,7 +48,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		/// <summary>
 		/// A list of immutable collections types (i.e., safe collection types)
 		/// </summary>
-		private static readonly ImmutableHashSet<string> ImmutableCollectionTypes = new HashSet<string> {
+		private static readonly ImmutableHashSet<string> ImmutableContainerTypes = new HashSet<string> {
 			"D2L.LP.Utilities.DeferredInitializer",
 			"System.Lazy",
 			"System.Collections.Immutable.ImmutableArray",
@@ -115,7 +115,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			typeStack.Add( type );
 			try {
 
-				if( ImmutableCollectionTypes.Contains( type.GetFullTypeName() ) ) {
+				if( ImmutableContainerTypes.Contains( type.GetFullTypeName() ) ) {
 					var namedType = type as INamedTypeSymbol;
 					bool isMutable = namedType.TypeArguments.Any( t => IsTypeMutableRecursive( t, MutabilityInspectionFlags.Default, typeStack ) );
 					return isMutable;
