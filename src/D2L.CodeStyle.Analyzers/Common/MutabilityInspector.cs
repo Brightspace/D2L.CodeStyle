@@ -88,16 +88,12 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					+ "are referenced, including transitive dependencies." );
 			}
 
-			if( type.IsValueType ) {
+			if( IsTypeKnownImmutable( type ) ) {
 				return false;
 			}
 
 			if( type.TypeKind == TypeKind.Array ) {
 				return true;
-			}
-
-			if( KnownImmutableTypes.Contains( type.GetFullTypeName() ) ) {
-				return false;
 			}
 
 			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && IsTypeMarkedImmutable( type ) ) {
@@ -197,6 +193,18 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					// we've got a member (event, etc.) that we can't currently be smart about, so fail
 					return true;
 			}
+		}
+
+		private bool IsTypeKnownImmutable( ITypeSymbol type ) {
+			if( type.IsPrimitive() ) {
+				return true;
+			}
+
+			if( KnownImmutableTypes.Contains( type.GetFullTypeName() ) ) {
+				return true;
+			}
+
+			return false;
 		}
 
 		public bool IsTypeMarkedImmutable( ITypeSymbol symbol ) {
