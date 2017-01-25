@@ -24,6 +24,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			"System.ComponentModel.TypeConverter",
 			"System.DateTime",
 			"System.Guid",
+			"System.Lazy",
 			"System.Reflection.ConstructorInfo",
 			"System.Reflection.FieldInfo",
 			"System.Reflection.MemberInfo",
@@ -50,7 +51,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		/// </summary>
 		private static readonly ImmutableHashSet<string> ImmutableContainerTypes = new HashSet<string> {
 			"D2L.LP.Utilities.DeferredInitializer",
-			"System.Lazy",
 			"System.Collections.Immutable.ImmutableArray",
 			"System.Collections.Immutable.ImmutableDictionary",
 			"System.Collections.Immutable.ImmutableHashSet",
