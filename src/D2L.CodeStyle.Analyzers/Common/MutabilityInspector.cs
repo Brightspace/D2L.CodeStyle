@@ -51,6 +51,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		/// A list of immutable collections types (i.e., safe collection types)
 		/// </summary>
 		private static readonly ImmutableHashSet<string> ImmutableContainerTypes = new HashSet<string> {
+			"System.Nullable",
 			"D2L.LP.Utilities.DeferredInitializer",
 			"System.Collections.Immutable.ImmutableArray",
 			"System.Collections.Immutable.ImmutableDictionary",
