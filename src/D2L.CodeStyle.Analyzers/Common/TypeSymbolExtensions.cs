@@ -37,12 +37,14 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		);
 
 		private static readonly SymbolDisplayFormat FullTypeDisplayFormat = new SymbolDisplayFormat(
-			typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
+			typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+			miscellaneousOptions: SymbolDisplayMiscellaneousOptions.ExpandNullable
 		);
 
 		private static readonly SymbolDisplayFormat FullTypeWithGenericsDisplayFormat = new SymbolDisplayFormat( 
 			typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces, 
-			genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters 
+			genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters ,
+			miscellaneousOptions: SymbolDisplayMiscellaneousOptions.ExpandNullable
 		);
 
 		public static string GetFullTypeName( this ITypeSymbol symbol ) {

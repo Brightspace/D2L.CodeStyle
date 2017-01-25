@@ -1,4 +1,6 @@
-﻿using NUnit.Framework;
+﻿using System.Linq;
+using Microsoft.CodeAnalysis;
+using NUnit.Framework;
 using static D2L.CodeStyle.Analyzers.Common.RoslynSymbolFactory;
 
 namespace D2L.CodeStyle.Analyzers.Common {
@@ -69,6 +71,28 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var type = Field( "uint foo" ).Type;
 
 			Assert.IsFalse( m_inspector.IsTypeMutable( type ) );
+		}
+
+		[Test]
+		public void IsTypeMutable_NullablePrimitiveType_False() {
+			var type = Field( "uint? foo" ).Type;
+
+			Assert.IsFalse( m_inspector.IsTypeMutable( type ) );
+		}
+
+		[Test]
+		public void IsTypeMutable_NullableNonPrimitiveType_True() {
+			var type = Type( @"
+				class Test {
+					struct Hello { object foo; }
+					Hello? nullable;
+				}" 
+			);
+			var field = type.GetMembers().FirstOrDefault( m => m is IFieldSymbol );
+			Assert.IsNotNull( field );
+			type = ( field as IFieldSymbol ).Type;
+
+			Assert.IsTrue( m_inspector.IsTypeMutable( type ) );
 		}
 
 		[Test]
