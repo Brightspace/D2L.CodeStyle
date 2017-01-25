@@ -65,8 +65,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}
 
 		[Test]
-		public void IsTypeMutable_ValueType_False() {
-			var type = Type( "struct random { string hello; }" );
+		public void IsTypeMutable_PrimitiveType_False() {
+			var type = Field( "uint foo" ).Type;
 
 			Assert.IsFalse( m_inspector.IsTypeMutable( type ) );
 		}
