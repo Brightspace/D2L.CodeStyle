@@ -47,11 +47,11 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			"System.StringComparer"
 		}.ToImmutableHashSet();
 
-
 		/// <summary>
 		/// A list of immutable collections types (i.e., safe collection types)
 		/// </summary>
-		private static readonly ImmutableHashSet<string> ImmutableCollectionTypes = new HashSet<string> {
+		private static readonly ImmutableHashSet<string> ImmutableContainerTypes = new HashSet<string> {
+			"D2L.LP.Utilities.DeferredInitializer",
 			"System.Collections.Immutable.ImmutableArray",
 			"System.Collections.Immutable.ImmutableDictionary",
 			"System.Collections.Immutable.ImmutableHashSet",
@@ -116,7 +116,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			typeStack.Add( type );
 			try {
 
-				if( ImmutableCollectionTypes.Contains( type.GetFullTypeName() ) ) {
+				if( ImmutableContainerTypes.Contains( type.GetFullTypeName() ) ) {
 					var namedType = type as INamedTypeSymbol;
 					bool isMutable = namedType.TypeArguments.Any( t => IsTypeMutableRecursive( t, MutabilityInspectionFlags.Default, typeStack ) );
 					return isMutable;
