@@ -26,36 +26,33 @@ namespace D2L.CodeStyle.TestAnalyzers.ExpectedException {
 			isEnabledByDefault: true,
 			description: Description
 		);
-		
-		public override void Initialize(AnalysisContext context)
-		{
+
+		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( Rule );
+
+		public override void Initialize( AnalysisContext context ) {
 			context.RegisterSyntaxNodeAction(
 				AnalyzeSyntaxNode,
 				SyntaxKind.AttributeList
 			);
 		}
-
-		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( Rule );
-
+		
 		private void AnalyzeSyntaxNode( SyntaxNodeAnalysisContext context ) {
 			var root = context.Node as AttributeListSyntax;
 			if( root == null ) {
 				return;
 			}
-			
+
 			bool isExpectedException = false;
 			Location location = root.GetLocation();
 
-			foreach (var attribute in root.Attributes)
-			{
+			foreach( var attribute in root.Attributes ) {
 				if( attribute.Name.ToString().Equals( "ExpectedException" ) ) {
 					location = attribute.GetLocation();
 					isExpectedException = true;
 					break;
 				} else if( attribute.Name.ToString().Equals( "TestCase" ) ) {
-					foreach (var argument in attribute.ArgumentList.Arguments)
-					{
-						if( argument.NameEquals!=null && argument.NameEquals.Name.ToString().Equals( "ExpectedException" ) ) {
+					foreach( var argument in attribute.ArgumentList.Arguments ) {
+						if( argument.NameEquals != null && argument.NameEquals.Name.ToString().Equals( "ExpectedException" ) ) {
 							location = argument.GetLocation();
 							isExpectedException = true;
 							break;

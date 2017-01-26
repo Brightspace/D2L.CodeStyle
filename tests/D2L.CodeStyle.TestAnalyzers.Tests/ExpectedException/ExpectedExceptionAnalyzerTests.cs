@@ -151,9 +151,9 @@ namespace D2L.CodeStyle.TestAnalyzers.ExpectedException {
 			VerifyCSharpDiagnostic( file );
 		}
 
-		private void AssertSingleDiagnostic( string file, int line, int column) {
+		private void AssertSingleDiagnostic( string file, int line, int column ) {
 
-			DiagnosticResult result = CreateDiagnosticResult( line, column);
+			DiagnosticResult result = CreateDiagnosticResult( line, column );
 			VerifyCSharpDiagnostic( file, result );
 		}
 
