@@ -61,6 +61,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			"System.Collections.Immutable.ImmutableSortedDictionary",
 			"System.Collections.Immutable.ImmutableSortedSet",
 			"System.Collections.Immutable.ImmutableStack",
+			"System.Collections.Generic.IReadOnlyCollection",
 			"System.Collections.Generic.IReadOnlyList",
 			"System.Collections.Generic.IReadOnlyDictionary",
 			"System.Collections.Generic.IEnumerable",
