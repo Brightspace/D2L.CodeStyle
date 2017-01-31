@@ -45,7 +45,7 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 		}
 
 		private async Task<AnalyzedResults> AnalyzeProjects() {
-			var projectFiles = Directory.EnumerateFiles( _rootDir, "*.csproj", SearchOption.AllDirectories );
+			var projectFiles = GetProjectPaths();
 
 			var tasks = projectFiles.Select( AnalyzeProject );
 			var results = await Task.WhenAll( tasks );
@@ -56,6 +56,16 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 
 			var finalResult = new AnalyzedResults( combinedResult );
 			return finalResult;
+		}
+
+		private IEnumerable<string> GetProjectPaths() {
+			if( Directory.Exists( _rootDir ) ) {
+				return Directory.EnumerateFiles( _rootDir, "*.csproj", SearchOption.AllDirectories );
+			} else if ( File.Exists( _rootDir ) ) {
+				return File.ReadAllLines( _rootDir );
+			} else {
+				throw new Exception( $"File or directory does not exist: '{_rootDir}'" );
+			}
 		}
 
 		private void WriteOutputFile( AnalyzedResults results ) {

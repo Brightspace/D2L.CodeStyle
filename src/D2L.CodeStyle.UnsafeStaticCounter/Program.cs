@@ -61,12 +61,12 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			}
 
 			if( string.IsNullOrWhiteSpace( path ) ) {
-				throw new InvalidOperationException( "usage: UnsafeStaticsCounter.exe -d {rootDir} -b {binDir} [-n {concurrency} -o {outputFile}]" );
+				throw new InvalidOperationException( "usage: UnsafeStaticsCounter.exe -d {rootDir|projectListFile} -b {binDir} [-n {concurrency} -o {outputFile}]" );
 			}
 			path = Path.GetFullPath( path );
 
 			if( string.IsNullOrWhiteSpace( binDir ) ) {
-				throw new InvalidOperationException( "usage: UnsafeStaticsCounter.exe -d {rootDir} -b {binDir} [-n {concurrency} -o {outputFile}]" );
+				throw new InvalidOperationException( "usage: UnsafeStaticsCounter.exe -d {rootDir|projectListFile} -b {binDir} [-n {concurrency} -o {outputFile}]" );
 			}
 			binDir = Path.GetFullPath( binDir );
 
