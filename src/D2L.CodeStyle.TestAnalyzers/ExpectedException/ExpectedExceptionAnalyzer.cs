@@ -15,7 +15,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ExpectedException {
 
 		private const string Title = "Ensure test does not contain ExpectedException.";
 		private const string Description = "'ExpectedException' should not be used in tests.";
-		internal const string MessageFormat = "'ExpectedException' is not safe for use, no longer available in NUnit 3";
+		internal const string MessageFormat = "Use Assert.Throws rather than 'ExpectedException' for NUnit 3 compatibility";
 
 		private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
 			DiagnosticId,
