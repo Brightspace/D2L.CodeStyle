@@ -24,6 +24,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			"Newtonsoft.Json.JsonSerializer",
 			"System.ComponentModel.TypeConverter",
 			"System.DateTime",
+			"System.Drawing.Size", // only safe because it's a struct with primitive fields
 			"System.Guid",
 			"System.Lazy",
 			"System.Reflection.ConstructorInfo",
