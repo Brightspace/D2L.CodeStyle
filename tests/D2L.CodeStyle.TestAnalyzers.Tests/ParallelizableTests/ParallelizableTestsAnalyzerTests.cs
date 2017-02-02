@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
-using D2L.CodeStyle.Analyzers.Test.Verifiers;
+using D2L.CodeStyle.TestAnalyzers.Test.Verifiers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using NUnit.Framework;
 
-namespace D2L.CodeStyle.Analyzers.ParallelizableTests {
+namespace D2L.CodeStyle.TestAnalyzers.ParallelizableTests {
     [TestFixture]
     public class ParallelizableTestsAnalyzerTests : DiagnosticVerifier {
 

@@ -15,6 +15,7 @@
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -23,6 +24,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -40,7 +42,6 @@
     <Compile Include="Common\TypeSymbolExtensionsTests.cs" />
     <Compile Include="Common\UtilsTests.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzerTests.cs" />
-    <Compile Include="ParallelizableTests\ParallelizableTestsAnalyzerTests.cs" />
     <Compile Include="UnsafeStatics\UnsafeStaticsAnalyzerTests.cs" />
     <Compile Include="Verifiers\DiagnosticResult.cs" />
     <Compile Include="Verifiers\DiagnosticVerifier.cs" />
