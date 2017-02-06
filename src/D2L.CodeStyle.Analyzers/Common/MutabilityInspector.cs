@@ -26,7 +26,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			"System.DateTime",
 			"System.Drawing.Size", // only safe because it's a struct with primitive fields
 			"System.Guid",
-			"System.Lazy",
 			"System.Reflection.ConstructorInfo",
 			"System.Reflection.FieldInfo",
 			"System.Reflection.MemberInfo",
@@ -53,7 +52,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		/// A list of immutable collections types (i.e., safe collection types)
 		/// </summary>
 		private static readonly ImmutableHashSet<string> ImmutableContainerTypes = new HashSet<string> {
-			"System.Nullable",
 			"D2L.LP.Utilities.DeferredInitializer",
 			"System.Collections.Immutable.ImmutableArray",
 			"System.Collections.Immutable.ImmutableDictionary",
@@ -67,6 +65,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			"System.Collections.Generic.IReadOnlyList",
 			"System.Collections.Generic.IReadOnlyDictionary",
 			"System.Collections.Generic.IEnumerable",
+			"System.Lazy",
+			"System.Nullable",
 		}.ToImmutableHashSet();
 
 		/// <summary>
