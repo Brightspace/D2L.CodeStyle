@@ -49,7 +49,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}.ToImmutableHashSet();
 
 		/// <summary>
-		/// A list of immutable collections types (i.e., safe collection types)
+		/// A list of immutable container types (i.e., types that hold other types)
 		/// </summary>
 		private static readonly ImmutableHashSet<string> ImmutableContainerTypes = new HashSet<string> {
 			"D2L.LP.Utilities.DeferredInitializer",
@@ -67,6 +67,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			"System.Collections.Generic.IEnumerable",
 			"System.Lazy",
 			"System.Nullable",
+			"System.Tuple"
 		}.ToImmutableHashSet();
 
 		/// <summary>
