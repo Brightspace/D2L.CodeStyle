@@ -42,7 +42,7 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 			var methods = tree.GetRoot().DescendantNodes().OfType<MethodDeclarationSyntax>().ToImmutableArray();
 
 			// Get All SourceNames of ValueSourceAttributes
-			var memberNames = new List<String>();
+			var memberNames = new HashSet<String>();
 			foreach( var method in methods ) {
 				var parameters = method.ParameterList.Parameters.ToImmutableArray();
 				if( parameters.Length == 0 ) {
