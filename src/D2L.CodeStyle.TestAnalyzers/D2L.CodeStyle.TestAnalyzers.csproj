@@ -93,6 +93,8 @@
     <Compile Include="ExpectedException\ExpectedExceptionAnalyzer.cs" />
     <Compile Include="ParallelizableTests\ParallelizableTestsAnalyzer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SourceAttribute\TestCaseSourceAttributeAnalyzer.cs" />
+    <Compile Include="SourceAttribute\ValueSourceAttributeAnalyzer.cs" />
     <Compile Include="TestCase\TestCaseAnalyzer.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -100,6 +100,8 @@
     <Compile Include="ExpectedException\ExpectedExceptionAnalyzerTests.cs" />
     <Compile Include="ParallelizableTests\ParallelizableTestsAnalyzerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SourceAttribute\TestCaseSourceAttributeAnalyzerTests.cs" />
+    <Compile Include="SourceAttribute\ValueSourceAttributeAnalyzerTests.cs" />
     <Compile Include="TestCase\TestCaseAnalyzerTests.cs" />
     <Compile Include="Verifiers\DiagnosticResult.cs" />
     <Compile Include="Verifiers\DiagnosticVerifier.cs" />
