@@ -45,7 +45,7 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 			private static readonly PluginTuple[] KnownPlugins = new[] { new PluginTuple() };
 
 			[Test]
-			public void test4( [ValueSource( typeof(String), nameof( KnownPlugins ) )] PluginTuple plugin ) {
+			public void test4( [ValueSource( nameof( KnownPlugins ) )] PluginTuple plugin ) {
 
 			}
 
@@ -64,12 +64,12 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 			private readonly PluginTuple[] KnownPlugins = new[] { new PluginTuple() };
 
 			[Test]
-			public void test4( [ValueSource( typeof(String), nameof( KnownPlugins ) )] PluginTuple plugin ) {
+			public void test4( [ValueSource( nameof( KnownPlugins ) )] PluginTuple plugin ) {
 
 			}
 		}
 	}";
-			AssertSingleDiagnostic( test, 6, 4, "field" );
+			AssertSingleDiagnostic( test, 9, 24, "KnownPlugins" );
 		}
 
 		[Test]
@@ -83,13 +83,12 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 				return new String('test');
 			}
 
-
 			public void test1( [ValueSource( 'ValidCases' )] String s ) {
 
 			}
 		}
 	}";
-			AssertSingleDiagnostic( test, 6, 4, "property" );
+			AssertSingleDiagnostic( test, 10, 24, "ValidCases" );
 		}
 
 		[Test]
@@ -109,11 +108,42 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 			}
 		}
 	}";
-			AssertSingleDiagnostic( test, 6, 4, "method (and the called methods by it)" );
+			AssertSingleDiagnostic( test, 11, 24, "GetContractVersions" );
 		}
 
 		[Test]
 		public void DocumentWithValueSource_WithoutStatic_Case4_Diag() {
+			const string test = @"
+	using System;
+
+	namespace test {
+		class Test {
+			static Array GetContractVersions() {
+				return Enum.GetValues( typeof( JsonContractVersion ) );
+			}
+
+			[Test]
+			public void test4( [ValueSource( typeof(Foo), 'GetContractVersions' )] JsonContractVersion contractVersion ) {
+
+			}
+		}
+		public class Foo {
+			public Array GetContractVersions() {
+				return Enum.GetValues( typeof( JsonContractVersion ) );
+			}
+		}
+
+		public class MyFoo {
+			public Array GetContractVersions() {
+				return Enum.GetValues( typeof( JsonContractVersion ) );
+			}
+		}
+	}";
+			AssertSingleDiagnostic( test, 11, 24, "GetContractVersions" );
+		}
+
+		[Test]
+		public void DocumentWithValueSource_WithoutStatic_Case5_Diag() {
 			const string test = @"
 	using System;
 
@@ -133,8 +163,8 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 			}
 		}
 	}";
-			var diag1 = CreateDiagnosticResult( 6, 4, "method (and the called methods by it)" );
-			var diag2 = CreateDiagnosticResult( 10, 4, "method (and the called methods by it)" );
+			var diag1 = CreateDiagnosticResult( 15, 24, "GetContractVersions" );
+			var diag2 = CreateDiagnosticResult( 15, 100, "GetHealthStatusCodes" );
 			VerifyCSharpDiagnostic( test, diag1, diag2 );
 		}
 

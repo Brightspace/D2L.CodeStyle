@@ -30,81 +30,62 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( Rule );
 
 		public override void Initialize( AnalysisContext context ) {
-			context.RegisterSemanticModelAction(
-				AnalyzeSemanticModel
-			);
+			context.RegisterSyntaxNodeAction(
+				AnalyzeSyntaxNode,
+				SyntaxKind.MethodDeclaration
+				);
 		}
 
-		private void AnalyzeSemanticModel( SemanticModelAnalysisContext semanticModelAnalysisContext ) {
-			var tree = semanticModelAnalysisContext.SemanticModel.SyntaxTree;
-			var fields = tree.GetRoot().DescendantNodes().OfType<FieldDeclarationSyntax>().ToImmutableArray();
-			var properties = tree.GetRoot().DescendantNodes().OfType<PropertyDeclarationSyntax>().ToImmutableArray();
-			var methods = tree.GetRoot().DescendantNodes().OfType<MethodDeclarationSyntax>().ToImmutableArray();
+		private void AnalyzeSyntaxNode( SyntaxNodeAnalysisContext context ) {
+			var method = context.Node as MethodDeclarationSyntax;
+			if( method == null ) {
+				return;
+			}
 
-			// Get All SourceNames of ValueSourceAttributes
-			var memberNames = new HashSet<String>();
-			foreach( var method in methods ) {
-				var parameters = method.ParameterList.Parameters.ToImmutableArray();
-				if( parameters.Length == 0 ) {
-					continue;
-				}
+			var parameters = method.ParameterList.Parameters.ToImmutableArray();
+			if( parameters.Length == 0 ) {
+				return;
+			}
 
-				foreach( var parameter in parameters ) {
-					var attributeLists = parameter.AttributeLists.ToImmutableArray();
-					foreach( var attributeList in attributeLists ) {
-						var attributes = attributeList.Attributes.ToImmutableArray();
-						foreach( var attribute in attributes ) {
-							if( attribute.Name.ToString() == "ValueSource" ) {
-								var attributeArguments = attribute.ArgumentList.Arguments.ToImmutableArray();
-								foreach( var attributeArgument in attributeArguments ) {
-									var expression = attributeArgument.Expression;
-									//StringLiteralExpression: "a", invocationExpression: nameof(a)  
-									if( expression is LiteralExpressionSyntax ) {
-										var member = expression.ToString().Replace( "\"", "" ).Replace( "\'", "" ).Trim();
-										memberNames.Add( member );
+			foreach( var parameter in parameters ) {
+				var attributeLists = parameter.AttributeLists.ToImmutableArray();
+				foreach( var attributeList in attributeLists ) {
+					var attributes = attributeList.Attributes.ToImmutableArray();
+					foreach( var attribute in attributes ) {
+						if( attribute.Name.ToString() == "ValueSource" ) {
+							var attributeArguments = attribute.ArgumentList.Arguments.ToImmutableArray();
+							String memberType = null;
+							String memberName = null;
+							ExpressionSyntax nameExpression;
 
-									} else if( expression is InvocationExpressionSyntax ) {
-										var member = expression.ToString().Trim().Substring( 7, expression.ToString().Trim().Length - 8 ).Trim();
-										memberNames.Add( member );
-									}
-								}
+							if( attributeArguments.Length == 2 ) {
+								var typeExpression = attributeArguments[0].Expression as TypeOfExpressionSyntax;
+								memberType = typeExpression.Type.ToString();
+								nameExpression = attributeArguments[1].Expression;
+							} else {
+								var methodSymbol = context.SemanticModel.GetDeclaredSymbol( method );
+								memberType = methodSymbol.ContainingType.MetadataName;
+								nameExpression = attributeArguments[0].Expression;
+							}
+
+							if( nameExpression is LiteralExpressionSyntax ) {
+								memberName = nameExpression.ToString().Trim( new char[] { '\"', '\'', ' ' } );
+							} else if( nameExpression is InvocationExpressionSyntax ) {
+								InvocationExpressionSyntax invocationExpression = nameExpression as InvocationExpressionSyntax;
+								memberName = invocationExpression.ArgumentList.Arguments.First().Expression.ToString();
+							}
+
+							var ns = context.SemanticModel.LookupNamespacesAndTypes( 0 )[0];
+							var namedTypeSymbol = context.SemanticModel.Compilation.GetTypeByMetadataName( string.Format( "{0}.{1}", ns, memberType ) );
+							var source = context.SemanticModel.LookupSymbols( attribute.GetLocation().SourceSpan.Start, namedTypeSymbol, memberName ).Single();
+							if( !source.IsStatic ) {
+								var diagnostic = Diagnostic.Create( Rule, attribute.GetLocation(), memberName );
+								context.ReportDiagnostic( diagnostic );
 							}
 						}
 					}
 				}
 			}
-
-			// For each Source Report Diagnostic
-			foreach( var method in methods ) {
-				if( memberNames.Contains( method.Identifier.ToString() ) ) {
-					if( !method.Modifiers.Any( SyntaxKind.StaticKeyword ) ) {
-						var diagnostic = Diagnostic.Create( Rule, method.GetLocation(), "method (and the called methods by it)" );
-						semanticModelAnalysisContext.ReportDiagnostic( diagnostic );
-					}
-				}
-			}
-			// Fields
-			foreach( var field in fields ) {
-				var variables = field.Declaration.Variables;
-				foreach( var variable in variables ) {
-					if( memberNames.Contains( variable.Identifier.ToString() ) ) {
-						if( !field.Modifiers.Any( SyntaxKind.StaticKeyword ) ) {
-							var diagnostic = Diagnostic.Create( Rule, field.GetLocation(), "field" );
-							semanticModelAnalysisContext.ReportDiagnostic( diagnostic );
-						}
-					}
-				}
-			}
-			// Properties
-			foreach( var property in properties ) {
-				if( memberNames.Contains( property.Identifier.ToString() ) ) {
-					if( !property.Modifiers.Any( SyntaxKind.StaticKeyword ) ) {
-						var diagnostic = Diagnostic.Create( Rule, property.GetLocation(), "property" );
-						semanticModelAnalysisContext.ReportDiagnostic( diagnostic );
-					}
-				}
-			}
-
 		}
 	}
 }

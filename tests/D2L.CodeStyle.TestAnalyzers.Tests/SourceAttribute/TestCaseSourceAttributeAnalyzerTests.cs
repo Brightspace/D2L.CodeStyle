@@ -49,7 +49,7 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 				new object[] { 12, 4, 3 }
 			};
 
-			[Test, TestCaseSource( 'DivideCases' )]
+			[TestCaseSource( 'DivideCases' )]
 			public void DivideTest( int n, int d, int q ) {
 			}
 
@@ -71,13 +71,13 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 				new object[] { 12, 2, 6 },
 				new object[] { 12, 4, 3 }
 			};
-
+			
 			[Test, TestCaseSource( 'DivideCases' )]
 			public void DivideTest( int n, int d, int q ) {
 			}
 		}
 	}";
-			AssertSingleDiagnostic( test, 6, 4, "field" );
+			AssertSingleDiagnostic( test, 13, 11, "DivideCases" );
 		}
 
 		[Test]
@@ -100,7 +100,7 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 			}
 		}
 	}";
-			AssertSingleDiagnostic( test, 6, 4, "property" );
+			AssertSingleDiagnostic( test, 14, 5, "ValidCases" );
 		}
 
 		[Test]
@@ -119,7 +119,7 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 			}
 		}
 	}";
-			AssertSingleDiagnostic( test, 6, 4, "method (and the called methods by it)" );
+			AssertSingleDiagnostic( test, 10, 5, "GetCachePolicies" );
 		}
 
 		[Test]
@@ -129,6 +129,8 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 
 	namespace test {
 		class Test {
+			static IEnumerable TestCases{}
+
 			[Test, TestCaseSource( typeof( MyFactoryClass ), 'TestCases' )]
 			public void DivideTest( int n, int d, int q ) {
 			}
@@ -149,7 +151,7 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 			}
 		}
 	}";
-			AssertSingleDiagnostic( test, 11, 4, "property" );
+			AssertSingleDiagnostic( test, 8, 11, "TestCases" );
 		}
 
 		[Test]
@@ -183,8 +185,8 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 			}
 		}
 	}";
-			var diag1 = CreateDiagnosticResult( 6, 4, "field" );
-			var diag2 = CreateDiagnosticResult( 17, 4, "property" );
+			var diag1 = CreateDiagnosticResult( 13, 11, "DivideCases" );
+			var diag2 = CreateDiagnosticResult( 25, 5, "ValidCases" );
 			VerifyCSharpDiagnostic( test, diag1, diag2 );
 		}
 
