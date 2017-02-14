@@ -13,7 +13,7 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 
 		private const string Title = "Ensure test does not contain named property 'Throws' in TestCaseData.";
 		private const string Description = "Named property 'Throws' should not be used in TestCaseData.";
-		internal const string MessageFormat = "Use Assert.Throws or Assert.That in your test case instead if 'Throws' in TestCaseData for NUnit 3 compatibility";
+		internal const string MessageFormat = "Use Assert.Throws or Assert.That in your test case instead of 'Throws' in TestCaseData for NUnit 3 compatibility";
 
 		private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
 			DiagnosticId,
