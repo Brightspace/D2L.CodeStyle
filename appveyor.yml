@@ -16,3 +16,5 @@ build:
 configuration:
 - Debug
 - Release
+cache:
+  - packages -> **\packages.config
