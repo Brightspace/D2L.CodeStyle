@@ -5,7 +5,6 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 
 	internal sealed class AnalyzedResults {
 		public readonly int UnsafeStaticsCount;
-		public readonly int UnsafeNonReadonlyStaticsCount;
 		public readonly IEnumerable<AnalyzedType> UnsafeStaticsPerType;
 		public readonly IEnumerable<AnalyzedProject> UnsafeStaticsPerProject;
 		public readonly IEnumerable<AnalyzedStatic> RawResults;
@@ -27,26 +26,12 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 					);
 				project.UnsafeStaticsCount++;
 
-				switch( result.Cause ) {
-
-					// increment per-type
-					case AnalyzedStatic.CAUSE_MUTABLE_TYPE:
-						var analyzedType = unsafeStaticsPerType.GetOrAdd(
-							result.FieldOrPropType,
-							() => new AnalyzedType( result.FieldOrPropType )
-						);
-						analyzedType.UnsafeStaticsCount++;
-						break;
-
-					// increment readonly count
-					case AnalyzedStatic.CAUSE_MUTABLE_DECLARATION:
-						UnsafeNonReadonlyStaticsCount++;
-						break;
-
-					default:
-						throw new InvalidOperationException( $"unknown cause{result.Cause}" );
-
-				}
+				// increment per type
+				var analyzedType = unsafeStaticsPerType.GetOrAdd(
+					result.FieldOrPropType,
+					() => new AnalyzedType( result.FieldOrPropType )
+				);
+				analyzedType.UnsafeStaticsCount++;
 
 			}
 

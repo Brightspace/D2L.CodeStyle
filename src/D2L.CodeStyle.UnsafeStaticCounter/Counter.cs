@@ -1,12 +1,15 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using D2L.CodeStyle.Analyzers.UnsafeStatics;
+using D2L.CodeStyle.Annotations;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -38,9 +41,13 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 		}
 
 		internal async Task<int> Run() {
+			var stopwatch = Stopwatch.StartNew();
+
 			var results = await AnalyzeProjects();
 			WriteOutputFile( results );
-			Console.WriteLine( "done" );
+
+			stopwatch.Stop();
+			Console.WriteLine( $"done in {stopwatch.ElapsedMilliseconds}ms." );
 			return 0;
 		}
 
@@ -78,6 +85,8 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			}
 		}
 
+		
+
 		private async Task<AnalyzedStatic[]> AnalyzeProject( string projectFile ) {
 			if( ShouldIgnoreProject( projectFile ) ) {
 				Console.WriteLine( $"...skipping {projectFile}" );
@@ -90,44 +99,25 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 					var proj = await workspace.OpenProjectAsync( projectFile );
 					Console.WriteLine( $"Analyzing: {proj.FilePath}" );
 
-					// ignore projects with analyzer already included -- there are no unsafe statics by definition
-					if( ProjectAlreadyAnalyzed( proj ) ) {
-						Console.WriteLine( $"...skipping {proj.FilePath}" );
-						return new AnalyzedStatic[0];
-					}
-
 					var compilation = await proj.GetCompilationAsync();
-					var compilationWithAnalzer = compilation.WithAnalyzers( _analyzers );
 
-					var diags = await compilationWithAnalzer.GetAnalyzerDiagnosticsAsync();
-					foreach( var diag in diags ) {
-						if( diag.Id != UnsafeStaticsAnalyzer.DiagnosticId ) {
-							var location = diag.Location.SourceTree?.FilePath ?? "no location";
-							throw new Exception( $"error processing project {proj.Name} ({location}): {diag}" );
-						}
+					// if the project doesn't reference Annotations, ignore
+					var unauditedAttribute = compilation.GetTypeByMetadataName( typeof( Statics.Unaudited ).FullName );
+					if( unauditedAttribute == null ) {
+						return new AnalyzedStatic[ 0 ];
 					}
 
-					return diags
-						.Select( d => new AnalyzedStatic( proj.Name, d ) )
-						.ToArray();
+					var visitor = new CountingVisitor();
+					var members = compilation.GetSymbolsWithName( n => true, SymbolFilter.Member );
+					Parallel.ForEach( members, m => m.Accept( visitor ) );
+
+					return visitor.AnalyzedStatics.ToArray();
 				}
 			} catch( Exception e ) {
 				throw new Exception( $"Exception analyzing project {projectFile}", e );
 			} finally {
 				_semaphore.Release();
 			}
-		}
-
-		private static bool ProjectAlreadyAnalyzed( Project proj ) {
-			var analyzers = proj.AnalyzerReferences
-				.SelectMany( r => r.GetAnalyzers( LanguageNames.CSharp ) );
-
-			// we use the name because UnsafeStaticsAnalyzer is not assembly neutral, so `is` might not work
-			if( analyzers.Any( a => a.GetType().Name == nameof( UnsafeStaticsAnalyzer ) ) ) {
-				return true;
-			}
-
-			return false;
 		}
 
 		private static bool ShouldIgnoreProject( string csProjFile ) {
