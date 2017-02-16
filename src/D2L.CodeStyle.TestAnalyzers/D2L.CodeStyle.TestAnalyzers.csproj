@@ -91,6 +91,7 @@
   <ItemGroup>
     <Compile Include="Asserts\AssertsAnalyzer.cs" />
     <Compile Include="ExpectedException\ExpectedExceptionAnalyzer.cs" />
+    <Compile Include="IgnoreAttribute\IgnoreAttributeAnalyzer.cs" />
     <Compile Include="ParallelizableTests\ParallelizableTestsAnalyzer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SourceAttribute\TestCaseSourceAttributeAnalyzer.cs" />
