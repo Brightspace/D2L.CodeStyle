@@ -21,6 +21,7 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 		public void DocumentWithoutThrows_NoDiag() {
 			const string test = @"
 	using System;
+	using NUnit.Framework;
 
 	namespace test {
 		class Test {
@@ -38,18 +39,19 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 		public void DocumentWithThrowsCase1_Diag() {
 			const string test = @"
 	using System;
+	using NUnit.Framework;
 
 	namespace test {
 		class Test {
 			private TestCaseData[] UserDetailsTestSource = {
-				new TestCaseData(0,0 ).SetCategory('').SetName( 'NoExistingResult_500Ids_Success' ).Throws( typeof( Exception ) ),
-				new TestCaseData( 0, 0 ).Throws( 'Exception' ),
+				new TestCaseData(0,0 ).SetCategory("""").SetName( ""NoExistingResult_500Ids_Success"" ).Throws( typeof( Exception ) ),
+				new TestCaseData( 0, 0 ).Throws( ""Exception"" ),
 				new TestCaseData( 0, 0 )
 			};
 		}
 	}";
-			var diag1 = CreateDiagnosticResult( 7, 89 );
-			var diag2 = CreateDiagnosticResult( 8, 30 );
+			var diag1 = CreateDiagnosticResult( 8, 5 );
+			var diag2 = CreateDiagnosticResult( 9, 5 );
 			VerifyCSharpDiagnostic( test, diag1, diag2 );
 		}
 
@@ -57,18 +59,19 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 		public void DocumentWithThrowsCase2_Diag() {
 			const string test = @"
 	using System;
+	using NUnit.Framework;
 
 	namespace test {
 		class Test {
 			static IEnumerable GetTranslateTestCases() {
-				yield return new TestCaseData( 0, 0 ).SetName( 'NoExistingResult_EmptyIdList_ExpectInvalidRequestDataException' ).Throws( typeof( Exception ) );
-				yield return new TestCaseData( 0, 500 ).SetCategory('').Throws( 'Exception' );
+				yield return new TestCaseData( 0, 0 ).SetName( ""NoExistingResult_EmptyIdList_ExpectInvalidRequestDataException"" ).Throws( typeof( Exception ) );
+				yield return new TestCaseData( 0, 500 ).SetCategory("""").Throws( ""Exception"" );
 				yield return new TestCaseData( 0, 0 );
 			}
 		}
 	}";
-			var diag1 = CreateDiagnosticResult( 7, 119 );
-			var diag2 = CreateDiagnosticResult( 8, 61 );
+			var diag1 = CreateDiagnosticResult( 8, 18 );
+			var diag2 = CreateDiagnosticResult( 9, 18 );
 			VerifyCSharpDiagnostic( test, diag1, diag2 );
 		}
 
@@ -76,6 +79,7 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 		public void DocumentWithThrowsCase3_Diag() {
 			const string test = @"
 	using System;
+	using NUnit.Framework;
 
 	namespace test {
 		class Test {
@@ -85,15 +89,15 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 				{
 					return new TestCaseData[] {
 						new TestCaseData(0,0 ).Throws( typeof( Exception ) ),
-						new TestCaseData(0,0 ).Throws( 'Exception' ),
+						new TestCaseData(0,0 ).Throws( ""Exception"" ),
 						new TestCaseData(0,0 )
 					};
 				}
 			}
 		}
 	}";
-			var diag1 = CreateDiagnosticResult( 11, 30 );
-			var diag2 = CreateDiagnosticResult( 12, 30 );
+			var diag1 = CreateDiagnosticResult( 12, 7 );
+			var diag2 = CreateDiagnosticResult( 13, 7 );
 			VerifyCSharpDiagnostic( test, diag1, diag2 );
 		}
 
@@ -101,6 +105,7 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 		public void DocumentWithThrowsCase4_Diag() {
 			const string test = @"
 	using System;
+	using NUnit.Framework;
 
 	namespace test {
 		class Test {
@@ -110,21 +115,21 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 				{
 					{
 						TestCaseData test =new TestCaseData(0,0);
-						test.SetCategory( '' );
-						test.Throws( '' );
+						test.SetCategory( """" );
+						test.Throws( ""Exception"" );
 						yield return test;
 					}
 					{
 						TestCaseData test = new TestCaseData( 0, 0 );
-						test.SetCategory( '' ).Throws( '' );
+						test.SetCategory( """" ).Throws( ""Exception"" );
 						yield return test;
 					}
 				}
 			}
 		}
 	}";
-			var diag1 = CreateDiagnosticResult( 13, 12 );
-			var diag2 = CreateDiagnosticResult( 18, 30 );
+			var diag1 = CreateDiagnosticResult( 14, 7 );
+			var diag2 = CreateDiagnosticResult( 19, 7 );
 			VerifyCSharpDiagnostic( test, diag1, diag2 );
 		}
 
@@ -147,6 +152,10 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 					new DiagnosticResultLocation( "Test0.cs", line, column )
 				}
 			};
+		}
+
+		protected override MetadataReference[] GetAdditionalReferences() {
+			return new MetadataReference[] { MetadataReference.CreateFromFile( @"..\..\..\..\packages\NUnit.2.6.4\lib\nunit.framework.dll" ) };
 		}
 	}
 }

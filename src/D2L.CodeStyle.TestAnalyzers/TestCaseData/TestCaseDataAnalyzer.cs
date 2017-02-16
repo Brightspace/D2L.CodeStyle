@@ -40,32 +40,19 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 				return;
 			}
 
-			if( root.Expression is MemberAccessExpressionSyntax ) {
-				var memberAccessExpression = root.Expression as MemberAccessExpressionSyntax;
-				if( memberAccessExpression.Name.ToString().Equals( "Throws" ) ) {
-					var objectCreationExpressions = memberAccessExpression.DescendantNodes().OfType<ObjectCreationExpressionSyntax>().ToImmutableArray();
-					if( objectCreationExpressions.Length > 0 ) {
-						if( objectCreationExpressions[0].Type.ToString().Equals( "TestCaseData" ) ) {
-							var diagnostic = Diagnostic.Create( Rule, memberAccessExpression.Name.GetLocation() );
-							context.ReportDiagnostic( diagnostic );
-						}
-					} else {
-						var identifierNames = memberAccessExpression.DescendantNodes().OfType<IdentifierNameSyntax>().ToImmutableArray();
-						foreach( var identifierName in identifierNames ) {
-							var symbol = context.SemanticModel.GetSymbolInfo( identifierName ).Symbol;
-							if( symbol != null && symbol.DeclaringSyntaxReferences != null ) {
-								var node = symbol.DeclaringSyntaxReferences[0].GetSyntax();
-								if( node is VariableDeclaratorSyntax ) {
-									var variableDeclaration = node as VariableDeclaratorSyntax;
-									if( variableDeclaration.Initializer.Value.ToString().Contains( "TestCaseData" ) ) {
-										var diagnostic = Diagnostic.Create( Rule, memberAccessExpression.Name.GetLocation() );
-										context.ReportDiagnostic( diagnostic );
-									}
-								}
-							}
-						}
-					}
-				}
+			var symbol = context.SemanticModel.GetSymbolInfo( root );
+			if( symbol.Symbol == null ) {
+				return;
+			}
+
+			var method = symbol.Symbol as IMethodSymbol;
+			if( method == null ) {
+				return;
+			}
+
+			if( method.Name == "Throws" && method.ContainingType.Name == "TestCaseData" ) {
+				var diagnostic = Diagnostic.Create( Rule, root.GetLocation() );
+				context.ReportDiagnostic( diagnostic );
 			}
 		}
 	}
