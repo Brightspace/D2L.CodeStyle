@@ -42,14 +42,29 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 
 			if( root.Expression is MemberAccessExpressionSyntax ) {
 				var memberAccessExpression = root.Expression as MemberAccessExpressionSyntax;
-				var objectCreationExpressions = memberAccessExpression.DescendantNodes().OfType<ObjectCreationExpressionSyntax>().ToImmutableArray();
-				if( objectCreationExpressions.Length == 0 ) {
-					return;
-				}
-
-				if( objectCreationExpressions[0].Type.ToString().Equals( "TestCaseData" ) && memberAccessExpression.Name.ToString().Equals( "Throws" ) ) {
-					var diagnostic = Diagnostic.Create( Rule, memberAccessExpression.Name.GetLocation() );
-					context.ReportDiagnostic( diagnostic );
+				if( memberAccessExpression.Name.ToString().Equals( "Throws" ) ) {
+					var objectCreationExpressions = memberAccessExpression.DescendantNodes().OfType<ObjectCreationExpressionSyntax>().ToImmutableArray();
+					if( objectCreationExpressions.Length > 0 ) {
+						if( objectCreationExpressions[0].Type.ToString().Equals( "TestCaseData" ) ) {
+							var diagnostic = Diagnostic.Create( Rule, memberAccessExpression.Name.GetLocation() );
+							context.ReportDiagnostic( diagnostic );
+						}
+					} else {
+						var identifierNames = memberAccessExpression.DescendantNodes().OfType<IdentifierNameSyntax>().ToImmutableArray();
+						foreach( var identifierName in identifierNames ) {
+							var symbol = context.SemanticModel.GetSymbolInfo( identifierName ).Symbol;
+							if( symbol != null && symbol.DeclaringSyntaxReferences != null ) {
+								var node = symbol.DeclaringSyntaxReferences[0].GetSyntax();
+								if( node is VariableDeclaratorSyntax ) {
+									var variableDeclaration = node as VariableDeclaratorSyntax;
+									if( variableDeclaration.Initializer.Value.ToString().Contains( "TestCaseData" ) ) {
+										var diagnostic = Diagnostic.Create( Rule, memberAccessExpression.Name.GetLocation() );
+										context.ReportDiagnostic( diagnostic );
+									}
+								}
+							}
+						}
+					}
 				}
 			}
 		}

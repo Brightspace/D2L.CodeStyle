@@ -97,6 +97,37 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 			VerifyCSharpDiagnostic( test, diag1, diag2 );
 		}
 
+		[Test]
+		public void DocumentWithThrowsCase4_Diag() {
+			const string test = @"
+	using System;
+
+	namespace test {
+		class Test {
+			private static IEnumerable<TestCaseData> CheckPassword_TestCases2
+			{
+				get
+				{
+					{
+						TestCaseData test =new TestCaseData(0,0);
+						test.SetCategory( '' );
+						test.Throws( '' );
+						yield return test;
+					}
+					{
+						TestCaseData test = new TestCaseData( 0, 0 );
+						test.SetCategory( '' ).Throws( '' );
+						yield return test;
+					}
+				}
+			}
+		}
+	}";
+			var diag1 = CreateDiagnosticResult( 13, 12 );
+			var diag2 = CreateDiagnosticResult( 18, 30 );
+			VerifyCSharpDiagnostic( test, diag1, diag2 );
+		}
+
 		private void AssertNoDiagnostic( string file ) {
 			VerifyCSharpDiagnostic( file );
 		}
