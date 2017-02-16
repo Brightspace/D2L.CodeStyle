@@ -94,6 +94,7 @@
     <Compile Include="IgnoreAttribute\IgnoreAttributeAnalyzer.cs" />
     <Compile Include="ParallelizableTests\ParallelizableTestsAnalyzer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestCaseData\TestCaseDataAnalyzer.cs" />
     <Compile Include="SourceAttribute\TestCaseSourceAttributeAnalyzer.cs" />
     <Compile Include="SourceAttribute\ValueSourceAttributeAnalyzer.cs" />
     <Compile Include="TestCase\TestCaseAnalyzer.cs" />
