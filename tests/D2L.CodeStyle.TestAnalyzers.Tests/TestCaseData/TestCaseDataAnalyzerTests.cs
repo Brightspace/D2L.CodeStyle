@@ -180,7 +180,7 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 		}
 
 		protected override MetadataReference[] GetAdditionalReferences() {
-			return new MetadataReference[] { MetadataReference.CreateFromFile( @"..\..\..\..\packages\NUnit.2.6.4\lib\nunit.framework.dll" ) };
+			return new MetadataReference[] { MetadataReference.CreateFromFile( @"..\..\..\packages\NUnit.2.6.4\lib\nunit.framework.dll" ) };
 		}
 	}
 }
