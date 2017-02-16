@@ -11,9 +11,9 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 		public const string DiagnosticId = "D2L0010";
 		private const string Category = "Safety";
 
-		private const string Title = "Ensure test does not contain named property 'Throws' in TestCaseData.";
-		private const string Description = "Named property 'Throws' should not be used in TestCaseData.";
-		internal const string MessageFormat = "Use Assert.Throws or Assert.That in your test case instead of 'Throws' in TestCaseData for NUnit 3 compatibility";
+		private const string Title = "Ensure test does not contain named property 'Throws' and 'MakeExplicit' in TestCaseData.";
+		private const string Description = "Named property 'Throws' and 'MakeExplicit' should not be used in TestCaseData.";
+		internal const string MessageFormat = "{0} in TestCaseData for NUnit 3 compatibility";
 
 		private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
 			DiagnosticId,
@@ -51,7 +51,10 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 			}
 
 			if( method.Name == "Throws" && method.ContainingType.Name == "TestCaseData" ) {
-				var diagnostic = Diagnostic.Create( Rule, root.GetLocation() );
+				var diagnostic = Diagnostic.Create( Rule, root.GetLocation(), "Use Assert.Throws or Assert.That in your test case instead of 'Throws'" );
+				context.ReportDiagnostic( diagnostic );
+			} else if( method.Name == "MakeExplicit" && method.ContainingType.Name == "TestCaseData" ) {
+				var diagnostic = Diagnostic.Create( Rule, root.GetLocation(), "Do not use 'MakeExplicit'" );
 				context.ReportDiagnostic( diagnostic );
 			}
 		}

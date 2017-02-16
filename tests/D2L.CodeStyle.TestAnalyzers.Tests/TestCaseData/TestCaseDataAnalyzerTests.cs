@@ -50,8 +50,8 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 			};
 		}
 	}";
-			var diag1 = CreateDiagnosticResult( 8, 5 );
-			var diag2 = CreateDiagnosticResult( 9, 5 );
+			var diag1 = CreateDiagnosticResult( 8, 5, "Use Assert.Throws or Assert.That in your test case instead of 'Throws'" );
+			var diag2 = CreateDiagnosticResult( 9, 5, "Use Assert.Throws or Assert.That in your test case instead of 'Throws'" );
 			VerifyCSharpDiagnostic( test, diag1, diag2 );
 		}
 
@@ -70,8 +70,8 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 			}
 		}
 	}";
-			var diag1 = CreateDiagnosticResult( 8, 18 );
-			var diag2 = CreateDiagnosticResult( 9, 18 );
+			var diag1 = CreateDiagnosticResult( 8, 18, "Use Assert.Throws or Assert.That in your test case instead of 'Throws'" );
+			var diag2 = CreateDiagnosticResult( 9, 18, "Use Assert.Throws or Assert.That in your test case instead of 'Throws'" );
 			VerifyCSharpDiagnostic( test, diag1, diag2 );
 		}
 
@@ -96,8 +96,8 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 			}
 		}
 	}";
-			var diag1 = CreateDiagnosticResult( 12, 7 );
-			var diag2 = CreateDiagnosticResult( 13, 7 );
+			var diag1 = CreateDiagnosticResult( 12, 7, "Use Assert.Throws or Assert.That in your test case instead of 'Throws'" );
+			var diag2 = CreateDiagnosticResult( 13, 7, "Use Assert.Throws or Assert.That in your test case instead of 'Throws'" );
 			VerifyCSharpDiagnostic( test, diag1, diag2 );
 		}
 
@@ -128,25 +128,50 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 			}
 		}
 	}";
-			var diag1 = CreateDiagnosticResult( 14, 7 );
-			var diag2 = CreateDiagnosticResult( 19, 7 );
+			var diag1 = CreateDiagnosticResult( 14, 7, "Use Assert.Throws or Assert.That in your test case instead of 'Throws'" );
+			var diag2 = CreateDiagnosticResult( 19, 7, "Use Assert.Throws or Assert.That in your test case instead of 'Throws'" );
 			VerifyCSharpDiagnostic( test, diag1, diag2 );
+		}
+
+		[Test]
+		public void DocumentWithThrowsCase5_Diag() {
+			const string test = @"
+	using System;
+	using NUnit.Framework;
+
+	namespace test {
+		class Test {
+			private static IEnumerable<TestCaseData> CheckPassword_TestCases2
+			{
+				get
+				{
+					{
+						TestCaseData test =new TestCaseData(0,0);
+						test.SetCategory( """" );
+						test.MakeExplicit( ""Bug: An unexpected exception type"" );
+						yield return test;
+					}
+				}
+			}
+		}
+	}";
+			AssertSingleDiagnostic( test, 14, 7, "Do not use 'MakeExplicit'" );
 		}
 
 		private void AssertNoDiagnostic( string file ) {
 			VerifyCSharpDiagnostic( file );
 		}
 
-		private void AssertSingleDiagnostic( string file, int line, int column ) {
+		private void AssertSingleDiagnostic( string file, int line, int column, string message ) {
 
-			DiagnosticResult result = CreateDiagnosticResult( line, column );
+			DiagnosticResult result = CreateDiagnosticResult( line, column, message );
 			VerifyCSharpDiagnostic( file, result );
 		}
 
-		private static DiagnosticResult CreateDiagnosticResult( int line, int column ) {
+		private static DiagnosticResult CreateDiagnosticResult( int line, int column, string message ) {
 			return new DiagnosticResult {
 				Id = TestCaseDataAnalyzer.DiagnosticId,
-				Message = TestCaseDataAnalyzer.MessageFormat,
+				Message = string.Format( TestCaseDataAnalyzer.MessageFormat, message ),
 				Severity = DiagnosticSeverity.Warning,
 				Locations = new[] {
 					new DiagnosticResultLocation( "Test0.cs", line, column )
