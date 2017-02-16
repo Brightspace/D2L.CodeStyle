@@ -1,4 +1,5 @@
-﻿using D2L.CodeStyle.TestAnalyzers.Test.Verifiers;
+﻿using System.IO;
+using D2L.CodeStyle.TestAnalyzers.Test.Verifiers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using NUnit.Framework;
@@ -180,7 +181,9 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 		}
 
 		protected override MetadataReference[] GetAdditionalReferences() {
-			return new MetadataReference[] { MetadataReference.CreateFromFile( @"..\..\..\packages\NUnit.2.6.4\lib\nunit.framework.dll" ) };
+			return new MetadataReference[] { MetadataReference.CreateFromFile( Path.Combine(
+				Path.GetDirectoryName( this.GetType().Assembly.Location ), @"..\..\..\..\packages\NUnit.2.6.4\lib\nunit.framework.dll"
+			) ) };
 		}
 	}
 }
