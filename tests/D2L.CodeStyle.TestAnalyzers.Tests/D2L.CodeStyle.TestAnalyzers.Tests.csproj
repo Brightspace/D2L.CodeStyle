@@ -105,6 +105,7 @@
     <Compile Include="SourceAttribute\TestCaseSourceAttributeAnalyzerTests.cs" />
     <Compile Include="SourceAttribute\ValueSourceAttributeAnalyzerTests.cs" />
     <Compile Include="TestCase\TestCaseAnalyzerTests.cs" />
+    <Compile Include="TestContext\TestContextAnalyzerTests.cs" />
     <Compile Include="Verifiers\DiagnosticResult.cs" />
     <Compile Include="Verifiers\DiagnosticVerifier.cs" />
   </ItemGroup>
