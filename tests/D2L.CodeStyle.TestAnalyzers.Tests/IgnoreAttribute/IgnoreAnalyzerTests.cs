@@ -125,7 +125,7 @@ namespace D2L.CodeStyle.TestAnalyzers.IgnoreAttribute {
 			return new DiagnosticResult {
 				Id = IgnoreAttributeAnalyzer.DiagnosticId,
 				Message = IgnoreAttributeAnalyzer.MessageFormat,
-				Severity = DiagnosticSeverity.Warning,
+				Severity = DiagnosticSeverity.Error,
 				Locations = new[] {
 					new DiagnosticResultLocation( "Test0.cs", line, column )
 				}

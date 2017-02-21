@@ -20,7 +20,7 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 			Title,
 			MessageFormat,
 			Category,
-			DiagnosticSeverity.Warning,
+			DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
 			description: Description
 		);

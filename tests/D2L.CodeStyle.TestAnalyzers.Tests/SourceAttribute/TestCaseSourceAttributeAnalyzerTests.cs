@@ -204,7 +204,7 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 			return new DiagnosticResult {
 				Id = TestCaseSourceAttributeAnalyzer.DiagnosticId,
 				Message = string.Format( TestCaseSourceAttributeAnalyzer.MessageFormat, message ),
-				Severity = DiagnosticSeverity.Warning,
+				Severity = DiagnosticSeverity.Error,
 				Locations = new[] {
 					new DiagnosticResultLocation( "Test0.cs", line, column )
 				}

@@ -161,7 +161,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ExpectedException {
 			return new DiagnosticResult {
 				Id = ExpectedExceptionAnalyzer.DiagnosticId,
 				Message = ExpectedExceptionAnalyzer.MessageFormat,
-				Severity = DiagnosticSeverity.Warning,
+				Severity = DiagnosticSeverity.Error,
 				Locations = new[] {
 					new DiagnosticResultLocation( "Test0.cs", line, column )
 				}

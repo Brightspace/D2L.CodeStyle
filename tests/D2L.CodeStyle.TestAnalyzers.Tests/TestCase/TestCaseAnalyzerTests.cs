@@ -96,7 +96,7 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCase {
 			return new DiagnosticResult {
 				Id = TestCaseAnalyzer.DiagnosticId,
 				Message = TestCaseAnalyzer.MessageFormat,
-				Severity = DiagnosticSeverity.Warning,
+				Severity = DiagnosticSeverity.Error,
 				Locations = new[] {
 					new DiagnosticResultLocation( "Test0.cs", line, column )
 				}

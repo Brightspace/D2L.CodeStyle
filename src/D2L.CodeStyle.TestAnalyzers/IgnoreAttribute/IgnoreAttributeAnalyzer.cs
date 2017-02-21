@@ -19,7 +19,7 @@ namespace D2L.CodeStyle.TestAnalyzers.IgnoreAttribute {
 			Title,
 			MessageFormat,
 			Category,
-			DiagnosticSeverity.Warning,
+			DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
 			description: Description
 		);

@@ -151,7 +151,7 @@ namespace D2L.CodeStyle.TestAnalyzers.Asserts {
 			return new DiagnosticResult {
 				Id = AssertsAnalyzer.DiagnosticId,
 				Message = AssertsAnalyzer.MessageFormat,
-				Severity = DiagnosticSeverity.Warning,
+				Severity = DiagnosticSeverity.Error,
 				Locations = new[] {
 					new DiagnosticResultLocation( "Test0.cs", line, column )
 				}
