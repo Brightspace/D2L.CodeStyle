@@ -13,7 +13,7 @@ namespace D2L.CodeStyle.TestAnalyzers.TestContext {
 
 		private const string Title = "Ensure test does not contain 'TestContext.CurrentContext.Result.Status' or 'TestContext.CurrentContext.Result.State'.";
 		private const string Description = "'TestContext.CurrentContext.Result.Status' and 'TestContext.CurrentContext.Result.State' should not be used in tests.";
-		internal const string MessageFormat = "Do not use 'TestContext.CurrentContext.Result.Status' and 'TestContext.CurrentContext.Result.State' for NUnit 3 compatibility";
+		internal const string MessageFormat = "Do not use 'TestContext.CurrentContext.Result.Status' or 'TestContext.CurrentContext.Result.State' for NUnit 3 compatibility";
 
 		private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
 			DiagnosticId,
@@ -39,9 +39,18 @@ namespace D2L.CodeStyle.TestAnalyzers.TestContext {
 			if( root == null ) {
 				return;
 			}
+			var symbol = context.SemanticModel.GetSymbolInfo( root );
+			if( symbol.Symbol == null ) {
+				return;
+			}
 
-			if( root.ToString().Equals( "TestContext.CurrentContext.Result.Status" ) || root.ToString().Equals( "TestContext.CurrentContext.Result.State" ) ) {
-				var diagnostic = Diagnostic.Create( Rule, root.GetLocation() );
+			var property = symbol.Symbol as IPropertySymbol;
+			if( property == null ) {
+				return;
+			}
+
+			if( ( property.Name == "Status" || property.Name=="State" ) && property.ContainingType.Name == "ResultAdapter" && property.ContainingType.ContainingType.Name == "TestContext" ) {
+				var diagnostic = Diagnostic.Create( Rule, root.GetLocation());
 				context.ReportDiagnostic( diagnostic );
 			}
 		}

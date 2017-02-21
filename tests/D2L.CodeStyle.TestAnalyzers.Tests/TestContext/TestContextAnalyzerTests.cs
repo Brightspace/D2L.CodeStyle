@@ -38,12 +38,13 @@ namespace D2L.CodeStyle.TestAnalyzers.TestContext {
 		public void DocumentWithTarget_Case1_Diag() {
 			const string test = @"
 	using System;
+	using NUnit.Framework;
 
 	namespace test {
 		class Test {
 
 			[Test]
-			public void TestWithIgnore() {
+			public void TestWithTarget() {
 				var status = TestContext.CurrentContext.Result.Status;  
 				var state = TestContext.CurrentContext.Result.State;  
 
@@ -53,10 +54,36 @@ namespace D2L.CodeStyle.TestAnalyzers.TestContext {
 			}
 		}
 	}";
-			var diag1 = CreateDiagnosticResult( 9, 18 );
-			var diag2 = CreateDiagnosticResult( 10, 17 );
-			var diag3 = CreateDiagnosticResult( 12, 9 );
+			var diag1 = CreateDiagnosticResult( 10, 18 );
+			var diag2 = CreateDiagnosticResult( 11, 17 );
+			var diag3 = CreateDiagnosticResult( 13, 9 );
 			VerifyCSharpDiagnostic( test, diag1, diag2, diag3 );
+		}
+
+		[Test]
+		public void DocumentWithTarget_Case2_Diag() {
+			const string test = @"
+	using System;
+	using NUnit.Framework;
+
+	namespace test {
+		class Test {
+
+			[Test]
+			public void TestWithTarget() {
+				var currentContext = TestContext.CurrentContext;  
+				var state = currentContext.Result.State;  
+
+				var result = TestContext.CurrentContext.Result;  
+				if( result.Status == TestStatus.Failed ) {
+
+				}
+			}
+		}
+	}";
+			var diag1 = CreateDiagnosticResult( 11, 17 );
+			var diag2 = CreateDiagnosticResult( 14, 9 );
+			VerifyCSharpDiagnostic( test, diag1, diag2 );
 		}
 
 		private void AssertNoDiagnostic( string file ) {
@@ -72,6 +99,11 @@ namespace D2L.CodeStyle.TestAnalyzers.TestContext {
 					new DiagnosticResultLocation( "Test0.cs", line, column )
 				}
 			};
+		}
+
+		protected override MetadataReference[] GetAdditionalReferences() {
+			return new MetadataReference[] { MetadataReference.CreateFromFile( @"..\..\..\..\packages\NUnit.2.6.4\lib\nunit.framework.dll"
+			 ) };
 		}
 	}
 }
