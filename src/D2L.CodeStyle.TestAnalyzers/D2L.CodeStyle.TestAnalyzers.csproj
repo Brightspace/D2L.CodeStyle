@@ -98,6 +98,7 @@
     <Compile Include="SourceAttribute\TestCaseSourceAttributeAnalyzer.cs" />
     <Compile Include="SourceAttribute\ValueSourceAttributeAnalyzer.cs" />
     <Compile Include="TestCase\TestCaseAnalyzer.cs" />
+    <Compile Include="TestContext\TestContextAnalyzer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="D2L.CodeStyle.TestAnalyzers.nuspec" />
