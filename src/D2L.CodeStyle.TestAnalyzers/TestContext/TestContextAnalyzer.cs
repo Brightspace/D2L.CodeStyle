@@ -49,8 +49,8 @@ namespace D2L.CodeStyle.TestAnalyzers.TestContext {
 				return;
 			}
 
-			if( ( property.Name == "Status" || property.Name=="State" ) && property.ContainingType.Name == "ResultAdapter" && property.ContainingType.ContainingType.Name == "TestContext" ) {
-				var diagnostic = Diagnostic.Create( Rule, root.GetLocation());
+			if( ( property.Name == "Status" || property.Name == "State" ) && property.ContainingType.Name == "ResultAdapter" && property.ContainingType.ContainingType.Name == "TestContext" ) {
+				var diagnostic = Diagnostic.Create( Rule, root.GetLocation() );
 				context.ReportDiagnostic( diagnostic );
 			}
 		}
