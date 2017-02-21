@@ -43,7 +43,7 @@ namespace D2L.CodeStyle.TestAnalyzers.IgnoreAttribute {
 
 	namespace test {
 		[TestFixture]
-		[Ignore('ignore reason')]
+		[Ignore(""ignore reason"")]
 		class Test {
 
 			[Test]

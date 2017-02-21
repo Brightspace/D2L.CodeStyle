@@ -80,10 +80,10 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 	namespace test {
 		class Test {
 			private String ValidCases {
-				return new String('test');
+				return new String(""test"");
 			}
 
-			public void test1( [ValueSource( 'ValidCases' )] String s ) {
+			public void test1( [ValueSource( ""ValidCases"" )] String s ) {
 
 			}
 		}
@@ -103,7 +103,7 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 			}
 
 			[Test]
-			public void test4( [ValueSource( 'GetContractVersions' )] JsonContractVersion contractVersion ) {
+			public void test4( [ValueSource( ""GetContractVersions"" )] JsonContractVersion contractVersion ) {
 
 			}
 		}
@@ -123,7 +123,7 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 			}
 
 			[Test]
-			public void test4( [ValueSource( typeof(Foo), 'GetContractVersions' )] JsonContractVersion contractVersion ) {
+			public void test4( [ValueSource( typeof(Foo), ""GetContractVersions"" )] JsonContractVersion contractVersion ) {
 
 			}
 		}
@@ -158,7 +158,7 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 			}
 
 			[Test]
-			public void test4( [ValueSource( 'GetContractVersions' )] JsonContractVersion contractVersion, [ValueSource( 'GetHealthStatusCodes' )] HealthStatusCode healthStatusCode ) {
+			public void test4( [ValueSource( ""GetContractVersions"" )] JsonContractVersion contractVersion, [ValueSource( ""GetHealthStatusCodes"" )] HealthStatusCode healthStatusCode ) {
 
 			}
 		}

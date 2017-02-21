@@ -49,7 +49,7 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 				new object[] { 12, 4, 3 }
 			};
 
-			[TestCaseSource( 'DivideCases' )]
+			[TestCaseSource( ""DivideCases"" )]
 			public void DivideTest( int n, int d, int q ) {
 			}
 
@@ -72,7 +72,7 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 				new object[] { 12, 4, 3 }
 			};
 			
-			[Test, TestCaseSource( 'DivideCases' )]
+			[Test, TestCaseSource( ""DivideCases"" )]
 			public void DivideTest( int n, int d, int q ) {
 			}
 		}
@@ -95,7 +95,7 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 				}
 			}
 
-			[TestCaseSource( 'ValidCases' )]
+			[TestCaseSource( ""ValidCases"" )]
 			public void DivideTest( int n, int d, int q ) {
 			}
 		}
@@ -131,7 +131,7 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 		class Test {
 			static IEnumerable TestCases{}
 
-			[Test, TestCaseSource( typeof( MyFactoryClass ), 'TestCases' )]
+			[Test, TestCaseSource( typeof( MyFactoryClass ), ""TestCases"" )]
 			public void DivideTest( int n, int d, int q ) {
 			}
 		}
@@ -145,8 +145,8 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 					yield return new TestCaseData( 12, 4 ).Returns( 3 );
 					yield return new TestCaseData( 0, 0 )
 					  .Throws( typeof( DivideByZeroException ) )
-					  .SetName( 'DivideByZero' )
-					  .SetDescription( 'An exception is expected' );
+					  .SetName( ""DivideByZero"" )
+					  .SetDescription( ""An exception is expected"" );
 				}
 			}
 		}
@@ -168,7 +168,7 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 				new object[] { 12, 4, 3 }
 			};
 
-			[Test, TestCaseSource( 'DivideCases' )]
+			[Test, TestCaseSource( ""DivideCases"" )]
 			public void DivideTest( int n, int d, int q ) {
 			}
 
@@ -180,7 +180,7 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 				}
 			}
 
-			[TestCaseSource( 'ValidCases' )]
+			[TestCaseSource( ""ValidCases"" )]
 			public void DivideTest( int n, int d, int q ) {
 			}
 		}
