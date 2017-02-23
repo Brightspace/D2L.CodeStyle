@@ -46,8 +46,8 @@ namespace D2L.CodeStyle.TestAnalyzers.Asserts {
 
 			[Test]
 			public void TestWithTargetAsserts() {
-				string html='tesT';
-				Assert.IsNotNullOrEmpty( html.ToLower(), 'message' );
+				string html=""tesT"";
+				Assert.IsNotNullOrEmpty( html.ToLower(), ""message"" );
 			}
 		}
 	}";
@@ -64,8 +64,8 @@ namespace D2L.CodeStyle.TestAnalyzers.Asserts {
 
 			[Test]
 			public void TestWithTargetAsserts() {
-				string html='tesT';
-				Assert.IsNullOrEmpty( html.ToLower(), 'message' );
+				string html=""tesT"";
+				Assert.IsNullOrEmpty( html.ToLower(), ""message"" );
 			}
 		}
 	}";
@@ -102,7 +102,7 @@ namespace D2L.CodeStyle.TestAnalyzers.Asserts {
 			public void TestWithTargetAsserts() {
 				List<String> ids = new List<string>();
 				foreach( var id in ids ) {
-					Assert.IsNullOrEmpty( id, 'message' );
+					Assert.IsNullOrEmpty( id, ""message"" );
 				}
 			}
 		}
@@ -120,13 +120,13 @@ namespace D2L.CodeStyle.TestAnalyzers.Asserts {
 
 			[Test]
 			public void TestWithTargetAsserts() {
-				string html='tesT';
+				string html=""tesT"";
 				Assert.IsNotNullOrEmpty( html.ToLower() );
 				Assert.IsNullOrEmpty( html );
 				
 				List<String> ids = new List<string>();
 				foreach( var id in ids ) {
-					Assert.IsNullOrEmpty( id, 'message' );
+					Assert.IsNullOrEmpty( id, ""message"" );
 				}
 			}
 		}
@@ -151,7 +151,7 @@ namespace D2L.CodeStyle.TestAnalyzers.Asserts {
 			return new DiagnosticResult {
 				Id = AssertsAnalyzer.DiagnosticId,
 				Message = AssertsAnalyzer.MessageFormat,
-				Severity = DiagnosticSeverity.Warning,
+				Severity = DiagnosticSeverity.Error,
 				Locations = new[] {
 					new DiagnosticResultLocation( "Test0.cs", line, column )
 				}

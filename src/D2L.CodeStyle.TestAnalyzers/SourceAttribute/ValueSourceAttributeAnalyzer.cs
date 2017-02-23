@@ -22,7 +22,7 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 			Title,
 			MessageFormat,
 			Category,
-			DiagnosticSeverity.Warning,
+			DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
 			description: Description
 		);
