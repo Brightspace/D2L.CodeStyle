@@ -87,13 +87,7 @@ namespace D2L.CodeStyle.Analyzers.Threading {
 				return false;
 			}
 
-			foreach( INamedTypeSymbol ns in awaitableSymbols ) {
-				if( namedType.OriginalDefinition.Equals( ns ) ) {
-					return true;
-				}
-			}
-
-			return false;
+			return awaitableSymbols.Any( x => namedType.OriginalDefinition.Equals( x ) );
 		}
 
 	}
