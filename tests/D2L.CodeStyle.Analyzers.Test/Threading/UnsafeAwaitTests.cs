@@ -45,14 +45,13 @@ public class Test {
     async Task<string> DoSomethignElseAsync() {
         int i = await DoSomethingAsync().SafeAsync();
         await NonGenericDoSomethingAsync();
-
-        await Task.Factory.StartNew(
+	    Task a = Task.Factory.StartNew(
                 () => {
                     for( int i = 0; i < 1000000; i++ ) {
                         Console.WriteLine(i);
                     }
                 } );
-
+		await a;
 
 
         return $""""hello {i}th person"""";
@@ -60,7 +59,7 @@ public class Test {
 }";
 			var diag1 = CreateDiagnosticResult(22, 9);
 			var diag2 = CreateDiagnosticResult(27, 9);
-			var diag3 = CreateDiagnosticResult(29, 9);
+			var diag3 = CreateDiagnosticResult(34, 3);
 			VerifyCSharpDiagnostic(code, diag1, diag2, diag3);
 		}
 

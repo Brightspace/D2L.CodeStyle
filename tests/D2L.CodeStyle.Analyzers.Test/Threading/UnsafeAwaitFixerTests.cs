@@ -48,12 +48,13 @@ public class Test {
     async Task<string> DoSomethignElseAsync() {
         int i = await DoSomethingAsync().SafeAsync();
         await NonGenericDoSomethingAsync();
-        await Task.Factory.StartNew(
+        Task a = Task.Factory.StartNew(
                 () => {
                     for( int i = 0; i < 1000000; i++ ) {
                         Console.WriteLine(i);
                     }
                 } );
+        await a;
         return $""""hello {i}th person"""";
     }
 }";
@@ -85,12 +86,13 @@ public class Test {
     async Task<string> DoSomethignElseAsync() {
         int i = await DoSomethingAsync().SafeAsync();
         await NonGenericDoSomethingAsync().ConfigureAwait(false);
-        await Task.Factory.StartNew(
+        Task a = Task.Factory.StartNew(
                 () => {
                     for( int i = 0; i < 1000000; i++ ) {
                         Console.WriteLine(i);
                     }
-                } ).ConfigureAwait(false);
+                } );
+        await a.ConfigureAwait(false);
         return $""""hello {i}th person"""";
     }
 }";

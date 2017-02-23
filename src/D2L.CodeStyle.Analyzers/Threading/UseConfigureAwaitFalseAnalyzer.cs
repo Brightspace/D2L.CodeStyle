@@ -44,14 +44,15 @@ namespace D2L.CodeStyle.Analyzers.Threading {
 			INamedTypeSymbol genericAwaitable =
 				context.Compilation.GetTypeByMetadataName( "System.Runtime.CompilerServices.ConfiguredTaskAwaitable`1" );
 
-			bool isConfigured = context.Node.DescendantNodes()
-			                           .OfType<MemberAccessExpressionSyntax>()
-			                           .Any(
-				                           x => IsConfigureAwaitFunction(
-					                           x,
-					                           context.SemanticModel,
-					                           genericAwaitable,
-					                           nonGenericAwaitable ) );
+			bool isConfigured = false;
+
+			ITypeSymbol invocationTypeInfo =
+				context.SemanticModel.GetTypeInfo( ((AwaitExpressionSyntax) context.Node).Expression ).Type;
+
+			if( invocationTypeInfo != null ) {
+				isConfigured = invocationTypeInfo.OriginalDefinition.Equals( nonGenericAwaitable ) ||
+				               invocationTypeInfo.OriginalDefinition.Equals( genericAwaitable );
+			}
 
 			if( !isConfigured ) {
 
@@ -59,35 +60,6 @@ namespace D2L.CodeStyle.Analyzers.Threading {
 
 				context.ReportDiagnostic( diagnostic );
 			}
-		}
-
-		private static bool IsConfigureAwaitFunction(
-			MemberAccessExpressionSyntax node,
-			SemanticModel model,
-			params INamedTypeSymbol[] awaitableSymbols ) {
-			if( !node.IsKind( SyntaxKind.SimpleMemberAccessExpression ) ) {
-				return false;
-			}
-
-			ISymbol symbol = model.GetSymbolInfo( node ).Symbol;
-
-			if( symbol == null ) {
-				return false;
-			}
-
-			IMethodSymbol methodSymbol = symbol as IMethodSymbol;
-
-			if( methodSymbol == null || methodSymbol.ReturnsVoid ) {
-				return false;
-			}
-
-			var namedType = methodSymbol.ReturnType as INamedTypeSymbol;
-
-			if( namedType == null ) {
-				return false;
-			}
-
-			return awaitableSymbols.Any( x => namedType.OriginalDefinition.Equals( x ) );
 		}
 
 	}
