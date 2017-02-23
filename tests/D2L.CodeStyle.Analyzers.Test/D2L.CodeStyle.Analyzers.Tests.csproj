@@ -42,6 +42,7 @@
     <Compile Include="Common\TypeSymbolExtensionsTests.cs" />
     <Compile Include="Common\UtilsTests.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzerTests.cs" />
+    <Compile Include="Threading\UnsafeAwaitTests.cs" />
     <Compile Include="UnsafeStatics\UnsafeStaticsAnalyzerTests.cs" />
     <Compile Include="Verifiers\DiagnosticResult.cs" />
     <Compile Include="Verifiers\DiagnosticVerifier.cs" />
