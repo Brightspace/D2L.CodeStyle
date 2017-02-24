@@ -38,9 +38,13 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCase {
 			if( root == null ) {
 				return;
 			}
-			
+
 			foreach( var attribute in root.Attributes ) {
 				if( attribute.Name.ToString().Equals( "TestCase" ) ) {
+					if( attribute.ArgumentList == null ) {
+						continue;
+					}
+
 					var attributeArguments = attribute.ArgumentList.Arguments.ToImmutableArray();
 					foreach( var attributeArgument in attributeArguments ) {
 						if( attributeArgument.NameEquals != null && attributeArgument.NameEquals.Name.ToString().Equals( "Result" ) ) {

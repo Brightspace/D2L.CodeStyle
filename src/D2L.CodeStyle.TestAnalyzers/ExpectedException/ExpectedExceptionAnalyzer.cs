@@ -51,6 +51,9 @@ namespace D2L.CodeStyle.TestAnalyzers.ExpectedException {
 					isExpectedException = true;
 					break;
 				} else if( attribute.Name.ToString().Equals( "TestCase" ) ) {
+					if( attribute.ArgumentList == null ) {
+						continue;
+					}
 					foreach( var argument in attribute.ArgumentList.Arguments ) {
 						if( argument.NameEquals != null && argument.NameEquals.Name.ToString().Equals( "ExpectedException" ) ) {
 							location = argument.GetLocation();
