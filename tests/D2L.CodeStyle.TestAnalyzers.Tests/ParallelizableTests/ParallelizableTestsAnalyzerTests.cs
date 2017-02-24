@@ -42,7 +42,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ParallelizableTests {
             var expected = new DiagnosticResult {
                 Id = ParallelizableTestsAnalyzer.DiagnosticId,
                 Message = string.Format( ParallelizableTestsAnalyzer.MessageFormat, "System.DateTime", "System.DateTime" ),
-                Severity = DiagnosticSeverity.Error,
+                Severity = DiagnosticSeverity.Warning,
                 Locations =
                     new[] {
                             new DiagnosticResultLocation("Test0.cs", 8, 28)
@@ -69,7 +69,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ParallelizableTests {
             var expected = new DiagnosticResult {
                 Id = ParallelizableTestsAnalyzer.DiagnosticId,
                 Message = string.Format( ParallelizableTestsAnalyzer.MessageFormat, "System.DateTime", "System.DateTime" ),
-                Severity = DiagnosticSeverity.Error,
+                Severity = DiagnosticSeverity.Warning,
                 Locations =
                     new[] {
                             new DiagnosticResultLocation("Test0.cs", 8, 28)
@@ -96,7 +96,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ParallelizableTests {
             var expected = new DiagnosticResult {
                 Id = ParallelizableTestsAnalyzer.DiagnosticId,
                 Message = string.Format( ParallelizableTestsAnalyzer.MessageFormat, "System.DateTime", "System.DateTime" ),
-                Severity = DiagnosticSeverity.Error,
+                Severity = DiagnosticSeverity.Warning,
                 Locations =
                     new[] {
                             new DiagnosticResultLocation("Test0.cs", 8, 28)

@@ -22,7 +22,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ParallelizableTests {
             Title, 
             MessageFormat, 
             Category,
-            DiagnosticSeverity.Error,
+            DiagnosticSeverity.Warning,
             isEnabledByDefault: true,
             description: Description
         );
