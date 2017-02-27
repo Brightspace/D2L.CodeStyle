@@ -190,6 +190,36 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 			VerifyCSharpDiagnostic( test, diag1, diag2 );
 		}
 
+		[Test]
+		public void DocumentWithTestCaseSource_WithoutStatic_Case6_Diag() {
+			const string test = @"
+	using System;
+
+	namespace test {
+		class Test : BaseTest{
+
+			[TestCaseSource( ""ValidCases"" )]
+			public void DivideTest( int n, int d, int q ) {
+			}
+		}
+
+		class BaseTest : BaseBaseTest{
+			
+		}
+
+		class BaseBaseTest{
+			private IEnumerable<TestCaseData> ValidCases {
+				get
+				{
+					yield return new TestCaseData( 12, 3, 4 );
+					yield return new TestCaseData( 12, 2, 6 );
+				}
+			}
+		}
+	}";
+			AssertSingleDiagnostic( test, 7, 5, "ValidCases" );
+		}
+
 		private void AssertNoDiagnostic( string file ) {
 			VerifyCSharpDiagnostic( file );
 		}

@@ -39,7 +39,7 @@ namespace D2L.CodeStyle.TestAnalyzers.IgnoreAttribute {
 			if( root == null ) {
 				return;
 			}
-			
+
 			foreach( var attribute in root.Attributes ) {
 				if( attribute.Name.ToString().Equals( "Ignore" ) ) {
 					var parentClassDeclaration = root.AncestorsAndSelf().OfType<ClassDeclarationSyntax>().ToImmutableArray().Single();
@@ -50,7 +50,7 @@ namespace D2L.CodeStyle.TestAnalyzers.IgnoreAttribute {
 							}
 						}
 					}
-					
+
 					if( attribute.ArgumentList == null ) {
 						var diagnostic = Diagnostic.Create( Rule, attribute.GetLocation() );
 						context.ReportDiagnostic( diagnostic );
