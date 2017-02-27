@@ -44,7 +44,7 @@ namespace D2L.CodeStyle.TestAnalyzers.IgnoreAttribute {
 	using System;
 
 	namespace test {
-		[ReflectionSerializer]
+		public class IgnoreAttribute : Attribute { }
 		class Test {
 
 			[Ignore]
