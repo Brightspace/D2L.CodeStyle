@@ -42,16 +42,12 @@ namespace D2L.CodeStyle.TestAnalyzers.IgnoreAttribute {
 
 			foreach( var attribute in root.Attributes ) {
 				if( attribute.Name.ToString().Equals( "Ignore" ) ) {
-					var parentClassDeclaration = root.AncestorsAndSelf().OfType<ClassDeclarationSyntax>().ToImmutableArray().Single();
-					foreach( var parentAttributeList in parentClassDeclaration.AttributeLists ) {
-						foreach( var parentAttribute in parentAttributeList.Attributes ) {
-							if( parentAttribute.Name.ToString().Equals( "ReflectionSerializer" ) ) {
-								return;
-							}
-						}
+					var memberGroups = context.SemanticModel.GetMemberGroup( attribute );
+					if( memberGroups.Length == 0 ) {
+						return;
 					}
 
-					if( attribute.ArgumentList == null ) {
+					if( memberGroups.First().ContainingType.ToString().Equals( "NUnit.Framework.IgnoreAttribute" ) && attribute.ArgumentList == null ) {
 						var diagnostic = Diagnostic.Create( Rule, attribute.GetLocation() );
 						context.ReportDiagnostic( diagnostic );
 					}
