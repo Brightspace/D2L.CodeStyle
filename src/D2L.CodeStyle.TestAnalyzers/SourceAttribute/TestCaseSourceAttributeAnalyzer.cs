@@ -60,14 +60,14 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 						ITypeSymbol typeContainingMember = null;
 
 						if( attributeArguments.Length == 2 ) {
-							var typeExpression = attributeArguments[0].Expression as TypeOfExpressionSyntax;
+							var typeExpression = attributeArguments[ 0 ].Expression as TypeOfExpressionSyntax;
 							memberType = typeExpression.Type.ToString();
-							nameExpression = attributeArguments[1].Expression;
+							nameExpression = attributeArguments[ 1 ].Expression;
 							typeContainingMember = context.SemanticModel.GetTypeInfo( typeExpression.Type ).Type;
 						} else {
 							var methodSymbol = context.SemanticModel.GetDeclaredSymbol( method );
 							memberType = methodSymbol.ContainingType.MetadataName;
-							nameExpression = attributeArguments[0].Expression;
+							nameExpression = attributeArguments[ 0 ].Expression;
 							typeContainingMember = methodSymbol.ContainingType;
 						}
 
@@ -77,7 +77,11 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 							InvocationExpressionSyntax invocationExpression = nameExpression as InvocationExpressionSyntax;
 							memberName = invocationExpression.ArgumentList.Arguments.First().Expression.ToString();
 						}
-						
+
+						while( typeContainingMember.GetMembers( memberName ).Length == 0 ) {
+							typeContainingMember = typeContainingMember.BaseType;
+						}
+
 						var source = typeContainingMember.GetMembers( memberName ).First();
 						if( !source.IsStatic ) {
 							var diagnostic = Diagnostic.Create( Rule, attribute.GetLocation(), memberName );
