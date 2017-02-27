@@ -37,6 +37,24 @@ namespace D2L.CodeStyle.TestAnalyzers.IgnoreAttribute {
 		}
 
 		[Test]
+		public void DocumentWithoutTestIgnore_NoDiag() {
+			const string test = @"
+	using System;
+
+	namespace test {
+		[ReflectionSerializer]
+		class Test {
+
+			[Ignore]
+			public void TestWithoutIgnore() {
+			}
+
+		}
+	}";
+			AssertNoDiagnostic( test );
+		}
+
+		[Test]
 		public void DocumentWithIgnore_WithReason_NoDiag() {
 			const string test = @"
 	using System;

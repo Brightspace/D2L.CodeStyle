@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -38,9 +39,18 @@ namespace D2L.CodeStyle.TestAnalyzers.IgnoreAttribute {
 			if( root == null ) {
 				return;
 			}
-
+			
 			foreach( var attribute in root.Attributes ) {
 				if( attribute.Name.ToString().Equals( "Ignore" ) ) {
+					var parentClassDeclaration = root.AncestorsAndSelf().OfType<ClassDeclarationSyntax>().ToImmutableArray().Single();
+					foreach( var parentAttributeList in parentClassDeclaration.AttributeLists ) {
+						foreach( var parentAttribute in parentAttributeList.Attributes ) {
+							if( parentAttribute.Name.ToString().Equals( "ReflectionSerializer" ) ) {
+								return;
+							}
+						}
+					}
+					
 					if( attribute.ArgumentList == null ) {
 						var diagnostic = Diagnostic.Create( Rule, attribute.GetLocation() );
 						context.ReportDiagnostic( diagnostic );
