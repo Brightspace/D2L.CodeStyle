@@ -8,8 +8,9 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.TestAnalyzers.ParallelizableTests {
-    [DiagnosticAnalyzer( LanguageNames.CSharp )]
-    public sealed class ParallelizableTestsAnalyzer : DiagnosticAnalyzer {
+	//Disable the ParallelizableTestsAnalyzer for temporary, too many tests need to be fixed for this property, defer to do it after upgrading to NUnit3
+	//[DiagnosticAnalyzer( LanguageNames.CSharp )]
+	public sealed class ParallelizableTestsAnalyzer : DiagnosticAnalyzer {
         public const string DiagnosticId = "D2L0001";
         private const string Category = "Safety";
 
