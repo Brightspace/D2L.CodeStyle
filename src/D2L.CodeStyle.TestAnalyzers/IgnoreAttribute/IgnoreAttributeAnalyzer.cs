@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -19,7 +20,7 @@ namespace D2L.CodeStyle.TestAnalyzers.IgnoreAttribute {
 			Title,
 			MessageFormat,
 			Category,
-			DiagnosticSeverity.Warning,
+			DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
 			description: Description
 		);
@@ -41,7 +42,12 @@ namespace D2L.CodeStyle.TestAnalyzers.IgnoreAttribute {
 
 			foreach( var attribute in root.Attributes ) {
 				if( attribute.Name.ToString().Equals( "Ignore" ) ) {
-					if( attribute.ArgumentList == null ) {
+					var memberGroups = context.SemanticModel.GetMemberGroup( attribute );
+					if( memberGroups.Length == 0 ) {
+						return;
+					}
+
+					if( memberGroups.First().ContainingType.ToString().Equals( "NUnit.Framework.IgnoreAttribute" ) && attribute.ArgumentList == null ) {
 						var diagnostic = Diagnostic.Create( Rule, attribute.GetLocation() );
 						context.ReportDiagnostic( diagnostic );
 					}

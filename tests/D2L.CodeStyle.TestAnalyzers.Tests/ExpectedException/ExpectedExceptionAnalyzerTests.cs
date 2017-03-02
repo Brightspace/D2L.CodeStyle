@@ -80,7 +80,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ExpectedException {
 		class Test {
 
 			[Test]
-			[ExpectedException( typeof( Exception ), ExpectedMessage = 'Invalid orgId value' )]
+			[ExpectedException( typeof( Exception ), ExpectedMessage = ""Invalid orgId value"" )]
 			public void TestWithException() {
 			}
 
@@ -116,7 +116,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ExpectedException {
 		class Test {
 
 			[Test]
-			[TestCase( '', ExpectedException = typeof(ArgumentNullException), ExpectedMessage = 'Username', MatchType=MessageMatch.Contains)]
+			[TestCase( """", ExpectedException = typeof(ArgumentNullException), ExpectedMessage = ""Username"", MatchType=MessageMatch.Contains)]
 			public void TestWithException(string name) {
 			}
 
@@ -134,8 +134,8 @@ namespace D2L.CodeStyle.TestAnalyzers.ExpectedException {
 		class Test {
 
 			[Test]
-			[TestCase( '', ExpectedException = typeof(ArgumentNullException), ExpectedMessage = 'Username', MatchType=MessageMatch.Contains)]
-			[TestCase( 'name', ExpectedException = typeof(ArgumentNullException), ExpectedMessage = 'Username', MatchType=MessageMatch.Contains)]
+			[TestCase( """", ExpectedException = typeof(ArgumentNullException), ExpectedMessage = ""Username"", MatchType=MessageMatch.Contains)]
+			[TestCase( ""name"", ExpectedException = typeof(ArgumentNullException), ExpectedMessage = ""Username"", MatchType=MessageMatch.Contains)]
 			public void TestWithException(string name) {
 			}
 
@@ -161,7 +161,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ExpectedException {
 			return new DiagnosticResult {
 				Id = ExpectedExceptionAnalyzer.DiagnosticId,
 				Message = ExpectedExceptionAnalyzer.MessageFormat,
-				Severity = DiagnosticSeverity.Warning,
+				Severity = DiagnosticSeverity.Error,
 				Locations = new[] {
 					new DiagnosticResultLocation( "Test0.cs", line, column )
 				}

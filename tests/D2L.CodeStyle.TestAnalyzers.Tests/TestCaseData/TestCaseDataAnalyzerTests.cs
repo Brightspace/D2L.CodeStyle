@@ -173,7 +173,7 @@ namespace D2L.CodeStyle.TestAnalyzers.TestCaseData {
 			return new DiagnosticResult {
 				Id = TestCaseDataAnalyzer.DiagnosticId,
 				Message = string.Format( TestCaseDataAnalyzer.MessageFormat, message ),
-				Severity = DiagnosticSeverity.Warning,
+				Severity = DiagnosticSeverity.Error,
 				Locations = new[] {
 					new DiagnosticResultLocation( "Test0.cs", line, column )
 				}

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.IO;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using D2L.CodeStyle.TestAnalyzers.Test.Verifiers;
 using Microsoft.CodeAnalysis;
@@ -23,6 +24,7 @@ namespace D2L.CodeStyle.TestAnalyzers.IgnoreAttribute {
 		public void DocumentWithoutIgnore_NoDiag() {
 			const string test = @"
 	using System;
+	using NUnit.Framework;
 
 	namespace test {
 		class Test {
@@ -37,13 +39,32 @@ namespace D2L.CodeStyle.TestAnalyzers.IgnoreAttribute {
 		}
 
 		[Test]
-		public void DocumentWithIgnore_WithReason_NoDiag() {
+		public void DocumentWithoutTestIgnore_NoDiag() {
 			const string test = @"
 	using System;
 
 	namespace test {
+		public class IgnoreAttribute : Attribute { }
+		class Test {
+
+			[Ignore]
+			public void TestWithoutIgnore() {
+			}
+
+		}
+	}";
+			AssertNoDiagnostic( test );
+		}
+
+		[Test]
+		public void DocumentWithIgnore_WithReason_NoDiag() {
+			const string test = @"
+	using System;
+	using NUnit.Framework;
+
+	namespace test {
 		[TestFixture]
-		[Ignore('ignore reason')]
+		[Ignore(""ignore reason"")]
 		class Test {
 
 			[Test]
@@ -58,6 +79,7 @@ namespace D2L.CodeStyle.TestAnalyzers.IgnoreAttribute {
 		public void DocumentWithIgnore_WithoutReason_Case1_Diag() {
 			const string test = @"
 	using System;
+	using NUnit.Framework;
 
 	namespace test {
 		[TestFixture]
@@ -69,13 +91,14 @@ namespace D2L.CodeStyle.TestAnalyzers.IgnoreAttribute {
 			}
 		}
 	}";
-			AssertSingleDiagnostic( test, 6, 4 );
+			AssertSingleDiagnostic( test, 7, 4 );
 		}
 
 		[Test]
 		public void DocumentWithIgnore_WithoutReason_Case2_Diag() {
 			const string test = @"
 	using System;
+	using NUnit.Framework;
 
 	namespace test {
 		[TestFixture]
@@ -87,13 +110,14 @@ namespace D2L.CodeStyle.TestAnalyzers.IgnoreAttribute {
 			}
 		}
 	}";
-			AssertSingleDiagnostic( test, 9, 5 );
+			AssertSingleDiagnostic( test, 10, 5 );
 		}
 
 		[Test]
 		public void DocumentWithIgnore_WithoutReason_Case3_Diag() {
 			const string test = @"
 	using System;
+	using NUnit.Framework;
 
 	namespace test {
 		[TestFixture]
@@ -106,8 +130,8 @@ namespace D2L.CodeStyle.TestAnalyzers.IgnoreAttribute {
 			}
 		}
 	}";
-			var diag1 = CreateDiagnosticResult( 6, 4 );
-			var diag2 = CreateDiagnosticResult( 10, 5 );
+			var diag1 = CreateDiagnosticResult( 7, 4 );
+			var diag2 = CreateDiagnosticResult( 11, 5 );
 			VerifyCSharpDiagnostic( test, diag1, diag2 );
 		}
 
@@ -125,11 +149,18 @@ namespace D2L.CodeStyle.TestAnalyzers.IgnoreAttribute {
 			return new DiagnosticResult {
 				Id = IgnoreAttributeAnalyzer.DiagnosticId,
 				Message = IgnoreAttributeAnalyzer.MessageFormat,
-				Severity = DiagnosticSeverity.Warning,
+				Severity = DiagnosticSeverity.Error,
 				Locations = new[] {
 					new DiagnosticResultLocation( "Test0.cs", line, column )
 				}
 			};
 		}
+
+		protected override MetadataReference[] GetAdditionalReferences() {
+			return new MetadataReference[] { MetadataReference.CreateFromFile( Path.Combine(
+				Path.GetDirectoryName( this.GetType().Assembly.Location ), @"..\..\..\..\packages\NUnit.2.6.4\lib\nunit.framework.dll"
+			) ) };
+		}
+
 	}
 }

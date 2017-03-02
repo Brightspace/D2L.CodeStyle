@@ -6,28 +6,28 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using NUnit.Framework;
 
 namespace D2L.CodeStyle.TestAnalyzers.ParallelizableTests {
-    [TestFixture]
-    public class ParallelizableTestsAnalyzerTests : DiagnosticVerifier {
+	[TestFixture]
+	public class ParallelizableTestsAnalyzerTests : DiagnosticVerifier {
 
-        private static readonly MetadataReference NUnitReference = MetadataReference.CreateFromFile( typeof( TestAttribute ).Assembly.Location );
-        protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer() {
-            return new ParallelizableTestsAnalyzer( new Dictionary<string, string> { { "System.DateTime", "System.DateTime" } }.ToImmutableDictionary() );
-        }
+		private static readonly MetadataReference NUnitReference = MetadataReference.CreateFromFile( typeof( TestAttribute ).Assembly.Location );
+		protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer() {
+			return new ParallelizableTestsAnalyzer( new Dictionary<string, string> { { "System.DateTime", "System.DateTime" } }.ToImmutableDictionary() );
+		}
 
-        protected override MetadataReference[] GetAdditionalReferences() {
-            return new[] { NUnitReference };
-        }
+		protected override MetadataReference[] GetAdditionalReferences() {
+			return new[] { NUnitReference };
+		}
 
-        [Test]
-        public void EmptyDocument_NoDiag() {
-            const string test = @"";
+		[Test]
+		public void EmptyDocument_NoDiag() {
+			const string test = @"";
 
-            VerifyCSharpDiagnostic( test );
-        }
+			VerifyCSharpDiagnostic( test );
+		}
 
-        [Test]
-        public void DocumentWithTest_UsesConstructorOnOffendingType_Diag() {
-            const string test = @"
+		[Test]
+		public void DocumentWithTest_UsesConstructorOnOffendingType_Diag() {
+			const string test = @"
     using System;
 
     namespace test {
@@ -39,22 +39,22 @@ namespace D2L.CodeStyle.TestAnalyzers.ParallelizableTests {
 
         }
     }";
-            var expected = new DiagnosticResult {
-                Id = ParallelizableTestsAnalyzer.DiagnosticId,
-                Message = string.Format( ParallelizableTestsAnalyzer.MessageFormat, "System.DateTime", "System.DateTime" ),
-                Severity = DiagnosticSeverity.Error,
-                Locations =
-                    new[] {
-                            new DiagnosticResultLocation("Test0.cs", 8, 28)
-                        }
-            };
+			var expected = new DiagnosticResult {
+				Id = ParallelizableTestsAnalyzer.DiagnosticId,
+				Message = string.Format( ParallelizableTestsAnalyzer.MessageFormat, "System.DateTime", "System.DateTime" ),
+				Severity = DiagnosticSeverity.Warning,
+				Locations =
+					new[] {
+							new DiagnosticResultLocation("Test0.cs", 8, 28)
+						}
+			};
 
-            VerifyCSharpDiagnostic( test, expected );
-        }
+			VerifyCSharpDiagnostic( test, expected );
+		}
 
-        [Test]
-        public void DocumentWithTest_UsesMethodOnOffendingType_Diag() {
-            const string test = @"
+		[Test]
+		public void DocumentWithTest_UsesMethodOnOffendingType_Diag() {
+			const string test = @"
     using System;
 
     namespace test {
@@ -66,22 +66,22 @@ namespace D2L.CodeStyle.TestAnalyzers.ParallelizableTests {
 
         }
     }";
-            var expected = new DiagnosticResult {
-                Id = ParallelizableTestsAnalyzer.DiagnosticId,
-                Message = string.Format( ParallelizableTestsAnalyzer.MessageFormat, "System.DateTime", "System.DateTime" ),
-                Severity = DiagnosticSeverity.Error,
-                Locations =
-                    new[] {
-                            new DiagnosticResultLocation("Test0.cs", 8, 28)
-                        }
-            };
+			var expected = new DiagnosticResult {
+				Id = ParallelizableTestsAnalyzer.DiagnosticId,
+				Message = string.Format( ParallelizableTestsAnalyzer.MessageFormat, "System.DateTime", "System.DateTime" ),
+				Severity = DiagnosticSeverity.Warning,
+				Locations =
+					new[] {
+							new DiagnosticResultLocation("Test0.cs", 8, 28)
+						}
+			};
 
-            VerifyCSharpDiagnostic( test, expected );
-        }
+			VerifyCSharpDiagnostic( test, expected );
+		}
 
-        [Test]
-        public void DocumentWithTest_UsesMemberOnOffendingType_Diag() {
-            const string test = @"
+		[Test]
+		public void DocumentWithTest_UsesMemberOnOffendingType_Diag() {
+			const string test = @"
     using System;
 
     namespace test {
@@ -93,18 +93,18 @@ namespace D2L.CodeStyle.TestAnalyzers.ParallelizableTests {
 
         }
     }";
-            var expected = new DiagnosticResult {
-                Id = ParallelizableTestsAnalyzer.DiagnosticId,
-                Message = string.Format( ParallelizableTestsAnalyzer.MessageFormat, "System.DateTime", "System.DateTime" ),
-                Severity = DiagnosticSeverity.Error,
-                Locations =
-                    new[] {
-                            new DiagnosticResultLocation("Test0.cs", 8, 28)
-                        }
-            };
+			var expected = new DiagnosticResult {
+				Id = ParallelizableTestsAnalyzer.DiagnosticId,
+				Message = string.Format( ParallelizableTestsAnalyzer.MessageFormat, "System.DateTime", "System.DateTime" ),
+				Severity = DiagnosticSeverity.Warning,
+				Locations =
+					new[] {
+							new DiagnosticResultLocation("Test0.cs", 8, 28)
+						}
+			};
 
-            VerifyCSharpDiagnostic( test, expected );
-        }
+			VerifyCSharpDiagnostic( test, expected );
+		}
 
-    }
+	}
 }
