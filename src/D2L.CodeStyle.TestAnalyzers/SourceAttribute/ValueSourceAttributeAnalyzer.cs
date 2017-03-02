@@ -71,10 +71,6 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 								typeContainingMember = methodSymbol.ContainingType;
 							}
 
-							if( String.Equals( memberType, "<invalid-global-code>" ) ) {
-								continue;
-							}
-
 							if( nameExpression is LiteralExpressionSyntax ) {
 								memberName = nameExpression.ToString().Trim( new char[] { '\"', '\'', ' ' } );
 							} else if( nameExpression is InvocationExpressionSyntax ) {
