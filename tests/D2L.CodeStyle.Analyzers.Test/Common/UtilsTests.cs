@@ -1,5 +1,4 @@
 ﻿using NUnit.Framework;
-using System.IO;
 
 namespace D2L.CodeStyle.Analyzers.Common {
 
@@ -9,35 +8,35 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		[Test]
 		public void IsGeneratedCodefile_NotCSharpFile_False() {
-			string file = Path.Combine( "proj", "random.js" );
+			const string file = @"proj\random.js";
 
 			Assert.IsFalse( m_utils.IsGeneratedCodefile( file ) );
 		}
 
 		[Test]
 		public void IsGeneratedCodefile_CSharpFileNotGenerated_False() {
-			string file = Path.Combine( "proj", "random.cs" );
+			const string file = @"proj\random.cs";
 
 			Assert.IsFalse( m_utils.IsGeneratedCodefile( file ) );
 		}
 
 		[Test]
 		public void IsGeneratedCodefile_CSharpFileInGeneratedFolder_True() {
-			string file = Path.Combine( "proj", ".generated", "random.cs" );
+			const string file = @"proj\.generated\random.cs";
 
 			Assert.IsTrue( m_utils.IsGeneratedCodefile( file ) );
 		}
 
 		[Test]
 		public void IsGeneratedCodefile_CSharpFileInFolderWithGeneratedName_False() {
-			string file = Path.Combine( "proj.generated", "random.cs" );
+			const string file = @"proj.generated\random.cs";
 
 			Assert.IsFalse( m_utils.IsGeneratedCodefile( file ) );
 		}
 
 		[Test]
 		public void IsGeneratedCodeFile_ResourceFile_True() {
-			string file = Path.Combine( "proj", "random.Designer.cs" );
+			const string file = @"proj\random.Designer.cs";
 
 			Assert.IsTrue( m_utils.IsGeneratedCodefile( file ) );
 		}
