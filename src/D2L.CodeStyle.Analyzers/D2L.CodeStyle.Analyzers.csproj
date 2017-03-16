@@ -33,6 +33,7 @@
     <Compile Include="Common\MutabilityInspector.cs" />
     <Compile Include="Common\TypeSymbolExtensions.cs" />
     <Compile Include="Common\Utils.cs" />
+    <Compile Include="IGlobalContext\IGlobalContextAnalyzer.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UnsafeStatics\UnsafeStaticsAnalyzer.cs" />
