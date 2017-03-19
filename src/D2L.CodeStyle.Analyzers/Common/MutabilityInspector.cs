@@ -75,35 +75,35 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		/// </summary>
 		/// <param name="type">The type to determine mutability for.</param>
 		/// <returns>Whether the type is mutable.</returns>
-		public bool IsTypeMutable(
+		public MutabilityInspectionResult InspectType(
 			ITypeSymbol type,
 			MutabilityInspectionFlags flags = MutabilityInspectionFlags.Default
 		) {
 			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
-			var result = IsTypeMutableRecursive( type, flags, typesInCurrentCycle );
+			var result = InspectTypeRecursive( type, flags, typesInCurrentCycle );
 			return result;
 		}
 
-		private bool IsTypeMutableRecursive(
+		private MutabilityInspectionResult InspectTypeRecursive(
 			ITypeSymbol type,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
-			if( type is IErrorTypeSymbol  || type == null ) {
-				throw new Exception( $"Type '{type}' cannot be resolved. Please ensure all dependencies " 
+			if( type is IErrorTypeSymbol || type == null ) {
+				throw new Exception( $"Type '{type}' cannot be resolved. Please ensure all dependencies "
 					+ "are referenced, including transitive dependencies." );
 			}
 
 			if( IsTypeKnownImmutable( type ) ) {
-				return false;
+				return MutabilityInspectionResult.NotMutable();
 			}
 
 			if( type.TypeKind == TypeKind.Array ) {
-				return true;
+				return MutabilityInspectionResult.Mutable( null, type.GetFullTypeName(), MutabilityTarget.Type, MutabilityCause.IsAnArray );
 			}
 
 			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && IsTypeMarkedImmutable( type ) ) {
-				return false;
+				return MutabilityInspectionResult.NotMutable();
 			}
 
 			if( typeStack.Contains( type ) ) {
@@ -111,7 +111,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				// or a generic parameter to a type causes the cycle (via IsTypeMutableRecursive). This is safe if the checks above have 
 				// passed and the remaining members are read-only immutable. So we can skip the current check, and allow the type to continue 
 				// to be evaluated.
-				return false;
+				return MutabilityInspectionResult.NotMutable();
 			}
 
 			typeStack.Add( type );
@@ -119,39 +119,49 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 				if( ImmutableContainerTypes.Contains( type.GetFullTypeName() ) ) {
 					var namedType = type as INamedTypeSymbol;
-					bool isMutable = namedType.TypeArguments.Any( t => IsTypeMutableRecursive( t, MutabilityInspectionFlags.Default, typeStack ) );
-					return isMutable;
+					foreach( var arg in namedType.TypeArguments ) {
+						var result = InspectTypeRecursive( arg, MutabilityInspectionFlags.Default, typeStack );
+						if( result.IsMutable ) {
+							// modify the result to target the type argument
+							result = MutabilityInspectionResult.Mutable( result.MemberPath, result.TypeName, MutabilityTarget.TypeArgument, result.Cause.Value );
+							return result;
+						}
+					}
+					return MutabilityInspectionResult.NotMutable();
 				}
 
 				if( type.TypeKind == TypeKind.Interface ) {
-					return true;
+					return MutabilityInspectionResult.Mutable( null, type.GetFullTypeName(), MutabilityTarget.Type, MutabilityCause.IsAnInterface );
 				}
 
 				if( !flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed )
 						&& type.TypeKind == TypeKind.Class
 						&& !type.IsSealed
 					) {
-					return true;
+					return MutabilityInspectionResult.Mutable( null, type.GetFullTypeName(), MutabilityTarget.Type, MutabilityCause.IsNotSealed );
 				}
 
-				foreach( ISymbol member in type.GetNonStaticMembers() ) {
-					if( IsMemberMutableRecursive( member, MutabilityInspectionFlags.Default, typeStack ) ) {
-						return true;
+				foreach( ISymbol member in type.GetExplicitNonStaticMembers() ) {
+					var result = InspectMemberRecursive( member, MutabilityInspectionFlags.Default, typeStack );
+					if( result.IsMutable ) {
+						return result;
 					}
 				}
 
-				return false;
+				return MutabilityInspectionResult.NotMutable();
 
 			} finally {
 				typeStack.Remove( type );
 			}
 		}
 
-		private bool IsMemberMutableRecursive(
+		private MutabilityInspectionResult InspectMemberRecursive(
 			ISymbol symbol,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
+
+			MutabilityInspectionResult result;
 
 			switch( symbol.Kind ) {
 
@@ -163,41 +173,43 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					var declarationSyntax = sourceTree?.GetSyntax() as PropertyDeclarationSyntax;
 					if( declarationSyntax != null && declarationSyntax.IsPropertyGetterImplemented() ) {
 						// property has getter with body; it is either backed by a field, or is a static function; ignore
-						return false;
+						return MutabilityInspectionResult.NotMutable();
 					}
 
 					if( IsPropertyMutable( prop ) ) {
-						return true;
+						return MutabilityInspectionResult.Mutable( prop.Name, prop.Type.GetFullTypeName(), MutabilityTarget.Member, MutabilityCause.IsNotReadonly );
 					}
 
-					if( IsTypeMutableRecursive( prop.Type, flags, typeStack ) ) {
-						return true;
+					result = InspectTypeRecursive( prop.Type, flags, typeStack );
+					if( result.IsMutable ) {
+						return result.WithPrefixedMember( prop.Name );
 					}
 
-					return false;
+					return MutabilityInspectionResult.NotMutable();
 
 				case SymbolKind.Field:
 
 					var field = (IFieldSymbol)symbol;
 
 					if( IsFieldMutable( field ) ) {
-						return true;
+						return MutabilityInspectionResult.Mutable( field.Name, field.Type.GetFullTypeName(), MutabilityTarget.Member, MutabilityCause.IsNotReadonly );
 					}
 
-					if( IsTypeMutableRecursive( field.Type, flags, typeStack ) ) {
-						return true;
+					result = InspectTypeRecursive( field.Type, flags, typeStack );
+					if( result.IsMutable ) {
+						return result.WithPrefixedMember( field.Name );
 					}
 
-					return false;
+					return MutabilityInspectionResult.NotMutable();
 
 				case SymbolKind.Method:
 				case SymbolKind.NamedType:
 					// ignore these symbols, because they do not contribute to immutability
-					return false;
+					return MutabilityInspectionResult.NotMutable();
 
 				default:
 					// we've got a member (event, etc.) that we can't currently be smart about, so fail
-					return true;
+					return MutabilityInspectionResult.Mutable( symbol.Name, null, MutabilityTarget.Member, MutabilityCause.IsPotentiallyMutable );
 			}
 		}
 
@@ -231,7 +243,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		/// <summary>
 		/// Determine if a property is mutable.
-		/// This does not check if the type of the property is also mutable; use <see cref="IsTypeMutable"/> for that.
+		/// This does not check if the type of the property is also mutable; use <see cref="InspectType"/> for that.
 		/// </summary>
 		/// <param name="prop">The property to check for mutability.</param>
 		/// <returns>Determines whether the property is mutable.</returns>
@@ -244,7 +256,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		/// <summary>
 		/// Determine if a field is mutable.
-		/// This does not check if the type of the field is also mutable; use <see cref="IsTypeMutable"/> for that.
+		/// This does not check if the type of the field is also mutable; use <see cref="InspectType"/> for that.
 		/// </summary>
 		/// <param name="field">The field to check for mutability.</param>
 		/// <returns>Determines whether the property is mutable.</returns>

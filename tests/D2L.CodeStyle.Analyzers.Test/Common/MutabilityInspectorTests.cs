@@ -67,120 +67,190 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}
 
 		[Test]
-		public void IsTypeMutable_PrimitiveType_False() {
+		public void InspectType_PrimitiveType_NotMutable() {
 			var type = Field( "uint foo" ).Type;
+			var expected = MutabilityInspectionResult.NotMutable();
 
-			Assert.IsFalse( m_inspector.IsTypeMutable( type ) );
+			var actual = m_inspector.InspectType( type );
+
+			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
-		public void IsTypeMutable_NullablePrimitiveType_False() {
+		public void InspectType_NullablePrimitiveType_NotMutable() {
 			var type = Field( "uint? foo" ).Type;
+			var expected = MutabilityInspectionResult.NotMutable();
 
-			Assert.IsFalse( m_inspector.IsTypeMutable( type ) );
+			var actual = m_inspector.InspectType( type );
+
+			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
-		public void IsTypeMutable_NullableNonPrimitiveType_True() {
+		public void InspectType_NullableNonPrimitiveType_NotMutable() {
 			var type = Type( @"
 				class Test {
-					struct Hello { object foo; }
+					struct Hello { }
 					Hello? nullable;
-				}" 
+				}"
 			);
 			var field = type.GetMembers().FirstOrDefault( m => m is IFieldSymbol );
 			Assert.IsNotNull( field );
 			type = ( field as IFieldSymbol ).Type;
+			var expected = MutabilityInspectionResult.NotMutable();
 
-			Assert.IsTrue( m_inspector.IsTypeMutable( type ) );
+			var actual = m_inspector.InspectType( type );
+
+			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
-		public void IsTypeMutable_ArrayType_True() {
+		public void InspectType_ArrayType_True() {
 			var type = Field( "int[] random" ).Type;
+			var expected = MutabilityInspectionResult.Mutable(
+				null,
+				"System.Int32[]",
+				MutabilityTarget.Type,
+				MutabilityCause.IsAnArray
+			);
 
-			Assert.IsTrue( m_inspector.IsTypeMutable( type ) );
+			var actual = m_inspector.InspectType( type );
+
+			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
-		public void IsTypeMutable_KnownImmutableType_False() {
+		public void InspectType_KnownImmutableType_False() {
 			var type = Field( "string random" ).Type;
+			var expected = MutabilityInspectionResult.NotMutable();
 
-			Assert.IsFalse( m_inspector.IsTypeMutable( type ) );
+			var actual = m_inspector.InspectType( type );
+
+			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
-		public void IsTypeMutable_Interface_True() {
+		public void InspectType_Interface_True() {
 			var type = Type( "interface foo {}" );
+			var expected = MutabilityInspectionResult.Mutable(
+				null,
+				$"{RootNamespace}.foo",
+				MutabilityTarget.Type,
+				MutabilityCause.IsAnInterface
+			);
 
-			Assert.IsTrue( m_inspector.IsTypeMutable( type ) );
+			var actual = m_inspector.InspectType( type );
+
+			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
-		public void IsTypeMutable_NonSealedClass_True() {
+		public void InspectType_NonSealedClass_True() {
 			var type = Type( "class foo {}" );
+			var expected = MutabilityInspectionResult.Mutable(
+				null,
+				$"{RootNamespace}.foo",
+				MutabilityTarget.Type,
+				MutabilityCause.IsNotSealed
+			);
 
-			Assert.IsTrue( m_inspector.IsTypeMutable( type ) );
+			var actual = m_inspector.InspectType( type );
+
+			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
-		public void IsTypeMutable_SealedClass_False() {
+		public void InspectType_SealedClass_False() {
 			var type = Type( "sealed class foo {}" );
+			var expected = MutabilityInspectionResult.NotMutable();
 
-			Assert.IsFalse( m_inspector.IsTypeMutable( type ) );
+			var actual = m_inspector.InspectType( type );
+
+			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
-		public void IsTypeMutable_LooksAtFieldsInType() {
+		public void InspectType_LooksAtMembersInDeclaredType() {
 			var field = Field( "public string random" );
 			Assert.IsTrue( m_inspector.IsFieldMutable( field ) );
+			var expected = MutabilityInspectionResult.Mutable(
+				"random",
+				"System.String",
+				MutabilityTarget.Member,
+				MutabilityCause.IsNotReadonly
+			);
 
-			Assert.IsTrue( m_inspector.IsTypeMutable( field.ContainingType ) );
+			var actual = m_inspector.InspectType( field.ContainingType );
+
+			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
-		public void IsTypeMutable_LooksAtMutabilityOfTypeOfField() {
+		public void InspectType_LooksAtMembersInExternalType() {
 			var field = Field( "public readonly System.Text.StringBuilder random" );
 			Assert.IsFalse( m_inspector.IsFieldMutable( field ) );
+			var expected = MutabilityInspectionResult.Mutable(
+				"Capacity",
+				"System.Int32",
+				MutabilityTarget.Member,
+				MutabilityCause.IsNotReadonly
+			);
 
-			Assert.IsTrue( m_inspector.IsTypeMutable( field.ContainingType ) );
+			var actual = m_inspector.InspectType( field.Type );
+
+			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
-		public void IsTypeMutable_LooksAtPropertiesInType() {
+		public void InspectType_LooksFieldsInType() {
+			var field = Field( "public readonly System.Text.StringBuilder random" );
+			Assert.IsFalse( m_inspector.IsFieldMutable( field ) );
+			var expected = MutabilityInspectionResult.Mutable(
+				"random.Capacity",
+				"System.Int32",
+				MutabilityTarget.Member,
+				MutabilityCause.IsNotReadonly
+			);
+
+			var actual = m_inspector.InspectType( field.ContainingType );
+
+			AssertResultsAreEqual( expected, actual );
+		}
+
+		[Test]
+		public void InspectType_LooksAtPropertiesInType() {
 			var prop = Property( "public string random { get; set; }" );
 			Assert.IsTrue( m_inspector.IsPropertyMutable( prop ) );
+			var expected = MutabilityInspectionResult.Mutable(
+				$"random",
+				"System.String",
+				MutabilityTarget.Member,
+				MutabilityCause.IsNotReadonly
+			);
 
-			Assert.IsTrue( m_inspector.IsTypeMutable( prop.ContainingType ) );
+			var actual = m_inspector.InspectType( prop.ContainingType );
+
+			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
-		public void IsTypeMutable_LooksAtMutabilityOfTypeOfProperty() {
-			var property = Property( "public System.Text.StringBuilder random { get; }" );
-			Assert.IsFalse( m_inspector.IsPropertyMutable( property ) );
-
-			Assert.IsTrue( m_inspector.IsTypeMutable( property.Type ) );
-		}
-
-		[Test]
-		public void IsTypeMutable_NonExistentType_ThrowsException() {
-			var type = Property( "public System.Text.StringBuilder random { get; }" ).Type;
-
-			Assert.IsTrue( m_inspector.IsTypeMutable( type ) );
-		}
-
-		[Test]
-		public void IsTypeMutable_ImmutableGenericCollectionWithValueTypeElement_ReturnsFalse() {
+		public void InspectType_ImmutableGenericCollectionWithValueTypeElement_ReturnsFalse() {
 			var type = Field( "private readonly System.Collections.Immutable.ImmutableArray<int> random" ).Type;
+			var expected = MutabilityInspectionResult.NotMutable();
 
-			Assert.IsFalse( m_inspector.IsTypeMutable( type ) );
+			var actual = m_inspector.InspectType( type );
+
+			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
-		public void IsTypeMutable_IEnumerableGenericCollectionWithImmutableElement_ReturnsFalse() {
+		public void InspectType_IEnumerableGenericCollectionWithImmutableElement_ReturnsFalse() {
 			var type = Field( "private readonly System.Collections.Generic.IEnumerable<int> random" ).Type;
+			var expected = MutabilityInspectionResult.NotMutable();
 
-			Assert.IsFalse( m_inspector.IsTypeMutable( type ) );
+			var actual = m_inspector.InspectType( type );
+
+			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
@@ -259,6 +329,14 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
 			Assert.AreEqual( "Foo", type.MetadataName );
 			Assert.IsTrue( m_inspector.IsTypeMarkedImmutable( type ) );
+		}
+
+		private void AssertResultsAreEqual( MutabilityInspectionResult expected, MutabilityInspectionResult actual ) {
+			Assert.AreEqual( expected.IsMutable, actual.IsMutable, "IsMutable does not match" );
+			Assert.AreEqual( expected.MemberPath, actual.MemberPath, "MemberPath does not match" );
+			Assert.AreEqual( expected.Target, actual.Target, "Target does not match" );
+			Assert.AreEqual( expected.Cause, actual.Cause, "Cause does not match" );
+			Assert.AreEqual( expected.TypeName, actual.TypeName, "TypeName does not match" );
 		}
 
 	}

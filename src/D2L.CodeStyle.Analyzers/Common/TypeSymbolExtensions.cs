@@ -8,7 +8,7 @@ using System.Collections.Immutable;
 namespace D2L.CodeStyle.Analyzers.Common {
 
 	public static class SyntaxNodeExtension {
-		public static bool IsPropertyGetterImplemented(this PropertyDeclarationSyntax syntax) {
+		public static bool IsPropertyGetterImplemented( this PropertyDeclarationSyntax syntax ) {
 			var getter = syntax.AccessorList?.Accessors.FirstOrDefault( a => a.IsKind( SyntaxKind.GetAccessorDeclaration ) );
 			return getter?.Body != null;
 		}
@@ -41,9 +41,9 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			miscellaneousOptions: SymbolDisplayMiscellaneousOptions.ExpandNullable
 		);
 
-		private static readonly SymbolDisplayFormat FullTypeWithGenericsDisplayFormat = new SymbolDisplayFormat( 
-			typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces, 
-			genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters ,
+		private static readonly SymbolDisplayFormat FullTypeWithGenericsDisplayFormat = new SymbolDisplayFormat(
+			typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+			genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
 			miscellaneousOptions: SymbolDisplayMiscellaneousOptions.ExpandNullable
 		);
 
@@ -58,10 +58,10 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			return fullyQualifiedName;
 		}
 
-		public static IEnumerable<ISymbol> GetNonStaticMembers( this INamespaceOrTypeSymbol type ) {
+		public static IEnumerable<ISymbol> GetExplicitNonStaticMembers( this INamespaceOrTypeSymbol type ) {
 
 			return type.GetMembers()
-				.Where( t => !t.IsStatic );
+				.Where( t => !t.IsStatic && !t.IsImplicitlyDeclared );
 		}
 
 		public static bool IsPrimitive( this ITypeSymbol symbol ) {

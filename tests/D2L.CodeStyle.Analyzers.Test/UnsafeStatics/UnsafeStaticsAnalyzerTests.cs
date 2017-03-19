@@ -6,11 +6,14 @@ using D2L.CodeStyle.Analyzers.Test.Verifiers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using NUnit.Framework;
+using D2L.CodeStyle.Analyzers.Common;
 
 namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 
 	internal sealed class UnsafeStaticsAnalyzerTests : DiagnosticVerifier {
-		protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer() {
+        private static readonly MutabilityInspectionResultFormatter s_formatter = new MutabilityInspectionResultFormatter();
+
+        protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer() {
 			return new UnsafeStaticsAnalyzer();
 		}
 
@@ -71,8 +74,18 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 
         }
     }";
-            var diag1 = CreateDiagnosticResult( 9, 44, "Default", "test.Tests.Foo" );
-            var diag2 = CreateDiagnosticResult( 11, 40, "good", "test.Tests.Foo" );
+            var diag1 = CreateDiagnosticResult( 9, 44, "Default", MutabilityInspectionResult.Mutable(
+                mutableMemberPath: "Default.uhoh",
+                membersTypeName: "test.Tests.Foo",
+                kind: MutabilityTarget.Member,
+                cause: MutabilityCause.IsNotReadonly
+            ) );
+            var diag2 = CreateDiagnosticResult( 11, 40, "good", MutabilityInspectionResult.Mutable(
+                mutableMemberPath: "good.uhoh",
+                membersTypeName: "test.Tests.Foo",
+                kind: MutabilityTarget.Member,
+                cause: MutabilityCause.IsNotReadonly
+            ) );
             VerifyCSharpDiagnostic( test, diag1, diag2 );
         }
 
@@ -92,7 +105,12 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 
         }
     }";
-			AssertSingleDiagnostic( test, 11, 31, "bad", "it" );
+			AssertSingleDiagnostic( test, 11, 31, "bad", MutabilityInspectionResult.Mutable(
+                mutableMemberPath: "bad",
+                membersTypeName: "test.Tests.Foo",
+                kind: MutabilityTarget.Member,
+                cause: MutabilityCause.IsNotReadonly
+            ) );
 		}
 
 		[Test]
@@ -152,7 +170,12 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 
         }
     }";
-			AssertSingleDiagnostic( test, 11, 40, "bad", "test.Tests.Foo" );
+			AssertSingleDiagnostic( test, 11, 40, "bad", MutabilityInspectionResult.Mutable(
+                mutableMemberPath: "bad.ClientsName",
+                membersTypeName: "test.Tests.Foo",
+                kind: MutabilityTarget.Member,
+                cause: MutabilityCause.IsNotReadonly
+            ) );
 		}
 
 		[Test]
@@ -194,7 +217,12 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			// Although a concrete instance of Foo is safe, we don't look
 			// inside GetFoo to see that its returning a concrete Foo and
 			// not some derived class.
-			AssertSingleDiagnostic( test, 11, 40, "bad", "test.Tests.Foo" );
+			AssertSingleDiagnostic( test, 11, 40, "bad", MutabilityInspectionResult.Mutable(
+                mutableMemberPath: "bad",
+                membersTypeName: "test.Tests.Foo",
+                kind: MutabilityTarget.Type,
+                cause: MutabilityCause.IsNotSealed
+            ) );
 		}
 
         [Test]
@@ -277,7 +305,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
         }
 
         [Test]
-        public void DocumentWithStaticField_InterfaceWithMutableConcreteInitializer_NoDiag() {
+        public void DocumentWithStaticField_InterfaceWithMutableConcreteInitializer_Diag() {
             const string test = @"
     using System;
 
@@ -293,7 +321,12 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 
         }
     }";
-            AssertSingleDiagnostic( test, 12, 41, "bad", "test.Tests.Foo" );
+            AssertSingleDiagnostic( test, 12, 41, "bad", MutabilityInspectionResult.Mutable(
+                mutableMemberPath: "bad.ClientsName",
+                membersTypeName: "System.String",
+                kind: MutabilityTarget.Member,
+                cause: MutabilityCause.IsNotReadonly
+            ) );
         }
 
         [Test]
@@ -307,11 +340,16 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 
         }
     }";
-            AssertSingleDiagnostic( test, 6, 61, "bad", "System.Collections.IList" );
+            AssertSingleDiagnostic( test, 6, 61, "bad", MutabilityInspectionResult.Mutable(
+                mutableMemberPath: "bad",
+                membersTypeName: "System.Collections.IList",
+                kind: MutabilityTarget.Type,
+                cause: MutabilityCause.IsAnInterface
+            ) );
         }
 
         [Test]
-        public void DocumentWithStaticCollectionField_GenericObject_Diag() {
+        public void DocumentWithStaticCollectionField_UnsealedContainer_Diag() {
             const string test = @"
     using System;
 
@@ -321,7 +359,12 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 
         }
     }";
-            AssertSingleDiagnostic( test, 6, 76, "bad", "System.Collections.Generic.List<System.Object>" );
+            AssertSingleDiagnostic( test, 6, 76, "bad", MutabilityInspectionResult.Mutable(
+                mutableMemberPath: "bad",
+                membersTypeName: "System.Collections.Generic.List",
+                kind: MutabilityTarget.Type,
+                cause: MutabilityCause.IsNotSealed
+            ) );
         }
 
         [Test]
@@ -335,7 +378,12 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 
         }
     }";
-            AssertSingleDiagnostic( test, 6, 87, "bad", "System.Collections.Immutable.ImmutableList<System.Object>" );
+            AssertSingleDiagnostic( test, 6, 87, "bad", MutabilityInspectionResult.Mutable(
+                mutableMemberPath: "bad",
+                membersTypeName: "System.Object",
+                kind: MutabilityTarget.TypeArgument,
+                cause: MutabilityCause.IsNotSealed
+            ) );
         }
 
         [Test]
@@ -388,7 +436,12 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 
         }
     }";
-			AssertSingleDiagnostic( test, 11, 13, "bad", "it" );
+			AssertSingleDiagnostic( test, 11, 13, "bad", MutabilityInspectionResult.Mutable(
+                mutableMemberPath: "bad",
+                membersTypeName: "test.Tests.Foo",
+                kind: MutabilityTarget.Member,
+                cause: MutabilityCause.IsNotReadonly
+            ) );
 		}
 
 
@@ -444,11 +497,16 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
                 public string ClientsName = ""YOLO"";
             }
 
-            public static Foo bad { get; }
+            public static Foo bad { get; } = new Foo()
 
         }
     }";
-			AssertSingleDiagnostic( test, 11, 13, "bad", "test.Tests.Foo" );
+			AssertSingleDiagnostic( test, 11, 13, "bad", MutabilityInspectionResult.Mutable(
+                mutableMemberPath: "bad.ClientsName",
+                membersTypeName: "System.String",
+                kind: MutabilityTarget.Member,
+                cause: MutabilityCause.IsNotReadonly
+            ) );
 		}
 
 		[Test]
@@ -502,7 +560,12 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 
         }
     }";
-			AssertSingleDiagnostic( test, 11, 13, "bad", "it" );
+			AssertSingleDiagnostic( test, 11, 13, "bad", MutabilityInspectionResult.Mutable(
+                mutableMemberPath: "bad",
+                membersTypeName: "test.Tests.Foo",
+                kind: MutabilityTarget.Member,
+                cause: MutabilityCause.IsNotReadonly
+            ) );
 		}
 
 		[Test]
@@ -586,7 +649,12 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 
         }
     }";
-            AssertSingleDiagnostic( test, 12, 13, "bad", "test.Tests.Foo" );
+            AssertSingleDiagnostic( test, 12, 13, "bad", MutabilityInspectionResult.Mutable(
+                mutableMemberPath: "bad.ClientsName",
+                membersTypeName: "System.String",
+                kind: MutabilityTarget.Member,
+                cause: MutabilityCause.IsNotReadonly
+            ) );
         }
 
 		[Test]
@@ -624,7 +692,12 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 		}
 	}";
 
-			AssertSingleDiagnostic( test, 7, 41, "foo", "test.Tests.Foo" );
+			AssertSingleDiagnostic( test, 7, 41, "foo", MutabilityInspectionResult.Mutable(
+                mutableMemberPath: "foo.Instance",
+                membersTypeName: "test.Tests.Foo",
+                kind: MutabilityTarget.Member,
+                cause: MutabilityCause.IsNotReadonly
+            ) );
 		}
 
 		[Test]
@@ -671,7 +744,12 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 		}
 	}";
 
-			AssertSingleDiagnostic( test, 7, 41, "foo", "test.Tests.Foo" );
+            AssertSingleDiagnostic( test, 7, 41, "foo", MutabilityInspectionResult.Mutable(
+                mutableMemberPath: "foo.Bar",
+                membersTypeName: "test.Tests.Bar",
+                kind: MutabilityTarget.Type,
+                cause: MutabilityCause.IsNotSealed
+            ) );
 		}
 
 		[Test]
@@ -687,12 +765,16 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				public static readonly Safe Instance { get; } = new Safe();
 			}
 
-			private readonly static IUnsafe foo = Safe.Instance;
+			private readonly static IUnsafe foo = Safe.Instance; // bad, Safe is not sealed
 		}
 	}";
 
-			// Safe isn't sealed
-			AssertSingleDiagnostic( test, 12, 36, "foo", "test.Tests.Safe" );
+			AssertSingleDiagnostic( test, 12, 36, "foo", MutabilityInspectionResult.Mutable(
+                mutableMemberPath: "foo",
+                membersTypeName: "test.Tests.Safe",
+                kind: MutabilityTarget.Type,
+                cause: MutabilityCause.IsNotSealed
+            ) );
 		}
 
 		[Test]
@@ -748,28 +830,35 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			private static readonly Foo foo = 3;
 		}
 	}";
-			AssertSingleDiagnostic( test, 15, 32, "foo", "test.Tests.Foo" );
+			AssertSingleDiagnostic( test, 15, 32, "foo", MutabilityInspectionResult.Mutable(
+                mutableMemberPath: "foo.x",
+                membersTypeName: "System.Int32",
+                kind: MutabilityTarget.Member,
+                cause: MutabilityCause.IsNotReadonly
+            ) );
 		}
 
 		private void AssertNoDiagnostic( string file ) {
 			VerifyCSharpDiagnostic( file );
 		}
 
-		private void AssertSingleDiagnostic( string file, int line, int column, string fieldOrProp, string badFieldOrType ) {
+        private void AssertSingleDiagnostic( string file, int line, int column, string fieldOrProp, MutabilityInspectionResult inspectionResult ) {
 
-			DiagnosticResult result = CreateDiagnosticResult( line, column, fieldOrProp, badFieldOrType );
-			VerifyCSharpDiagnostic( file, result );
-		}
+            DiagnosticResult result = CreateDiagnosticResult( line, column, fieldOrProp, inspectionResult );
+            VerifyCSharpDiagnostic( file, result );
+        }
 
-		private static DiagnosticResult CreateDiagnosticResult( int line, int column, string fieldOrProp, string badFieldOrType ) {
-			return new DiagnosticResult {
-				Id = UnsafeStaticsAnalyzer.DiagnosticId,
-				Message = string.Format( UnsafeStaticsAnalyzer.MessageFormat, fieldOrProp, badFieldOrType ),
-				Severity = DiagnosticSeverity.Error,
-				Locations = new[] {
-					new DiagnosticResultLocation( "Test0.cs", line, column )
-				}
-			};
-		}
-	}
+        private static DiagnosticResult CreateDiagnosticResult( int line, int column, string fieldOrProp, MutabilityInspectionResult result ) {
+            var reason = s_formatter.Format( result );
+
+            return new DiagnosticResult {
+                Id = UnsafeStaticsAnalyzer.DiagnosticId,
+                Message = string.Format( UnsafeStaticsAnalyzer.MessageFormat, fieldOrProp, reason ),
+                Severity = DiagnosticSeverity.Error,
+                Locations = new[] {
+                    new DiagnosticResultLocation( "Test0.cs", line, column )
+                }
+            };
+        }
+    }
 }
