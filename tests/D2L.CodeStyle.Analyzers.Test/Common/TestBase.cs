@@ -10,6 +10,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 	public static class RoslynSymbolFactory {
 
 		internal static string TestAssemblyName = DiagnosticVerifier.TestProjectName;
+		internal static string RootNamespace = "D2L";
+		internal static string RootClass = "Fake";
 
 		public static CSharpCompilation Compile( string source ) {
 			var tree = CSharpSyntaxTree.ParseText( source );
@@ -25,7 +27,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}
 
 		public static ITypeSymbol Type( string text ) {
-			var source = $"using System; namespace D2L {{ {text} }}";
+			var source = $"using System; namespace {RootNamespace} {{ {text} }}";
 			var compilation = Compile( source );
 
 			var toReturn = compilation.GetSymbolsWithName(
@@ -38,7 +40,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}
 
 		public static IFieldSymbol Field( string text ) {
-			var type = Type( "sealed class Fake { " + text + "; }" );
+			var type = Type( "sealed class " + RootClass + " { " + text + "; }" );
 
 			var toReturn = type.GetMembers().OfType<IFieldSymbol>().FirstOrDefault();
 			Assert.IsNotNull( toReturn );
@@ -47,7 +49,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}
 
 		public static IPropertySymbol Property( string text ) {
-			var type = Type( "sealed class Fake { " + text + "; }" );
+			var type = Type( "sealed class " + RootClass + " { " + text + "; }" );
 
 			var toReturn = type.GetMembers().OfType<IPropertySymbol>().FirstOrDefault();
 			Assert.IsNotNull( toReturn );
