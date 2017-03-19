@@ -30,6 +30,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Common\MutabilityInspectionResult.cs" />
+    <Compile Include="Common\MutabilityInspectionResultFormatter.cs" />
     <Compile Include="Common\MutabilityInspector.cs" />
     <Compile Include="Common\TypeSymbolExtensions.cs" />
     <Compile Include="Common\Utils.cs" />
