@@ -80,7 +80,7 @@ namespace D2L.CodeStyle.TestAnalyzers.SourceAttribute {
 	namespace test {
 		class Test {
 			private String ValidCases {
-				return new String(""test"");
+				return ""test"";
 			}
 
 			public void test1( [ValueSource( ""ValidCases"" )] String s ) {
