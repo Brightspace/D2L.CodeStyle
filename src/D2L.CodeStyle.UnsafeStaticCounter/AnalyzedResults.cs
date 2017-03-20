@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Collections.Generic;
 
 namespace D2L.CodeStyle.UnsafeStaticCounter {
@@ -26,16 +25,6 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			UnsafeStaticsPerProject = rawResults
 				.GroupBy( r => r.ProjectName )
 				.ToDictionary( g => g.Key, Enumerable.Count );
-		}
-	}
-
-	internal sealed class Aggregation {
-		public readonly string Name;
-		public readonly int UnsafeStaticsCount;
-
-		public Aggregation( string name, int count ) {
-			Name = name;
-			UnsafeStaticsCount = count;
 		}
 	}
 }
