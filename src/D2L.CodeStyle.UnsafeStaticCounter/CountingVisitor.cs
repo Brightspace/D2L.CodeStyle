@@ -24,7 +24,6 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 				cause = unauditedAttribute.ConstructorArguments[ 0 ].Value.ToString();
 			}
 			AnalyzedStatics.Add( new AnalyzedStatic( symbol, cause ) );
-			Console.WriteLine( $"found one: {symbol}" );
 		}
 
 		public override void VisitProperty( IPropertySymbol symbol ) {
@@ -40,7 +39,6 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 				cause = unauditedAttribute.ConstructorArguments[ 0 ].Value.ToString();
 			}
 			AnalyzedStatics.Add( new AnalyzedStatic( symbol, cause ) );
-			Console.WriteLine( $"found one: {symbol}" );
 		}
 	}
 }
