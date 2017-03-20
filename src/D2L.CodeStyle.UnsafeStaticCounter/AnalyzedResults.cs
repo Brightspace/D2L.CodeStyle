@@ -1,61 +1,41 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace D2L.CodeStyle.UnsafeStaticCounter {
 
 	internal sealed class AnalyzedResults {
 		public readonly int UnsafeStaticsCount;
-		public readonly IEnumerable<Aggregation> UnsafeStaticsPerCause;
-		public readonly IEnumerable<Aggregation> UnsafeStaticsPerType;
-		public readonly IEnumerable<Aggregation> UnsafeStaticsPerProject;
+		public readonly IDictionary<string, int> UnsafeStaticsPerCause;
+		public readonly IDictionary<string, int> UnsafeStaticsPerType;
+		public readonly IDictionary<string, int> UnsafeStaticsPerProject;
 		public readonly IEnumerable<AnalyzedStatic> RawResults;
 
 		public AnalyzedResults( AnalyzedStatic[] rawResults ) {
 			RawResults = rawResults;
-
 			UnsafeStaticsCount = rawResults.Length;
 
-			var unsafeStaticsPerCause = new Dictionary<string, Aggregation>();
-			var unsafeStaticsPerProject = new Dictionary<string, Aggregation>();
-			var unsafeStaticsPerType = new Dictionary<string, Aggregation>();
+			UnsafeStaticsPerCause = rawResults
+				.GroupBy( r => r.Cause )
+				.ToDictionary( g => g.Key, Enumerable.Count );
 
-			foreach( var result in rawResults ) {
+			UnsafeStaticsPerType = rawResults
+				.GroupBy( r => r.FieldOrPropType )
+				.ToDictionary( g => g.Key, Enumerable.Count );
 
-				// increment per project
-				var project = unsafeStaticsPerProject.GetOrAdd(
-						result.ProjectName,
-						() => new Aggregation( result.ProjectName )
-					);
-				project.UnsafeStaticsCount++;
-
-				// increment per type
-				var analyzedType = unsafeStaticsPerType.GetOrAdd(
-					result.FieldOrPropType,
-					() => new Aggregation( result.FieldOrPropType )
-				);
-				analyzedType.UnsafeStaticsCount++;
-
-				// increment per cause
-				var analyzedCause = unsafeStaticsPerCause.GetOrAdd(
-					result.Cause,
-					() => new Aggregation( result.Cause )
-				);
-				analyzedCause.UnsafeStaticsCount++;
-
-			}
-
-			UnsafeStaticsPerCause = unsafeStaticsPerCause.Values;
-			UnsafeStaticsPerProject = unsafeStaticsPerProject.Values;
-			UnsafeStaticsPerType = unsafeStaticsPerType.Values;
+			UnsafeStaticsPerProject = rawResults
+				.GroupBy( r => r.ProjectName )
+				.ToDictionary( g => g.Key, Enumerable.Count );
 		}
 	}
 
 	internal sealed class Aggregation {
 		public readonly string Name;
-		public int UnsafeStaticsCount;
+		public readonly int UnsafeStaticsCount;
 
-		public Aggregation( string name ) {
+		public Aggregation( string name, int count ) {
 			Name = name;
+			UnsafeStaticsCount = count;
 		}
 	}
 }
