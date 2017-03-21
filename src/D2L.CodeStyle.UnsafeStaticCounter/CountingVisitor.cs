@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using D2L.CodeStyle.Annotations;
 using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.UnsafeStaticCounter {
@@ -10,6 +11,14 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 		private const string DefaultCause = "none";
 
 		internal readonly ConcurrentBag<AnalyzedStatic> AnalyzedStatics = new ConcurrentBag<AnalyzedStatic>();
+
+		private string GetBecauseValue( object o ) {
+			if( o is int ) {
+				var enumObject = Enum.ToObject( typeof( Because ), o );
+				return enumObject.ToString();
+			}
+			return o.ToString();
+		}
 
 		public override void VisitField( IFieldSymbol symbol ) {
 			var unauditedAttribute = symbol
@@ -21,7 +30,7 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 
 			var cause = DefaultCause;
 			if( unauditedAttribute.ConstructorArguments.Length > 0 ) {
-				cause = unauditedAttribute.ConstructorArguments[ 0 ].Value.ToString();
+				cause = GetBecauseValue( unauditedAttribute.ConstructorArguments[ 0 ].Value );
 			}
 			AnalyzedStatics.Add( new AnalyzedStatic( symbol, cause ) );
 		}
@@ -36,7 +45,7 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 
 			var cause = DefaultCause;
 			if( unauditedAttribute.ConstructorArguments.Length > 0 ) {
-				cause = unauditedAttribute.ConstructorArguments[ 0 ].Value.ToString();
+				cause = GetBecauseValue( unauditedAttribute.ConstructorArguments[ 0 ].Value );
 			}
 			AnalyzedStatics.Add( new AnalyzedStatic( symbol, cause ) );
 		}
