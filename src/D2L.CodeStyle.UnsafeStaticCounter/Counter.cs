@@ -22,6 +22,7 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 		private static readonly ImmutableHashSet<Regex> s_assemblyPatternsToIgnore = ImmutableHashSet.Create(
 			new Regex( @"D2L\.Automation\.UI.*", RegexOptions.Compiled )
 		);
+		private const string s_analyzerReferenceName = @"D2L.CodeStyle.Analyzers";
 
 		private readonly string _rootDir;
 		private readonly string _outputFile;
@@ -58,7 +59,7 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			var results = await Task.WhenAll( tasks );
 
 			var combinedResult = results
-				.SelectMany( r => r )
+				.Where( r => r != null )
 				.ToArray();
 
 			var finalResult = new AnalyzedResults( combinedResult );
@@ -85,12 +86,10 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			}
 		}
 
-		
-
-		private async Task<AnalyzedStatic[]> AnalyzeProject( string projectFile ) {
+		private async Task<AnalyzedProject> AnalyzeProject( string projectFile ) {
 			if( ShouldIgnoreProject( projectFile ) ) {
 				Console.WriteLine( $"...skipping {projectFile}" );
-				return new AnalyzedStatic[0];
+				return null;
 			}
 
 			try {
@@ -99,19 +98,22 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 					var proj = await workspace.OpenProjectAsync( projectFile );
 					Console.WriteLine( $"Analyzing: {proj.FilePath}" );
 
+					var isAnalyzed = proj.AnalyzerReferences.Any( r => r.Display == s_analyzerReferenceName );
+
 					var compilation = await proj.GetCompilationAsync();
 
 					// if the project doesn't reference Annotations, ignore
 					var unauditedAttribute = compilation.GetTypeByMetadataName( typeof( Statics.Unaudited ).FullName );
 					if( unauditedAttribute == null ) {
-						return new AnalyzedStatic[ 0 ];
+						return new AnalyzedProject( proj.Name, isAnalyzed, new AnalyzedStatic[0] );
 					}
 
 					var visitor = new CountingVisitor();
 					var members = compilation.GetSymbolsWithName( n => true, SymbolFilter.Member );
 					Parallel.ForEach( members, m => m.Accept( visitor ) );
 
-					return visitor.AnalyzedStatics.ToArray();
+					var statics = visitor.AnalyzedStatics.ToArray();
+					return new AnalyzedProject( proj.Name, isAnalyzed, statics );
 				}
 			} catch( Exception e ) {
 				throw new Exception( $"Exception analyzing project {projectFile}", e );
