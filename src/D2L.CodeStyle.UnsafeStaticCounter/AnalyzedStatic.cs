@@ -24,6 +24,7 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			LineNumber = lineNumber;
 			FieldOrPropName = name;
 			FieldOrPropType = typeName;
+			Cause = cause;
 		}
 
 		public AnalyzedStatic( IFieldSymbol symbol, string cause ) : this(
