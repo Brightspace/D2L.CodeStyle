@@ -67,7 +67,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				| MutabilityInspectionFlags.AllowUnsealed // `symbol` is the concrete type
 				| MutabilityInspectionFlags.IgnoreImmutabilityAttribute; // we're _validating_ the attribute
 
-			if( m_immutabilityInspector.IsTypeMutable( symbol, flags ) ) {
+			if( m_immutabilityInspector.InspectType( symbol, flags ).IsMutable ) {
 				var diagnostic = Diagnostic.Create( Rule, root.GetLocation() );
 				context.ReportDiagnostic( diagnostic );
 			}

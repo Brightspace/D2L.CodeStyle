@@ -20,7 +20,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 
 		private const string Title = "Ensure that static field is safe in undifferentiated servers.";
 		private const string Description = "Static fields should not have client-specific or mutable data, otherwise they will not be safe in undifferentiated servers.";
-		internal const string MessageFormat = "The static field or property {0} is unsafe because {1} is mutable.";
+		internal const string MessageFormat = "The static field or property '{0}' is unsafe because {1}.";
 
 		private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
 			DiagnosticId,
@@ -36,6 +36,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 
 		private readonly MutabilityInspector m_immutabilityInspector = new MutabilityInspector();
 		private readonly Utils m_utils = new Utils();
+		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
 
 		public override void Initialize( AnalysisContext context ) {
 			context.RegisterCompilationStartAction( ctx => {
@@ -94,7 +95,17 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				}
 
 				if( m_immutabilityInspector.IsFieldMutable( symbol ) ) {
-					var diagnostic = CreateDiagnostic( variable.GetLocation(), variable.Identifier.ValueText, "it" );
+					var diagnostic = CreateDiagnostic(
+						variable.GetLocation(),
+						symbol.Name,
+						symbol.Type.GetFullTypeNameWithGenericArguments(),
+						MutabilityInspectionResult.Mutable(
+							symbol.Name,
+							symbol.Type.GetFullTypeNameWithGenericArguments(),
+							MutabilityTarget.Member,
+							MutabilityCause.IsNotReadonly
+						)
+					);
 					context.ReportDiagnostic( diagnostic );
 					return;
 				}
@@ -143,7 +154,17 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			}
 
 			if( m_immutabilityInspector.IsPropertyMutable( prop ) ) {
-				var diagnostic = CreateDiagnostic( root.GetLocation(), prop.Name, "it" );
+				var diagnostic = CreateDiagnostic(
+					root.GetLocation(),
+					prop.Name,
+					prop.Type.GetFullTypeNameWithGenericArguments(),
+					MutabilityInspectionResult.Mutable(
+						prop.Name,
+						prop.Type.GetFullTypeNameWithGenericArguments(),
+						MutabilityTarget.Member,
+						MutabilityCause.IsNotReadonly
+					)
+				);
 				context.ReportDiagnostic( diagnostic );
 				return;
 			}
@@ -187,25 +208,38 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				flags |= MutabilityInspectionFlags.AllowUnsealed;
 			}
 
-			if( m_immutabilityInspector.IsTypeMutable( type, flags ) ) {
-				var diagnostic = CreateDiagnostic( location, fieldOrPropName, type.GetFullTypeNameWithGenericArguments() );
+			var result = m_immutabilityInspector.InspectType( type, flags );
+			if ( result.IsMutable ) {
+				result = result.WithPrefixedMember( fieldOrPropName );
+				var diagnostic = CreateDiagnostic( 
+					location, 
+					fieldOrPropName, 
+					type.GetFullTypeNameWithGenericArguments(), 
+					result 
+				);
 				context.ReportDiagnostic( diagnostic );
 			}
 		}
 
-		private Diagnostic CreateDiagnostic( Location location, string fieldOrPropName, string offendingType ) {
+		private Diagnostic CreateDiagnostic( 
+			Location location, 
+			string fieldOrPropName, 
+			string offendingType, 
+			MutabilityInspectionResult result 
+		) {
 			var builder = ImmutableDictionary.CreateBuilder<string, string>();
 			builder[PROPERTY_FIELDORPROPNAME] = fieldOrPropName;
 			builder[PROPERTY_OFFENDINGTYPE] = offendingType;
 			var properties = builder.ToImmutable();
+
+			var reason = m_resultFormatter.Format( result );
 
 			var diagnostic = Diagnostic.Create(
 				Rule,
 				location,
 				properties,
 				fieldOrPropName,
-				offendingType
-				
+				reason
 			);
 			return diagnostic;
 		}
