@@ -51,24 +51,24 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		/// <summary>
 		/// A list of immutable container types (i.e., types that hold other types)
 		/// </summary>
-		private static readonly ImmutableHashSet<string> ImmutableContainerTypes = new HashSet<string> {
-			"D2L.LP.Utilities.DeferredInitializer",
-			"System.Collections.Immutable.ImmutableArray",
-			"System.Collections.Immutable.ImmutableDictionary",
-			"System.Collections.Immutable.ImmutableHashSet",
-			"System.Collections.Immutable.ImmutableList",
-			"System.Collections.Immutable.ImmutableQueue",
-			"System.Collections.Immutable.ImmutableSortedDictionary",
-			"System.Collections.Immutable.ImmutableSortedSet",
-			"System.Collections.Immutable.ImmutableStack",
-			"System.Collections.Generic.IReadOnlyCollection",
-			"System.Collections.Generic.IReadOnlyList",
-			"System.Collections.Generic.IReadOnlyDictionary",
-			"System.Collections.Generic.IEnumerable",
-			"System.Lazy",
-			"System.Nullable",
-			"System.Tuple"
-		}.ToImmutableHashSet();
+		private static readonly ImmutableDictionary<string, string[]> ImmutableContainerTypes = new Dictionary<string, string[]> {
+			[ "D2L.LP.Utilities.DeferredInitializer" ] = new[] { "Value" },
+			[ "System.Collections.Immutable.ImmutableArray" ] = new[] { "[]" },
+			[ "System.Collections.Immutable.ImmutableDictionary" ] = new[] { "[].Key", "[].Value" },
+			[ "System.Collections.Immutable.ImmutableHashSet" ] = new[] { "[]" },
+			[ "System.Collections.Immutable.ImmutableList" ] = new[] { "[]" },
+			[ "System.Collections.Immutable.ImmutableQueue" ] = new[] { "[]" },
+			[ "System.Collections.Immutable.ImmutableSortedDictionary" ] = new[] { "[].Key", "[].Value" },
+			[ "System.Collections.Immutable.ImmutableSortedSet" ] = new[] { "[]" },
+			[ "System.Collections.Immutable.ImmutableStack" ] = new[] { "[]" },
+			[ "System.Collections.Generic.IReadOnlyCollection" ] = new[] { "[]" },
+			[ "System.Collections.Generic.IReadOnlyList" ] = new[] { "[]" },
+			[ "System.Collections.Generic.IReadOnlyDictionary" ] = new[] { "[].Key", "[].Value" },
+			[ "System.Collections.Generic.IEnumerable" ] = new[] { "[]" },
+			[ "System.Lazy" ] = new[] { "Value" },
+			[ "System.Nullable" ] = new[] { "Value" },
+			[ "System.Tuple" ] = new[] { "Item1", "Item2", "Item3", "Item4", "Item5", "Item6" }
+		}.ToImmutableDictionary();
 
 		/// <summary>
 		/// Determine if a given type is mutable.
@@ -117,13 +117,30 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			typeStack.Add( type );
 			try {
 
-				if( ImmutableContainerTypes.Contains( type.GetFullTypeName() ) ) {
+				if( ImmutableContainerTypes.ContainsKey( type.GetFullTypeName() ) ) {
 					var namedType = type as INamedTypeSymbol;
-					foreach( var arg in namedType.TypeArguments ) {
+					for( int i = 0; i < namedType.TypeArguments.Length; i++ ) {
+						var arg = namedType.TypeArguments[ i ];
 						var result = InspectTypeRecursive( arg, MutabilityInspectionFlags.Default, typeStack );
+
 						if( result.IsMutable ) {
-							// modify the result to target the type argument
-							result = MutabilityInspectionResult.Mutable( result.MemberPath, result.TypeName, MutabilityTarget.TypeArgument, result.Cause.Value );
+							if( result.Target == MutabilityTarget.Member ) {
+
+								// modify the result to prefix with container member.
+								var prefix = ImmutableContainerTypes[ type.GetFullTypeName() ];
+								result = result.WithPrefixedMember( prefix[i] );
+
+							} else {
+
+								// modify the result to target the type argument if the target is not a member
+								result = MutabilityInspectionResult.Mutable( 
+									result.MemberPath, 
+									result.TypeName, 
+									MutabilityTarget.TypeArgument, 
+									result.Cause.Value 
+								);
+
+							}
 							return result;
 						}
 					}
