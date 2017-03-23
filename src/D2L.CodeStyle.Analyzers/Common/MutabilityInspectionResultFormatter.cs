@@ -32,7 +32,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				case MutabilityCause.IsAnArray:
 					return "an array";
 				case MutabilityCause.IsAnInterface:
-					return "an interface";
+					return "an interface that is not marked with `[Objects.Immutable]`";
 				case MutabilityCause.IsNotSealed:
 					return "not sealed";
 				case MutabilityCause.IsNotReadonly:

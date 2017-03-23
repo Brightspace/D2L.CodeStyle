@@ -29,7 +29,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 			new TestCaseData(
 				MutabilityInspectionResult.Mutable("foo", "bar", MutabilityTarget.Type, MutabilityCause.IsAnInterface),
-				"'foo''s type ('bar') is an interface"
+				"'foo''s type ('bar') is an interface that is not marked with `[Objects.Immutable]`"
 			).SetName("type is an interface"),
 
 			new TestCaseData(
@@ -51,7 +51,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 			new TestCaseData(
 				MutabilityInspectionResult.Mutable("foo", "bar", MutabilityTarget.TypeArgument, MutabilityCause.IsAnInterface),
-				"'foo''s type argument ('bar') is an interface"
+				"'foo''s type argument ('bar') is an interface that is not marked with `[Objects.Immutable]`"
 			).SetName("type argument is an interface"),
 
 			new TestCaseData(
