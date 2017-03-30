@@ -17,7 +17,7 @@ build_script:
 after_build:
   - dotnet pack src\D2L.CodeStyle.Annotations -o artifacts -c Release
   - nuget pack src\D2L.CodeStyle.Analyzers\D2L.CodeStyle.Analyzers.csproj -Properties "Configuration=Release" -OutputDirectory artifacts
-  - nuget pack src\D2L.CodeStyle.TestAnalzyers\D2L.CodeStyle.TestAnalzyers.csproj -Properties "Configuration=Release" -OutputDirectory artifacts
+  - nuget pack src\D2L.CodeStyle.TestAnalyzers\D2L.CodeStyle.TestAnalyzers.csproj -Properties "Configuration=Release" -OutputDirectory artifacts
 
 build:
   publish_nuget: true
