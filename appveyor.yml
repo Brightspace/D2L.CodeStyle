@@ -13,8 +13,8 @@ before_build:
 
 build_script:
   - dotnet build -c Release
-  - dotnet test tests\D2L.CodeStyle.Analyzers.Test\D2L.CodeStyle.Analyzers.Test.csproj
-  - dotnet test tests\D2L.CodeStyle.TestAnalyzers.Test\D2L.CodeStyle.TestAnalyzers.Test.csproj
+  - dotnet test tests\D2L.CodeStyle.Analyzers.Test\D2L.CodeStyle.Analyzers.Tests.csproj
+  - dotnet test tests\D2L.CodeStyle.TestAnalyzers.Tests\D2L.CodeStyle.TestAnalyzers.Tests.csproj
   - dotnet pack src\D2L.CodeStyle.Annotations -o artifacts -c Release
   - dotnet pack src\D2L.CodeStyle.Analyzers -o artifacts -c Release
   - dotnet pack src\D2L.CodeStyle.TestAnalyzers -o artifacts -c Release
