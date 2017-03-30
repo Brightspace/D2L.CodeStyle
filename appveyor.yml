@@ -15,7 +15,8 @@ build_script:
   - dotnet build -c Release
 
 after_build:
-  - dotnet pack src\D2L.CodeStyle.Annotations -o artifacts -c Release
+  # the dotnet-pack output path is relative to project dir :( https://github.com/dotnet/cli/issues/4765
+  - dotnet pack src\D2L.CodeStyle.Annotations -o ..\..\artifacts -c Release
   - nuget pack src\D2L.CodeStyle.Analyzers\D2L.CodeStyle.Analyzers.csproj -Properties "Configuration=Release" -OutputDirectory artifacts
   - nuget pack src\D2L.CodeStyle.TestAnalyzers\D2L.CodeStyle.TestAnalyzers.csproj -Properties "Configuration=Release" -OutputDirectory artifacts
 
