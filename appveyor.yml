@@ -1,3 +1,5 @@
+os: Visual Studio 2017
+
 version: 0.1.0.{build}
 pull_requests:
   do_not_increment_build_number: true
@@ -11,7 +13,8 @@ before_build:
 build_script:
   - dotnet --info
   - dotnet build
-  - dotnet test
+  - dotnet test tests\D2L.CodeStyle.Analyzers.Test
+  - dotnet test tests\D2L.CodeStyle.TestAnalyzers.Test
   - dotnet pack src\D2L.CodeStyle.Annotations
   - dotnet pack src\D2L.CodeStyle.Analyzers
   - dotnet pack src\D2L.CodeStyle.TestAnalyzers
