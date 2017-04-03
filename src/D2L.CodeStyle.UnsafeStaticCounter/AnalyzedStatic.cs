@@ -1,12 +1,9 @@
-﻿using D2L.CodeStyle.Analyzers.UnsafeStatics;
+﻿using D2L.CodeStyle.Analyzers.Common;
 using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.UnsafeStaticCounter {
 
 	internal sealed class AnalyzedStatic {
-		public const string CAUSE_MUTABLE_DECLARATION = "DeclarationIsMutable";
-		public const string CAUSE_MUTABLE_TYPE = "TypeIsMutable";
-
 		public readonly string ProjectName;
 		public readonly string FilePath;
 		public readonly int LineNumber;
@@ -14,19 +11,38 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 		public readonly string FieldOrPropType;
 		public readonly string Cause;
 
-		public AnalyzedStatic( string projectName, Diagnostic diag ) {
+		public AnalyzedStatic( 
+			string projectName, 
+			string filePath, 
+			int lineNumber, 
+			string name, 
+			string typeName,
+			string cause
+		) {
 			ProjectName = projectName;
-			FilePath = diag.Location.SourceTree.FilePath;
-			LineNumber = diag.Location.GetMappedLineSpan().Span.Start.Line;
-			FieldOrPropName = diag.Properties[UnsafeStaticsAnalyzer.PROPERTY_FIELDORPROPNAME];
-			FieldOrPropType = diag.Properties[UnsafeStaticsAnalyzer.PROPERTY_OFFENDINGTYPE];
-
-			if( FieldOrPropType == "it" ) {
-				FieldOrPropType = null; // analyzer doesn't expose type if declaration is unsafe
-				Cause = CAUSE_MUTABLE_DECLARATION;
-			} else {
-				Cause = CAUSE_MUTABLE_TYPE;
-			}
+			FilePath = filePath;
+			LineNumber = lineNumber;
+			FieldOrPropName = name;
+			FieldOrPropType = typeName;
+			Cause = cause;
 		}
+
+		public AnalyzedStatic( IFieldSymbol symbol, string cause ) : this(
+			projectName: symbol.ContainingAssembly.Name,
+			filePath: symbol.Locations[ 0 ].SourceTree.FilePath,
+			lineNumber: symbol.Locations[ 0 ].GetMappedLineSpan().Span.Start.Line,
+			name: symbol.Name,
+			typeName: symbol.Type.GetFullTypeName(),
+			cause: cause
+		) { }
+
+		public AnalyzedStatic( IPropertySymbol symbol, string cause ) : this(
+			projectName: symbol.ContainingAssembly.Name,
+			filePath: symbol.Locations[ 0 ].SourceTree.FilePath,
+			lineNumber: symbol.Locations[ 0 ].GetMappedLineSpan().Span.Start.Line,
+			name: symbol.Name,
+			typeName: symbol.Type.GetFullTypeName(),
+			cause: cause
+		) { }
 	}
 }

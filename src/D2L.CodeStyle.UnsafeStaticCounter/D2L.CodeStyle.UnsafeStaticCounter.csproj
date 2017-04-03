@@ -98,6 +98,7 @@
     <Compile Include="AnalyzedResults.cs" />
     <Compile Include="AnalyzedStatic.cs" />
     <Compile Include="Counter.cs" />
+    <Compile Include="CountingVisitor.cs" />
     <Compile Include="DictionaryExtensions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -114,6 +115,10 @@
     <ProjectReference Include="..\D2L.CodeStyle.Analyzers\D2L.CodeStyle.Analyzers.csproj">
       <Project>{fe7608cd-c8b1-43dd-bbcc-9b1917c9ca73}</Project>
       <Name>D2L.CodeStyle.Analyzers</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\D2L.CodeStyle.Annotations\D2L.CodeStyle.Annotations.csproj">
+      <Project>{1812AF7E-59B1-4764-8090-F84446A71C4E}</Project>
+      <Name>D2L.CodeStyle.Annotations</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

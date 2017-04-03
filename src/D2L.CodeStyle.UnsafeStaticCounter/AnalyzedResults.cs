@@ -1,74 +1,58 @@
-﻿using System;
+﻿using System.Linq;
 using System.Collections.Generic;
 
 namespace D2L.CodeStyle.UnsafeStaticCounter {
 
 	internal sealed class AnalyzedResults {
 		public readonly int UnsafeStaticsCount;
-		public readonly int UnsafeNonReadonlyStaticsCount;
-		public readonly IEnumerable<AnalyzedType> UnsafeStaticsPerType;
-		public readonly IEnumerable<AnalyzedProject> UnsafeStaticsPerProject;
-		public readonly IEnumerable<AnalyzedStatic> RawResults;
+		public readonly IReadOnlyCollection<string> UnanalyzedProjects;
+		public readonly IDictionary<string, int> UnsafeStaticsPerCause;
+		public readonly IDictionary<string, int> UnsafeStaticsPerType;
+		public readonly IDictionary<string, int> UnsafeStaticsPerProject;
+		public readonly IReadOnlyCollection<AnalyzedStatic> RawResults;
 
-		public AnalyzedResults( AnalyzedStatic[] rawResults ) {
-			RawResults = rawResults;
+		public AnalyzedResults( AnalyzedProject[] projects ) {
+			// grab all results
+			RawResults = projects.SelectMany( p => p.RawResults ).ToArray();
+			UnsafeStaticsCount = RawResults.Count;
 
-			UnsafeStaticsCount = rawResults.Length;
+			// grab list of unanalyzed projects
+			UnanalyzedProjects = projects
+				.Where( p => !p.IsAnalyzed )
+				.Select( p => p.Name )
+				.ToArray();
 
-			var unsafeStaticsPerProject = new Dictionary<string, AnalyzedProject>();
-			var unsafeStaticsPerType = new Dictionary<string, AnalyzedType>();
+			// group results per project
+			UnsafeStaticsPerProject = RawResults
+				.GroupBy( r => r.ProjectName )
+				.ToDictionary( g => g.Key, Enumerable.Count );
 
-			foreach( var result in rawResults ) {
+			// group results by cause
+			UnsafeStaticsPerCause = RawResults
+				.GroupBy( r => r.Cause )
+				.ToDictionary( g => g.Key, Enumerable.Count );
 
-				// increment per project
-				var project = unsafeStaticsPerProject.GetOrAdd(
-						result.ProjectName,
-						() => new AnalyzedProject( result.ProjectName )
-					);
-				project.UnsafeStaticsCount++;
+			// group results by type
+			UnsafeStaticsPerType = RawResults
+				.GroupBy( r => r.FieldOrPropType )
+				.ToDictionary( g => g.Key, Enumerable.Count );
 
-				switch( result.Cause ) {
-
-					// increment per-type
-					case AnalyzedStatic.CAUSE_MUTABLE_TYPE:
-						var analyzedType = unsafeStaticsPerType.GetOrAdd(
-							result.FieldOrPropType,
-							() => new AnalyzedType( result.FieldOrPropType )
-						);
-						analyzedType.UnsafeStaticsCount++;
-						break;
-
-					// increment readonly count
-					case AnalyzedStatic.CAUSE_MUTABLE_DECLARATION:
-						UnsafeNonReadonlyStaticsCount++;
-						break;
-
-					default:
-						throw new InvalidOperationException( $"unknown cause{result.Cause}" );
-
-				}
-
-			}
-
-			UnsafeStaticsPerProject = unsafeStaticsPerProject.Values;
-			UnsafeStaticsPerType = unsafeStaticsPerType.Values;
 		}
 	}
 
 	internal sealed class AnalyzedProject {
 		public readonly string Name;
-		public int UnsafeStaticsCount;
+		public readonly bool IsAnalyzed;
+		public readonly AnalyzedStatic[] RawResults;
 
-		public AnalyzedProject( string projectName ) {
-			Name = projectName;
-		}
-	}
-	internal sealed class AnalyzedType {
-		public readonly string Name;
-		public int UnsafeStaticsCount;
-
-		public AnalyzedType( string typeName ) {
-			Name = typeName;
+		public AnalyzedProject( 
+			string name, 
+			bool isAnalyzed, 
+			AnalyzedStatic[] rawResults 
+		) {
+			Name = name;
+			IsAnalyzed = isAnalyzed;
+			RawResults = rawResults;
 		}
 	}
 }
