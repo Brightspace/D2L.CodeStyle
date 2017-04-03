@@ -101,6 +101,7 @@
     <Compile Include="TestContext\TestContextAnalyzer.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="D2L.CodeStyle.TestAnalyzers.nuspec" />
     <None Include="packages.config" />
   </ItemGroup>

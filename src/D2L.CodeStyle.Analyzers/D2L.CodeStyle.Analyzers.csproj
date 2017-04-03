@@ -37,6 +37,8 @@
     <Compile Include="Common\Utils.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Threading\UseConfigureAwaitFalseAnalyzer.cs" />
+    <Compile Include="Threading\UseConfigureAwaitFalseAnalyzerFixer.cs" />
     <Compile Include="UnsafeStatics\UnsafeStaticsAnalyzer.cs" />
   </ItemGroup>
   <ItemGroup>
