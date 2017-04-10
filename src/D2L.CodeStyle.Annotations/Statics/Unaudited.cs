@@ -15,11 +15,6 @@ namespace D2L.CodeStyle.Annotations {
 		public sealed class Unaudited : Attribute {
 			public readonly Because m_cuz;
 
-			// extra-legacy parameterless constructor
-			public Unaudited() {
-				m_cuz = Because.ItHasntBeenLookedAt; 
-			}
-
 			public Unaudited( Because why ) {
 				m_cuz = why;
 			}
