@@ -47,6 +47,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 
 			if ( ps.Count == 0 ) {
 				context.ReportDiagnostic( Diagnostic.Create( RpcContextRule, method.ParameterList.GetLocation() ) );
+				return;
 			} else {
 				var firstParam = method.ParameterList.Parameters[0];
 
