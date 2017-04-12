@@ -85,7 +85,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 			bool isRpc = method
 				.AttributeLists
 				.SelectMany( al => al.Attributes )
-				.Any( attr => IsRpcAttribute( rpcAttributeType, attr, context.SemanticModel ) );
+				.Any( attr => IsAttribute( rpcAttributeType, attr, context.SemanticModel ) );
 
 			if( !isRpc ) {
 				return false;
@@ -143,14 +143,14 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 			// - appropriate use of [Dependency]
 		}
 
-		private static bool IsRpcAttribute(
+		private static bool IsAttribute(
 			INamedTypeSymbol expectedType,
 			AttributeSyntax attr,
 			SemanticModel model
 		) {
 			var symbol = model.GetSymbolInfo( attr ).Symbol;
 
-			if ( symbol == null || symbol.Kind == SymbolKind.ErrorType ) {
+			if( symbol == null || symbol.Kind == SymbolKind.ErrorType ) {
 				return false;
 			}
 
