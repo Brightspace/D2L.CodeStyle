@@ -22,6 +22,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 			=> ImmutableArray.Create( RpcContextRule );
 
 		public override void Initialize( AnalysisContext context ) {
+			context.EnableConcurrentExecution();
 			context.RegisterCompilationStartAction( RegisterRpcAnalyzer );
 		}
 
