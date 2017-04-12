@@ -18,8 +18,18 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 			description: "RPCs must take an IRpcContext, IRpcPostContext or IRpcPostContextBase as their first argument"
 		);
 
+		internal static readonly DiagnosticDescriptor SortRule = new DiagnosticDescriptor(
+			id: "D2L0005",
+			title: "Dependency-injected arguments must be properly sorted",
+			messageFormat: "Dependency-injected must come before RPC parameters but after IRpcContext",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Dependency-injected must come before RPC parameters but after IRpcContext"
+		);
+
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
-			=> ImmutableArray.Create( RpcContextRule );
+			=> ImmutableArray.Create( RpcContextRule, SortRule );
 
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
