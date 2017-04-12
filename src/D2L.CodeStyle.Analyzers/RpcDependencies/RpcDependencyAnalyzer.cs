@@ -70,6 +70,8 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 				return false;
 			}
 
+			// Note: symbol corresponds to the constructor for the attribute,
+			// so we need to look at symbol.ContainingType
 			return symbol.ContainingType.Equals( expectedType );
 		}
 
