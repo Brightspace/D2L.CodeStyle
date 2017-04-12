@@ -10,12 +10,12 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 	internal sealed class RpcDependencyAnalyzer : DiagnosticAnalyzer {
 		internal static readonly DiagnosticDescriptor RpcContextRule = new DiagnosticDescriptor(
 			id: "D2L0004",
-			title: "RPCs must take an IRpcContext as their first argument",
-			messageFormat: "RPCs must take an IRpcContext as their first argument",
+			title: "RPCs must take an IRpcContext, IRpcPostContext or IRpcPostContextBase as their first argument",
+			messageFormat: "RPCs must take an IRpcContext, IRpcPostContext or IRpcPostContextBase as their first argument",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
-			description: "RPCs must take an IRpcContext as their first argument"
+			description: "RPCs must take an IRpcContext, IRpcPostContext or IRpcPostContextBase as their first argument"
 		);
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
@@ -28,13 +28,25 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 		public static void RegisterRpcAnalyzer( CompilationStartAnalysisContext context ) {
 			var rpcAttributeType = context.Compilation.GetTypeByMetadataName( "D2L.Web.RpcAttribute" );
 			var rpcContextType = context.Compilation.GetTypeByMetadataName( "D2L.Web.IRpcContext" );
+			var rpcPostContextType = context.Compilation.GetTypeByMetadataName( "D2L.Web.IRpcPostContext" );
+			var rpcPostContextBaseType = context.Compilation.GetTypeByMetadataName( "D2L.Web.RequestContext.IRpcPostContextBase" );
 
-			if ( rpcAttributeType == null || rpcContextType == null ) {
+			if ( rpcAttributeType == null || rpcAttributeType.Kind == SymbolKind.ErrorType ) {
+				return;
+			}
+
+			if ( rpcContextType == null || rpcContextType.Kind == SymbolKind.ErrorType ) {
 				return;
 			}
 
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeMethod( ctx, rpcAttributeType, rpcContextType ),
+				ctx => AnalyzeMethod(
+					ctx,
+					rpcAttributeType: rpcAttributeType,
+					rpcContextType: rpcContextType,
+					rpcPostContextType: rpcPostContextType,
+					rpcPostContextBaseType: rpcPostContextBaseType
+				),
 				SyntaxKind.MethodDeclaration
 			);
 		}
@@ -42,7 +54,9 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 		private static void AnalyzeMethod(
 			SyntaxNodeAnalysisContext context,
 			INamedTypeSymbol rpcAttributeType,
-			INamedTypeSymbol rpcContextType
+			INamedTypeSymbol rpcContextType,
+			INamedTypeSymbol rpcPostContextType,
+			INamedTypeSymbol rpcPostContextBaseType
 		) {
 			var method = context.Node as MethodDeclarationSyntax;
 
@@ -69,7 +83,12 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 			} else {
 				var firstParam = method.ParameterList.Parameters[0];
 
-				if ( !ParameterIsOfTypeIRpcContext( rpcContextType, firstParam, context.SemanticModel ) ) {
+				var firstParamIsReasonableType =
+					ParameterIsOfTypeIRpcContext( rpcContextType, firstParam, context.SemanticModel ) ||
+					ParameterIsOfTypeIRpcContext( rpcPostContextType, firstParam, context.SemanticModel ) ||
+					ParameterIsOfTypeIRpcContext( rpcPostContextBaseType, firstParam, context.SemanticModel );
+
+				if ( !firstParamIsReasonableType ) {
 					context.ReportDiagnostic(
 						Diagnostic.Create( RpcContextRule, firstParam.GetLocation() )
 					);

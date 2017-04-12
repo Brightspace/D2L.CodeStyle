@@ -9,7 +9,12 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 		private const string PREAMBLE = @"
 namespace D2L.Web {
 	interface IRpcContext {}
+	interface IRpcPostContext {}
 	class RpcAttribute : System.Attribute {}
+}
+
+namespace D2L.Web.RequestContext {
+	interface IRpcPostContextBase {}
 }
 
 namespace D2L.LP.Extensibility.Activation.Domain {
@@ -51,7 +56,7 @@ namespace Test {
 		public void Test() {}
 	}
 }";
-			AssertSingleDiagnostic( test, 15, 19 );
+			AssertSingleDiagnostic( test, 20, 19 );
 		}
 
 		[Test]
@@ -65,7 +70,7 @@ namespace Test {
 		public void Test( int x ) {}
 	}
 }";
-			AssertSingleDiagnostic( test, 15, 21 );
+			AssertSingleDiagnostic( test, 20, 21 );
 		}
 
 		[Test]
@@ -82,11 +87,40 @@ namespace Test {
 			AssertNoDiagnostic( test );
 		}
 
+		[Test]
+		public void MethodWithRpcAttributeAndIRpcPostContextFirstArg_NoDiag() {
+			const string test = PREAMBLE + @"
+namespace Test {
+	using D2L.Web;
+
+	class Test {
+		[Rpc]
+		public void Test( IRpcPostContext x ) {}
+	}
+}";
+			AssertNoDiagnostic( test );
+		}
+
+		[Test]
+		public void MethodWithRpcAttributeAndIRpcPostContextBaseFirstArg_NoDiag() {
+			const string test = PREAMBLE + @"
+namespace Test {
+	using D2L.Web;
+	using D2L.Web.RequestContext;
+
+	class Test {
+		[Rpc]
+		public void Test( IRpcPostContextBase x ) {}
+	}
+}";
+			AssertNoDiagnostic( test );
+		}
+
 		private void AssertNoDiagnostic( string file ) {
 			VerifyCSharpDiagnostic( file );
 		}
 
-        private void AssertSingleDiagnostic( string file, int line, int column ) {
+		private void AssertSingleDiagnostic( string file, int line, int column ) {
 			DiagnosticResult result = new DiagnosticResult {
 				Id = RpcDependencyAnalyzer.RpcContextRule.Id,
 				Message = RpcDependencyAnalyzer.RpcContextRule.MessageFormat.ToString(),
