@@ -27,10 +27,14 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 		}
 
 		public static void RegisterRpcAnalyzer( CompilationStartAnalysisContext context ) {
+			// Cache some important type lookups
 			var rpcAttributeType = context.Compilation.GetTypeByMetadataName( "D2L.Web.RpcAttribute" );
 			var rpcContextType = context.Compilation.GetTypeByMetadataName( "D2L.Web.IRpcContext" );
 			var rpcPostContextType = context.Compilation.GetTypeByMetadataName( "D2L.Web.IRpcPostContext" );
 			var rpcPostContextBaseType = context.Compilation.GetTypeByMetadataName( "D2L.Web.RequestContext.IRpcPostContextBase" );
+
+			// If any of those type lookups failed then presumably D2L.Web is
+			// not referenced and we don't need to register our analyzer.
 
 			if ( rpcAttributeType == null || rpcAttributeType.Kind == SymbolKind.ErrorType ) {
 				return;
