@@ -22,18 +22,33 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 			=> ImmutableArray.Create( RpcContextRule );
 
 		public override void Initialize( AnalysisContext context ) {
-			context.RegisterSyntaxNodeAction( AnalyzeMethod, SyntaxKind.MethodDeclaration );
+			context.RegisterCompilationStartAction( RegisterRpcAnalyzer );
 		}
 
-		private static void AnalyzeMethod( SyntaxNodeAnalysisContext context ) {
+		public static void RegisterRpcAnalyzer( CompilationStartAnalysisContext context ) {
+			var rpcAttributeType = context.Compilation.GetTypeByMetadataName( "D2L.Web.RpcAttribute" );
+			var rpcContextType = context.Compilation.GetTypeByMetadataName( "D2L.Web.IRpcContext" );
+
+			if ( rpcAttributeType == null || rpcContextType == null ) {
+				return;
+			}
+
+			context.RegisterSyntaxNodeAction(
+				ctx => AnalyzeMethod( ctx, rpcAttributeType, rpcContextType ),
+				SyntaxKind.MethodDeclaration
+			);
+		}
+
+		private static void AnalyzeMethod(
+			SyntaxNodeAnalysisContext context,
+			INamedTypeSymbol rpcAttributeType,
+			INamedTypeSymbol rpcContextType
+		) {
 			var method = context.Node as MethodDeclarationSyntax;
 
 			if ( method == null ) {
 				return;
 			}
-
-			// Could this be cached per-compilation?
-			var rpcAttributeType = context.Compilation.GetTypeByMetadataName( "D2L.Web.RpcAttribute" );
 
 			bool isRpc = method
 				.AttributeLists
@@ -53,8 +68,6 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 				return;
 			} else {
 				var firstParam = method.ParameterList.Parameters[0];
-
-				var rpcContextType = context.Compilation.GetTypeByMetadataName( "D2L.Web.IRpcContext" );
 
 				if ( !ParameterIsOfTypeIRpcContext( rpcContextType, firstParam, context.SemanticModel ) ) {
 					context.ReportDiagnostic(
