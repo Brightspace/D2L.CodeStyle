@@ -79,6 +79,43 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 			);
 		}
 
+		private static void AnalyzeMethod(
+			SyntaxNodeAnalysisContext context,
+			INamedTypeSymbol rpcAttributeType,
+			INamedTypeSymbol rpcContextType,
+			INamedTypeSymbol rpcPostContextType,
+			INamedTypeSymbol rpcPostContextBaseType,
+			INamedTypeSymbol dependencyAttributeType
+		) {
+			var method = context.Node as MethodDeclarationSyntax;
+
+			if ( method == null ) {
+				return;
+			}
+
+			bool keepGoing = CheckThatFirstArgumentIsIRpcContext(
+				context,
+				method,
+				rpcAttributeType: rpcAttributeType,
+				rpcContextType: rpcContextType,
+				rpcPostContextType: rpcPostContextType,
+				rpcPostContextBaseType: rpcPostContextBaseType
+			);
+
+			if ( !keepGoing ) {
+				return;
+			}
+
+			CheckThatDependencyArgumentsAreSortedCorrectly(
+				context,
+				method.ParameterList.Parameters,
+				dependencyAttributeType
+			);
+
+			// other things to check:
+			// - appropriate use of [Dependency]
+		}
+
 		private static bool CheckThatFirstArgumentIsIRpcContext(
 			SyntaxNodeAnalysisContext context,
 			MethodDeclarationSyntax method,
@@ -139,43 +176,6 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 					context.ReportDiagnostic( Diagnostic.Create( SortRule, param.GetLocation() ) );
 				}
 			}
-		}
-
-		private static void AnalyzeMethod(
-			SyntaxNodeAnalysisContext context,
-			INamedTypeSymbol rpcAttributeType,
-			INamedTypeSymbol rpcContextType,
-			INamedTypeSymbol rpcPostContextType,
-			INamedTypeSymbol rpcPostContextBaseType,
-			INamedTypeSymbol dependencyAttributeType
-		) {
-			var method = context.Node as MethodDeclarationSyntax;
-
-			if ( method == null ) {
-				return;
-			}
-
-			bool keepGoing = CheckThatFirstArgumentIsIRpcContext(
-				context,
-				method,
-				rpcAttributeType: rpcAttributeType,
-				rpcContextType: rpcContextType,
-				rpcPostContextType: rpcPostContextType,
-				rpcPostContextBaseType: rpcPostContextBaseType
-			);
-
-			if ( !keepGoing ) {
-				return;
-			}
-
-			CheckThatDependencyArgumentsAreSortedCorrectly(
-				context,
-				method.ParameterList.Parameters,
-				dependencyAttributeType
-			);
-
-			// other things to check:
-			// - appropriate use of [Dependency]
 		}
 
 		private static bool IsAttribute(
