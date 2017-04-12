@@ -18,7 +18,8 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 			description: "RPCs must take an IRpcContext as their first argument"
 		);
 
-		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( RpcContextRule );
+		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
+			=> ImmutableArray.Create( RpcContextRule );
 
 		public override void Initialize( AnalysisContext context ) {
 			context.RegisterSyntaxNodeAction( AnalyzeMethod, SyntaxKind.MethodDeclaration );
@@ -46,7 +47,9 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 			var ps = method.ParameterList.Parameters;
 
 			if ( ps.Count == 0 ) {
-				context.ReportDiagnostic( Diagnostic.Create( RpcContextRule, method.ParameterList.GetLocation() ) );
+				context.ReportDiagnostic(
+					Diagnostic.Create( RpcContextRule, method.ParameterList.GetLocation() )
+				);
 				return;
 			} else {
 				var firstParam = method.ParameterList.Parameters[0];
@@ -54,7 +57,9 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 				var rpcContextType = context.Compilation.GetTypeByMetadataName( "D2L.Web.IRpcContext" );
 
 				if ( !ParameterIsOfTypeIRpcContext( rpcContextType, firstParam, context.SemanticModel ) ) {
-					context.ReportDiagnostic( Diagnostic.Create( RpcContextRule, firstParam.GetLocation() ) );
+					context.ReportDiagnostic(
+						Diagnostic.Create( RpcContextRule, firstParam.GetLocation() )
+					);
 				}
 			}
 
@@ -63,7 +68,11 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 			// - appropriate use of [Dependency]
 		}
 
-		private static bool IsRpcAttribute( INamedTypeSymbol expectedType, AttributeSyntax attr, SemanticModel model ) {
+		private static bool IsRpcAttribute(
+			INamedTypeSymbol expectedType,
+			AttributeSyntax attr,
+			SemanticModel model
+		) {
 			var symbol = model.GetSymbolInfo( attr ).Symbol;
 
 			if ( symbol == null || symbol.Kind == SymbolKind.ErrorType ) {
@@ -75,7 +84,11 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 			return symbol.ContainingType.Equals( expectedType );
 		}
 
-		private static bool ParameterIsOfTypeIRpcContext( INamedTypeSymbol expectedType, ParameterSyntax param, SemanticModel model ) {
+		private static bool ParameterIsOfTypeIRpcContext(
+			INamedTypeSymbol expectedType,
+			ParameterSyntax param,
+			SemanticModel model
+		) {
 			var symbol = model.GetSymbolInfo( param.Type ).Symbol;
 
 			if ( symbol == null || symbol.Kind == SymbolKind.ErrorType ) {
