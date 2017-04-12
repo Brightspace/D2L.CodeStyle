@@ -97,9 +97,9 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 				var firstParam = method.ParameterList.Parameters[0];
 
 				var firstParamIsReasonableType =
-					ParameterIsOfTypeIRpcContext( rpcContextType, firstParam, context.SemanticModel ) ||
-					ParameterIsOfTypeIRpcContext( rpcPostContextType, firstParam, context.SemanticModel ) ||
-					ParameterIsOfTypeIRpcContext( rpcPostContextBaseType, firstParam, context.SemanticModel );
+					ParameterIsOfType( rpcContextType, firstParam, context.SemanticModel ) ||
+					ParameterIsOfType( rpcPostContextType, firstParam, context.SemanticModel ) ||
+					ParameterIsOfType( rpcPostContextBaseType, firstParam, context.SemanticModel );
 
 				if ( !firstParamIsReasonableType ) {
 					context.ReportDiagnostic(
@@ -129,7 +129,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 			return symbol.ContainingType.Equals( expectedType );
 		}
 
-		private static bool ParameterIsOfTypeIRpcContext(
+		private static bool ParameterIsOfType(
 			INamedTypeSymbol expectedType,
 			ParameterSyntax param,
 			SemanticModel model
