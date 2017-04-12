@@ -64,6 +64,48 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 			);
 		}
 
+		private static bool CheckThatFirstArgumentIsIRpcContext(
+			SyntaxNodeAnalysisContext context,
+			MethodDeclarationSyntax method,
+			INamedTypeSymbol rpcAttributeType,
+			INamedTypeSymbol rpcContextType,
+			INamedTypeSymbol rpcPostContextType,
+			INamedTypeSymbol rpcPostContextBaseType
+		) {
+			bool isRpc = method
+				.AttributeLists
+				.SelectMany( al => al.Attributes )
+				.Any( attr => IsRpcAttribute( rpcAttributeType, attr, context.SemanticModel ) );
+
+			if( !isRpc ) {
+				return false;
+			}
+
+			var ps = method.ParameterList.Parameters;
+
+			if( ps.Count == 0 ) {
+				context.ReportDiagnostic(
+					Diagnostic.Create( RpcContextRule, method.ParameterList.GetLocation() )
+				);
+				return false;
+			}
+
+			var firstParam = method.ParameterList.Parameters[0];
+
+			var firstParamIsReasonableType =
+				ParameterIsOfType( rpcContextType, firstParam, context.SemanticModel ) ||
+				ParameterIsOfType( rpcPostContextType, firstParam, context.SemanticModel ) ||
+				ParameterIsOfType( rpcPostContextBaseType, firstParam, context.SemanticModel );
+
+			if( !firstParamIsReasonableType ) {
+				context.ReportDiagnostic(
+					Diagnostic.Create( RpcContextRule, firstParam.GetLocation() )
+				);
+			}
+
+			return true;
+		}
+
 		private static void AnalyzeMethod(
 			SyntaxNodeAnalysisContext context,
 			INamedTypeSymbol rpcAttributeType,
@@ -77,36 +119,14 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 				return;
 			}
 
-			bool isRpc = method
-				.AttributeLists
-				.SelectMany( al => al.Attributes )
-				.Any( attr => IsRpcAttribute( rpcAttributeType, attr, context.SemanticModel ) );
-
-			if( !isRpc ) {
-				return;
-			}
-
-			var ps = method.ParameterList.Parameters;
-
-			if ( ps.Count == 0 ) {
-				context.ReportDiagnostic(
-					Diagnostic.Create( RpcContextRule, method.ParameterList.GetLocation() )
-				);
-				return;
-			} else {
-				var firstParam = method.ParameterList.Parameters[0];
-
-				var firstParamIsReasonableType =
-					ParameterIsOfType( rpcContextType, firstParam, context.SemanticModel ) ||
-					ParameterIsOfType( rpcPostContextType, firstParam, context.SemanticModel ) ||
-					ParameterIsOfType( rpcPostContextBaseType, firstParam, context.SemanticModel );
-
-				if ( !firstParamIsReasonableType ) {
-					context.ReportDiagnostic(
-						Diagnostic.Create( RpcContextRule, firstParam.GetLocation() )
-					);
-				}
-			}
+			CheckThatFirstArgumentIsIRpcContext(
+				context,
+				method,
+				rpcAttributeType: rpcAttributeType,
+				rpcContextType: rpcContextType,
+				rpcPostContextType: rpcPostContextType,
+				rpcPostContextBaseType: rpcPostContextBaseType
+			);
 
 			// other things to check:
 			// - sort order of [Dependency] arguments
