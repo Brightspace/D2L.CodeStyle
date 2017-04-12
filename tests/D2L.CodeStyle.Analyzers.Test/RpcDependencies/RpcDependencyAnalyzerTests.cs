@@ -56,7 +56,7 @@ namespace Test {
 		public void Test() {}
 	}
 }";
-			AssertSingleDiagnostic( test, 20, 19 );
+			AssertSingleDiagnostic( RpcDependencyAnalyzer.RpcContextRule, test, 20, 19 );
 		}
 
 		[Test]
@@ -70,7 +70,7 @@ namespace Test {
 		public void Test( int x ) {}
 	}
 }";
-			AssertSingleDiagnostic( test, 20, 21 );
+			AssertSingleDiagnostic( RpcDependencyAnalyzer.RpcContextRule, test, 20, 21 );
 		}
 
 		[Test]
@@ -116,14 +116,98 @@ namespace Test {
 			AssertNoDiagnostic( test );
 		}
 
+		[Test]
+		public void RpcWithoutDependencyArgs_NoDiag() {
+			const string test = PREAMBLE + @"
+namespace Test {
+	using D2L.Web;
+	using D2L.LP.Extensibility.Activation.Domain;
+	class Test {
+		[Rpc]
+		public void Test( IRpcContext x, int x, int y ) {}
+	}
+}";
+			AssertNoDiagnostic( test );
+		}
+
+		[Test]
+		public void RpcWithSingleDependencyNoParams_NoDiag() {
+			const string test = PREAMBLE + @"
+namespace Test {
+	using D2L.Web;
+	using D2L.LP.Extensibility.Activation.Domain;
+	class Test {
+		[Rpc]
+		public void Test( IRpcContext x, [Dependency] int x ) {}
+	}
+}";
+			AssertNoDiagnostic( test );
+		}
+
+		[Test]
+		public void RpcWithTwoDependencyNoParams_NoDiag() {
+			const string test = PREAMBLE + @"
+namespace Test {
+	using D2L.Web;
+	using D2L.LP.Extensibility.Activation.Domain;
+	class Test {
+		[Rpc]
+		public void Test( IRpcContext x, [Dependency] int x, [Dependency] int y ) {}
+	}
+}";
+			AssertNoDiagnostic( test );
+		}
+
+		[Test]
+		public void RpcWithTwoDependencySingleParams_NoDiag() {
+			const string test = PREAMBLE + @"
+namespace Test {
+	using D2L.Web;
+	using D2L.LP.Extensibility.Activation.Domain;
+	class Test {
+		[Rpc]
+		public void Test( IRpcContext x, [Dependency] int x, [Dependency] int y, int z ) {}
+	}
+}";
+			AssertNoDiagnostic( test );
+		}
+
+		[Test]
+		public void RpcWithDependencyAtEnd_SortDiag() {
+			const string test = PREAMBLE + @"
+namespace Test {
+	using D2L.Web;
+	using D2L.LP.Extensibility.Activation.Domain;
+	class Test {
+		[Rpc]
+		public void Test( IRpcContext x, int y, int z, [Dependency] int a ) {}
+	}
+}";
+			AssertSingleDiagnostic( RpcDependencyAnalyzer.SortRule, test, 20, 50 );
+		}
+
+		[Test]
+		public void RpcWithTwoDependencySingleParamInTheMiddle_SortDiag() {
+			const string test = PREAMBLE + @"
+namespace Test {
+	using D2L.Web;
+	using D2L.LP.Extensibility.Activation.Domain;
+	class Test {
+		[Rpc]
+		public void Test( IRpcContext x, [Dependency] int y, int z, [Dependency] int w ) {}
+	}
+}";
+			AssertSingleDiagnostic( RpcDependencyAnalyzer.SortRule, test, 20, 63 );
+		}
+
 		private void AssertNoDiagnostic( string file ) {
 			VerifyCSharpDiagnostic( file );
 		}
 
-		private void AssertSingleDiagnostic( string file, int line, int column ) {
+		private void AssertSingleDiagnostic( DiagnosticDescriptor diag, string file, int line, int column ) {
 			DiagnosticResult result = new DiagnosticResult {
-				Id = RpcDependencyAnalyzer.RpcContextRule.Id,
-				Message = RpcDependencyAnalyzer.RpcContextRule.MessageFormat.ToString(),
+				Id = diag.Id,
+				Message = diag.MessageFormat.ToString(),
 				Severity =  DiagnosticSeverity.Error,
 				Locations = new [] {
 					new DiagnosticResultLocation( "Test0.cs", line, column )

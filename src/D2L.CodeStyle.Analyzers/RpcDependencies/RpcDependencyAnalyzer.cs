@@ -42,6 +42,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 			var rpcContextType = context.Compilation.GetTypeByMetadataName( "D2L.Web.IRpcContext" );
 			var rpcPostContextType = context.Compilation.GetTypeByMetadataName( "D2L.Web.IRpcPostContext" );
 			var rpcPostContextBaseType = context.Compilation.GetTypeByMetadataName( "D2L.Web.RequestContext.IRpcPostContextBase" );
+			var dependencyAttributeType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.DependencyAttribute" );
 
 			// If any of those type lookups failed then presumably D2L.Web is
 			// not referenced and we don't need to register our analyzer.
@@ -62,13 +63,17 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 				return;
 			}
 
+			// intentionally not checking dependencyAttributeType: still want
+			// the analyzer to run if that is not in scope.
+
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeMethod(
 					ctx,
 					rpcAttributeType: rpcAttributeType,
 					rpcContextType: rpcContextType,
 					rpcPostContextType: rpcPostContextType,
-					rpcPostContextBaseType: rpcPostContextBaseType
+					rpcPostContextBaseType: rpcPostContextBaseType,
+					dependencyAttributeType: dependencyAttributeType
 				),
 				SyntaxKind.MethodDeclaration
 			);
@@ -116,12 +121,33 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 			return true;
 		}
 
+		private static void CheckThatDependencyArgumentsAreSortedCorrectly(
+			SyntaxNodeAnalysisContext context,
+			SeparatedSyntaxList<ParameterSyntax> ps,
+			INamedTypeSymbol dependencyAttributeType
+		) {
+			bool doneDependencies = false;
+			foreach( var param in ps.Skip( 1 ) ) {
+				var isDep = param
+					.AttributeLists
+					.SelectMany( al => al.Attributes )
+					.Any( attr => IsAttribute( dependencyAttributeType, attr, context.SemanticModel ) );
+
+				if( !isDep && !doneDependencies ) {
+					doneDependencies = true;
+				} else if( isDep && doneDependencies ) {
+					context.ReportDiagnostic( Diagnostic.Create( SortRule, param.GetLocation() ) );
+				}
+			}
+		}
+
 		private static void AnalyzeMethod(
 			SyntaxNodeAnalysisContext context,
 			INamedTypeSymbol rpcAttributeType,
 			INamedTypeSymbol rpcContextType,
 			INamedTypeSymbol rpcPostContextType,
-			INamedTypeSymbol rpcPostContextBaseType
+			INamedTypeSymbol rpcPostContextBaseType,
+			INamedTypeSymbol dependencyAttributeType
 		) {
 			var method = context.Node as MethodDeclarationSyntax;
 
@@ -129,7 +155,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 				return;
 			}
 
-			CheckThatFirstArgumentIsIRpcContext(
+			bool keepGoing = CheckThatFirstArgumentIsIRpcContext(
 				context,
 				method,
 				rpcAttributeType: rpcAttributeType,
@@ -138,8 +164,17 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 				rpcPostContextBaseType: rpcPostContextBaseType
 			);
 
+			if ( !keepGoing ) {
+				return;
+			}
+
+			CheckThatDependencyArgumentsAreSortedCorrectly(
+				context,
+				method.ParameterList.Parameters,
+				dependencyAttributeType
+			);
+
 			// other things to check:
-			// - sort order of [Dependency] arguments
 			// - appropriate use of [Dependency]
 		}
 
