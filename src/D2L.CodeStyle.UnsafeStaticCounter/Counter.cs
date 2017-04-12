@@ -98,9 +98,9 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 					var proj = await workspace.OpenProjectAsync( projectFile );
 					Console.WriteLine( $"Analyzing: {proj.FilePath}" );
 
-					var isAnalyzed = proj.AnalyzerReferences.Any( r => r.Display == s_analyzerReferenceName );
-
 					var compilation = await proj.GetCompilationAsync();
+
+					var isAnalyzed = IsAnalyzed( proj, compilation );
 
 					// if the project doesn't reference Annotations, ignore
 					var unauditedAttribute = compilation.GetTypeByMetadataName( typeof( Statics.Unaudited ).FullName );
@@ -120,6 +120,20 @@ namespace D2L.CodeStyle.UnsafeStaticCounter {
 			} finally {
 				_semaphore.Release();
 			}
+		}
+
+		private static bool IsAnalyzed( Project proj, Compilation compilation ) {
+			var analyzers = proj.AnalyzerReferences;
+			if( !analyzers.Any( r => r.Display == s_analyzerReferenceName ) ) {
+				return false;
+			}
+
+			var attributes = compilation.Assembly.GetAttributes();
+			if( attributes.Any( a => a.AttributeClass.MetadataName == "SuperHackySketchyAssemblyThatIsExemptCuzLikeItsSpecialSnowflake" ) ) {
+				return false;
+			}
+
+			return true;
 		}
 
 		private static bool ShouldIgnoreProject( string csProjFile ) {

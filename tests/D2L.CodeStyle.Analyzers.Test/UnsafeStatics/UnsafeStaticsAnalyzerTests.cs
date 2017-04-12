@@ -25,6 +25,20 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 		}
 
 		[Test]
+		public void DocumentWithBadStatic_BailedAssembly_NoDiag() {
+			const string test = @"
+	[assembly: SuperHackySketchyAssemblyThatIsExemptCuzLikeItsSpecialSnowflake()]
+    using System;
+
+    namespace test {
+        class Tests {
+            public static string bad = null;
+        }
+    }";
+			AssertNoDiagnostic( test );
+		}
+
+		[Test]
 		public void DocumentWithoutStatic_NoDiag() {
 			const string test = @"
     using System;
