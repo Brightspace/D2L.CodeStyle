@@ -40,6 +40,14 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 				return;
 			}
 
+			if ( rpcPostContextType == null || rpcPostContextType.Kind == SymbolKind.ErrorType ) {
+				return;
+			}
+
+			if ( rpcPostContextBaseType == null || rpcPostContextBaseType.Kind == SymbolKind.ErrorType ) {
+				return;
+			}
+
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeMethod(
 					ctx,
