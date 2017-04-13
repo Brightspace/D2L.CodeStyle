@@ -93,10 +93,13 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 				return;
 			}
 
+			if ( !CheckThatMethodIsRpc( context, method, rpcAttributeType ) ) {
+				return;
+			}
+
 			bool keepGoing = CheckThatFirstArgumentIsIRpcContext(
 				context,
 				method,
-				rpcAttributeType: rpcAttributeType,
 				rpcContextType: rpcContextType,
 				rpcPostContextType: rpcPostContextType,
 				rpcPostContextBaseType: rpcPostContextBaseType
@@ -116,23 +119,26 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 			// - appropriate use of [Dependency]
 		}
 
-		private static bool CheckThatFirstArgumentIsIRpcContext(
+		private static bool CheckThatMethodIsRpc(
 			SyntaxNodeAnalysisContext context,
 			MethodDeclarationSyntax method,
-			INamedTypeSymbol rpcAttributeType,
-			INamedTypeSymbol rpcContextType,
-			INamedTypeSymbol rpcPostContextType,
-			INamedTypeSymbol rpcPostContextBaseType
+			INamedTypeSymbol rpcAttributeType
 		) {
 			bool isRpc = method
 				.AttributeLists
 				.SelectMany( al => al.Attributes )
 				.Any( attr => IsAttribute( rpcAttributeType, attr, context.SemanticModel ) );
 
-			if( !isRpc ) {
-				return false;
-			}
+			return isRpc;
+		}
 
+		private static bool CheckThatFirstArgumentIsIRpcContext(
+			SyntaxNodeAnalysisContext context,
+			MethodDeclarationSyntax method,
+			INamedTypeSymbol rpcContextType,
+			INamedTypeSymbol rpcPostContextType,
+			INamedTypeSymbol rpcPostContextBaseType
+		) {
 			var ps = method.ParameterList.Parameters;
 
 			if( ps.Count == 0 ) {
