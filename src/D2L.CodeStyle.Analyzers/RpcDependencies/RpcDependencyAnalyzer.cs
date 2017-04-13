@@ -20,12 +20,12 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 
 		internal static readonly DiagnosticDescriptor SortRule = new DiagnosticDescriptor(
 			id: "D2L0005",
-			title: "Dependency-injected arguments must be properly sorted",
-			messageFormat: "Dependency-injected must come before RPC parameters but after IRpcContext",
+			title: "Dependency-injected arguments in RPC methods must preceed other parameters (other than the first context argument)",
+			messageFormat: "Dependency-injected arguments in RPC methods must preceed other parameters (other than the first context argument)",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
-			description: "Dependency-injected must come before RPC parameters but after IRpcContext"
+			description: "Dependency-injected arguments in RPC methods must preceed other parameters (other than the first context argument)"
 		);
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
