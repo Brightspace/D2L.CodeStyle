@@ -97,17 +97,13 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 				return;
 			}
 
-			bool keepGoing = CheckThatFirstArgumentIsIRpcContext(
+			CheckThatFirstArgumentIsIRpcContext(
 				context,
 				method,
 				rpcContextType: rpcContextType,
 				rpcPostContextType: rpcPostContextType,
 				rpcPostContextBaseType: rpcPostContextBaseType
 			);
-
-			if ( !keepGoing ) {
-				return;
-			}
 
 			CheckThatDependencyArgumentsAreSortedCorrectly(
 				context,
@@ -132,7 +128,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 			return isRpc;
 		}
 
-		private static bool CheckThatFirstArgumentIsIRpcContext(
+		private static void CheckThatFirstArgumentIsIRpcContext(
 			SyntaxNodeAnalysisContext context,
 			MethodDeclarationSyntax method,
 			INamedTypeSymbol rpcContextType,
@@ -145,7 +141,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 				context.ReportDiagnostic(
 					Diagnostic.Create( RpcContextRule, method.ParameterList.GetLocation() )
 				);
-				return false;
+				return;
 			}
 
 			var firstParam = method.ParameterList.Parameters[0];
@@ -160,8 +156,6 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 					Diagnostic.Create( RpcContextRule, firstParam.GetLocation() )
 				);
 			}
-
-			return true;
 		}
 
 		private static void CheckThatDependencyArgumentsAreSortedCorrectly(
