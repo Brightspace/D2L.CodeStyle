@@ -27,7 +27,8 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 		[Test]
 		public void DocumentWithBadStatic_BailedAssembly_NoDiag() {
 			const string test = @"
-	[assembly: SuperHackySketchyAssemblyThatIsExemptCuzLikeItsSpecialSnowflake()]
+    class SuperHackySketchyAssemblyThatIsExemptCuzLikeItsSpecialSnowflakeAttribute : Attribute {}	
+    [assembly: SuperHackySketchyAssemblyThatIsExemptCuzLikeItsSpecialSnowflake()]
     using System;
 
     namespace test {
