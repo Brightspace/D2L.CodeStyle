@@ -39,6 +39,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					return "not read-only";
 				case MutabilityCause.IsPotentiallyMutable:
 					return "not deterministically immutable";
+				case MutabilityCause.IsNotAllowed:
+					return "not allowed";
 				default:
 					throw new NotImplementedException( $"unknown cause '{result.Cause}'" );
 			}
