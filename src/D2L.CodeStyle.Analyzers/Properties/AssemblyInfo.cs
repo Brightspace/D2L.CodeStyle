@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription( "D2L.CodeStyle analyzers" )]
 [assembly: AssemblyCompany( "D2L" )]
 [assembly: AssemblyProduct( "D2L.CodeStyle.Analyzers" )]
-[assembly: AssemblyCopyright( "Copyright © D2L 2016" )]
+[assembly: AssemblyCopyright( "Copyright © D2L 2017" )]
 
 [assembly: ComVisible( false )]
 
-[assembly: AssemblyVersion( "0.9.5.0" )]
-[assembly: AssemblyFileVersion( "0.9.5.0" )]
+[assembly: AssemblyVersion( "0.10.1.0" )]
+[assembly: AssemblyFileVersion( "0.10.1.0" )]
 
 [assembly: InternalsVisibleTo( "D2L.CodeStyle.Analyzers.Tests" )]
