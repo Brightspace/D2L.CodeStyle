@@ -254,6 +254,21 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}
 
 		[Test]
+		public void InspectType_TypeWithFuncProperty_ReturnsMutable() {
+			var type = Property( "public Func<string> StringGetter { get; }" ).ContainingType;
+			var expected = MutabilityInspectionResult.Mutable(
+				"StringGetter",
+				"System.Func",
+				MutabilityTarget.Type,
+				MutabilityCause.IsADelegate
+			);
+
+			var actual = m_inspector.InspectType( type );
+
+			AssertResultsAreEqual( expected, actual );
+		}
+
+		[Test]
 		public void IsTypeMarkedImmutable_No_ReturnsFalse() {
 			var type = Type( "class Foo {}" );
 
