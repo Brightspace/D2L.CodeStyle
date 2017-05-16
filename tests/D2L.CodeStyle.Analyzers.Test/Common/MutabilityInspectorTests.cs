@@ -260,7 +260,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				"StringGetter",
 				"System.Func",
 				MutabilityTarget.Type,
-				MutabilityCause.IsNotAllowed
+				MutabilityCause.IsADelegate
 			);
 
 			var actual = m_inspector.InspectType( type );

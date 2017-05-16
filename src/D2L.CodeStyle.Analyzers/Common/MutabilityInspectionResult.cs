@@ -6,7 +6,7 @@
 	}
 
 	public enum MutabilityCause {
-		IsNotAllowed,
+		IsADelegate,
 		IsNotReadonly,
 		IsNotSealed,
 		IsAnInterface,

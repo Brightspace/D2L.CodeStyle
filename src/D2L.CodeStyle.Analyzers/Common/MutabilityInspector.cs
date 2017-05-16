@@ -17,17 +17,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 	public sealed class MutabilityInspector {
 
 		/// <summary>
-		/// A list of types that are not allowed to be used in immutable types. 
-		/// 
-		/// The reason is because their internals often hold onto state that we
-		/// cannot analyze.
-		/// </summary>
-		private static readonly ImmutableHashSet<string> DisallowedTypes = new HashSet<string> {
-			"System.Action",
-			"System.Func"
-		}.ToImmutableHashSet();
-
-		/// <summary>
 		/// A list of known immutable types
 		/// </summary>
 		private static readonly ImmutableHashSet<string> KnownImmutableTypes = new HashSet<string> {
@@ -115,10 +104,11 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return MutabilityInspectionResult.Mutable( null, type.GetFullTypeName(), MutabilityTarget.Type, MutabilityCause.IsAnArray );
 			}
 
-			if( !IsTypeAllowed( type ) ) {
-				return MutabilityInspectionResult.Mutable( null, type.GetFullTypeName(), MutabilityTarget.Type, MutabilityCause.IsNotAllowed );
+			if( type.TypeKind == TypeKind.Delegate ) {
+				return MutabilityInspectionResult.Mutable( null, type.GetFullTypeName(), MutabilityTarget.Type, MutabilityCause.IsADelegate );
 			}
 
+			// If we're verifying immutability, then carry on; otherwise, bailout
 			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && IsTypeMarkedImmutable( type ) ) {
 				return MutabilityInspectionResult.NotMutable();
 			}
@@ -245,13 +235,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					// we've got a member (event, etc.) that we can't currently be smart about, so fail
 					return MutabilityInspectionResult.Mutable( symbol.Name, null, MutabilityTarget.Member, MutabilityCause.IsPotentiallyMutable );
 			}
-		}
-
-		private bool IsTypeAllowed( ITypeSymbol type ) {
-			if( DisallowedTypes.Contains( type.GetFullTypeName() ) ) {
-				return false;
-			}
-			return true;
 		}
 
 		private bool IsTypeKnownImmutable( ITypeSymbol type ) {
