@@ -59,12 +59,6 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				return false;
 			}
 
-			var attributes = compilation.Assembly.GetAttributes();
-			if( attributes.Any( a => a.AttributeClass.MetadataName == "SuperHackySketchyAssemblyThatIsExemptCuzLikeItsSpecialSnowflakeAttribute" ) ) {
-				// bail out on assemblies with this attribute
-				return false;
-			}
-
 			return true;
 		}
 
