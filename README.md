@@ -1,6 +1,6 @@
 # D2L.CodeStyle
 
-[![Build status](https://ci.appveyor.com/api/projects/status/9er7o190apge1eq4/branch/master?svg=true)](https://ci.appveyor.com/project/Brightspace/d2l-codestyle/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/psw7acwi8s59be62/branch/master?svg=true)](https://ci.appveyor.com/project/Brightspace/d2l-codestyle-cf97m/branch/master)
 
 Description goes here
 
