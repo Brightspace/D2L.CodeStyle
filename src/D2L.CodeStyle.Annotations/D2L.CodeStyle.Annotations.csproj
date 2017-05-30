@@ -34,7 +34,6 @@
     <Compile Include="Objects\Audited.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Statics\Audited.cs" />
-    <Compile Include="Statics\SuperHackySketchyAssemblyThatIsExemptCuzLikeItsSpecialSnowflakeAttribute.cs" />
     <Compile Include="Statics\Unaudited.cs" />
   </ItemGroup>
   <ItemGroup>
