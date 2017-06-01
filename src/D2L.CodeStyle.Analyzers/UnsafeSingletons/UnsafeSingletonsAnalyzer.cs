@@ -67,7 +67,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 				context.ReportDiagnostic( diagnostic );
 			}
 		}
-		
+
 		private bool IsTypeSingleton( INamedTypeSymbol type ) {
 			// TODO: implement this method when we have that information.
 			return false;
