@@ -38,6 +38,7 @@
     <Compile Include="Immutability\ImmutabilityAnalyzer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RpcDependencies\RpcDependencyAnalyzer.cs" />
+    <Compile Include="UnsafeSingletons\UnsafeSingletonsAnalyzer.cs" />
     <Compile Include="UnsafeStatics\UnsafeStaticsAnalyzer.cs" />
   </ItemGroup>
   <ItemGroup>
