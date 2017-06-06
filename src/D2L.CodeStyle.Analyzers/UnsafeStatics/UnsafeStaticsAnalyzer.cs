@@ -39,27 +39,14 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
 
 		public override void Initialize( AnalysisContext context ) {
-			context.RegisterCompilationStartAction( ctx => {
-				if( ShouldAnalyzeCompilation( ctx.Compilation ) ) {
-					ctx.RegisterSyntaxNodeAction( AnalyzeField, SyntaxKind.FieldDeclaration );
-					ctx.RegisterSyntaxNodeAction( AnalyzeProperty, SyntaxKind.PropertyDeclaration );
-				}
-			} );
-		}
-
-		private bool ShouldAnalyzeCompilation( Compilation compilation ) {
-			var assemblyName = compilation.AssemblyName;
-			if( assemblyName.Contains( "Test" ) ) {
-				// Compilation is a test assembly, skip
-				return false;
-			}
-			var references = compilation.ReferencedAssemblyNames;
-			if( references.Any( r => r.Name.ToUpper().Contains( "NUNIT" ) ) ) {
-				// Compilation is a test assembly, skip
-				return false;
-			}
-
-			return true;
+			context.RegisterSyntaxNodeAction(
+				AnalyzeField,
+				SyntaxKind.FieldDeclaration
+			);
+			context.RegisterSyntaxNodeAction(
+				AnalyzeProperty,
+				SyntaxKind.PropertyDeclaration
+			);
 		}
 
 		private void AnalyzeField( SyntaxNodeAnalysisContext context ) {
