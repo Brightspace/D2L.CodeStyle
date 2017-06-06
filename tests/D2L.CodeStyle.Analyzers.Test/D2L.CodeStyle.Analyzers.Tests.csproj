@@ -42,6 +42,7 @@
     <Compile Include="Common\TestBase.cs" />
     <Compile Include="Common\TypeSymbolExtensionsTests.cs" />
     <Compile Include="Common\UtilsTests.cs" />
+    <Compile Include="IGlobalContext\IGlobalContextAnalyzerTests.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzerTests.cs" />
     <Compile Include="RpcDependencies\RpcDependencyAnalyzerTests.cs" />
     <Compile Include="UnsafeStatics\UnsafeStaticsAnalyzerTests.cs" />
