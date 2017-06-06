@@ -39,16 +39,14 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
 
 		public override void Initialize( AnalysisContext context ) {
-			context.RegisterCompilationStartAction( ctx => {
-				ctx.RegisterSyntaxNodeAction(
-					AnalyzeField,
-					SyntaxKind.FieldDeclaration
-				);
-				ctx.RegisterSyntaxNodeAction(
-					AnalyzeProperty,
-					SyntaxKind.PropertyDeclaration
-				);
-			} );
+			context.RegisterSyntaxNodeAction(
+				AnalyzeField,
+				SyntaxKind.FieldDeclaration
+			);
+			context.RegisterSyntaxNodeAction(
+				AnalyzeProperty,
+				SyntaxKind.PropertyDeclaration
+			);
 		}
 
 		private void AnalyzeField( SyntaxNodeAnalysisContext context ) {
