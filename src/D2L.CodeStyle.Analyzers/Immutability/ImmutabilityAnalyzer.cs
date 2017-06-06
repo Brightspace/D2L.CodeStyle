@@ -33,17 +33,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private readonly MutabilityInspector m_immutabilityInspector = new MutabilityInspector();
 
 		public override void Initialize( AnalysisContext context ) {
-			context.RegisterCompilationStartAction( RegisterIfNotTestAssembly );
-		}
-
-		private void RegisterIfNotTestAssembly( CompilationStartAnalysisContext compilation ) {
-			var references = compilation.Compilation.ReferencedAssemblyNames;
-			if( references.Any( r => r.Name.ToUpper().Contains( "NUNIT" ) ) ) {
-				// Compilation is a test assembly, skip
-				return;
-			}
-
-			compilation.RegisterSyntaxNodeAction( AnalyzeClass, SyntaxKind.ClassDeclaration );
+			context.RegisterCompilationStartAction( ctx =>
+				ctx.RegisterSyntaxNodeAction(
+					AnalyzeClass,
+					SyntaxKind.ClassDeclaration
+				)
+			);
 		}
 
 		private void AnalyzeClass( SyntaxNodeAnalysisContext context ) {
