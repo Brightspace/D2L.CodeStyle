@@ -109,12 +109,10 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				return;
 			}
 
-#pragma warning disable CS0618 // Type or member is obsolete
 			if( prop.GetAttributes().Any( a => a.AttributeClass.MetadataName == "Unaudited" ) ) {
 				// anyhing marked unaudited should not break the build, it's temporary
 				return;
 			}
-#pragma warning restore CS0618 // Type or member is obsolete
 
 			if( prop.GetAttributes().Any( a => a.AttributeClass.MetadataName == "Audited" ) ) {
 				// anything marked audited has been explicitly marked as a safe static
