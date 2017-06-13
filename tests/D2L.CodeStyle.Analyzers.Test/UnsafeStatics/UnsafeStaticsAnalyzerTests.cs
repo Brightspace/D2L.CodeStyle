@@ -852,8 +852,8 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
             var reason = s_formatter.Format( result );
 
             return new DiagnosticResult {
-                Id = UnsafeStaticsAnalyzer.DiagnosticId,
-                Message = string.Format( UnsafeStaticsAnalyzer.MessageFormat, fieldOrProp, reason ),
+                Id = Diagnostics.UnsafeStatic.Id,
+                Message = string.Format( Diagnostics.UnsafeStatic.MessageFormat.ToString(), fieldOrProp, reason ),
                 Severity = DiagnosticSeverity.Error,
                 Locations = new[] {
                     new DiagnosticResultLocation( "Test0.cs", line, column )

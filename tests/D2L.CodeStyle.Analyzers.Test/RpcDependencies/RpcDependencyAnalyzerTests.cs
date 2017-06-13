@@ -1,4 +1,5 @@
-﻿using D2L.CodeStyle.Analyzers.Test.Verifiers;
+﻿using D2L.CodeStyle.Analyzers.Common;
+using D2L.CodeStyle.Analyzers.Test.Verifiers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using NUnit.Framework;
@@ -56,7 +57,7 @@ namespace Test {
 		public void Test() {}
 	}
 }";
-			AssertSingleDiagnostic( RpcDependencyAnalyzer.RpcContextRule, test, 20, 19 );
+			AssertSingleDiagnostic( Diagnostics.RpcContextFirstArgument, test, 20, 19 );
 		}
 
 		[Test]
@@ -70,7 +71,7 @@ namespace Test {
 		public void Test( int x ) {}
 	}
 }";
-			AssertSingleDiagnostic( RpcDependencyAnalyzer.RpcContextRule, test, 20, 21 );
+			AssertSingleDiagnostic( Diagnostics.RpcContextFirstArgument, test, 20, 21 );
 		}
 
 		[Test]
@@ -183,7 +184,7 @@ namespace Test {
 		public void Test( IRpcContext x, int y, int z, [Dependency] int a ) {}
 	}
 }";
-			AssertSingleDiagnostic( RpcDependencyAnalyzer.SortRule, test, 20, 50 );
+			AssertSingleDiagnostic( Diagnostics.RpcArgumentSortOrder, test, 20, 50 );
 		}
 
 		[Test]
@@ -197,7 +198,7 @@ namespace Test {
 		public void Test( IRpcContext x, [Dependency] int y, int z, [Dependency] int w ) {}
 	}
 }";
-			AssertSingleDiagnostic( RpcDependencyAnalyzer.SortRule, test, 20, 63 );
+			AssertSingleDiagnostic( Diagnostics.RpcArgumentSortOrder, test, 20, 63 );
 		}
 
 		private void AssertNoDiagnostic( string file ) {

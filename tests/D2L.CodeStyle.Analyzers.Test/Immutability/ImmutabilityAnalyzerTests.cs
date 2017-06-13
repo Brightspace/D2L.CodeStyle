@@ -1,4 +1,5 @@
-﻿using D2L.CodeStyle.Analyzers.Immutability;
+﻿using D2L.CodeStyle.Analyzers.Common;
+using D2L.CodeStyle.Analyzers.Immutability;
 using D2L.CodeStyle.Analyzers.Test.Verifiers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -95,8 +96,8 @@ namespace D2L.CodeStyle.Analyzers {
 
 		private void AssertSingleDiagnostic( string file, int line, int column ) {
 			var expected = new DiagnosticResult {
-				Id = ImmutabilityAnalyzer.DiagnosticId,
-				Message = ImmutabilityAnalyzer.MessageFormat,
+				Id = Diagnostics.ImmutableClassIsnt.Id,
+				Message = Diagnostics.ImmutableClassIsnt.MessageFormat.ToString(),
 				Severity = DiagnosticSeverity.Error,
 				Locations = new[] {
 					new DiagnosticResultLocation( "Test0.cs", line, column )

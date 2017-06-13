@@ -8,25 +8,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class UnsafeSingletonsAnalyzer : DiagnosticAnalyzer {
-
-		public const string DiagnosticId = "D2L0006";
-		private const string Category = "Safety";
-
-		private const string Title = "Ensure that a singleton is safe in undifferentiated servers.";
-		private const string Description = "Singletons should not have client-specific or mutable data, otherwise they will not be safe in undifferentiated servers.";
-		internal const string MessageFormat = "The singleton '{0}' is unsafe because {1}.";
-
-		private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
-			DiagnosticId,
-			Title,
-			MessageFormat,
-			Category,
-			DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: Description
-		);
-
-		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( Rule );
+		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( Diagnostics.UnsafeSingletonField );
 
 		private readonly MutabilityInspector m_immutabilityInspector = new MutabilityInspector();
 		private readonly Utils m_utils = new Utils();
@@ -56,6 +38,8 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 				return;
 			}
 
+			// TODO: it probably makes more sense to iterate over the fields and emit diagnostics tied to those individual fields for more accurate red-squigglies
+			// a DI singleton should be capable of having multiple diagnostics come out of it
 			var flags = MutabilityInspectionFlags.AllowUnsealed | MutabilityInspectionFlags.IgnoreImmutabilityAttribute;
 			var result = m_immutabilityInspector.InspectType( type, flags );
 			if( result.IsMutable ) {
@@ -80,7 +64,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 		) {
 			var reason = m_resultFormatter.Format( result );
 			var diagnostic = Diagnostic.Create(
-				Rule,
+				Diagnostics.UnsafeSingletonField,
 				location,
 				typeName,
 				reason

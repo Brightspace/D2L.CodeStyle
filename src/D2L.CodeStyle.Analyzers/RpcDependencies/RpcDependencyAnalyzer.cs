@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using System.Linq;
+using D2L.CodeStyle.Analyzers.Common;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -8,28 +9,8 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	internal sealed class RpcDependencyAnalyzer : DiagnosticAnalyzer {
-		internal static readonly DiagnosticDescriptor RpcContextRule = new DiagnosticDescriptor(
-			id: "D2L0004",
-			title: "RPCs must take an IRpcContext, IRpcPostContext or IRpcPostContextBase as their first argument",
-			messageFormat: "RPCs must take an IRpcContext, IRpcPostContext or IRpcPostContextBase as their first argument",
-			category: "Correctness",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "RPCs must take an IRpcContext, IRpcPostContext or IRpcPostContextBase as their first argument"
-		);
-
-		internal static readonly DiagnosticDescriptor SortRule = new DiagnosticDescriptor(
-			id: "D2L0005",
-			title: "Dependency-injected arguments in RPC methods must preceed other parameters (other than the first context argument)",
-			messageFormat: "Dependency-injected arguments in RPC methods must preceed other parameters (other than the first context argument)",
-			category: "Correctness",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "Dependency-injected arguments in RPC methods must preceed other parameters (other than the first context argument)"
-		);
-
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
-			=> ImmutableArray.Create( RpcContextRule, SortRule );
+			=> ImmutableArray.Create( Diagnostics.RpcContextFirstArgument, Diagnostics.RpcArgumentSortOrder );
 
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
@@ -139,7 +120,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 
 			if( ps.Count == 0 ) {
 				context.ReportDiagnostic(
-					Diagnostic.Create( RpcContextRule, method.ParameterList.GetLocation() )
+					Diagnostic.Create( Diagnostics.RpcContextFirstArgument, method.ParameterList.GetLocation() )
 				);
 				return;
 			}
@@ -153,7 +134,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 
 			if( !firstParamIsReasonableType ) {
 				context.ReportDiagnostic(
-					Diagnostic.Create( RpcContextRule, firstParam.GetLocation() )
+					Diagnostic.Create( Diagnostics.RpcContextFirstArgument, firstParam.GetLocation() )
 				);
 			}
 		}
@@ -173,7 +154,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 				if( !isDep && !doneDependencies ) {
 					doneDependencies = true;
 				} else if( isDep && doneDependencies ) {
-					context.ReportDiagnostic( Diagnostic.Create( SortRule, param.GetLocation() ) );
+					context.ReportDiagnostic( Diagnostic.Create( Diagnostics.RpcArgumentSortOrder, param.GetLocation() ) );
 				}
 			}
 		}
