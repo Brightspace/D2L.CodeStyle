@@ -11,62 +11,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		private readonly MutabilityInspector m_inspector = new MutabilityInspector();
 
 		[Test]
-		public void IsFieldMutable_Private_True() {
-			var field = Field( "private int[] random" );
-
-			Assert.IsTrue( m_inspector.IsFieldMutable( field ) );
-		}
-
-		[Test]
-		public void IsFieldMutable_Readonly_False() {
-			var field = Field( "readonly int[] random" );
-
-			Assert.IsFalse( m_inspector.IsFieldMutable( field ) );
-		}
-
-		[Test]
-		public void IsFieldMutable_PublicReadonly_False() {
-			var field = Field( "public readonly int[] random" );
-
-			Assert.IsFalse( m_inspector.IsFieldMutable( field ) );
-		}
-
-		[Test]
-		public void IsFieldMutable_Public_True() {
-			var field = Field( "public int[] random" );
-
-			Assert.IsTrue( m_inspector.IsFieldMutable( field ) );
-		}
-
-		[Test]
-		public void IsPropertyMutable_Private_True() {
-			var prop = Property( "private int random { get; set; }" );
-
-			Assert.IsTrue( m_inspector.IsPropertyMutable( prop ) );
-		}
-
-		[Test]
-		public void IsPropertyMutable_Readonly_False() {
-			var prop = Property( "int random { get; }" );
-
-			Assert.IsFalse( m_inspector.IsPropertyMutable( prop ) );
-		}
-
-		[Test]
-		public void IsPropertyMutable_PrivateSetter_True() {
-			var prop = Property( "int random { get; private set; }" );
-
-			Assert.IsTrue( m_inspector.IsPropertyMutable( prop ) );
-		}
-
-		[Test]
-		public void IsPropertyMutable_PublicWithSetter_True() {
-			var prop = Property( "public int random { get; set; }" );
-
-			Assert.IsTrue( m_inspector.IsPropertyMutable( prop ) );
-		}
-
-		[Test]
 		public void InspectType_PrimitiveType_NotMutable() {
 			var type = Field( "uint foo" ).Type;
 			var expected = MutabilityInspectionResult.NotMutable();
@@ -172,7 +116,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		[Test]
 		public void InspectType_LooksAtMembersInDeclaredType() {
 			var field = Field( "public string random" );
-			Assert.IsTrue( m_inspector.IsFieldMutable( field ) );
+
 			var expected = MutabilityInspectionResult.Mutable(
 				"random",
 				"System.String",
@@ -188,7 +132,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		[Test]
 		public void InspectType_LooksAtMembersInExternalType() {
 			var field = Field( "public readonly System.Text.StringBuilder random" );
-			Assert.IsFalse( m_inspector.IsFieldMutable( field ) );
+
 			var expected = MutabilityInspectionResult.Mutable(
 				"Capacity",
 				"System.Int32",
@@ -204,7 +148,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		[Test]
 		public void InspectType_LooksFieldsInType() {
 			var field = Field( "public readonly System.Text.StringBuilder random" );
-			Assert.IsFalse( m_inspector.IsFieldMutable( field ) );
+
 			var expected = MutabilityInspectionResult.Mutable(
 				"random.Capacity",
 				"System.Int32",
@@ -220,7 +164,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		[Test]
 		public void InspectType_LooksAtPropertiesInType() {
 			var prop = Property( "public string random { get; set; }" );
-			Assert.IsTrue( m_inspector.IsPropertyMutable( prop ) );
+
 			var expected = MutabilityInspectionResult.Mutable(
 				$"random",
 				"System.String",

@@ -62,7 +62,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 					return;
 				}
 
-				if( m_immutabilityInspector.IsFieldMutable( symbol ) ) {
+				if( !symbol.IsReadOnly ) {
 					var diagnostic = CreateDiagnostic(
 						variable.GetLocation(),
 						symbol.Name,
@@ -121,7 +121,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				return;
 			}
 
-			if( m_immutabilityInspector.IsPropertyMutable( prop ) ) {
+			if( !prop.IsReadOnly ) {
 				var diagnostic = CreateDiagnostic(
 					root.GetLocation(),
 					prop.Name,
