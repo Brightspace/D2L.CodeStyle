@@ -43,8 +43,8 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 			var reason = s_formatter.Format( result );
 
 			return new DiagnosticResult {
-				Id = UnsafeSingletonsAnalyzer.DiagnosticId,
-				Message = string.Format( UnsafeSingletonsAnalyzer.MessageFormat, typeName, reason ),
+				Id = Diagnostics.UnsafeSingletonField.Id,
+				Message = string.Format( Diagnostics.UnsafeSingletonField.MessageFormat.ToString(), typeName, reason ),
 				Severity = DiagnosticSeverity.Error,
 				Locations = new[] {
 					new DiagnosticResultLocation( "Test0.cs", line, column )

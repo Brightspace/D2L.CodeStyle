@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Common;
 using Microsoft.CodeAnalysis;
@@ -15,24 +13,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 		public const string PROPERTY_FIELDORPROPNAME = "FieldOrProprName";
 		public const string PROPERTY_OFFENDINGTYPE = "OffendingType";
 
-		public const string DiagnosticId = "D2L0002";
-		private const string Category = "Safety";
-
-		private const string Title = "Ensure that static field is safe in undifferentiated servers.";
-		private const string Description = "Static fields should not have client-specific or mutable data, otherwise they will not be safe in undifferentiated servers.";
-		internal const string MessageFormat = "The static field or property '{0}' is unsafe because {1}.";
-
-		private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
-			DiagnosticId,
-			Title,
-			MessageFormat,
-			Category,
-			DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: Description
-		);
-
-		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( Rule );
+		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( Diagnostics.UnsafeStatic );
 
 		private readonly MutabilityInspector m_immutabilityInspector = new MutabilityInspector();
 		private readonly Utils m_utils = new Utils();
@@ -222,7 +203,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			var reason = m_resultFormatter.Format( result );
 
 			var diagnostic = Diagnostic.Create(
-				Rule,
+				Diagnostics.UnsafeStatic,
 				location,
 				properties,
 				fieldOrPropName,
