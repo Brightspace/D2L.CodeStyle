@@ -22,6 +22,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		private static readonly ImmutableHashSet<string> KnownImmutableTypes = new HashSet<string> {
 			"count4net.IRateCounter",
 			"count4net.IStatCounter",
+			"count4net.IValueCounter",
+			"count4net.Writers.DurationCounter",
 			"log4net.ILog",
 			"Newtonsoft.Json.JsonSerializer",
 			"System.ComponentModel.TypeConverter",
