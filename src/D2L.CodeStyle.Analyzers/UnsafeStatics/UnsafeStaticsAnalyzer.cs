@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Common;
 using Microsoft.CodeAnalysis;
@@ -78,13 +79,17 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 					return;
 				}
 
-				InspectType(
-					context,
+				var diagnostics = InspectType(
+					context.SemanticModel,
 					symbol.Type,
 					variable.Initializer?.Value,
 					variable.GetLocation(),
 					variable.Identifier.ValueText
 				);
+
+				foreach( var diagnostic in diagnostics ) {
+					context.ReportDiagnostic( diagnostic );
+				}
 			}
 		}
 
@@ -141,11 +146,21 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				return;
 			}
 
-			InspectType( context, prop.Type, root.Initializer?.Value, root.GetLocation(), prop.Name );
+			var diagnostics = InspectType(
+				context.SemanticModel,
+				prop.Type,
+				root.Initializer?.Value,
+				root.GetLocation(),
+				prop.Name
+			);
+
+			foreach( var diagnostic in diagnostics ) {
+				context.ReportDiagnostic( diagnostic );
+			}
 		}
 
-		private void InspectType(
-			SyntaxNodeAnalysisContext context,
+		private IEnumerable<Diagnostic> InspectType(
+			SemanticModel model,
 			ITypeSymbol type,
 			ExpressionSyntax exp,
 			Location location,
@@ -153,7 +168,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 		) {
 			if( m_immutabilityInspector.IsTypeMarkedImmutable( type ) ) {
 				// if the type is marked immutable, skip checking it, to avoid reporting a diagnostic for each usage of non-immutable types that are marked immutable (another analyzer catches this already)
-				return;
+				yield break;
 			}
 
 			var flags = MutabilityInspectionFlags.Default;
@@ -161,7 +176,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			// Always prefer the type from the initializer if it exists because
 			// it may be more specific.
 			if( exp != null ) {
-				var typeInfo = context.SemanticModel.GetTypeInfo( exp );
+				var typeInfo = model.GetTypeInfo( exp );
 
 				// Fall back to the declaration type if we can't get a type for
 				// the initializer
@@ -185,7 +200,8 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 					type.GetFullTypeNameWithGenericArguments(), 
 					result 
 				);
-				context.ReportDiagnostic( diagnostic );
+
+				yield return diagnostic;
 			}
 		}
 
