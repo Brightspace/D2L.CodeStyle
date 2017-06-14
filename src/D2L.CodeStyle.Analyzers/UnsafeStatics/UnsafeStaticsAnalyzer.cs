@@ -149,13 +149,28 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				isPropertyGetterImplemented: isPropertyGetterImplemented
 			);
 
-			var enumerator = diagnostics.GetEnumerator();
-
-			var hasDiagnostics = enumerator.MoveNext();
-
 			var attributes = attributeLists
 				.SelectMany( al => al.Attributes )
 				.ToImmutableArray();
+
+			// We're manually using enumerators here.
+			// - if we used IEnumerable directly we'd re-compute the first
+			//   diagnostic in the GatherDiagnostics generator
+			// - if we did .ToArray() early then we would avoid multiple
+			//   enumeration but would compute diagnostics even when we
+			//   ultimately ignore them due to annotations
+			using( var enumerator = diagnostics.GetEnumerator() ) {
+				ProcessDiagnostics( context, enumerator, location, attributes );
+			}
+		}
+		
+		private void ProcessDiagnostics(
+			SyntaxNodeAnalysisContext context,
+			IEnumerator<Diagnostic> enumerator,
+			Location location,
+			ImmutableArray<AttributeSyntax> attributes
+		) {
+			var hasDiagnostics = enumerator.MoveNext();
 
 			// TODO: This EndsWith stuff is lame. We should do the same thing
 			// that the RpcAnalyzer does with looking up and caching the types.
@@ -199,12 +214,6 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				return;
 			}
 
-			// We're manually using enumerators here.
-			// - if we used IEnumerable directly we'd re-compute the first
-			//   diagnostic in the GatherDiagnostics generator
-			// - if we did .ToArray() early then we would avoid multiple
-			//   enumeration but would compute diagnostics even when we
-			//   ultimately ignore them due to annotations
 			while ( hasDiagnostics ) {
 				context.ReportDiagnostic( enumerator.Current );
 				hasDiagnostics = enumerator.MoveNext();
