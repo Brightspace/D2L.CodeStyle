@@ -126,11 +126,12 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 			}
 
 			var firstParam = method.ParameterList.Parameters[0];
+			var firstParamType = context.SemanticModel.GetSymbolInfo( firstParam.Type ).Symbol;
 
 			var firstParamIsReasonableType =
-				ParameterIsOfType( rpcContextType, firstParam, context.SemanticModel ) ||
-				ParameterIsOfType( rpcPostContextType, firstParam, context.SemanticModel ) ||
-				ParameterIsOfType( rpcPostContextBaseType, firstParam, context.SemanticModel );
+				rpcContextType.Equals( firstParamType ) ||
+				rpcPostContextType.Equals( firstParamType ) ||
+				rpcPostContextBaseType.Equals( firstParamType );
 
 			if( !firstParamIsReasonableType ) {
 				context.ReportDiagnostic(
@@ -164,29 +165,11 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 			AttributeSyntax attr,
 			SemanticModel model
 		) {
-			var symbol = model.GetSymbolInfo( attr ).Symbol;
-
-			if( symbol == null || symbol.Kind == SymbolKind.ErrorType ) {
-				return false;
-			}
+			var attributeConstructorType = model.GetSymbolInfo( attr ).Symbol;
 
 			// Note: symbol corresponds to the constructor for the attribute,
 			// so we need to look at symbol.ContainingType
-			return symbol.ContainingType.Equals( expectedType );
-		}
-
-		private static bool ParameterIsOfType(
-			INamedTypeSymbol expectedType,
-			ParameterSyntax param,
-			SemanticModel model
-		) {
-			var symbol = model.GetSymbolInfo( param.Type ).Symbol;
-
-			if ( symbol == null || symbol.Kind == SymbolKind.ErrorType ) {
-				return false;
-			}
-
-			return symbol.Equals( expectedType );
+			return expectedType.Equals( attributeConstructorType.ContainingType );
 		}
 	}
 }
