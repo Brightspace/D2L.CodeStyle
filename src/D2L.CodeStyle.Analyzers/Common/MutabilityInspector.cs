@@ -202,7 +202,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 						return MutabilityInspectionResult.NotMutable();
 					}
 
-					if( IsPropertyMutable( prop ) ) {
+					if( !prop.IsReadOnly ) {
 						return MutabilityInspectionResult.Mutable( prop.Name, prop.Type.GetFullTypeName(), MutabilityTarget.Member, MutabilityCause.IsNotReadonly );
 					}
 
@@ -217,7 +217,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 					var field = (IFieldSymbol)symbol;
 
-					if( IsFieldMutable( field ) ) {
+					if( !field.IsReadOnly ) {
 						return MutabilityInspectionResult.Mutable( field.Name, field.Type.GetFullTypeName(), MutabilityTarget.Member, MutabilityCause.IsNotReadonly );
 					}
 
@@ -266,32 +266,5 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			}
 			return false;
 		}
-
-		/// <summary>
-		/// Determine if a property is mutable.
-		/// This does not check if the type of the property is also mutable; use <see cref="InspectType"/> for that.
-		/// </summary>
-		/// <param name="prop">The property to check for mutability.</param>
-		/// <returns>Determines whether the property is mutable.</returns>
-		public bool IsPropertyMutable( IPropertySymbol prop ) {
-			if( prop.IsReadOnly ) {
-				return false;
-			}
-			return true;
-		}
-
-		/// <summary>
-		/// Determine if a field is mutable.
-		/// This does not check if the type of the field is also mutable; use <see cref="InspectType"/> for that.
-		/// </summary>
-		/// <param name="field">The field to check for mutability.</param>
-		/// <returns>Determines whether the property is mutable.</returns>
-		public bool IsFieldMutable( IFieldSymbol field ) {
-			if( field.IsReadOnly ) {
-				return false;
-			}
-			return true;
-		}
-
 	}
 }
