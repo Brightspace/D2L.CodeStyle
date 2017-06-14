@@ -75,6 +75,21 @@ namespace Test {
 		}
 
 		[Test]
+		public void RpcWithFirstArgumentOfUnknownType_Diag() {
+			// This test ensures that we don't throw a NullReferenceException due to the first argument being of unknown type
+			const string test = PREAMBLE + @"
+namespace Test {
+	using D2L.Web;
+	using D2L.LP.Extensibility.Activation.Domain;
+	class Test {
+		[Rpc]
+		public void Test( SomethingWeird x ) {}
+	}
+}";
+			AssertSingleDiagnostic( Diagnostics.RpcContextFirstArgument, test, 20, 21 );
+		}
+
+		[Test]
 		public void MethodWithRpcAttributeAndIRpcContextFirstArg_NoDiag() {
 			const string test = PREAMBLE + @"
 namespace Test {
