@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Common;
@@ -45,8 +46,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			var root = context.Node as FieldDeclarationSyntax;
 
 			if( root == null ) {
-				// This can't happen: this check makes the compiler not worried
-				return;
+				throw new Exception( "This should not happen if this function is wired up correctly" );
 			}
 
 			bool isStatic = root.Modifiers.Any( SyntaxKind.StaticKeyword );
@@ -84,8 +84,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			var root = context.Node as PropertyDeclarationSyntax;
 
 			if( root == null ) {
-				// This can't happen: this check makes the compiler not worried
-				return;
+				throw new Exception( "This should not happen if this function is wired up correctly" );
 			}
 
 			bool isStatic = root.Modifiers.Any( SyntaxKind.StaticKeyword );
