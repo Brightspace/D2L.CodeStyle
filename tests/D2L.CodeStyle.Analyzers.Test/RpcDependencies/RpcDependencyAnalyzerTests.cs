@@ -34,6 +34,18 @@ namespace Test {
 		}
 
 		[Test]
+		public void NormalMethodWithUnknownAttribute_NoDiag() {
+			const string test = PREAMBLE + @"
+namespace Test {
+	class Test {
+		[SomethingWeird]
+		public void Test( int x ) {}
+	}
+}";
+			AssertNoDiagnostic( test );
+		}
+
+		[Test]
 		public void MethodWithUnrelatedButAnnoyinglyNamedRpcAttribute_NoDiag() {
 			const string test = PREAMBLE + @"
 namespace Test {
@@ -141,6 +153,20 @@ namespace Test {
 	class Test {
 		[Rpc]
 		public void Test( IRpcContext x, int x, int y ) {}
+	}
+}";
+			AssertNoDiagnostic( test );
+		}
+
+		[Test]
+		public void RpcWithParameterThatHasBadAttributeType_NoDiag() {
+			const string test = PREAMBLE + @"
+namespace Test {
+	using D2L.Web;
+	using D2L.LP.Extensibility.Activation.Domain;
+	class Test {
+		[Rpc]
+		public void Test( IRpcContext x, [SomethingWeird] int x, int y ) {}
 	}
 }";
 			AssertNoDiagnostic( test );
