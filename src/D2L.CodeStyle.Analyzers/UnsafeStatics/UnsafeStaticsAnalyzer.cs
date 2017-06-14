@@ -142,7 +142,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				context.SemanticModel,
 				location: location,
 				isStatic: isStatic,
-				isReadonly: isReadOnly,
+				isReadOnly: isReadOnly,
 				fieldOrPropertyType: fieldOrPropertyType,
 				fieldOrPropertyName: fieldOrPropertyName,
 				initializationExpression: initializer,
@@ -232,7 +232,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			SemanticModel model,
 			Location location,
 			bool isStatic,
-			bool isReadonly,
+			bool isReadOnly,
 			ITypeSymbol fieldOrPropertyType,
 			string fieldOrPropertyName,
 			ExpressionSyntax initializationExpression,
@@ -248,7 +248,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				yield break;
 			}
 
-			if( !isReadonly ) {
+			if( !isReadOnly ) {
 				yield return CreateDiagnostic(
 					location,
 					fieldOrPropertyName,
@@ -260,6 +260,12 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 						MutabilityCause.IsNotReadonly
 					)
 				);
+
+				// TODO: it'd probably be reasonable to not bail here. However
+				// we need to update the unsafestatics report because it counts
+				// the number of diagnostics that come out (it assumes at most one
+				// error per-field.)
+				yield break;
 			}
 
 			if( m_immutabilityInspector.IsTypeMarkedImmutable( fieldOrPropertyType ) ) {
