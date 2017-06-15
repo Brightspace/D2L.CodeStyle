@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -77,10 +79,19 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static IEnumerable TestCases {
 			get {
-				var resourceSet = Specs.SpecTests.ResourceManager.GetResourceSet( CultureInfo.CurrentUICulture, true, true );
-				foreach ( DictionaryEntry resource in resourceSet ) {
-					var testName = resource.Key.ToString();
-					var source = resource.Value;
+				var assembly = Assembly.GetExecutingAssembly();
+
+				foreach( var specName in assembly.GetManifestResourceNames() ) {
+					if ( !specName.EndsWith( ".cs" )) {
+						continue;
+					}
+
+					string source;
+					using( var specStream = new StreamReader( assembly.GetManifestResourceStream( specName ) ) ) {
+						source = specStream.ReadToEnd();
+					}
+
+					var testName = specName.Replace( ".cs", "" );
 
 					yield return new TestCaseData(
 						testName, source
