@@ -159,18 +159,25 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			// - if we did .ToArray() early then we would avoid multiple
 			//   enumeration but would compute diagnostics even when we
 			//   ultimately ignore them due to annotations
-			using( var enumerator = diagnostics.GetEnumerator() ) {
-				ProcessDiagnostics( context, enumerator, location, attributes );
+			using( var diagnosticsEnumerator = diagnostics.GetEnumerator() ) {
+				ProcessDiagnostics(
+					context,
+					diagnosticsEnumerator,
+					location,
+					attributes,
+					fieldOrPropertyName
+				);
 			}
 		}
 		
 		private void ProcessDiagnostics(
 			SyntaxNodeAnalysisContext context,
-			IEnumerator<Diagnostic> enumerator,
+			IEnumerator<Diagnostic> diagnostics,
 			Location location,
-			ImmutableArray<AttributeSyntax> attributes
+			ImmutableArray<AttributeSyntax> attributes,
+			string fieldOrPropertyName
 		) {
-			var hasDiagnostics = enumerator.MoveNext();
+			var hasDiagnostics = diagnostics.MoveNext();
 
 			// TODO: This EndsWith stuff is lame. We should do the same thing
 			// that the RpcAnalyzer does with looking up and caching the types.
@@ -201,7 +208,10 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				context.ReportDiagnostic(
 					Diagnostic.Create(
 						Diagnostics.UnnecessaryStaticAnnotation,
-						location
+						location,
+						ImmutableDictionary<string, string>.Empty,
+						hasAuditedAnnotation ? "Statics.Audited" : "Statics.Unaudited",
+						fieldOrPropertyName
 					)
 				);
 
@@ -215,8 +225,8 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			}
 
 			while ( hasDiagnostics ) {
-				context.ReportDiagnostic( enumerator.Current );
-				hasDiagnostics = enumerator.MoveNext();
+				context.ReportDiagnostic( diagnostics.Current );
+				hasDiagnostics = diagnostics.MoveNext();
 			}
 		}
 

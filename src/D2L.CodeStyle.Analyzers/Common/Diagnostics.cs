@@ -55,7 +55,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		public static readonly DiagnosticDescriptor UnnecessaryStaticAnnotation = new DiagnosticDescriptor(
 			id: "D2L0007",
 			title: "Unnecessary static annotations should be removed to keep the code base clean",
-			messageFormat: "The '{0}' annotation is not necessary because the member '{1}' is immutable. Please remove this attribute to keep our code base clean.",
+			messageFormat: "The {0} annotation is not necessary because {1} is immutable. Please remove this attribute to keep our code base clean.",
 			category: "Cleanliness",
 			defaultSeverity: DiagnosticSeverity.Error, // this may seem extreme but we want to keep the amount of annotated stuff minimal
 			isEnabledByDefault:true,
