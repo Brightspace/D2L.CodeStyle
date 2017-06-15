@@ -51,5 +51,25 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			isEnabledByDefault: true,
 			description: "Singletons should not have client-specific or mutable data, otherwise they will not be safe in undifferentiated servers."
 		);
+
+		public static readonly DiagnosticDescriptor UnnecessaryStaticAnnotation = new DiagnosticDescriptor(
+			id: "D2L0007",
+			title: "Unnecessary static annotations should be removed to keep the code base clean",
+			messageFormat: "The {0} annotation is not necessary because {1} is immutable. Please remove this attribute to keep our code base clean.",
+			category: "Cleanliness",
+			defaultSeverity: DiagnosticSeverity.Error, // this may seem extreme but we want to keep the amount of annotated stuff minimal
+			isEnabledByDefault:true,
+			description: "Unnecessary static annotations should be removed to keep the code base clean"
+		);
+
+		public static readonly DiagnosticDescriptor ConflictingStaticAnnotation = new DiagnosticDescriptor(
+			id: "D2L0008",
+			title: "Statics.Audited and Statics.Unaudited are mutually exclusive",
+			messageFormat: "Statics.Audited and Statics.Unaudited are mutually exclusive. Remove at least one of them.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault:true,
+			description: "Statics.Audited and Statics.Unaudited are mutually exclusive. Remove at least one of them."
+		);
 	}
 }

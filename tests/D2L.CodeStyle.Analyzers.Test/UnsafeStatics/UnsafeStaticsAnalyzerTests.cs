@@ -842,6 +842,70 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			VerifyCSharpDiagnostic( file );
 		}
 
+		[Test]
+		public void DocumentWithAuditedSafeThing_Diag() {
+			const string test = @"
+namespace test {
+	class tests {
+		[Statics.Audited("""", """", """")]
+		private readonly static string x = ""hey""
+	}
+}";
+			var expected = new DiagnosticResult {
+				Id = Diagnostics.UnnecessaryStaticAnnotation.Id,
+				Message = string.Format( Diagnostics.UnnecessaryStaticAnnotation.MessageFormat.ToString(), "Statics.Audited", "x" ),
+				Severity = DiagnosticSeverity.Error,
+				Locations = new[] {
+					new DiagnosticResultLocation( "Test0.cs", 5, 34),
+				}
+			};
+
+			VerifyCSharpDiagnostic( test, expected );
+		}
+
+		[Test]
+		public void DocumentWithUnauditedSafeThing_Diag() {
+			const string test = @"
+namespace test {
+	class tests {
+		[Statics.Unaudited( Because.ItsSketchy )]
+		private readonly static string x = ""hey""
+	}
+}";
+			var expected = new DiagnosticResult {
+				Id = Diagnostics.UnnecessaryStaticAnnotation.Id,
+				Message = string.Format( Diagnostics.UnnecessaryStaticAnnotation.MessageFormat.ToString(), "Statics.Unaudited", "x" ),
+				Severity = DiagnosticSeverity.Error,
+				Locations = new[] {
+					new DiagnosticResultLocation( "Test0.cs", 5, 34),
+				}
+			};
+
+			VerifyCSharpDiagnostic( test, expected );
+		}
+
+		[Test]
+		public void DocumentWithConflictingAnnotations_Diag() {
+			const string test = @"
+namespace test {
+	class tests {
+		[Statcs.Unaudited( Because.ItsSketchy )]
+		[Statics.Audited("""", """", """")]
+		private static string x = ""hey""
+	}
+}";
+			var expected = new DiagnosticResult {
+				Id = Diagnostics.ConflictingStaticAnnotation.Id,
+				Message = Diagnostics.ConflictingStaticAnnotation.MessageFormat.ToString(),
+				Severity = DiagnosticSeverity.Error,
+				Locations = new[] {
+					new DiagnosticResultLocation( "Test0.cs", 6, 25),
+				}
+			};
+
+			VerifyCSharpDiagnostic( test, expected );
+		}
+
         private void AssertSingleDiagnostic( string file, int line, int column, string fieldOrProp, MutabilityInspectionResult inspectionResult ) {
 
             DiagnosticResult result = CreateDiagnosticResult( line, column, fieldOrProp, inspectionResult );
