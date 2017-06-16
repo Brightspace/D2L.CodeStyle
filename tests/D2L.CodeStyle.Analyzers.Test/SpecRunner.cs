@@ -2,12 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using D2L.CodeStyle.Analyzers.Common;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -16,11 +16,84 @@ using Microsoft.CodeAnalysis.Text;
 using NUnit.Framework;
 
 namespace D2L.CodeStyle.Analyzers {
-	[TestFixture]
-	internal sealed class SpecRunner {
-		[Test, TestCaseSource(typeof(SpecRunner), nameof(TestCases))]
-		public async Task RunSpec( string testName, string source ) {
-			CompilationUnitSyntax root = (CompilationUnitSyntax)CSharpSyntaxTree.ParseText( source ).GetRoot();
+	[TestFixtureSource(nameof(m_specNames))]
+	internal sealed class Spec {
+		private static readonly IEnumerable m_specNames;
+		private static readonly ImmutableDictionary<string, string> m_specSource;
+
+		private readonly ImmutableArray<Diagnostic> m_expectedDiagnostics;
+		private readonly ImmutableArray<Diagnostic> m_actualDiagnostics;
+		private readonly ImmutableHashSet<Diagnostic> m_unexpectedDiagnostics;
+
+		static Spec() {
+			var assembly = Assembly.GetExecutingAssembly();
+
+			var builder = ImmutableDictionary.CreateBuilder<string, string>();
+			foreach( var specFilePath in assembly.GetManifestResourceNames() ) {
+				if( !specFilePath.EndsWith( ".cs" ) ) {
+					continue;
+				}
+
+				string specName = Regex.Replace(
+					specFilePath,
+					@"^.*\.(?<specName>[^\.]*)\.cs$",
+					@"${specName}"
+				);
+
+				string source;
+
+				using( var specStream = new StreamReader( assembly.GetManifestResourceStream( specFilePath ) ) ) {
+					source = specStream.ReadToEnd();
+				}
+
+				builder[specName] = source;
+			}
+
+			m_specSource = builder.ToImmutable();
+			m_specNames = m_specSource.Keys;
+		}
+
+		public Spec( string specName ) {
+			var source = m_specSource[specName];
+			var analyzer = GetAnalyzerNameFromSpec( source );
+			var compilation = GetCompilationForSource( specName, source );
+			m_actualDiagnostics = GetActualDiagnostics( compilation, analyzer );
+			m_expectedDiagnostics = GetExpectedDiagnostics( (CompilationUnitSyntax)compilation.SyntaxTrees.First().GetRoot() );
+
+			// TODO: implement by diffing m_actualDiagnostics and
+			// m_expectedDiagnostics. diagnostics should be matched up by start
+			// location, end location if necessary and code if necessary. Prefer
+			// to match up as little as necessary and assert equality for the
+			// rest to provide best dev UX.
+			// ---
+			// This is done in the constructor because both the
+			// NoUnexpectedDiagnostics and ExpectedDiagnostics tests use it.
+			m_unexpectedDiagnostics = ImmutableHashSet<Diagnostic>.Empty;
+		}
+
+		[Test]
+		public void NoUnexpectedDiagnostics() {
+			CollectionAssert.IsEmpty( m_unexpectedDiagnostics );
+		}
+
+		// TODO: investigate: can/should this be TestCaseSource? Maybe it'd be
+		// cool, but there are some snags. Firstly, TestCaseSource needs to come
+		// from a static and we don't have context about what spec we're running
+		// in those. Additionally it's not obvious what to name each test case
+		// (line/column number?)
+
+		[Test]
+		public void ExpectedDiagnostics() {
+			// TODO: this isn't the correct assertion. It is weaker than what
+			// we should be asserting.
+			Assert.AreEqual(
+				m_expectedDiagnostics.Length,
+				m_actualDiagnostics.Length
+			);
+		}
+
+		private DiagnosticAnalyzer GetAnalyzerNameFromSpec( string source ) {
+			var root = (CompilationUnitSyntax)CSharpSyntaxTree.ParseText( source ).GetRoot();
 
 			string rawComment = root.GetLeadingTrivia()
 				.First(
@@ -36,68 +109,67 @@ namespace D2L.CodeStyle.Analyzers {
 				} )
 				.ToImmutableDictionary( StringComparer.InvariantCultureIgnoreCase );
 
-			Assert.True( settings.ContainsKey( "analyzer" ) );
+			Assert.True( settings.ContainsKey( "analyzer" ), "spec must start with a comment of the form \"// analyzer: <type of analyzer to test>\"" );
 
-			var type = Type.GetType( settings["analyzer"] + ", D2L.CodeStyle.Analyzers" );
+			string analyzerName = settings["analyzer"];
 
-			Assert.NotNull( type );
+			var type = Type.GetType( analyzerName + ", D2L.CodeStyle.Analyzers" );
+
+			Assert.NotNull( type, "couldn't get type for analyzer {0}", analyzerName );
 
 			var analyzer = (DiagnosticAnalyzer)Activator.CreateInstance( type );
 
-			Assert.NotNull( analyzer );
+			Assert.NotNull( analyzer, "couldn't instantiate type for analyzer {0}", analyzerName );
 
-			var projectName = "SpecTestsFor" + testName;
-			var filename = testName + ".cs";
+			return analyzer;
+		}
 
-			var projectId = ProjectId.CreateNewId( debugName: projectName );
-			var documentId = DocumentId.CreateNewId( projectId, debugName: filename );
+		private static ImmutableArray<Diagnostic> GetActualDiagnostics( Compilation compilation, DiagnosticAnalyzer analyzer ) {
+			return compilation
+				.WithAnalyzers( ImmutableArray.Create( analyzer ) )
+				.GetAnalyzerDiagnosticsAsync().Result
+				.ToImmutableArray();
+		}
 
-			var solution = new AdhocWorkspace()
-				.CurrentSolution
-				.AddProject( projectId, projectName, projectName, LanguageNames.CSharp )
-				.AddMetadataReference( projectId, MetadataReference.CreateFromFile( typeof( object ).Assembly.Location ) ) // mscorlib
-				.AddMetadataReference( projectId, MetadataReference.CreateFromFile( typeof( Enumerable ).Assembly.Location ) ) // system.core
-				.AddDocument( documentId, filename, SourceText.From( source ) );
-
-			var compilation = ( await solution.Projects.First().GetCompilationAsync() )
-				.WithAnalyzers( ImmutableArray.Create( analyzer ));
-
-			var diags = (await compilation.GetAnalyzerDiagnosticsAsync()).ToImmutableArray();
-
-			var multilineComments = root.DescendantTrivia()
+		private static ImmutableArray<Diagnostic> GetExpectedDiagnostics( CompilationUnitSyntax root ) {
+			// TODO: this is full of garbage, only important thing right now is its output length is correct
+			return root.DescendantTrivia()
 				.Where( t => t.Kind() == SyntaxKind.MultiLineCommentTrivia )
 				.Select( c => GetCommentContents( c.ToString() ) )
-				.Where( c => c != "" ).ToImmutableArray();
+				.Where( c => c != "" )
+				.Select( c => Diagnostic.Create( Diagnostics.RpcContextFirstArgument, Location.None ) )
+				.ToImmutableArray();
+		}
 
-			Assert.AreEqual( multilineComments.Length, diags.Length );
+		private static Compilation GetCompilationForSource( string specName, string source ) {
+			var projectId = ProjectId.CreateNewId( debugName: specName );
+			var filename = specName + ".cs";
+			var documentId = DocumentId.CreateNewId( projectId, debugName: filename );
+
+			var solution = new AdhocWorkspace().CurrentSolution
+				.AddProject( projectId, specName, specName, LanguageNames.CSharp )
+
+				.AddMetadataReference(
+					projectId,
+					// mscorlinb
+					MetadataReference
+						.CreateFromFile( typeof( object ).Assembly.Location ) )
+
+				.AddMetadataReference(
+					projectId,
+					// system.core
+					MetadataReference
+						.CreateFromFile( typeof( Enumerable ).Assembly.Location ) )
+
+				.AddDocument( documentId, filename, SourceText.From( source ) );
+
+			return solution.Projects.First()
+				.GetCompilationAsync().Result;
 		}
 
 		private static string GetCommentContents( string rawComment ) {
 			// real ghetto
 			return Regex.Replace( rawComment.Trim(), @"^(//|/\*)(?<contents>[^*]*)(\*/)*$", "${contents}" ).Trim();
-		}
-
-		public static IEnumerable TestCases {
-			get {
-				var assembly = Assembly.GetExecutingAssembly();
-
-				foreach( var specName in assembly.GetManifestResourceNames() ) {
-					if ( !specName.EndsWith( ".cs" )) {
-						continue;
-					}
-
-					string source;
-					using( var specStream = new StreamReader( assembly.GetManifestResourceStream( specName ) ) ) {
-						source = specStream.ReadToEnd();
-					}
-
-					var testName = specName.Replace( ".cs", "" );
-
-					yield return new TestCaseData(
-						testName, source
-					).SetCategory( "Unit" ).SetName( testName );
-				}
-			}
 		}
 	}
 }
