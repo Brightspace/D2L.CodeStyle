@@ -24,7 +24,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			VerifyCSharpDiagnostic( test );
 		}
 
-		[Test]
+		[Test] // X
 		public void DocumentWithoutStatic_NoDiag() {
 			const string test = @"
     using System;
@@ -40,7 +40,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			AssertNoDiagnostic( test );
 		}
 
-		[Test]
+		[Test] // X
         public void DocumentWithStatic_ReadonlySelfReferencingStatic_NoDiag() {
             const string test = @"
     using System;
@@ -178,7 +178,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
             ) );
 		}
 
-		[Test]
+		[Test] // X
 		public void DocumentWithStaticField_ReadonlyValueType_NoDiag() {
 			const string test = @"
     using System;
@@ -225,7 +225,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
             ) );
 		}
 
-        [Test]
+        [Test] // X
         public void DocumentWithStaticField_ReadonlyNotSealedImmutableKnownConcreteType_NoDiag() {
             const string test = @"
     using System;
@@ -245,7 +245,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
             AssertNoDiagnostic( test );
         }
 
-		[Test]
+		[Test] // X
 		public void DocumentWithStaticField_ReadonlySealedImmutable_NoDiag() {
 			const string test = @"
     using System;
@@ -284,7 +284,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			AssertNoDiagnostic( test );
 		}
 
-        [Test]
+        [Test] // X
         public void DocumentWithStaticField_InterfaceWithImmutableConcreteInitializer_NoDiag() {
             const string test = @"
     using System;
