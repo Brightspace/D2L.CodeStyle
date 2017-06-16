@@ -43,7 +43,9 @@
     <Compile Include="Common\TypeSymbolExtensionsTests.cs" />
     <Compile Include="Common\UtilsTests.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzerTests.cs" />
+    <EmbeddedResource Include="Specs\RpcAnalyzer.cs" />
     <Compile Include="RpcDependencies\RpcDependencyAnalyzerTests.cs" />
+    <Compile Include="SpecRunner.cs" />
     <Compile Include="UnsafeSingletons\UnsafeSingletonsAnalyzerTests.cs" />
     <Compile Include="UnsafeStatics\UnsafeStaticsAnalyzerTests.cs" />
     <Compile Include="Verifiers\DiagnosticResult.cs" />
@@ -137,6 +139,7 @@
     <Analyzer Include="..\..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
     <Analyzer Include="..\..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
