@@ -22,6 +22,7 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 	public sealed class FooDependency { }
 	public sealed class BarDependency { }
+
 	public sealed class OkayRpcHandler {
 		public void NonRpcMethod( int x ) { }
 
@@ -78,6 +79,8 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 	}
 
 	public sealed class BadRpcs {
+		// The first argument must be wither IRpcContext, IRpcPostContext or IRpcPostContextBase
+
 		[Rpc]
 		/* RpcContextFirstArgument */ public static void MissingFirstArgument() /**/ { }
 
@@ -93,6 +96,10 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 			/* RpcContextFirstArgument */ int x /**/,
 			IRpcContext context
 		) { }
+
+		// [Dependency] arguments must come after the first argument but before
+		// any of the arguments that aren't [Dependency] (those come from the
+		// user-agent.)
 
 		[Rpc]
 		public static void IncorrectDependencySortOrder(
