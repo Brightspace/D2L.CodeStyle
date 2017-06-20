@@ -71,5 +71,15 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			isEnabledByDefault:true,
 			description: "Statics.Audited and Statics.Unaudited are mutually exclusive. Remove at least one of them."
 		);
+
+		public static readonly DiagnosticDescriptor NullPassedToNotNullParameter = new DiagnosticDescriptor(
+			id: "D2L0009",
+			title: "Paramter cannot be passed with a null value.",
+			messageFormat: "Paramter cannot be passed with a null value",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "The method being called has declared that this paramter cannot receive null, but a null value is being passed."
+		);
 	}
 }

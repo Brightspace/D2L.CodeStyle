@@ -31,6 +31,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Contract\NotNullAttribute.cs" />
     <Compile Include="Objects\Audited.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Statics\Audited.cs" />
@@ -40,6 +41,9 @@
     <None Include="D2L.CodeStyle.Annotations.nuspec">
       <SubType>Designer</SubType>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
