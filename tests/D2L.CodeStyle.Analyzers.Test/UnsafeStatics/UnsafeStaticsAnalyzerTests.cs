@@ -950,6 +950,23 @@ namespace test {
         }
 
         [Test]
+        public void PropertyWithImplementedSetterOnly_NoDiagnostic() {
+            const string test = @"
+ namespace test {
+    sealed class tests {
+        [Statics.Unaudited("""", """", """")]
+        public static int[] m_things;
+
+        public static int[] Things {
+            set { m_things = value; }
+        }
+    }
+}";
+
+            AssertNoDiagnostic( test );
+        }
+
+        [Test]
         public void PropertyWithImplementedGetterSetter_NoDiagnostic() {
             const string test = @"
  namespace test {
