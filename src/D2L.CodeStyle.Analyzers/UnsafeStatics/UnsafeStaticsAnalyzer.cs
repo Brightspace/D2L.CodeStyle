@@ -70,7 +70,8 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 					fieldOrPropertyType: symbol.Type,
 					fieldOrPropertyName: variable.Identifier.ValueText,
 					initializer: variable.Initializer?.Value,
-					isPropertyGetterImplemented: false
+					isProperty: false,
+					isAutoImplementedProperty: false
 				);
 			}
 		}
@@ -97,7 +98,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				return;
 			}
 
-			bool isPropertyGetterImplemented = root.IsPropertyGetterImplemented();
+			bool isAutoImplementedProperty = root.IsAutoImplemented();
 
 			InspectFieldOrProperty(
 				context,
@@ -108,7 +109,8 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				fieldOrPropertyType: prop.Type,
 				fieldOrPropertyName: prop.Name,
 				initializer: root.Initializer?.Value,
-				isPropertyGetterImplemented: isPropertyGetterImplemented
+				isProperty: true,
+				isAutoImplementedProperty: isAutoImplementedProperty
 			);
 		}
 
@@ -136,7 +138,8 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			ITypeSymbol fieldOrPropertyType,
 			string fieldOrPropertyName,
 			ExpressionSyntax initializer,
-			bool isPropertyGetterImplemented // only applies to properties
+			bool isProperty,
+			bool isAutoImplementedProperty
 		) {
 			var diagnostics = GatherDiagnostics(
 				context.SemanticModel,
@@ -146,7 +149,8 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				fieldOrPropertyType: fieldOrPropertyType,
 				fieldOrPropertyName: fieldOrPropertyName,
 				initializationExpression: initializer,
-				isPropertyGetterImplemented: isPropertyGetterImplemented
+				isProperty: isProperty,
+				isAutoImplementedProperty: isAutoImplementedProperty
 			);
 
 			var attributes = attributeLists
@@ -246,17 +250,23 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			ITypeSymbol fieldOrPropertyType,
 			string fieldOrPropertyName,
 			ExpressionSyntax initializationExpression,
-			bool isPropertyGetterImplemented
+			bool isProperty,
+			bool isAutoImplementedProperty
 		) {
 			if ( !isStatic ) {
 				yield break;
 			}
 
-			if( isPropertyGetterImplemented ) {
-				// things with getters are really just functions; they can't
-				// hold state themselves.
+			if( isProperty && !isAutoImplementedProperty ) {
+				// non-auto-implemented properties don't hold their own state.
+				// We should never emit diagnostics for them.
 				yield break;
 			}
+
+			// Auto-implemented properties should be treated similar to fields:
+			// 1. They should not have a setter (i.e. isReadOnly)
+			// 2. Their type should be immutable
+			//    a. Unless an initializer ensures it isn't
 
 			if( !isReadOnly ) {
 				yield return CreateDiagnostic(
@@ -286,7 +296,6 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			}
 
 			var flags = MutabilityInspectionFlags.Default;
-
 			// Always prefer the type from the initializer if it exists because
 			// it may be more specific.
 			if( initializationExpression != null ) {

@@ -8,9 +8,13 @@ using System.Collections.Immutable;
 namespace D2L.CodeStyle.Analyzers.Common {
 
 	public static class SyntaxNodeExtension {
-		public static bool IsPropertyGetterImplemented( this PropertyDeclarationSyntax syntax ) {
-			var getter = syntax.AccessorList?.Accessors.FirstOrDefault( a => a.IsKind( SyntaxKind.GetAccessorDeclaration ) );
-			return getter?.Body != null;
+		public static bool IsAutoImplemented( this PropertyDeclarationSyntax syntax ) {
+			return !syntax
+				.AccessorList.Accessors
+				.Where( a =>
+					a.Kind() == SyntaxKind.GetAccessorDeclaration ||
+					a.Kind() == SyntaxKind.SetAccessorDeclaration )
+				.Any( a => a.Body != null );
 		}
 	}
 
