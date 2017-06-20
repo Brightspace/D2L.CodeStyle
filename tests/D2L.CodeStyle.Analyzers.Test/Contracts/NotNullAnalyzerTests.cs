@@ -27,6 +27,11 @@ namespace Test {
 			[D2L.CodeStyle.Annotations.Contract.NotNull] string testName
 		) {}
 
+		public void MultiNotNull(
+			[D2L.CodeStyle.Annotations.Contract.NotNull] string testName
+			[D2L.CodeStyle.Annotations.Contract.NotNull] string anotherName
+		) {}
+
 		public void TestMethodCanTakeNull( string testName ) {}
 
 		public bool ShouldDoStuff => false;
@@ -174,6 +179,45 @@ namespace Test {
 					6 + NotNullParamMethodLines,
 					44
 				);
+		}
+
+		[Test]
+		public void NotNullParam_MultipleParamtersWithIssue_ReportsMultipleProblems() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			string name = null;
+			provider.TestMethod( ""Hello!"" );
+			provider.MultiNotNull(
+					name,
+					null
+				);
+		}
+	}
+}";
+			DiagnosticDescriptor descriptor = Diagnostics.NullPassedToNotNullParameter;
+			DiagnosticResult[] expectedResults = new[] {
+				new DiagnosticResult() {
+					Id = descriptor.Id,
+					Message = descriptor.MessageFormat.ToString(),
+					Severity = DiagnosticSeverity.Error,
+					Locations = new[] {
+						new DiagnosticResultLocation( "Test0.cs", 8 + NotNullParamMethodLines, 6 )
+					}
+				},
+				new DiagnosticResult() {
+					Id = descriptor.Id,
+					Message = descriptor.MessageFormat.ToString(),
+					Severity = DiagnosticSeverity.Error,
+					Locations = new[] {
+						new DiagnosticResultLocation( "Test0.cs", 9 + NotNullParamMethodLines, 6 )
+					}
+				}
+			};
+
+			VerifyCSharpDiagnostic( test, expectedResults );
 		}
 
 		#endregion

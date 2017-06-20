@@ -27,28 +27,15 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 
 		public static void RegisterNotNullAnalyzer( CompilationStartAnalysisContext context ) {
 			context.RegisterSyntaxNodeAction(
-					AnalyzeUsage,
-					SyntaxKind.Argument // TODO: Change this back to SyntaxKind.InvocationExpression?
+					AnalyzeInvocation,
+					SyntaxKind.InvocationExpression
 				);
 		}
 
-		private static void AnalyzeUsage(
+		private static void AnalyzeInvocation(
 			SyntaxNodeAnalysisContext context
 		) {
-			var argument = context.Node as ArgumentSyntax;
-			if( argument == null ) {
-				return;
-			}
-
-			var argumentList = argument.Parent as ArgumentListSyntax;
-			if( argumentList == null ) {
-				return;
-			}
-
-			SeparatedSyntaxList<ArgumentSyntax> separatedSyntaxList = argumentList.Arguments;
-			int argumentIndex = separatedSyntaxList.IndexOf( argument );
-
-			var invocation = argumentList.Parent as InvocationExpressionSyntax;
+			var invocation = context.Node as InvocationExpressionSyntax;
 			if( invocation == null ) {
 				return;
 			}
@@ -58,19 +45,42 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				return;
 			}
 
-			ImmutableArray<IParameterSymbol> methodParameters = memberSymbol.Parameters;
-			if( methodParameters.Length == 0 || methodParameters.Length < argumentIndex + 1 ) {
-				// Make sure that the value being passed actually maps to a parameter
+			ImmutableArray<IParameterSymbol> parameters = memberSymbol.Parameters;
+			if( parameters.Length == 0 ) {
+				// We don't care about methods that take no arguments
 				return;
 			}
 
-			IParameterSymbol methodParameter = methodParameters[argumentIndex];
-			bool hasNotNullAttribute = methodParameter.GetAttributes()
-				.Any( x => x.ToString() == NotNullAttribute );
-			if( !hasNotNullAttribute ) {
+			bool hasNotNullParameter = false;
+			bool[] notNullParameters = parameters.Select(
+					param => {
+						ImmutableArray<AttributeData> attributes = param.GetAttributes();
+						if( attributes.Length == 0
+							|| !attributes.Any( x => x.AttributeClass.ToString() == NotNullAttribute )
+						) {
+							return false;
+						}
+
+						hasNotNullParameter = true;
+						return true;
+					}
+				).ToArray();
+
+			if( !hasNotNullParameter ) {
 				return;
 			}
 
+			var arguments = invocation.ArgumentList.Arguments;
+			for( int i = 0; i < parameters.Length; i++ ) {
+				if( !notNullParameters[i] ) {
+					continue;
+				}
+
+				AnalyzeArgument( context, invocation, arguments[i] );
+			}
+		}
+
+		private static void AnalyzeArgument( SyntaxNodeAnalysisContext context, InvocationExpressionSyntax invocation, ArgumentSyntax argument ) {
 			var literalValue = argument.Expression as LiteralExpressionSyntax;
 			if( literalValue != null ) {
 				if( literalValue.Token.Text != "null" ) {
@@ -130,7 +140,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 
 					// If it was assigned a value at declaration, look at the value
 					if( declarator.Initializer != null ) {
-						if( IsNotNullValue( declarator.Initializer.Value )) {
+						if( IsNotNullValue( declarator.Initializer.Value ) ) {
 							return;
 						}
 					}
