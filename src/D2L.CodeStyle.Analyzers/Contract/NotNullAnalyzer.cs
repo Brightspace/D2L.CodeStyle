@@ -7,12 +7,15 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.Text;
 
 namespace D2L.CodeStyle.Analyzers.Contract {
 
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	internal sealed class NotNullAnalyzer : DiagnosticAnalyzer {
+
+		private const string NotNullAttribute = "D2L.CodeStyle.Annotations.Contract.NotNullAttribute";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 			=> ImmutableArray.Create( Diagnostics.NullPassedToNotNullParameter );
@@ -23,31 +26,14 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 		}
 
 		public static void RegisterNotNullAnalyzer( CompilationStartAnalysisContext context ) {
-			INamedTypeSymbol notNullAttributeType;
-			try {
-				notNullAttributeType = context.Compilation.GetTypeByMetadataName(
-					"D2L.CodeStyle.Annotations.Contract.NotNullAttribute"
-				);
-			} catch( Exception e ) {
-				throw new Exception( "Error getting Not Null attribute", e );
-			}
-			
-			if( notNullAttributeType == null || notNullAttributeType.Kind == SymbolKind.ErrorType ) {
-				return;
-			}
-
 			context.RegisterSyntaxNodeAction(
-					ctx => AnalyzeUsage(
-						ctx,
-						notNullAttributeType
-					),
+					AnalyzeUsage,
 					SyntaxKind.Argument // TODO: Change this back to SyntaxKind.InvocationExpression?
 				);
 		}
 
 		private static void AnalyzeUsage(
-			SyntaxNodeAnalysisContext context,
-			INamedTypeSymbol notNullAttribute
+			SyntaxNodeAnalysisContext context
 		) {
 			var argument = context.Node as ArgumentSyntax;
 			if( argument == null ) {
@@ -67,12 +53,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				return;
 			}
 
-			var memberAccess = invocation.Expression as MemberAccessExpressionSyntax;
-			if( memberAccess == null ) {
-				return;
-			}
-
-			var memberSymbol = context.SemanticModel.GetSymbolInfo( memberAccess ).Symbol as IMethodSymbol;
+			var memberSymbol = context.SemanticModel.GetSymbolInfo( invocation.Expression ).Symbol as IMethodSymbol;
 			if( memberSymbol == null ) {
 				return;
 			}
@@ -85,7 +66,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 
 			IParameterSymbol methodParameter = methodParameters[argumentIndex];
 			bool hasNotNullAttribute = methodParameter.GetAttributes()
-				.Any( x => x.AttributeClass.Equals( notNullAttribute ) );
+				.Any( x => x.ToString() == NotNullAttribute );
 			if( !hasNotNullAttribute ) {
 				return;
 			}
@@ -106,12 +87,13 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				SymbolInfo symbolInfo = semanticModel.GetSymbolInfo( identifierName );
 				ISymbol symbol = symbolInfo.Symbol;
 
-				var methodDeclaration = GetParentNodeOfType<MethodDeclarationSyntax>(invocation.Parent);
+				var methodDeclaration = GetAncestorNodeOfType<BaseMethodDeclarationSyntax>( invocation.Parent );
+				if( methodDeclaration == null ) {
+					return; // Likely part of a class declaration, which can't be checked anywhere near the same way
+				}
 
 				// Analyze the flow of data before this call took place
-				DataFlowAnalysis dataFlowAnalysis = semanticModel.AnalyzeDataFlow(
-						methodDeclaration.Body
-					);
+				DataFlowAnalysis dataFlowAnalysis = semanticModel.AnalyzeDataFlow( methodDeclaration.Body );
 				ImmutableArray<ISymbol> variablesDeclared = dataFlowAnalysis.VariablesDeclared;
 
 				bool variableIsLocal = variablesDeclared.Contains( symbol );
@@ -174,10 +156,10 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			context.ReportDiagnostic( diagnostic );
 		}
 
-		private static T GetParentNodeOfType<T>(
+		private static T GetAncestorNodeOfType<T>(
 			SyntaxNode node
 		) where T : SyntaxNode {
-			while( !( node is T ) ) {
+			while( !( node is T ) && node != null ) {
 				node = node.Parent;
 			}
 			return node as T;

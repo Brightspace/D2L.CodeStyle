@@ -57,11 +57,51 @@ namespace Test {
 		}
 
 		[Test]
+		public void NotNullParam_NullIsPassed_MethodInSameClass_ReportsProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			DoStuff( null );
+		}
+
+		public void DoStuff(
+			[D2L.CodeStyle.Annotations.Contract.NotNull] string stuff
+		) {}
+	}
+}";
+			AssertProducesError(
+					test,
+					4 + NotNullParamMethodLines,
+					13
+				);
+		}
+
+		[Test]
 		public void NotNullParam_NullVariableIsPassed_ReportsProblem() {
 			const string test = NotNullParamMethod + @"
 namespace Test {
 	class TestCaller {
 		public void TestMethod() {
+			var provider = new TestProvider();
+			string name = null;
+			provider.TestMethod( name );
+		}
+	}
+}";
+			AssertProducesError(
+					test,
+					6 + NotNullParamMethodLines,
+					25
+				);
+		}
+
+		[Test]
+		public void NotNullParam_NullVariableIsPassedInConstructor_ReportsProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public TestCaller() {
 			var provider = new TestProvider();
 			string name = null;
 			provider.TestMethod( name );
@@ -114,6 +154,25 @@ namespace Test {
 					test,
 					9 + NotNullParamMethodLines,
 					25
+				);
+		}
+
+		[Test]
+		public void NotNullParam_NulLVariableIsInClosureContext_ReportsProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			string name = null;
+			var action = () => provider.TestMethod( name );
+		}
+	}
+}";
+			AssertProducesError(
+					test,
+					6 + NotNullParamMethodLines,
+					44
 				);
 		}
 
