@@ -906,6 +906,67 @@ namespace test {
 			VerifyCSharpDiagnostic( test, expected );
 		}
 
+        [Test]
+        public void ReadOnlyProperty_NoDiagnostic() {
+            const string test = @"
+ namespace test {
+    class tests {
+        public int ReadOnlyProperty { get; }
+    }
+}";
+            AssertNoDiagnostic( test );
+        }
+
+        [Test]
+        public void NonReadOnlyProperty_Diagnostic() {
+            const string test = @"
+ namespace test {
+    class tests {
+        public static int PropertyWithSetter { get; set; }
+    }
+}";
+			AssertSingleDiagnostic( test, 4, 9, "PropertyWithSetter", MutabilityInspectionResult.Mutable(
+                mutableMemberPath: "PropertyWithSetter",
+                membersTypeName: "Widget",
+                kind: MutabilityTarget.Member,
+                cause: MutabilityCause.IsNotReadonly
+            ) );
+        }
+
+        [Test]
+        public void PropertyWithImplementedGetterOnly_NoDiagnostic() {
+            const string test = @"
+ namespace test {
+    class tests {
+        [Statics.Unaudited("""", """", """")]
+        public static int[] m_things;
+
+        public static int[] Things {
+            get { m_things = value; }
+        }
+    }
+}";
+            AssertNoDiagnostic( test );
+        }
+
+        [Test]
+        public void PropertyWithImplementedGetterSetter_NoDiagnostic() {
+            const string test = @"
+ namespace test {
+    sealed class tests {
+        [Statics.Unaudited("""", """", """")]
+        public static int[] m_things;
+
+        public static int[] Things {
+            get { return m_things; }
+            set { m_things = value; }
+        }
+    }
+}";
+
+            AssertNoDiagnostic( test );
+        }
+
         private void AssertSingleDiagnostic( string file, int line, int column, string fieldOrProp, MutabilityInspectionResult inspectionResult ) {
 
             DiagnosticResult result = CreateDiagnosticResult( line, column, fieldOrProp, inspectionResult );
