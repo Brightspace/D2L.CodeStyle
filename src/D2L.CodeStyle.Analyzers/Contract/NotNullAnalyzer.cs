@@ -7,8 +7,16 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.Text;
+using ArgumentSyntax = Microsoft.CodeAnalysis.CSharp.Syntax.ArgumentSyntax;
+using CompilationUnitSyntax = Microsoft.CodeAnalysis.CSharp.Syntax.CompilationUnitSyntax;
+using ExpressionSyntax = Microsoft.CodeAnalysis.CSharp.Syntax.ExpressionSyntax;
+using IdentifierNameSyntax = Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax;
+using InvocationExpressionSyntax = Microsoft.CodeAnalysis.CSharp.Syntax.InvocationExpressionSyntax;
+using LiteralExpressionSyntax = Microsoft.CodeAnalysis.CSharp.Syntax.LiteralExpressionSyntax;
+using LocalDeclarationStatementSyntax = Microsoft.CodeAnalysis.CSharp.Syntax.LocalDeclarationStatementSyntax;
+using StatementSyntax = Microsoft.CodeAnalysis.CSharp.Syntax.StatementSyntax;
+using VariableDeclaratorSyntax = Microsoft.CodeAnalysis.CSharp.Syntax.VariableDeclaratorSyntax;
 
 namespace D2L.CodeStyle.Analyzers.Contract {
 
@@ -40,7 +48,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				return;
 			}
 
-			var memberSymbol = context.SemanticModel.GetSymbolInfo( invocation.Expression ).Symbol as IMethodSymbol;
+			var memberSymbol = context.SemanticModel.GetSymbolInfo( invocation ).Symbol as IMethodSymbol;
 			if( memberSymbol == null ) {
 				return;
 			}
@@ -59,7 +67,17 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 
 			IList<ArgumentSyntax> notNullArguments = new List<ArgumentSyntax>();
 			for( int i = 0; i < parameters.Length; i++ ) {
-				IParameterSymbol param = parameters[i];
+				ArgumentSyntax argument = arguments[i];
+				IParameterSymbol param;
+
+				if( argument.NameColon == null ) { // Regular order-based
+					param = parameters[i];
+				} else { // Named parameter
+					param = parameters.Single(
+							p => p.Name == argument.NameColon.Name.ToString()
+						);
+				}
+
 				ImmutableArray<AttributeData> attributes = param.GetAttributes();
 				if( attributes.Length > 0
 					&& attributes.Any( x => x.AttributeClass.ToString() == NotNullAttribute )
@@ -184,22 +202,66 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 					if( IsNotNullValue( declarator.Initializer.Value ) ) {
 						return;
 					}
+
+					variableIsAssigned = VariableIsAlwaysAssignedAfterDeclaration(
+							methodDeclaration,
+							declarator
+						);
 				}
 
-				IEnumerable<ExpressionSyntax> assignmentValues = descendantNodes
-					.OfType<AssignmentExpressionSyntax>()
-					.Where(
-						x => x.Left is IdentifierNameSyntax
-							&& ( (IdentifierNameSyntax)x.Left ).Identifier.Text == argumentIdentifierName.Identifier.Text
-					).Select( x => x.Right );
+				if( variableIsAssigned ) {
+					IEnumerable<ExpressionSyntax> assignmentValues = descendantNodes
+						.OfType<AssignmentExpressionSyntax>()
+						.Where(
+							x => x.Left is IdentifierNameSyntax
+								&& ( (IdentifierNameSyntax)x.Left ).Identifier.Text == argumentIdentifierName.Identifier.Text
+						).Select( x => x.Right );
 
-				// TODO: Can this be modified to determine if a variable has null reassigned to it?
-				if( assignmentValues.Any( IsNotNullValue ) ) {
-					return;
+					// TODO: Can this be modified to determine if a variable has null reassigned to it?
+					if( assignmentValues.Any( IsNotNullValue ) ) {
+						return;
+					}
 				}
 			}
 
 			MarkDiagnosticError( context, argument );
+		}
+
+		// Used for determining if a variable that was assigned `null` at declaration is guaranteed to be
+		// assigned another value later on
+		private static bool VariableIsAlwaysAssignedAfterDeclaration(
+			BaseMethodDeclarationSyntax methodDeclaration,
+			VariableDeclaratorSyntax declarator
+		) {
+			// Pretend the assignment didn't exist, and see if it's still always assigned;
+			// Have to recompile the tree after removing the assignment, unfortunately
+			var compilationUnit = GetAncestorNodeOfType<CompilationUnitSyntax>( methodDeclaration )
+				.RemoveNode(
+					declarator.Initializer,
+					SyntaxRemoveOptions.KeepDirectives
+				);
+			var compilation = CSharpCompilation.Create( "ThrowAwayCompilation" )
+				.AddSyntaxTrees( compilationUnit.SyntaxTree );
+
+			// Re-find the parent method in the new compilation
+			var typeDeclaration = compilationUnit.FindNode( methodDeclaration.Span ) as TypeDeclarationSyntax;
+			methodDeclaration = (BaseMethodDeclarationSyntax)typeDeclaration.ChildNodes()
+				.First( x => x.SpanStart == methodDeclaration.SpanStart );
+
+			// Get the new symbol for the variable
+			declarator = methodDeclaration.DescendantNodes( declarator.Identifier.Span )
+				.OfType<VariableDeclaratorSyntax>()
+				.Single();
+
+			SemanticModel semanticModel = compilation.GetSemanticModel( methodDeclaration.SyntaxTree );
+			ISymbol symbol = semanticModel.GetDeclaredSymbol( declarator );
+
+			// Determine if the variable is assigned again
+			bool variableIsAssigned = semanticModel
+				.AnalyzeDataFlow( methodDeclaration.Body )
+				.AlwaysAssigned.Select( x => x.Name )
+				.Contains( symbol.Name );
+			return variableIsAssigned;
 		}
 
 		private static void MarkDiagnosticError(
@@ -216,10 +278,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 		private static T GetAncestorNodeOfType<T>(
 			SyntaxNode node
 		) where T : SyntaxNode {
-			while( !( node is T ) && node != null ) {
-				node = node.Parent;
-			}
-			return node as T;
+			return (T)node.FirstAncestorOrSelf<SyntaxNode>( x => x is T );
 		}
 
 		private static bool IsNotNullValue( ExpressionSyntax exp ) {

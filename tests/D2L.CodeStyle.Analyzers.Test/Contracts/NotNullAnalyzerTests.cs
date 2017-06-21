@@ -28,7 +28,7 @@ namespace Test {
 		) {}
 
 		public void MultiNotNull(
-			[D2L.CodeStyle.Annotations.Contract.NotNull] string testName
+			[D2L.CodeStyle.Annotations.Contract.NotNull] string testName,
 			[D2L.CodeStyle.Annotations.Contract.NotNull] string anotherName
 		) {}
 
@@ -163,7 +163,29 @@ namespace Test {
 		}
 
 		[Test]
-		public void NotNullParam_NulLVariableIsInClosureContext_ReportsProblem() {
+		public void NotNullParam_VariableNotAlwaysAssignedNonNullValue_ReportsProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			string name = null;
+			if( provider.ShouldDoStuff ) {
+				name = ""Antidisestablishmentarianism"";
+			}
+			provider.TestMethod( name );
+		}
+	}
+}";
+			AssertProducesError(
+					test,
+					9 + NotNullParamMethodLines,
+					25
+				);
+		}
+
+		[Test]
+		public void NotNullParam_NullVariableIsInClosureContext_ReportsProblem() {
 			const string test = NotNullParamMethod + @"
 namespace Test {
 	class TestCaller {
@@ -218,6 +240,27 @@ namespace Test {
 			};
 
 			VerifyCSharpDiagnostic( test, expectedResults );
+		}
+
+		[Test]
+		public void NotNullParam_NamedArguments_OneIsNull_ReportsProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			provider.TestMethod(
+				testName: null,
+				allowedToBeNull: ""This is an object""
+			);
+		}
+	}
+}";
+			AssertProducesError(
+					test,
+					6 + NotNullParamMethodLines,
+					5
+				);
 		}
 
 		#endregion
@@ -338,6 +381,30 @@ namespace Test {
 		}
 
 		[Test]
+		public void NotNullParam_NullVariableAtDeclaration_AlwaysAssignedValueAfterDeclaration_DoesNotReportProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			string name = null;
+			if( provider.ShouldDoStuff ) {
+				name = ""Do some stuff"";
+			} else {
+				name = ""Do some other stuff"";
+			}
+			provider.TestMethod( name );
+
+			string otherName = null;
+			otherName = provider.ShouldDoStuff ? ""Do?"" : ""Or do not?"";
+			provider.TestMethod( otherName );
+		}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+
+		[Test]
 		public void NotNullParam_NoAttribute_DoesNotReportProblem() {
 			const string test = NotNullParamMethod + @"
 namespace Test {
@@ -397,21 +464,3 @@ namespace Test {
 
 	}
 }
-
-//namespace Test {
-//	class TestCaller {
-//		public void TestMethod() {
-//			var provider = new TestProvider();
-//			string name;
-//			if( provider.ShouldDoStuff ) {
-//				name = "Do some stuff";
-//			} else {
-//				name = "Do some other stuff";
-//			}
-//			provider.TestMethod( name );
-
-//			string otherName = provider.ShouldDoStuff ? "Do?" : "Or do not?";
-//			provider.TestMethod( otherName );
-//		}
-//	}
-//}
