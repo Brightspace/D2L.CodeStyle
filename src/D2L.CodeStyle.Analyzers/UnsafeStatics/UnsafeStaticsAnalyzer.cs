@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Common;
 using Microsoft.CodeAnalysis;
@@ -141,6 +142,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			bool isProperty,
 			bool isAutoImplementedProperty
 		) {
+
 			var diagnostics = GatherDiagnostics(
 				context.SemanticModel,
 				location: location,
@@ -208,7 +210,13 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 
 			bool hasAnnotations = hasAuditedAnnotation || hasUnauditedAnnotation;
 
-			if ( hasAnnotations && !hasDiagnostics ) {
+			// In full builds our analyzer appears to not get full source
+			// code/private members from other assemblies, possibly related to
+			// this issue:
+			// https://github.com/dotnet/roslyn/issues/5049
+			// This diagnostic would erroneously cause or full builds to fail,
+			// so it has been temporarily disabled.
+			if( hasAnnotations && !hasDiagnostics && false ) {
 				context.ReportDiagnostic(
 					Diagnostic.Create(
 						Diagnostics.UnnecessaryStaticAnnotation,
