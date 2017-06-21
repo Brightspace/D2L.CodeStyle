@@ -14,9 +14,9 @@ namespace D2L.CodeStyle.Analyzers.Common {
             var syntax = prop.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as PropertyDeclarationSyntax;
             Assert.IsNotNull( syntax );
 
-            var isGetterImplemented = SyntaxNodeExtension.IsPropertyGetterImplemented( syntax );
+            var isGetterImplemented = SyntaxNodeExtension.IsAutoImplemented( syntax );
 
-            Assert.IsTrue( isGetterImplemented );
+            Assert.IsFalse( isGetterImplemented );
         }
 
         [Test]
@@ -25,9 +25,9 @@ namespace D2L.CodeStyle.Analyzers.Common {
             var syntax = prop.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as PropertyDeclarationSyntax;
             Assert.IsNotNull( syntax );
 
-            var isGetterImplemented = SyntaxNodeExtension.IsPropertyGetterImplemented( syntax );
+            var isGetterImplemented = SyntaxNodeExtension.IsAutoImplemented( syntax );
 
-            Assert.IsFalse( isGetterImplemented );
+            Assert.IsTrue( isGetterImplemented );
         }
     }
 }

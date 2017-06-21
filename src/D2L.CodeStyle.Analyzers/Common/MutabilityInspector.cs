@@ -197,8 +197,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 					var sourceTree = prop.DeclaringSyntaxReferences.FirstOrDefault();
 					var declarationSyntax = sourceTree?.GetSyntax() as PropertyDeclarationSyntax;
-					if( declarationSyntax != null && declarationSyntax.IsPropertyGetterImplemented() ) {
-						// property has getter with body; it is either backed by a field, or is a static function; ignore
+					if( declarationSyntax != null && !declarationSyntax.IsAutoImplemented() ) {
+						// non-auto properties never hold state themselves
 						return MutabilityInspectionResult.NotMutable();
 					}
 
