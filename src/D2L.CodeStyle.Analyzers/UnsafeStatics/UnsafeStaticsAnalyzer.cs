@@ -143,10 +143,6 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			bool isAutoImplementedProperty
 		) {
 
-			if ( fieldOrPropertyName == "m_queueIdsCache" ) {
-				Debugger.Launch();
-			}
-
 			var diagnostics = GatherDiagnostics(
 				context.SemanticModel,
 				location: location,
