@@ -911,7 +911,18 @@ namespace test {
             const string test = @"
  namespace test {
     class tests {
-        public int ReadOnlyProperty { get; }
+        public static int ReadOnlyProperty { get; }
+    }
+}";
+            AssertNoDiagnostic( test );
+        }
+
+        [Test]
+        public void ReadOnlyPropertyWithInitializer_NoDiagnostic() {
+            const string test = @"
+ namespace test {
+    class tests {
+        public static object readonlyproperty { get; } = new string();
     }
 }";
             AssertNoDiagnostic( test );
@@ -948,6 +959,17 @@ namespace test {
 }";
             AssertNoDiagnostic( test );
         }
+
+		[Test]
+		public void NonAutoPropertyWithInitializer_NoDiagnostic() {
+			const string test = @"
+ namespace test {
+    class tests {
+        public static int[] shittyarray => new int[] {1,2,3};
+    }
+}";
+			AssertNoDiagnostic( test );
+		}
 
         [Test]
         public void PropertyWithImplementedSetterOnly_NoDiagnostic() {
