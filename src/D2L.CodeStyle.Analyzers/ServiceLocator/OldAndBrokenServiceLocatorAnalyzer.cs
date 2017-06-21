@@ -36,18 +36,9 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 			context.RegisterSyntaxNodeAction(
 				ctx => PreventOldAndBrokenUsage(
 					ctx,
-					locatorType
+					new List<INamedTypeSymbol> { locatorType, factoryType }
 				),
 				SyntaxKind.IdentifierName
-			);
-
-			//Prevent usage of the OldAndBrokenServiceLocatorFactory constructor
-			context.RegisterSyntaxNodeAction(
-				ctx => PreventOldAndBrokenUsage(
-					ctx,
-					factoryType
-				),
-				SyntaxKind.ObjectCreationExpression
 			);
 		}
 
@@ -55,7 +46,7 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 		//For example, OldAndBrokenServiceLocator.Instance.Get<IFoo>()
 		private static void PreventOldAndBrokenUsage(
 			SyntaxNodeAnalysisContext context,
-			INamedTypeSymbol disallowedType
+			List<INamedTypeSymbol> disallowedTypes
 		) {
 			var actualType = context.SemanticModel.GetTypeInfo( context.Node ).Type as INamedTypeSymbol;
 			
@@ -63,7 +54,7 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 				return;
 			}
 
-			if (disallowedType.Equals( actualType )) {
+			if (disallowedTypes.Contains( actualType )) {
 				if( IsAssemblyWhitelisted( context.Compilation.AssemblyName ) ) {
 					return;
 				}

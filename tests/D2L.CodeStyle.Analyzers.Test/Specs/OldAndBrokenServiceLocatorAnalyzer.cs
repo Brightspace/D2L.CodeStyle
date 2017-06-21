@@ -30,7 +30,7 @@ namespace D2L.CodeStyle.Analyzers.OldAndBrokenLocator.Examples {
 		}
 
 		public void UsesBrokenLocatorFactory() {
-			IServiceLocator locator = new /* OldAndBrokenLocatorIsObsolete */ OldAndBrokenServiceLocatorFactory /**/().Create();
+			IServiceLocator locator = /* OldAndBrokenLocatorIsObsolete */ OldAndBrokenServiceLocatorFactory /**/.Create();
 		}
 	}
 
