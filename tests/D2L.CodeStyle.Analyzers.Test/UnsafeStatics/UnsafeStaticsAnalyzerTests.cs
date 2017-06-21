@@ -842,7 +842,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			VerifyCSharpDiagnostic( file );
 		}
 
-		[Test]
+		[Test, Ignore("diagnostic temporarily disabled")]
 		public void DocumentWithAuditedSafeThing_Diag() {
 			const string test = @"
 namespace test {
@@ -863,7 +863,7 @@ namespace test {
 			VerifyCSharpDiagnostic( test, expected );
 		}
 
-		[Test]
+		[Test, Ignore("diagnostic temporarily disabled")]
 		public void DocumentWithUnauditedSafeThing_Diag() {
 			const string test = @"
 namespace test {
