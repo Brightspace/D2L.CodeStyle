@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using D2L.CodeStyle.Analyzers.Common;
 using D2L.CodeStyle.Analyzers.Contract;
 using D2L.CodeStyle.Analyzers.Test.Verifiers;
@@ -102,7 +103,8 @@ namespace Test {
 			AssertProducesError(
 					test,
 					5 + NotNullParamMethodLines,
-					25
+					25,
+					"testName"
 				);
 		}
 
@@ -123,7 +125,8 @@ namespace Test {
 			AssertProducesError(
 					test,
 					4 + NotNullParamMethodLines,
-					13
+					13,
+					"stuff"
 				);
 		}
 
@@ -142,7 +145,8 @@ namespace Test {
 			AssertProducesError(
 					test,
 					6 + NotNullParamMethodLines,
-					25
+					25,
+					"testName"
 				);
 		}
 
@@ -161,7 +165,8 @@ namespace Test {
 			AssertProducesError(
 					test,
 					6 + NotNullParamMethodLines,
-					25
+					25,
+					"testName"
 				);
 		}
 
@@ -181,7 +186,8 @@ namespace Test {
 			AssertProducesError(
 					test,
 					6 + NotNullParamMethodLines,
-					25
+					25,
+					"testName"
 				);
 		}
 
@@ -203,7 +209,8 @@ namespace Test {
 			AssertProducesError(
 					test,
 					9 + NotNullParamMethodLines,
-					25
+					25,
+					"testName"
 				);
 		}
 
@@ -225,7 +232,8 @@ namespace Test {
 			AssertProducesError(
 					test,
 					9 + NotNullParamMethodLines,
-					25
+					25,
+					"testName"
 				);
 		}
 
@@ -244,7 +252,8 @@ namespace Test {
 			AssertProducesError(
 					test,
 					6 + NotNullParamMethodLines,
-					44
+					44,
+					"testName"
 				);
 		}
 
@@ -268,7 +277,7 @@ namespace Test {
 			DiagnosticResult[] expectedResults = new[] {
 				new DiagnosticResult() {
 					Id = descriptor.Id,
-					Message = descriptor.MessageFormat.ToString(),
+					Message = string.Format( descriptor.MessageFormat.ToString(), "testName" ),
 					Severity = DiagnosticSeverity.Error,
 					Locations = new[] {
 						new DiagnosticResultLocation( "Test0.cs", 8 + NotNullParamMethodLines, 6 )
@@ -276,7 +285,7 @@ namespace Test {
 				},
 				new DiagnosticResult() {
 					Id = descriptor.Id,
-					Message = descriptor.MessageFormat.ToString(),
+					Message = string.Format( descriptor.MessageFormat.ToString(), "anotherName" ),
 					Severity = DiagnosticSeverity.Error,
 					Locations = new[] {
 						new DiagnosticResultLocation( "Test0.cs", 9 + NotNullParamMethodLines, 6 )
@@ -304,7 +313,8 @@ namespace Test {
 			AssertProducesError(
 					test,
 					6 + NotNullParamMethodLines,
-					5
+					5,
+					"testName"
 				);
 		}
 
@@ -499,7 +509,8 @@ namespace Test {
 			AssertProducesError(
 					test,
 					5 + NotNullTypeLines,
-					25
+					25,
+					"database"
 				);
 		}
 
@@ -520,7 +531,8 @@ namespace Test {
 			AssertProducesError(
 					test,
 					4 + NotNullTypeLines,
-					13
+					13,
+					"database"
 				);
 		}
 
@@ -539,7 +551,8 @@ namespace Test {
 			AssertProducesError(
 					test,
 					6 + NotNullTypeLines,
-					25
+					25,
+					"database"
 				);
 		}
 
@@ -558,7 +571,8 @@ namespace Test {
 			AssertProducesError(
 					test,
 					6 + NotNullTypeLines,
-					25
+					25,
+					"database"
 				);
 		}
 
@@ -578,7 +592,8 @@ namespace Test {
 			AssertProducesError(
 					test,
 					6 + NotNullTypeLines,
-					25
+					25,
+					"database"
 				);
 		}
 
@@ -600,7 +615,8 @@ namespace Test {
 			AssertProducesError(
 					test,
 					9 + NotNullTypeLines,
-					25
+					25,
+					"database"
 				);
 		}
 
@@ -622,7 +638,8 @@ namespace Test {
 			AssertProducesError(
 					test,
 					9 + NotNullTypeLines,
-					25
+					25,
+					"database"
 				);
 		}
 
@@ -641,7 +658,8 @@ namespace Test {
 			AssertProducesError(
 					test,
 					6 + NotNullTypeLines,
-					44
+					44,
+					"database"
 				);
 		}
 
@@ -665,7 +683,7 @@ namespace Test {
 			DiagnosticResult[] expectedResults = new[] {
 				new DiagnosticResult() {
 					Id = descriptor.Id,
-					Message = descriptor.MessageFormat.ToString(),
+					Message = string.Format( descriptor.MessageFormat.ToString(), "first" ),
 					Severity = DiagnosticSeverity.Error,
 					Locations = new[] {
 						new DiagnosticResultLocation( "Test0.cs", 8 + NotNullTypeLines, 6 )
@@ -673,7 +691,7 @@ namespace Test {
 				},
 				new DiagnosticResult() {
 					Id = descriptor.Id,
-					Message = descriptor.MessageFormat.ToString(),
+					Message = string.Format( descriptor.MessageFormat.ToString(), "second" ),
 					Severity = DiagnosticSeverity.Error,
 					Locations = new[] {
 						new DiagnosticResultLocation( "Test0.cs", 9 + NotNullTypeLines, 6 )
@@ -701,7 +719,8 @@ namespace Test {
 			AssertProducesError(
 					test,
 					6 + NotNullTypeLines,
-					5
+					5,
+					"testDatabase"
 				);
 		}
 
@@ -852,12 +871,13 @@ namespace Test {
 		private void AssertProducesError(
 			string file,
 			int line,
-			int column
+			int column,
+			string paramName
 		) {
 			DiagnosticDescriptor descriptor = Diagnostics.NullPassedToNotNullParameter;
 			DiagnosticResult result = new DiagnosticResult() {
 				Id = descriptor.Id,
-				Message = descriptor.MessageFormat.ToString(),
+				Message = string.Format( descriptor.MessageFormat.ToString(), paramName ),
 				Severity = DiagnosticSeverity.Error,
 				Locations = new[] {
 					new DiagnosticResultLocation( "Test0.cs", line, column ),

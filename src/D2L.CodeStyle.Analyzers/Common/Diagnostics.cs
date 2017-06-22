@@ -75,7 +75,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		public static readonly DiagnosticDescriptor NullPassedToNotNullParameter = new DiagnosticDescriptor(
 			id: "D2L0009",
 			title: "Paramter cannot be passed with a null value.",
-			messageFormat: "Paramter cannot be passed with a null value",
+			messageFormat: "Paramter \"{0}\" cannot be passed a null value",
 			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,

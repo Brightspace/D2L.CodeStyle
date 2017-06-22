@@ -24,5 +24,15 @@ namespace D2L.CodeStyle.Annotations.Contract {
 	/// the parameter will be allowed to receive a null value.
 	/// </summary>
 	[AttributeUsage( AttributeTargets.Parameter | AttributeTargets.Property )]
-	public sealed class AllowNullAttribute : Attribute {}
+	public sealed class AllowNullAttribute : Attribute {
+
+		public AllowNullAttribute(
+			string rationale
+		) {
+			Rationale = rationale;
+		}
+
+		public string Rationale { get; private set; }
+
+	}
 }

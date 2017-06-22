@@ -68,7 +68,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				return;
 			}
 
-			IList<ArgumentSyntax> notNullArguments = new List<ArgumentSyntax>();
+			IList<Tuple<ArgumentSyntax, IParameterSymbol>> notNullArguments = new List<Tuple<ArgumentSyntax, IParameterSymbol>>();
 			for( int i = 0; i < parameters.Length; i++ ) {
 				ArgumentSyntax argument = arguments[i];
 				IParameterSymbol param;
@@ -86,7 +86,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				if( paramAttributes.Length > 0
 					&& paramAttributes.Any( x => x.AttributeClass.ToString() == NotNullAttribute )
 				) {
-					notNullArguments.Add( arguments[i] );
+					notNullArguments.Add( new Tuple<ArgumentSyntax, IParameterSymbol>( arguments[i], param ) );
 					continue;
 				}
 
@@ -97,7 +97,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 					&& typeAttributes.Any( x => x.AttributeClass.ToString() == NotNullTypeAttribute )
 					&& !paramAttributes.Any( x => x.AttributeClass.ToString() == AllowNullAttribute )
 				) {
-					notNullArguments.Add( arguments[i] );
+					notNullArguments.Add( new Tuple<ArgumentSyntax, IParameterSymbol>( arguments[i], param ) );
 				}
 			}
 
@@ -118,8 +118,11 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				);
 
 			// Start analyzing the arguments
-			foreach( ArgumentSyntax argument in notNullArguments ) {
-				if( TryAnalyzeLiteralValueArgument( context, argument ) ) {
+			foreach( Tuple<ArgumentSyntax, IParameterSymbol> tuple in notNullArguments ) {
+				ArgumentSyntax argument = tuple.Item1;
+				IParameterSymbol parameter = tuple.Item2;
+
+				if( TryAnalyzeLiteralValueArgument( context, argument, parameter ) ) {
 					continue;
 				}
 
@@ -140,6 +143,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 						context,
 						invocation,
 						argument,
+						parameter,
 						argumentIdentifierName,
 						methodDeclaration.Value,
 						dataFlowAnalysis.Value,
@@ -150,7 +154,8 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 
 		private static bool TryAnalyzeLiteralValueArgument(
 			SyntaxNodeAnalysisContext context,
-			ArgumentSyntax argument
+			ArgumentSyntax argument,
+			IParameterSymbol parameter
 		) {
 			var literalValue = argument.Expression as LiteralExpressionSyntax;
 			if( literalValue == null ) {
@@ -159,7 +164,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			}
 
 			if( literalValue.Token.Text == "null" ) {
-				MarkDiagnosticError( context, argument );
+				MarkDiagnosticError( context, argument, parameter );
 			}
 
 			return true;
@@ -169,6 +174,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			SyntaxNodeAnalysisContext context,
 			InvocationExpressionSyntax invocation,
 			ArgumentSyntax argument,
+			IParameterSymbol parameter,
 			IdentifierNameSyntax argumentIdentifierName,
 			BaseMethodDeclarationSyntax methodDeclaration,
 			DataFlowAnalysis dataFlowAnalysis,
@@ -239,7 +245,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				}
 			}
 
-			MarkDiagnosticError( context, argument );
+			MarkDiagnosticError( context, argument, parameter );
 		}
 
 		// Used for determining if a variable that was assigned `null` at declaration is guaranteed to be
@@ -281,11 +287,13 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 
 		private static void MarkDiagnosticError(
 			SyntaxNodeAnalysisContext context,
-			ArgumentSyntax argument
+			ArgumentSyntax argument,
+			IParameterSymbol parameter
 		) {
 			Diagnostic diagnostic = Diagnostic.Create(
 					Diagnostics.NullPassedToNotNullParameter,
-					argument.GetLocation()
+					argument.GetLocation(),
+					parameter.Name
 				);
 			context.ReportDiagnostic( diagnostic );
 		}
