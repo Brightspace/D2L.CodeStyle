@@ -48,6 +48,7 @@
     <Compile Include="RpcDependencies\RpcDependencyAnalyzerTests.cs" />
     <Compile Include="SpecRunner.cs" />
     <EmbeddedResource Include="Specs\UnsafeStaticsAnalyzer.cs" />
+    <EmbeddedResource Include="Specs\NotNullAnalyzer.cs" />
     <Compile Include="UnsafeSingletons\UnsafeSingletonsAnalyzerTests.cs" />
     <Compile Include="UnsafeStatics\UnsafeStaticsAnalyzerTests.cs" />
     <Compile Include="Verifiers\DiagnosticResult.cs" />
