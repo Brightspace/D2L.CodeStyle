@@ -12,24 +12,27 @@ namespace D2L.CodeStyle.Analyzers.Contracts {
 	internal sealed class NotNullAnalyzerTests : DiagnosticVerifier {
 
 		private const string NotNullParamMethod = @"
+using D2L.CodeStyle.Annotations.Contract;
+
 namespace D2L.CodeStyle.Annotations.Contract {
 	public class NotNullAttribute : System.Attribute {}
+	public class NotNullWhenParameterAttribute : Attribute {}
 }
 
 namespace Test {
 	class TestProvider {
 		public void TestMethod(
-			[D2L.CodeStyle.Annotations.Contract.NotNull] string testName
+			[NotNull] string testName
 		) {}
 
 		public void TestMethod(
 			object allowedToBeNull,
-			[D2L.CodeStyle.Annotations.Contract.NotNull] string testName
+			[NotNull] string testName
 		) {}
 
 		public void MultiNotNull(
-			[D2L.CodeStyle.Annotations.Contract.NotNull] string testName,
-			[D2L.CodeStyle.Annotations.Contract.NotNull] string anotherName
+			[NotNull] string testName,
+			[NotNull] string anotherName
 		) {}
 
 		public void TestMethodCanTakeNull( string testName ) {}
@@ -39,7 +42,49 @@ namespace Test {
 }
 ";
 
+		private const string NotNullType = @"
+using D2L.CodeStyle.Annotations.Contract;
+
+namespace D2L.CodeStyle.Annotations.Contract {
+	public class NotNullAttribute : System.Attribute {}
+	public class NotNullWhenParameterAttribute : Attribute {}
+	public class AllowNullAttribute : Attribute {}
+}
+
+namespace Test {
+	[NotNullWhenParameter]
+	interface IDatabase {}
+
+	class Database : IDatabase {};
+
+	class TestProvider {
+		public void TestMethod(
+			IDatabase database
+		) {}
+
+		public void TestMethod(
+			string allowedToBeNull,
+			IDatabase testDatabase
+		) {}
+
+		public void MultiNotNull(
+			IDatabase first,
+			IDatabase second
+		) {}
+
+		public void TestMethodCanTakeNull(
+			[AllowNull] IDatabase database
+		) {}
+
+		public bool ShouldDoStuff => false;
+	}
+}
+";
+
 		private static readonly int NotNullParamMethodLines = NotNullParamMethod.Count( c => c.Equals( '\n' ) ) + 1;
+		private static readonly int NotNullTypeLines = NotNullType.Count( c => c.Equals( '\n' ) ) + 1;
+
+		#region Parameter has [NotNull] directly
 
 		#region Should produce errors
 
@@ -313,7 +358,7 @@ namespace Test {
 		}
 
 		[Test]
-		public void NotNullParam_VariablAssignedOtherVariable_AtDeclaration_DoesNotReportProblem() {
+		public void NotNullParam_VariableAssignedOtherVariable_AtDeclaration_DoesNotReportProblem() {
 			const string test = NotNullParamMethod + @"
 namespace Test {
 	class TestCaller {
@@ -328,7 +373,7 @@ namespace Test {
 		}
 
 		[Test]
-		public void NotNullParam_VariablAssignedOtherVariable_AfterDeclaration_DoesNotReportProblem() {
+		public void NotNullParam_VariableAssignedOtherVariable_AfterDeclaration_DoesNotReportProblem() {
 			const string test = NotNullParamMethod + @"
 namespace Test {
 	class TestCaller {
@@ -431,6 +476,370 @@ namespace Test {
 }";
 			AssertDoesNotProduceError( test );
 		}
+
+		#endregion
+
+		#endregion
+
+		#region Parameter's type has [NotNullWhenParameter]
+
+		#region Should produce errors
+
+		[Test]
+		public void NotNullType_NullIsPassed_ReportsProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			provider.TestMethod( null );
+		}
+	}
+}";
+			AssertProducesError(
+					test,
+					5 + NotNullTypeLines,
+					25
+				);
+		}
+
+		[Test]
+		public void NotNullType_NullIsPassed_MethodInSameClass_ReportsProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			DoStuff( null );
+		}
+
+		public void DoStuff(
+			IDatabase database
+		) {}
+	}
+}";
+			AssertProducesError(
+					test,
+					4 + NotNullTypeLines,
+					13
+				);
+		}
+
+		[Test]
+		public void NotNullType_NullVariableIsPassed_ReportsProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			IDatabase name = null;
+			provider.TestMethod( name );
+		}
+	}
+}";
+			AssertProducesError(
+					test,
+					6 + NotNullTypeLines,
+					25
+				);
+		}
+
+		[Test]
+		public void NotNullType_NullVariableIsPassedInConstructor_ReportsProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public TestCaller() {
+			var provider = new TestProvider();
+			IDatabase db = null;
+			provider.TestMethod( db );
+		}
+	}
+}";
+			AssertProducesError(
+					test,
+					6 + NotNullTypeLines,
+					25
+				);
+		}
+
+		[Test]
+		public void NotNullType_RealValueAssignedAfterPassing_ReportsProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			IDatabase db;
+			provider.TestMethod( db );
+			db = new Database();
+		}
+	}
+}";
+			AssertProducesError(
+					test,
+					6 + NotNullTypeLines,
+					25
+				);
+		}
+
+		[Test]
+		public void NotNullType_VariableNotAlwaysAssignedValue_ReportsProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			IDatabase db;
+			if( provider.ShouldDoStuff ) {
+				db = new Database();
+			}
+			provider.TestMethod( db );
+		}
+	}
+}";
+			AssertProducesError(
+					test,
+					9 + NotNullTypeLines,
+					25
+				);
+		}
+
+		[Test]
+		public void NotNullType_VariableNotAlwaysAssignedNonNullValue_ReportsProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			IDatabase db = null;
+			if( provider.ShouldDoStuff ) {
+				db = new Database();
+			}
+			provider.TestMethod( db );
+		}
+	}
+}";
+			AssertProducesError(
+					test,
+					9 + NotNullTypeLines,
+					25
+				);
+		}
+
+		[Test]
+		public void NotNullType_NullVariableIsInClosureContext_ReportsProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			IDatabase db = null;
+			var action = () => provider.TestMethod( db );
+		}
+	}
+}";
+			AssertProducesError(
+					test,
+					6 + NotNullTypeLines,
+					44
+				);
+		}
+
+		[Test]
+		public void NotNullType_MultipleParamtersWithIssue_ReportsMultipleProblems() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			IDatabase db = null;
+			provider.TestMethod( new Database() );
+			provider.MultiNotNull(
+					db,
+					null
+				);
+		}
+	}
+}";
+			DiagnosticDescriptor descriptor = Diagnostics.NullPassedToNotNullParameter;
+			DiagnosticResult[] expectedResults = new[] {
+				new DiagnosticResult() {
+					Id = descriptor.Id,
+					Message = descriptor.MessageFormat.ToString(),
+					Severity = DiagnosticSeverity.Error,
+					Locations = new[] {
+						new DiagnosticResultLocation( "Test0.cs", 8 + NotNullTypeLines, 6 )
+					}
+				},
+				new DiagnosticResult() {
+					Id = descriptor.Id,
+					Message = descriptor.MessageFormat.ToString(),
+					Severity = DiagnosticSeverity.Error,
+					Locations = new[] {
+						new DiagnosticResultLocation( "Test0.cs", 9 + NotNullTypeLines, 6 )
+					}
+				}
+			};
+
+			VerifyCSharpDiagnostic( test, expectedResults );
+		}
+
+		[Test]
+		public void NotNullType_NamedArguments_OneIsNull_ReportsProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			provider.TestMethod(
+				testDatabase: null,
+				allowedToBeNull: ""This one is actually a string, not a database""
+			);
+		}
+	}
+}";
+			AssertProducesError(
+					test,
+					6 + NotNullTypeLines,
+					5
+				);
+		}
+
+		#endregion
+
+		#region  Should not produce errors, due to not passing null
+
+		[Test]
+		public void NotNullType_ValueIsPassed_DoesNotReportProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			provider.TestMethod( new Database() );
+		}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+
+		[Test]
+		public void NotNullType_VariableWithValueAssigned_AtDeclaration_DoesNotReportProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			IDatabase db = new Database();
+			provider.TestMethod( db );
+		}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+
+		[Test]
+		public void NotNullType_VariableAssignedOtherVariable_AfterDeclaration_DoesNotReportProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod( IDatabase intakeDb ) {
+			var provider = new TestProvider();
+			IDatabase db;
+			db = intakeDb;
+			provider.TestMethod( db );
+		}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+
+		[Test]
+		public void NotNullType_OneParamNotNull_NullPassedToNullable_DoesNotReportProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			provider.TestMethod( null, new Database() );
+		}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+
+		#endregion
+
+		#region Parameter is flagged with [AllowNull]
+
+		[Test]
+		public void NotNullType_AllowNull_NullIsPassed_DoesNotReportProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			provider.TestMethodCanTakeNull( null );
+		}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+
+		[Test]
+		public void NotNullType_AllowNull_NullIsPassed_MethodInSameClass_DoesNotReportProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			DoStuff( null );
+		}
+
+		public void DoStuff(
+			[AllowNull] IDatabase database
+		) {}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+
+		[Test]
+		public void NotNullType_AllowNull_VariableNotAlwaysAssignedValue_DoesNotReportProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			IDatabase db;
+			if( provider.ShouldDoStuff ) {
+				db = new Database();
+			}
+			provider.TestMethodCanTakeNull( db );
+		}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+
+		[Test]
+		public void NotNullType_AllowNull_VariableNotAlwaysAssignedNonNullValue_DoesNotReportProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			IDatabase db = null;
+			if( provider.ShouldDoStuff ) {
+				db = new Database();
+			}
+			provider.TestMethodCanTakeNull( db );
+		}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+
+		#endregion
 
 		#endregion
 

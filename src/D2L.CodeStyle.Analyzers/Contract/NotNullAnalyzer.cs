@@ -23,7 +23,9 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	internal sealed class NotNullAnalyzer : DiagnosticAnalyzer {
 
-		private const string NotNullAttribute = "D2L.CodeStyle.Annotations.Contract.NotNullAttribute";
+		private const string NotNullAttribute = "D2L.CodeStyle.Annotations.Contract.NotNullAttribute",
+			NotNullTypeAttribute = "D2L.CodeStyle.Annotations.Contract.NotNullWhenParameterAttribute",
+			AllowNullAttribute = "D2L.CodeStyle.Annotations.Contract.AllowNullAttribute";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 			=> ImmutableArray.Create( Diagnostics.NullPassedToNotNullParameter );
@@ -48,18 +50,19 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				return;
 			}
 
-			var memberSymbol = context.SemanticModel.GetSymbolInfo( invocation ).Symbol as IMethodSymbol;
+			var arguments = invocation.ArgumentList.Arguments;
+			if( arguments.Count == 0 ) {
+				// We don't care about methods that take no arguments
+				return;
+			}
+
+			SymbolInfo symbolInfo = context.SemanticModel.GetSymbolInfo( invocation );
+			var memberSymbol = symbolInfo.Symbol as IMethodSymbol;
 			if( memberSymbol == null ) {
 				return;
 			}
 
 			ImmutableArray<IParameterSymbol> parameters = memberSymbol.Parameters;
-			if( parameters.Length == 0 ) {
-				// We don't care about methods that take no arguments
-				return;
-			}
-
-			var arguments = invocation.ArgumentList.Arguments;
 			if( arguments.Count < parameters.Length ) {
 				// Something is weird, and we can't analyze this
 				return;
@@ -78,9 +81,21 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 						);
 				}
 
-				ImmutableArray<AttributeData> attributes = param.GetAttributes();
-				if( attributes.Length > 0
-					&& attributes.Any( x => x.AttributeClass.ToString() == NotNullAttribute )
+				// Check if the parameter has [NotNull]
+				ImmutableArray<AttributeData> paramAttributes = param.GetAttributes();
+				if( paramAttributes.Length > 0
+					&& paramAttributes.Any( x => x.AttributeClass.ToString() == NotNullAttribute )
+				) {
+					notNullArguments.Add( arguments[i] );
+					continue;
+				}
+
+				// Check if the parameter type is not allowed to be null
+				// TODO: Is it worth caching which types allow null?
+				ImmutableArray<AttributeData> typeAttributes = param.Type.GetAttributes();
+				if( typeAttributes.Length > 0
+					&& typeAttributes.Any( x => x.AttributeClass.ToString() == NotNullTypeAttribute )
+					&& !paramAttributes.Any( x => x.AttributeClass.ToString() == AllowNullAttribute )
 				) {
 					notNullArguments.Add( arguments[i] );
 				}
