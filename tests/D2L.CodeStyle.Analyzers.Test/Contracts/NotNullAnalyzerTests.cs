@@ -344,6 +344,26 @@ namespace Test {
 				);
 		}
 
+		[Test]
+		public void NotNullParam_CalledTwice_ReportsProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			provider.TestMethod( ""This is a value"" );
+			provider.TestMethod( null );
+		}
+	}
+}";
+			AssertProducesError(
+					test,
+					6 + NotNullParamMethodLines,
+					25,
+					"testName"
+				);
+		}
+
 		#endregion
 
 		#region Should not produce errors

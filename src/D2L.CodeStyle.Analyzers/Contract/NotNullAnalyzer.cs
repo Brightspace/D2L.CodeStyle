@@ -36,14 +36,27 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 		}
 
 		public static void RegisterNotNullAnalyzer( CompilationStartAnalysisContext context ) {
+			// For caching if a method has any not-null parameters, and the which ones are
+			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache =
+				new ConcurrentDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>>();
+			// For caching is a type has [NotNullWhenParameter] applied
+			IDictionary<ITypeSymbol, bool> notNullTypeCache =
+				new ConcurrentDictionary<ITypeSymbol, bool>();
+
 			context.RegisterSyntaxNodeAction(
-					AnalyzeInvocation,
+					ctx => TryAnalyzeInvocation(
+							ctx,
+							notNullMethodCache,
+							notNullTypeCache
+						),
 					SyntaxKind.InvocationExpression
 				);
 		}
 
 		private static void AnalyzeInvocation(
-			SyntaxNodeAnalysisContext context
+			SyntaxNodeAnalysisContext context,
+			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache,
+			IDictionary<ITypeSymbol, bool> notNullTypeCache
 		) {
 			var invocation = context.Node as InvocationExpressionSyntax;
 			if( invocation == null ) {
@@ -56,53 +69,17 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				return;
 			}
 
-			SymbolInfo symbolInfo = context.SemanticModel.GetSymbolInfo( invocation );
-			var memberSymbol = symbolInfo.Symbol as IMethodSymbol;
-			if( memberSymbol == null ) {
-				return;
-			}
+			IList<Tuple<ArgumentSyntax, IParameterSymbol>> notNullArguments;
+			bool isNotNullMethod = TryGetNotNullArguments(
+					context,
+					invocation,
+					arguments,
+					notNullMethodCache,
+					notNullTypeCache,
+					out notNullArguments
+				);
 
-			ImmutableArray<IParameterSymbol> parameters = memberSymbol.Parameters;
-			if( arguments.Count < parameters.Length ) {
-				// Something is weird, and we can't analyze this
-				return;
-			}
-
-			IList<Tuple<ArgumentSyntax, IParameterSymbol>> notNullArguments = new List<Tuple<ArgumentSyntax, IParameterSymbol>>();
-			for( int i = 0; i < parameters.Length; i++ ) {
-				ArgumentSyntax argument = arguments[i];
-				IParameterSymbol param;
-
-				if( argument.NameColon == null ) { // Regular order-based
-					param = parameters[i];
-				} else { // Named parameter
-					// While parameters with @ are allowed in C#, the compiler strips it from the parameter
-					// name, but not from the named argument
-					string argumentName = argument.NameColon.Name.ToString().TrimStart( '@' );
-					param = parameters.Single( p => p.Name == argumentName );
-				}
-
-				// Check if the parameter has [NotNull]
-				ImmutableArray<AttributeData> paramAttributes = param.GetAttributes();
-				if( paramAttributes.Length > 0
-					&& paramAttributes.Any( x => x.AttributeClass.ToString() == NotNullAttribute )
-				) {
-					notNullArguments.Add( new Tuple<ArgumentSyntax, IParameterSymbol>( arguments[i], param ) );
-					continue;
-				}
-
-				// Check if the parameter type is not allowed to be null
-				// TODO: Is it worth caching which types allow null?
-				ImmutableArray<AttributeData> typeAttributes = param.Type.GetAttributes();
-				if( typeAttributes.Length > 0
-					&& typeAttributes.Any( x => x.AttributeClass.ToString() == NotNullTypeAttribute )
-					&& !paramAttributes.Any( x => x.AttributeClass.ToString() == AllowNullAttribute )
-				) {
-					notNullArguments.Add( new Tuple<ArgumentSyntax, IParameterSymbol>( arguments[i], param ) );
-				}
-			}
-
-			if( notNullArguments.Count == 0 ) {
+			if( !isNotNullMethod ) {
 				return;
 			}
 
@@ -151,6 +128,84 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 						semanticModel.Value
 					);
 			}
+		}
+
+		private static bool TryGetNotNullArguments(
+			SyntaxNodeAnalysisContext context,
+			InvocationExpressionSyntax invocation,
+			SeparatedSyntaxList<ArgumentSyntax> arguments,
+			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache,
+			IDictionary<ITypeSymbol, bool> notNullTypeCache,
+			out IList<Tuple<ArgumentSyntax, IParameterSymbol>> notNullArguments
+		) {
+			SymbolInfo invokedSymbolInfo = context.SemanticModel.GetSymbolInfo( invocation );
+			var invokedSymbol = invokedSymbolInfo.Symbol as IMethodSymbol;
+			if( invokedSymbol == null ) {
+				notNullArguments = null;
+				return false;
+			}
+
+			ImmutableHashSet<IParameterSymbol> notNullParameterCache = null;
+			if( notNullMethodCache.ContainsKey( invokedSymbol ) ) {
+				notNullParameterCache = notNullMethodCache[invokedSymbol];
+				if( notNullParameterCache == null ) {
+					// We've examined it before, and nothing needs to be not null
+					notNullArguments = null;
+					return false;
+				}
+			}
+
+			ImmutableArray<IParameterSymbol> parameters = invokedSymbol.Parameters;
+			if( arguments.Count < parameters.Length ) {
+				// Something is weird, and we can't analyze this
+				notNullArguments = null;
+				return false;
+			}
+
+			notNullArguments = new List<Tuple<ArgumentSyntax, IParameterSymbol>>();
+			for( int i = 0; i < parameters.Length; i++ ) {
+				ArgumentSyntax argument = arguments[i];
+				IParameterSymbol param;
+
+				if( argument.NameColon == null ) { // Regular order-based
+					param = parameters[i];
+				} else { // Named parameter
+					// While parameters with @ are allowed in C#, the compiler strips it from the parameter
+					// name, but not from the named argument
+					string argumentName = argument.NameColon.Name.ToString().TrimStart( '@' );
+					param = parameters.Single( p => p.Name == argumentName );
+				}
+
+				if( notNullParameterCache != null ) {
+					if( notNullParameterCache.Contains( param ) ) {
+						notNullArguments.Add( new Tuple<ArgumentSyntax, IParameterSymbol>( arguments[i], param ) );
+					}
+					continue;
+				}
+
+				// Check if the parameter type is not allowed to be null
+				var paramAttributes = new Lazy<ImmutableArray<AttributeData>>(
+						() => param.GetAttributes()
+					);
+				if( IsNotNullType( param.Type, notNullTypeCache ) ) {
+					if( !AttributeListContains( paramAttributes.Value, AllowNullAttribute ) ) {
+						notNullArguments.Add( new Tuple<ArgumentSyntax, IParameterSymbol>( arguments[i], param ) );
+					}
+
+					// Ignore any [NotNull] as either the type makes it implicit, or [AllowNull] overrides it
+					continue;
+				}
+				// Check if the parameter has [NotNull]
+				if( AttributeListContains( paramAttributes.Value, NotNullAttribute ) ) {
+					notNullArguments.Add( new Tuple<ArgumentSyntax, IParameterSymbol>( arguments[i], param ) );
+				}
+			}
+
+			bool isNotNullMethod = notNullArguments.Count > 0;
+			notNullMethodCache[invokedSymbol] = notNullArguments
+				.Select( x => x.Item2 )
+				.ToImmutableHashSet();
+			return isNotNullMethod;
 		}
 
 		private static bool TryAnalyzeLiteralValueArgument(
@@ -309,5 +364,27 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			return !( exp is LiteralExpressionSyntax ) // Not a literal expression, like `7`, or `"some string"`
 				|| ((LiteralExpressionSyntax)exp).Token.Text != "null";
 		}
+
+		private static bool IsNotNullType(
+			ITypeSymbol paramType,
+			IDictionary<ITypeSymbol, bool> notNullTypeCache
+		) {
+			if( notNullTypeCache.ContainsKey( paramType ) ) {
+				return notNullTypeCache[paramType];
+			}
+
+			bool isNotNull = AttributeListContains( paramType.GetAttributes(), NotNullTypeAttribute );
+			notNullTypeCache[paramType] = isNotNull;
+			return isNotNull;
+		}
+
+		private static bool AttributeListContains(
+			ImmutableArray<AttributeData> attributes,
+			string attributeClassName
+		) {
+			return attributes.Length > 0
+				&& attributes.Any( x => x.AttributeClass.ToString() == attributeClassName );
+		}
+
 	}
 }
