@@ -1,6 +1,4 @@
 ﻿using System;
-using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -29,8 +27,9 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 		private const string NotNullAttribute = "D2L.CodeStyle.Annotations.Contract.NotNullAttribute",
 			NotNullTypeAttribute = "D2L.CodeStyle.Annotations.Contract.NotNullWhenParameterAttribute",
 			AllowNullAttribute = "D2L.CodeStyle.Annotations.Contract.AllowNullAttribute",
-			// We don't have the fully qualified type where this gets used
-			AlwaysAssignedValueAttribute = "AlwaysAssignedValue";
+			// We don't have the fully qualified type where these get used
+			AlwaysAssignedValueAttribute = "AlwaysAssignedValue",
+			IgnoreNotNullErrorsAttribute = "IgnoreNotNullErrors";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 			=> ImmutableArray.Create( Diagnostics.NullPassedToNotNullParameter );
@@ -58,6 +57,34 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				);
 		}
 
+		private static void TryAnalyzeInvocation(
+			SyntaxNodeAnalysisContext context,
+			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache,
+			IDictionary<ITypeSymbol, bool> notNullTypes
+		) {
+			try {
+				AnalyzeInvocation(
+						context,
+						notNullMethodCache,
+						notNullTypes
+					);
+			} catch( Exception e ) {
+				Diagnostic diagnostic = Diagnostic.Create(
+						new DiagnosticDescriptor(
+							id: "D2L9999",
+							title: "Error in NotNullAnalyzer",
+							messageFormat: $"Error occurred in NotNullAnalyzer: {e.Message}; {e.StackTrace}",
+							category: "AnalyzerError",
+							defaultSeverity: DiagnosticSeverity.Error,
+							isEnabledByDefault: true,
+							description: "Error occurred while running NotNullAnalyzer"
+						),
+						context.Node.GetLocation()
+					);
+				context.ReportDiagnostic( diagnostic );
+			}
+		}
+
 		private static void AnalyzeInvocation(
 			SyntaxNodeAnalysisContext context,
 			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache,
@@ -66,6 +93,26 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			var invocation = context.Node as InvocationExpressionSyntax;
 			if( invocation == null ) {
 				return;
+			}
+
+			// Check to see if errors are being ignored
+			IEnumerable<AttributeListSyntax> attributeLists = null;
+			var methodDeclaration = GetAncestorNodeOfType<BaseMethodDeclarationSyntax>( invocation );
+			if( methodDeclaration != null ) {
+				attributeLists = methodDeclaration.AttributeLists;
+			} else {
+				var classDeclaration = GetAncestorNodeOfType<ClassDeclarationSyntax>( invocation );
+				if( classDeclaration != null ) {
+					attributeLists = classDeclaration.AttributeLists;
+				}
+			}
+			if( attributeLists != null ) {
+				bool ignoreErrors = attributeLists
+					.SelectMany( x => x.Attributes )
+					.Any( x => x.Name.ToString() == IgnoreNotNullErrorsAttribute );
+				if( ignoreErrors ) {
+					return;
+				}
 			}
 
 			var arguments = invocation.ArgumentList.Arguments;
@@ -90,14 +137,11 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 
 			// Using Lazy<T> so we don't do extra work if no arguments can be analyzed, or they don't need these values
 			// They're also based on the invocation, not the argument, so only need to be fetched once
-			var methodDeclaration = new Lazy<BaseMethodDeclarationSyntax>(
-					() => GetAncestorNodeOfType<BaseMethodDeclarationSyntax>( invocation )
-				);
 			var semanticModel = new Lazy<SemanticModel>(
 					() => context.Compilation.GetSemanticModel( invocation.SyntaxTree )
 				);
 			var dataFlowAnalysis = new Lazy<DataFlowAnalysis>(
-					() => semanticModel.Value.AnalyzeDataFlow( methodDeclaration.Value.Body )
+					() => semanticModel.Value.AnalyzeDataFlow( methodDeclaration.Body )
 				);
 
 			// Start analyzing the arguments
@@ -115,7 +159,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				}
 
 				// Now that we know it's not a literal value, and is an identifier name, these checks become relevant.
-				if( methodDeclaration.Value == null ) {
+				if( methodDeclaration == null ) {
 					// Likely part of a class declaration, which requires very different work to determine if the
 					// argument was ever assigned a value. However, other arguments may still be analyzed in simpler
 					// ways, so don't entirely exit yet
@@ -128,7 +172,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 						argument,
 						parameter,
 						argumentIdentifierName,
-						methodDeclaration.Value,
+						methodDeclaration,
 						dataFlowAnalysis.Value,
 						semanticModel.Value
 					);

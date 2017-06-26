@@ -42,7 +42,6 @@ namespace D2L.CodeStyle.Annotations.Contract {
 		}
 
 		public string Rationale { get; private set; }
-
 	}
 
 	/// <summary>
@@ -67,6 +66,21 @@ namespace D2L.CodeStyle.Annotations.Contract {
 
 		public string VariableName { get; private set; }
 		public string Rationale { get; private set; }
+	}
 
+	[AttributeUsage( AttributeTargets.Constructor | AttributeTargets.Method )]
+	[Obsolete( "This should only be used in case of errors in the NotNullAnalyzer" )]
+	public sealed class IgnoreNotNullErrorsAttribute : Attribute {
+
+		public IgnoreNotNullErrorsAttribute(
+			string author,
+			string rationale
+		) {
+			Author = author;
+			Rationale = rationale;
+		}
+
+		public string Author { get; set; }
+		public string Rationale { get; set; }
 	}
 }

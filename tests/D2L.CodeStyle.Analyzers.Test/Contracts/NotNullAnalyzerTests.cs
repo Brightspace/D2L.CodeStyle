@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using D2L.CodeStyle.Analyzers.Common;
 using D2L.CodeStyle.Analyzers.Contract;
 using D2L.CodeStyle.Analyzers.Test.Verifiers;
@@ -28,6 +27,8 @@ namespace D2L.CodeStyle.Annotations.Contract {
 		}
 		public string VariableName { get; private set; }
 	}
+
+	public class IgnoreNotNullErrorsAttribute : Attribute {}
 }
 ";
 
@@ -746,6 +747,33 @@ namespace Test {
 		}
 	}
 }";
+			AssertDoesNotProduceError( test );
+		}
+
+		[Test]
+		public void NotNullParam_MethodHasIgnoreNotNullErrorsAttribute_DoesNotReportProblem() {
+			// Make sure it still fails so we're actually testing that it makes a difference
+			const string hasErrorTest = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			string hello = null;
+			provider.TestMethod( hello );
+		}
+	}
+}";
+			AssertProducesError(
+					hasErrorTest,
+					6 + NotNullParamMethodLines,
+					25,
+					"testName"
+				);
+
+			string test = hasErrorTest.Replace(
+					"public void TestMethod()",
+					"[IgnoreNotNullErrors] public void TestMethod()"
+				);
 			AssertDoesNotProduceError( test );
 		}
 
