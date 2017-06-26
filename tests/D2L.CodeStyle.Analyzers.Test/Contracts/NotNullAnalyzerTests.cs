@@ -12,14 +12,26 @@ namespace D2L.CodeStyle.Analyzers.Contracts {
 	[TestFixture]
 	internal sealed class NotNullAnalyzerTests : DiagnosticVerifier {
 
-		private const string NotNullParamMethod = @"
+		private const string Attributes = @"
 using D2L.CodeStyle.Annotations.Contract;
 
 namespace D2L.CodeStyle.Annotations.Contract {
 	public class NotNullAttribute : System.Attribute {}
-	public class NotNullWhenParameterAttribute : Attribute {}
-}
 
+	public class NotNullWhenParameterAttribute : Attribute {}
+
+	public class AllowNullAttribute : Attribute {}
+
+	public class AlwaysAssignedValueAttribute : Attribute {
+		public AlwaysAssignedValueAttribute( string variableName ) {
+			VariableName = variableName;
+		}
+		public string VariableName { get; private set; }
+	}
+}
+";
+
+		private const string NotNullParamMethod = Attributes + @"
 namespace Test {
 	class TestProvider {
 		public void TestMethod(
@@ -36,6 +48,8 @@ namespace Test {
 			[NotNull] string anotherName
 		) {}
 
+		public string GetStuff() { return ""Ghostbusters"" };
+
 		public void TestMethodCanTakeNull( string testName ) {}
 
 		public bool ShouldDoStuff => false;
@@ -43,15 +57,7 @@ namespace Test {
 }
 ";
 
-		private const string NotNullType = @"
-using D2L.CodeStyle.Annotations.Contract;
-
-namespace D2L.CodeStyle.Annotations.Contract {
-	public class NotNullAttribute : System.Attribute {}
-	public class NotNullWhenParameterAttribute : Attribute {}
-	public class AllowNullAttribute : Attribute {}
-}
-
+		private const string NotNullType = Attributes + @"
 namespace Test {
 	[NotNullWhenParameter]
 	interface IDatabase {}
@@ -364,6 +370,27 @@ namespace Test {
 				);
 		}
 
+		[Test]
+		public void NotNullParam_AlwaysAssignedAttribute_VariableNeverAssigned_ReportsProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		[AlwaysAssignedValue( ""name"" )]
+		public void TestMethod() {
+			var provider = new TestProvider();
+			string name;
+			provider.TestMethod( name );
+		}
+	}
+}";
+			AssertProducesError(
+					test,
+					7 + NotNullParamMethodLines,
+					25,
+					"testName"
+				);
+		}
+
 		#endregion
 
 		#region Should not produce errors
@@ -530,6 +557,150 @@ namespace Test {
 		}
 	}
 }";
+			AssertDoesNotProduceError( test );
+		}
+
+		[Test]
+		public void NotNullParam_VariableUsedInNestedBlock_DoesNotReportProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			if( provider.ShouldDoStuff ) {
+				string value = provider.GetStuff();
+				for( int i = 0; i < 5; i++ ) {
+					provider.TestMethod( value );
+				}
+			}
+		}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+
+		[Test]
+		public void NotNullParam_MethodCallResultPassedDirectly_DoesNotReportProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			provider.TestMethod( provider.GetStuff() );
+		}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+
+		[Test]
+		public void NotNullParam_DeclaredAfterPotentialReturn_DoesNotReportProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			if( provider.ShouldDoStuff ) {
+				return;
+			}
+
+			string tempTwo = provider.GetStuff();
+			provider.TestMethod( tempTwo );
+		}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+
+		[Test]
+		public void NotNullParam_NullVariablePassedWithNullCoalesce_DoesNotReportProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			string hello = null;
+			provider.TestMethod( hello ?? ""Testing, testing, one two three"" );
+		}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+
+		[Test]
+		public void NotNullParam_AssignedNonNullAfterPotentialReturn_DoesNotReportProblem() {
+			// TODO: Modify the code to remove any blocks that contain a `return` and see if the value would be assigned?
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			string hello = null;
+			if( provider.ShouldDoStuff ) {
+				return;
+			}
+
+			hello = provider.GetStuff();
+			provider.TestMethod( hello );
+		}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+
+		[Test]
+		public void NotNullParam_AssignedAfterPotentialReturn_DoesNotReportProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			string hello;
+
+			if( provider.ShouldDoStuff ) {
+				return;
+			}
+
+			hello = provider.GetStuff();
+			provider.TestMethod( hello );
+		}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+
+		[Test]
+		public void NotNullParam_VariableDeclaredAsAlwaysAssigned_DoesNotReportProblem() {
+			// It was a case like this that needed adding the [AlwaysAssignedValue] attribute.
+			// Make sure it still fails so we're actually testing that it makes a difference
+			const string hasErrorTest = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			string hello;
+
+			try {
+				hello = provider.GetStuff();
+			} catch( Exception e ) {
+				return;
+			}
+
+			provider.TestMethod( hello );
+		}
+	}
+}";
+			AssertProducesError(
+					hasErrorTest,
+					13 + NotNullParamMethodLines,
+					25,
+					"testName"
+				);
+
+			string test = hasErrorTest.Replace(
+					"public void TestMethod()",
+					"[AlwaysAssignedValue(\"hello\")]public void TestMethod()"
+				);
 			AssertDoesNotProduceError( test );
 		}
 

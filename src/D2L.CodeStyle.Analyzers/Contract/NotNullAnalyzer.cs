@@ -1,4 +1,7 @@
 ﻿using System;
+using System;
+using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -25,7 +28,9 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 
 		private const string NotNullAttribute = "D2L.CodeStyle.Annotations.Contract.NotNullAttribute",
 			NotNullTypeAttribute = "D2L.CodeStyle.Annotations.Contract.NotNullWhenParameterAttribute",
-			AllowNullAttribute = "D2L.CodeStyle.Annotations.Contract.AllowNullAttribute";
+			AllowNullAttribute = "D2L.CodeStyle.Annotations.Contract.AllowNullAttribute",
+			// We don't have the fully qualified type where this gets used
+			AlwaysAssignedValueAttribute = "AlwaysAssignedValue";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 			=> ImmutableArray.Create( Diagnostics.NullPassedToNotNullParameter );
@@ -86,7 +91,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			// Using Lazy<T> so we don't do extra work if no arguments can be analyzed, or they don't need these values
 			// They're also based on the invocation, not the argument, so only need to be fetched once
 			var methodDeclaration = new Lazy<BaseMethodDeclarationSyntax>(
-					() => GetAncestorNodeOfType<BaseMethodDeclarationSyntax>( invocation.Parent )
+					() => GetAncestorNodeOfType<BaseMethodDeclarationSyntax>( invocation )
 				);
 			var semanticModel = new Lazy<SemanticModel>(
 					() => context.Compilation.GetSemanticModel( invocation.SyntaxTree )
@@ -187,6 +192,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				var paramAttributes = new Lazy<ImmutableArray<AttributeData>>(
 						() => param.GetAttributes()
 					);
+
 				if( IsNotNullType( param.Type, notNullTypeCache ) ) {
 					if( !AttributeListContains( paramAttributes.Value, AllowNullAttribute ) ) {
 						notNullArguments.Add( new Tuple<ArgumentSyntax, IParameterSymbol>( arguments[i], param ) );
@@ -195,6 +201,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 					// Ignore any [NotNull] as either the type makes it implicit, or [AllowNull] overrides it
 					continue;
 				}
+
 				// Check if the parameter has [NotNull]
 				if( AttributeListContains( paramAttributes.Value, NotNullAttribute ) ) {
 					notNullArguments.Add( new Tuple<ArgumentSyntax, IParameterSymbol>( arguments[i], param ) );
@@ -248,15 +255,27 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				return;
 			}
 
-			ImmutableArray<ISymbol> alwaysAssigned = dataFlowAnalysis.AlwaysAssigned;
-			bool variableIsAssigned = alwaysAssigned.Contains( symbol );
+			// Find the innermost block in which it was declared, and do our analysis in there
+			BlockSyntax declaringBlock = GetAncestorNodeOfType<BlockSyntax>( invocation );
+			while( declaringBlock != methodDeclaration.Body ) {
+				DataFlowAnalysis innerAnalysis = semanticModel.AnalyzeDataFlow( declaringBlock );
+				if( innerAnalysis.VariablesDeclared.Contains( symbol ) ) {
+					//variableIsAssigned = innerAnalysis.AlwaysAssigned.Contains( symbol );
+					break;
+				}
+				declaringBlock = GetAncestorNodeOfType<BlockSyntax>( declaringBlock );
+			}
+
+			bool variableIsAssigned = VariableIsAlwaysAssignedAfterDeclaration(
+					semanticModel,
+					declaringBlock,
+					symbol
+				);
+
 			if( variableIsAssigned ) { // If it's not always assigned, fall through and show an error
-				int invocationStart = invocation.SpanStart;
-
 				// Limit the search to between the method start & when the call under analysis is being invoked
-				TextSpan searchLimits = new TextSpan( 0, invocationStart );
-
-				IEnumerable<SyntaxNode> descendantNodes = methodDeclaration.Body.DescendantNodes(
+				TextSpan searchLimits = new TextSpan( 0, invocation.SpanStart );
+				IEnumerable<SyntaxNode> descendantNodes = declaringBlock.DescendantNodes(
 						searchLimits,
 						node => ( node is ExpressionSyntax || node is StatementSyntax )
 					).Where(
@@ -279,65 +298,125 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 					if( IsNotNullValue( declarator.Initializer.Value ) ) {
 						return;
 					}
-
-					variableIsAssigned = VariableIsAlwaysAssignedAfterDeclaration(
-							methodDeclaration,
-							declarator
-						);
 				}
 
-				if( variableIsAssigned ) {
-					IEnumerable<ExpressionSyntax> assignmentValues = descendantNodes
-						.OfType<AssignmentExpressionSyntax>()
-						.Where(
-							x => x.Left is IdentifierNameSyntax
-								&& ( (IdentifierNameSyntax)x.Left ).Identifier.Text == argumentIdentifierName.Identifier.Text
-						).Select( x => x.Right );
+				IEnumerable<ExpressionSyntax> assignmentValues = descendantNodes
+					.OfType<AssignmentExpressionSyntax>()
+					.Where(
+						x => x.Left is IdentifierNameSyntax
+							&& ( (IdentifierNameSyntax)x.Left ).Identifier.Text == argumentIdentifierName.Identifier.Text
+					).Select( x => x.Right );
 
-					// TODO: Can this be modified to determine if a variable has null reassigned to it?
-					if( assignmentValues.Any( IsNotNullValue ) ) {
-						return;
-					}
+				// TODO: Can this be modified to determine if a variable has null reassigned to it?
+				if( assignmentValues.Any( IsNotNullValue ) ) {
+					return;
 				}
 			}
 
 			MarkDiagnosticError( context, argument, parameter );
 		}
 
-		// Used for determining if a variable that was assigned `null` at declaration is guaranteed to be
-		// assigned another value later on
 		private static bool VariableIsAlwaysAssignedAfterDeclaration(
-			BaseMethodDeclarationSyntax methodDeclaration,
-			VariableDeclaratorSyntax declarator
+			SemanticModel semanticModel,
+			BlockSyntax declaringBlock,
+			ISymbol variable
 		) {
-			// Pretend the assignment didn't exist, and see if it's still always assigned;
-			// Have to recompile the tree after removing the assignment, unfortunately
-			var compilationUnit = GetAncestorNodeOfType<CompilationUnitSyntax>( methodDeclaration )
-				.RemoveNode(
-					declarator.Initializer,
-					SyntaxRemoveOptions.KeepDirectives
-				);
-			var compilation = CSharpCompilation.Create( "ThrowAwayCompilation" )
-				.AddSyntaxTrees( compilationUnit.SyntaxTree );
+			VariableDeclaratorSyntax declarator = declaringBlock
+				.ChildNodes()
+				.OfType<LocalDeclarationStatementSyntax>()
+				.SelectMany( x => x.Declaration.Variables )
+				.First( x => x.Identifier.Text == variable.Name );
 
-			// Re-find the parent method in the new compilation
-			var typeDeclaration = compilationUnit.FindNode( methodDeclaration.Span ) as TypeDeclarationSyntax;
-			methodDeclaration = (BaseMethodDeclarationSyntax)typeDeclaration.ChildNodes()
-				.First( x => x.SpanStart == methodDeclaration.SpanStart );
+			IEnumerable<SyntaxNode> nodesToRemove = new SyntaxNode[0];
+
+			// Look at the delcaration, and potential assignment there
+			if( declarator.Initializer != null ) {
+				if( IsNotNullValue( declarator.Initializer.Value ) ) {
+					return true;
+				}
+				nodesToRemove = new[] { declarator.Initializer };
+			} else if( VariableIsAlwaysAssigned( declaringBlock, declarator, semanticModel ) ) {
+				return true;
+			}
+
+			// See if it has a "AlwaysAssignedValue" attribute
+			var methodDeclaration = GetAncestorNodeOfType<BaseMethodDeclarationSyntax>( declaringBlock );
+			bool hasAlwaysAssignedAttribute = methodDeclaration.AttributeLists
+				.SelectMany( x => x.Attributes )
+				.Where( x => x.Name.ToString() == AlwaysAssignedValueAttribute )
+				.Select( x => x.ArgumentList.Arguments.First().Expression )
+				.OfType<LiteralExpressionSyntax>()
+				.Any( x => x.Token.ValueText == variable.Name );
+
+			if( hasAlwaysAssignedAttribute ) {
+				return true;
+			}
+
+			// Find nodes between beginning of block and the variable's declaration
+			nodesToRemove = declaringBlock.ChildNodes()
+				.Where( x => x.Span.End < declarator.SpanStart )
+				.Concat( nodesToRemove );
+
+			// Find child blocks that potentially do a return, as these will stop it from "always" being assigned a value
+			ControlFlowAnalysis controlFlowAnalysis = semanticModel.AnalyzeControlFlow( declaringBlock );
+			nodesToRemove = controlFlowAnalysis.ExitPoints
+				.Select( GetAncestorNodeOfType<BlockSyntax> )
+				.Distinct()
+				.Where( x => !x.Equals( declaringBlock ) )
+				.SelectMany( x => x.ChildNodes() )
+				.Concat( nodesToRemove );
+
+			// Remove the nodes, recompile, and check the status
+			var compilationUnit = GetAncestorNodeOfType<CompilationUnitSyntax>( declaringBlock );
+			compilationUnit = compilationUnit.RemoveNodes(
+						nodesToRemove,
+						SyntaxRemoveOptions.KeepDirectives
+					);
+
+			return VariableIsAlwaysAssignedInRecompiledCode(
+					declaringBlock,
+					variable,
+					compilationUnit
+				);
+		}
+
+		private static bool VariableIsAlwaysAssignedInRecompiledCode(
+			BlockSyntax declaringBlock,
+			ISymbol variable,
+			CompilationUnitSyntax compilationUnit
+		) {
+			var compilation = CSharpCompilation.Create( "ThrowAwayCompilation" )
+				.AddSyntaxTrees( compilationUnit.SyntaxTree ); // Re-find the parent block in the new compilation
+			var parentBlock = compilationUnit.FindNode( declaringBlock.OpenBraceToken.Span );
+			declaringBlock = parentBlock.DescendantNodes().OfType<BlockSyntax>()
+				.FirstOrDefault( x => x.SpanStart == declaringBlock.SpanStart ) ?? (BlockSyntax)parentBlock;
 
 			// Get the new symbol for the variable
-			declarator = methodDeclaration.DescendantNodes( declarator.Identifier.Span )
-				.OfType<VariableDeclaratorSyntax>()
-				.Single();
-
-			SemanticModel semanticModel = compilation.GetSemanticModel( methodDeclaration.SyntaxTree );
-			ISymbol symbol = semanticModel.GetDeclaredSymbol( declarator );
+			IEnumerable<SyntaxNode> descendantNodes = declaringBlock
+				.ChildNodes()
+				.ToArray();
+			VariableDeclaratorSyntax declarator = descendantNodes
+				.OfType<LocalDeclarationStatementSyntax>()
+				.SelectMany( x => x.Declaration.Variables )
+				.First( x => x.Identifier.Text == variable.Name );
 
 			// Determine if the variable is assigned again
-			bool variableIsAssigned = semanticModel
-				.AnalyzeDataFlow( methodDeclaration.Body )
-				.AlwaysAssigned.Select( x => x.Name )
+			SemanticModel semanticModel = compilation.GetSemanticModel( declaringBlock.SyntaxTree );
+			return VariableIsAlwaysAssigned( declaringBlock, declarator, semanticModel );
+		}
+
+		private static bool VariableIsAlwaysAssigned(
+			BlockSyntax declaringBlock,
+			VariableDeclaratorSyntax declarator,
+			SemanticModel semanticModel
+		) {
+			ISymbol symbol = semanticModel.GetDeclaredSymbol( declarator );
+			bool variableIsAssigned = semanticModel.AnalyzeDataFlow(
+					GetAncestorNodeOfType<LocalDeclarationStatementSyntax>( declarator ),
+					declaringBlock.ChildNodes().Last()
+				).AlwaysAssigned.Select( x => x.Name )
 				.Contains( symbol.Name );
+
 			return variableIsAssigned;
 		}
 
@@ -357,7 +436,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 		private static T GetAncestorNodeOfType<T>(
 			SyntaxNode node
 		) where T : SyntaxNode {
-			return (T)node.FirstAncestorOrSelf<SyntaxNode>( x => x is T );
+			return (T)node.Parent.FirstAncestorOrSelf<SyntaxNode>( x => x is T );
 		}
 
 		private static bool IsNotNullValue( ExpressionSyntax exp ) {
