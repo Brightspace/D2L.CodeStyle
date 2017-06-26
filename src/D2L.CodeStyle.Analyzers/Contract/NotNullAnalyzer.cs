@@ -325,7 +325,11 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				.ChildNodes()
 				.OfType<LocalDeclarationStatementSyntax>()
 				.SelectMany( x => x.Declaration.Variables )
-				.First( x => x.Identifier.Text == variable.Name );
+				.FirstOrDefault( x => x.Identifier.Text == variable.Name );
+			if( declarator == null ) {
+				// This can happen in delegates, `Func`s, or similar
+				return true;
+			}
 
 			IEnumerable<SyntaxNode> nodesToRemove = new SyntaxNode[0];
 

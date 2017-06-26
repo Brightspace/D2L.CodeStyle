@@ -391,6 +391,32 @@ namespace Test {
 				);
 		}
 
+		[Test]
+		public void NotNullParam_VariableDeclaredInDelegate_ReportsProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+
+		delegate void MyDelegate( int number );
+
+		public void TestMethod() {
+			var provider = new TestProvider();
+
+			MyDelegate delegate = delegate( int num ) {
+				string val = null;
+				provider.TestMethod( num, val );
+			};
+		}
+	}
+}";
+			AssertProducesError(
+					test,
+					11 + NotNullParamMethodLines,
+					31,
+					"testName"
+				);
+		}
+
 		#endregion
 
 		#region Should not produce errors
@@ -629,7 +655,6 @@ namespace Test {
 
 		[Test]
 		public void NotNullParam_AssignedNonNullAfterPotentialReturn_DoesNotReportProblem() {
-			// TODO: Modify the code to remove any blocks that contain a `return` and see if the value would be assigned?
 			const string test = NotNullParamMethod + @"
 namespace Test {
 	class TestCaller {
@@ -701,6 +726,26 @@ namespace Test {
 					"public void TestMethod()",
 					"[AlwaysAssignedValue(\"hello\")]public void TestMethod()"
 				);
+			AssertDoesNotProduceError( test );
+		}
+
+		[Test]
+		public void NotNullParam_ValueUsedInDelegate_DoesNotReportProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+
+		delegate void MyDelegate( int number, string value );
+
+		public void TestMethod() {
+			var provider = new TestProvider();
+
+			MyDelegate delegate = delegate( int num, string val ) {
+				provider.TestMethod( num, val );
+			};
+		}
+	}
+}";
 			AssertDoesNotProduceError( test );
 		}
 
