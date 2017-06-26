@@ -76,9 +76,10 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				if( argument.NameColon == null ) { // Regular order-based
 					param = parameters[i];
 				} else { // Named parameter
-					param = parameters.Single(
-							p => p.Name == argument.NameColon.Name.ToString()
-						);
+					// While parameters with @ are allowed in C#, the compiler strips it from the parameter
+					// name, but not from the named argument
+					string argumentName = argument.NameColon.Name.ToString().TrimStart( '@' );
+					param = parameters.Single( p => p.Name == argumentName );
 				}
 
 				// Check if the parameter has [NotNull]

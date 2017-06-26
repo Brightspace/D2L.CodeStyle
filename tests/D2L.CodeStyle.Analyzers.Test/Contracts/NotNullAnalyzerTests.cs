@@ -318,6 +318,32 @@ namespace Test {
 				);
 		}
 
+		[Test]
+		public void NotNullParam_NamedArgumentsWithAtSign_ReportsProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			DoSomeStuff(
+				@char: null,
+				myVar: ""A Value""
+			);
+		}
+
+		private void DoSomeStuff(
+			[NotNull] string @char,
+			[NotNull] string myVar
+		) {}
+	}
+}";
+			AssertProducesError(
+					test,
+					5 + NotNullParamMethodLines,
+					5,
+					"char"
+				);
+		}
+
 		#endregion
 
 		#region Should not produce errors
