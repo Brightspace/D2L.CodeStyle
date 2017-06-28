@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Common;
 using Microsoft.CodeAnalysis;
@@ -27,15 +26,20 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
 
 		public override void Initialize( AnalysisContext context ) {
-			context.RegisterSyntaxNodeAction(
-				AnalyzeField,
-				SyntaxKind.FieldDeclaration
-			);
+			context.RegisterCompilationStartAction( ctx => {
+				ctx.Compilation.HackImportAllMetadata();
+				ctx.Compilation.ThrowIfNotImportingAllMetadata();
 
-			context.RegisterSyntaxNodeAction(
-				AnalyzeProperty,
-				SyntaxKind.PropertyDeclaration
-			);
+				ctx.RegisterSyntaxNodeAction(
+					AnalyzeField,
+					SyntaxKind.FieldDeclaration
+				);
+
+				ctx.RegisterSyntaxNodeAction(
+					AnalyzeProperty,
+					SyntaxKind.PropertyDeclaration
+				);
+			} );
 		}
 
 		private void AnalyzeField( SyntaxNodeAnalysisContext context ) {
