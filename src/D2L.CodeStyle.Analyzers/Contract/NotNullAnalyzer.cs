@@ -150,9 +150,8 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			IDictionary<ITypeSymbol, bool> notNullTypeCache,
 			out IList<Tuple<ArgumentSyntax, IParameterSymbol>> notNullArguments
 		) {
-			SymbolInfo invokedSymbolInfo = context.SemanticModel.GetSymbolInfo( invocation );
-			var invokedSymbol = invokedSymbolInfo.Symbol as IMethodSymbol;
-			if( invokedSymbol == null ) {
+			IMethodSymbol invokedSymbol;
+			if( !TryGetInvokedSymbol( context, invocation, arguments, out invokedSymbol ) ) {
 				notNullArguments = null;
 				return false;
 			}
@@ -168,24 +167,19 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			}
 
 			ImmutableArray<IParameterSymbol> parameters = invokedSymbol.Parameters;
-			if( arguments.Count < parameters.Length ) {
+			if( arguments.Count > parameters.Length ) {
 				// Something is weird, and we can't analyze this
 				notNullArguments = null;
 				return false;
 			}
 
 			notNullArguments = new List<Tuple<ArgumentSyntax, IParameterSymbol>>();
-			for( int i = 0; i < parameters.Length; i++ ) {
+			for( int i = 0; i < arguments.Count; i++ ) {
 				ArgumentSyntax argument = arguments[i];
 				IParameterSymbol param;
 
-				if( argument.NameColon == null ) { // Regular order-based
-					param = parameters[i];
-				} else { // Named parameter
-					// While parameters with @ are allowed in C#, the compiler strips it from the parameter
-					// name, but not from the named argument
-					string argumentName = argument.NameColon.Name.ToString().TrimStart( '@' );
-					param = parameters.Single( p => p.Name == argumentName );
+				if( !TryGetParameter( argument, parameters, i, out param ) ) {
+					continue;
 				}
 
 				if( notNullParameterCache != null ) {
@@ -220,6 +214,51 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				.Select( x => x.Item2 )
 				.ToImmutableHashSet();
 			return isNotNullMethod;
+		}
+
+		private static bool TryGetParameter(
+			ArgumentSyntax argument,
+			ImmutableArray<IParameterSymbol> parameters,
+			int argumentIndex,
+			out IParameterSymbol parameter
+		) {
+			// Not a named parameter
+			if( argument.NameColon == null ) { // Regular order-based
+				parameter = parameters[argumentIndex];
+				return true;
+			}
+
+			// While parameters with @ are allowed in C#, the compiler strips it from the parameter
+			// name, but not from the named argument
+			string argumentName = argument.NameColon.Name.ToString().TrimStart( '@' );
+			parameter = parameters.SingleOrDefault( p => p.Name == argumentName );
+
+			return parameter != null;
+		}
+
+		private static bool TryGetInvokedSymbol(
+			SyntaxNodeAnalysisContext context,
+			InvocationExpressionSyntax invocation,
+			SeparatedSyntaxList<ArgumentSyntax> arguments,
+			out IMethodSymbol invokedSymbol
+		) {
+			SymbolInfo invokedSymbolInfo = context.SemanticModel.GetSymbolInfo( invocation );
+
+			// The simple case, where there's no ambiguity
+			invokedSymbol = invokedSymbolInfo.Symbol as IMethodSymbol;
+			if( invokedSymbol != null ) {
+				return true;
+			}
+
+			// Default parameter values might result in a single candidate, but doesn't guarantee
+			// resolution to a method symbol
+			if( invokedSymbolInfo.CandidateReason == CandidateReason.OverloadResolutionFailure
+				&& invokedSymbolInfo.CandidateSymbols.Length == 1
+			) {
+				invokedSymbol = invokedSymbolInfo.CandidateSymbols[0] as IMethodSymbol;
+			}
+
+			return invokedSymbol != null;
 		}
 
 		private static bool TryAnalyzeLiteralValueArgument(
@@ -267,7 +306,6 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			while( declaringBlock != methodDeclaration.Body ) {
 				DataFlowAnalysis innerAnalysis = semanticModel.AnalyzeDataFlow( declaringBlock );
 				if( innerAnalysis.VariablesDeclared.Contains( symbol ) ) {
-					//variableIsAssigned = innerAnalysis.AlwaysAssigned.Contains( symbol );
 					break;
 				}
 				declaringBlock = GetAncestorNodeOfType<BlockSyntax>( declaringBlock );

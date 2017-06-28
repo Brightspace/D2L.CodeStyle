@@ -418,6 +418,93 @@ namespace Test {
 				);
 		}
 
+		[Test]
+		public void NotNullParam_CalledMethodHasDefaultValues_NullValuePassed_ReportsProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			string hello = null;
+			DoSomeStuff( provider, hello );
+		}
+
+		private void DoSomeStuff(
+			Provider provider,
+			[NotNull] string value = ""a value"",
+			[NotNull] string anotherValue = ""another value""
+		) {}
+	}
+}";
+			AssertProducesError(
+					test,
+					6 + NotNullParamMethodLines,
+					27,
+					"value"
+				);
+		}
+
+		[Test]
+		public void NotNullParam_CalledMethodHasDefaultValues_NamedArgumentsWithNull_ReportsProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			string hello = null;
+			DoSomeStuff(
+					provider,
+					anotherValue: hello
+				);
+		}
+
+		private void DoSomeStuff(
+			TestProvider provider,
+			[NotNull] string value = ""a value"",
+			[NotNull] string anotherValue = ""another value""
+		) {}
+	}
+}";
+			AssertProducesError(
+					test,
+					8 + NotNullParamMethodLines,
+					6,
+					"anotherValue"
+				);
+		}
+
+		[Test]
+		public void NotNullParam_OverloadedMethodHasDefaultValues_NamedArgumentsWithNull_ReportsProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			DoSomeStuff(
+					value: null,
+					provider: provider
+				);
+		}
+
+		private void DoSomeStuff(
+			string provider = ""a value"",
+			[NotNull] string value = ""another value""
+		) {}
+
+		private void DoSomeStuff(
+			TestProvider provider,
+			[NotNull] string value = ""a value""
+		) {}
+	}
+}";
+			AssertProducesError(
+					test,
+					6 + NotNullParamMethodLines,
+					6,
+					"value"
+				);
+		}
+
 		#endregion
 
 		#region Should not produce errors
@@ -776,6 +863,28 @@ namespace Test {
 				);
 			AssertDoesNotProduceError( test );
 		}
+
+		[Test]
+		public void NotNullParam_CalledMethodHasDefaultValues_MarkedAsNotNull_DoesNotReportProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			string hello = ""something"";
+			DoSomeStuff( provider, hello );
+		}
+
+		private void DoSomeStuff(
+			TestProvider provider,
+			[NotNull] string value = ""a value"",
+			[NotNull] string anotherValue = ""another value"",
+		) {}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+		
 
 		#endregion
 
