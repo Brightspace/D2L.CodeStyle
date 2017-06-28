@@ -9,15 +9,6 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
-using ArgumentSyntax = Microsoft.CodeAnalysis.CSharp.Syntax.ArgumentSyntax;
-using CompilationUnitSyntax = Microsoft.CodeAnalysis.CSharp.Syntax.CompilationUnitSyntax;
-using ExpressionSyntax = Microsoft.CodeAnalysis.CSharp.Syntax.ExpressionSyntax;
-using IdentifierNameSyntax = Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax;
-using InvocationExpressionSyntax = Microsoft.CodeAnalysis.CSharp.Syntax.InvocationExpressionSyntax;
-using LiteralExpressionSyntax = Microsoft.CodeAnalysis.CSharp.Syntax.LiteralExpressionSyntax;
-using LocalDeclarationStatementSyntax = Microsoft.CodeAnalysis.CSharp.Syntax.LocalDeclarationStatementSyntax;
-using StatementSyntax = Microsoft.CodeAnalysis.CSharp.Syntax.StatementSyntax;
-using VariableDeclaratorSyntax = Microsoft.CodeAnalysis.CSharp.Syntax.VariableDeclaratorSyntax;
 
 namespace D2L.CodeStyle.Analyzers.Contract {
 
@@ -48,41 +39,13 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				new ConcurrentDictionary<ITypeSymbol, bool>();
 
 			context.RegisterSyntaxNodeAction(
-					ctx => TryAnalyzeInvocation(
+					ctx => AnalyzeInvocation(
 							ctx,
 							notNullMethodCache,
 							notNullTypeCache
 						),
 					SyntaxKind.InvocationExpression
 				);
-		}
-
-		private static void TryAnalyzeInvocation(
-			SyntaxNodeAnalysisContext context,
-			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache,
-			IDictionary<ITypeSymbol, bool> notNullTypes
-		) {
-			try {
-				AnalyzeInvocation(
-						context,
-						notNullMethodCache,
-						notNullTypes
-					);
-			} catch( Exception e ) {
-				Diagnostic diagnostic = Diagnostic.Create(
-						new DiagnosticDescriptor(
-							id: "D2L9999",
-							title: "Error in NotNullAnalyzer",
-							messageFormat: $"Error occurred in NotNullAnalyzer: {e.Message}; {e.StackTrace}",
-							category: "AnalyzerError",
-							defaultSeverity: DiagnosticSeverity.Error,
-							isEnabledByDefault: true,
-							description: "Error occurred while running NotNullAnalyzer"
-						),
-						context.Node.GetLocation()
-					);
-				context.ReportDiagnostic( diagnostic );
-			}
 		}
 
 		private static void AnalyzeInvocation(
