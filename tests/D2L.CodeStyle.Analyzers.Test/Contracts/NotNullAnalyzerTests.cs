@@ -12,6 +12,7 @@ namespace D2L.CodeStyle.Analyzers.Contracts {
 	internal sealed class NotNullAnalyzerTests : DiagnosticVerifier {
 
 		private const string Attributes = @"
+using System;
 using D2L.CodeStyle.Annotations.Contract;
 
 namespace D2L.CodeStyle.Annotations.Contract {
@@ -860,6 +861,33 @@ namespace Test {
 			string test = hasErrorTest.Replace(
 					"public void TestMethod()",
 					"[IgnoreNotNullErrors] public void TestMethod()"
+				);
+			AssertDoesNotProduceError( test );
+		}
+
+		[Test]
+		public void NotNullParam_ClassHasIgnoreNotNullErrorsAttribute_DoesNotReportProblem() {
+			// Make sure it still fails so we're actually testing that it makes a difference
+			const string hasErrorTest = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			string hello = null;
+			provider.TestMethod( hello );
+		}
+	}
+}";
+			AssertProducesError(
+					hasErrorTest,
+					6 + NotNullParamMethodLines,
+					25,
+					"testName"
+				);
+
+			string test = hasErrorTest.Replace(
+					"class TestCaller",
+					"[IgnoreNotNullErrors] class TestCaller"
 				);
 			AssertDoesNotProduceError( test );
 		}

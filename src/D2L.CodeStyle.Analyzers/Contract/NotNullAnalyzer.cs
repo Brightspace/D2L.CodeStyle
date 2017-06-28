@@ -15,12 +15,12 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	internal sealed class NotNullAnalyzer : DiagnosticAnalyzer {
 
-		private const string NotNullAttribute = "D2L.CodeStyle.Annotations.Contract.NotNullAttribute",
-			NotNullTypeAttribute = "D2L.CodeStyle.Annotations.Contract.NotNullWhenParameterAttribute",
-			AllowNullAttribute = "D2L.CodeStyle.Annotations.Contract.AllowNullAttribute",
-			// We don't have the fully qualified type where these get used
-			AlwaysAssignedValueAttribute = "AlwaysAssignedValue",
-			IgnoreNotNullErrorsAttribute = "IgnoreNotNullErrors";
+		private const string Namespace = "D2L.CodeStyle.Annotations.Contract.";
+		private const string NotNullAttribute = Namespace + "NotNullAttribute";
+		private const string NotNullTypeAttribute = Namespace + "NotNullWhenParameterAttribute";
+		private const string AllowNullAttribute = Namespace + "AllowNullAttribute";
+		private const string AlwaysAssignedValueAttribute = Namespace + "AlwaysAssignedValueAttribute";
+		private const string IgnoreNotNullErrorsAttribute = Namespace + "IgnoreNotNullErrorsAttribute";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 			=> ImmutableArray.Create( Diagnostics.NullPassedToNotNullParameter );
@@ -59,21 +59,17 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			}
 
 			// Check to see if errors are being ignored
-			IEnumerable<AttributeListSyntax> attributeLists = null;
 			var methodDeclaration = GetAncestorNodeOfType<BaseMethodDeclarationSyntax>( invocation );
 			if( methodDeclaration != null ) {
-				attributeLists = methodDeclaration.AttributeLists;
-			} else {
-				var classDeclaration = GetAncestorNodeOfType<ClassDeclarationSyntax>( invocation );
-				if( classDeclaration != null ) {
-					attributeLists = classDeclaration.AttributeLists;
-				}
+				IMethodSymbol methodSymbol = context.SemanticModel.GetDeclaredSymbol( methodDeclaration );
+				if( SymbolHasAttribute( methodSymbol, IgnoreNotNullErrorsAttribute ) ) {
+					return;
+				};
 			}
-			if( attributeLists != null ) {
-				bool ignoreErrors = attributeLists
-					.SelectMany( x => x.Attributes )
-					.Any( x => x.Name.ToString() == IgnoreNotNullErrorsAttribute );
-				if( ignoreErrors ) {
+			var classDeclaration = GetAncestorNodeOfType<TypeDeclarationSyntax>( invocation );
+			if( classDeclaration != null ) {
+				INamedTypeSymbol classSymbol = context.SemanticModel.GetDeclaredSymbol( classDeclaration );
+				if( SymbolHasAttribute( classSymbol, IgnoreNotNullErrorsAttribute ) ) {
 					return;
 				}
 			}
@@ -390,12 +386,12 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 
 			// See if it has a "AlwaysAssignedValue" attribute
 			var methodDeclaration = GetAncestorNodeOfType<BaseMethodDeclarationSyntax>( declaringBlock );
-			bool hasAlwaysAssignedAttribute = methodDeclaration.AttributeLists
-				.SelectMany( x => x.Attributes )
-				.Where( x => x.Name.ToString() == AlwaysAssignedValueAttribute )
-				.Select( x => x.ArgumentList.Arguments.First().Expression )
-				.OfType<LiteralExpressionSyntax>()
-				.Any( x => x.Token.ValueText == variable.Name );
+			IMethodSymbol methodSymbol = semanticModel.GetDeclaredSymbol( methodDeclaration );
+			bool hasAlwaysAssignedAttribute = SymbolHasAttribute(
+					methodSymbol,
+					AlwaysAssignedValueAttribute,
+					variable.Name
+				);
 
 			if( hasAlwaysAssignedAttribute ) {
 				return true;
@@ -501,17 +497,39 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				return notNullTypeCache[paramType];
 			}
 
-			bool isNotNull = AttributeListContains( paramType.GetAttributes(), NotNullTypeAttribute );
+			bool isNotNull = SymbolHasAttribute( paramType, NotNullTypeAttribute );
 			notNullTypeCache[paramType] = isNotNull;
 			return isNotNull;
 		}
 
+		private static bool SymbolHasAttribute(
+			ISymbol symbol,
+			string attributeClassName,
+			string expectedArgumentValue = null
+		) {
+			return AttributeListContains(
+					symbol.GetAttributes(),
+					attributeClassName,
+					expectedArgumentValue
+				);
+		}
+
 		private static bool AttributeListContains(
 			ImmutableArray<AttributeData> attributes,
-			string attributeClassName
+			string attributeClassName,
+			string expectedArgumentValue = null
 		) {
 			return attributes.Length > 0
-				&& attributes.Any( x => x.AttributeClass.ToString() == attributeClassName );
+				&& attributes.Any(
+					x => x.AttributeClass.ToString() == attributeClassName
+						&& (
+							expectedArgumentValue == null 
+							|| (
+								x.ConstructorArguments.Length >= 1
+								&& x.ConstructorArguments[0].Value.ToString() == expectedArgumentValue
+							)
+						)
+				);
 		}
 
 	}
