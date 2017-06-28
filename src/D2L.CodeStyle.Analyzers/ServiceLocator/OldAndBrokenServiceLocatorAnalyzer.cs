@@ -31,6 +31,10 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 				return;
 			}
 
+			if( IsAssemblyWhitelisted( context.Compilation.AssemblyName ) ) {
+				return;
+			}
+
 			//Prevent static usage of OldAndBrokenServiceLocator
 			//For example, OldAndBrokenServiceLocator.Instance.Get<IFoo>()
 			context.RegisterSyntaxNodeAction(
@@ -55,10 +59,6 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 			}
 
 			if (disallowedTypes.Contains( actualType )) {
-				if( IsAssemblyWhitelisted( context.Compilation.AssemblyName ) ) {
-					return;
-				}
-				
 				context.ReportDiagnostic(
 					Diagnostic.Create( Diagnostics.OldAndBrokenLocatorIsObsolete, context.Node.GetLocation() )
 				);
