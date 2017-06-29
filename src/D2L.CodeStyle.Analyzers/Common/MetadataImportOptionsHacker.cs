@@ -13,6 +13,16 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			LazyThreadSafetyMode.ExecutionAndPublication
 		);
 
+		/// <summary>
+		/// This method modifies the compilation using reflection to import all 
+		/// metadata. We do this because analyzers can behave differently depenending
+		/// on what context they are running in (see 
+		/// https://github.com/dotnet/roslyn/issues/20373). 
+		/// </summary>
+		/// <remarks>
+		/// If the issue linked to above is resolved correctly, then this hack
+		/// may no longer be necessary, and we can feel free to delete it.
+		/// </remarks>
 		internal static void HackImportAllMetadata( this Compilation compilation) {
 			var options = compilation.Options;
 
@@ -30,6 +40,11 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			metadataImportOptionsProperty.SetValue( options, s_metadataImportOptionsAll.Value );
 		}
 
+		/// <summary>
+		/// Throws if the compilation is not configured to import all metadata.
+		/// See <see cref="HackImportAllMetadata"/> for additional information.
+		/// </summary>
+		/// <param name="compilation"></param>
 		internal static void ThrowIfNotImportingAllMetadata( this Compilation compilation ) {
 			var options = compilation.Options;
 
