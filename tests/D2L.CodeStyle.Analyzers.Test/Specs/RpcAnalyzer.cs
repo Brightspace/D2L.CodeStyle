@@ -82,7 +82,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 		// The first argument must be wither IRpcContext, IRpcPostContext or IRpcPostContextBase
 
 		[Rpc]
-		/* RpcContextFirstArgument */ public static void MissingFirstArgument() /**/ { }
+		public static void MissingFirstArgument /* RpcContextFirstArgument */ () /**/ { }
 
 		[Rpc]
 		public static void BadFirstArgument( /* RpcContextFirstArgument */ int x /**/ ) { }
