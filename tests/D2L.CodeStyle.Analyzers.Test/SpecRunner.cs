@@ -17,6 +17,23 @@ using NUnit.Framework;
 namespace D2L.CodeStyle.Analyzers {
 	[TestFixtureSource(nameof(m_specNames))]
 	internal sealed class Spec {
+		/// <summary>
+		/// Compares diagnostics based on their Id and location
+		/// </summary>
+		private sealed class DiagnosticComparer : IEqualityComparer<Diagnostic> {
+			public static DiagnosticComparer Instance = new DiagnosticComparer();
+
+			bool IEqualityComparer<Diagnostic>.Equals( Diagnostic x, Diagnostic y ) {
+				return x.Id == y.Id && x.Location == y.Location;
+			}
+
+			int IEqualityComparer<Diagnostic>.GetHashCode( Diagnostic diag ) {
+				var hashCode = diag.GetHashCode();
+				hashCode = ( hashCode * 397 ) ^ diag.Location.GetHashCode();
+				return hashCode;
+			}
+		}
+
 		private static readonly IEnumerable m_specNames;
 		private static readonly ImmutableDictionary<string, string> m_specSource;
 
