@@ -71,5 +71,15 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			isEnabledByDefault:true,
 			description: "Statics.Audited and Statics.Unaudited are mutually exclusive. Remove at least one of them."
 		);
+
+		public static readonly DiagnosticDescriptor OldAndBrokenLocatorIsObsolete = new DiagnosticDescriptor(
+			id: "D2L0009",
+			title: "OldAndBrokenServiceLocator should be avoided.  Use dependency injection instead.",
+			messageFormat: "OldAndBrokenServiceLocator should be avoided.  Use dependency injection instead.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "OldAndBrokenServiceLocator should be avoided.  Use dependency injection instead."
+		);
 	}
 }
