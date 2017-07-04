@@ -25,34 +25,33 @@ namespace D2L.CodeStyle.Analyzers {
 		private readonly ImmutableArray<Diagnostic> m_actualDiagnostics;
 		private readonly ImmutableHashSet<Diagnostic> m_unexpectedDiagnostics;
 
+		/// <summary>
+		/// Loads all the source code to all the spec files.
+		/// We need this to happen in the static constructor because
+		/// TestFixtureSource needs this data to be available prior to fixture
+		/// instantiation.
+		/// Compilation doesn't happen here to avoid unexpected errors taking
+		/// down all tests and better parallelizability.
+		/// </summary>
 		static Spec() {
-			var assembly = Assembly.GetExecutingAssembly();
-
 			var builder = ImmutableDictionary.CreateBuilder<string, string>();
-			foreach( var specFilePath in assembly.GetManifestResourceNames() ) {
-				if( !specFilePath.EndsWith( ".cs" ) ) {
-					continue;
-				}
 
-				string specName = Regex.Replace(
-					specFilePath,
-					@"^.*\.(?<specName>[^\.]*)\.cs$",
-					@"${specName}"
-				);
-
-				string source;
-
-				using( var specStream = new StreamReader( assembly.GetManifestResourceStream( specFilePath ) ) ) {
-					source = specStream.ReadToEnd();
-				}
-
-				builder[specName] = source;
-			}
+			LoadAllSpecSourceCode( builder );
 
 			m_specSource = builder.ToImmutable();
+
 			m_specNames = m_specSource.Keys;
 		}
 
+		/// <summary>
+		/// Each spec causes a single compilation to happen. This constructor
+		/// extracts all the information needed for the assertions in the
+		/// other test cases. It is called by NUnit due to the
+		/// TestFixtureSource attribute.
+		/// </summary>
+		/// <param name="specName">
+		/// The name of the spec to run (its source code is in m_specSource.)
+		/// </param>
 		public Spec( string specName ) {
 			var source = m_specSource[specName];
 			var analyzer = GetAnalyzerNameFromSpec( source );
@@ -90,6 +89,39 @@ namespace D2L.CodeStyle.Analyzers {
 				m_expectedDiagnostics.Length,
 				m_actualDiagnostics.Length
 			);
+		}
+
+		/// <summary>
+		/// Loads the source to all specs stored in resources into an IDictionary
+		/// </summary>
+		/// <param name="specNameToSourceCode">
+		/// Dictionary to cache source in
+		/// </param>
+		private static void LoadAllSpecSourceCode(
+			IDictionary<string, string> specNameToSourceCode
+		) {
+			var assembly = Assembly.GetExecutingAssembly();
+
+			foreach( var specFilePath in assembly.GetManifestResourceNames() ) {
+				if( !specFilePath.EndsWith( ".cs" ) ) {
+					continue;
+				}
+
+				// The file foo/bar.baz.cs has specName bar.baz
+				string specName = Regex.Replace(
+					specFilePath,
+					@"^.*\.(?<specName>[^\.]*)\.cs$",
+					@"${specName}"
+				);
+
+				string source;
+
+				using( var specStream = new StreamReader( assembly.GetManifestResourceStream( specFilePath ) ) ) {
+					source = specStream.ReadToEnd();
+				}
+
+				specNameToSourceCode[specName] = source;
+			}
 		}
 
 		private DiagnosticAnalyzer GetAnalyzerNameFromSpec( string source ) {
