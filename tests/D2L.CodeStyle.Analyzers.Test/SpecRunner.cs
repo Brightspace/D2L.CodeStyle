@@ -26,31 +26,12 @@ namespace D2L.CodeStyle.Analyzers {
 		private readonly ImmutableHashSet<Diagnostic> m_unexpectedDiagnostics;
 
 		static Spec() {
-			var assembly = Assembly.GetExecutingAssembly();
-
 			var builder = ImmutableDictionary.CreateBuilder<string, string>();
-			foreach( var specFilePath in assembly.GetManifestResourceNames() ) {
-				if( !specFilePath.EndsWith( ".cs" ) ) {
-					continue;
-				}
 
-				// The file foo/bar.baz.cs has specName bar.baz
-				string specName = Regex.Replace(
-					specFilePath,
-					@"^.*\.(?<specName>[^\.]*)\.cs$",
-					@"${specName}"
-				);
-
-				string source;
-
-				using( var specStream = new StreamReader( assembly.GetManifestResourceStream( specFilePath ) ) ) {
-					source = specStream.ReadToEnd();
-				}
-
-				builder[specName] = source;
-			}
+			LoadAllSpecSourceCode( builder );
 
 			m_specSource = builder.ToImmutable();
+
 			m_specNames = m_specSource.Keys;
 		}
 
@@ -91,6 +72,31 @@ namespace D2L.CodeStyle.Analyzers {
 				m_expectedDiagnostics.Length,
 				m_actualDiagnostics.Length
 			);
+		}
+
+		private static void LoadAllSpecSourceCode( IDictionary<string, string> specNameToSourceCode ) {
+			var assembly = Assembly.GetExecutingAssembly();
+
+			foreach( var specFilePath in assembly.GetManifestResourceNames() ) {
+				if( !specFilePath.EndsWith( ".cs" ) ) {
+					continue;
+				}
+
+				// The file foo/bar.baz.cs has specName bar.baz
+				string specName = Regex.Replace(
+					specFilePath,
+					@"^.*\.(?<specName>[^\.]*)\.cs$",
+					@"${specName}"
+				);
+
+				string source;
+
+				using( var specStream = new StreamReader( assembly.GetManifestResourceStream( specFilePath ) ) ) {
+					source = specStream.ReadToEnd();
+				}
+
+				specNameToSourceCode[specName] = source;
+			}
 		}
 
 		private DiagnosticAnalyzer GetAnalyzerNameFromSpec( string source ) {
