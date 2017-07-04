@@ -34,6 +34,7 @@ namespace D2L.CodeStyle.Analyzers {
 					continue;
 				}
 
+				// The file foo/bar.baz.cs has specName bar.baz
 				string specName = Regex.Replace(
 					specFilePath,
 					@"^.*\.(?<specName>[^\.]*)\.cs$",
