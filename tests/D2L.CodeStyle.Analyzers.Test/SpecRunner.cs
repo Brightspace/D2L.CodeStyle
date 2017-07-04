@@ -25,6 +25,14 @@ namespace D2L.CodeStyle.Analyzers {
 		private readonly ImmutableArray<Diagnostic> m_actualDiagnostics;
 		private readonly ImmutableHashSet<Diagnostic> m_unexpectedDiagnostics;
 
+		/// <summary>
+		/// Loads all the source code to all the spec files.
+		/// We need this to happen in the static constructor because
+		/// TestFixtureSource needs this data to be available prior to fixture
+		/// instantiation.
+		/// Compilation doesn't happen here to avoid unexpected errors taking
+		/// down all tests and better parallelizability.
+		/// </summary>
 		static Spec() {
 			var builder = ImmutableDictionary.CreateBuilder<string, string>();
 
@@ -35,6 +43,15 @@ namespace D2L.CodeStyle.Analyzers {
 			m_specNames = m_specSource.Keys;
 		}
 
+		/// <summary>
+		/// Each spec causes a single compilation to happen. This constructor
+		/// extracts all the information needed for the assertions in the
+		/// other test cases. It is called by NUnit due to the
+		/// TestFixtureSource attribute.
+		/// </summary>
+		/// <param name="specName">
+		/// The name of the spec to run (its source code is in m_specSource.)
+		/// </param>
 		public Spec( string specName ) {
 			var source = m_specSource[specName];
 			var analyzer = GetAnalyzerNameFromSpec( source );
@@ -74,7 +91,15 @@ namespace D2L.CodeStyle.Analyzers {
 			);
 		}
 
-		private static void LoadAllSpecSourceCode( IDictionary<string, string> specNameToSourceCode ) {
+		/// <summary>
+		/// Loads the source to all specs stored in resources into an IDictionary
+		/// </summary>
+		/// <param name="specNameToSourceCode">
+		/// Dictionary to cache source in
+		/// </param>
+		private static void LoadAllSpecSourceCode(
+			IDictionary<string, string> specNameToSourceCode
+		) {
 			var assembly = Assembly.GetExecutingAssembly();
 
 			foreach( var specFilePath in assembly.GetManifestResourceNames() ) {
