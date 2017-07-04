@@ -31,7 +31,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Common\Diagnostics.cs" />
-    <Compile Include="Common\MetadataImportOptionsHacker.cs" />
     <Compile Include="Common\MutabilityInspectionResult.cs" />
     <Compile Include="Common\MutabilityInspectionResultFormatter.cs" />
     <Compile Include="Common\MutabilityInspector.cs" />
