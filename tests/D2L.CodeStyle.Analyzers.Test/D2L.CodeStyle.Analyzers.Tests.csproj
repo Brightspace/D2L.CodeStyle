@@ -42,11 +42,13 @@
     <Compile Include="Common\TestBase.cs" />
     <Compile Include="Common\TypeSymbolExtensionsTests.cs" />
     <Compile Include="Common\UtilsTests.cs" />
+    <Compile Include="Contracts\NotNullAnalyzerTests.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzerTests.cs" />
     <EmbeddedResource Include="Specs\RpcAnalyzer.cs" />
     <Compile Include="RpcDependencies\RpcDependencyAnalyzerTests.cs" />
     <Compile Include="SpecRunner.cs" />
     <EmbeddedResource Include="Specs\UnsafeStaticsAnalyzer.cs" />
+    <EmbeddedResource Include="Specs\NotNullAnalyzer.cs" />
     <Compile Include="UnsafeSingletons\UnsafeSingletonsAnalyzerTests.cs" />
     <Compile Include="UnsafeStatics\UnsafeStaticsAnalyzerTests.cs" />
     <Compile Include="Verifiers\DiagnosticResult.cs" />
@@ -57,6 +59,10 @@
     <ProjectReference Include="..\..\src\D2L.CodeStyle.Analyzers\D2L.CodeStyle.Analyzers.csproj">
       <Project>{FE7608CD-C8B1-43DD-BBCC-9B1917C9CA73}</Project>
       <Name>D2L.CodeStyle.Analyzers</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\D2L.CodeStyle.Annotations\D2L.CodeStyle.Annotations.csproj">
+      <Project>{1812AF7E-59B1-4764-8090-F84446A71C4E}</Project>
+      <Name>D2L.CodeStyle.Annotations</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
