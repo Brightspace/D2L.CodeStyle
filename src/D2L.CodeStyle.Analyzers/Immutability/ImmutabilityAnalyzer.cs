@@ -13,15 +13,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private readonly MutabilityInspector m_immutabilityInspector = new MutabilityInspector();
 
 		public override void Initialize( AnalysisContext context ) {
-			context.RegisterCompilationStartAction( ctx => {
-				ctx.Compilation.HackImportAllMetadata();
-				ctx.Compilation.ThrowIfNotImportingAllMetadata();
-
-				ctx.RegisterSyntaxNodeAction(
-					AnalyzeClass,
-					SyntaxKind.ClassDeclaration
-				);
-			} );
+			context.RegisterSyntaxNodeAction(
+				AnalyzeClass,
+				SyntaxKind.ClassDeclaration
+			);
 		}
 
 		private void AnalyzeClass( SyntaxNodeAnalysisContext context ) {
