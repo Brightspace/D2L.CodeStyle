@@ -180,15 +180,15 @@ namespace D2L.CodeStyle.Analyzers {
 			var solution = new AdhocWorkspace().CurrentSolution
 				.AddProject( projectId, specName, specName, LanguageNames.CSharp )
 
+				// mscorlib
 				.AddMetadataReference(
 					projectId,
-					// mscorlinb
 					MetadataReference
 						.CreateFromFile( typeof( object ).Assembly.Location ) )
 
+				// system.core
 				.AddMetadataReference(
 					projectId,
-					// system.core
 					MetadataReference
 						.CreateFromFile( typeof( Enumerable ).Assembly.Location ) )
 
