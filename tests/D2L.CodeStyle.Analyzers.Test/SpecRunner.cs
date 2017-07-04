@@ -36,10 +36,11 @@ namespace D2L.CodeStyle.Analyzers {
 
 		private static readonly IEnumerable m_specNames;
 		private static readonly ImmutableDictionary<string, string> m_specSource;
+		private static readonly ImmutableDictionary<string, DiagnosticDescriptor> m_possibleDiagnostics;
 
 		private readonly ImmutableArray<Diagnostic> m_expectedDiagnostics;
 		private readonly ImmutableArray<Diagnostic> m_actualDiagnostics;
-		private readonly ImmutableHashSet<Diagnostic> m_unexpectedDiagnostics;
+		private readonly ImmutableHashSet<Diagnostic> m_matchedDiagnostics;
 
 		/// <summary>
 		/// Loads all the source code to all the spec files.
@@ -57,6 +58,18 @@ namespace D2L.CodeStyle.Analyzers {
 			m_specSource = builder.ToImmutable();
 
 			m_specNames = m_specSource.Keys;
+
+			m_possibleDiagnostics = typeof( Diagnostics )
+				.GetFields()
+				.Select( f => new {
+					f.Name,
+					Value = (DiagnosticDescriptor)f.GetValue( null )
+				} )
+				.ToImmutableDictionary( nv => nv.Name, nv => nv.Value );
+
+			foreach( var diag in m_possibleDiagnostics ) {
+				Assert.NotNull( diag.Value, $"Common.Diagnostics.{diag.Key} must be of type DiagnosticDescriptor" );
+			}
 		}
 
 		/// <summary>
@@ -70,25 +83,31 @@ namespace D2L.CodeStyle.Analyzers {
 		/// </param>
 		public Spec( string specName ) {
 			var source = m_specSource[specName];
-			var analyzer = GetAnalyzerNameFromSpec( source );
-			var compilation = GetCompilationForSource( specName, source );
-			m_actualDiagnostics = GetActualDiagnostics( compilation, analyzer );
-			m_expectedDiagnostics = GetExpectedDiagnostics( (CompilationUnitSyntax)compilation.SyntaxTrees.First().GetRoot() );
 
-			// TODO: implement by diffing m_actualDiagnostics and
-			// m_expectedDiagnostics. diagnostics should be matched up by start
-			// location, end location if necessary and code if necessary. Prefer
-			// to match up as little as necessary and assert equality for the
-			// rest to provide best dev UX.
-			// ---
-			// This is done in the constructor because both the
-			// NoUnexpectedDiagnostics and ExpectedDiagnostics tests use it.
-			m_unexpectedDiagnostics = ImmutableHashSet<Diagnostic>.Empty;
+			var analyzer = GetAnalyzerNameFromSpec( source );
+
+			var compilation = GetCompilationForSource( specName, source );
+
+			m_actualDiagnostics = GetActualDiagnostics( compilation, analyzer );
+
+			m_expectedDiagnostics = GetExpectedDiagnostics(
+				(CompilationUnitSyntax)compilation.SyntaxTrees.First().GetRoot()
+			).ToImmutableArray();
+
+			m_matchedDiagnostics = m_actualDiagnostics
+				.Intersect(
+					m_expectedDiagnostics,
+					DiagnosticComparer.Instance
+				).ToImmutableHashSet();
 		}
 
 		[Test]
 		public void NoUnexpectedDiagnostics() {
-			CollectionAssert.IsEmpty( m_unexpectedDiagnostics );
+			var unexpectedDiagnostics = m_expectedDiagnostics
+				.Where( d => !m_matchedDiagnostics.Contains( d ) )
+				.ToImmutableArray();
+
+			CollectionAssert.IsEmpty( unexpectedDiagnostics );
 		}
 
 		// TODO: investigate: can/should this be TestCaseSource? Maybe it'd be
@@ -99,12 +118,11 @@ namespace D2L.CodeStyle.Analyzers {
 
 		[Test]
 		public void ExpectedDiagnostics() {
-			// TODO: this isn't the correct assertion. It is weaker than what
-			// we should be asserting.
-			Assert.AreEqual(
-				m_expectedDiagnostics.Length,
-				m_actualDiagnostics.Length
-			);
+			var missingDiagnostics = m_actualDiagnostics
+				.Where( d => !m_matchedDiagnostics.Contains( d ) )
+				.ToImmutableArray();
+
+			CollectionAssert.IsEmpty( missingDiagnostics );
 		}
 
 		/// <summary>
@@ -143,23 +161,17 @@ namespace D2L.CodeStyle.Analyzers {
 		private DiagnosticAnalyzer GetAnalyzerNameFromSpec( string source ) {
 			var root = (CompilationUnitSyntax)CSharpSyntaxTree.ParseText( source ).GetRoot();
 
-			string rawComment = root.GetLeadingTrivia()
-				.First(
-					t => t.Kind() == SyntaxKind.SingleLineCommentTrivia
-					|| t.Kind() == SyntaxKind.MultiLineCommentTrivia )
-				.ToString();
+			var header = root
+				.GetLeadingTrivia()
+				.First( t => t.Kind() == SyntaxKind.SingleLineCommentTrivia );
 
-			var settings =
-				Regex.Split( GetCommentContents( rawComment ), @"\r?\n" )
-				.Select( l => {
-					var parts = l.Split( new[] { ':' }, 2 );
-					return new KeyValuePair<string, string>( parts[0].Trim(), parts[1].Trim() );
-				} )
-				.ToImmutableDictionary( StringComparer.InvariantCultureIgnoreCase );
+			Assert.NotNull( header, "There must be a single-line comment at the start of the file of the form \"analyzer: <type of analyzer to use in this spec>\"." );
 
-			Assert.True( settings.ContainsKey( "analyzer" ), "spec must start with a comment of the form \"// analyzer: <type of analyzer to test>\"" );
+			var headerContents = GetSingleLineCommentContents( header );
 
-			string analyzerName = settings["analyzer"];
+			StringAssert.StartsWith( "analyzer: ", headerContents, "First single-line comment must be of the form \"analyzer: <type of analyzer to use in this spec>\"." );
+
+			string analyzerName = headerContents.Substring( "analyzer: ".Length ).Trim();
 
 			var type = Type.GetType( analyzerName + ", D2L.CodeStyle.Analyzers" );
 
@@ -179,14 +191,102 @@ namespace D2L.CodeStyle.Analyzers {
 				.ToImmutableArray();
 		}
 
-		private static ImmutableArray<Diagnostic> GetExpectedDiagnostics( CompilationUnitSyntax root ) {
-			// TODO: this is full of garbage, only important thing right now is its output length is correct
-			return root.DescendantTrivia()
-				.Where( t => t.Kind() == SyntaxKind.MultiLineCommentTrivia )
-				.Select( c => GetCommentContents( c.ToString() ) )
-				.Where( c => c != "" )
-				.Select( c => Diagnostic.Create( Diagnostics.RpcContextFirstArgument, Location.None ) )
-				.ToImmutableArray();
+		private static IEnumerable<Tuple<SyntaxTrivia, SyntaxTrivia>> GroupCommentsIntoAdjacentPairs(
+			IEnumerable<SyntaxTrivia> trivia
+		) {
+			using( var it = trivia.GetEnumerator() ) {
+				while(true ) {
+					if ( !it.MoveNext() ) {
+						yield break;
+					}
+
+					var first = it.Current;
+
+					if ( !it.MoveNext() ) {
+						Assert.Fail( $"Missing end delimiter for comment at {first.GetLocation()}" );
+					}
+
+					yield return new Tuple<SyntaxTrivia, SyntaxTrivia>(
+						first,
+						it.Current
+					);
+				}
+			}
+		}
+
+		private static string GetSingleLineCommentContents(
+			SyntaxTrivia comment
+		) {
+			string contents = comment.ToString().Trim();
+
+			Assert.AreEqual( contents.Substring( 0, 2 ), "//" );
+			contents = contents.Substring( 2 );
+
+			return contents.Trim();
+		}
+
+		private static string GetMultiLineCommentContents(
+			SyntaxTrivia comment
+		) {
+			string contents = comment.ToString().Trim();
+
+			Assert.AreEqual( "/*", contents.Substring( 0, 2 ) );
+			contents = contents.Substring( 2 );
+
+			Assert.AreEqual( "*/", contents.Substring( contents.Length - 2, 2 ) );
+			contents = contents.Substring( 0, contents.Length - 2 );
+
+			return contents.Trim();
+		}
+
+		private static IEnumerable<Diagnostic> GetExpectedDiagnostics( CompilationUnitSyntax root ) {
+			var multilineComments = root
+				.DescendantTrivia()
+				.Where( c => c.Kind() == SyntaxKind.MultiLineCommentTrivia );
+
+			var commentPairs = GroupCommentsIntoAdjacentPairs(
+				multilineComments
+			);
+
+			foreach( var comments in commentPairs ) {
+				var start = comments.Item1;
+				var end = comments.Item2;
+
+				var startContents = GetMultiLineCommentContents( start );
+				var endContents = GetMultiLineCommentContents( end );
+
+				// Every assertion's start comment must map to a diagnostic
+				// defined in Common.Diagnostics
+				if ( !m_possibleDiagnostics.ContainsKey( startContents ) ) {
+					Assert.Fail( $"Comment at {start.GetLocation()} doesn't map to a diagnostic defined in Common.Diagnostic" );
+					
+				}
+				// Every assertion-comment pair starts with a comment
+				// containing the name of a diagnostic and then an empty
+				// (multiline) comment to mark the end of the diagnostic.
+				// Note that this means that assertions cannot overlap.
+				if( endContents != "" ) {
+					Assert.Fail( $"Expected empty comment at {end.GetLocation()} to end comment at {start.GetLocation()}, got {end}" );
+				}
+
+				// The diagnostic must be between the two delimiting comments,
+				// with one leading and trailing space inside the delimiters.
+				// i.e.    /* Foo */ abcdef hijklmno pqr /**/
+				//                   -------------------
+				//                      ^ expected Foo diagnostic
+				//
+				// TODO: it would be nice to do fuzzier matching (e.g. ignore
+				// leading and trailing whitespace inside delimiters.) 
+				var diagStart = start.GetLocation().SourceSpan.End + 1;
+				var diagEnd = end.GetLocation().SourceSpan.Start - 1;
+				Assert.Less( diagStart, diagEnd );
+				var diagSpan = TextSpan.FromBounds( diagStart, diagEnd );
+
+				yield return Diagnostic.Create(
+					m_possibleDiagnostics[startContents],
+					Location.Create( root.SyntaxTree, diagSpan )
+				);
+			}
 		}
 
 		private static Compilation GetCompilationForSource( string specName, string source ) {
@@ -213,11 +313,6 @@ namespace D2L.CodeStyle.Analyzers {
 
 			return solution.Projects.First()
 				.GetCompilationAsync().Result;
-		}
-
-		private static string GetCommentContents( string rawComment ) {
-			// real ghetto
-			return Regex.Replace( rawComment.Trim(), @"^(//|/\*)(?<contents>[^*]*)(\*/)*$", "${contents}" ).Trim();
 		}
 	}
 }
