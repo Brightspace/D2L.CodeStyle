@@ -8,7 +8,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 	[TestFixture]
 	public class MutabilityInspectorTests {
 
-		private readonly MutabilityInspector m_inspector = new MutabilityInspector();
+		private readonly MutabilityInspector m_inspector = new MutabilityInspector( KnownImmutableTypes.Default );
 
 		[Test]
 		public void InspectType_PrimitiveType_NotMutable() {

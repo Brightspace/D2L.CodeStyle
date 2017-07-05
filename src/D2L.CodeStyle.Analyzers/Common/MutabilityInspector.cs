@@ -14,36 +14,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		IgnoreImmutabilityAttribute = 2,
 	}
 
-	public sealed class MutabilityInspector {
-
-		/// <summary>
-		/// A list of known immutable types
-		/// </summary>
-		private static readonly ImmutableHashSet<string> KnownImmutableTypes = new HashSet<string> {
-			"count4net.IRateCounter",
-			"count4net.IStatCounter",
-			"count4net.IValueCounter",
-			"count4net.Writers.DurationCounter",
-			"log4net.ILog",
-			"Newtonsoft.Json.JsonSerializer",
-			"System.ComponentModel.TypeConverter",
-			"System.DateTime",
-			"System.Drawing.Size", // only safe because it's a struct with primitive fields
-			"System.Guid",
-			"System.Reflection.ConstructorInfo",
-			"System.Reflection.FieldInfo",
-			"System.Reflection.MemberInfo",
-			"System.Reflection.MethodInfo",
-			"System.Reflection.PropertyInfo",
-			"System.Text.RegularExpressions.Regex",
-			"System.TimeSpan",
-			"System.Type",
-			"System.Uri",
-			"System.String",
-			"System.Version",
-			"System.Workflow.ComponentModel.DependencyProperty",
-			"System.Xml.Serialization.XmlSerializer"
-		}.ToImmutableHashSet();
+	internal sealed class MutabilityInspector {
 
 		/// <summary>
 		/// A list of marked immutable types owned externally.
@@ -74,6 +45,14 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			[ "System.Tuple" ] = new[] { "Item1", "Item2", "Item3", "Item4", "Item5", "Item6" }
 		}.ToImmutableDictionary();
 
+		private readonly KnownImmutableTypes _knownImmutableTypes;
+
+		internal MutabilityInspector(
+			KnownImmutableTypes knownImmutableTypes
+		) {
+			_knownImmutableTypes = knownImmutableTypes;
+		}
+
 		/// <summary>
 		/// Determine if a given type is mutable.
 		/// </summary>
@@ -98,7 +77,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					+ "are referenced, including transitive dependencies." );
 			}
 
-			if( IsTypeKnownImmutable( type ) ) {
+			if( _knownImmutableTypes.IsTypeKnownImmutable( type ) ) {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
@@ -237,18 +216,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					// we've got a member (event, etc.) that we can't currently be smart about, so fail
 					return MutabilityInspectionResult.Mutable( symbol.Name, null, MutabilityTarget.Member, MutabilityCause.IsPotentiallyMutable );
 			}
-		}
-
-		private bool IsTypeKnownImmutable( ITypeSymbol type ) {
-			if( type.IsPrimitive() ) {
-				return true;
-			}
-
-			if( KnownImmutableTypes.Contains( type.GetFullTypeName() ) ) {
-				return true;
-			}
-
-			return false;
 		}
 
 		public bool IsTypeMarkedImmutable( ITypeSymbol symbol ) {

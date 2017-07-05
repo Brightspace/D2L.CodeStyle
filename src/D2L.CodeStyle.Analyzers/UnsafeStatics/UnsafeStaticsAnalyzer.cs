@@ -22,7 +22,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			Diagnostics.UnnecessaryStaticAnnotation
 		);
 
-		private readonly MutabilityInspector m_immutabilityInspector = new MutabilityInspector();
+		private readonly MutabilityInspector m_immutabilityInspector = new MutabilityInspector( KnownImmutableTypes.Default );
 		private readonly Utils m_utils = new Utils();
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
 

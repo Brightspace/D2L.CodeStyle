@@ -10,7 +10,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 	public sealed class ImmutabilityAnalyzer : DiagnosticAnalyzer {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( Diagnostics.ImmutableClassIsnt );
 
-		private readonly MutabilityInspector m_immutabilityInspector = new MutabilityInspector();
+		private readonly MutabilityInspector m_immutabilityInspector = new MutabilityInspector( KnownImmutableTypes.Default );
 
 		public override void Initialize( AnalysisContext context ) {
 			context.RegisterSyntaxNodeAction(
