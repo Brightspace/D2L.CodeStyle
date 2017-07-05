@@ -28,7 +28,7 @@ namespace D2L.CodeStyle.Analyzers {
 			}
 
 			int IEqualityComparer<Diagnostic>.GetHashCode( Diagnostic diag ) {
-				var hashCode = diag.GetHashCode();
+				var hashCode = diag.Id.GetHashCode();
 				hashCode = ( hashCode * 397 ) ^ diag.Location.GetHashCode();
 				return hashCode;
 			}
