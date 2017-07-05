@@ -215,7 +215,7 @@ namespace D2L.CodeStyle.Analyzers {
 		) {
 			string contents = comment.ToString().Trim();
 
-			Assert.AreEqual( contents.Substring( 0, 2 ), "//" );
+			StringAssert.StartsWith( "//", contents ); // should never fail
 			contents = contents.Substring( 2 );
 
 			return contents.Trim();
@@ -226,10 +226,10 @@ namespace D2L.CodeStyle.Analyzers {
 		) {
 			string contents = comment.ToString().Trim();
 
-			Assert.AreEqual( "/*", contents.Substring( 0, 2 ) );
+			StringAssert.StartsWith( "/*", contents ); // should never fail
 			contents = contents.Substring( 2 );
 
-			Assert.AreEqual( "*/", contents.Substring( contents.Length - 2, 2 ) );
+			StringAssert.EndsWith( "*/", contents ); // should never fail
 			contents = contents.Substring( 0, contents.Length - 2 );
 
 			return contents.Trim();
