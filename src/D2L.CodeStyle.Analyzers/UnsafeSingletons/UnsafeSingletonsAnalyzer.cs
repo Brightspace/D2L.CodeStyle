@@ -10,7 +10,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 	public sealed class UnsafeSingletonsAnalyzer : DiagnosticAnalyzer {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( Diagnostics.UnsafeSingletonField );
 
-		private readonly MutabilityInspector m_immutabilityInspector = new MutabilityInspector();
+		private readonly MutabilityInspector m_immutabilityInspector = new MutabilityInspector( KnownImmutableTypes.Default );
 		private readonly Utils m_utils = new Utils();
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
 
