@@ -21,7 +21,7 @@ namespace D2L.CodeStyle.Analyzers {
 		/// Compares diagnostics based on their Id and location
 		/// </summary>
 		private sealed class DiagnosticComparer : IEqualityComparer<Diagnostic> {
-			public static DiagnosticComparer Instance = new DiagnosticComparer();
+			public static readonly DiagnosticComparer Instance = new DiagnosticComparer();
 
 			bool IEqualityComparer<Diagnostic>.Equals( Diagnostic x, Diagnostic y ) {
 				return x.Id == y.Id && x.Location == y.Location;
