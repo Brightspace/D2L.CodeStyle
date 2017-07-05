@@ -104,8 +104,7 @@ namespace D2L.CodeStyle.Analyzers {
 		[Test]
 		public void NoUnexpectedDiagnostics() {
 			var unexpectedDiagnostics = m_actualDiagnostics
-				.Where( d => !m_matchedDiagnostics.Contains( d ) )
-				.ToImmutableArray();
+				.Where( d => !m_matchedDiagnostics.Contains( d ) );
 
 			CollectionAssert.IsEmpty( unexpectedDiagnostics );
 		}
@@ -119,8 +118,7 @@ namespace D2L.CodeStyle.Analyzers {
 		[Test]
 		public void ExpectedDiagnostics() {
 			var missingDiagnostics = m_expectedDiagnostics
-				.Where( d => !m_matchedDiagnostics.Contains( d ) )
-				.ToImmutableArray();
+				.Where( d => !m_matchedDiagnostics.Contains( d ) );
 
 			CollectionAssert.IsEmpty( missingDiagnostics );
 		}
