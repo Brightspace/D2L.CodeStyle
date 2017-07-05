@@ -63,12 +63,12 @@ namespace D2L.CodeStyle.Analyzers {
 				.GetFields()
 				.Select( f => new {
 					f.Name,
-					Value = (DiagnosticDescriptor)f.GetValue( null )
+					Value = f.GetValue( null ) as DiagnosticDescriptor
 				} )
 				.ToImmutableDictionary( nv => nv.Name, nv => nv.Value );
 
 			foreach( var diag in m_possibleDiagnostics ) {
-				Assert.NotNull( diag.Value, $"Common.Diagnostics.{diag.Key} must be of type DiagnosticDescriptor" );
+				Assert.NotNull( diag.Value, $"Common.Diagnostics.{diag.Key} must be of type DiagnosticDescriptor and not null" );
 			}
 		}
 
