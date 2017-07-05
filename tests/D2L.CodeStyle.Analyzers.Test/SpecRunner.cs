@@ -195,11 +195,7 @@ namespace D2L.CodeStyle.Analyzers {
 			IEnumerable<SyntaxTrivia> trivia
 		) {
 			using( var it = trivia.GetEnumerator() ) {
-				while(true ) {
-					if ( !it.MoveNext() ) {
-						yield break;
-					}
-
+				while( it.MoveNext() ) {
 					var first = it.Current;
 
 					if ( !it.MoveNext() ) {
