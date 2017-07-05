@@ -17,10 +17,6 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 
 		private const string Namespace = "D2L.CodeStyle.Annotations.Contract.";
 		private const string NotNullAttribute = Namespace + "NotNullAttribute";
-		private const string NotNullTypeAttribute = Namespace + "NotNullWhenParameterAttribute";
-		private const string AllowNullAttribute = Namespace + "AllowNullAttribute";
-		private const string AlwaysAssignedValueAttribute = Namespace + "AlwaysAssignedValueAttribute";
-		private const string IgnoreNotNullErrorsAttribute = Namespace + "IgnoreNotNullErrorsAttribute";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 			=> ImmutableArray.Create( Diagnostics.NullPassedToNotNullParameter );
@@ -33,14 +29,11 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 		public static void RegisterNotNullAnalyzer( CompilationStartAnalysisContext context ) {
 			// For caching if a method has any not-null parameters, and the which ones are
 			var notNullMethodCache = new ConcurrentDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>>();
-			// For caching is a type has [NotNullWhenParameter] applied
-			var notNullTypeCache = new ConcurrentDictionary<ITypeSymbol, bool>();
 
 			context.RegisterSyntaxNodeAction(
 					ctx => AnalyzeInvocation(
 							ctx,
-							notNullMethodCache,
-							notNullTypeCache
+							notNullMethodCache
 						),
 					SyntaxKind.InvocationExpression
 				);
@@ -48,29 +41,12 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 
 		private static void AnalyzeInvocation(
 			SyntaxNodeAnalysisContext context,
-			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache,
-			IDictionary<ITypeSymbol, bool> notNullTypeCache
+			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache
 		) {
 			SemanticModel semanticModel = context.SemanticModel;
 			var invocation = context.Node as InvocationExpressionSyntax;
 			if( invocation == null ) {
 				return;
-			}
-
-			// Check to see if errors are being ignored
-			var methodDeclaration = GetAncestorNodeOfType<BaseMethodDeclarationSyntax>( invocation );
-			if( methodDeclaration != null ) {
-				IMethodSymbol methodSymbol = semanticModel.GetDeclaredSymbol( methodDeclaration );
-				if( SymbolHasAttribute( methodSymbol, IgnoreNotNullErrorsAttribute ) ) {
-					return;
-				};
-			}
-			var classDeclaration = GetAncestorNodeOfType<TypeDeclarationSyntax>( invocation );
-			if( classDeclaration != null ) {
-				INamedTypeSymbol classSymbol = semanticModel.GetDeclaredSymbol( classDeclaration );
-				if( SymbolHasAttribute( classSymbol, IgnoreNotNullErrorsAttribute ) ) {
-					return;
-				}
 			}
 
 			var arguments = invocation.ArgumentList.Arguments;
@@ -85,7 +61,6 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 					invocation,
 					arguments,
 					notNullMethodCache,
-					notNullTypeCache,
 					out notNullArguments
 				);
 
@@ -95,6 +70,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 
 			// Using Lazy<T> so we don't do extra work if no arguments need to be analyzed, and only
 			// needs to be processed once per invocation, rather than per argument
+			var methodDeclaration = GetAncestorNodeOfType<BaseMethodDeclarationSyntax>( invocation );
 			var localVariables = new Lazy<ImmutableArray<ISymbol>>(
 					() => semanticModel.AnalyzeDataFlow( methodDeclaration.Body ).VariablesDeclared
 				);
@@ -139,11 +115,10 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			InvocationExpressionSyntax invocation,
 			SeparatedSyntaxList<ArgumentSyntax> arguments,
 			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache,
-			IDictionary<ITypeSymbol, bool> notNullTypeCache,
 			out IList<Tuple<ArgumentSyntax, IParameterSymbol>> notNullArguments
 		) {
 			IMethodSymbol invokedSymbol;
-			if( !TryGetInvokedSymbol( context, invocation, arguments, out invokedSymbol ) ) {
+			if( !TryGetInvokedSymbol( context, invocation, out invokedSymbol ) ) {
 				notNullArguments = null;
 				return false;
 			}
@@ -180,20 +155,8 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 					continue;
 				}
 
-				// Check if the parameter type is not allowed to be null
-				var paramAttributes = new Lazy<ImmutableArray<AttributeData>>( param.GetAttributes );
-
-				if( IsNotNullType( param.Type, notNullTypeCache ) ) {
-					if( !AttributeListContains( paramAttributes.Value, AllowNullAttribute ) ) {
-						notNullArguments.Add( new Tuple<ArgumentSyntax, IParameterSymbol>( arguments[i], param ) );
-					}
-
-					// Ignore any [NotNull] as either the type makes it implicit, or [AllowNull] overrides it
-					continue;
-				}
-
 				// Check if the parameter has [NotNull]
-				if( AttributeListContains( paramAttributes.Value, NotNullAttribute ) ) {
+				if( SymbolHasAttribute( param, NotNullAttribute ) ) {
 					notNullArguments.Add( new Tuple<ArgumentSyntax, IParameterSymbol>( arguments[i], param ) );
 				}
 			}
@@ -228,7 +191,6 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 		private static bool TryGetInvokedSymbol(
 			SyntaxNodeAnalysisContext context,
 			InvocationExpressionSyntax invocation,
-			SeparatedSyntaxList<ArgumentSyntax> arguments,
 			out IMethodSymbol invokedSymbol
 		) {
 			SymbolInfo invokedSymbolInfo = context.SemanticModel.GetSymbolInfo( invocation );
@@ -374,19 +336,6 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				return true;
 			}
 
-			// See if it has a "AlwaysAssignedValue" attribute
-			var methodDeclaration = GetAncestorNodeOfType<BaseMethodDeclarationSyntax>( declaringBlock );
-			IMethodSymbol methodSymbol = semanticModel.GetDeclaredSymbol( methodDeclaration );
-			bool hasAlwaysAssignedAttribute = SymbolHasAttribute(
-					methodSymbol,
-					AlwaysAssignedValueAttribute,
-					variable.Name
-				);
-
-			if( hasAlwaysAssignedAttribute ) {
-				return true;
-			}
-
 			// Find nodes between beginning of block and the variable's declaration
 			nodesToRemove = declaringBlock.ChildNodes()
 				.Where( x => x.Span.End < declarator.SpanStart )
@@ -421,7 +370,9 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			CompilationUnitSyntax compilationUnit
 		) {
 			var compilation = CSharpCompilation.Create( "ThrowAwayCompilation" )
-				.AddSyntaxTrees( compilationUnit.SyntaxTree ); // Re-find the parent block in the new compilation
+				.AddSyntaxTrees( compilationUnit.SyntaxTree );
+
+			// Re-find the parent block in the new compilation
 			var parentBlock = compilationUnit.FindNode( declaringBlock.OpenBraceToken.Span );
 			declaringBlock = parentBlock.DescendantNodes().OfType<BlockSyntax>()
 				.FirstOrDefault( x => x.SpanStart == declaringBlock.SpanStart ) ?? (BlockSyntax)parentBlock;
@@ -474,20 +425,6 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 		private static bool IsNotNullValue( ExpressionSyntax exp ) {
 			return !( exp is LiteralExpressionSyntax ) // Not a literal expression, like `7`, or `"some string"`
 				|| ((LiteralExpressionSyntax)exp).Token.Text != "null";
-		}
-
-		private static bool IsNotNullType(
-			ITypeSymbol paramType,
-			IDictionary<ITypeSymbol, bool> notNullTypeCache
-		) {
-			bool isNotNull;
-			if( notNullTypeCache.TryGetValue( paramType, out isNotNull ) ) {
-				return isNotNull;
-			}
-
-			isNotNull = SymbolHasAttribute( paramType, NotNullTypeAttribute );
-			notNullTypeCache[paramType] = isNotNull;
-			return isNotNull;
 		}
 
 		private static bool SymbolHasAttribute(
