@@ -1,4 +1,6 @@
-﻿namespace D2L.CodeStyle.Analyzers.Common {
+﻿using Microsoft.CodeAnalysis;
+
+namespace D2L.CodeStyle.Analyzers.Common {
 	public enum MutabilityTarget {
 		Member,
 		Type,
@@ -61,6 +63,53 @@
 			);
 		}
 
+		public static MutabilityInspectionResult MutableType(
+			ITypeSymbol type,
+			MutabilityCause cause
+		) {
+			return Mutable(
+				null,
+				type.GetFullTypeName(),
+				MutabilityTarget.Type,
+				cause
+			);
+		}
+
+		public static MutabilityInspectionResult MutableField(
+			IFieldSymbol field,
+			MutabilityCause cause
+		) {
+			return Mutable(
+				field.Name,
+				field.Type.GetFullTypeName(),
+				MutabilityTarget.Member,
+				cause
+			);
+		}
+
+		public static MutabilityInspectionResult MutableProperty(
+			IPropertySymbol property,
+			MutabilityCause cause
+		) {
+			return Mutable(
+				property.Name,
+				property.Type.GetFullTypeName(),
+				MutabilityTarget.Member,
+				cause
+			);
+		}
+
+		public static MutabilityInspectionResult PotentiallyMutableMember(
+			ISymbol member
+		) {
+			return Mutable(
+				member.Name,
+				null,
+				MutabilityTarget.Member,
+				MutabilityCause.IsPotentiallyMutable
+			);
+		}
+
 		public MutabilityInspectionResult WithPrefixedMember( string parentMember ) {
 			var newMember = string.IsNullOrWhiteSpace( this.MemberPath )
 				? parentMember
@@ -71,6 +120,16 @@
 				newMember,
 				this.TypeName,
 				this.Target,
+				this.Cause
+			);
+		}
+
+		public MutabilityInspectionResult WithTarget( MutabilityTarget newTarget ) {
+			return new MutabilityInspectionResult(
+				this.IsMutable,
+				this.MemberPath,
+				this.TypeName,
+				newTarget,
 				this.Cause
 			);
 		}

@@ -103,11 +103,11 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			}
 
 			if( type.TypeKind == TypeKind.Array ) {
-				return MutabilityInspectionResult.Mutable( null, type.GetFullTypeName(), MutabilityTarget.Type, MutabilityCause.IsAnArray );
+				return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnArray );
 			}
 
 			if( type.TypeKind == TypeKind.Delegate ) {
-				return MutabilityInspectionResult.Mutable( null, type.GetFullTypeName(), MutabilityTarget.Type, MutabilityCause.IsADelegate );
+				return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsADelegate );
 			}
 
 			// If we're verifying immutability, then carry on; otherwise, bailout
@@ -142,12 +142,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 							} else {
 
 								// modify the result to target the type argument if the target is not a member
-								result = MutabilityInspectionResult.Mutable( 
-									result.MemberPath, 
-									result.TypeName, 
-									MutabilityTarget.TypeArgument, 
-									result.Cause.Value 
-								);
+								result = result.WithTarget( MutabilityTarget.TypeArgument );
 
 							}
 							return result;
@@ -157,14 +152,14 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				}
 
 				if( type.TypeKind == TypeKind.Interface ) {
-					return MutabilityInspectionResult.Mutable( null, type.GetFullTypeName(), MutabilityTarget.Type, MutabilityCause.IsAnInterface );
+					return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnInterface );
 				}
 
 				if( !flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed )
 						&& type.TypeKind == TypeKind.Class
 						&& !type.IsSealed
 					) {
-					return MutabilityInspectionResult.Mutable( null, type.GetFullTypeName(), MutabilityTarget.Type, MutabilityCause.IsNotSealed );
+					return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsNotSealed );
 				}
 
 				foreach( ISymbol member in type.GetExplicitNonStaticMembers() ) {
@@ -203,7 +198,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					}
 
 					if( !prop.IsReadOnly ) {
-						return MutabilityInspectionResult.Mutable( prop.Name, prop.Type.GetFullTypeName(), MutabilityTarget.Member, MutabilityCause.IsNotReadonly );
+						return MutabilityInspectionResult.MutableProperty( prop, MutabilityCause.IsNotReadonly );
 					}
 
 					result = InspectTypeRecursive( prop.Type, flags, typeStack );
@@ -218,7 +213,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					var field = (IFieldSymbol)symbol;
 
 					if( !field.IsReadOnly ) {
-						return MutabilityInspectionResult.Mutable( field.Name, field.Type.GetFullTypeName(), MutabilityTarget.Member, MutabilityCause.IsNotReadonly );
+						return MutabilityInspectionResult.MutableField( field, MutabilityCause.IsNotReadonly );
 					}
 
 					result = InspectTypeRecursive( field.Type, flags, typeStack );
@@ -235,7 +230,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 				default:
 					// we've got a member (event, etc.) that we can't currently be smart about, so fail
-					return MutabilityInspectionResult.Mutable( symbol.Name, null, MutabilityTarget.Member, MutabilityCause.IsPotentiallyMutable );
+					return MutabilityInspectionResult.PotentiallyMutableMember( symbol );
 			}
 		}
 
