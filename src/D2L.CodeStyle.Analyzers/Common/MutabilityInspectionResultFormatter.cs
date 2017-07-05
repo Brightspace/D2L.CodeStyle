@@ -31,6 +31,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			switch( result.Cause ) {
 				case MutabilityCause.IsAnArray:
 					return "an array";
+				case MutabilityCause.IsDynamic:
+					return "dynamic";
 				case MutabilityCause.IsAnInterface:
 					return "an interface that is not marked with `[Objects.Immutable]`";
 				case MutabilityCause.IsNotSealed:

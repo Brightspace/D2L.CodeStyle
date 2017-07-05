@@ -75,6 +75,22 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}.ToImmutableDictionary();
 
 		/// <summary>
+		/// A list of <see cref="TypeKind"/>s that are unsafe.
+		/// </summary>
+		private static readonly ImmutableDictionary<TypeKind, MutabilityCause> UnsafeTypeKinds = new Dictionary<TypeKind, MutabilityCause> {
+			[TypeKind.Array] = MutabilityCause.IsAnArray,
+			[TypeKind.Delegate] = MutabilityCause.IsADelegate,
+			[TypeKind.Dynamic] = MutabilityCause.IsDynamic
+		}.ToImmutableDictionary();
+
+		/// <summary>
+		/// A list of <see cref="TypeKind"/> that are immutable.
+		/// </summary>
+		private static readonly ImmutableHashSet<TypeKind> ImmutableTypeKinds = new HashSet<TypeKind> {
+			TypeKind.Enum
+		}.ToImmutableHashSet();
+
+		/// <summary>
 		/// Determine if a given type is mutable.
 		/// </summary>
 		/// <param name="type">The type to determine mutability for.</param>
@@ -102,12 +118,13 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
-			if( type.TypeKind == TypeKind.Array ) {
-				return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnArray );
+			if( UnsafeTypeKinds.ContainsKey( type.TypeKind ) ) {
+				var cause = UnsafeTypeKinds[type.TypeKind];
+				return MutabilityInspectionResult.MutableType( type, cause );
 			}
 
-			if( type.TypeKind == TypeKind.Delegate ) {
-				return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsADelegate );
+			if( ImmutableTypeKinds.Contains( type.TypeKind ) ) {
+				return MutabilityInspectionResult.NotMutable();
 			}
 
 			// If we're verifying immutability, then carry on; otherwise, bailout
