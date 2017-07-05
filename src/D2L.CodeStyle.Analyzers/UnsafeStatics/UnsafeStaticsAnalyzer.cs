@@ -26,6 +26,11 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
 
 		public override void Initialize( AnalysisContext context ) {
+			if( m_utils.IsGeneratedCodefile( context.Node.SyntaxTree.FilePath ) ) {
+				// skip code-gen'd files; they have been hand-inspected to be safe
+				return;
+			}
+			
 			context.RegisterSyntaxNodeAction(
 				AnalyzeField,
 				SyntaxKind.FieldDeclaration
@@ -38,11 +43,6 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 		}
 
 		private void AnalyzeField( SyntaxNodeAnalysisContext context ) {
-			if( m_utils.IsGeneratedCodefile( context.Node.SyntaxTree.FilePath ) ) {
-				// skip code-gen'd files; they have been hand-inspected to be safe
-				return;
-			}
-
 			var root = context.Node as FieldDeclarationSyntax;
 
 			if( root == null ) {
@@ -76,11 +76,6 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 		}
 
 		private void AnalyzeProperty( SyntaxNodeAnalysisContext context ) {
-			if( m_utils.IsGeneratedCodefile( context.Node.SyntaxTree.FilePath ) ) {
-				// skip code-gen'd files; they have been hand-inspected to be safe
-				return;
-			}
-
 			var root = context.Node as PropertyDeclarationSyntax;
 
 			if( root == null ) {
