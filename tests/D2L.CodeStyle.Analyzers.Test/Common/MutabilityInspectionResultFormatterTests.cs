@@ -28,6 +28,11 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			).SetName("type is an array"),
 
 			new TestCaseData(
+				MutabilityInspectionResult.Mutable("foo", "bar", MutabilityTarget.Type, MutabilityCause.IsDynamic),
+				"'foo''s type ('bar') is dynamic"
+			).SetName("type is dynamic"),
+
+			new TestCaseData(
 				MutabilityInspectionResult.Mutable("foo", "bar", MutabilityTarget.Type, MutabilityCause.IsAnInterface),
 				"'foo''s type ('bar') is an interface that is not marked with `[Objects.Immutable]`"
 			).SetName("type is an interface"),
@@ -48,6 +53,11 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityInspectionResult.Mutable("foo", "bar", MutabilityTarget.TypeArgument, MutabilityCause.IsAnArray),
 				"'foo''s type argument ('bar') is an array"
 			).SetName("type argument is an array"),
+
+			new TestCaseData(
+				MutabilityInspectionResult.Mutable("foo", "bar", MutabilityTarget.TypeArgument, MutabilityCause.IsDynamic),
+				"'foo''s type argument ('bar') is dynamic"
+			).SetName("type argument is dynamic"),
 
 			new TestCaseData(
 				MutabilityInspectionResult.Mutable("foo", "bar", MutabilityTarget.TypeArgument, MutabilityCause.IsAnInterface),

@@ -13,7 +13,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		IsNotSealed,
 		IsAnInterface,
 		IsAnArray,
-		IsPotentiallyMutable
+		IsPotentiallyMutable,
+		IsDynamic
 	}
 
 	public sealed class MutabilityInspectionResult {
