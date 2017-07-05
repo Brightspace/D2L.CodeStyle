@@ -103,7 +103,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		[Test]
 		public void NoUnexpectedDiagnostics() {
-			var unexpectedDiagnostics = m_expectedDiagnostics
+			var unexpectedDiagnostics = m_actualDiagnostics
 				.Where( d => !m_matchedDiagnostics.Contains( d ) )
 				.ToImmutableArray();
 
@@ -118,7 +118,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		[Test]
 		public void ExpectedDiagnostics() {
-			var missingDiagnostics = m_actualDiagnostics
+			var missingDiagnostics = m_expectedDiagnostics
 				.Where( d => !m_matchedDiagnostics.Contains( d ) )
 				.ToImmutableArray();
 
