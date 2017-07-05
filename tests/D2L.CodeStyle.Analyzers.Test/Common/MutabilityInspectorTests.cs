@@ -89,6 +89,16 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}
 
 		[Test]
+		public void InspectType_Enum_False() {
+			var type = Type( "enum blah {}" );
+			var expected = MutabilityInspectionResult.NotMutable();
+
+			var actual = m_inspector.InspectType( type );
+
+			AssertResultsAreEqual( expected, actual );
+		}
+
+		[Test]
 		public void InspectType_NonSealedClass_True() {
 			var type = Type( "class foo {}" );
 			var expected = MutabilityInspectionResult.Mutable(
