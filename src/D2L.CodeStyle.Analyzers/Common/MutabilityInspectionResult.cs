@@ -1,4 +1,6 @@
-﻿namespace D2L.CodeStyle.Analyzers.Common {
+﻿using Microsoft.CodeAnalysis;
+
+namespace D2L.CodeStyle.Analyzers.Common {
 	public enum MutabilityTarget {
 		Member,
 		Type,
@@ -94,6 +96,17 @@
 				property.Type.GetFullTypeName(),
 				MutabilityTarget.Member,
 				cause
+			);
+		}
+
+		public static MutabilityInspectionResult PotentiallyMutableMember(
+			ISymbol member
+		) {
+			return Mutable(
+				member.Name,
+				null,
+				MutabilityTarget.Member,
+				MutabilityCause.IsPotentiallyMutable
 			);
 		}
 

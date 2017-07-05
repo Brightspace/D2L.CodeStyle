@@ -230,7 +230,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 				default:
 					// we've got a member (event, etc.) that we can't currently be smart about, so fail
-					return MutabilityInspectionResult.Mutable( symbol.Name, null, MutabilityTarget.Member, MutabilityCause.IsPotentiallyMutable );
+					return MutabilityInspectionResult.PotentiallyMutableMember( symbol );
 			}
 		}
 
