@@ -103,7 +103,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 		) {
 			IMethodSymbol invokedSymbol;
 			if( !TryGetInvokedSymbol( context, invocation, out invokedSymbol ) ) {
-				// There could either by multiple methods that match, in which case we don't know which we should
+				// There could either be multiple methods that match, in which case we don't know which we should
 				// look at, or the method being called may not actually exist.
 				notNullArguments = null;
 				return false;
@@ -118,7 +118,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 
 			ImmutableHashSet<IParameterSymbol> notNullParameterCache;
 			if( notNullMethodCache.TryGetValue( invokedSymbol, out notNullParameterCache )
-				&& notNullParameterCache == null
+				&& notNullParameterCache.Count == 0
 			) {
 				// We've examined it before, and nothing needs to be not null
 				notNullArguments = null;
@@ -161,9 +161,12 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			}
 
 			bool isNotNullMethod = notNullArguments.Count > 0;
-			notNullMethodCache[invokedSymbol] = notNullArguments
-				.Select( x => x.Item2 )
-				.ToImmutableHashSet();
+			if( notNullParameterCache == null ) {
+				// Cache the values, if we didn't just pull it from the cache
+				notNullMethodCache[invokedSymbol] = notNullArguments
+					.Select( x => x.Item2 )
+					.ToImmutableHashSet();
+			}
 			return isNotNullMethod;
 		}
 

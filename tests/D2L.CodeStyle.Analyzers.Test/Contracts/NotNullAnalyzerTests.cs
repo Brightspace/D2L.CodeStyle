@@ -188,7 +188,11 @@ namespace Test {
 			var provider = new TestProvider();
 			provider.TestMethod( ""This is a value"" );
 			provider.TestMethod( null );
+			DoNothing( 3 );
+			DoNothing( 4 );
 		}
+
+		private void DoNothing( int num ) {}
 	}
 }";
 			AssertProducesError(
