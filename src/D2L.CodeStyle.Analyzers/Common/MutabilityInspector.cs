@@ -79,12 +79,18 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			MutabilityInspectionFlags flags = MutabilityInspectionFlags.Default
 		) {
 			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
-			var result = InspectTypeRecursive( type, flags, typesInCurrentCycle );
+			var result = InspectTypeRecursive( 
+				type, 
+				type.ContainingAssembly, 
+				flags, 
+				typesInCurrentCycle
+			);
 			return result;
 		}
 
 		private MutabilityInspectionResult InspectTypeRecursive(
 			ITypeSymbol type,
+			IAssemblySymbol rootAssembly,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
@@ -126,7 +132,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					var namedType = type as INamedTypeSymbol;
 					for( int i = 0; i < namedType.TypeArguments.Length; i++ ) {
 						var arg = namedType.TypeArguments[ i ];
-						var result = InspectTypeRecursive( arg, MutabilityInspectionFlags.Default, typeStack );
+						var result = InspectTypeRecursive( arg, rootAssembly, MutabilityInspectionFlags.Default, typeStack );
 
 						if( result.IsMutable ) {
 							if( result.Target == MutabilityTarget.Member ) {
@@ -158,8 +164,15 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsNotSealed );
 				}
 
+				if( type.ContainingAssembly != rootAssembly ) {
+					// We have a type that is not marked immutable, is not an interface, is not an immutable container, etc. and it is 
+					// defined in a different assembly. 
+					// We might not have the metadata to correctly analyze it; so we fail.
+					return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnExternalUnmarkedType );
+				}
+
 				foreach( ISymbol member in type.GetExplicitNonStaticMembers() ) {
-					var result = InspectMemberRecursive( member, MutabilityInspectionFlags.Default, typeStack );
+					var result = InspectMemberRecursive( member, rootAssembly, MutabilityInspectionFlags.Default, typeStack );
 					if( result.IsMutable ) {
 						return result;
 					}
@@ -174,6 +187,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		private MutabilityInspectionResult InspectMemberRecursive(
 			ISymbol symbol,
+			IAssemblySymbol rootAssembly,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
@@ -197,7 +211,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 						return MutabilityInspectionResult.MutableProperty( prop, MutabilityCause.IsNotReadonly );
 					}
 
-					result = InspectTypeRecursive( prop.Type, flags, typeStack );
+					result = InspectTypeRecursive( prop.Type, rootAssembly, flags, typeStack );
 					if( result.IsMutable ) {
 						return result.WithPrefixedMember( prop.Name );
 					}
@@ -212,7 +226,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 						return MutabilityInspectionResult.MutableField( field, MutabilityCause.IsNotReadonly );
 					}
 
-					result = InspectTypeRecursive( field.Type, flags, typeStack );
+					result = InspectTypeRecursive( field.Type, rootAssembly, flags, typeStack );
 					if( result.IsMutable ) {
 						return result.WithPrefixedMember( field.Name );
 					}

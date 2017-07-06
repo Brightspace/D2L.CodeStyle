@@ -12,6 +12,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		IsNotReadonly,
 		IsNotSealed,
 		IsAnInterface,
+		IsAnExternalUnmarkedType,
 		IsAnArray,
 		IsPotentiallyMutable,
 		IsDynamic

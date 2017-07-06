@@ -35,6 +35,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					return "dynamic";
 				case MutabilityCause.IsAnInterface:
 					return "an interface that is not marked with `[Objects.Immutable]`";
+				case MutabilityCause.IsAnExternalUnmarkedType:
+					return "defined in another assembly but is not marked with `[Objects.Immutable]`";
 				case MutabilityCause.IsNotSealed:
 					return "not sealed";
 				case MutabilityCause.IsNotReadonly:
