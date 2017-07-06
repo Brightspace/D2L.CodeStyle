@@ -54,22 +54,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}
 
 		/// <summary>
-		/// A list of <see cref="TypeKind"/>s that are unsafe.
-		/// </summary>
-		private static readonly ImmutableDictionary<TypeKind, MutabilityCause> UnsafeTypeKinds = new Dictionary<TypeKind, MutabilityCause> {
-			[TypeKind.Array] = MutabilityCause.IsAnArray,
-			[TypeKind.Delegate] = MutabilityCause.IsADelegate,
-			[TypeKind.Dynamic] = MutabilityCause.IsDynamic
-		}.ToImmutableDictionary();
-
-		/// <summary>
-		/// A list of <see cref="TypeKind"/> that are immutable.
-		/// </summary>
-		private static readonly ImmutableHashSet<TypeKind> ImmutableTypeKinds = new HashSet<TypeKind> {
-			TypeKind.Enum
-		}.ToImmutableHashSet();
-
-		/// <summary>
 		/// Determine if a given type is mutable.
 		/// </summary>
 		/// <param name="type">The type to determine mutability for.</param>
@@ -97,15 +81,61 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
-			if( UnsafeTypeKinds.ContainsKey( type.TypeKind ) ) {
-				var cause = UnsafeTypeKinds[type.TypeKind];
-				return MutabilityInspectionResult.MutableType( type, cause );
-			}
+			switch( type.TypeKind ) {
+				case TypeKind.Unknown:
+					// When does this happen?
+					throw new NotImplementedException();
 
-			if( ImmutableTypeKinds.Contains( type.TypeKind ) ) {
-				return MutabilityInspectionResult.NotMutable();
-			}
+				case TypeKind.Array:
+					return MutabilityInspectionResult.MutableType(
+						type,
+						MutabilityCause.IsAnArray
+					);
 
+				case TypeKind.Delegate:
+					return MutabilityInspectionResult.MutableType(
+						type,
+						MutabilityCause.IsADelegate
+					);
+
+				case TypeKind.Dynamic:
+					return MutabilityInspectionResult.MutableType(
+						type,
+						MutabilityCause.IsDynamic
+					);
+
+				case TypeKind.Enum:
+					return MutabilityInspectionResult.NotMutable();
+
+				case TypeKind.Error:
+					// This only happens when the build is failing for other
+					// (more fundamental) reasons. We only need to be strict
+					// for otherwise-successful builds, so we bail analysis in
+					// this case.
+					return MutabilityInspectionResult.NotMutable();
+
+				case TypeKind.Class:
+				case TypeKind.Interface:
+				case TypeKind.Struct: // equivalent to TypeKind.Structure
+					return InspectClassStructOrInterface(
+						type,
+						flags,
+						typeStack
+					);
+
+				default:
+					// not handled: Module, Pointer, TypeParameter, Submission
+					throw new NotImplementedException(
+						$"TypeKind.{type.Kind} not handled by analysis"
+					);
+			}
+		}
+
+		private MutabilityInspectionResult InspectClassStructOrInterface(
+			ITypeSymbol type,
+			MutabilityInspectionFlags flags,
+			HashSet<ITypeSymbol> typeStack
+		) {
 			// If we're verifying immutability, then carry on; otherwise, bailout
 			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && IsTypeMarkedImmutable( type ) ) {
 				return MutabilityInspectionResult.NotMutable();
