@@ -54,22 +54,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}
 
 		/// <summary>
-		/// A list of <see cref="TypeKind"/>s that are unsafe.
-		/// </summary>
-		private static readonly ImmutableDictionary<TypeKind, MutabilityCause> UnsafeTypeKinds = new Dictionary<TypeKind, MutabilityCause> {
-			[TypeKind.Array] = MutabilityCause.IsAnArray,
-			[TypeKind.Delegate] = MutabilityCause.IsADelegate,
-			[TypeKind.Dynamic] = MutabilityCause.IsDynamic
-		}.ToImmutableDictionary();
-
-		/// <summary>
-		/// A list of <see cref="TypeKind"/> that are immutable.
-		/// </summary>
-		private static readonly ImmutableHashSet<TypeKind> ImmutableTypeKinds = new HashSet<TypeKind> {
-			TypeKind.Enum
-		}.ToImmutableHashSet();
-
-		/// <summary>
 		/// Determine if a given type is mutable.
 		/// </summary>
 		/// <param name="type">The type to determine mutability for.</param>
@@ -104,15 +88,68 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
-			if( UnsafeTypeKinds.ContainsKey( type.TypeKind ) ) {
-				var cause = UnsafeTypeKinds[type.TypeKind];
-				return MutabilityInspectionResult.MutableType( type, cause );
-			}
+			switch( type.TypeKind ) {
+				case TypeKind.Array:
+					// Arrays are always mutable because you can rebind the
+					// individual elements.
+					return MutabilityInspectionResult.MutableType(
+						type,
+						MutabilityCause.IsAnArray
+					);
 
-			if( ImmutableTypeKinds.Contains( type.TypeKind ) ) {
-				return MutabilityInspectionResult.NotMutable();
-			}
+				case TypeKind.Delegate:
+					// Delegates can hold state so are mutable in general.
+					return MutabilityInspectionResult.MutableType(
+						type,
+						MutabilityCause.IsADelegate
+					);
 
+				case TypeKind.Dynamic:
+					// Dynamic types are always mutable
+					return MutabilityInspectionResult.MutableType(
+						type,
+						MutabilityCause.IsDynamic
+					);
+
+				case TypeKind.Enum:
+					// Enums are just fancy ints.
+					return MutabilityInspectionResult.NotMutable();
+
+				case TypeKind.Class:
+				case TypeKind.Interface:
+				case TypeKind.Struct: // equivalent to TypeKind.Structure
+					return InspectClassStructOrInterface(
+						type,
+						flags,
+						typeStack
+					);
+
+				case TypeKind.Error:
+					// This only happens when the build is failing for other
+					// (more fundamental) reasons. We only need to be strict
+					// for otherwise-successful builds, so we bail analysis in
+					// this case.
+					return MutabilityInspectionResult.NotMutable();
+
+				case TypeKind.Unknown:
+					// Looking at the Roslyn source this doesn't appear to
+					// happen outside their tests. It is value 0 in the enum so
+					// it may just be a safety guard.
+					throw new NotImplementedException();
+
+				default:
+					// not handled: Module, Pointer, TypeParameter, Submission.
+					throw new NotImplementedException(
+						$"TypeKind.{type.Kind} not handled by analysis"
+					);
+			}
+		}
+
+		private MutabilityInspectionResult InspectClassStructOrInterface(
+			ITypeSymbol type,
+			MutabilityInspectionFlags flags,
+			HashSet<ITypeSymbol> typeStack
+		) {
 			// If we're verifying immutability, then carry on; otherwise, bailout
 			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && IsTypeMarkedImmutable( type ) ) {
 				return MutabilityInspectionResult.NotMutable();
