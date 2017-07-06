@@ -82,36 +82,30 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			}
 
 			switch( type.TypeKind ) {
-				case TypeKind.Unknown:
-					// When does this happen?
-					throw new NotImplementedException();
-
 				case TypeKind.Array:
+					// Arrays are always mutable because you can rebind the
+					// individual elements.
 					return MutabilityInspectionResult.MutableType(
 						type,
 						MutabilityCause.IsAnArray
 					);
 
 				case TypeKind.Delegate:
+					// Delegates can hold state so are mutable in general.
 					return MutabilityInspectionResult.MutableType(
 						type,
 						MutabilityCause.IsADelegate
 					);
 
 				case TypeKind.Dynamic:
+					// Dynamic types are always mutable
 					return MutabilityInspectionResult.MutableType(
 						type,
 						MutabilityCause.IsDynamic
 					);
 
 				case TypeKind.Enum:
-					return MutabilityInspectionResult.NotMutable();
-
-				case TypeKind.Error:
-					// This only happens when the build is failing for other
-					// (more fundamental) reasons. We only need to be strict
-					// for otherwise-successful builds, so we bail analysis in
-					// this case.
+					// Enums are just fancy ints.
 					return MutabilityInspectionResult.NotMutable();
 
 				case TypeKind.Class:
@@ -123,8 +117,21 @@ namespace D2L.CodeStyle.Analyzers.Common {
 						typeStack
 					);
 
+				case TypeKind.Error:
+					// This only happens when the build is failing for other
+					// (more fundamental) reasons. We only need to be strict
+					// for otherwise-successful builds, so we bail analysis in
+					// this case.
+					return MutabilityInspectionResult.NotMutable();
+
+				case TypeKind.Unknown:
+					// Looking at the Roslyn source this doesn't appear to
+					// happen outside their tests. It is value 0 in the enum so
+					// it may just be a safety guard.
+					throw new NotImplementedException();
+
 				default:
-					// not handled: Module, Pointer, TypeParameter, Submission
+					// not handled: Module, Pointer, TypeParameter, Submission.
 					throw new NotImplementedException(
 						$"TypeKind.{type.Kind} not handled by analysis"
 					);
