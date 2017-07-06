@@ -76,12 +76,13 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		/// <returns>Whether the type is mutable.</returns>
 		public MutabilityInspectionResult InspectType(
 			ITypeSymbol type,
+			IAssemblySymbol rootAssembly,
 			MutabilityInspectionFlags flags = MutabilityInspectionFlags.Default
 		) {
 			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
 			var result = InspectTypeRecursive( 
 				type, 
-				type.ContainingAssembly, 
+				rootAssembly, 
 				flags, 
 				typesInCurrentCycle
 			);

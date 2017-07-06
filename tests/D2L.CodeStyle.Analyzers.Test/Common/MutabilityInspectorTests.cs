@@ -15,7 +15,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var type = Field( "uint foo" ).Type;
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( type );
+			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -25,7 +25,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var type = Field( "uint? foo" ).Type;
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( type );
+			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -43,7 +43,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			type = ( field as IFieldSymbol ).Type;
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( type );
+			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -58,7 +58,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsAnArray
 			);
 
-			var actual = m_inspector.InspectType( type );
+			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -68,7 +68,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var type = Field( "string random" ).Type;
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( type );
+			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -83,7 +83,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsAnInterface
 			);
 
-			var actual = m_inspector.InspectType( type );
+			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -93,7 +93,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var type = Type( "enum blah {}" );
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( type );
+			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -108,7 +108,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsNotSealed
 			);
 
-			var actual = m_inspector.InspectType( type );
+			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -118,7 +118,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var type = Type( "sealed class foo {}" );
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( type );
+			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -134,7 +134,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsNotReadonly
 			);
 
-			var actual = m_inspector.InspectType( field.ContainingType );
+			var actual = m_inspector.InspectType( field.ContainingType, field.ContainingAssembly );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -150,7 +150,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsNotReadonly
 			);
 
-			var actual = m_inspector.InspectType( field.Type );
+			var actual = m_inspector.InspectType( field.Type, field.ContainingAssembly );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -166,7 +166,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsNotReadonly
 			);
 
-			var actual = m_inspector.InspectType( field.ContainingType );
+			var actual = m_inspector.InspectType( field.ContainingType, field.ContainingAssembly );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -182,7 +182,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsNotReadonly
 			);
 
-			var actual = m_inspector.InspectType( prop.ContainingType );
+			var actual = m_inspector.InspectType( prop.ContainingType, prop.ContainingAssembly );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -192,7 +192,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var type = Field( "private readonly System.Collections.Immutable.ImmutableArray<int> random" ).Type;
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( type );
+			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -202,7 +202,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var type = Field( "private readonly System.Collections.Generic.IEnumerable<int> random" ).Type;
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( type );
+			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -217,7 +217,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsADelegate
 			);
 
-			var actual = m_inspector.InspectType( type );
+			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
 
 			AssertResultsAreEqual( expected, actual );
 		}

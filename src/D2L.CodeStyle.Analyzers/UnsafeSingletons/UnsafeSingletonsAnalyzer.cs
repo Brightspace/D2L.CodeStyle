@@ -41,7 +41,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 			// TODO: it probably makes more sense to iterate over the fields and emit diagnostics tied to those individual fields for more accurate red-squigglies
 			// a DI singleton should be capable of having multiple diagnostics come out of it
 			var flags = MutabilityInspectionFlags.AllowUnsealed | MutabilityInspectionFlags.IgnoreImmutabilityAttribute;
-			var result = m_immutabilityInspector.InspectType( type, flags );
+			var result = m_immutabilityInspector.InspectType( type, context.Compilation.Assembly, flags );
 			if( result.IsMutable ) {
 				var diagnostic = CreateDiagnostic(
 					root.GetLocation(),
