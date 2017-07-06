@@ -19,7 +19,7 @@ namespace D2L.CodeStyle.Annotations {
             /// <param name="auditedDate">The last time this type was reviewed</param>
             /// <param name="rationale">A brief explaination of why this type is safe in a multi-tenant process</param>
             public Audited(
-                string type,
+                Type type,
                 string owner,
                 string auditedDate,
                 string rationale
@@ -30,7 +30,7 @@ namespace D2L.CodeStyle.Annotations {
                 Rationale = rationale;
             }
 
-            public string Type { get; }
+            public Type Type { get; }
             public string Owner { get; }
             public string AuditedDate { get; }
             public string Rationale { get; }
