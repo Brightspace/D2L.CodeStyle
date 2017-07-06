@@ -90,7 +90,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		) {
 			if( type is IErrorTypeSymbol ) {
 				// This only happens for code that otherwise won't compile. Our
-				// analyzer doesn't need to validate these types.
+				// analyzer doesn't need to validate these types. It only needs
+				// to be strict for valid code.
 				return MutabilityInspectionResult.NotMutable();
 			}
 
