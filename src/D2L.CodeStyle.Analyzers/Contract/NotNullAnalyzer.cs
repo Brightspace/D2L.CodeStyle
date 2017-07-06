@@ -34,7 +34,8 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 							ctx,
 							notNullMethodCache
 						),
-					SyntaxKind.InvocationExpression
+					SyntaxKind.InvocationExpression,
+					SyntaxKind.ObjectCreationExpression
 				);
 		}
 
@@ -42,13 +43,18 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			SyntaxNodeAnalysisContext context,
 			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache
 		) {
+			// It could be a method or constructor call, but there is no common interface or base
+			// type, despite being very similar when coded, and analyzed
 			var invocation = context.Node as InvocationExpressionSyntax;
-			if( invocation == null ) {
+			var construction = context.Node as ObjectCreationExpressionSyntax;
+
+			if( invocation == null && construction == null ) {
 				// A method isn't being invoked, so there's nothing to look at
 				return;
 			}
 
-			var arguments = invocation.ArgumentList.Arguments;
+			var arguments = invocation?.ArgumentList.Arguments
+				?? construction.ArgumentList.Arguments;
 			if( arguments.Count == 0 ) {
 				// We don't care about methods that take no arguments
 				return;
@@ -57,7 +63,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			IList<Tuple<ArgumentSyntax, IParameterSymbol>> notNullArguments;
 			bool isNotNullMethod = TryGetNotNullArguments(
 					context,
-					invocation,
+					(ExpressionSyntax)invocation ?? construction,
 					arguments,
 					notNullMethodCache,
 					out notNullArguments
@@ -90,7 +96,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 
 		private static bool TryGetNotNullArguments(
 			SyntaxNodeAnalysisContext context,
-			InvocationExpressionSyntax invocation,
+			ExpressionSyntax invocation,
 			SeparatedSyntaxList<ArgumentSyntax> arguments,
 			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache,
 			out IList<Tuple<ArgumentSyntax, IParameterSymbol>> notNullArguments
@@ -188,7 +194,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 
 		private static bool TryGetInvokedSymbol(
 			SyntaxNodeAnalysisContext context,
-			InvocationExpressionSyntax invocation,
+			ExpressionSyntax invocation,
 			out IMethodSymbol invokedSymbol
 		) {
 			SymbolInfo invokedSymbolInfo = context.SemanticModel.GetSymbolInfo( invocation );

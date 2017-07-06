@@ -338,6 +338,36 @@ namespace Test {
 				);
 		}
 
+		[Test]
+		public void NotNullParam_ConstructorCalled_ReportsProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var foo = new Foo(
+					null,
+					null,
+					new int[5]
+				);
+		}
+	}
+
+	internal class Foo {
+		public Foo(
+			string name,
+			[NotNull] string other,
+			object obj
+		) {}
+	}
+}";
+			AssertProducesError(
+					test,
+					6 + NotNullParamMethodLines,
+					6,
+					"other"
+				);
+		}
+
 		#endregion
 
 		#region Should not produce errors
