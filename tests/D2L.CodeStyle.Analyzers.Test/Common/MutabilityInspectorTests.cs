@@ -12,20 +12,20 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		[Test]
 		public void InspectType_PrimitiveType_NotMutable() {
-			var type = Field( "uint foo" ).Type;
+			var field = Field( "uint foo" );
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
+			var actual = m_inspector.InspectType( field.Symbol.Type, field.CompilationAssemblySymbol );
 
 			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
 		public void InspectType_NullablePrimitiveType_NotMutable() {
-			var type = Field( "uint? foo" ).Type;
+			var field = Field( "uint? foo" );
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
+			var actual = m_inspector.InspectType( field.Symbol.Type, field.CompilationAssemblySymbol );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -38,19 +38,19 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					Hello? nullable;
 				}"
 			);
-			var field = type.GetMembers().FirstOrDefault( m => m is IFieldSymbol );
+			var field = type.Symbol.GetMembers().FirstOrDefault( m => m is IFieldSymbol );
 			Assert.IsNotNull( field );
-			type = ( field as IFieldSymbol ).Type;
+			var realType = ( field as IFieldSymbol ).Type;
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
+			var actual = m_inspector.InspectType( realType, type.CompilationAssemblySymbol );
 
 			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
 		public void InspectType_ArrayType_True() {
-			var type = Field( "int[] random" ).Type;
+			var field = Field( "int[] random" );
 			var expected = MutabilityInspectionResult.Mutable(
 				null,
 				"System.Int32[]",
@@ -58,17 +58,17 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsAnArray
 			);
 
-			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
+			var actual = m_inspector.InspectType( field.Symbol.Type, field.CompilationAssemblySymbol );
 
 			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
 		public void InspectType_KnownImmutableType_False() {
-			var type = Field( "string random" ).Type;
+			var field = Field( "string random" );
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
+			var actual = m_inspector.InspectType( field.Symbol.Type, field.CompilationAssemblySymbol );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -83,7 +83,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsAnInterface
 			);
 
-			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
+			var actual = m_inspector.InspectType( type.Symbol, type.CompilationAssemblySymbol );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -93,7 +93,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var type = Type( "enum blah {}" );
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
+			var actual = m_inspector.InspectType( type.Symbol, type.CompilationAssemblySymbol );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -108,7 +108,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsNotSealed
 			);
 
-			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
+			var actual = m_inspector.InspectType( type.Symbol, type.CompilationAssemblySymbol );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -118,7 +118,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var type = Type( "sealed class foo {}" );
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
+			var actual = m_inspector.InspectType( type.Symbol, type.CompilationAssemblySymbol );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -134,82 +134,82 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsNotReadonly
 			);
 
-			var actual = m_inspector.InspectType( field.ContainingType, field.ContainingAssembly );
+			var actual = m_inspector.InspectType( field.Symbol.ContainingType, field.CompilationAssemblySymbol );
 
 			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
-		public void InspectType_LooksAtMembersInExternalType() {
+		public void InspectType_DoesNotLookAtMembersInExternalType() {
 			var field = Field( "public readonly System.Text.StringBuilder random" );
 
 			var expected = MutabilityInspectionResult.Mutable(
-				"Capacity",
-				"System.Int32",
-				MutabilityTarget.Member,
-				MutabilityCause.IsNotReadonly
+				null,
+				"System.Text.StringBuilder",
+				MutabilityTarget.Type,
+				MutabilityCause.IsAnExternalUnmarkedType
 			);
 
-			var actual = m_inspector.InspectType( field.Type, field.ContainingAssembly );
+			var actual = m_inspector.InspectType( field.Symbol.Type, field.CompilationAssemblySymbol );
 
 			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
-		public void InspectType_LooksFieldsInType() {
-			var field = Field( "public readonly System.Text.StringBuilder random" );
+		public void InspectType_LooksAtFieldsInNonExternalType() {
+			var field = Field( "public string random" );
 
 			var expected = MutabilityInspectionResult.Mutable(
-				"random.Capacity",
-				"System.Int32",
-				MutabilityTarget.Member,
-				MutabilityCause.IsNotReadonly
-			);
-
-			var actual = m_inspector.InspectType( field.ContainingType, field.ContainingAssembly );
-
-			AssertResultsAreEqual( expected, actual );
-		}
-
-		[Test]
-		public void InspectType_LooksAtPropertiesInType() {
-			var prop = Property( "public string random { get; set; }" );
-
-			var expected = MutabilityInspectionResult.Mutable(
-				$"random",
+				"random",
 				"System.String",
 				MutabilityTarget.Member,
 				MutabilityCause.IsNotReadonly
 			);
 
-			var actual = m_inspector.InspectType( prop.ContainingType, prop.ContainingAssembly );
+			var actual = m_inspector.InspectType( field.Symbol.ContainingType, field.CompilationAssemblySymbol );
+
+			AssertResultsAreEqual( expected, actual );
+		}
+
+		[Test]
+		public void InspectType_LooksAtPropertiesInNonExternalType() {
+			var prop = Property( "public string random { get; set; }" );
+
+			var expected = MutabilityInspectionResult.Mutable(
+				"random",
+				"System.String",
+				MutabilityTarget.Member,
+				MutabilityCause.IsNotReadonly
+			);
+
+			var actual = m_inspector.InspectType( prop.Symbol.ContainingType, prop.CompilationAssemblySymbol );
 
 			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
 		public void InspectType_ImmutableGenericCollectionWithValueTypeElement_ReturnsFalse() {
-			var type = Field( "private readonly System.Collections.Immutable.ImmutableArray<int> random" ).Type;
+			var field = Field( "private readonly System.Collections.Immutable.ImmutableArray<int> random" );
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
+			var actual = m_inspector.InspectType( field.Symbol.Type, field.CompilationAssemblySymbol );
 
 			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
 		public void InspectType_IEnumerableGenericCollectionWithImmutableElement_ReturnsFalse() {
-			var type = Field( "private readonly System.Collections.Generic.IEnumerable<int> random" ).Type;
+			var field = Field( "private readonly System.Collections.Generic.IEnumerable<int> random" );
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
+			var actual = m_inspector.InspectType( field.Symbol.Type, field.CompilationAssemblySymbol );
 
 			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
 		public void InspectType_TypeWithFuncProperty_ReturnsMutable() {
-			var type = Property( "public Func<string> StringGetter { get; }" ).ContainingType;
+			var prop = Property( "public Func<string> StringGetter { get; }" );
 			var expected = MutabilityInspectionResult.Mutable(
 				"StringGetter",
 				"System.Func",
@@ -217,21 +217,21 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsADelegate
 			);
 
-			var actual = m_inspector.InspectType( type, type.ContainingAssembly );
+			var actual = m_inspector.InspectType( prop.Symbol.ContainingType, prop.CompilationAssemblySymbol );
 
 			AssertResultsAreEqual( expected, actual );
 		}
 
 		[Test]
 		public void IsTypeMarkedImmutable_No_ReturnsFalse() {
-			var type = Type( "class Foo {}" );
+			var type = Type( "class Foo {}" ).Symbol;
 
 			Assert.IsFalse( m_inspector.IsTypeMarkedImmutable( type ) );
 		}
 
 		[Test]
 		public void IsTypeMarkedImmutable_Yes_ReturnsTrue() {
-			var type = Type( "[Immutable] class Foo {}" );
+			var type = Type( "[Immutable] class Foo {}" ).Symbol;
 
 			Assert.IsTrue( m_inspector.IsTypeMarkedImmutable( type ) );
 		}
@@ -241,7 +241,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var type = Type( @"
 				class Foo : IFoo {} 
 				[Immutable] interface IFoo {} "
-			);
+			).Symbol;
 
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
 			Assert.AreEqual( "Foo", type.MetadataName );
@@ -254,7 +254,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				class Foo : IFoo1, IFoo2 {} 
 				interface IFoo1 {}
 				[Immutable] interface IFoo2 { } "
-			);
+			).Symbol;
 
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
 			Assert.AreEqual( "Foo", type.MetadataName );
@@ -267,7 +267,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				class Foo : IFoo {} 
 				interface IFoo : IFooTop {} 
 				[Immutable] interface IFooTop {}"
-			);
+			).Symbol;
 
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
 			Assert.AreEqual( "Foo", type.MetadataName );
@@ -280,7 +280,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var type = Type( @"
 				class Foo : FooBase {} 
 				[Immutable] class FooBase {}"
-			);
+			).Symbol;
 
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
 			Assert.AreEqual( "Foo", type.MetadataName );
@@ -293,7 +293,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				class Foo : FooBase {} 
 				class FooBase : FooBaseOfBase {}
 				[Immutable] class FooBaseOfBase { }"
-			);
+			).Symbol;
 
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
 			Assert.AreEqual( "Foo", type.MetadataName );

@@ -7,13 +7,22 @@ using D2L.CodeStyle.Analyzers.Test.Verifiers;
 
 namespace D2L.CodeStyle.Analyzers.Common {
 
-	public static class RoslynSymbolFactory {
+	internal sealed class TestSymbol<T> where T : ISymbol {
+		internal readonly T Symbol;
+		internal readonly IAssemblySymbol CompilationAssemblySymbol;
+		public TestSymbol( T symbol, IAssemblySymbol assemblySymbol ) {
+			Symbol = symbol;
+			CompilationAssemblySymbol = assemblySymbol;
+		}
+	}
+
+	internal static class RoslynSymbolFactory {
 
 		internal static string TestAssemblyName = DiagnosticVerifier.TestProjectName;
 		internal static string RootNamespace = "D2L";
 		internal static string RootClass = "Fake";
 
-		public static CSharpCompilation Compile( string source ) {
+		internal static CSharpCompilation Compile( string source ) {
 			var tree = CSharpSyntaxTree.ParseText( source );
 			var compilation = CSharpCompilation.Create(
 				assemblyName: TestAssemblyName,
@@ -26,7 +35,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			return compilation;
 		}
 
-		public static ITypeSymbol Type( string text ) {
+		internal static TestSymbol<ITypeSymbol> Type( string text ) {
 			var source = $"using System; namespace {RootNamespace} {{ {text} }}";
 			var compilation = Compile( source );
 
@@ -36,25 +45,28 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			).OfType<ITypeSymbol>().FirstOrDefault();
 			Assert.IsNotNull( toReturn );
 			Assert.AreNotEqual( TypeKind.Error, toReturn.TypeKind );
-			return toReturn;
+
+			return new TestSymbol<ITypeSymbol>( toReturn, compilation.Assembly );
 		}
 
-		public static IFieldSymbol Field( string text ) {
+		internal static TestSymbol<IFieldSymbol> Field( string text ) {
 			var type = Type( "sealed class " + RootClass + " { " + text + "; }" );
 
-			var toReturn = type.GetMembers().OfType<IFieldSymbol>().FirstOrDefault();
+			var toReturn = type.Symbol.GetMembers().OfType<IFieldSymbol>().FirstOrDefault();
 			Assert.IsNotNull( toReturn );
 			Assert.AreNotEqual( TypeKind.Error, toReturn.Type.TypeKind );
-			return toReturn;
+
+			return new TestSymbol<IFieldSymbol>( toReturn, type.CompilationAssemblySymbol );
 		}
 
-		public static IPropertySymbol Property( string text ) {
+		internal static TestSymbol<IPropertySymbol> Property( string text ) {
 			var type = Type( "sealed class " + RootClass + " { " + text + "; }" );
 
-			var toReturn = type.GetMembers().OfType<IPropertySymbol>().FirstOrDefault();
+			var toReturn = type.Symbol.GetMembers().OfType<IPropertySymbol>().FirstOrDefault();
 			Assert.IsNotNull( toReturn );
 			Assert.AreNotEqual( TypeKind.Error, toReturn.Type.TypeKind );
-			return toReturn;
+
+			return new TestSymbol<IPropertySymbol>( toReturn, type.CompilationAssemblySymbol );
 		}
 	}
 

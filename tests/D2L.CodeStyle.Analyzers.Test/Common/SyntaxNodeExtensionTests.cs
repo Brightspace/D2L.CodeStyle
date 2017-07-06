@@ -11,7 +11,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
         [Test]
         public void IsPropertyGetterImplemented_Yes_ReturnsTrue() {
             var prop = Property( "private string random { get { return \"\"; } }" );
-            var syntax = prop.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as PropertyDeclarationSyntax;
+            var syntax = prop.Symbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as PropertyDeclarationSyntax;
             Assert.IsNotNull( syntax );
 
             var isGetterImplemented = SyntaxNodeExtension.IsAutoImplemented( syntax );
@@ -22,7 +22,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
         [Test]
         public void IsPropertyGetterImplemented_No_ReturnsFalse() {
             var prop = Property( "private string random { get; }" );
-            var syntax = prop.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as PropertyDeclarationSyntax;
+            var syntax = prop.Symbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() as PropertyDeclarationSyntax;
             Assert.IsNotNull( syntax );
 
             var isGetterImplemented = SyntaxNodeExtension.IsAutoImplemented( syntax );
