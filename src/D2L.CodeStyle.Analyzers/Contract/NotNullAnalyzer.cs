@@ -103,6 +103,13 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				return false;
 			}
 
+			ImmutableArray<IParameterSymbol> parameters = invokedSymbol.Parameters;
+			if( parameters.Length == 0 ) {
+				// Method doesn't take any parameters so there's no need to look at arguments
+				notNullArguments = null;
+				return false;
+			}
+
 			ImmutableHashSet<IParameterSymbol> notNullParameterCache;
 			if( notNullMethodCache.TryGetValue( invokedSymbol, out notNullParameterCache )
 				&& notNullParameterCache == null
@@ -112,8 +119,10 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				return false;
 			}
 
-			ImmutableArray<IParameterSymbol> parameters = invokedSymbol.Parameters;
-			if( arguments.Count > parameters.Length ) {
+			if( arguments.Count > parameters.Length
+				// `params` converts multiple arguments into a single array parameter
+				&& !parameters[parameters.Length - 1].IsParams
+			) {
 				// Something is weird, and we can't analyze this
 				notNullArguments = null;
 				return false;
@@ -160,6 +169,11 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 		) {
 			// Not a named parameter
 			if( argument.NameColon == null ) { // Regular order-based
+				if( argumentIndex >= parameters.Length ) {
+					// `params` parameter, where the remaining arguments all apply to the last parameter
+					parameter = parameters[parameters.Length - 1];
+					return true;
+				}
 				parameter = parameters[argumentIndex];
 				return true;
 			}

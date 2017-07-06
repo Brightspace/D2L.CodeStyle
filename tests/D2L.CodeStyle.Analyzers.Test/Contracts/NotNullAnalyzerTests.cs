@@ -284,6 +284,60 @@ namespace Test {
 				);
 		}
 
+		[Test]
+		public void NotNullParam_MethodHasParamsParameter_FirstIsNotNull_ReportsProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			DoSomeStuff( null, 1, 2, 3, 4, 5 );
+		}
+
+		private void DoSomeStuff(
+			[NotNull] string name = ""a value"",
+			params int[] numbers
+		) {}
+	}
+}";
+			AssertProducesError(
+					test,
+					5 + NotNullParamMethodLines,
+					17,
+					"name"
+				);
+		}
+
+		[Test]
+		public void NotNullParam_ParamsParameterIsNotNull_NullIncludedInList_ReportsProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			DoSomeStuff(
+					42,
+					""a value"",
+					""another value"",
+					null,
+					""value the third""
+				);
+		}
+
+		private void DoSomeStuff(
+			int number,
+			[NotNull] params string[] names
+		) {}
+	}
+}";
+			AssertProducesError(
+					test,
+					9 + NotNullParamMethodLines,
+					6,
+					"names"
+				);
+		}
+
 		#endregion
 
 		#region Should not produce errors
@@ -387,13 +441,32 @@ namespace Test {
 		private void DoSomeStuff(
 			TestProvider provider,
 			[NotNull] string value = ""a value"",
-			[NotNull] string anotherValue = ""another value"",
+			[NotNull] string anotherValue = ""another value""
 		) {}
 	}
 }";
 			AssertDoesNotProduceError( test );
 		}
-		
+
+		[Test]
+		public void NotNullParam_CallingMethodWithExtraArguments_MarkedAsNotNull_DoesNotReportProblem() {
+			// This should not be marked as an error since the method is being called in a way that
+			// shouldn't even compile properly
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			DoSomeStuff( null, ""something"" );
+		}
+
+		private void DoSomeStuff(
+			[NotNull] string value = ""a value""
+		) {}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
 
 		#endregion
 
