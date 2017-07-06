@@ -118,7 +118,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				case TypeKind.Class:
 				case TypeKind.Interface:
 				case TypeKind.Struct: // equivalent to TypeKind.Structure
-				case TypeKind.TypeParameter
+				case TypeKind.TypeParameter:
 					return InspectClassStructOrInterfaceOrTypeParameter(
 						type,
 						flags,
