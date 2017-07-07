@@ -71,7 +71,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}
 
 		internal KnownImmutableTypes( IAssemblySymbol a )
-			: this( LoadFromAssembly( a ) ) { }
+			: this( LoadFromAssembly( a ).ToImmutableHashSet() ) { }
 
 		internal bool IsTypeKnownImmutable( ITypeSymbol type ) {
 			if( ImmutableSpecialTypes.Contains( type.SpecialType ) ) {
