@@ -118,7 +118,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				case TypeKind.Class:
 				case TypeKind.Interface:
 				case TypeKind.Struct: // equivalent to TypeKind.Structure
-					return InspectClassStructOrInterface(
+				case TypeKind.TypeParameter:
+					return InspectClassStructOrInterfaceOrTypeParameter(
 						type,
 						flags,
 						typeStack
@@ -138,14 +139,14 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					throw new NotImplementedException();
 
 				default:
-					// not handled: Module, Pointer, TypeParameter, Submission.
+					// not handled: Module, Pointer, Submission.
 					throw new NotImplementedException(
 						$"TypeKind.{type.Kind} not handled by analysis"
 					);
 			}
 		}
 
-		private MutabilityInspectionResult InspectClassStructOrInterface(
+		private MutabilityInspectionResult InspectClassStructOrInterfaceOrTypeParameter(
 			ITypeSymbol type,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
