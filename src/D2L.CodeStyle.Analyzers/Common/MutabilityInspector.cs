@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -217,6 +217,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				case TypeKind.TypeParameter:
 					return InspectClassStructOrInterfaceOrTypeParameter(
 						type,
+						rootAssembly,
 						flags,
 						typeStack
 					);
@@ -244,6 +245,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		private MutabilityInspectionResult InspectClassStructOrInterfaceOrTypeParameter(
 			ITypeSymbol type,
+			IAssemblySymbol rootAssembly,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
