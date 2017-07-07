@@ -63,6 +63,15 @@ namespace SpecTests {
 		public static int x;
 		[Statics.Unaudited( Because.ItsStickyDataOhNooo )]
 		public static readonly INotNecessarilyImmutableInterface x;
+
+		internal sealed class ClassWithMemberOfUnknownType {
+			private readonly INotSureWhatThisIs m_foo = null;
+		}
+
+		// This shouldn't emit a diagnostic and shouldn't throw an exception
+		// even though we can't complete the analysis. That's okay because
+		// our analyzer only needs to be strict for builds that pass.
+		public static readonly ClassWithMemberOfUnknownType m_classWithMemberOfUnknownType;
 		
 	}
 }
