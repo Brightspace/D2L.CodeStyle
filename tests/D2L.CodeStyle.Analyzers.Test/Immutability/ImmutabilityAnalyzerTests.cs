@@ -12,6 +12,8 @@ namespace D2L.CodeStyle.Analyzers {
 			return new ImmutabilityAnalyzer();
 		}
 
+		private readonly MutabilityInspectionResultFormatter m_formatter = new MutabilityInspectionResultFormatter();
+
 		[Test]
 		public void EmptyDocument_NoDiag() {
 			const string test = @"";
@@ -33,7 +35,12 @@ namespace D2L.CodeStyle.Analyzers {
 
 		}
 	}";
-			AssertSingleDiagnostic( test, 5, 3 );
+			AssertSingleDiagnostic( test, 5, 3, MutabilityInspectionResult.Mutable(
+				"bad",
+				"System.DateTime",
+				MutabilityTarget.Member,
+				MutabilityCause.IsNotReadonly
+			) );
 		}
 
 
@@ -51,7 +58,12 @@ namespace D2L.CodeStyle.Analyzers {
 
 		}
 	}";
-			AssertSingleDiagnostic( test, 6, 3 );
+			AssertSingleDiagnostic( test, 6, 3, MutabilityInspectionResult.Mutable(
+				"bad",
+				"System.DateTime",
+				MutabilityTarget.Member,
+				MutabilityCause.IsNotReadonly
+			) );
 		}
 
 		[Test]
@@ -69,7 +81,12 @@ namespace D2L.CodeStyle.Analyzers {
 
 		}
 	}";
-			AssertSingleDiagnostic( test, 7, 3 );
+			AssertSingleDiagnostic( test, 7, 3, MutabilityInspectionResult.Mutable( 
+				"bad",
+				"System.DateTime",
+				MutabilityTarget.Member,
+				MutabilityCause.IsNotReadonly
+			) );
 		}
 
 		[Test]
@@ -94,10 +111,13 @@ namespace D2L.CodeStyle.Analyzers {
 			VerifyCSharpDiagnostic( file );
 		}
 
-		private void AssertSingleDiagnostic( string file, int line, int column ) {
+		private void AssertSingleDiagnostic( string file, int line, int column, MutabilityInspectionResult result ) {
+			var reason = m_formatter.Format( result );
+			var message = string.Format( Diagnostics.ImmutableClassIsnt.MessageFormat.ToString(), reason );
+
 			var expected = new DiagnosticResult {
 				Id = Diagnostics.ImmutableClassIsnt.Id,
-				Message = Diagnostics.ImmutableClassIsnt.MessageFormat.ToString(),
+				Message = message,
 				Severity = DiagnosticSeverity.Error,
 				Locations = new[] {
 					new DiagnosticResultLocation( "Test0.cs", line, column )

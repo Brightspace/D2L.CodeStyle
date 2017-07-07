@@ -15,7 +15,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		public static readonly DiagnosticDescriptor ImmutableClassIsnt = new DiagnosticDescriptor(
 			id: "D2L0003",
 			title: "Classes marked as immutable should be immutable.",
-			messageFormat: "This class is marked immutable, but it is not. Check that all fields and properties are immutable.",
+			messageFormat: "This class is marked immutable, but it is not, because '{0}'. Check that all fields and properties are immutable.",
 			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
