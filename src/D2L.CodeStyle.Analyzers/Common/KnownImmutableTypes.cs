@@ -18,6 +18,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			"count4net.Writers.DurationCounter",
 			"log4net.ILog",
 			"Newtonsoft.Json.JsonSerializer",
+			"System.Collections.Generic.KeyValuePair",
 			"System.ComponentModel.TypeConverter",
 			"System.DateTime",
 			"System.Drawing.Size", // only safe because it's a struct with primitive fields

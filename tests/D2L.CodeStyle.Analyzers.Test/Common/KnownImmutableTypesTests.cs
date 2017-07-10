@@ -10,7 +10,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		[Test]
 		public void IsTypeKnownImmutable_DefaultlyImmutable_True() {
 			var knownTypes = new KnownImmutableTypes( ImmutableHashSet<string>.Empty );
-			var type = Field( "System.Version foo" ).Type;
+			var type = Field( "System.Version foo" ).Symbol.Type;
 
 			var result = knownTypes.IsTypeKnownImmutable( type );
 
@@ -20,7 +20,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		[Test]
 		public void IsTypeKnownImmutable_DefaultlyNotImmutable_False() {
 			var knownTypes = new KnownImmutableTypes( ImmutableHashSet<string>.Empty );
-			var type = Field( "System.IDisposable foo" ).Type;
+			var type = Field( "System.IDisposable foo" ).Symbol.Type;
 
 			var result = knownTypes.IsTypeKnownImmutable( type );
 
@@ -32,7 +32,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var knownTypes = new KnownImmutableTypes( new HashSet<string> {
 				"System.IDisposable"
 			}.ToImmutableHashSet() );
-			var type = Field( "System.IDisposable foo" ).Type;
+			var type = Field( "System.IDisposable foo" ).Symbol.Type;
 
 			var result = knownTypes.IsTypeKnownImmutable( type );
 
@@ -42,7 +42,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		[Test]
 		public void IsTypeKnownImmutable_NotDeclaredImmutableAndNotDefault_False() {
 			var knownTypes = new KnownImmutableTypes( ImmutableHashSet<string>.Empty );
-			var type = Field( "System.IDisposable foo" ).Type;
+			var type = Field( "System.IDisposable foo" ).Symbol.Type;
 
 			var result = knownTypes.IsTypeKnownImmutable( type );
 

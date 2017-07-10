@@ -17,6 +17,95 @@ namespace D2L.CodeStyle.Analyzers.Common {
 	internal sealed class MutabilityInspector {
 
 		/// <summary>
+		/// A list of temporarily allowed external types. This is here so that we can get a fix in for 
+		/// requiring external types to be marked with [Objects.Immutable]; we will burn this list down
+		/// and will not add to it!
+		/// </summary>
+		private static readonly ImmutableHashSet<string> TemporarilyAllowedExternalTypes = new HashSet<string> {
+			"D2L.AW.ETL.Utility.Logger",
+			"D2L.Core.Caching.OptimisticPermanentCache",
+			"D2L.Core.Comparisons.EqualityComparerAdapter",
+			"D2L.Core.Comparisons.NullableEqualityComparerWrapper",
+			"D2L.Core.Contracts.Plugins.Contract",
+			"D2L.Core.Data.MsSql.RowVersion",
+			"D2L.Core.JobManagement.Legacy.JobManager",
+			"D2L.Core.JobManagement.Legacy.JobStatusType",
+			"D2L.Core.Reflection.AssemblyQualifiedNameFormatter",
+			"D2L.Core.Security.Encryption.D2LEncryptionFactory",
+			"D2L.Core.Security.Encryption.StringHasher",
+			"D2L.Core.Xml.ArrayXmlFormatter",
+			"D2L.Core.Xml.DictionaryXmlFormatter",
+			"D2L.Custom.ReportingFramework.Domain.Entities.DataSetFilter",
+			"D2L.HoldingTank.Batch.DSL.HoldingTankCommandHelpText",
+			"D2L.LOR.Search.Field",
+			"D2L.LP.Caching.Providers.PermanentCache",
+			"D2L.LP.Caching.SimpleLifetimeCache",
+			"D2L.LP.Diagnostics.Performance.Metric",
+			"D2L.LP.Extensibility.TypeResolution.CustomType",
+			"D2L.LP.Files.Domain.Default.InMemoryFile",
+			"D2L.LP.Globalization.Timezones.Domain.ServerTimezone",
+			"D2L.LP.Globalization.Timezones.Domain.UtcTimezone",
+			"D2L.LP.Hypermedia.Constants.CanonicalDomainName",
+			"D2L.LP.LayeredArch.Data.CompositeDTOFactory",
+			"D2L.LP.LayeredArch.Data.CompositeDTOFactoryBase",
+			"D2L.LP.LayeredArch.Data.Objects.ExpressionFieldMapper",
+			"D2L.LP.LayeredArch.Data.Searching.MsSql.MsSqlSearchData",
+			"D2L.LP.LayeredArch.LoadMoreSortInfo",
+			"D2L.LP.OrgUnits.OrgId",
+			"D2L.LP.OrgUnits.OrgUnitId",
+			"D2L.LP.OrgUnits.WorkQueue.Workers.HandlerType",
+			"D2L.LP.Resources.GlobalTypeIdentifier",
+			"D2L.LP.Text.LangTerm",
+			"D2L.LP.Users.UserId",
+			"D2L.LP.Validation.Validators.GreaterThanValidator",
+			"D2L.LP.Validation.Validators.TrueValidator",
+			"D2L.LP.Web.UI.Common.Controls.Container.SetIsVisibleFunction",
+			"D2L.LP.Web.UI.Common.Controls.Form.SubmitRpcFunction",
+			"D2L.LP.Web.UI.Common.Controls.Hidden.SetValueFunction",
+			"D2L.LP.Web.UI.Desktop.Controls.DateTimeSelector.SetIsEnabledFunction",
+			"D2L.LP.Web.UI.Desktop.Controls.Grid.ReloadFunction",
+			"D2L.LP.Web.UI.Desktop.Controls.RadioList.SetIsAllEnabledFunction",
+			"D2L.LP.Web.UI.Html.JavaScript.CompareBooleanFunction",
+			"D2L.LP.Web.UI.Html.JavaScript.CompareStringFunction",
+			"D2L.LP.Web.UI.Html.JavaScript.Expressions.IntExpression",
+			"D2L.LP.Web.UI.Html.JavaScript.IfShortHandJavaScriptFunction",
+			"D2L.LP.Web.UI.Html.JavaScript.JavaScriptFunction",
+			"D2L.LP.Web.UI.Html.JavaScript.JavaScriptFunctionPipeline",
+			"D2L.LP.Web.UI.Html.JavaScript.NavigateFunction",
+			"D2L.LP.Web.UI.Html.Scoping.ScopeName",
+			"D2L.LP.Web.UI.Html.Style.Background.BackgroundHorizontalPosition",
+			"D2L.LP.Web.UI.Html.Style.Background.BackgroundStyleFactory",
+			"D2L.LP.Web.UI.Html.Style.Background.BackgroundVerticalPosition",
+			"D2L.LP.Web.UI.Html.Style.Borders.Border",
+			"D2L.LP.Web.UI.Html.Style.Borders.BorderFactory",
+			"D2L.LP.Web.UI.Html.Style.Borders.BorderRadius",
+			"D2L.LP.Web.UI.Html.Style.Spacing.SpacingFactory",
+			"D2L.LP.WebExtensibility.Paging.LoadMorePagingInfo",
+			"D2L.LP.WebExtensibility.Paging.LoadMorePagingResultSet",
+			"D2L.LP.WebExtensibility.Paging.PageSizeCalculator",
+			"D2L.LP.WebExtensibility.Versioning.RestWebServiceVersion",
+			"D2L.Lms.Domain.Security.Right",
+			"D2L.LocalDate",
+			"D2L.LocalDateTime",
+			"D2L.LocalTime",
+			"D2L.Paths.Web.AbsoluteVirtualPath",
+			"D2L.Services.Monitoring.HealthCheck.Contract.Model.ApplicationIdentifier",
+			"D2L.Services.Monitoring.HealthCheck.Contract.Model.Status",
+			"D2L.Services.Monitoring.HealthCheck.Contract.Status",
+			"D2L.UtcDateTime",
+			"System.Drawing.Imaging.ImageFormat",
+			"System.Random",
+			"System.Security.Cryptography.RNGCryptoServiceProvider",
+			"System.Text.ASCIIEncoding",
+			"System.Text.UTF8Encoding",
+			"System.Threading.ReaderWriterLockSlim",
+			"System.Xml.Linq.XDeclaration",
+			"System.Xml.Linq.XName",
+			"System.Xml.Linq.XNamespace",
+			"System.Xml.XmlWriterSettings"
+		}.ToImmutableHashSet();
+
+		/// <summary>
 		/// A list of marked immutable types owned externally.
 		/// </summary>
 		private static readonly ImmutableHashSet<string> MarkedImmutableTypes = new HashSet<string> {
@@ -60,15 +149,22 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		/// <returns>Whether the type is mutable.</returns>
 		public MutabilityInspectionResult InspectType(
 			ITypeSymbol type,
+			IAssemblySymbol rootAssembly,
 			MutabilityInspectionFlags flags = MutabilityInspectionFlags.Default
 		) {
 			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
-			var result = InspectTypeRecursive( type, flags, typesInCurrentCycle );
+			var result = InspectTypeRecursive( 
+				type, 
+				rootAssembly, 
+				flags, 
+				typesInCurrentCycle
+			);
 			return result;
 		}
 
 		private MutabilityInspectionResult InspectTypeRecursive(
 			ITypeSymbol type,
+			IAssemblySymbol rootAssembly,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
@@ -121,6 +217,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				case TypeKind.TypeParameter:
 					return InspectClassStructOrInterfaceOrTypeParameter(
 						type,
+						rootAssembly,
 						flags,
 						typeStack
 					);
@@ -148,6 +245,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		private MutabilityInspectionResult InspectClassStructOrInterfaceOrTypeParameter(
 			ITypeSymbol type,
+			IAssemblySymbol rootAssembly,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
@@ -171,7 +269,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					var namedType = type as INamedTypeSymbol;
 					for( int i = 0; i < namedType.TypeArguments.Length; i++ ) {
 						var arg = namedType.TypeArguments[ i ];
-						var result = InspectTypeRecursive( arg, MutabilityInspectionFlags.Default, typeStack );
+						var result = InspectTypeRecursive( arg, rootAssembly, MutabilityInspectionFlags.Default, typeStack );
 
 						if( result.IsMutable ) {
 							if( result.Target == MutabilityTarget.Member ) {
@@ -203,8 +301,24 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsNotSealed );
 				}
 
+				// System.Object is safe if we can allow unsealed types (i.e., the type is the concrete type). 
+				// For example, `private readonly object m_lock = new object();` is fine. 
+				// There is no state, so we finish early.
+				if( flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed ) && type.SpecialType == SpecialType.System_Object ) {
+					return MutabilityInspectionResult.NotMutable();
+				}
+
+				// We have a type that is not marked immutable, is not an interface, is not an immutable container, etc..
+				// If it is defined in a different assembly, we might not have the metadata to correctly analyze it; so we fail.
+				if( type.ContainingAssembly != rootAssembly ) {
+					if( !TemporarilyAllowedExternalTypes.Contains( type.GetFullTypeName() ) ) {
+						// this if-block is temporary!
+						return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnExternalUnmarkedType );
+					}
+				}
+
 				foreach( ISymbol member in type.GetExplicitNonStaticMembers() ) {
-					var result = InspectMemberRecursive( member, MutabilityInspectionFlags.Default, typeStack );
+					var result = InspectMemberRecursive( member, rootAssembly, MutabilityInspectionFlags.Default, typeStack );
 					if( result.IsMutable ) {
 						return result;
 					}
@@ -219,6 +333,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		private MutabilityInspectionResult InspectMemberRecursive(
 			ISymbol symbol,
+			IAssemblySymbol rootAssembly,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
@@ -242,7 +357,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 						return MutabilityInspectionResult.MutableProperty( prop, MutabilityCause.IsNotReadonly );
 					}
 
-					result = InspectTypeRecursive( prop.Type, flags, typeStack );
+					result = InspectTypeRecursive( prop.Type, rootAssembly, flags, typeStack );
 					if( result.IsMutable ) {
 						return result.WithPrefixedMember( prop.Name );
 					}
@@ -257,7 +372,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 						return MutabilityInspectionResult.MutableField( field, MutabilityCause.IsNotReadonly );
 					}
 
-					result = InspectTypeRecursive( field.Type, flags, typeStack );
+					result = InspectTypeRecursive( field.Type, rootAssembly, flags, typeStack );
 					if( result.IsMutable ) {
 						return result.WithPrefixedMember( field.Name );
 					}
