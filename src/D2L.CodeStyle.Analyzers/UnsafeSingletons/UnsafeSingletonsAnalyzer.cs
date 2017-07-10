@@ -14,8 +14,10 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
 
 		public override void Initialize( AnalysisContext context ) {
-			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.None );
-			context.RegisterSyntaxNodeAction( AnalyzeClass, SyntaxKind.ClassDeclaration );
+			context.RegisterSyntaxNodeAction(
+				AnalyzeClass,
+				SyntaxKind.ClassDeclaration
+			);
 		}
 
 		private void AnalyzeClass( SyntaxNodeAnalysisContext context ) {
