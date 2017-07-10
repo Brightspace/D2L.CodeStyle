@@ -26,7 +26,13 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
 
 		public override void Initialize( AnalysisContext context ) {
-			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.None ); 
+			// We aren't analyzing code-gen'd files. This is not ideal
+			// long-term because it may cause us to miss things but is
+			// being done temporarily because of the large signal-to-noise
+			// ratio.
+			context.ConfigureGeneratedCodeAnalysis(
+				GeneratedCodeAnalysisFlags.None
+			); 
 
 			context.RegisterSyntaxNodeAction(
 				AnalyzeField,
