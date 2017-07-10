@@ -11,19 +11,14 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( Diagnostics.UnsafeSingletonField );
 
 		private readonly MutabilityInspector m_immutabilityInspector = new MutabilityInspector( KnownImmutableTypes.Default );
-		private readonly Utils m_utils = new Utils();
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
 
 		public override void Initialize( AnalysisContext context ) {
+			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.None );
 			context.RegisterSyntaxNodeAction( AnalyzeClass, SyntaxKind.ClassDeclaration );
 		}
 
 		private void AnalyzeClass( SyntaxNodeAnalysisContext context ) {
-			if( m_utils.IsGeneratedCodefile( context.Node.SyntaxTree.FilePath ) ) {
-				// skip code-gen'd files; they have been hand-inspected to be safe
-				return;
-			}
-
 			var root = context.Node as ClassDeclarationSyntax;
 			if( root == null ) {
 				return;
