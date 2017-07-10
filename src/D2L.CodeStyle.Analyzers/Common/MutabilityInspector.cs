@@ -59,6 +59,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			"D2L.LP.Users.UserId",
 			"D2L.LP.Validation.Validators.GreaterThanValidator",
 			"D2L.LP.Validation.Validators.TrueValidator",
+			"D2L.LP.Web.Mvc.RouteLocation",
 			"D2L.LP.Web.UI.Common.Controls.Container.SetIsVisibleFunction",
 			"D2L.LP.Web.UI.Common.Controls.Form.SubmitRpcFunction",
 			"D2L.LP.Web.UI.Common.Controls.Hidden.SetValueFunction",
