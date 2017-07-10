@@ -11,6 +11,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( Diagnostics.ImmutableClassIsnt );
 
 		private readonly MutabilityInspector m_immutabilityInspector = new MutabilityInspector( KnownImmutableTypes.Default );
+		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
 
 		public override void Initialize( AnalysisContext context ) {
 			context.RegisterSyntaxNodeAction(
@@ -39,8 +40,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				| MutabilityInspectionFlags.AllowUnsealed // `symbol` is the concrete type
 				| MutabilityInspectionFlags.IgnoreImmutabilityAttribute; // we're _validating_ the attribute
 
-			if( m_immutabilityInspector.InspectType( symbol, context.Compilation.Assembly, flags ).IsMutable ) {
-				var diagnostic = Diagnostic.Create( Diagnostics.ImmutableClassIsnt, root.GetLocation() );
+			var mutabilityResult = m_immutabilityInspector.InspectType( symbol, context.Compilation.Assembly, flags );
+
+			if( mutabilityResult.IsMutable ) {
+				var reason = m_resultFormatter.Format( mutabilityResult );
+				var diagnostic = Diagnostic.Create( Diagnostics.ImmutableClassIsnt, root.GetLocation(), reason );
 				context.ReportDiagnostic( diagnostic );
 			}
 		}
