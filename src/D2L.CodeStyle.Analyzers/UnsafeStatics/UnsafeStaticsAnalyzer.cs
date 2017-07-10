@@ -23,10 +23,17 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 		);
 
 		private readonly MutabilityInspector m_immutabilityInspector = new MutabilityInspector( KnownImmutableTypes.Default );
-		private readonly Utils m_utils = new Utils();
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
 
 		public override void Initialize( AnalysisContext context ) {
+			// We aren't analyzing code-gen'd files. This is not ideal
+			// long-term because it may cause us to miss things but is
+			// being done temporarily because of the large signal-to-noise
+			// ratio.
+			context.ConfigureGeneratedCodeAnalysis(
+				GeneratedCodeAnalysisFlags.None
+			); 
+
 			context.RegisterSyntaxNodeAction(
 				AnalyzeField,
 				SyntaxKind.FieldDeclaration
@@ -39,11 +46,6 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 		}
 
 		private void AnalyzeField( SyntaxNodeAnalysisContext context ) {
-			if( m_utils.IsGeneratedCodefile( context.Node.SyntaxTree.FilePath ) ) {
-				// skip code-gen'd files; they have been hand-inspected to be safe
-				return;
-			}
-
 			var root = context.Node as FieldDeclarationSyntax;
 
 			if( root == null ) {
@@ -78,11 +80,6 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 		}
 
 		private void AnalyzeProperty( SyntaxNodeAnalysisContext context ) {
-			if( m_utils.IsGeneratedCodefile( context.Node.SyntaxTree.FilePath ) ) {
-				// skip code-gen'd files; they have been hand-inspected to be safe
-				return;
-			}
-
 			var root = context.Node as PropertyDeclarationSyntax;
 
 			if( root == null ) {

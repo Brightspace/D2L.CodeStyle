@@ -42,7 +42,6 @@
     <Compile Include="Common\SyntaxNodeExtensionTests.cs" />
     <Compile Include="Common\TestBase.cs" />
     <Compile Include="Common\TypeSymbolExtensionsTests.cs" />
-    <Compile Include="Common\UtilsTests.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzerTests.cs" />
     <EmbeddedResource Include="Specs\RpcAnalyzer.cs" />
     <Compile Include="RpcDependencies\RpcDependencyAnalyzerTests.cs" />
