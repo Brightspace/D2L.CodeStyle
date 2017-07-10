@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -39,6 +40,29 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}.ToImmutableHashSet();
 
 		/// <summary>
+		/// A list of known immutable special types.
+		/// </summary
+		private readonly static ImmutableArray<SpecialType> ImmutableSpecialTypes = ImmutableArray.Create(
+			SpecialType.System_Enum,
+			SpecialType.System_Boolean,
+			SpecialType.System_Char,
+			SpecialType.System_SByte,
+			SpecialType.System_Byte,
+			SpecialType.System_Int16,
+			SpecialType.System_UInt16,
+			SpecialType.System_Int32,
+			SpecialType.System_UInt32,
+			SpecialType.System_Int64,
+			SpecialType.System_UInt64,
+			SpecialType.System_Decimal,
+			SpecialType.System_Single,
+			SpecialType.System_Double,
+			SpecialType.System_String,
+			SpecialType.System_IntPtr,
+			SpecialType.System_UIntPtr
+		);
+		
+		/// <summary>
 		/// A list of known immutable types defined for the assembly.
 		/// </summary>
 		private readonly ImmutableHashSet<string> DeclaredKnownImmutableTypes;
@@ -48,10 +72,10 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}
 
 		internal KnownImmutableTypes( IAssemblySymbol a )
-			: this( LoadFromAssembly( a ) ) { }
+			: this( LoadFromAssembly( a ).ToImmutableHashSet() ) { }
 
 		internal bool IsTypeKnownImmutable( ITypeSymbol type ) {
-			if( type.IsPrimitive() ) {
+			if( ImmutableSpecialTypes.Contains( type.SpecialType ) ) {
 				return true;
 			}
 
@@ -68,39 +92,21 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			return false;
 		}
 
-		private static ImmutableHashSet<string> LoadFromAssembly( IAssemblySymbol a ) {
-			var knownImmutableTypesAttribute = a.GetAttributes()
-				.Where( attr => attr.AttributeClass.Name == "KnownImmutableTypes" )
-				.SingleOrDefault();
-
-			if( knownImmutableTypesAttribute == null ) {
-				return ImmutableHashSet<string>.Empty;
-			}
-
-			var knownImmutableTypes = knownImmutableTypesAttribute
-				.ConstructorArguments
-				.SelectMany( GetTypeConstantValues<string> );
-
-			return knownImmutableTypes
-				.Select( t => t.ToString() )
-				.ToImmutableHashSet();
-		}
-
-		private static ISet<T> GetTypeConstantValues<T>( TypedConstant c ) {
-			var values = new HashSet<T>();
-
-			if( c.Value != null ) {
-				values.Add( (T) c.Value );
-			}
-
-			if( !c.Values.IsDefaultOrEmpty ) {
-				var nestedValues = c.Values.SelectMany( GetTypeConstantValues<T> );
-				foreach( var nestedValue in nestedValues ) {
-					values.Add( nestedValue );
+		private static IEnumerable<string> LoadFromAssembly( IAssemblySymbol a ) {
+			foreach( var attribute in a.GetAttributes() ) {
+				if( attribute.AttributeClass.GetFullTypeName() != "D2L.CodeStyle.Annotations.Types.Audited" ) {
+					continue;
 				}
-			}
 
-			return values;
+				var typeofArgument = attribute.ConstructorArguments[0];
+				var value = typeofArgument.Value as INamedTypeSymbol;
+				if( value == null ) {
+					// unable to extract the type, continue safely
+					continue;
+				}
+
+				yield return value.GetFullTypeName();
+			}
 		}
 	}
 }
