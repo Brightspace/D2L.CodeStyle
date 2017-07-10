@@ -421,7 +421,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			if( MarkedImmutableTypes.Contains( symbol.GetFullTypeName() ) ) {
 				return true;
 			}
-			if( symbol.GetAttributes().Any( a => a.AttributeClass.Name == "Immutable" ) ) {
+			if( Attributes.Objects.Immutable.IsDefined( symbol ) ) {
 				return true;
 			}
 			if( symbol.Interfaces.Any( IsTypeMarkedImmutable ) ) {

@@ -93,11 +93,9 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}
 
 		private static IEnumerable<string> LoadFromAssembly( IAssemblySymbol a ) {
-			foreach( var attribute in a.GetAttributes() ) {
-				if( attribute.AttributeClass.GetFullTypeName() != "D2L.CodeStyle.Annotations.Types.Audited" ) {
-					continue;
-				}
+			var typesAttributes = Attributes.Types.Audited.GetAll( a );
 
+			foreach( var attribute in typesAttributes ) {
 				var typeofArgument = attribute.ConstructorArguments[0];
 				var value = typeofArgument.Value as INamedTypeSymbol;
 				if( value == null ) {
