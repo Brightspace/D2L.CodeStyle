@@ -98,13 +98,13 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				}
 
 				var typeofArgument = attribute.ConstructorArguments[0];
-				var value = typeofArgument.Value as Type;
+				var value = typeofArgument.Value as INamedTypeSymbol;
 				if( value == null ) {
 					// unable to extract the type, continue safely
 					continue;
 				}
 
-				yield return value.FullName;
+				yield return value.GetFullTypeName();
 			}
 		}
 	}
