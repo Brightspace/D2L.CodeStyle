@@ -12,13 +12,22 @@ namespace D2L.CodeStyle.Analyzers {
 			return new ImmutabilityAnalyzer();
 		}
 
+		private const string s_preamble = @"
+using D2L.CodeStyle.Annotations;
+namespace D2L.CodeStyle.Annotations {
+	public class Objects {
+		public class Immutable : Attribute {}
+	}
+}
+";
+
 		private readonly MutabilityInspectionResultFormatter m_formatter = new MutabilityInspectionResultFormatter();
 
 		[Test]
 		public void EmptyDocument_NoDiag() {
 			const string test = @"";
 
-			VerifyCSharpDiagnostic( test );
+			VerifyCSharpDiagnostic( s_preamble + test );
 		}
 
 		[Test]
@@ -27,7 +36,7 @@ namespace D2L.CodeStyle.Analyzers {
 	using System;
 
 	namespace test {
-		[Immutable]
+		[Objects.Immutable]
 		class Test {
 
 			public DateTime bad = DateTime.Now;
@@ -35,7 +44,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		}
 	}";
-			AssertSingleDiagnostic( test, 5, 3, MutabilityInspectionResult.Mutable(
+			AssertSingleDiagnostic( s_preamble + test, 12, 3, MutabilityInspectionResult.Mutable(
 				"bad",
 				"System.DateTime",
 				MutabilityTarget.Member,
@@ -50,7 +59,7 @@ namespace D2L.CodeStyle.Analyzers {
 	using System;
 
 	namespace test {
-		[Immutable] interface IFoo {} 
+		[Objects.Immutable] interface IFoo {} 
 		class Test : IFoo {
 
 			public DateTime bad = DateTime.Now;
@@ -58,7 +67,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		}
 	}";
-			AssertSingleDiagnostic( test, 6, 3, MutabilityInspectionResult.Mutable(
+			AssertSingleDiagnostic( s_preamble + test, 13, 3, MutabilityInspectionResult.Mutable(
 				"bad",
 				"System.DateTime",
 				MutabilityTarget.Member,
@@ -72,7 +81,7 @@ namespace D2L.CodeStyle.Analyzers {
 	using System;
 
 	namespace test {
-		[Immutable] interface IFooBase {} 
+		[Objects.Immutable] interface IFooBase {} 
 		interface IFoo : IFooBase {} 
 		class Test : IFoo {
 
@@ -81,7 +90,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		}
 	}";
-			AssertSingleDiagnostic( test, 7, 3, MutabilityInspectionResult.Mutable( 
+			AssertSingleDiagnostic( s_preamble + test, 14, 3, MutabilityInspectionResult.Mutable( 
 				"bad",
 				"System.DateTime",
 				MutabilityTarget.Member,
@@ -95,7 +104,7 @@ namespace D2L.CodeStyle.Analyzers {
 	using System;
 
 	namespace test {
-		[Immutable] interface IFooBase {} 
+		[Objects.Immutable] interface IFooBase {} 
 		interface IFoo : IFooBase {} 
 		class Test : IFoo {
 
@@ -104,7 +113,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		}
 	}";
-			AssertNoDiagnostic( test );
+			AssertNoDiagnostic( s_preamble + test );
 		}
 
 		private void AssertNoDiagnostic( string file ) {
