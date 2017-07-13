@@ -14,6 +14,12 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		IgnoreImmutabilityAttribute = 2,
 	}
 
+	public enum MemberEnumerationStyle {
+		Default = NonStaticMembers,
+		NonStaticMembers = 0,
+		NonStaticNonAuditedMembers = 1
+	}
+
 	internal sealed class MutabilityInspector {
 
 		/// <summary>
@@ -151,13 +157,15 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		public MutabilityInspectionResult InspectType(
 			ITypeSymbol type,
 			IAssemblySymbol rootAssembly,
-			MutabilityInspectionFlags flags = MutabilityInspectionFlags.Default
+			MutabilityInspectionFlags flags = MutabilityInspectionFlags.Default,
+			MemberEnumerationStyle memberEnumerationStyle = MemberEnumerationStyle.Default
 		) {
 			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
 			var result = InspectTypeRecursive( 
 				type, 
 				rootAssembly, 
-				flags, 
+				flags,
+				memberEnumerationStyle,
 				typesInCurrentCycle
 			);
 			return result;
@@ -167,6 +175,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			ITypeSymbol type,
 			IAssemblySymbol rootAssembly,
 			MutabilityInspectionFlags flags,
+			MemberEnumerationStyle memberEnumerationStyle,
 			HashSet<ITypeSymbol> typeStack
 		) {
 			if( type is IErrorTypeSymbol ) {
@@ -220,6 +229,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 						type,
 						rootAssembly,
 						flags,
+						memberEnumerationStyle,
 						typeStack
 					);
 
@@ -248,6 +258,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			ITypeSymbol type,
 			IAssemblySymbol rootAssembly,
 			MutabilityInspectionFlags flags,
+			MemberEnumerationStyle memberEnumerationStyle,
 			HashSet<ITypeSymbol> typeStack
 		) {
 			// If we're verifying immutability, then carry on; otherwise, bailout
@@ -270,7 +281,10 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					var namedType = type as INamedTypeSymbol;
 					for( int i = 0; i < namedType.TypeArguments.Length; i++ ) {
 						var arg = namedType.TypeArguments[ i ];
-						var result = InspectTypeRecursive( arg, rootAssembly, MutabilityInspectionFlags.Default, typeStack );
+						// TODO: we override the inspection flags, but not the enumeration style; that is intentional (because the inspection flags
+						// are based on the field/prop declaration), but probably confusing
+						// for others and is ugly. We should rethink this and make it easier to follow.
+						var result = InspectTypeRecursive( arg, rootAssembly, MutabilityInspectionFlags.Default, memberEnumerationStyle, typeStack );
 
 						if( result.IsMutable ) {
 							if( result.Target == MutabilityTarget.Member ) {
@@ -318,8 +332,9 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					}
 				}
 
-				foreach( ISymbol member in type.GetExplicitNonStaticMembers() ) {
-					var result = InspectMemberRecursive( member, rootAssembly, MutabilityInspectionFlags.Default, typeStack );
+				var members = EnumerateMembers( type, memberEnumerationStyle );
+				foreach( ISymbol member in members ) {
+					var result = InspectMemberRecursive( member, rootAssembly, MutabilityInspectionFlags.Default, memberEnumerationStyle, typeStack );
 					if( result.IsMutable ) {
 						return result;
 					}
@@ -336,6 +351,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			ISymbol symbol,
 			IAssemblySymbol rootAssembly,
 			MutabilityInspectionFlags flags,
+			MemberEnumerationStyle memberEnumerationStyle,
 			HashSet<ITypeSymbol> typeStack
 		) {
 
@@ -358,7 +374,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 						return MutabilityInspectionResult.MutableProperty( prop, MutabilityCause.IsNotReadonly );
 					}
 
-					result = InspectTypeRecursive( prop.Type, rootAssembly, flags, typeStack );
+					result = InspectTypeRecursive( prop.Type, rootAssembly, flags, memberEnumerationStyle, typeStack );
 					if( result.IsMutable ) {
 						return result.WithPrefixedMember( prop.Name );
 					}
@@ -373,7 +389,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 						return MutabilityInspectionResult.MutableField( field, MutabilityCause.IsNotReadonly );
 					}
 
-					result = InspectTypeRecursive( field.Type, rootAssembly, flags, typeStack );
+					result = InspectTypeRecursive( field.Type, rootAssembly, flags, memberEnumerationStyle, typeStack );
 					if( result.IsMutable ) {
 						return result.WithPrefixedMember( field.Name );
 					}
@@ -388,6 +404,23 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				default:
 					// we've got a member (event, etc.) that we can't currently be smart about, so fail
 					return MutabilityInspectionResult.PotentiallyMutableMember( symbol );
+			}
+		}
+
+		private IEnumerable<ISymbol> EnumerateMembers( ITypeSymbol type, MemberEnumerationStyle enumerationStyle ) {
+			var nonStaticMembers = type.GetExplicitNonStaticMembers();
+
+			switch( enumerationStyle ) {
+
+				case MemberEnumerationStyle.NonStaticMembers:
+					return nonStaticMembers;
+
+				case MemberEnumerationStyle.NonStaticNonAuditedMembers:
+					return nonStaticMembers
+						.Where( member => !Attributes.Members.Audited.IsDefined( member ) );
+
+				default:
+					throw new NotSupportedException( $"Unsupported member enumeration style: {enumerationStyle}." );
 			}
 		}
 

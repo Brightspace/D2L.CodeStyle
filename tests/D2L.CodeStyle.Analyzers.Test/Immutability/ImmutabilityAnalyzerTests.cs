@@ -18,6 +18,9 @@ namespace D2L.CodeStyle.Annotations {
 	public class Objects {
 		public class Immutable : Attribute {}
 	}
+	public class Members {
+		public class Audited : Attribute {}
+	}
 }
 ";
 
@@ -96,6 +99,40 @@ namespace D2L.CodeStyle.Annotations {
 				MutabilityTarget.Member,
 				MutabilityCause.IsNotReadonly
 			) );
+		}
+
+		[Test]
+		public void DocumentWithImmutable_MutableFieldButAudited_NoDiag() {
+			const string test = @"
+	using System;
+
+	namespace test {
+		[Objects.Immutable]
+		class Test {
+
+			[Members.Audited]
+			public DateTime bad;
+
+		}
+	}";
+			AssertNoDiagnostic( s_preamble + test );
+		}
+
+		[Test]
+		public void DocumentWithImmutable_MutablePropertyButAudited_NoDiag() {
+			const string test = @"
+	using System;
+
+	namespace test {
+		[Objects.Immutable]
+		class Test {
+
+			[Members.Audited]
+			public DateTime badToo { get; set; }
+
+		}
+	}";
+			AssertNoDiagnostic( s_preamble + test );
 		}
 
 		[Test]
