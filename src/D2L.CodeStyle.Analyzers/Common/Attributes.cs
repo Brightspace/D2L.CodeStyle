@@ -40,10 +40,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return arr.ToImmutable();
 			}
 
-			internal AttributeData GetSingle( ISymbol s ) {
-				return GetAll( s ).Single();
-			}
-
 			internal bool IsDefined( ISymbol s ) {
 				foreach( var attr in s.GetAttributes() ) {
 					var attrFullTypeName = attr.AttributeClass.GetFullTypeName();
