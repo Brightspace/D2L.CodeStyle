@@ -6,7 +6,7 @@ namespace D2L.CodeStyle.Annotations {
 		/// <summary>
 		/// Indicates that a mutable or otherwise not guaranteed immutable member in a type is safe in a multi-tenant process.
 		/// </summary>
-		[AttributeUsage( validOn: AttributeTargets.Assembly, AllowMultiple = true )]
+		[AttributeUsage( validOn: AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false )]
         public sealed class Audited : Attribute {
             /// <summary>
             /// Mark a mutable or otherwise not guaranteed immutable member as safe in a multi-tenant process
