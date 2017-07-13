@@ -10,17 +10,22 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 	public sealed class UnsafeSingletonsAnalyzer : DiagnosticAnalyzer {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( Diagnostics.UnsafeSingletonField );
 
-		private readonly MutabilityInspector m_immutabilityInspector = new MutabilityInspector( KnownImmutableTypes.Default );
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
 
 		public override void Initialize( AnalysisContext context ) {
+			context.RegisterCompilationStartAction( RegisterAnalysis );
+		}
+
+		private void RegisterAnalysis( CompilationStartAnalysisContext context ) {
+			var inspector = new MutabilityInspector( new KnownImmutableTypes( context.Compilation.Assembly ) );
+
 			context.RegisterSyntaxNodeAction(
-				AnalyzeClass,
+				ctx => AnalyzeClass( ctx, inspector ),
 				SyntaxKind.ClassDeclaration
 			);
 		}
 
-		private void AnalyzeClass( SyntaxNodeAnalysisContext context ) {
+		private void AnalyzeClass( SyntaxNodeAnalysisContext context, MutabilityInspector inspector ) {
 			var root = context.Node as ClassDeclarationSyntax;
 			if( root == null ) {
 				return;
@@ -38,7 +43,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 			// TODO: it probably makes more sense to iterate over the fields and emit diagnostics tied to those individual fields for more accurate red-squigglies
 			// a DI singleton should be capable of having multiple diagnostics come out of it
 			var flags = MutabilityInspectionFlags.AllowUnsealed | MutabilityInspectionFlags.IgnoreImmutabilityAttribute;
-			var result = m_immutabilityInspector.InspectType( type, context.Compilation.Assembly, flags );
+			var result = inspector.InspectType( type, context.Compilation.Assembly, flags );
 			if( result.IsMutable ) {
 				var diagnostic = CreateDiagnostic(
 					root.GetLocation(),

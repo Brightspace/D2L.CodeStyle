@@ -21,7 +21,6 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			Diagnostics.UnnecessaryStaticAnnotation
 		);
 
-		private readonly MutabilityInspector m_immutabilityInspector = new MutabilityInspector( KnownImmutableTypes.Default );
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
 
 		public override void Initialize( AnalysisContext context ) {
@@ -33,18 +32,24 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				GeneratedCodeAnalysisFlags.None
 			); 
 
+			context.RegisterCompilationStartAction( RegisterAnalysis );
+		}
+
+		private void RegisterAnalysis( CompilationStartAnalysisContext context ) {
+			var inspector = new MutabilityInspector( new KnownImmutableTypes( context.Compilation.Assembly ) );
+
 			context.RegisterSyntaxNodeAction(
-				AnalyzeField,
+				ctx => AnalyzeField( ctx, inspector ),
 				SyntaxKind.FieldDeclaration
 			);
 
 			context.RegisterSyntaxNodeAction(
-				AnalyzeProperty,
+				ctx => AnalyzeProperty( ctx, inspector ),
 				SyntaxKind.PropertyDeclaration
 			);
 		}
 
-		private void AnalyzeField( SyntaxNodeAnalysisContext context ) {
+		private void AnalyzeField( SyntaxNodeAnalysisContext context, MutabilityInspector inspector ) {
 			var root = context.Node as FieldDeclarationSyntax;
 
 			if( root == null ) {
@@ -65,6 +70,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 
 				InspectFieldOrProperty(
 					context,
+					inspector,
 					location: variable.GetLocation(),
 					isStatic: isStatic,
 					isReadOnly: isReadOnly,
@@ -78,7 +84,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			}
 		}
 
-		private void AnalyzeProperty( SyntaxNodeAnalysisContext context ) {
+		private void AnalyzeProperty( SyntaxNodeAnalysisContext context, MutabilityInspector inspector ) {
 			var root = context.Node as PropertyDeclarationSyntax;
 
 			if( root == null ) {
@@ -99,6 +105,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 
 			InspectFieldOrProperty(
 				context,
+				inspector,
 				location: root.GetLocation(),
 				isStatic: isStatic,
 				isReadOnly: prop.IsReadOnly,
@@ -128,6 +135,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 		/// </summary>
 		private void InspectFieldOrProperty(
 			SyntaxNodeAnalysisContext context,
+			MutabilityInspector inspector,
 			Location location,
 			ISymbol fieldOrProperty,
 			bool isStatic,
@@ -141,6 +149,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 
 			var diagnostics = GatherDiagnostics(
 				context.SemanticModel,
+				inspector,
 				location: location,
 				isStatic: isStatic,
 				isReadOnly: isReadOnly,
@@ -237,6 +246,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 		/// </summary>
 		private IEnumerable<Diagnostic> GatherDiagnostics(
 			SemanticModel model,
+			MutabilityInspector inspector,
 			Location location,
 			bool isStatic,
 			bool isReadOnly,
@@ -281,7 +291,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				yield break;
 			}
 
-			if( m_immutabilityInspector.IsTypeMarkedImmutable( fieldOrPropertyType ) ) {
+			if( inspector.IsTypeMarkedImmutable( fieldOrPropertyType ) ) {
 				// if the type is marked immutable, skip checking it, to avoid reporting
 				// a diagnostic for each usage of non-immutable types that are marked
 				// immutable (another analyzer catches this already.)
@@ -307,7 +317,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				flags |= MutabilityInspectionFlags.AllowUnsealed;
 			}
 
-			var result = m_immutabilityInspector.InspectType( fieldOrPropertyType, model.Compilation.Assembly, flags );
+			var result = inspector.InspectType( fieldOrPropertyType, model.Compilation.Assembly, flags );
 			if ( result.IsMutable ) {
 				result = result.WithPrefixedMember( fieldOrPropertyName );
 				yield return CreateDiagnostic( 
