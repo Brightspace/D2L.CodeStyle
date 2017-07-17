@@ -44,26 +44,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 	public static class TypeSymbolExtensions {
 
-		private readonly static ImmutableArray<SpecialType> PrimitiveTypes = ImmutableArray.Create(
-			SpecialType.System_Enum,
-			SpecialType.System_Boolean,
-			SpecialType.System_Char,
-			SpecialType.System_SByte,
-			SpecialType.System_Byte,
-			SpecialType.System_Int16,
-			SpecialType.System_UInt16,
-			SpecialType.System_Int32,
-			SpecialType.System_UInt32,
-			SpecialType.System_Int64,
-			SpecialType.System_UInt64,
-			SpecialType.System_Decimal,
-			SpecialType.System_Single,
-			SpecialType.System_Double,
-			SpecialType.System_String,
-			SpecialType.System_IntPtr,
-			SpecialType.System_UIntPtr
-		);
-
 		private static readonly SymbolDisplayFormat FullTypeDisplayFormat = new SymbolDisplayFormat(
 			typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
 			miscellaneousOptions: SymbolDisplayMiscellaneousOptions.ExpandNullable
@@ -92,8 +72,5 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				.Where( t => !t.IsStatic && !t.IsImplicitlyDeclared );
 		}
 
-		public static bool IsPrimitive( this ITypeSymbol symbol ) {
-			return PrimitiveTypes.Contains( symbol.SpecialType );
-		}
 	}
 }

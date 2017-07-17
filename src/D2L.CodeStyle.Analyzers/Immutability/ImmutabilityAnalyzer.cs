@@ -10,16 +10,22 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 	public sealed class ImmutabilityAnalyzer : DiagnosticAnalyzer {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( Diagnostics.ImmutableClassIsnt );
 
-		private readonly MutabilityInspector m_immutabilityInspector = new MutabilityInspector();
+		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
 
 		public override void Initialize( AnalysisContext context ) {
+			context.RegisterCompilationStartAction( RegisterAnalysis );
+		}
+
+		private void RegisterAnalysis( CompilationStartAnalysisContext context ) {
+			var inspector = new MutabilityInspector( new KnownImmutableTypes( context.Compilation.Assembly ) );
+
 			context.RegisterSyntaxNodeAction(
-				AnalyzeClass,
+				ctx => AnalyzeClass( ctx, inspector ),
 				SyntaxKind.ClassDeclaration
 			);
 		}
 
-		private void AnalyzeClass( SyntaxNodeAnalysisContext context ) {
+		private void AnalyzeClass( SyntaxNodeAnalysisContext context, MutabilityInspector inspector ) {
 			var root = context.Node as ClassDeclarationSyntax;
 			if( root == null ) {
 				return;
@@ -31,7 +37,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			// skip classes not marked immutable
-			if( !m_immutabilityInspector.IsTypeMarkedImmutable( symbol ) ) {
+			if( !inspector.IsTypeMarkedImmutable( symbol ) ) {
 				return;
 			}
 
@@ -39,8 +45,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				| MutabilityInspectionFlags.AllowUnsealed // `symbol` is the concrete type
 				| MutabilityInspectionFlags.IgnoreImmutabilityAttribute; // we're _validating_ the attribute
 
-			if( m_immutabilityInspector.InspectType( symbol, flags ).IsMutable ) {
-				var diagnostic = Diagnostic.Create( Diagnostics.ImmutableClassIsnt, root.GetLocation() );
+			var mutabilityResult = inspector.InspectType( symbol, context.Compilation.Assembly, flags );
+
+			if( mutabilityResult.IsMutable ) {
+				var reason = m_resultFormatter.Format( mutabilityResult );
+				var diagnostic = Diagnostic.Create( Diagnostics.ImmutableClassIsnt, root.GetLocation(), reason );
 				context.ReportDiagnostic( diagnostic );
 			}
 		}

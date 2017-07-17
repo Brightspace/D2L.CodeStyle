@@ -31,11 +31,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Common\Diagnostics.cs" />
+    <Compile Include="Common\KnownImmutableTypes.cs" />
     <Compile Include="Common\MutabilityInspectionResult.cs" />
     <Compile Include="Common\MutabilityInspectionResultFormatter.cs" />
     <Compile Include="Common\MutabilityInspector.cs" />
     <Compile Include="Common\TypeSymbolExtensions.cs" />
-    <Compile Include="Common\Utils.cs" />
     <Compile Include="Contract\NotNullAnalyzer.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

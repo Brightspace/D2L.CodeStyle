@@ -36,12 +36,12 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Common\KnownImmutableTypesTests.cs" />
     <Compile Include="Common\MutabilityInspectionResultFormatterTests.cs" />
     <Compile Include="Common\MutabilityInspectorTests.cs" />
     <Compile Include="Common\SyntaxNodeExtensionTests.cs" />
     <Compile Include="Common\TestBase.cs" />
     <Compile Include="Common\TypeSymbolExtensionsTests.cs" />
-    <Compile Include="Common\UtilsTests.cs" />
     <Compile Include="Contracts\NotNullAnalyzerTests.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzerTests.cs" />
     <EmbeddedResource Include="Specs\RpcAnalyzer.cs" />
