@@ -62,7 +62,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 
 			IList<Tuple<ArgumentSyntax, IParameterSymbol>> notNullArguments;
 			bool isNotNullMethod = TryGetNotNullArguments(
-					context,
+					context.SemanticModel,
 					(ExpressionSyntax)invocation ?? construction,
 					arguments,
 					notNullMethodCache,
@@ -95,14 +95,14 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 		}
 
 		private static bool TryGetNotNullArguments(
-			SyntaxNodeAnalysisContext context,
+			SemanticModel semanticModel,
 			ExpressionSyntax invocation,
 			SeparatedSyntaxList<ArgumentSyntax> arguments,
 			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache,
 			out IList<Tuple<ArgumentSyntax, IParameterSymbol>> notNullArguments
 		) {
 			IMethodSymbol invokedSymbol;
-			if( !TryGetInvokedSymbol( context, invocation, out invokedSymbol ) ) {
+			if( !TryGetInvokedSymbol( semanticModel, invocation, out invokedSymbol ) ) {
 				// There could either be multiple methods that match, in which case we don't know which we should
 				// look at, or the method being called may not actually exist.
 				notNullArguments = null;
@@ -196,11 +196,11 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 		}
 
 		private static bool TryGetInvokedSymbol(
-			SyntaxNodeAnalysisContext context,
+			SemanticModel semanticModel,
 			ExpressionSyntax invocation,
 			out IMethodSymbol invokedSymbol
 		) {
-			SymbolInfo invokedSymbolInfo = context.SemanticModel.GetSymbolInfo( invocation );
+			SymbolInfo invokedSymbolInfo = semanticModel.GetSymbolInfo( invocation );
 
 			// The simple case, where there's no ambiguity
 			invokedSymbol = invokedSymbolInfo.Symbol as IMethodSymbol;
@@ -221,21 +221,14 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 
 		private static bool SymbolHasAttribute(
 			ISymbol symbol,
-			string attributeClassName,
-			string expectedArgumentValue = null
+			string attributeClassName
 		) {
 			ImmutableArray<AttributeData> attributes = symbol.GetAttributes();
-			return attributes.Length > 0
+			bool hasExpectedAttribute = attributes.Length > 0
 				&& attributes.Any(
-					x => x.AttributeClass.ToString() == attributeClassName
-						&& (
-							expectedArgumentValue == null 
-							|| (
-								x.ConstructorArguments.Length >= 1
-								&& x.ConstructorArguments[0].Value.ToString() == expectedArgumentValue
-							)
-						)
+					x => x.AttributeClass.GetFullTypeName() == attributeClassName
 				);
+			return hasExpectedAttribute;
 		}
 
 	}

@@ -60,10 +60,6 @@
       <Project>{FE7608CD-C8B1-43DD-BBCC-9B1917C9CA73}</Project>
       <Name>D2L.CodeStyle.Analyzers</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\src\D2L.CodeStyle.Annotations\D2L.CodeStyle.Annotations.csproj">
-      <Project>{1812AF7E-59B1-4764-8090-F84446A71C4E}</Project>
-      <Name>D2L.CodeStyle.Annotations</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
