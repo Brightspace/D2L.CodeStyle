@@ -240,13 +240,12 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			ISymbol symbol,
 			string attributeClassName
 		) {
-			ImmutableArray<AttributeData> attributes = symbol.GetAttributes();
-			bool hasExpectedAttribute = attributes.Length > 0
-				&& attributes.Any(
-					x => x.AttributeClass.GetFullTypeName() == attributeClassName
-				);
+			// TODO: don't compare type names as strings
+			bool hasExpectedAttribute = symbol.GetAttributes().Any(
+				x => x.AttributeClass.GetFullTypeName() == attributeClassName
+			);
+
 			return hasExpectedAttribute;
 		}
-
 	}
 }
