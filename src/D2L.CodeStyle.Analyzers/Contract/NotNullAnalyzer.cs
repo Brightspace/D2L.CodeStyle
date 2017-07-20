@@ -25,36 +25,67 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			context.RegisterCompilationStartAction( RegisterNotNullAnalyzer );
 		}
 
-		public static void RegisterNotNullAnalyzer( CompilationStartAnalysisContext context ) {
+		public static void RegisterNotNullAnalyzer(
+			CompilationStartAnalysisContext context
+		) {
 			// For caching if a method has any not-null parameters, and the which ones are
 			var notNullMethodCache = new ConcurrentDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>>();
 
 			context.RegisterSyntaxNodeAction(
-					ctx => AnalyzeInvocation(
-							ctx,
-							notNullMethodCache
-						),
-					SyntaxKind.InvocationExpression,
-					SyntaxKind.ObjectCreationExpression
-				);
+				ctx => AnalyzeInvocation(
+						ctx,
+						(InvocationExpressionSyntax)ctx.Node,
+						notNullMethodCache
+					),
+				SyntaxKind.InvocationExpression
+			);
+
+			context.RegisterSyntaxNodeAction(
+				ctx => AnalyzeObjectCreation(
+					ctx,
+					(ObjectCreationExpressionSyntax)ctx.Node,
+					notNullMethodCache
+				),
+				SyntaxKind.ObjectCreationExpression
+			);
 		}
 
 		private static void AnalyzeInvocation(
 			SyntaxNodeAnalysisContext context,
+			InvocationExpressionSyntax invocation,
 			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache
 		) {
-			// It could be a method or constructor call, but there is no common interface or base
-			// type, despite being very similar when coded, and analyzed
-			var invocation = context.Node as InvocationExpressionSyntax;
-			var construction = context.Node as ObjectCreationExpressionSyntax;
+			AnalyzeInvocationLikeThing(
+				context,
+				invocation.ArgumentList.Arguments,
+				invocation,
+				notNullMethodCache
+			);
+		}
 
-			if( invocation == null && construction == null ) {
-				// A method isn't being invoked, so there's nothing to look at
-				return;
-			}
+		private static void AnalyzeObjectCreation(
+			SyntaxNodeAnalysisContext context,
+			ObjectCreationExpressionSyntax construction,
+			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache
+		) {
+			AnalyzeInvocationLikeThing(
+				context,
+				construction.ArgumentList.Arguments,
+				construction,
+				notNullMethodCache
+			);
+		}
 
-			var arguments = invocation?.ArgumentList.Arguments
-				?? construction.ArgumentList.Arguments;
+		/// <summary>
+		/// Checks that some sort of method call respects [NotNull] annotations
+		/// from the methods declaration.
+		/// </summary>
+		private static void AnalyzeInvocationLikeThing(
+			SyntaxNodeAnalysisContext context,
+			SeparatedSyntaxList<ArgumentSyntax> arguments,
+			ExpressionSyntax expression,
+			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache
+		) {
 			if( arguments.Count == 0 ) {
 				// We don't care about methods that take no arguments
 				return;
@@ -63,7 +94,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			IList<Tuple<ArgumentSyntax, IParameterSymbol>> notNullArguments;
 			bool isNotNullMethod = TryGetNotNullArguments(
 					context.SemanticModel,
-					(ExpressionSyntax)invocation ?? construction,
+					expression,
 					arguments,
 					notNullMethodCache,
 					out notNullArguments
