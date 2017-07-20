@@ -91,19 +91,12 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				return;
 			}
 
-			IList<Tuple<ArgumentSyntax, IParameterSymbol>> notNullArguments;
-			bool isNotNullMethod = TryGetNotNullArguments(
-					context.SemanticModel,
-					expression,
-					arguments,
-					notNullMethodCache,
-					out notNullArguments
-				);
-
-			if( !isNotNullMethod ) {
-				// The called method doesn't have any [NotNull] parameters, so there's nothing more to analyze
-				return;
-			}
+			var notNullArguments = GetNotNullArguments(
+				context.SemanticModel,
+				expression,
+				arguments,
+				notNullMethodCache
+			);
 
 			// Start analyzing the arguments
 			foreach( Tuple<ArgumentSyntax, IParameterSymbol> tuple in notNullArguments ) {
@@ -125,26 +118,23 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			}
 		}
 
-		private static bool TryGetNotNullArguments(
+		private static IEnumerable<Tuple<ArgumentSyntax, IParameterSymbol>>  GetNotNullArguments(
 			SemanticModel semanticModel,
 			ExpressionSyntax invocation,
 			SeparatedSyntaxList<ArgumentSyntax> arguments,
-			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache,
-			out IList<Tuple<ArgumentSyntax, IParameterSymbol>> notNullArguments
+			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache
 		) {
 			IMethodSymbol invokedSymbol;
 			if( !TryGetInvokedSymbol( semanticModel, invocation, out invokedSymbol ) ) {
 				// There could either be multiple methods that match, in which case we don't know which we should
 				// look at, or the method being called may not actually exist.
-				notNullArguments = null;
-				return false;
+				return Enumerable.Empty<Tuple<ArgumentSyntax, IParameterSymbol>>();
 			}
 
 			ImmutableArray<IParameterSymbol> parameters = invokedSymbol.Parameters;
 			if( parameters.Length == 0 ) {
 				// Method doesn't take any parameters so there's no need to look at arguments
-				notNullArguments = null;
-				return false;
+				return Enumerable.Empty<Tuple<ArgumentSyntax, IParameterSymbol>>();
 			}
 
 			ImmutableHashSet<IParameterSymbol> notNullParameterCache;
@@ -152,8 +142,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				&& notNullParameterCache.Count == 0
 			) {
 				// We've examined it before, and nothing needs to be not null
-				notNullArguments = null;
-				return false;
+				return Enumerable.Empty<Tuple<ArgumentSyntax, IParameterSymbol>>();
 			}
 
 			if( arguments.Count > parameters.Length
@@ -161,11 +150,10 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				&& !parameters[parameters.Length - 1].IsParams
 			) {
 				// Something is weird, and we can't analyze this
-				notNullArguments = null;
-				return false;
+				return Enumerable.Empty<Tuple<ArgumentSyntax, IParameterSymbol>>();
 			}
 
-			notNullArguments = new List<Tuple<ArgumentSyntax, IParameterSymbol>>();
+			var notNullArguments = new List<Tuple<ArgumentSyntax, IParameterSymbol>>();
 			for( int i = 0; i < arguments.Count; i++ ) {
 				ArgumentSyntax argument = arguments[i];
 				IParameterSymbol param;
@@ -191,14 +179,14 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				}
 			}
 
-			bool isNotNullMethod = notNullArguments.Count > 0;
 			if( notNullParameterCache == null ) {
 				// Cache the values, if we didn't just pull it from the cache
 				notNullMethodCache[invokedSymbol] = notNullArguments
 					.Select( x => x.Item2 )
 					.ToImmutableHashSet();
 			}
-			return isNotNullMethod;
+
+			return notNullArguments;
 		}
 
 		private static bool TryGetParameter(
