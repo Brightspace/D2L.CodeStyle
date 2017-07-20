@@ -91,9 +91,15 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				return;
 			}
 
+			IMethodSymbol invokedSymbol;
+			if( !TryGetInvokedSymbol( context.SemanticModel, expression, out invokedSymbol ) ) {
+				// There could either be multiple methods that match, in which case we don't know which we should
+				// look at, or the method being called may not actually exist.
+				return;
+			}
+
 			var notNullArguments = GetNotNullArguments(
-				context.SemanticModel,
-				expression,
+				invokedSymbol,
 				arguments,
 				notNullMethodCache
 			);
@@ -119,18 +125,10 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 		}
 
 		private static IEnumerable<Tuple<ArgumentSyntax, IParameterSymbol>>  GetNotNullArguments(
-			SemanticModel semanticModel,
-			ExpressionSyntax invocation,
+			IMethodSymbol invokedSymbol,
 			SeparatedSyntaxList<ArgumentSyntax> arguments,
 			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache
 		) {
-			IMethodSymbol invokedSymbol;
-			if( !TryGetInvokedSymbol( semanticModel, invocation, out invokedSymbol ) ) {
-				// There could either be multiple methods that match, in which case we don't know which we should
-				// look at, or the method being called may not actually exist.
-				return Enumerable.Empty<Tuple<ArgumentSyntax, IParameterSymbol>>();
-			}
-
 			ImmutableArray<IParameterSymbol> parameters = invokedSymbol.Parameters;
 			if( parameters.Length == 0 ) {
 				// Method doesn't take any parameters so there's no need to look at arguments
