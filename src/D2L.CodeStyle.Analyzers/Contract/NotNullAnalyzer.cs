@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Common;
+using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -28,23 +26,18 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 		public static void RegisterNotNullAnalyzer(
 			CompilationStartAnalysisContext context
 		) {
-			// For caching if a method has any not-null parameters, and the which ones are
-			var notNullMethodCache = new ConcurrentDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>>();
-
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeInvocation(
-						ctx,
-						(InvocationExpressionSyntax)ctx.Node,
-						notNullMethodCache
-					),
+					ctx,
+					(InvocationExpressionSyntax)ctx.Node
+				),
 				SyntaxKind.InvocationExpression
 			);
 
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeObjectCreation(
 					ctx,
-					(ObjectCreationExpressionSyntax)ctx.Node,
-					notNullMethodCache
+					(ObjectCreationExpressionSyntax)ctx.Node
 				),
 				SyntaxKind.ObjectCreationExpression
 			);
@@ -52,27 +45,21 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 
 		private static void AnalyzeInvocation(
 			SyntaxNodeAnalysisContext context,
-			InvocationExpressionSyntax invocation,
-			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache
+			InvocationExpressionSyntax invocation
 		) {
 			AnalyzeInvocationLikeThing(
 				context,
-				invocation.ArgumentList.Arguments,
-				invocation,
-				notNullMethodCache
+				invocation.ArgumentList.Arguments
 			);
 		}
 
 		private static void AnalyzeObjectCreation(
 			SyntaxNodeAnalysisContext context,
-			ObjectCreationExpressionSyntax construction,
-			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache
+			ObjectCreationExpressionSyntax construction
 		) {
 			AnalyzeInvocationLikeThing(
 				context,
-				construction.ArgumentList.Arguments,
-				construction,
-				notNullMethodCache
+				construction.ArgumentList.Arguments
 			);
 		}
 
@@ -82,158 +69,60 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 		/// </summary>
 		private static void AnalyzeInvocationLikeThing(
 			SyntaxNodeAnalysisContext context,
-			SeparatedSyntaxList<ArgumentSyntax> arguments,
-			ExpressionSyntax expression,
-			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache
+			SeparatedSyntaxList<ArgumentSyntax> arguments
 		) {
-			if( arguments.Count == 0 ) {
-				// We don't care about methods that take no arguments
-				return;
-			}
-
-			IMethodSymbol invokedSymbol;
-			if( !TryGetInvokedSymbol( context.SemanticModel, expression, out invokedSymbol ) ) {
-				// There could either be multiple methods that match, in which case we don't know which we should
-				// look at, or the method being called may not actually exist.
-				return;
-			}
-
-			var notNullArguments = GetNotNullArguments(
-				invokedSymbol,
-				arguments,
-				notNullMethodCache
-			);
-
-			// Start analyzing the arguments
-			foreach( Tuple<ArgumentSyntax, IParameterSymbol> tuple in notNullArguments ) {
-				ArgumentSyntax argument = tuple.Item1;
-				IParameterSymbol parameter = tuple.Item2;
-
-				var literalExpression = argument.Expression as LiteralExpressionSyntax;
-				if( literalExpression != null
-					&& literalExpression.Token.Kind() == SyntaxKind.NullKeyword
-				) {
-					// It is a literal "null" keyword, so mark it as an error
-					Diagnostic diagnostic = Diagnostic.Create(
-							Diagnostics.NullPassedToNotNullParameter,
-							argument.GetLocation(),
-							parameter.Name
-						);
-					context.ReportDiagnostic( diagnostic );
-				}
-			}
-		}
-
-		private static IEnumerable<Tuple<ArgumentSyntax, IParameterSymbol>>  GetNotNullArguments(
-			IMethodSymbol invokedSymbol,
-			SeparatedSyntaxList<ArgumentSyntax> arguments,
-			IDictionary<IMethodSymbol, ImmutableHashSet<IParameterSymbol>> notNullMethodCache
-		) {
-			ImmutableArray<IParameterSymbol> parameters = invokedSymbol.Parameters;
-			if( parameters.Length == 0 ) {
-				// Method doesn't take any parameters so there's no need to look at arguments
-				return Enumerable.Empty<Tuple<ArgumentSyntax, IParameterSymbol>>();
-			}
-
-			ImmutableHashSet<IParameterSymbol> notNullParameterCache;
-			if( notNullMethodCache.TryGetValue( invokedSymbol, out notNullParameterCache )
-				&& notNullParameterCache.Count == 0
-			) {
-				// We've examined it before, and nothing needs to be not null
-				return Enumerable.Empty<Tuple<ArgumentSyntax, IParameterSymbol>>();
-			}
-
-			if( arguments.Count > parameters.Length
-				// `params` converts multiple arguments into a single array parameter
-				&& !parameters[parameters.Length - 1].IsParams
-			) {
-				// Something is weird, and we can't analyze this
-				return Enumerable.Empty<Tuple<ArgumentSyntax, IParameterSymbol>>();
-			}
-
-			var notNullArguments = new List<Tuple<ArgumentSyntax, IParameterSymbol>>();
-			for( int i = 0; i < arguments.Count; i++ ) {
-				ArgumentSyntax argument = arguments[i];
-				IParameterSymbol param;
-
-				if( !TryGetParameter( argument, parameters, i, out param ) ) {
-					// If the parameter matching the argument can't be retrieved for whatever reason then
-					// we can't examine the attributes on it
+			// Validate that all arguments that are provided are either not
+			// null or associated with a parameter that does not have [NotNull]
+			// attribute. This would miss a null being passed to a params 
+			// parameter which may be reasonable to always complain about
+			// because it's a weird and ugly edge-case.
+			foreach( var argument in arguments ) {
+				// If the argument expression looks safe we don't need to
+				// inspect the parameter.
+				if ( !ThereIsSufficientConcernThatThisExpressionIsNull( argument.Expression ) ) {
 					continue;
 				}
 
-				if( notNullParameterCache != null ) {
-					if( notNullParameterCache.Contains( param ) ) {
-						notNullArguments.Add( new Tuple<ArgumentSyntax, IParameterSymbol>( arguments[i], param ) );
-					}
-					// We've previously cached whether or not this parameter has [NotNull], so
-					// there's no need to examine it again
+				var parameter = argument.DetermineParameter(
+					context.SemanticModel,
+					allowParams: true
+				);
+
+				// This corresponds to some manner of broken code. The
+				// analyzer only needs to emit diagnostics (at worst) for
+				// otherwise correct code.
+				if ( parameter == null ) {
 					continue;
 				}
 
-				// Check if the parameter has [NotNull]
-				if( SymbolHasAttribute( param, NotNullAttribute ) ) {
-					notNullArguments.Add( new Tuple<ArgumentSyntax, IParameterSymbol>( arguments[i], param ) );
+				// If the parameter isn't marked [NotNull] we can skip this
+				// argument. It might be interesting to complain for null
+				// passed to a params argument in the future.
+				if ( !SymbolHasAttribute( parameter, NotNullAttribute ) ) {
+					continue;
 				}
-			}
 
-			if( notNullParameterCache == null ) {
-				// Cache the values, if we didn't just pull it from the cache
-				notNullMethodCache[invokedSymbol] = notNullArguments
-					.Select( x => x.Item2 )
-					.ToImmutableHashSet();
+				// We know that the argument looks null enough and the
+				// parameter has the [NotNull] attribute. Emit a diagnostic.
+				context.ReportDiagnostic( Diagnostic.Create(
+					Diagnostics.NullPassedToNotNullParameter,
+					argument.GetLocation(),
+					parameter.Name
+				) );
 			}
-
-			return notNullArguments;
 		}
 
-		private static bool TryGetParameter(
-			ArgumentSyntax argument,
-			ImmutableArray<IParameterSymbol> parameters,
-			int argumentIndex,
-			out IParameterSymbol parameter
+		private static bool ThereIsSufficientConcernThatThisExpressionIsNull(
+			ExpressionSyntax expr
 		) {
-			// Not a named parameter
-			if( argument.NameColon == null ) { // Regular order-based
-				if( argumentIndex >= parameters.Length ) {
-					// `params` parameter, where the remaining arguments all apply to the last parameter
-					parameter = parameters[parameters.Length - 1];
-					return true;
-				}
-				parameter = parameters[argumentIndex];
-				return true;
+			var litExpr = expr as LiteralExpressionSyntax;
+
+			// We aren't handling anything this fancy at this point in time
+			if ( litExpr == null ) {
+				return false;
 			}
 
-			// While parameters with @ are allowed in C#, the compiler strips it from the parameter
-			// name, but not from the named argument
-			string argumentName = argument.NameColon.Name.ToString().TrimStart( '@' );
-			parameter = parameters.SingleOrDefault( p => p.Name == argumentName );
-
-			return parameter != null;
-		}
-
-		private static bool TryGetInvokedSymbol(
-			SemanticModel semanticModel,
-			ExpressionSyntax invocation,
-			out IMethodSymbol invokedSymbol
-		) {
-			SymbolInfo invokedSymbolInfo = semanticModel.GetSymbolInfo( invocation );
-
-			// The simple case, where there's no ambiguity
-			invokedSymbol = invokedSymbolInfo.Symbol as IMethodSymbol;
-			if( invokedSymbol != null ) {
-				return true;
-			}
-
-			// Default parameter values might result in a single candidate, but doesn't guarantee
-			// resolution to a method symbol
-			if( invokedSymbolInfo.CandidateReason == CandidateReason.OverloadResolutionFailure
-				&& invokedSymbolInfo.CandidateSymbols.Length == 1
-			) {
-				invokedSymbol = invokedSymbolInfo.CandidateSymbols[0] as IMethodSymbol;
-			}
-
-			return invokedSymbol != null;
+			return litExpr.Token.Kind() == SyntaxKind.NullKeyword;
 		}
 
 		private static bool SymbolHasAttribute(
