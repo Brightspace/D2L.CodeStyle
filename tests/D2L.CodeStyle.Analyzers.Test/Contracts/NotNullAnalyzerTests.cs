@@ -214,7 +214,7 @@ namespace Test {
 		}
 
 		private void DoSomeStuff(
-			Provider provider,
+			TestProvider provider,
 			[NotNull] string value = ""a value"",
 			[NotNull] string anotherValue = ""another value""
 		) {}
