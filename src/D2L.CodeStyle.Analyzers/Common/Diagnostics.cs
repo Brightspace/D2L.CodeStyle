@@ -81,5 +81,15 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			isEnabledByDefault: true,
 			description: "OldAndBrokenServiceLocator should be avoided.  Use dependency injection instead."
 		);
+
+		public static readonly DiagnosticDescriptor NullPassedToNotNullParameter = new DiagnosticDescriptor(
+			id: "D2L0010",
+			title: "Parameter cannot be passed with a null value.",
+			messageFormat: "Parameter \"{0}\" cannot be passed a null value",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "The method being called has declared that this parameter cannot receive null, but a null value is being passed."
+		);
 	}
 }

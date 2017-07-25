@@ -11,6 +11,7 @@
     <RootNamespace>D2L.CodeStyle.Analyzers</RootNamespace>
     <AssemblyName>D2L.CodeStyle.Analyzers</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -36,6 +37,8 @@
     <Compile Include="Common\MutabilityInspectionResultFormatter.cs" />
     <Compile Include="Common\MutabilityInspector.cs" />
     <Compile Include="Common\TypeSymbolExtensions.cs" />
+    <Compile Include="Contract\NotNullAnalyzer.cs" />
+    <Compile Include="Extensions\Microsoft.CodeAnalysis.CSharp.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RpcDependencies\RpcDependencyAnalyzer.cs" />
