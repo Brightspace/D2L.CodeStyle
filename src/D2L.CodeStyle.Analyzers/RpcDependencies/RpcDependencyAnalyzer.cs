@@ -86,14 +86,18 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies {
 				rpcPostContextBaseType: rpcPostContextBaseType
 			);
 
-			CheckThatDependencyArgumentsAreSortedCorrectly(
-				context,
-				method.ParameterList.Parameters,
-				dependencyAttributeType
-			);
+			// dependencyAttributeType may be null if that DLL isn't
+			// referenced. In that case don't do some of these checks.
+			if ( dependencyAttributeType != null ) {
+				CheckThatDependencyArgumentsAreSortedCorrectly(
+					context,
+					method.ParameterList.Parameters,
+					dependencyAttributeType
+				);
 
-			// other things to check:
-			// - appropriate use of [Dependency]
+				// other things to check:
+				// - appropriate use of [Dependency]
+			}
 		}
 
 		private static bool CheckThatMethodIsRpc(
