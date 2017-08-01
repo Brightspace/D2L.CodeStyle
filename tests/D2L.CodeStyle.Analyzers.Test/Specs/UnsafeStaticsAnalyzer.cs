@@ -2,10 +2,18 @@
 
 using System;
 
-namespace SpecTests {
-	public static class Statics {
-		public sealed class UnauditedAttribute : Attribute { }
+using D2L.CodeStyle.Annotations;
+namespace D2L.CodeStyle.Annotations {
+	public class Statics {
+		public class Audited : Attribute { }
+		public class Unaudited : Attribute { }
 	}
+	public class Objects {
+		public class Immutable : Attribute { }
+	}
+}
+
+namespace SpecTests {
 	public class SafeThings {
 		// Non-static members should not raise diagnostics.
 		DateTime now = DateTime.Now;
@@ -50,12 +58,12 @@ namespace SpecTests {
 		sealed class ImmutableImplementation : INotNecessarilyImmutableInterface { }
 		INotNecessarilyImmutableInterface blahBlah = new ImmutableImplementation();
 
-		[Immutable]
+		[Objects.Immutable]
 		private class NotImmutableButBlessed {
 			public int changeMe;
 		}
 
-		// The [Immutable] attribute is a hammer (but your field still must be readonly)
+		// The [Objects.Immutable] attribute is a hammer (but your field still must be readonly)
 		public static readonly NotImmutableButBlessed urg = new NotImmutableButBlessed();
 
 		// The Statics.Unaudited annotation supresses errors

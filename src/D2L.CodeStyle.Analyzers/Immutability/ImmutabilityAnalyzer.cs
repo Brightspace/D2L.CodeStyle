@@ -45,7 +45,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				| MutabilityInspectionFlags.AllowUnsealed // `symbol` is the concrete type
 				| MutabilityInspectionFlags.IgnoreImmutabilityAttribute; // we're _validating_ the attribute
 
-			var mutabilityResult = inspector.InspectType( symbol, context.Compilation.Assembly, flags );
+			// override the enumeration style to exclude audited members
+			var memberEnumerationStyle = MemberEnumerationStyle.NonStaticNonAuditedMembers;
+
+			var mutabilityResult = inspector.InspectType( 
+				symbol, 
+				context.Compilation.Assembly, 
+				flags, 
+				memberEnumerationStyle 
+			);
 
 			if( mutabilityResult.IsMutable ) {
 				var reason = m_resultFormatter.Format( mutabilityResult );
