@@ -11,12 +11,20 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 			=> ImmutableArray.Create( Diagnostics.OldAndBrokenLocatorIsObsolete );
 
+		private readonly bool _excludeKnownProblems;
+
+		public OldAndBrokenServiceLocatorAnalyzer() : this(true) { }
+
+		public OldAndBrokenServiceLocatorAnalyzer( bool excludeKnownProblemDlls ) {
+			_excludeKnownProblems = excludeKnownProblemDlls;
+		}
+
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
 			context.RegisterCompilationStartAction( RegisterServiceLocatorAnalyzer );
 		}
 
-		public static void RegisterServiceLocatorAnalyzer( CompilationStartAnalysisContext context ) {
+		public void RegisterServiceLocatorAnalyzer( CompilationStartAnalysisContext context ) {
 			// Cache some important type lookups
 			var locatorType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.OldAndBrokenServiceLocator" );
 			var factoryType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.OldAndBrokenServiceLocatorFactory" );
@@ -242,8 +250,8 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 			"D2L.WCS.Webpages"
 		}.ToImmutableHashSet();
 
-		private static bool IsAssemblyWhitelisted( string assemblyName ) {
-			return WhitelistedAssemblies.Contains( assemblyName );
+		private bool IsAssemblyWhitelisted( string assemblyName ) {
+			return _excludeKnownProblems && WhitelistedAssemblies.Contains( assemblyName );
 		}
 	}
 }
