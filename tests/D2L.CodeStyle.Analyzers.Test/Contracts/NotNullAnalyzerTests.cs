@@ -372,6 +372,37 @@ namespace Test {
 				);
 		}
 
+		[Test]
+		public void NotNullParam_ConstructorCalledThenObjectInitializerSyntax_ReportsProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var foo = new Foo( null, null ) {
+				Id = 42,
+				Count = 3.14159
+			};
+		}
+	}
+
+	internal class Foo {
+		public Foo(
+			string name,
+			[NotNull] string other
+		) {}
+
+		public int Id {get; set;}
+		public double Count {get; set;}
+	}
+}";
+			AssertProducesError(
+					test,
+					4 + NotNullParamMethodLines,
+					29,
+					"other"
+				);
+		}
+
 		#endregion
 
 		#region Should not produce errors
@@ -497,6 +528,27 @@ namespace Test {
 		private void DoSomeStuff(
 			[NotNull] string value = ""a value""
 		) {}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+
+		[Test]
+		public void NotNullParam_EmptyConstructorUsingObjectInitializerSyntax_DoesNotReportProblem() {
+			const string test = NotNullParamMethod + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var obj = new MyObject {
+				Id = 5,
+				Name = ""My Name""
+			};
+		}
+	}
+
+	class MyObject {
+		public int Id {get; set;}
+		public string Name {get; set;}
 	}
 }";
 			AssertDoesNotProduceError( test );

@@ -49,7 +49,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 		) {
 			AnalyzeInvocationLikeThing(
 				context,
-				invocation.ArgumentList.Arguments
+				invocation.ArgumentList
 			);
 		}
 
@@ -59,7 +59,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 		) {
 			AnalyzeInvocationLikeThing(
 				context,
-				construction.ArgumentList.Arguments
+				construction.ArgumentList
 			);
 		}
 
@@ -69,13 +69,21 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 		/// </summary>
 		private static void AnalyzeInvocationLikeThing(
 			SyntaxNodeAnalysisContext context,
-			SeparatedSyntaxList<ArgumentSyntax> arguments
+			ArgumentListSyntax argumentList
 		) {
+			// If a constructor takes no arguments, and is populated using
+			// object initializer syntax, then the argument list will be null.
+			// There's nothing for us to analyze.
+			if( argumentList == null ) {
+				return;
+			}
+
 			// Validate that all arguments that are provided are either not
 			// null or associated with a parameter that does not have [NotNull]
 			// attribute. This would miss a null being passed to a params 
 			// parameter which may be reasonable to always complain about
 			// because it's a weird and ugly edge-case.
+			SeparatedSyntaxList<ArgumentSyntax> arguments = argumentList.Arguments;
 			foreach( var argument in arguments ) {
 				// If the argument expression looks safe we don't need to
 				// inspect the parameter.
