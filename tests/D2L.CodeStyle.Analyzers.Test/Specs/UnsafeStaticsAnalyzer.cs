@@ -14,9 +14,6 @@ namespace SpecTests {
 		// If a type can't be resolved our analyzer shouldn't crash.
 		UnknownType weird;
 
-		// ValueType is the base class of all ValueTypes and it itself is safe
-		private static readonly ValueType m_valueType = new ValueType();
-
 		sealed class ImmutableClassWithInstanceVar {
 			public static readonly ImmutableClassWithInstanceVar Instance = new ImmutableClassWithInstanceVar();
 		}
@@ -79,5 +76,30 @@ namespace SpecTests {
 
 	public sealed class UnsafeThings {
 		private static int /* UnsafeStatic(m_mutableInt,'m_mutableInt' is not read-only) */ m_mutableInt /**/;
+	}
+
+	public sealed class ValueTypeCases {
+
+		// ValueType is the base class of all ValueTypes and it itself is safe
+		private static readonly ValueType m_valueType = new ValueType();
+
+		public struct UsuallyMutable {
+			public int x;
+		}
+
+		// This gets marked as unsafe even though it technically isn't. Our
+		// analyzer isn't smart enough to spot that.
+		// https://codeblog.jonskeet.uk/2014/07/16/micro-optimization-the-surprising-inefficiency-of-readonly-fields/
+		private static readonly ValueType /* UnsafeStatic(m_edgeCase,'m_edgeCase.x' is not read-only) */ m_edgeCase = new UsuallyMutable() /**/;
+
+		public struct AlwaysMutable {
+			public readonly string[] m_data;
+		}
+
+		// This case, however, should be marked unsafe because even with the
+		// caveat above, the copy of the struct will have the same pointer to
+		// m_data (a reference type) as the field itself.
+		public static readonly ValueType /* UnsafeStatic(m_mutable,'m_mutable.m_data''s type ('System.String[]') is an array) */ m_mutable = new AlwaysMutable() /**/;
+
 	}
 }
