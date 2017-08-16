@@ -6,6 +6,7 @@ namespace SpecTests {
 	public static class Statics {
 		public sealed class UnauditedAttribute : Attribute { }
 	}
+
 	public class SafeThings {
 		// Non-static members should not raise diagnostics.
 		DateTime now = DateTime.Now;
@@ -72,9 +73,39 @@ namespace SpecTests {
 		// even though we can't complete the analysis. That's okay because
 		// our analyzer only needs to be strict for builds that pass.
 		public static readonly ClassWithMemberOfUnknownType m_classWithMemberOfUnknownType;
+
+		public class CoRecursiveTypeA : CoRecursiveTypeB { }
+		public class CoRecursiveTypeB : CoRecursiveTypeA { }
+
+		// This should not crash our analyzer due to an infinite loop. It is
+		// not valid code, though.
+		private static readonly CoRecursiveTypeA m_recursiveA = new CoRecursiveTypeA();
+		private static readonly CoRecursiveTypeB m_recursiveA = new CoRecursiveTypeB();
+
+		public sealed class ThingWithUnknownBaseType : SomethingThatDoesntExist { }
+
+		// The analyzer sees that SomethingTHatDoesntExist is IErrorType and
+		// ignores it. That's safe because this code wouldn't compile anyway.
+		private static readonly ThingWithUnknownBaseType m_unknownBaseType;
+
+		public class OkBaseClass {
+			private readonly int m_x = 0;
+		}
+
+		public sealed class OkClassWithBase : OkBaseClass { }
+
+		private static readonly OkClassWithBase m_okWithBase = new OkClassWithBase();
 	}
+
+	public class MutableBaseClass {
+		private int m_mutableInt;
+	}
+
+	public sealed class ClassWithMutableBaseClass : MutableBaseClass {}
 
 	public sealed class UnsafeThings {
 		private static int /* UnsafeStatic(m_mutableInt,'m_mutableInt' is not read-only) */ m_mutableInt /**/;
+
+		private static readonly ClassWithMutableBaseClass /* UnsafeStatic(m_foo,'m_foo.m_mutableInt' is not read-only) */ m_foo /**/ ;
 	}
 }
