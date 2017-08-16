@@ -267,9 +267,6 @@ namespace D2L.CodeStyle.Analyzers {
 					str.Length - 2 - indexOfOpenParen
 				);
 
-				Assert.AreEqual( -1, arguments.IndexOf( '(' ) );
-				Assert.AreEqual( -1, arguments.IndexOf( ')' ) );
-
 				return new DiagnosticExpectation(
 					name: name,
 					arguments: arguments.Split( ',' ).ToImmutableArray()
