@@ -81,6 +81,10 @@ namespace SpecTests {
 	public sealed class ValueTypeCases {
 
 		// ValueType is the base class of all ValueTypes and it itself is safe
+		//
+		// Saquib points out that this shouldn't actually compile because
+		// ValueType is abstract, but we're keeping it because its still an
+		// OK test.
 		private static readonly ValueType m_valueType = new ValueType();
 
 		public struct UsuallyMutable {
