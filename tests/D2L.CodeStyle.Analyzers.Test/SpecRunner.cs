@@ -147,8 +147,8 @@ namespace D2L.CodeStyle.Analyzers {
 				);
 
 				string source;
-
-				using( var specStream = new StreamReader( assembly.GetManifestResourceStream( specFilePath ) ) ) {
+				using( var stream = assembly.GetManifestResourceStream( specFilePath ) )
+				using( var specStream = new StreamReader( stream ) ) {
 					source = specStream.ReadToEnd();
 				}
 
