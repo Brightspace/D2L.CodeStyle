@@ -14,6 +14,9 @@ namespace SpecTests {
 		// If a type can't be resolved our analyzer shouldn't crash.
 		UnknownType weird;
 
+		// ValueType is the base class of all ValueTypes and it itself is safe
+		private static readonly ValueType m_valueType = new ValueType();
+
 		sealed class ImmutableClassWithInstanceVar {
 			public static readonly ImmutableClassWithInstanceVar Instance = new ImmutableClassWithInstanceVar();
 		}
