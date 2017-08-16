@@ -309,6 +309,11 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					return MutabilityInspectionResult.NotMutable();
 				}
 
+				// System.ValueType is the base class of all value types (obscure detail)
+				if ( flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed ) && type.SpecialType == SpecialType.System_ValueType ) {
+					return MutabilityInspectionResult.NotMutable();
+				}
+
 				// We have a type that is not marked immutable, is not an interface, is not an immutable container, etc..
 				// If it is defined in a different assembly, we might not have the metadata to correctly analyze it; so we fail.
 				if( type.ContainingAssembly != rootAssembly ) {
