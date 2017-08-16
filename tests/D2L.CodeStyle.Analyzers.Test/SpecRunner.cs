@@ -24,12 +24,15 @@ namespace D2L.CodeStyle.Analyzers {
 			public static readonly DiagnosticComparer Instance = new DiagnosticComparer();
 
 			bool IEqualityComparer<Diagnostic>.Equals( Diagnostic x, Diagnostic y ) {
-				return x.Id == y.Id && x.Location == y.Location;
+				return x.Id == y.Id
+				    && x.Location == y.Location
+				    && x.GetMessage() == y.GetMessage();
 			}
 
 			int IEqualityComparer<Diagnostic>.GetHashCode( Diagnostic diag ) {
 				var hashCode = diag.Id.GetHashCode();
 				hashCode = ( hashCode * 397 ) ^ diag.Location.GetHashCode();
+				hashCode = ( hashCode * 397 ) ^ diag.GetMessage().GetHashCode();
 				return hashCode;
 			}
 		}
@@ -118,7 +121,10 @@ namespace D2L.CodeStyle.Analyzers {
 		[Test]
 		public void ExpectedDiagnostics() {
 			var missingDiagnostics = m_expectedDiagnostics
-				.Where( d => !m_matchedDiagnostics.Contains( d ) );
+				.Where( d => !m_matchedDiagnostics.Contains(
+					d,
+					DiagnosticComparer.Instance
+				) );
 
 			CollectionAssert.IsEmpty( missingDiagnostics );
 		}
@@ -147,8 +153,8 @@ namespace D2L.CodeStyle.Analyzers {
 				);
 
 				string source;
-
-				using( var specStream = new StreamReader( assembly.GetManifestResourceStream( specFilePath ) ) ) {
+				using( var stream = assembly.GetManifestResourceStream( specFilePath ) )
+				using( var specStream = new StreamReader( stream ) ) {
 					source = specStream.ReadToEnd();
 				}
 
@@ -233,6 +239,47 @@ namespace D2L.CodeStyle.Analyzers {
 			return contents.Trim();
 		}
 
+		private class DiagnosticExpectation {
+			public DiagnosticExpectation(
+				string name,
+				ImmutableArray<string> arguments
+			) {
+				Name = name;
+				Arguments = arguments;
+			}
+
+			public static DiagnosticExpectation Parse( string str ) {
+				var indexOfOpenParen = str.IndexOf( '(' );
+
+				if( indexOfOpenParen == -1 ) {
+					return new DiagnosticExpectation(
+						name: str,
+						arguments: ImmutableArray<string>.Empty
+					);
+				}
+
+				Assert.AreEqual( ')', str[str.Length - 1] );
+
+				var name = str.Substring( 0, indexOfOpenParen );
+
+				var arguments = str.Substring(
+					indexOfOpenParen + 1,
+					str.Length - 2 - indexOfOpenParen
+				);
+
+				Assert.AreEqual( -1, arguments.IndexOf( '(' ) );
+				Assert.AreEqual( -1, arguments.IndexOf( ')' ) );
+
+				return new DiagnosticExpectation(
+					name: name,
+					arguments: arguments.Split( ',' ).ToImmutableArray()
+				);
+			}
+
+			public string Name { get; }
+			public ImmutableArray<string> Arguments { get; }
+		}
+
 		private static IEnumerable<Diagnostic> GetExpectedDiagnostics( CompilationUnitSyntax root ) {
 			var multilineComments = root
 				.DescendantTrivia()
@@ -249,9 +296,12 @@ namespace D2L.CodeStyle.Analyzers {
 				var startContents = GetMultiLineCommentContents( start );
 				var endContents = GetMultiLineCommentContents( end );
 
+				var diagnosticExpectation = DiagnosticExpectation.Parse( startContents );
+
 				// Every assertion's start comment must map to a diagnostic
 				// defined in Common.Diagnostics
-				if ( !m_possibleDiagnostics.ContainsKey( startContents ) ) {
+				DiagnosticDescriptor descriptor;
+				if ( !m_possibleDiagnostics.TryGetValue( diagnosticExpectation.Name, out descriptor ) ) {
 					Assert.Fail( $"Comment at {start.GetLocation()} doesn't map to a diagnostic defined in Common.Diagnostic" );
 					
 				}
@@ -277,8 +327,9 @@ namespace D2L.CodeStyle.Analyzers {
 				var diagSpan = TextSpan.FromBounds( diagStart, diagEnd );
 
 				yield return Diagnostic.Create(
-					m_possibleDiagnostics[startContents],
-					Location.Create( root.SyntaxTree, diagSpan )
+					descriptor: descriptor,
+					location: Location.Create( root.SyntaxTree, diagSpan ),
+					messageArgs: diagnosticExpectation.Arguments.ToArray()
 				);
 			}
 		}

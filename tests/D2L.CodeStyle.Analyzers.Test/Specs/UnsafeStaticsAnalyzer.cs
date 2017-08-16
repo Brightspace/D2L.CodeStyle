@@ -72,6 +72,9 @@ namespace SpecTests {
 		// even though we can't complete the analysis. That's okay because
 		// our analyzer only needs to be strict for builds that pass.
 		public static readonly ClassWithMemberOfUnknownType m_classWithMemberOfUnknownType;
-		
+	}
+
+	public sealed class UnsafeThings {
+		private static int /* UnsafeStatic(m_mutableInt,'m_mutableInt' is not read-only) */ m_mutableInt /**/;
 	}
 }
