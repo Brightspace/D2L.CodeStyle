@@ -118,7 +118,10 @@ namespace D2L.CodeStyle.Analyzers {
 		[Test]
 		public void ExpectedDiagnostics() {
 			var missingDiagnostics = m_expectedDiagnostics
-				.Where( d => !m_matchedDiagnostics.Contains( d ) );
+				.Where( d => !m_matchedDiagnostics.Contains(
+					d,
+					DiagnosticComparer.Instance
+				) );
 
 			CollectionAssert.IsEmpty( missingDiagnostics );
 		}
