@@ -244,12 +244,33 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			}
 		}
 
+		private MutabilityInspectionResult InspectBaseType(
+			ITypeSymbol type,
+			IAssemblySymbol rootAssembly,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			if ( type.BaseType == null ) {
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			if ( type.BaseType is IErrorTypeSymbol ) {
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			return InspectClassStructOrInterfaceOrTypeParameter( type.BaseType, rootAssembly, MutabilityInspectionFlags.AllowUnsealed, typeStack );
+		}
+
 		private MutabilityInspectionResult InspectClassStructOrInterfaceOrTypeParameter(
 			ITypeSymbol type,
 			IAssemblySymbol rootAssembly,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
+			var baseResult = InspectBaseType( type, rootAssembly, typeStack );
+			if ( baseResult.IsMutable ) {
+				return baseResult;
+			}
+
 			// If we're verifying immutability, then carry on; otherwise, bailout
 			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && IsTypeMarkedImmutable( type ) ) {
 				return MutabilityInspectionResult.NotMutable();
