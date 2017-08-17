@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 
 [assembly: ComVisible( false )]
 
-[assembly: AssemblyVersion( "0.21.0.0" )]
-[assembly: AssemblyFileVersion( "0.21.0.0" )]
+[assembly: AssemblyVersion( "0.22.0.0" )]
+[assembly: AssemblyFileVersion( "0.22.0.0" )]
 
 [assembly: InternalsVisibleTo( "D2L.CodeStyle.Analyzers.Tests" )]
