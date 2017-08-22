@@ -8,7 +8,10 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class UnsafeSingletonsAnalyzer : DiagnosticAnalyzer {
-		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( Diagnostics.UnsafeSingletonField );
+		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( 
+			Diagnostics.UnsafeSingletonField,
+			Diagnostics.ConcreteTypeNotResolved
+		);
 
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
 
@@ -19,59 +22,58 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 		private void RegisterAnalysis( CompilationStartAnalysisContext context ) {
 			var inspector = new MutabilityInspector( new KnownImmutableTypes( context.Compilation.Assembly ) );
 
+			DependencyRegistry dependencyRegistry;
+			if( !DependencyRegistry.TryCreateRegistry( context.Compilation, out dependencyRegistry ) ) {
+				return;
+			}
+
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeClass( ctx, inspector ),
-				SyntaxKind.ClassDeclaration
+				ctx => AnalyzeInvocation( ctx, inspector, dependencyRegistry ),
+				SyntaxKind.InvocationExpression
 			);
 		}
 
-		private void AnalyzeClass( SyntaxNodeAnalysisContext context, MutabilityInspector inspector ) {
-			var root = context.Node as ClassDeclarationSyntax;
+		private void AnalyzeInvocation( SyntaxNodeAnalysisContext context, MutabilityInspector inspector, DependencyRegistry registry ) {
+			var root = context.Node as InvocationExpressionSyntax;
 			if( root == null ) {
 				return;
 			}
 
-			var type = context.SemanticModel.GetDeclaredSymbol( root );
-			if( type == null || type.TypeKind == TypeKind.Error ) {
+			IMethodSymbol method;
+			SeparatedSyntaxList<ArgumentSyntax> arguments;
+			if( !registry.TryGetSingletonRegistration( root, context.SemanticModel, out method, out arguments ) ) {
 				return;
 			}
 
-			if( !IsTypeSingleton( type ) ) {
+			ITypeSymbol concreteType = registry.GetConcreteTypeFromSingletonRegistration(
+				context.SemanticModel,
+				method,
+				arguments
+			);
+			if( concreteType.IsNullOrErrorType() ) {
+				// we expected a concrete type, but didn't get one, so fail
+				var diagnostic = Diagnostic.Create(
+					Diagnostics.ConcreteTypeNotResolved,
+					root.GetLocation()
+				);
+				context.ReportDiagnostic( diagnostic );
 				return;
 			}
 
 			// TODO: it probably makes more sense to iterate over the fields and emit diagnostics tied to those individual fields for more accurate red-squigglies
 			// a DI singleton should be capable of having multiple diagnostics come out of it
 			var flags = MutabilityInspectionFlags.AllowUnsealed | MutabilityInspectionFlags.IgnoreImmutabilityAttribute;
-			var result = inspector.InspectType( type, context.Compilation.Assembly, flags );
+			var result = inspector.InspectType( concreteType, context.Compilation.Assembly, flags );
 			if( result.IsMutable ) {
-				var diagnostic = CreateDiagnostic(
+				var reason = m_resultFormatter.Format( result );
+				var diagnostic = Diagnostic.Create(
+					Diagnostics.UnsafeSingletonField,
 					root.GetLocation(),
-					type.GetFullTypeNameWithGenericArguments(),
-					result
+					concreteType.GetFullTypeNameWithGenericArguments(),
+					reason
 				);
 				context.ReportDiagnostic( diagnostic );
 			}
-		}
-
-		private bool IsTypeSingleton( INamedTypeSymbol type ) {
-			// TODO: implement this method when we have that information.
-			return false;
-		}
-
-		private Diagnostic CreateDiagnostic(
-			Location location,
-			string typeName,
-			MutabilityInspectionResult result
-		) {
-			var reason = m_resultFormatter.Format( result );
-			var diagnostic = Diagnostic.Create(
-				Diagnostics.UnsafeSingletonField,
-				location,
-				typeName,
-				reason
-			);
-			return diagnostic;
 		}
 
 	}
