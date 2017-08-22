@@ -150,7 +150,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				// only used in open-generic types), so we don't care.
 				//		r.Register( typeof(IFoo), typeof(Foo), ObjectScope.Singleton );
 				var arg = methodArguments.Skip( 1 ).FirstOrDefault();
-				var typeofExpression = arg.Expression as TypeOfExpressionSyntax;
+				var typeofExpression = arg?.Expression as TypeOfExpressionSyntax;
 				if( typeofExpression == null ) {
 					return null;
 				}

@@ -33,6 +33,7 @@ namespace SpecTests {
 			// Immutable Singletons are not flagged.
 			reg.Register<string>( "hello" );
 			reg.Register<ISingleton>( new SafeSingleton() );
+			reg.Register( new SafeSingleton() ); // inferred generic argument of above
 			reg.Register<ISingleton, SafeSingleton>( ObjectScope.Singleton );
 			reg.Register( typeof( ISingleton ), typeof( SafeSingleton ), ObjectScope.Singleton );
 
