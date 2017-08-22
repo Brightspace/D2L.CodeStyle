@@ -38,6 +38,8 @@ namespace SpecTests {
 			reg.Register( typeof( ISingleton ), typeof( SafeSingleton ), ObjectScope.Singleton );
 
 			// Mutable Singletons are flagged.
+			/* UnsafeSingletonField(SpecTests.UnsafeSingleton,'mutableField' is not read-only) */ reg.Register<ISingleton>( new UnsafeSingleton() ) /**/;
+			/* UnsafeSingletonField(SpecTests.UnsafeSingleton,'mutableField' is not read-only) */ reg.Register( new UnsafeSingleton() ) /**/; // inferred generic argument of above
 			/* UnsafeSingletonField(SpecTests.UnsafeSingleton,'mutableField' is not read-only) */ reg.Register<ISingleton, UnsafeSingleton>( ObjectScope.Singleton ) /**/;
 			/* UnsafeSingletonField(SpecTests.UnsafeSingleton,'mutableField' is not read-only) */ reg.Register( typeof( ISingleton ), typeof( UnsafeSingleton ), ObjectScope.Singleton ) /**/;
 
