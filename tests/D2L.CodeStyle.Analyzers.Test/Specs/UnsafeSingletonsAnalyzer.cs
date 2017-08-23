@@ -43,6 +43,9 @@ namespace SpecTests {
 			/* UnsafeSingletonField(SpecTests.UnsafeSingleton,'mutableField' is not read-only) */ reg.Register<ISingleton, UnsafeSingleton>( ObjectScope.Singleton ) /**/;
 			/* UnsafeSingletonField(SpecTests.UnsafeSingleton,'mutableField' is not read-only) */ reg.Register( typeof( ISingleton ), typeof( UnsafeSingleton ), ObjectScope.Singleton ) /**/;
 
+			// Ensure the messages type or type argument violations are formatted correctly
+			/* UnsafeSingletonField(SpecTests.ISingleton,its type ('SpecTests.ISingleton') is an interface that is not marked with `[Objects.Immutable]`) */ reg.Register( typeof( ISingleton ), typeof( ISingleton ), ObjectScope.Singleton ) /**/;
+
 			// Non-Singletons are not flagged.
 			reg.Register<ISingleton, UnsafeSingleton>( ObjectScope.WebRequest );
 
