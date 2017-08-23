@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.Common {
@@ -11,45 +6,13 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		private readonly INamedTypeSymbol m_dependencyRegistryType;
 		private readonly INamedTypeSymbol m_objectScopeType;
-		private readonly int m_objectScopeSingletonEnumValue;
-
-		// void Register<TDependencyType>( TDependencyType instance );
-		private readonly IMethodSymbol m_registerConcreteObjectMethod;
-
-		// void Register<TDependencyType, TConcreteType>( ObjectScope scope )
-		private readonly IMethodSymbol m_registerWithDependencyTypeAndConcreteTypeMethod;
-
-		// void Register( Type dependencyType, Type concreteType, ObjectScope scope );
-		private readonly IMethodSymbol m_registerWithDependencyTypeConcreteTypeAndScopeMethod;
 
 		public DependencyRegistry(
 			INamedTypeSymbol objectScopeType,
-			INamedTypeSymbol dependencyRegistryType,
-			int objectScopeSingletonEnumValue
+			INamedTypeSymbol dependencyRegistryType
 		) {
 			m_objectScopeType = objectScopeType;
 			m_dependencyRegistryType = dependencyRegistryType;
-			m_objectScopeSingletonEnumValue = objectScopeSingletonEnumValue;
-
-			var methods = m_dependencyRegistryType.GetMembers().OfType<IMethodSymbol>();
-			foreach( var method in methods ) {
-
-				// void Register<TDependencyType>( TDependencyType instance );
-				if( method.Name == "Register" && method.IsGenericMethod && method.TypeParameters.Length == 1 && method.Parameters.Length == 1 ) {
-					m_registerConcreteObjectMethod = method;
-				}
-
-				// void Register<TDependencyType, TConcreteType>( ObjectScope scope )
-				else if( method.Name == "Register" && method.IsGenericMethod && method.TypeParameters.Length == 2 && method.Parameters.Length == 1 ) {
-					m_registerWithDependencyTypeAndConcreteTypeMethod = method;
-
-				}
-
-				// void Register( Type dependencyType, Type concreteType, ObjectScope scope );
-				else if( method.Name == "Register" && !method.IsGenericMethod && method.Parameters.Length == 3 ) {
-					m_registerWithDependencyTypeConcreteTypeAndScopeMethod = method;
-				}
-			}
 		}
 
 		public static bool TryCreateRegistry( Compilation compilation, out DependencyRegistry registry ) {
@@ -63,104 +26,124 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				registry = null;
 				return false;
 			}
-			var singletonScopeEnumField = objectScopeType.GetMembers().FirstOrDefault( m => m.Name == "Singleton" ) as IFieldSymbol;
-			if( singletonScopeEnumField == null || !singletonScopeEnumField.HasConstantValue ) {
-				registry = null;
-				return false;
-			}
-			var singletonScopeValue = (int)singletonScopeEnumField.ConstantValue;
 
-			registry = new DependencyRegistry( 
-				dependencyRegistryType: dependencyRegistryType, 
-				objectScopeType: objectScopeType,
-				objectScopeSingletonEnumValue: singletonScopeValue
+			registry = new DependencyRegistry(
+				dependencyRegistryType: dependencyRegistryType,
+				objectScopeType: objectScopeType
 			);
 			return true;
 		}
 
 		/// <summary>
-		/// Trys to get the register method represented by the expression. 
-		/// Only non-factory, non-plugin methods are supported.
+		/// Attempts to extract a <see cref="DependencyRegistration"/> from <code>Register*</code> invocation.
 		/// </summary>
-		public bool TryGetSingletonRegistration( 
-			InvocationExpressionSyntax expression, 
-			SemanticModel semanticModel, 
-			out IMethodSymbol method,
-			out SeparatedSyntaxList<ArgumentSyntax> arguments 
+		/// <remarks>
+		/// Only concrete non-factory registrations are currently supported.
+		/// </remarks>
+		/// <returns>Returns null if the expression is not a registration, or is an unsupported registration.</returns>
+		public DependencyRegistration GetRegistration( 
+			InvocationExpressionSyntax registrationExpression, 
+			SemanticModel semanticModel 
 		) {
-			method = semanticModel.GetSymbolInfo( expression ).Symbol as IMethodSymbol;
-			arguments = default( SeparatedSyntaxList<ArgumentSyntax> );
-
+			var method = semanticModel.GetSymbolInfo( registrationExpression ).Symbol as IMethodSymbol;
 			if( method == null ) {
-				return false;
+				return null;
 			}
 
-			var evenMoreGenericMethod = method.ConstructedFrom;
-			var isOneOfTheMethods = evenMoreGenericMethod == m_registerConcreteObjectMethod
-				|| evenMoreGenericMethod == m_registerWithDependencyTypeAndConcreteTypeMethod
-				|| evenMoreGenericMethod == m_registerWithDependencyTypeConcreteTypeAndScopeMethod;
-			if( !isOneOfTheMethods) {
-				return false;
+			if( method.ContainingType != m_dependencyRegistryType ) {
+				return null;
 			}
 
-			if( expression.ArgumentList == null || expression.ArgumentList.Arguments.Count == 0 ) {
-				return false;
+			if( registrationExpression.ArgumentList == null ) {
+				return null;
 			}
-			arguments = expression.ArgumentList.Arguments;
+			var arguments = registrationExpression.ArgumentList.Arguments;
 
-			// there is either an ObjectScope parameter, it is always the last one, and it must be "Singleton"
-			// or they're registering an actual object, which is always a singleton
-			var scopeParameter = method.Parameters.LastOrDefault();
-			var scopeArgument = arguments.LastOrDefault();
-			if( scopeParameter != null && scopeParameter.Type == m_objectScopeType ) {
-				var scopeArgumentValue = semanticModel.GetConstantValue( scopeArgument.Expression );
-				if( !scopeArgumentValue.HasValue ) {
-					return false;
-				}
-				if( (int)scopeArgumentValue.Value != m_objectScopeSingletonEnumValue ) {
-					return false;
-				}
-			}
-
-			return true;
-		}
-
-		public ITypeSymbol GetConcreteTypeFromSingletonRegistration( 
-			SemanticModel semanticModel, 
-			IMethodSymbol registerMethod, 
-			SeparatedSyntaxList<ArgumentSyntax> methodArguments
-		) {
-			var evenMoreGenericMethod = registerMethod.ConstructedFrom;
-
-			if( evenMoreGenericMethod == m_registerConcreteObjectMethod ) {
+			if( method.IsGenericMethod && method.TypeParameters.Length == 1 && method.Parameters.Length == 1 && arguments.Count == 1 ) {
 				// void Register<TDependencyType>( TDependencyType instance );
-				var argument = methodArguments.First();
-				var argumentsType = semanticModel.GetTypeInfo( argument.Expression ).Type;
-				return argumentsType;
+				// void RegisterPlugin<TDependencyType>( TDependencyType instance );
 
-			} else if( evenMoreGenericMethod == m_registerWithDependencyTypeAndConcreteTypeMethod ) {
-				// void Register<TDependencyType, TConcreteType>( ObjectScope scope )
-				return registerMethod.TypeArguments.Skip( 1 ).FirstOrDefault();
+				var concreteType = semanticModel.GetTypeInfo( arguments[0].Expression ).Type;
+				var dependencyType = concreteType;
+				if( method.TypeArguments.Length == 1 ) {
+					// if there's a type argument provided, use that for dependency type instead
+					dependencyType = method.TypeArguments[0];
+				}
+				return DependencyRegistration.NonFactory( ObjectScope.Singleton, dependencyType, concreteType );
+			}
 
-			} else if( evenMoreGenericMethod == m_registerWithDependencyTypeConcreteTypeAndScopeMethod ) {
+			if( method.Name == "RegisterParentAwareFactory" && method.TypeArguments.Length == 2 && method.Parameters.Length == 0 ) {
+				// void RegisterParentAwareFactory<TDependencyType, TFactoryType>();
+
+				return DependencyRegistration.Factory( ObjectScope.AlwaysCreateNewInstance, method.TypeArguments[0], method.TypeArguments[1] );
+			}
+
+			if( method.Name == "Register" && !method.IsGenericMethod && method.Parameters.Length == 3 && arguments.Count == 3 ) {
 				// void Register( Type dependencyType, Type concreteType, ObjectScope scope );
 
 				// This only handles the case where `typeof` is used inline.
 				// This sucks, but there are very few usages of this method (it's
 				// only used in open-generic types), so we don't care.
 				//		r.Register( typeof(IFoo), typeof(Foo), ObjectScope.Singleton );
-				var arg = methodArguments.Skip( 1 ).FirstOrDefault();
-				var typeofExpression = arg?.Expression as TypeOfExpressionSyntax;
-				if( typeofExpression == null ) {
+				var dependencyTypeExpression = arguments[0].Expression as TypeOfExpressionSyntax;
+				if( dependencyTypeExpression == null ) {
 					return null;
 				}
-				var argumentValue = semanticModel.GetSymbolInfo( typeofExpression.Type ).Symbol;
-				return argumentValue as ITypeSymbol;
+				var dependencyType = semanticModel.GetSymbolInfo( dependencyTypeExpression.Type ).Symbol as ITypeSymbol;
+
+				var concreteTypeExpression = arguments[1].Expression as TypeOfExpressionSyntax;
+				if( dependencyTypeExpression == null ) {
+					return null;
+				}
+				var concreteType = semanticModel.GetSymbolInfo( concreteTypeExpression.Type ).Symbol as ITypeSymbol;
+
+				ObjectScope scope;
+				if( !TryGetObjectScope( arguments[2], semanticModel, out scope ) ) {
+					return null;
+				}
+
+				return DependencyRegistration.NonFactory( scope, dependencyType, concreteType );
 			}
 
-			throw new NotSupportedException( "unsupported registration method" );
+			if( method.IsGenericMethod && method.TypeArguments.Length == 2 && method.Parameters.Length == 1 && arguments.Count == 1 ) {
+				// void Register<TDependencyType, TConcreteType>( ObjectScope scope )
+				// void RegisterPlugin<TDependencyType, TConcreteType>( ObjectScope scope )
+				// void RegisterFactory<TDependencyType, TFactoryType>( ObjectScope scope )
+				// void RegisterPluginFactory<TDependencyType, TFactoryType>( ObjectScope scope )
+
+				ObjectScope scope;
+				if( !TryGetObjectScope( arguments[0], semanticModel, out scope ) ) {
+					return null;
+				}
+
+				if( method.Name.Contains( "Factory" ) ) {
+					return DependencyRegistration.Factory( scope, method.TypeArguments[0], method.TypeArguments[1] );
+				} else {
+					return DependencyRegistration.NonFactory( scope, method.TypeArguments[0], method.TypeArguments[1] );
+				}
+			}
+
+			// unsupported or incompletely written registration method
+			return null;
+		}
+
+		private bool TryGetObjectScope(
+			ArgumentSyntax argument,
+			SemanticModel semanticModel,
+			out ObjectScope scope
+		) {
+			scope = ObjectScope.AlwaysCreateNewInstance; // bogus
+
+			var scopeArgumentValue = semanticModel.GetConstantValue( argument.Expression );
+			if( !scopeArgumentValue.HasValue ) {
+				// this can happen if someone is typing, or in the rare case that someone doesn't pass this value inline (i.e., uses a variable)
+				return false;
+			}
+
+			// if this cast fails, things explode...but I want it to, because this shouldn't fail
+			// unless someone redefines LP's ObjectScope enum to `long` (boxed types aren't coerced)
+			scope = (ObjectScope)(int)scopeArgumentValue.Value;
+			return true;
 		}
 	}
-
-
 }

@@ -92,14 +92,14 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			description: "The method being called has declared that this parameter cannot receive null, but a null value is being passed."
 		);
 
-		public static readonly DiagnosticDescriptor ConcreteTypeNotResolved = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor SingletonRegistrationTypeUnknown = new DiagnosticDescriptor(
 			id: "D2L0011",
-			title: "Unable to resolve the concrete type for this registration.",
-			messageFormat: "Unable to determine the concrete type for this registration; please make sure to reference the type's assembly.",
+			title: "Unable to resolve the concrete or plugin type for this registration.",
+			messageFormat: "Unable to determine the concrete or plugin type for this registration; please make sure to reference the type's assembly.",
 			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
-			description: "Concrete singleton registrations must be known at compile-time; please make sure to reference the type's assembly."
+			description: "Singleton registrations must be known at compile-time; please make sure to reference the type's assembly."
 		);
 
 	}

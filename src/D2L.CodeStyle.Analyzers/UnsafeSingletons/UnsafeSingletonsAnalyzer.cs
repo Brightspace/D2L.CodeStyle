@@ -10,7 +10,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 	public sealed class UnsafeSingletonsAnalyzer : DiagnosticAnalyzer {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( 
 			Diagnostics.UnsafeSingletonField,
-			Diagnostics.ConcreteTypeNotResolved
+			Diagnostics.SingletonRegistrationTypeUnknown
 		);
 
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
@@ -39,21 +39,24 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 				return;
 			}
 
-			IMethodSymbol method;
-			SeparatedSyntaxList<ArgumentSyntax> arguments;
-			if( !registry.TryGetSingletonRegistration( root, context.SemanticModel, out method, out arguments ) ) {
+			var dependencyRegistration = registry.GetRegistration( root, context.SemanticModel );
+			if( dependencyRegistration == null ) {
 				return;
 			}
 
-			ITypeSymbol concreteType = registry.GetConcreteTypeFromSingletonRegistration(
-				context.SemanticModel,
-				method,
-				arguments
-			);
-			if( concreteType.IsNullOrErrorType() ) {
-				// we expected a concrete type, but didn't get one, so fail
+			if( dependencyRegistration.ObjectScope != ObjectScope.Singleton ) {
+				// we only care about singletons
+				return;
+			}
+
+			var typeToInspect = dependencyRegistration.IsFactoryRegistration
+				? dependencyRegistration.DependencyType
+				: dependencyRegistration.ConcreteType;
+
+			if( typeToInspect.IsNullOrErrorType() ) {
+				// we expected a type, but didn't get one, so fail
 				var diagnostic = Diagnostic.Create(
-					Diagnostics.ConcreteTypeNotResolved,
+					Diagnostics.SingletonRegistrationTypeUnknown,
 					root.GetLocation()
 				);
 				context.ReportDiagnostic( diagnostic );
@@ -63,13 +66,13 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 			// TODO: it probably makes more sense to iterate over the fields and emit diagnostics tied to those individual fields for more accurate red-squigglies
 			// a DI singleton should be capable of having multiple diagnostics come out of it
 			var flags = MutabilityInspectionFlags.AllowUnsealed | MutabilityInspectionFlags.IgnoreImmutabilityAttribute;
-			var result = inspector.InspectType( concreteType, context.Compilation.Assembly, flags );
+			var result = inspector.InspectType( typeToInspect, context.Compilation.Assembly, flags );
 			if( result.IsMutable ) {
 				var reason = m_resultFormatter.Format( result );
 				var diagnostic = Diagnostic.Create(
 					Diagnostics.UnsafeSingletonField,
 					root.GetLocation(),
-					concreteType.GetFullTypeNameWithGenericArguments(),
+					typeToInspect.GetFullTypeNameWithGenericArguments(),
 					reason
 				);
 				context.ReportDiagnostic( diagnostic );
