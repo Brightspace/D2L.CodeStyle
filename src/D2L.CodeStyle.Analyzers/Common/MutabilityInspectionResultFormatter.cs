@@ -20,7 +20,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			}
 
 			// for type or type argument, MemberPath is not required,
-			// so we'll change it to "the" if it's not available
+			// so we'll change it to "its" if it's not available
 			var memberPath = string.IsNullOrWhiteSpace( result.MemberPath ) 
 				? "its" 
 				: $"'{result.MemberPath}''s";
