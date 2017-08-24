@@ -26,7 +26,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				: $"'{result.MemberPath}''s";
 
 			switch( result.Target ) {
-				case MutabilityTarget.Member:
 				case MutabilityTarget.Type:
 					return $"{memberPath} type ('{result.TypeName}')";
 				case MutabilityTarget.TypeArgument:

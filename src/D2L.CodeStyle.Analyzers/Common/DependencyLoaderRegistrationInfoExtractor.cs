@@ -35,11 +35,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}
 
 		/// <summary>
-		/// Attempts to extract a <see cref="DependencyRegistration"/> from <code>Register*</code> invocation.
+		/// Attempts to extract a <see cref="DependencyRegistration"/> from a <code>Register*</code> invocation.
 		/// </summary>
-		/// <remarks>
-		/// Only concrete non-factory registrations are currently supported.
-		/// </remarks>
 		/// <returns>Returns null if the expression is not a registration, or is an unsupported registration.</returns>
 		public DependencyRegistration GetRegistration( 
 			InvocationExpressionSyntax registrationExpression, 

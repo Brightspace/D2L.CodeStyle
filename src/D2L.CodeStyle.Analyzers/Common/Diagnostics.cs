@@ -47,7 +47,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			title: "Ensure that a singleton is safe in undifferentiated servers.",
 			messageFormat: "The type '{0}' is not safe to register as a singleton, because {1}.",
 			category: "Safety",
-			defaultSeverity: DiagnosticSeverity.Warning,
+			defaultSeverity: DiagnosticSeverity.Info,
 			isEnabledByDefault: true,
 			description: "Singletons should not have client-specific or mutable data, otherwise they will not be safe in undifferentiated servers."
 		);
