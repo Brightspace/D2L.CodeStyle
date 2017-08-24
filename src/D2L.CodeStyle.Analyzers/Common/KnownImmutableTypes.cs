@@ -19,6 +19,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			"count4net.Writers.DurationCounter",
 			"log4net.ILog",
 			"Newtonsoft.Json.JsonSerializer",
+			"Newtonsoft.Json.JsonConverter",
 			"System.Collections.Generic.KeyValuePair",
 			"System.ComponentModel.TypeConverter",
 			"System.DateTime",
