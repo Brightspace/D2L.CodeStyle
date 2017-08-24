@@ -266,11 +266,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
-			var baseResult = InspectBaseType( type, rootAssembly, typeStack );
-			if ( baseResult.IsMutable ) {
-				return baseResult;
-			}
-
 			// If we're verifying immutability, then carry on; otherwise, bailout
 			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && IsTypeMarkedImmutable( type ) ) {
 				return MutabilityInspectionResult.NotMutable();
@@ -349,6 +344,12 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					if( result.IsMutable ) {
 						return result;
 					}
+				}
+
+				// We descend into the base class last
+				var baseResult = InspectBaseType( type, rootAssembly, typeStack );
+				if ( baseResult.IsMutable ) {
+					return baseResult;
 				}
 
 				return MutabilityInspectionResult.NotMutable();
