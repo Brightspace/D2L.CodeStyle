@@ -49,10 +49,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 				return;
 			}
 
-			var typeToInspect = dependencyRegistration.IsFactoryRegistration
-				? dependencyRegistration.DependencyType
-				: dependencyRegistration.ConcreteType;
-
+			var typeToInspect = GetTypeToInspect( dependencyRegistration );
 			if( typeToInspect.IsNullOrErrorType() ) {
 				// we expected a type, but didn't get one, so fail
 				var diagnostic = Diagnostic.Create(
@@ -77,6 +74,14 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 				);
 				context.ReportDiagnostic( diagnostic );
 			}
+		}
+
+		private ITypeSymbol GetTypeToInspect( DependencyRegistration registration ) {
+			// if we have a concrete type, use it; otherwise, use the dependency type
+			if( !registration.IsFactoryRegistration && !registration.ConcreteType.IsNullOrErrorType() ) {
+				return registration.ConcreteType;
+			}
+			return registration.DependencyType;
 		}
 
 	}
