@@ -68,7 +68,10 @@ namespace SpecTests {
 			/* UnsafeSingletonField(SpecTests.UnsafeSingleton,'mutableField' is not read-only) */ reg.Register<ISingleton, UnsafeSingleton>( ObjectScope.Singleton ) /**/;
 			/* UnsafeSingletonField(SpecTests.UnsafeSingleton,'mutableField' is not read-only) */ reg.Register( typeof( ISingleton ), typeof( UnsafeSingleton ), ObjectScope.Singleton ) /**/;
 			
-			// And factory Singletons inspect the interface
+			// And factory Singletons or singletons where concrete type is not resolved inspect the interface
+			/* UnsafeSingletonField(SpecTests.ISingleton,its type ('SpecTests.ISingleton') is an interface that is not marked with `[Objects.Immutable]`) */ reg.Register<ISingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton ) /**/;
+			/* UnsafeSingletonField(SpecTests.ISingleton,its type ('SpecTests.ISingleton') is an interface that is not marked with `[Objects.Immutable]`) */ reg.RegisterPlugin<ISingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton ) /**/;
+			/* UnsafeSingletonField(SpecTests.ISingleton,its type ('SpecTests.ISingleton') is an interface that is not marked with `[Objects.Immutable]`) */ reg.Register<ISingleton>( null ) /**/;
 			/* UnsafeSingletonField(SpecTests.ISingleton,its type ('SpecTests.ISingleton') is an interface that is not marked with `[Objects.Immutable]`) */ reg.RegisterFactory<ISingleton, SingletonFactory>( ObjectScope.Singleton ) /**/;
 			/* UnsafeSingletonField(SpecTests.ISingleton,its type ('SpecTests.ISingleton') is an interface that is not marked with `[Objects.Immutable]`) */ reg.RegisterPluginFactory<ISingleton, SingletonFactory>( ObjectScope.Singleton ) /**/;
 
@@ -81,8 +84,6 @@ namespace SpecTests {
 			reg.RegisterParentAwareFactory<ISingleton, SingletonFactory>();
 
 			// Types that don't exist should raise a diagnostic, so that we can be strict. 
-			/* SingletonRegistrationTypeUnknown */ reg.Register<ISingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton ) /**/;
-			/* SingletonRegistrationTypeUnknown */ reg.RegisterPlugin<ISingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton ) /**/;
 			/* SingletonRegistrationTypeUnknown */ reg.RegisterFactory<NonExistentTypeOrInTheMiddleOfTyping, SingletonFactory>( ObjectScope.Singleton ) /**/;
 			/* SingletonRegistrationTypeUnknown */ reg.RegisterPluginFactory<NonExistentTypeOrInTheMiddleOfTyping, SingletonFactory>( ObjectScope.Singleton ) /**/;
 		}
