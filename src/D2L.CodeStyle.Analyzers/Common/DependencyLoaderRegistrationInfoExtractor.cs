@@ -66,6 +66,11 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					// if there's a type argument provided, use that for dependency type instead
 					dependencyType = method.TypeArguments[0];
 				}
+				if( concreteType.IsNullOrErrorType() ) {
+					// concreteType can sometimes legitimately not resolve, like in this case:
+					//		Register<IFoo>( null );
+					concreteType = dependencyType;
+				}
 				return DependencyRegistration.NonFactory( ObjectScope.Singleton, dependencyType, concreteType );
 			}
 
