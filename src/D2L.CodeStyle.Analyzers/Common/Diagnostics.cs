@@ -45,9 +45,9 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		public static readonly DiagnosticDescriptor UnsafeSingletonField = new DiagnosticDescriptor(
 			id: "D2L0006",
 			title: "Ensure that a singleton is safe in undifferentiated servers.",
-			messageFormat: "",
+			messageFormat: "The type '{0}' is not safe to register as a singleton, because {1}.",
 			category: "Safety",
-			defaultSeverity: DiagnosticSeverity.Error,
+			defaultSeverity: DiagnosticSeverity.Info,
 			isEnabledByDefault: true,
 			description: "Singletons should not have client-specific or mutable data, otherwise they will not be safe in undifferentiated servers."
 		);
@@ -91,5 +91,16 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			isEnabledByDefault: true,
 			description: "The method being called has declared that this parameter cannot receive null, but a null value is being passed."
 		);
+
+		public static readonly DiagnosticDescriptor SingletonRegistrationTypeUnknown = new DiagnosticDescriptor(
+			id: "D2L0011",
+			title: "Unable to resolve the concrete or plugin type for this registration.",
+			messageFormat: "Unable to determine the concrete or plugin type for this registration; please make sure to reference the type's assembly.",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Singleton registrations must be known at compile-time; please make sure to reference the type's assembly."
+		);
+
 	}
 }

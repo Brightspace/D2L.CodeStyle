@@ -15,13 +15,21 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}
 
 		private string FormatTarget( MutabilityInspectionResult result ) {
+			if( result.Target == MutabilityTarget.Member ) {
+				return $"'{result.MemberPath}'";
+			}
+
+			// for type or type argument, MemberPath is not required,
+			// so we'll change it to "its" if it's not available
+			var memberPath = string.IsNullOrWhiteSpace( result.MemberPath ) 
+				? "its" 
+				: $"'{result.MemberPath}''s";
+
 			switch( result.Target ) {
-				case MutabilityTarget.Member:
-					return $"'{result.MemberPath}'";
 				case MutabilityTarget.Type:
-					return $"'{result.MemberPath}''s type ('{result.TypeName}')";
+					return $"{memberPath} type ('{result.TypeName}')";
 				case MutabilityTarget.TypeArgument:
-					return $"'{result.MemberPath}''s type argument ('{result.TypeName}')";
+					return $"{memberPath} type argument ('{result.TypeName}')";
 				default:
 					throw new NotImplementedException( $"unknown target '{result.Target}'" );
 			}

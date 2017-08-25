@@ -23,6 +23,16 @@ namespace D2L.CodeStyle.Analyzers.Common {
             // type cases
 
             new TestCaseData(
+				MutabilityInspectionResult.Mutable(null, "bar", MutabilityTarget.Type, MutabilityCause.IsAnArray),
+				"its type ('bar') is an array"
+			).SetName("type is an array, null member"),
+
+			new TestCaseData(
+				MutabilityInspectionResult.Mutable("", "bar", MutabilityTarget.Type, MutabilityCause.IsAnArray),
+				"its type ('bar') is an array"
+			).SetName("type is an array, empty member"),
+
+			new TestCaseData(
 				MutabilityInspectionResult.Mutable("foo", "bar", MutabilityTarget.Type, MutabilityCause.IsAnArray),
 				"'foo''s type ('bar') is an array"
 			).SetName("type is an array"),
@@ -49,7 +59,17 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
             // type argument cases
 
-            new TestCaseData(
+			new TestCaseData(
+				MutabilityInspectionResult.Mutable(null, "bar", MutabilityTarget.TypeArgument, MutabilityCause.IsAnArray),
+				"its type argument ('bar') is an array"
+			).SetName("type argument is an array, null member"),
+
+			new TestCaseData(
+				MutabilityInspectionResult.Mutable("", "bar", MutabilityTarget.TypeArgument, MutabilityCause.IsAnArray),
+				"its type argument ('bar') is an array"
+			).SetName("type argument is an array, empty member"),
+
+			new TestCaseData(
 				MutabilityInspectionResult.Mutable("foo", "bar", MutabilityTarget.TypeArgument, MutabilityCause.IsAnArray),
 				"'foo''s type argument ('bar') is an array"
 			).SetName("type argument is an array"),
