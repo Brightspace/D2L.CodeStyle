@@ -97,6 +97,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			"System.Drawing.Imaging.ImageFormat",
 			"System.Random",
 			"System.Security.Cryptography.RNGCryptoServiceProvider",
+			"System.Text.Encoding",
 			"System.Text.ASCIIEncoding",
 			"System.Text.UTF8Encoding",
 			"System.Threading.ReaderWriterLockSlim",
