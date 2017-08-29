@@ -49,7 +49,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			if( mutabilityResult.IsMutable ) {
 				var reason = m_resultFormatter.Format( mutabilityResult );
-				var diagnostic = Diagnostic.Create( Diagnostics.ImmutableClassIsnt, root.GetLocation(), reason );
+				var diagnostic = Diagnostic.Create( Diagnostics.ImmutableClassIsnt, root.Identifier.GetLocation(), reason );
 				context.ReportDiagnostic( diagnostic );
 			}
 		}

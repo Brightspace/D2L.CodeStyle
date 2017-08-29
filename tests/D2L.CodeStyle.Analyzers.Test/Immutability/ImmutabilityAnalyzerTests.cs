@@ -35,7 +35,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		}
 	}";
-			AssertSingleDiagnostic( test, 5, 3, MutabilityInspectionResult.Mutable(
+			AssertSingleDiagnostic( test, 6, 9, MutabilityInspectionResult.Mutable(
 				"bad",
 				"System.DateTime",
 				MutabilityTarget.Member,
@@ -58,7 +58,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		}
 	}";
-			AssertSingleDiagnostic( test, 6, 3, MutabilityInspectionResult.Mutable(
+			AssertSingleDiagnostic( test, 6, 9, MutabilityInspectionResult.Mutable(
 				"bad",
 				"System.DateTime",
 				MutabilityTarget.Member,
@@ -81,7 +81,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		}
 	}";
-			AssertSingleDiagnostic( test, 7, 3, MutabilityInspectionResult.Mutable( 
+			AssertSingleDiagnostic( test, 7, 9, MutabilityInspectionResult.Mutable( 
 				"bad",
 				"System.DateTime",
 				MutabilityTarget.Member,
