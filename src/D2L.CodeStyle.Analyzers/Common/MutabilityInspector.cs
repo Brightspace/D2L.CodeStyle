@@ -281,7 +281,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 			typeStack.Add( type );
 			try {
-
 				if( ImmutableContainerTypes.ContainsKey( type.GetFullTypeName() ) ) {
 					var namedType = type as INamedTypeSymbol;
 					for( int i = 0; i < namedType.TypeArguments.Length; i++ ) {
@@ -337,6 +336,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 						// this if-block is temporary!
 						return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnExternalUnmarkedType );
 					}
+
+					return MutabilityInspectionResult.NotMutable();
 				}
 
 				foreach( ISymbol member in type.GetExplicitNonStaticMembers() ) {
