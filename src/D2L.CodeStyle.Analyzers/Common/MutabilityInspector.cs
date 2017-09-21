@@ -257,7 +257,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
-			return InspectClassStructOrInterfaceOrTypeParameter( type.BaseType, rootAssembly, MutabilityInspectionFlags.AllowUnsealed, typeStack );
+			return InspectTypeRecursive( type.BaseType, rootAssembly, MutabilityInspectionFlags.AllowUnsealed, typeStack );
 		}
 
 		private MutabilityInspectionResult InspectClassStructOrInterfaceOrTypeParameter(
