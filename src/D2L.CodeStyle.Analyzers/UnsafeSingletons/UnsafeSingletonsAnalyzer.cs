@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
-	[DiagnosticAnalyzer( LanguageNames.CSharp )]
+	// [DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class UnsafeSingletonsAnalyzer : DiagnosticAnalyzer {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( 
 			Diagnostics.UnsafeSingletonField,
