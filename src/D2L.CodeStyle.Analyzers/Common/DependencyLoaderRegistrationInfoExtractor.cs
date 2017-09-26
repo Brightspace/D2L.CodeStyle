@@ -94,7 +94,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				var dependencyType = semanticModel.GetSymbolInfo( dependencyTypeExpression.Type ).Symbol as ITypeSymbol;
 
 				var concreteTypeExpression = arguments[1].Expression as TypeOfExpressionSyntax;
-				if( dependencyTypeExpression == null ) {
+				if( concreteTypeExpression == null ) {
 					return null;
 				}
 				var concreteType = semanticModel.GetSymbolInfo( concreteTypeExpression.Type ).Symbol as ITypeSymbol;
