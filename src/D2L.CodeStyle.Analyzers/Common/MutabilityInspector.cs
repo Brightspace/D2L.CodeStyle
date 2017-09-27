@@ -19,7 +19,10 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		/// A list of marked immutable types owned externally.
 		/// </summary>
 		private static readonly ImmutableHashSet<string> MarkedImmutableTypes = new HashSet<string> {
-			"System.StringComparer"
+			"System.StringComparer",
+			"System.Text.ASCIIEncoding",
+			"System.Text.Encoding",
+			"System.Text.UTF8Encoding",
 		}.ToImmutableHashSet();
 
 		/// <summary>
