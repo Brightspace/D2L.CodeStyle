@@ -13,6 +13,11 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		/// A list of known immutable types.
 		/// </summary>
 		private static readonly ImmutableHashSet<string> DefaultKnownImmutableTypes = new HashSet<string> {
+			"D2L.UtcDateTime",
+			"D2L.LP.Users.UserId",
+			"D2L.LP.OrgUnits.OrgId",
+			"D2L.LP.OrgUnits.OrgUnitId",
+
 			"count4net.IRateCounter",
 			"count4net.IStatCounter",
 			"count4net.IValueCounter",
