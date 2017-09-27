@@ -17,6 +17,8 @@ using D2L.CodeStyle.Annotations.Contract;
 
 namespace D2L.CodeStyle.Annotations.Contract {
 	public class NotNullAttribute : System.Attribute {}
+	public class NotNullWhenParameterAttribute : Attribute {}
+	public class AllowNullAttribute : Attribute {}
 }
 ";
 
@@ -46,7 +48,33 @@ namespace Test {
 }
 ";
 
+		private const string NotNullType = Attributes + @"
+namespace Test {
+	[NotNullWhenParameter]
+	interface IDatabase {}
+	class Database : IDatabase {};
+	class TestProvider {
+		public void TestMethod(
+			IDatabase database
+		) {}
+		public void TestMethod(
+			string allowedToBeNull,
+			IDatabase testDatabase
+		) {}
+		public void MultiNotNull(
+			IDatabase first,
+			IDatabase second
+		) {}
+		public void TestMethodCanTakeNull(
+			[AllowNull] IDatabase database
+		) {}
+		public bool ShouldDoStuff => false;
+	}
+}
+";
+
 		private static readonly int NotNullParamMethodLines = NotNullParamMethod.Count( c => c.Equals( '\n' ) ) + 1;
+		private static readonly int NotNullTypeLines = NotNullType.Count( c => c.Equals( '\n' ) ) + 1;
 
 		#region Parameter has [NotNull] directly
 
@@ -549,6 +577,180 @@ namespace Test {
 	class MyObject {
 		public int Id {get; set;}
 		public string Name {get; set;}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+
+		#endregion
+
+		#endregion
+
+		#region Parameter's type has [NotNullWhenParameter]
+
+		#region Should produce errors
+
+		[Test]
+		public void NotNullType_NullIsPassed_ReportsProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			provider.TestMethod( null );
+		}
+	}
+}";
+			AssertProducesError(
+					test,
+					5 + NotNullTypeLines,
+					25,
+					"database"
+				);
+		}
+
+		[Test]
+		public void NotNullType_NullIsPassed_MethodInSameClass_ReportsProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			DoStuff( null );
+		}
+		public void DoStuff(
+			IDatabase database
+		) {}
+	}
+}";
+			AssertProducesError(
+					test,
+					4 + NotNullTypeLines,
+					13,
+					"database"
+				);
+		}
+
+		[Test]
+		public void NotNullType_MultipleParamtersWithIssue_ReportsMultipleProblems() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			provider.TestMethod( new Database() );
+			provider.MultiNotNull(
+					null,
+					null
+				);
+		}
+	}
+}";
+			DiagnosticDescriptor descriptor = Diagnostics.NullPassedToNotNullParameter;
+			DiagnosticResult[] expectedResults = new[] {
+				new DiagnosticResult() {
+					Id = descriptor.Id,
+					Message = string.Format( descriptor.MessageFormat.ToString(), "first" ),
+					Severity = DiagnosticSeverity.Error,
+					Locations = new[] {
+						new DiagnosticResultLocation( "Test0.cs", 7 + NotNullTypeLines, 6 )
+					}
+				},
+				new DiagnosticResult() {
+					Id = descriptor.Id,
+					Message = string.Format( descriptor.MessageFormat.ToString(), "second" ),
+					Severity = DiagnosticSeverity.Error,
+					Locations = new[] {
+						new DiagnosticResultLocation( "Test0.cs", 8 + NotNullTypeLines, 6 )
+					}
+				}
+			};
+
+			VerifyCSharpDiagnostic( test, expectedResults );
+		}
+
+		[Test]
+		public void NotNullType_NamedArguments_OneIsNull_ReportsProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			provider.TestMethod(
+				testDatabase: null,
+				allowedToBeNull: ""This one is actually a string, not a database""
+			);
+		}
+	}
+}";
+			AssertProducesError(
+					test,
+					6 + NotNullTypeLines,
+					5,
+					"testDatabase"
+				);
+		}
+
+		#endregion
+
+		#region  Should not produce errors, due to not passing null
+
+		[Test]
+		public void NotNullType_ValueIsPassed_DoesNotReportProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			provider.TestMethod( new Database() );
+		}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+
+		[Test]
+		public void NotNullType_OneParamNotNull_NullPassedToNullable_DoesNotReportProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			provider.TestMethod( null, new Database() );
+		}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+
+		#endregion
+
+		#region Parameter is flagged with [AllowNull]
+
+		[Test]
+		public void NotNullType_AllowNull_NullIsPassed_DoesNotReportProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			var provider = new TestProvider();
+			provider.TestMethodCanTakeNull( null );
+		}
+	}
+}";
+			AssertDoesNotProduceError( test );
+		}
+
+		[Test]
+		public void NotNullType_AllowNull_NullIsPassed_MethodInSameClass_DoesNotReportProblem() {
+			const string test = NotNullType + @"
+namespace Test {
+	class TestCaller {
+		public void TestMethod() {
+			DoStuff( null );
+		}
+		public void DoStuff(
+			[AllowNull] IDatabase database
+		) {}
 	}
 }";
 			AssertDoesNotProduceError( test );

@@ -14,6 +14,8 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 
 		private const string Namespace = "D2L.CodeStyle.Annotations.Contract.";
 		private const string NotNullAttribute = Namespace + "NotNullAttribute";
+		private const string NotNullTypeAttribute = Namespace + "NotNullWhenParameterAttribute";
+		private const string AllowNullAttribute = Namespace + "AllowNullAttribute";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 			=> ImmutableArray.Create( Diagnostics.NullPassedToNotNullParameter );
@@ -91,7 +93,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 					continue;
 				}
 
-				var parameter = argument.DetermineParameter(
+				IParameterSymbol parameter = argument.DetermineParameter(
 					context.SemanticModel,
 					allowParams: true
 				);
@@ -103,15 +105,14 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 					continue;
 				}
 
-				// If the parameter isn't marked [NotNull] we can skip this
-				// argument. It might be interesting to complain for null
-				// passed to a params argument in the future.
-				if ( !SymbolHasAttribute( parameter, NotNullAttribute ) ) {
+				// If the parameter and its type aren't marked as [NotNull]
+				// we can skip this argument.
+				if( !ParameterMustNotBeNull( parameter ) ) {
 					continue;
 				}
 
 				// We know that the argument looks null enough and the
-				// parameter has the [NotNull] attribute. Emit a diagnostic.
+				// parameter must not be passed null. Emit a diagnostic.
 				context.ReportDiagnostic( Diagnostic.Create(
 					Diagnostics.NullPassedToNotNullParameter,
 					argument.GetLocation(),
@@ -133,6 +134,27 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			return litExpr.Token.Kind() == SyntaxKind.NullKeyword;
 		}
 
+		private static bool ParameterMustNotBeNull(
+			IParameterSymbol parameter
+		) {
+			// If the parameter is marked [NotNull] we can skip checking for other attributes.
+			if( SymbolHasAttribute( parameter, NotNullAttribute ) ) {
+				return true;
+			}
+
+			// If the parameter's type is marked [NotNullWhenParameter], and
+			// the parameter itself is not marked with [AllowNull], then the
+			// parameter is considered equivalent to having [NotNull] applied.
+			ITypeSymbol paramType = parameter.Type;
+			if( SymbolHasAttribute( paramType, NotNullTypeAttribute )
+				&& !SymbolHasAttribute( parameter, AllowNullAttribute )
+			) {
+				return true;
+			}
+
+			return false;
+		}
+
 		private static bool SymbolHasAttribute(
 			ISymbol symbol,
 			string attributeClassName
@@ -146,3 +168,4 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 		}
 	}
 }
+ 
