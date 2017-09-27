@@ -28,6 +28,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			"System.Collections.Generic.KeyValuePair",
 			"System.ComponentModel.TypeConverter",
 			"System.DateTime",
+			"System.Drawing.Imaging.ImageFormat",
 			"System.Drawing.Size", // only safe because it's a struct with primitive fields
 			"System.Guid",
 			"System.Reflection.ConstructorInfo",
@@ -35,7 +36,9 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			"System.Reflection.MemberInfo",
 			"System.Reflection.MethodInfo",
 			"System.Reflection.PropertyInfo",
+			"System.Security.Cryptography.RNGCryptoServiceProvider",
 			"System.Text.RegularExpressions.Regex",
+			"System.Threading.ReaderWriterLockSlim",
 			"System.TimeSpan",
 			"System.Type",
 			"System.Uri",
