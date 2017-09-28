@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Text;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
@@ -49,9 +50,32 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			if( mutabilityResult.IsMutable ) {
 				var reason = m_resultFormatter.Format( mutabilityResult );
-				var diagnostic = Diagnostic.Create( Diagnostics.ImmutableClassIsnt, root.Identifier.GetLocation(), reason );
+				var location = GetLocationOfClassIdentifierAndGenericParameters( root );
+				var diagnostic = Diagnostic.Create( 
+					Diagnostics.ImmutableClassIsnt, 
+					location, 
+					reason 
+				);
 				context.ReportDiagnostic( diagnostic );
 			}
+		}
+
+
+		private Location GetLocationOfClassIdentifierAndGenericParameters( ClassDeclarationSyntax decl ) {
+			var location = decl.Identifier.GetLocation();
+
+			if( decl.TypeParameterList != null ) {
+				location = Location.Create(
+					decl.SyntaxTree,
+					TextSpan.FromBounds(
+						location.SourceSpan.Start,
+						decl.TypeParameterList.GetLocation().SourceSpan.End
+					)
+				);
+			}
+
+
+			return location;
 		}
 	}
 }
