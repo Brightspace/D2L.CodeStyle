@@ -135,7 +135,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				case TypeKind.Class:
 				case TypeKind.Interface:
 				case TypeKind.Struct: // equivalent to TypeKind.Structure
-					return InspectClassStructOrInterfaceOrTypeParameter(
+					return InspectClassStructOrInterface(
 						type,
 						rootAssembly,
 						flags,
@@ -179,7 +179,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			return InspectTypeRecursive( type.BaseType, rootAssembly, MutabilityInspectionFlags.AllowUnsealed, typeStack );
 		}
 
-		private MutabilityInspectionResult InspectClassStructOrInterfaceOrTypeParameter(
+		private MutabilityInspectionResult InspectClassStructOrInterface(
 			ITypeSymbol type,
 			IAssemblySymbol rootAssembly,
 			MutabilityInspectionFlags flags,
