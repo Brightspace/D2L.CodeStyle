@@ -120,6 +120,14 @@ namespace D2L.CodeStyle.Analyzers.Common {
 						MutabilityCause.IsDynamic
 					);
 
+				case TypeKind.TypeParameter:
+					// Type parameters (not arguments) are not specialized
+					// and we can't analyze them, so are always mutable
+					return MutabilityInspectionResult.MutableType(
+						type,
+						MutabilityCause.IsANonSpecializedGenericType
+					);
+
 				case TypeKind.Enum:
 					// Enums are just fancy ints.
 					return MutabilityInspectionResult.NotMutable();
@@ -127,7 +135,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				case TypeKind.Class:
 				case TypeKind.Interface:
 				case TypeKind.Struct: // equivalent to TypeKind.Structure
-				case TypeKind.TypeParameter:
 					return InspectClassStructOrInterfaceOrTypeParameter(
 						type,
 						rootAssembly,

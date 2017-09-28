@@ -107,6 +107,39 @@ namespace D2L.CodeStyle.Analyzers {
 			AssertNoDiagnostic( test );
 		}
 
+		[Test]
+		public void Document_ClassHasNonSpecializedGenericState_Diag() {
+			const string test = @"
+	using System;
+
+	namespace test {
+		[Immutable] interface IFoo<T> {} 
+		class Test<T> : IFoo<T> { 
+			internal readonly T foo;
+		}
+	}";
+			AssertSingleDiagnostic( test, 6, 9, MutabilityInspectionResult.Mutable(
+				"foo",
+				"T",
+				MutabilityTarget.Type,
+				MutabilityCause.IsANonSpecializedGenericType
+			) );
+		}
+
+		[Test]
+		public void Document_ClassHasSpecializedGenericState_NoDiag() {
+			const string test = @"
+	using System;
+
+	namespace test {
+		[Immutable] interface IFoo<T> {} 
+		class Test : IFoo<string> { 
+			internal readonly string foo;
+		}
+	}";
+			AssertNoDiagnostic( test );
+		}
+
 		private void AssertNoDiagnostic( string file ) {
 			VerifyCSharpDiagnostic( file );
 		}

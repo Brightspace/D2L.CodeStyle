@@ -15,7 +15,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		IsAnExternalUnmarkedType,
 		IsAnArray,
 		IsPotentiallyMutable,
-		IsDynamic
+		IsDynamic,
+		IsANonSpecializedGenericType
 	}
 
 	public sealed class MutabilityInspectionResult {
