@@ -22,13 +22,13 @@ namespace SpecTests {
 
 		class GenericClassWithoutStateIsSafe<T> : IGenericImmutable<T> { }
 
-		class /* ImmutableClassIsnt('foo''s type ('T') is a generic type) */ GenericClassWithStateIsUnsafe<T> /**/ : IGenericImmutable<T> {
+		class /* ImmutableClassIsnt('foo''s type ('T') is a generic type) */ GenericClassWithStateIsUnsafe /**/ <T>  : IGenericImmutable<T> {
 			internal readonly T foo;
 		}
 
 		// todo: we should try and map generic parameters with arguments on implemented interfaces
 		// and extract any constraints that we can
-		class /* ImmutableClassIsnt('foo''s type ('T') is a generic type) */ IndirectlyConstrainedGenericClassWithStateIsUnsafe<T> /**/ : IGenericImmutableWithTypeConstraint<T> {
+		class /* ImmutableClassIsnt('foo''s type ('T') is a generic type) */ IndirectlyConstrainedGenericClassWithStateIsUnsafe /**/ <T>  : IGenericImmutableWithTypeConstraint<T> {
 			internal readonly T foo;
 		}
 
