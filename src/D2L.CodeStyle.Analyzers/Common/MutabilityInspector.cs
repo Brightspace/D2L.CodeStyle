@@ -120,17 +120,17 @@ namespace D2L.CodeStyle.Analyzers.Common {
 						MutabilityCause.IsDynamic
 					);
 
-				case TypeKind.TypeParameter:
-					// Type parameters (not arguments) are not specialized
-					// and we can't analyze them, so are always mutable
-					return MutabilityInspectionResult.MutableType(
-						type,
-						MutabilityCause.IsANonSpecializedGenericType
-					);
-
 				case TypeKind.Enum:
 					// Enums are just fancy ints.
 					return MutabilityInspectionResult.NotMutable();
+
+				case TypeKind.TypeParameter:
+					return InspectTypeParameter(
+						type,
+						rootAssembly,
+						flags,
+						typeStack
+					);
 
 				case TypeKind.Class:
 				case TypeKind.Interface:
@@ -272,6 +272,38 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			} finally {
 				typeStack.Remove( type );
 			}
+		}
+
+		private MutabilityInspectionResult InspectTypeParameter(
+			ITypeSymbol symbol, 
+			IAssemblySymbol rootAssembly, 
+			MutabilityInspectionFlags flags,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			var typeParameter = symbol as ITypeParameterSymbol;
+
+			if( typeParameter.ConstraintTypes == null  || typeParameter.ConstraintTypes .Length == 0 ) {
+				// this type parameters is not closed and we can't analyze it
+				return MutabilityInspectionResult.MutableType(
+					symbol,
+					MutabilityCause.IsAGenericType
+				);
+			}
+
+			// there are constraints we can check, so require them all to be immutable
+			foreach( var constraintType in typeParameter.ConstraintTypes ) {
+				var result = InspectTypeRecursive( constraintType, rootAssembly, flags, typeStack );
+				if( result.IsMutable) {
+					// ignore the result's details, because it has information about a constraint
+					// and not the type in question
+					return MutabilityInspectionResult.MutableType(
+						symbol,
+						MutabilityCause.IsAGenericType
+					);
+				}
+			}
+
+			return MutabilityInspectionResult.NotMutable();
 		}
 
 		private MutabilityInspectionResult InspectMemberRecursive(
