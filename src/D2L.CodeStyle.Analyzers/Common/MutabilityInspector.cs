@@ -282,28 +282,21 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		) {
 			var typeParameter = symbol as ITypeParameterSymbol;
 
-			if( typeParameter.ConstraintTypes == null  || typeParameter.ConstraintTypes .Length == 0 ) {
-				// this type parameters is not closed and we can't analyze it
-				return MutabilityInspectionResult.MutableType(
-					symbol,
-					MutabilityCause.IsAGenericType
-				);
-			}
-
-			// there are constraints we can check, so require them all to be immutable
-			foreach( var constraintType in typeParameter.ConstraintTypes ) {
-				var result = InspectTypeRecursive( constraintType, rootAssembly, flags, typeStack );
-				if( result.IsMutable) {
-					// ignore the result's details, because it has information about a constraint
-					// and not the type in question
-					return MutabilityInspectionResult.MutableType(
-						symbol,
-						MutabilityCause.IsAGenericType
-					);
+			if( typeParameter.ConstraintTypes != null  || typeParameter.ConstraintTypes.Length > 0 ) {
+				// there are constraints we can check. as type constraints are unionized, we only need one 
+				// type constraint to be immutable to succeed
+				foreach( var constraintType in typeParameter.ConstraintTypes ) {
+					var result = InspectTypeRecursive( constraintType, rootAssembly, flags, typeStack );
+					if( !result.IsMutable ) {
+						return MutabilityInspectionResult.NotMutable();
+					}
 				}
 			}
 
-			return MutabilityInspectionResult.NotMutable();
+			return MutabilityInspectionResult.MutableType(
+				symbol,
+				MutabilityCause.IsAGenericType
+			); ;
 		}
 
 		private MutabilityInspectionResult InspectMemberRecursive(
