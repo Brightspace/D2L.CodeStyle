@@ -32,7 +32,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Common\DependencyInjection\DependencyRegistration.cs" />
+    <Compile Include="Common\DependencyInjection\DependencyRegistrationExpression.cs" />
     <Compile Include="Common\DependencyInjection\DependencyRegistry.cs" />
+    <Compile Include="Common\DependencyInjection\FullyGenericRegisterExpression.cs" />
+    <Compile Include="Common\DependencyInjection\NonGenericRegisterExpression.cs" />
+    <Compile Include="Common\DependencyInjection\RegisterInstantiatedObjectExpression.cs" />
+    <Compile Include="Common\DependencyInjection\RegisterParentAwareFactoryExpression.cs" />
     <Compile Include="Common\Diagnostics.cs" />
     <Compile Include="Common\KnownImmutableTypes.cs" />
     <Compile Include="Common\MutabilityInspectionResult.cs" />

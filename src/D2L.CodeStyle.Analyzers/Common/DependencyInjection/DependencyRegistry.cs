@@ -1,8 +1,17 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System.Collections.Immutable;
+using System.Linq;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 	internal sealed class DependencyRegistry {
+
+		private static readonly ImmutableArray<DependencyRegistrationExpression> s_registrationExpressions = ImmutableArray.Create<DependencyRegistrationExpression>(
+			new RegisterParentAwareFactoryExpression(),
+			new RegisterInstantiatedObjectExpression(),
+			new NonGenericRegisterExpression(),
+			new FullyGenericRegisterExpression()
+		);
 
 		private readonly INamedTypeSymbol m_dependencyRegistryType;
 		private readonly INamedTypeSymbol m_objectScopeType;
@@ -56,96 +65,17 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 			}
 			var arguments = registrationExpression.ArgumentList.Arguments;
 
-			if( method.IsGenericMethod && method.TypeParameters.Length == 1 && method.Parameters.Length == 1 && arguments.Count == 1 ) {
-				// void Register<TDependencyType>( TDependencyType instance );
-				// void RegisterPlugin<TDependencyType>( TDependencyType instance );
-
-				var concreteType = semanticModel.GetTypeInfo( arguments[0].Expression ).Type;
-				var dependencyType = concreteType;
-				if( method.TypeArguments.Length == 1 ) {
-					// if there's a type argument provided, use that for dependency type instead
-					dependencyType = method.TypeArguments[0];
-				}
-				if( concreteType.IsNullOrErrorType() ) {
-					// concreteType can sometimes legitimately not resolve, like in this case:
-					//		Register<IFoo>( null );
-					concreteType = dependencyType;
-				}
-				return DependencyRegistration.NonFactory( ObjectScope.Singleton, dependencyType, concreteType );
+			var mappedRegistrationExpression = s_registrationExpressions.FirstOrDefault(
+				expr => expr.CanHandleMethod( method )
+			);
+			if( mappedRegistrationExpression == null ) {
+				// todo: raise a diagnostic here eventually, all register calls have to be picked up
+				return null;
 			}
 
-			if( method.Name == "RegisterParentAwareFactory" && method.TypeArguments.Length == 2 && method.Parameters.Length == 0 ) {
-				// void RegisterParentAwareFactory<TDependencyType, TFactoryType>();
-
-				return DependencyRegistration.Factory( ObjectScope.AlwaysCreateNewInstance, method.TypeArguments[0], method.TypeArguments[1] );
-			}
-
-			if( method.Name == "Register" && !method.IsGenericMethod && method.Parameters.Length == 3 && arguments.Count == 3 ) {
-				// void Register( Type dependencyType, Type concreteType, ObjectScope scope );
-
-				// This only handles the case where `typeof` is used inline.
-				// This sucks, but there are very few usages of this method (it's
-				// only used in open-generic types), so we don't care.
-				//		r.Register( typeof(IFoo), typeof(Foo), ObjectScope.Singleton );
-				var dependencyTypeExpression = arguments[0].Expression as TypeOfExpressionSyntax;
-				if( dependencyTypeExpression == null ) {
-					return null;
-				}
-				var dependencyType = semanticModel.GetSymbolInfo( dependencyTypeExpression.Type ).Symbol as ITypeSymbol;
-
-				var concreteTypeExpression = arguments[1].Expression as TypeOfExpressionSyntax;
-				if( concreteTypeExpression == null ) {
-					return null;
-				}
-				var concreteType = semanticModel.GetSymbolInfo( concreteTypeExpression.Type ).Symbol as ITypeSymbol;
-
-				ObjectScope scope;
-				if( !TryGetObjectScope( arguments[2], semanticModel, out scope ) ) {
-					return null;
-				}
-
-				return DependencyRegistration.NonFactory( scope, dependencyType, concreteType );
-			}
-
-			if( method.IsGenericMethod && method.TypeArguments.Length == 2 && method.Parameters.Length == 1 && arguments.Count == 1 ) {
-				// void Register<TDependencyType, TConcreteType>( ObjectScope scope )
-				// void RegisterPlugin<TDependencyType, TConcreteType>( ObjectScope scope )
-				// void RegisterFactory<TDependencyType, TFactoryType>( ObjectScope scope )
-				// void RegisterPluginFactory<TDependencyType, TFactoryType>( ObjectScope scope )
-
-				ObjectScope scope;
-				if( !TryGetObjectScope( arguments[0], semanticModel, out scope ) ) {
-					return null;
-				}
-
-				if( method.Name.Contains( "Factory" ) ) {
-					return DependencyRegistration.Factory( scope, method.TypeArguments[0], method.TypeArguments[1] );
-				} else {
-					return DependencyRegistration.NonFactory( scope, method.TypeArguments[0], method.TypeArguments[1] );
-				}
-			}
-
-			// unsupported or incompletely written registration method
-			return null;
+			var registation = mappedRegistrationExpression.GetRegistration( method, arguments, semanticModel );
+			return registation;
 		}
 
-		private bool TryGetObjectScope(
-			ArgumentSyntax argument,
-			SemanticModel semanticModel,
-			out ObjectScope scope
-		) {
-			scope = ObjectScope.AlwaysCreateNewInstance; // bogus
-
-			var scopeArgumentValue = semanticModel.GetConstantValue( argument.Expression );
-			if( !scopeArgumentValue.HasValue ) {
-				// this can happen if someone is typing, or in the rare case that someone doesn't pass this value inline (i.e., uses a variable)
-				return false;
-			}
-
-			// if this cast fails, things explode...but I want it to, because this shouldn't fail
-			// unless someone redefines LP's ObjectScope enum to `long` (boxed types aren't coerced)
-			scope = (ObjectScope)(int)scopeArgumentValue.Value;
-			return true;
-		}
 	}
 }
