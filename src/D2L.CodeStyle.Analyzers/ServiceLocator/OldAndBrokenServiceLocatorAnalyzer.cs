@@ -28,6 +28,8 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 			// Cache some important type lookups
 			var locatorType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.OldAndBrokenServiceLocator" );
 			var factoryType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.OldAndBrokenServiceLocatorFactory" );
+			var activatorType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.IObjectActivator" );
+			var customActivatorType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.ICustomObjectActivator" );
 
 			// If those type lookups failed then OldAndBrokenServiceLocator
 			// cannot resolve and we don't need to register our analyzer.
@@ -48,7 +50,7 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 			context.RegisterSyntaxNodeAction(
 				ctx => PreventOldAndBrokenUsage(
 					ctx,
-					new List<INamedTypeSymbol> { locatorType, factoryType }
+					new List<INamedTypeSymbol> { locatorType, factoryType, activatorType, customActivatorType }
 				),
 				SyntaxKind.IdentifierName
 			);
@@ -78,13 +80,8 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 		/// A list of assemblies that already contain OldAndBrokenServiceLocator references
 		/// </summary>
 		private static readonly ImmutableHashSet<string> WhitelistedAssemblies = new HashSet<string> {
-			"BulkCourseCreate",
-			"BulkCourseExport",
 			"D2L",
-			"D2L.AP.DataExtraction.Initiator",
-			"D2L.AP.ETL.Cleanup.Initiator",
 			"D2L.AP.S3.SISImporter",
-			"D2L.AW.DataImporter.Command",
 			"D2L.Awards",
 			"D2L.Core.JobManagement",
 			"D2L.Core.Metadata",
@@ -98,7 +95,6 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 			"D2L.Custom.CourseBrandingRunner",
 			"D2L.Custom.DropboxArchiver",
 			"D2L.Custom.DropboxArchiver.Core",
-			"D2L.Custom.EPCollectionAutomation",
 			"D2L.Custom.EPSharingGroups",
 			"D2L.Custom.ExternalHomepageResolver",
 			"D2L.Custom.GradingListAPI",
@@ -120,8 +116,14 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 			"D2L.Custom.UserSyncTool",
 			"D2L.Custom.ValenceAPI.WorkspaceManagement",
 			"D2L.eP.Domain",
+			"D2L.eP.Forms",
 			"D2L.eP.Forms.Implementation",
+			"D2L.eP.Forms.Services",
+			"D2L.eP.Forms.Web",
 			"D2L.eP.ImportExport",
+			"D2L.eP.Services",
+			"D2L.eP.Web",
+			"D2L.eP.Webpages",
 			"D2L.Ext.RemotePlugins",
 			"D2L.IM.GoogleApps.Drive",
 			"D2L.IM.GradesExport.Banner",
@@ -145,17 +147,14 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 			"D2L.Integration.LOR_PT.Web",
 			"D2L.LE.Accelerator",
 			"D2L.LE.Authorization",
-			"D2L.LE.Classlist",
 			"D2L.LE.Competencies",
 			"D2L.LE.Content",
 			"D2L.LE.Conversion",
 			"D2L.LE.Conversion.ClientDataConverters.BB",
 			"D2L.LE.CopyCourse",
-			"D2L.LE.CourseBuilder",
 			"D2L.LE.Discussions",
 			"D2L.LE.Dropbox",
 			"D2L.LE.Grades",
-			"D2L.LE.IntelligentAgents",
 			"D2L.LE.Lti",
 			"D2L.LE.News",
 			"D2L.LE.Pager",
@@ -172,7 +171,6 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 			"D2L.Lms.Competencies.Web",
 			"D2L.Lms.Content.Implementation",
 			"D2L.Lms.Conversion.Adaptor",
-			"D2L.Lms.Conversion.CopyCourseBulk",
 			"D2L.Lms.Conversion.CoursePackages",
 			"D2L.Lms.CourseExport",
 			"D2L.Lms.CourseImport",
@@ -212,7 +210,9 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 			"D2L.LP.AppLoader",
 			"D2L.LP.Diagnostics.Console",
 			"D2L.LP.Diagnostics.Tracing",
+			"D2L.LP.Diagnostics.Web",
 			"D2L.LP.Files.MoreDirectoryMigrator",
+			"D2L.LP.Services.Framework",
 			"D2L.LP.Tools",
 			"D2L.LP.Tools.DataPurgeArchive",
 			"D2L.LP.Tools.DataPurgeJobAdministration",
@@ -223,12 +223,14 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 			"D2L.LP.WebDAV.Security.Service",
 			"D2L.PlatformTools.DataPurgeArchive",
 			"D2L.PlatformTools.ErrorPages",
+			"D2L.PlatformTools.Homepage",
+			"D2L.PlatformTools.Navbars",
 			"D2L.PlatformTools.SystemHealth",
-			"D2L.ScheduledTasks.Console",
-			"D2L.ScheduledTasks.Runner",
 			"D2L.Web",
 			"D2L.Web.Common.Web",
-			"OrgUnitXMLTool"
+			"OrgUnitXMLTool",
+			"SampleExporter",
+			"SampleImporter",
 		}.ToImmutableHashSet();
 
 		private bool IsAssemblyWhitelisted( string assemblyName ) {
