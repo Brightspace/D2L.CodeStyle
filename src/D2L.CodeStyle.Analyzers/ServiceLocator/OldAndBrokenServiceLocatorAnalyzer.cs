@@ -147,6 +147,7 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 			"D2L.Integration.LOR_PT.Web",
 			"D2L.LE.Accelerator",
 			"D2L.LE.Authorization",
+			"D2L.LE.Classlist",
 			"D2L.LE.Competencies",
 			"D2L.LE.Content",
 			"D2L.LE.Conversion",
