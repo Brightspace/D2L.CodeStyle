@@ -1,7 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace D2L.CodeStyle.Analyzers.Common {
+namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 	internal sealed class DependencyRegistry {
 
 		private readonly INamedTypeSymbol m_dependencyRegistryType;

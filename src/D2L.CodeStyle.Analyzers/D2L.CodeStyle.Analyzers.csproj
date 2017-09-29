@@ -31,8 +31,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Common\DependencyLoaderRegistrationInfoExtractor.cs" />
-    <Compile Include="Common\DependencyRegistration.cs" />
+    <Compile Include="Common\DependencyInjection\DependencyRegistration.cs" />
+    <Compile Include="Common\DependencyInjection\DependencyRegistry.cs" />
     <Compile Include="Common\Diagnostics.cs" />
     <Compile Include="Common\KnownImmutableTypes.cs" />
     <Compile Include="Common\MutabilityInspectionResult.cs" />

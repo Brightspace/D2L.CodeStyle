@@ -1,6 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 
-namespace D2L.CodeStyle.Analyzers.Common {
+namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 	internal sealed class DependencyRegistration {
 
 		public ObjectScope ObjectScope { get; }

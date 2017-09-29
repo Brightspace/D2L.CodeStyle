@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Common;
+using D2L.CodeStyle.Analyzers.Common.DependencyInjection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
