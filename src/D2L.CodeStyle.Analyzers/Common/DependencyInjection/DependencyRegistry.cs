@@ -60,9 +60,15 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 		}
 
 		public bool IsRegistationMethod( IMethodSymbol method ) {
-			// todo: this should be ReceiverType, to support extension methods
-			// but that will raise diagnostics (RegistrationKindUnknown)
-			// so we'll do this later
+			// if we have a handler for it, then yes
+			var mappedHandler = s_registrationExpressions.FirstOrDefault(
+				handler => handler.CanHandleMethod( method )
+			);
+			if( mappedHandler != null ) {
+				return true;
+			}
+
+			// otherwise, if it's a method on IDependencyRegistry, then yes
 			return method.ContainingType == m_dependencyRegistryType;
 		}
 	}

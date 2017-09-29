@@ -56,7 +56,8 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 				context.SemanticModel, 
 				out dependencyRegistrationExpresion 
 			) ) {
-				// we expected a mapped registration method, but didn't get one
+				// this can happen where there's a new registration method
+				// that we can't map to
 				// so we fail
 				var diagnostic = Diagnostic.Create(
 					Diagnostics.RegistrationKindUnknown,
@@ -72,11 +73,11 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 				context.SemanticModel
 			);
 			if( dependencyRegistration == null ) {
-				// this happens when ObjectScope is a variable
-				// or the number of arguments doesn't match the
-				// number of parameters
-				// sometimes this is a compiler error, other times it isn't
-				// but we should fail because we can't analyze it
+				/* This can happen in the following scenarios:
+				 * 1) ObjectScope is passed in as a variable and we can't extract it.
+				 * 2) Some require argument is missing (compile error).
+				 * We fail because we can't analyze it.
+				 */
 				var diagnostic = Diagnostic.Create(
 					Diagnostics.RegistrationKindUnknown,
 					root.GetLocation()
