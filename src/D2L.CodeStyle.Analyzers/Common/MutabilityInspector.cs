@@ -124,11 +124,18 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					// Enums are just fancy ints.
 					return MutabilityInspectionResult.NotMutable();
 
+				case TypeKind.TypeParameter:
+					return InspectTypeParameter(
+						type,
+						rootAssembly,
+						flags,
+						typeStack
+					);
+
 				case TypeKind.Class:
 				case TypeKind.Interface:
 				case TypeKind.Struct: // equivalent to TypeKind.Structure
-				case TypeKind.TypeParameter:
-					return InspectClassStructOrInterfaceOrTypeParameter(
+					return InspectClassStructOrInterface(
 						type,
 						rootAssembly,
 						flags,
@@ -172,7 +179,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			return InspectTypeRecursive( type.BaseType, rootAssembly, MutabilityInspectionFlags.AllowUnsealed, typeStack );
 		}
 
-		private MutabilityInspectionResult InspectClassStructOrInterfaceOrTypeParameter(
+		private MutabilityInspectionResult InspectClassStructOrInterface(
 			ITypeSymbol type,
 			IAssemblySymbol rootAssembly,
 			MutabilityInspectionFlags flags,
@@ -265,6 +272,31 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			} finally {
 				typeStack.Remove( type );
 			}
+		}
+
+		private MutabilityInspectionResult InspectTypeParameter(
+			ITypeSymbol symbol, 
+			IAssemblySymbol rootAssembly, 
+			MutabilityInspectionFlags flags,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			var typeParameter = symbol as ITypeParameterSymbol;
+
+			if( typeParameter.ConstraintTypes != null  || typeParameter.ConstraintTypes.Length > 0 ) {
+				// there are constraints we can check. as type constraints are unionized, we only need one 
+				// type constraint to be immutable to succeed
+				foreach( var constraintType in typeParameter.ConstraintTypes ) {
+					var result = InspectTypeRecursive( constraintType, rootAssembly, flags, typeStack );
+					if( !result.IsMutable ) {
+						return MutabilityInspectionResult.NotMutable();
+					}
+				}
+			}
+
+			return MutabilityInspectionResult.MutableType(
+				symbol,
+				MutabilityCause.IsAGenericType
+			); ;
 		}
 
 		private MutabilityInspectionResult InspectMemberRecursive(
