@@ -28,6 +28,8 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 			// Cache some important type lookups
 			var locatorType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.OldAndBrokenServiceLocator" );
 			var factoryType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.OldAndBrokenServiceLocatorFactory" );
+			var activatorType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.IObjectActivator" );
+			var customActivatorType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.ICustomObjectActivator" );
 
 			// If those type lookups failed then OldAndBrokenServiceLocator
 			// cannot resolve and we don't need to register our analyzer.
@@ -48,7 +50,7 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 			context.RegisterSyntaxNodeAction(
 				ctx => PreventOldAndBrokenUsage(
 					ctx,
-					new List<INamedTypeSymbol> { locatorType, factoryType }
+					new List<INamedTypeSymbol> { locatorType, factoryType, activatorType, customActivatorType }
 				),
 				SyntaxKind.IdentifierName
 			);
