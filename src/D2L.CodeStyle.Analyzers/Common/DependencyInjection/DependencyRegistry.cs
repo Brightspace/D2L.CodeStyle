@@ -47,35 +47,23 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 		/// Attempts to extract a <see cref="DependencyRegistration"/> from a <code>Register*</code> invocation.
 		/// </summary>
 		/// <returns>Returns null if the expression is not a registration, or is an unsupported registration.</returns>
-		public DependencyRegistration GetRegistration( 
-			InvocationExpressionSyntax registrationExpression, 
-			SemanticModel semanticModel 
+		public bool TryMapRegistrationMethod(
+			IMethodSymbol method,
+			SeparatedSyntaxList<ArgumentSyntax> arguments,
+			SemanticModel semanticModel,
+			out DependencyRegistrationExpression mappedRegistrationExpression
 		) {
-			var method = semanticModel.GetSymbolInfo( registrationExpression ).Symbol as IMethodSymbol;
-			if( method == null ) {
-				return null;
-			}
-
-			if( method.ContainingType != m_dependencyRegistryType ) {
-				return null;
-			}
-
-			if( registrationExpression.ArgumentList == null ) {
-				return null;
-			}
-			var arguments = registrationExpression.ArgumentList.Arguments;
-
-			var mappedRegistrationExpression = s_registrationExpressions.FirstOrDefault(
+			mappedRegistrationExpression = s_registrationExpressions.FirstOrDefault(
 				expr => expr.CanHandleMethod( method )
 			);
-			if( mappedRegistrationExpression == null ) {
-				// todo: raise a diagnostic here eventually, all register calls have to be picked up
-				return null;
-			}
-
-			var registation = mappedRegistrationExpression.GetRegistration( method, arguments, semanticModel );
-			return registation;
+			return mappedRegistrationExpression != null;
 		}
 
+		public bool IsRegistationMethod( IMethodSymbol method ) {
+			// todo: this should be ReceiverType, to support extension methods
+			// but that will raise diagnostics (RegistrationKindUnknown)
+			// so we'll do this later
+			return method.ContainingType == m_dependencyRegistryType;
+		}
 	}
 }
