@@ -1,7 +1,14 @@
 ﻿// analyzer: D2L.CodeStyle.Analyzers.UnsafeSingletons.UnsafeSingletonsAnalyzer
 
 using System;
+using D2L.CodeStyle.Annotations;
 using D2L.LP.Extensibility.Activation.Domain;
+
+namespace D2L.CodeStyle.Annotations {
+	public sealed class Objects {
+		public sealed class Immutable : Attribute { }
+	}
+}
 
 // copied from: http://search.dev.d2l/source/raw/Lms/core/lp/framework/core/D2L.LP.Foundation/LP/Extensibility/Activation/Domain/IDependencyRegistry.cs
 // and: http://search.dev.d2l/source/raw/Lms/core/lp/framework/core/D2L.LP.Foundation/LP/Extensibility/Activation/Domain/ObjectScope.cs
@@ -91,9 +98,29 @@ namespace SpecTests {
 
 			// Unhandled registration methods should raise a diagnostic.
 			/* RegistrationKindUnknown */ reg.UnhandledRegisterMethod() /**/;
+		}
 
+		// Registrations in some classes are ignored because they 
+		// are wrappers of other register methods and we don't have enough
+		// to analyze.
+		public static class RegistrationCallsInThisClassAreIgnored {
+			public static void DoesntMatter<T>( this IDependencyRegistry reg ) where T : new() {
+				reg.Register<T>( new T() );
+			}
+		}
+
+		// Registrations in extension methods with enough information should be handled. 
+		public static class SomeExtensionMethods {
+			public static void ThisIsSafe<TDependencyType, TConcreteType>( this IDependencyRegistry reg ) 
+				where TDependencyType : IImmutable
+				where TConcreteType : TDependencyType {
+				reg.Register<TDependencyType, TConcreteType>();
+			}
 		}
 	}
+
+	[Objects.Immutable]
+	public interface IImmutable { }
 
 	public interface ISingleton { }
 
