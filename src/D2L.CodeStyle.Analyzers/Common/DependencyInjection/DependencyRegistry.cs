@@ -60,6 +60,10 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 		}
 
 		public bool IsRegistationMethod( IMethodSymbol method ) {
+			if( method.ContainingType != m_dependencyRegistryType && method.ReceiverType != m_dependencyRegistryType ) {
+				return false;
+			}
+
 			// if we have a handler for it, then yes
 			var mappedHandler = s_registrationExpressions.FirstOrDefault(
 				handler => handler.CanHandleMethod( method )

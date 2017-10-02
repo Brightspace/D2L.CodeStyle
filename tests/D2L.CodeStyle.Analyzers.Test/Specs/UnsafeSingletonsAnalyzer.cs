@@ -122,6 +122,15 @@ namespace SpecTests {
 				reg.Register<TDependencyType, TConcreteType>();
 			}
 		}
+
+		public static class OnlyRegistrationMethodsOnIDependencyRegistryMatter {
+			public static void DoesntMatter( IDependencyRegistry reg ) {
+				Register<UnsafeSingleton>( null );
+			}
+			public static void Register<TDependencyType>(
+				TDependencyType instance
+			);
+		}
 	}
 
 	[Objects.Immutable]
