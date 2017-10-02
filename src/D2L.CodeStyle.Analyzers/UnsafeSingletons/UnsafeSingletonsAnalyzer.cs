@@ -11,7 +11,8 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 	public sealed class UnsafeSingletonsAnalyzer : DiagnosticAnalyzer {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( 
 			Diagnostics.UnsafeSingletonField,
-			Diagnostics.SingletonRegistrationTypeUnknown
+			Diagnostics.SingletonRegistrationTypeUnknown,
+			Diagnostics.RegistrationKindUnknown
 		);
 
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
@@ -39,9 +40,49 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 			if( root == null ) {
 				return;
 			}
+			var method = context.SemanticModel.GetSymbolInfo( root ).Symbol as IMethodSymbol;
+			if( method == null ) {
+				return;
+			}
 
-			var dependencyRegistration = registry.GetRegistration( root, context.SemanticModel );
+			if( !registry.IsRegistationMethod( method ) ) {
+				return;
+			}
+
+			DependencyRegistrationExpression dependencyRegistrationExpresion;
+			if( !registry.TryMapRegistrationMethod( 
+				method, 
+				root.ArgumentList.Arguments, 
+				context.SemanticModel, 
+				out dependencyRegistrationExpresion 
+			) ) {
+				// this can happen where there's a new registration method
+				// that we can't map to
+				// so we fail
+				var diagnostic = Diagnostic.Create(
+					Diagnostics.RegistrationKindUnknown,
+					root.GetLocation()
+				);
+				context.ReportDiagnostic( diagnostic );
+				return;
+			}
+
+			var dependencyRegistration = dependencyRegistrationExpresion.GetRegistration( 
+				method,
+				root.ArgumentList.Arguments,
+				context.SemanticModel
+			);
 			if( dependencyRegistration == null ) {
+				/* This can happen in the following scenarios:
+				 * 1) ObjectScope is passed in as a variable and we can't extract it.
+				 * 2) Some require argument is missing (compile error).
+				 * We fail because we can't analyze it.
+				 */
+				var diagnostic = Diagnostic.Create(
+					Diagnostics.RegistrationKindUnknown,
+					root.GetLocation()
+				);
+				context.ReportDiagnostic( diagnostic );
 				return;
 			}
 

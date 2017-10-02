@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
@@ -30,5 +31,4 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 			}
 		}
 	}
-
 }

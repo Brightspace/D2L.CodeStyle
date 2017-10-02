@@ -102,5 +102,15 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			description: "Singleton registrations must be known at compile-time; please make sure to reference the type's assembly."
 		);
 
+		public static readonly DiagnosticDescriptor RegistrationKindUnknown = new DiagnosticDescriptor(
+			id: "D2L0012",
+			title: "Unable to determine the kind of dependency registration attempted.",
+			messageFormat: "The attempted DI registration is not known to our analysis or there was an error analyzing it. This is mostly likely because the ObjectScope is being passed as a variable, or this is a new kind of registration and needs to be handled.",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "All DI registrations must be known to static analyzers, to allow for thorough analysis."
+		);
+
 	}
 }

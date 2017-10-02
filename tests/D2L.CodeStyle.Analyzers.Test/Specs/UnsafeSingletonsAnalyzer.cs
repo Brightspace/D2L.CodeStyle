@@ -44,6 +44,8 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 		void RegisterPluginFactory<TDependencyType, TFactoryType>(
 				ObjectScope scope
 			) where TFactoryType : IFactory<TDependencyType>;
+
+		void UnhandledRegisterMethod();
 	}
 }
 
@@ -86,6 +88,10 @@ namespace SpecTests {
 			// Types that don't exist should raise a diagnostic, so that we can be strict. 
 			/* SingletonRegistrationTypeUnknown */ reg.RegisterFactory<NonExistentTypeOrInTheMiddleOfTyping, SingletonFactory>( ObjectScope.Singleton ) /**/;
 			/* SingletonRegistrationTypeUnknown */ reg.RegisterPluginFactory<NonExistentTypeOrInTheMiddleOfTyping, SingletonFactory>( ObjectScope.Singleton ) /**/;
+
+			// Unhandled registration methods should raise a diagnostic.
+			/* RegistrationKindUnknown */ reg.UnhandledRegisterMethod() /**/;
+
 		}
 	}
 
