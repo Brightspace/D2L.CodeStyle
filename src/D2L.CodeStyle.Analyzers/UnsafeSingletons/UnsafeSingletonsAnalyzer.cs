@@ -13,7 +13,8 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 
 		// It might be worthwhile to refactor this to an attribute instead later.
 		private static readonly IImmutableSet<string> s_blessedClasses = ImmutableHashSet.Create(
-			"SpecTests.SomeTestCases.RegistrationCallsInThisClassAreIgnored" // this comes from a test
+			"SpecTests.SomeTestCases.RegistrationCallsInThisClassAreIgnored", // this comes from a test
+			"SpecTests.SomeTestCases.RegistrationCallsInThisStructAreIgnored" // this comes from a test
 		);
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( 
@@ -138,17 +139,14 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 		}
 
 		private bool IsExpressionInClassInIgnoreList( InvocationExpressionSyntax expr, SemanticModel semanticModel ) {
-			// there is always a class declaration for a given invocation expression
-			var classDecl = expr.Ancestors().OfType<ClassDeclarationSyntax>().First();
-
-			var classSymbol = semanticModel.GetDeclaredSymbol( classDecl );
-			if( classSymbol.IsNullOrErrorType() ) {
-				// we failed to pull out the class this invocation is being called from
+			var structOrClass = GetClassOrStructContainingExpression( expr, semanticModel );
+			if( structOrClass.IsNullOrErrorType() ) {
+				// we failed to pull out the class/struct this invocation is being called from
 				// so don't ignore it
 				return false;
 			}
 
-			var className = classSymbol.GetFullTypeNameWithGenericArguments();
+			var className = structOrClass.GetFullTypeNameWithGenericArguments();
 			if( s_blessedClasses.Contains( className ) ) {
 				return true;
 			}
@@ -156,5 +154,18 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 			return false;
 		}
 
+		private ITypeSymbol GetClassOrStructContainingExpression(
+			InvocationExpressionSyntax expr,
+			SemanticModel semanticModel
+		) {
+			foreach( var ancestor in expr.Ancestors() ) {
+				if( ancestor is StructDeclarationSyntax ) {
+					return semanticModel.GetDeclaredSymbol( ancestor as StructDeclarationSyntax );
+				} else if( ancestor is ClassDeclarationSyntax ) {
+					return semanticModel.GetDeclaredSymbol( ancestor as ClassDeclarationSyntax );
+				}
+			}
+			return null;
+		}
 	}
 }

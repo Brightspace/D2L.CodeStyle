@@ -100,11 +100,16 @@ namespace SpecTests {
 			/* RegistrationKindUnknown */ reg.UnhandledRegisterMethod() /**/;
 		}
 
-		// Registrations in some classes are ignored because they 
+		// Registrations in some classes/structs are ignored because they 
 		// are wrappers of other register methods and we don't have enough
 		// to analyze.
 		public static class RegistrationCallsInThisClassAreIgnored {
-			public static void DoesntMatter<T>( this IDependencyRegistry reg ) where T : new() {
+			public static void DoesntMatter<T>( IDependencyRegistry reg ) where T : new() {
+				reg.Register<T>( new T() );
+			}
+		}
+		public struct RegistrationCallsInThisStructAreIgnored {
+			public static void DoesntMatter<T>( IDependencyRegistry reg ) where T : new() {
 				reg.Register<T>( new T() );
 			}
 		}
