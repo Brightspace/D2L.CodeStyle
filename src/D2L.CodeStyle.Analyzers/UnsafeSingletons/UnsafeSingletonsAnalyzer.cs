@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Linq;
 using D2L.CodeStyle.Analyzers.Common;
 using D2L.CodeStyle.Analyzers.Common.DependencyInjection;
 using Microsoft.CodeAnalysis;
@@ -9,6 +10,13 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class UnsafeSingletonsAnalyzer : DiagnosticAnalyzer {
+
+		// It might be worthwhile to refactor this to an attribute instead later.
+		private static readonly IImmutableSet<string> s_blessedClasses = ImmutableHashSet.Create(
+			"SpecTests.SomeTestCases.RegistrationCallsInThisClassAreIgnored", // this comes from a test
+			"SpecTests.SomeTestCases.RegistrationCallsInThisStructAreIgnored" // this comes from a test
+		);
+
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( 
 			Diagnostics.UnsafeSingletonField,
 			Diagnostics.SingletonRegistrationTypeUnknown,
@@ -46,6 +54,10 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 			}
 
 			if( !registry.IsRegistationMethod( method ) ) {
+				return;
+			}
+
+			if( IsExpressionInClassInIgnoreList( root, context.SemanticModel ) ) {
 				return;
 			}
 
@@ -126,5 +138,34 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 			return registration.DependencyType;
 		}
 
+		private bool IsExpressionInClassInIgnoreList( InvocationExpressionSyntax expr, SemanticModel semanticModel ) {
+			var structOrClass = GetClassOrStructContainingExpression( expr, semanticModel );
+			if( structOrClass.IsNullOrErrorType() ) {
+				// we failed to pull out the class/struct this invocation is being called from
+				// so don't ignore it
+				return false;
+			}
+
+			var className = structOrClass.GetFullTypeNameWithGenericArguments();
+			if( s_blessedClasses.Contains( className ) ) {
+				return true;
+			}
+
+			return false;
+		}
+
+		private ITypeSymbol GetClassOrStructContainingExpression(
+			InvocationExpressionSyntax expr,
+			SemanticModel semanticModel
+		) {
+			foreach( var ancestor in expr.Ancestors() ) {
+				if( ancestor is StructDeclarationSyntax ) {
+					return semanticModel.GetDeclaredSymbol( ancestor as StructDeclarationSyntax );
+				} else if( ancestor is ClassDeclarationSyntax ) {
+					return semanticModel.GetDeclaredSymbol( ancestor as ClassDeclarationSyntax );
+				}
+			}
+			return null;
+		}
 	}
 }
