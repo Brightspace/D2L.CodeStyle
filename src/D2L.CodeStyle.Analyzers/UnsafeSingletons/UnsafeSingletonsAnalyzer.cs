@@ -16,6 +16,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 			"D2L.LP.Extensibility.Activation.Domain.DependencyRegistryExtensionPointExtensions",
 			"D2L.LP.Extensibility.Activation.Domain.DynamicObjectFactoryRegistryExtensions",
 			"D2L.LP.Extensibility.Activation.Domain.IDependencyRegistryConfigurePluginsExtensions",
+			"D2L.LP.Extensibility.Activation.Domain.IDependencyRegistryExtensions",
 			"D2L.LP.Extensibility.Activation.Domain.LegacyPluginsDependencyLoaderExtensions",
 
 			"SpecTests.SomeTestCases.RegistrationCallsInThisClassAreIgnored", // this comes from a test
