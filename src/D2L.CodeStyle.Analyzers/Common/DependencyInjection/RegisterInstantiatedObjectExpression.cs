@@ -6,7 +6,8 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 	// void RegisterPlugin<TDependencyType>( TDependencyType instance );
 	internal sealed class RegisterInstantiatedObjectExpression : DependencyRegistrationExpression {
 		internal override bool CanHandleMethod( IMethodSymbol method ) {
-			return method.IsGenericMethod 
+			return ( method.Name == "Register" || method.Name == "RegisterPlugin" )
+				&& method.IsGenericMethod 
 				&& method.TypeParameters.Length == 1 
 				&& method.Parameters.Length == 1;
 		}

@@ -10,7 +10,13 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 			new RegisterParentAwareFactoryExpression(),
 			new RegisterInstantiatedObjectExpression(),
 			new NonGenericRegisterExpression(),
-			new FullyGenericRegisterExpression()
+			new FullyGenericRegisterExpression(),
+			new RegisterSubInterfaceExpression(),
+			new ConfigurePluginsExpression(),
+			new ConfigureInstancePluginsExpression(),
+			new RegisterDynamicObjectFactoryExpression(),
+			new RegisterPluginForExtensionPointExpression(),
+			new RegisterExtensionPointExpression()
 		);
 
 		private readonly INamedTypeSymbol m_dependencyRegistryType;

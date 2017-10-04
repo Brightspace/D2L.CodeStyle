@@ -13,6 +13,11 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 
 		// It might be worthwhile to refactor this to an attribute instead later.
 		private static readonly IImmutableSet<string> s_blessedClasses = ImmutableHashSet.Create(
+			"D2L.LP.Extensibility.Activation.Domain.DependencyRegistryExtensionPointExtensions",
+			"D2L.LP.Extensibility.Activation.Domain.DynamicObjectFactoryRegistryExtensions",
+			"D2L.LP.Extensibility.Activation.Domain.IDependencyRegistryConfigurePluginsExtensions",
+			"D2L.LP.Extensibility.Activation.Domain.LegacyPluginsDependencyLoaderExtensions",
+
 			"SpecTests.SomeTestCases.RegistrationCallsInThisClassAreIgnored", // this comes from a test
 			"SpecTests.SomeTestCases.RegistrationCallsInThisStructAreIgnored" // this comes from a test
 		);

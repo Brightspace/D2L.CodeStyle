@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -8,8 +9,16 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 	// void RegisterFactory<TDependencyType, TFactoryType>( ObjectScope scope )
 	// void RegisterPluginFactory<TDependencyType, TFactoryType>( ObjectScope scope )
 	internal sealed class FullyGenericRegisterExpression : DependencyRegistrationExpression {
+		private static readonly ImmutableHashSet<string> s_validNames = ImmutableHashSet.Create(
+			"Register",
+			"RegisterPlugin",
+			"RegisterFactory",
+			"RegisterPluginFactory"
+		);
+
 		internal override bool CanHandleMethod( IMethodSymbol method ) {
-			return method.IsGenericMethod 
+			return s_validNames.Contains( method.Name )
+				&& method.IsGenericMethod 
 				&& method.TypeArguments.Length == 2 
 				&& method.Parameters.Length == 1;
 		}
