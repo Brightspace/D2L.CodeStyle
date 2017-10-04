@@ -102,5 +102,14 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			description: "Singleton registrations must be known at compile-time; please make sure to reference the type's assembly."
 		);
 
+		public static readonly DiagnosticDescriptor ClassShouldBeSealed = new DiagnosticDescriptor(
+			id: "D2Lnnnn",
+			title: "Non-public class should be sealed because it doesn't have any subtypes.",
+			messageFormat: "Non-public class should be sealed because it doesn't have any subtypes.",
+			category: "Style",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Non-public class should be sealed because it doesn't have any subtypes."
+		);
 	}
 }
