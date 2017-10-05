@@ -51,6 +51,7 @@
     <EmbeddedResource Include="Specs\OldAndBrokenServiceLocatorAnalyzer.cs" />
     <EmbeddedResource Include="Specs\RpcAnalyzer.NoDependencyAttribute.cs" />
     <EmbeddedResource Include="Specs\UnsafeSingletonsAnalyzer.cs" />
+    <EmbeddedResource Include="Specs\ClassShouldBeSealedAnalyzer.cs" />
     <Compile Include="UnsafeStatics\UnsafeStaticsAnalyzerTests.cs" />
     <Compile Include="Verifiers\DiagnosticResult.cs" />
     <Compile Include="Verifiers\DiagnosticVerifier.cs" />
