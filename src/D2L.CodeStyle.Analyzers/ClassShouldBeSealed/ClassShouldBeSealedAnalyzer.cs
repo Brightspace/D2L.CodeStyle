@@ -60,6 +60,10 @@ namespace D2L.CodeStyle.Analyzers.ClassShouldBeSealed {
 				return;
 			}
 
+			if ( symbol.IsStatic ) {
+				return;
+			}
+
 			if ( symbol.IsSealed ) {
 				return;
 			}

@@ -5,6 +5,7 @@ namespace D2L.CodeStyle.Analyzers.Specs {
 	internal abstract class AbstractClass { } // no diagnostic because its abstract (but it is dead code)
 	interface ISomeInterface { } // interfaces can't be sealed
 	internal struct Struct { } // structs are implicitly sealed
+	internal static class StaticClass { }
 
 	internal sealed class SealedClass { } // already sealed
 
