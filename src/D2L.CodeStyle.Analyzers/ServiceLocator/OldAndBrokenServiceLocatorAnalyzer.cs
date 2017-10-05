@@ -82,6 +82,7 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 		private static readonly ImmutableHashSet<string> WhitelistedAssemblies = new HashSet<string> {
 			"D2L",
 			"D2L.AP.S3.SISImporter",
+			"D2L.Automation.RegSpecFramework",
 			"D2L.Awards",
 			"D2L.Core.JobManagement",
 			"D2L.Core.Metadata",
