@@ -25,7 +25,7 @@ namespace D2L.CodeStyle.Analyzers.ClassShouldBeSealed {
 			CompilationStartAnalysisContext context
 		) {
 			var privateOrInternalBaseClasses = new ConcurrentDictionary<INamedTypeSymbol, bool>();
-			var privateOrInternalUnsealedClasses = new ConcurrentDictionary<INamedTypeSymbol, ClassDeclarationSyntax>();
+			var privateOrInternalUnsealedClasses = new ConcurrentDictionary<INamedTypeSymbol, Location>();
 
 			context.RegisterSymbolAction(
 				ctx => Collect(
@@ -48,7 +48,7 @@ namespace D2L.CodeStyle.Analyzers.ClassShouldBeSealed {
 		private static void Collect(
 			SymbolAnalysisContext context,
 			ConcurrentDictionary<INamedTypeSymbol, bool> privateOrInternalBaseClasses,
-			ConcurrentDictionary<INamedTypeSymbol, ClassDeclarationSyntax> privateOrInternalUnsealedClasses
+			ConcurrentDictionary<INamedTypeSymbol, Location> privateOrInternalUnsealedClasses
 		) {
 			var symbol = (INamedTypeSymbol)context.Symbol;
 
@@ -86,20 +86,20 @@ namespace D2L.CodeStyle.Analyzers.ClassShouldBeSealed {
 
 			if ( firstDecl is ClassDeclarationSyntax ) {
 				// at this point we know its a class, its private or internal and its not sealed
-				privateOrInternalUnsealedClasses[symbol] = firstDecl as ClassDeclarationSyntax;
+				privateOrInternalUnsealedClasses[symbol] = (firstDecl as ClassDeclarationSyntax).Identifier.GetLocation();
 			}
 		}
 
 		private static void EmitDiagnostics(
 			CompilationAnalysisContext context,
 			ConcurrentDictionary<INamedTypeSymbol, bool> privateOrInternalBaseClasses,
-			ConcurrentDictionary<INamedTypeSymbol, ClassDeclarationSyntax> privateOrInternalUnsealedClasses
+			ConcurrentDictionary<INamedTypeSymbol, Location> privateOrInternalUnsealedClasses
 		) {
 			foreach( var unsealed in privateOrInternalUnsealedClasses ) {
 				if( !privateOrInternalBaseClasses.ContainsKey( unsealed.Key ) ) {
 					context.ReportDiagnostic( Diagnostic.Create(
 						Diagnostics.ClassShouldBeSealed,
-						unsealed.Value.Identifier.GetLocation()
+						unsealed.Value
 					) );
 				}
 			}
