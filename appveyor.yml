@@ -13,5 +13,4 @@ build:
   parallel: true
   verbosity: minimal
 configuration:
-- Debug
 - Release
