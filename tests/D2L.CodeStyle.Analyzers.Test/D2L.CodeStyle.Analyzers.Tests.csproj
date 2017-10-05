@@ -52,6 +52,7 @@
     <EmbeddedResource Include="Specs\RpcAnalyzer.NoDependencyAttribute.cs" />
     <EmbeddedResource Include="Specs\UnsafeSingletonsAnalyzer.cs" />
     <EmbeddedResource Include="Specs\ClassShouldBeSealedAnalyzer.cs" />
+    <EmbeddedResource Include="Specs\ImmutabilityAnalyzer.cs" />
     <Compile Include="UnsafeStatics\UnsafeStaticsAnalyzerTests.cs" />
     <Compile Include="Verifiers\DiagnosticResult.cs" />
     <Compile Include="Verifiers\DiagnosticVerifier.cs" />

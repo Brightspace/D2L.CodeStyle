@@ -49,6 +49,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					return "not sealed";
 				case MutabilityCause.IsNotReadonly:
 					return "not read-only";
+				case MutabilityCause.IsAGenericType:
+					return "a generic type";
 				case MutabilityCause.IsPotentiallyMutable:
 					return "not deterministically immutable";
 				case MutabilityCause.IsADelegate:

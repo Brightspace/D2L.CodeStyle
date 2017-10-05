@@ -32,8 +32,19 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ClassShouldBeSealed\ClassShouldBeSealedAnalyzer.cs" />
-    <Compile Include="Common\DependencyLoaderRegistrationInfoExtractor.cs" />
-    <Compile Include="Common\DependencyRegistration.cs" />
+    <Compile Include="Common\DependencyInjection\ConfigureInstancePluginsExpression.cs" />
+    <Compile Include="Common\DependencyInjection\ConfigurePluginsExpression.cs" />
+    <Compile Include="Common\DependencyInjection\DependencyRegistration.cs" />
+    <Compile Include="Common\DependencyInjection\DependencyRegistrationExpression.cs" />
+    <Compile Include="Common\DependencyInjection\DependencyRegistry.cs" />
+    <Compile Include="Common\DependencyInjection\FullyGenericRegisterExpression.cs" />
+    <Compile Include="Common\DependencyInjection\NonGenericRegisterExpression.cs" />
+    <Compile Include="Common\DependencyInjection\RegisterDynamicObjectFactoryExpression.cs" />
+    <Compile Include="Common\DependencyInjection\RegisterExtensionPointExpression.cs" />
+    <Compile Include="Common\DependencyInjection\RegisterInstantiatedObjectExpression.cs" />
+    <Compile Include="Common\DependencyInjection\RegisterParentAwareFactoryExpression.cs" />
+    <Compile Include="Common\DependencyInjection\RegisterPluginForExtensionPointExpression.cs" />
+    <Compile Include="Common\DependencyInjection\RegisterSubInterfaceExpression.cs" />
     <Compile Include="Common\Diagnostics.cs" />
     <Compile Include="Common\KnownImmutableTypes.cs" />
     <Compile Include="Common\MutabilityInspectionResult.cs" />
