@@ -184,6 +184,7 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 			"D2L.Lms.Dropbox.Integration",
 			"D2L.Lms.Dropbox.TurnItIn",
 			"D2L.Lms.Dropbox.Web",
+			"D2L.Lms.Email",
 			"D2L.Lms.Email.Implementation",
 			"D2L.Lms.Grades.Implementation",
 			"D2L.Lms.Grades.ImportExport",
