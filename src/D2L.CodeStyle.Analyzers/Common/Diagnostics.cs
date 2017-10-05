@@ -103,7 +103,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		);
 
 		public static readonly DiagnosticDescriptor ClassShouldBeSealed = new DiagnosticDescriptor(
-			id: "D2Lnnnn",
+			id: "D2L0012",
 			title: "Non-public class should be sealed because it doesn't have any subtypes.",
 			messageFormat: "Non-public class should be sealed because it doesn't have any subtypes.",
 			category: "Style",
