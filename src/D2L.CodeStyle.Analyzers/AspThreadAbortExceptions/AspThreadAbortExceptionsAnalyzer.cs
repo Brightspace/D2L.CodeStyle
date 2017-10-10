@@ -98,7 +98,7 @@ namespace D2L.CodeStyle.Analyzers.AspThreadAbortExceptions {
 			}
 
 			if( invokedMethod == lessEvilRedirectMethod ) {
-				// Respose.Redirect( x, true ) is ok... see if that's what we've got
+				// Respose.Redirect( x, false ) is ok... see if that's what we've got
 
 				var endResponseExpr = GetEndResponseArgument(
 					context.SemanticModel,
