@@ -1,5 +1,5 @@
 ﻿namespace D2L.CodeStyle.Analyzers.Common.Exemptions {
-	internal sealed class Exemption {
+	internal struct Exemption {
 		public Exemption(
 			ExemptionKind kind,
 			string identifier
@@ -10,16 +10,6 @@
 
 		public ExemptionKind Kind { get; }
 		public string Identifier { get; }
-
-		public override bool Equals( object obj ) {
-			var other = obj as Exemption;
-
-			if ( other == null ) {
-				return false;
-			}
-
-			return Kind == other.Kind && Identifier == other.Identifier;
-		}
 
 		public override int GetHashCode() {
 			int result = 17;
