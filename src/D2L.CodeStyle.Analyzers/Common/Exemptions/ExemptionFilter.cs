@@ -21,7 +21,7 @@ namespace D2L.CodeStyle.Analyzers.Common.Exemptions {
 			m_exemptions = exemptions;
 		}
 
-		public Action<SyntaxNodeAnalysisContext> AndThen(
+		public Action<SyntaxNodeAnalysisContext> Apply(
 			Action<SyntaxNodeAnalysisContext> analyzer
 		) {
 			return ctx => {
