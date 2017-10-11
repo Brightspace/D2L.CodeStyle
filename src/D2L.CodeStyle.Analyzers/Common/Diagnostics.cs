@@ -111,6 +111,15 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			isEnabledByDefault: true,
 			description: "All DI registrations must be known to static analyzers, to allow for thorough analysis."
 		);
-
+    
+		public static readonly DiagnosticDescriptor ClassShouldBeSealed = new DiagnosticDescriptor(
+			id: "D2L0013",
+			title: "Non-public class should be sealed because it doesn't have any subtypes.",
+			messageFormat: "Non-public class should be sealed because it doesn't have any subtypes.",
+			category: "Style",
+			defaultSeverity: DiagnosticSeverity.Info,
+			isEnabledByDefault: true,
+			description: "Non-public class should be sealed because it doesn't have any subtypes."
+		);
 	}
 }
