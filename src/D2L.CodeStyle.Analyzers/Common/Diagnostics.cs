@@ -112,5 +112,24 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			description: "All DI registrations must be known to static analyzers, to allow for thorough analysis."
 		);
 
+		public static readonly DiagnosticDescriptor UnsafeUseOfAspRedirect = new DiagnosticDescriptor(
+			id: "D2L0014",
+			title: "Response.Redirect without the endResponse argument is very expensive due to ThreadAbortExceptions. Use endResponse = false and understand the implications. You can read this blog post for more info: https://blogs.msdn.microsoft.com/tmarq/2009/06/25/correct-use-of-system-web-httpresponse-redirect/",
+			messageFormat: "Response.Redirect without the endResponse argument is very expensive due to ThreadAbortExceptions. Use endResponse = false and understand the implications. You can read this blog post for more info: https://blogs.msdn.microsoft.com/tmarq/2009/06/25/correct-use-of-system-web-httpresponse-redirect/",
+			category: "Performance",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Response.Redirect without the endResponse argument is very expensive due to ThreadAbortExceptions. Use endResponse = false and understand the implications. You can read this blog post for more info: https://blogs.msdn.microsoft.com/tmarq/2009/06/25/correct-use-of-system-web-httpresponse-redirect/"
+		);
+
+		public static readonly DiagnosticDescriptor DontUseAspResponseEnd = new DiagnosticDescriptor(
+			id: "D2L0015",
+			title: "Response.End is very expensive due to ThreadAbortExceptions. Don't use it. See this blog post: https://blogs.msdn.microsoft.com/tmarq/2009/06/25/correct-use-of-system-web-httpresponse-redirect/",
+			messageFormat: "Response.End is very expensive due to ThreadAbortExceptions. Don't use it. See this blog post: https://blogs.msdn.microsoft.com/tmarq/2009/06/25/correct-use-of-system-web-httpresponse-redirect/",
+			category: "Performance",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Response.End is very expensive due to ThreadAbortExceptions. Don't use it. See this blog post: https://blogs.msdn.microsoft.com/tmarq/2009/06/25/correct-use-of-system-web-httpresponse-redirect/"
+		);
 	}
 }
