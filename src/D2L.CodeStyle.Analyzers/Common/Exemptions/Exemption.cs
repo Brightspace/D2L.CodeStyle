@@ -11,6 +11,16 @@
 		public ExemptionKind Kind { get; }
 		public string Identifier { get; }
 
+		public override bool Equals(object obj) {
+			if ( !(obj is Exemption) ) {
+				return false;
+			}
+
+			var other = (Exemption)obj;
+
+			return Kind == other.Kind && Identifier == other.Identifier;
+		}
+
 		public override int GetHashCode() {
 			int result = 17;
 			result = ( result * 23 ) + Kind.GetHashCode();
