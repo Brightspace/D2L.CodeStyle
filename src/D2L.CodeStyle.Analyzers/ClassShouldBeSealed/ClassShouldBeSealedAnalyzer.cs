@@ -24,8 +24,14 @@ namespace D2L.CodeStyle.Analyzers.ClassShouldBeSealed {
 		private static void RegisterAnalyzer(
 			CompilationStartAnalysisContext context
 		) {
+			// There is no ConcurrentHashSet<T>, so use a dummy bool
 			var privateOrInternalBaseClasses = new ConcurrentDictionary<INamedTypeSymbol, bool>();
 			var privateOrInternalUnsealedClasses = new ConcurrentDictionary<INamedTypeSymbol, Location>();
+
+			// During symbol action execution (and syntax node) we can't cheaply
+			// (as far as I know) answer "are there any subtypes of T?", so
+			// instead we keep track of all types that are used as a base type
+			// and all class types that are unsealed.
 
 			context.RegisterSymbolAction(
 				ctx => Collect(
@@ -35,6 +41,11 @@ namespace D2L.CodeStyle.Analyzers.ClassShouldBeSealed {
 				),
 				SymbolKind.NamedType
 			);
+
+			// Afterwards, during our compilation end action we can compare the
+			// two lists. Compilation end always occurs after all symbol actions
+			// are complete. Documentation for ordering of actions can be read
+			// here: https://github.com/dotnet/roslyn/blob/master/docs/analyzers/Analyzer%20Actions%20Semantics.md
 
 			context.RegisterCompilationEndAction(
 				ctx => EmitDiagnostics(
