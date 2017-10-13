@@ -63,9 +63,19 @@ namespace D2L.CodeStyle.Analyzers.ClassShouldBeSealed {
 		) {
 			var symbol = (INamedTypeSymbol)context.Symbol;
 
+			// We can't make calls about public unsealed types and a public
+			// type can't have an internal or private base type so we can
+			// safely ignore them.
+			if ( symbol.DeclaredAccessibility.HasFlag( Accessibility.Public ) ) {
+				return;
+			}
+
 			if ( symbol.BaseType != null ) {
 				privateOrInternalBaseClasses[symbol.BaseType] = true;
 			}
+
+			// From this point we are trying to determine if symbol represents
+			// an internal or private unsealed type
 
 			if ( !symbol.IsDefinition ) {
 				return;
@@ -83,10 +93,6 @@ namespace D2L.CodeStyle.Analyzers.ClassShouldBeSealed {
 			// diagnostic then this class is probably dead-code. That's worth
 			// complaining about but not in this analyzer.
 			if ( symbol.IsAbstract ) {
-				return;
-			}
-
-			if ( symbol.DeclaredAccessibility.HasFlag( Accessibility.Public ) ) {
 				return;
 			}
 
