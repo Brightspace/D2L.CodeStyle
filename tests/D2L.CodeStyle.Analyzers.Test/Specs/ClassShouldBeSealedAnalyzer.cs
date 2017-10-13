@@ -22,7 +22,7 @@ namespace D2L.CodeStyle.Analyzers.Specs {
 		private sealed class Derived : PrivateBaseClass { }
 	}
 
-	public sealed class Derived : InternalBaseClass {}
+	internal sealed class Derived : InternalBaseClass {}
 
 	internal class AnotherInternalBaseBaseClass { } // this one is used (albeit not usefully) as a base class
 	internal class /* ClassShouldBeSealed */ AnotherInternalBaseClass /**/ : AnotherInternalBaseBaseClass { }
