@@ -63,6 +63,15 @@ namespace D2L.CodeStyle.Analyzers.ClassShouldBeSealed {
 		) {
 			var symbol = (INamedTypeSymbol)context.Symbol;
 
+			// We can ignore types in other assemblies (forgetting about
+			// InternalsVisibleTo because if we're seeing them here they must
+			// be public so 1) not our deal 2) not subtypes of our internal
+			// or private types. This isn't strictly necessary because of
+			// the next check (ignore public types) but it is more explicit.
+			if ( symbol.ContainingAssembly != context.Compilation.Assembly ) {
+				return;
+			}
+
 			// We can't make calls about public unsealed types and a public
 			// type can't have an internal or private base type so we can
 			// safely ignore them.
