@@ -105,6 +105,7 @@ namespace D2L.CodeStyle.Analyzers.ClassShouldBeSealed {
 				return;
 			}
 
+			// Not sure how this would happen... implicit types?
 			if ( symbol.DeclaringSyntaxReferences.Length == 0 ) {
 				return;
 			}
