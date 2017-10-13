@@ -63,6 +63,10 @@ namespace D2L.CodeStyle.Analyzers.ClassShouldBeSealed {
 		) {
 			var symbol = (INamedTypeSymbol)context.Symbol;
 
+			if ( !symbol.IsDefinition ) {
+				return;
+			}
+
 			// We can ignore types in other assemblies (forgetting about
 			// InternalsVisibleTo because if we're seeing them here they must
 			// be public so 1) not our deal 2) not subtypes of our internal
@@ -85,10 +89,6 @@ namespace D2L.CodeStyle.Analyzers.ClassShouldBeSealed {
 
 			// From this point we are trying to determine if symbol represents
 			// an internal or private unsealed type
-
-			if ( !symbol.IsDefinition ) {
-				return;
-			}
 
 			if ( symbol.IsStatic ) {
 				return;
