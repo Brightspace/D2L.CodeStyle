@@ -865,7 +865,7 @@ namespace test {
 				Message = string.Format( Diagnostics.UnnecessaryStaticAnnotation.MessageFormat.ToString(), "Statics.Audited", "x" ),
 				Severity = DiagnosticSeverity.Error,
 				Locations = new[] {
-					new DiagnosticResultLocation( "Test0.cs", 17, 34),
+					new DiagnosticResultLocation( "Test0.cs", 16, 34),
 				}
 			};
 
@@ -886,7 +886,7 @@ namespace test {
 				Message = string.Format( Diagnostics.UnnecessaryStaticAnnotation.MessageFormat.ToString(), "Statics.Unaudited", "x" ),
 				Severity = DiagnosticSeverity.Error,
 				Locations = new[] {
-					new DiagnosticResultLocation( "Test0.cs", 17, 34),
+					new DiagnosticResultLocation( "Test0.cs", 16, 34),
 				}
 			};
 
