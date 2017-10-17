@@ -13,15 +13,22 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		/// A list of known immutable types.
 		/// </summary>
 		private static readonly ImmutableHashSet<string> DefaultKnownImmutableTypes = new HashSet<string> {
+			"D2L.UtcDateTime",
+			"D2L.LP.Users.UserId",
+			"D2L.LP.OrgUnits.OrgId",
+			"D2L.LP.OrgUnits.OrgUnitId",
+
 			"count4net.IRateCounter",
 			"count4net.IStatCounter",
 			"count4net.IValueCounter",
 			"count4net.Writers.DurationCounter",
 			"log4net.ILog",
 			"Newtonsoft.Json.JsonSerializer",
+			"Newtonsoft.Json.JsonConverter",
 			"System.Collections.Generic.KeyValuePair",
 			"System.ComponentModel.TypeConverter",
 			"System.DateTime",
+			"System.Drawing.Imaging.ImageFormat",
 			"System.Drawing.Size", // only safe because it's a struct with primitive fields
 			"System.Guid",
 			"System.Reflection.ConstructorInfo",
@@ -29,7 +36,9 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			"System.Reflection.MemberInfo",
 			"System.Reflection.MethodInfo",
 			"System.Reflection.PropertyInfo",
+			"System.Security.Cryptography.RNGCryptoServiceProvider",
 			"System.Text.RegularExpressions.Regex",
+			"System.Threading.ReaderWriterLockSlim",
 			"System.TimeSpan",
 			"System.Type",
 			"System.Uri",

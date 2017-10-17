@@ -45,9 +45,9 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		public static readonly DiagnosticDescriptor UnsafeSingletonField = new DiagnosticDescriptor(
 			id: "D2L0006",
 			title: "Ensure that a singleton is safe in undifferentiated servers.",
-			messageFormat: "",
+			messageFormat: "The type '{0}' is not safe to register as a singleton, because {1}.",
 			category: "Safety",
-			defaultSeverity: DiagnosticSeverity.Error,
+			defaultSeverity: DiagnosticSeverity.Info,
 			isEnabledByDefault: true,
 			description: "Singletons should not have client-specific or mutable data, otherwise they will not be safe in undifferentiated servers."
 		);
@@ -90,6 +90,36 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
 			description: "The method being called has declared that this parameter cannot receive null, but a null value is being passed."
+		);
+
+		public static readonly DiagnosticDescriptor SingletonRegistrationTypeUnknown = new DiagnosticDescriptor(
+			id: "D2L0011",
+			title: "Unable to resolve the concrete or plugin type for this registration.",
+			messageFormat: "Unable to determine the concrete or plugin type for this registration; please make sure to reference the type's assembly.",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Singleton registrations must be known at compile-time; please make sure to reference the type's assembly."
+		);
+
+		public static readonly DiagnosticDescriptor RegistrationKindUnknown = new DiagnosticDescriptor(
+			id: "D2L0012",
+			title: "Unable to determine the kind of dependency registration attempted.",
+			messageFormat: "The attempted DI registration is not known to our analysis or there was an error analyzing it. This is mostly likely because the ObjectScope is being passed as a variable, or this is a new kind of registration and needs to be handled.",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "All DI registrations must be known to static analyzers, to allow for thorough analysis."
+		);
+    
+		public static readonly DiagnosticDescriptor ClassShouldBeSealed = new DiagnosticDescriptor(
+			id: "D2L0013",
+			title: "Non-public class should be sealed because it doesn't have any subtypes.",
+			messageFormat: "Non-public class should be sealed because it doesn't have any subtypes.",
+			category: "Style",
+			defaultSeverity: DiagnosticSeverity.Info,
+			isEnabledByDefault: true,
+			description: "Non-public class should be sealed because it doesn't have any subtypes."
 		);
 	}
 }

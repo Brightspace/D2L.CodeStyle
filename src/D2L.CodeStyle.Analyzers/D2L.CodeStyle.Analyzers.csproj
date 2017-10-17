@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -32,7 +32,25 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Common\Attributes.cs" />
+    <Compile Include="ClassShouldBeSealed\ClassShouldBeSealedAnalyzer.cs" />
+    <Compile Include="Common\DependencyInjection\ConfigureInstancePluginsExpression.cs" />
+    <Compile Include="Common\DependencyInjection\ConfigurePluginsExpression.cs" />
+    <Compile Include="Common\DependencyInjection\DependencyRegistration.cs" />
+    <Compile Include="Common\DependencyInjection\DependencyRegistrationExpression.cs" />
+    <Compile Include="Common\DependencyInjection\DependencyRegistry.cs" />
+    <Compile Include="Common\DependencyInjection\FullyGenericRegisterExpression.cs" />
+    <Compile Include="Common\DependencyInjection\NonGenericRegisterExpression.cs" />
+    <Compile Include="Common\DependencyInjection\RegisterDynamicObjectFactoryExpression.cs" />
+    <Compile Include="Common\DependencyInjection\RegisterExtensionPointExpression.cs" />
+    <Compile Include="Common\DependencyInjection\RegisterInstantiatedObjectExpression.cs" />
+    <Compile Include="Common\DependencyInjection\RegisterParentAwareFactoryExpression.cs" />
+    <Compile Include="Common\DependencyInjection\RegisterPluginForExtensionPointExpression.cs" />
+    <Compile Include="Common\DependencyInjection\RegisterSubInterfaceExpression.cs" />
     <Compile Include="Common\Diagnostics.cs" />
+    <Compile Include="Common\Exemptions\Exemption.cs" />
+    <Compile Include="Common\Exemptions\ExemptionFilter.cs" />
+    <Compile Include="Common\Exemptions\ExemptionFilterBuilder.cs" />
+    <Compile Include="Common\Exemptions\ExemptionKind.cs" />
     <Compile Include="Common\KnownImmutableTypes.cs" />
     <Compile Include="Common\MutabilityInspectionResult.cs" />
     <Compile Include="Common\MutabilityInspectionResultFormatter.cs" />

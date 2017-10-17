@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -851,7 +851,7 @@ namespace D2L.CodeStyle.Annotations {
             ) );
 		}
 
-		[Test, Ignore("diagnostic temporarily disabled")]
+		[Test]
 		public void DocumentWithAuditedSafeThing_Diag() {
 			const string test = @"
 namespace test {
@@ -872,7 +872,7 @@ namespace test {
 			VerifyCSharpDiagnostic( s_preamble + test, expected );
 		}
 
-		[Test, Ignore("diagnostic temporarily disabled")]
+		[Test]
 		public void DocumentWithUnauditedSafeThing_Diag() {
 			const string test = @"
 namespace test {

@@ -72,5 +72,19 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				.Where( t => !t.IsStatic && !t.IsImplicitlyDeclared );
 		}
 
+		public static bool IsNullOrErrorType( this ITypeSymbol symbol ) {
+			if( symbol == null ) {
+				return true;
+			}
+			if( symbol.Kind == SymbolKind.ErrorType ) {
+				return true;
+			}
+			if( symbol.TypeKind == TypeKind.Error ) {
+				return true;
+			}
+
+			return false;
+		}
+
 	}
 }

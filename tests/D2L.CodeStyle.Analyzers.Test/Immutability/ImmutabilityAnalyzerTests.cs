@@ -1,4 +1,4 @@
-﻿using D2L.CodeStyle.Analyzers.Common;
+using D2L.CodeStyle.Analyzers.Common;
 using D2L.CodeStyle.Analyzers.Immutability;
 using D2L.CodeStyle.Analyzers.Test.Verifiers;
 using Microsoft.CodeAnalysis;

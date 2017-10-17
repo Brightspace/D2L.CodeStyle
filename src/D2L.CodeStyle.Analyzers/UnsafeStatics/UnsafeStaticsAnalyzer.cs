@@ -204,13 +204,15 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 
 			bool hasAnnotations = hasAuditedAnnotation || hasUnauditedAnnotation;
 
-			// In full builds our analyzer appears to not get full source
-			// code/private members from other assemblies, possibly related to
-			// this issue:
-			// https://github.com/dotnet/roslyn/issues/5049
-			// This diagnostic would erroneously cause or full builds to fail,
-			// so it has been temporarily disabled.
-			if( hasAnnotations && !hasDiagnostics && false ) {
+			// Unnecessary annotations clutter the code base. Because
+			// Statics.Audited and Statics.Unaudited enable things to build
+			// that shouldn't otherwise we would like to keep the list of
+			// annotations small and this covers the easy case. This also
+			// provides assurance that we don't start marking things as safe
+			// that we previously wouldn't due to an analyzer change (the
+			// existing Statics.Audited and Statics.Unaudited serve as test
+			// cases in a way.)
+			if( hasAnnotations && !hasDiagnostics ) {
 				context.ReportDiagnostic(
 					Diagnostic.Create(
 						Diagnostics.UnnecessaryStaticAnnotation,
