@@ -65,7 +65,17 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 					res = new PropertyGoal( member as IPropertySymbol );
 					return true;
 
+				// Methods can't hold state (aren't the source of mutability,
+				// even if they mutate others state.)
 				case SymbolKind.Method:
+					res = null;
+					return false;
+
+				// Embedded class/struct definitions, etc.
+				// These will be scanned if necessary (if some held state uses
+				// that type) otherwise these aren't relevant (putting decls
+				// inside the class is just a syntactic thing.)
+				case SymbolKind.NamedType:
 					res = null;
 					return false;
 
