@@ -13,8 +13,8 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 				goal.Type.BaseType
 			);
 
-			foreach( var obl in ApplyToMembers( model, goal.Type ) ) {
-				yield return obl;
+			foreach( var subgoal in ApplyToMembers( model, goal.Type ) ) {
+				yield return subgoal;
 			}
 		}
 
@@ -24,8 +24,8 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 		) {
 			// Structs have no base type
 
-			foreach( var obl in ApplyToMembers( model, goal.Type ) ) {
-				yield return obl;
+			foreach( var subgoal in ApplyToMembers( model, goal.Type ) ) {
+				yield return subgoal;
 			}
 		}
 
@@ -45,9 +45,9 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 			var members = type.GetExplicitNonStaticMembers();
 
 			foreach( ISymbol member in members ) {
-				Goal obl;
-				if( MemberToGoal( member, out obl ) ) {
-					yield return obl;
+				Goal subgoal;
+				if( MemberToGoal( member, out subgoal ) ) {
+					yield return subgoal;
 				}
 			}
 		}
