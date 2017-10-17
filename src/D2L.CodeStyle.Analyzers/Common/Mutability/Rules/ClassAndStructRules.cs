@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using D2L.CodeStyle.Analyzers.Common;
 using D2L.CodeStyle.Analyzers.Common.Mutability.Goals;
 using Microsoft.CodeAnalysis;
 
-namespace D2L.CodeStyle.Analyzers.Commmon.Mutability.Rules {
+namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 	internal static class ClassAndStructRules {
 		public static IEnumerable<Goal> Apply(
 			SemanticModel model,
