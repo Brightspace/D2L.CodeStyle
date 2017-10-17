@@ -79,7 +79,14 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 					res = null;
 					return false;
 
+				case SymbolKind.Event:
+					res = new EventGoal( member as IEventSymbol );
+					return true;
+
 				default:
+					// I'm not aware of any missed case but the SymbolKind enum
+					// is a superset of the kinds of members.
+					// https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/members
 					throw new NotImplementedException();
 			}
 		}
