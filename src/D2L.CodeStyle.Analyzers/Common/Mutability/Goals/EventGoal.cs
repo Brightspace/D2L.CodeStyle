@@ -1,7 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers.Common.Mutability.Goals {
-	internal sealed class EventGoal : Goal {
+	internal struct EventGoal : Goal {
 		public EventGoal( IEventSymbol ev ) {
 			Event = ev;
 		}

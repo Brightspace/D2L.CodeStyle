@@ -1,8 +1,8 @@
 ﻿using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers.Common.Mutability.Goals {
-	internal sealed class StructGoal : Goal {
-		internal StructGoal( ITypeSymbol type ) {
+	internal struct StructGoal : Goal {
+		public StructGoal( ITypeSymbol type ) {
 			Type = type;
 		}
 

@@ -65,7 +65,7 @@
     <Compile Include="Common\Mutability\Goals\ConcreteTypeGoal.cs" />
     <Compile Include="Common\Mutability\Goals\FieldGoal.cs" />
     <Compile Include="Common\Mutability\Goals\Goal.cs" />
-    <Compile Include="Common\Mutability\Goals\PropertyObligation.cs" />
+    <Compile Include="Common\Mutability\Goals\PropertyGoal.cs" />
     <Compile Include="Common\Mutability\Goals\StructGoal.cs" />
     <Compile Include="Common\Mutability\Rules\ClassAndStructRules.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
