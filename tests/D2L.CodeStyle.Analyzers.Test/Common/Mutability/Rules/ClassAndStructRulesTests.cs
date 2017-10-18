@@ -107,7 +107,7 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 		//   void SomeMethod() {}
 		// }
 		[Test]
-		public void ClassWithStaticProperty_IgnoresIt() {
+		public void StructWithMethod_IgnoresIt() {
 			var property = CreateMember<IPropertySymbol>(
 				SymbolKind.Property
 			);
