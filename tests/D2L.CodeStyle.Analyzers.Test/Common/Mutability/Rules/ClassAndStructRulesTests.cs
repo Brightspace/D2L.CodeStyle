@@ -45,8 +45,8 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 		}
 
 		// struct Foo {
-		//   private Foo x; // --> PropertyGoal(x)
-		//   private Foo y; // --> PropertyGoal(y)
+		//   private Foo x { get; } // --> PropertyGoal(x)
+		//   private Foo y { get; } // --> PropertyGoal(y)
 		// }
 		[Test]
 		public void StructWithTwoProperties_ReturnsTwoPropertySubgoals() {
@@ -73,7 +73,7 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 
 		// struct Foo {
 		//   private static int x;
-		//   private Foo y; // --> PropertyGoal(y)
+		//   private Foo y { get; } // --> Property(y)
 		// }
 		[Test]
 		public void StructWithStaticProperty_IgnoresIt() {
@@ -102,7 +102,7 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 		}
 
 		// struct Foo {
-		//   private Foo x; // --> PropertyGoal(x)
+		//   private Foo x { get; } // --> PropertyGoal(x)
 		//
 		//   void SomeMethod() {}
 		// }
