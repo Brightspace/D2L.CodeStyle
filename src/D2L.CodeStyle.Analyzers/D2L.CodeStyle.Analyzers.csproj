@@ -54,10 +54,20 @@
     <Compile Include="Common\MutabilityInspectionResult.cs" />
     <Compile Include="Common\MutabilityInspectionResultFormatter.cs" />
     <Compile Include="Common\MutabilityInspector.cs" />
+    <Compile Include="Common\Mutability\Goals\EventGoal.cs" />
+    <Compile Include="Common\Mutability\ISemanticModel.cs" />
+    <Compile Include="Common\Mutability\WrappedSemanticModel.cs" />
     <Compile Include="Common\TypeSymbolExtensions.cs" />
     <Compile Include="Contract\NotNullAnalyzer.cs" />
     <Compile Include="Extensions\Microsoft.CodeAnalysis.CSharp.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzer.cs" />
+    <Compile Include="Common\Mutability\Goals\ClassGoal.cs" />
+    <Compile Include="Common\Mutability\Goals\ConcreteTypeGoal.cs" />
+    <Compile Include="Common\Mutability\Goals\FieldGoal.cs" />
+    <Compile Include="Common\Mutability\Goals\Goal.cs" />
+    <Compile Include="Common\Mutability\Goals\PropertyGoal.cs" />
+    <Compile Include="Common\Mutability\Goals\StructGoal.cs" />
+    <Compile Include="Common\Mutability\Rules\ClassAndStructRules.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RpcDependencies\RpcDependencyAnalyzer.cs" />
     <Compile Include="ServiceLocator\OldAndBrokenServiceLocatorAnalyzer.cs" />
@@ -110,6 +120,7 @@
       <HintPath>..\..\packages\Microsoft.CodeAnalysis.Workspaces.Common.1.2.0\lib\net45\Microsoft.CodeAnalysis.Workspaces.Desktop.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Collections.Immutable, Version=1.1.37.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\..\packages\System.Collections.Immutable.1.1.37\lib\dotnet\System.Collections.Immutable.dll</HintPath>
@@ -140,6 +151,7 @@
       <Private>True</Private>
     </Reference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
