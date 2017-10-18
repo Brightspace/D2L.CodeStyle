@@ -14,3 +14,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion( "0.33.0.0" )]
 
 [assembly: InternalsVisibleTo( "D2L.CodeStyle.Analyzers.Tests" )]
+[assembly: InternalsVisibleTo( "DynamicProxyGenAssembly2" )]
