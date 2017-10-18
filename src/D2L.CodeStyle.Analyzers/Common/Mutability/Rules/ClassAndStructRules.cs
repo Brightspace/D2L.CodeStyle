@@ -87,7 +87,7 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 					// I'm not aware of any missed case but the SymbolKind enum
 					// is a superset of the kinds of members.
 					// https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/members
-					throw new NotImplementedException();
+					throw new NotImplementedException( $"symbol kind {member.Kind} unhandled" );
 			}
 		}
 	}
