@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
+using D2L.CodeStyle.Analyzers.Common;
 
 namespace D2L.CodeStyle.Analyzers.Common {
 
@@ -186,7 +187,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			HashSet<ITypeSymbol> typeStack
 		) {
 			// If we're verifying immutability, then carry on; otherwise, bailout
-			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && IsTypeMarkedImmutable( type ) ) {
+			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && IsTypeMarkedImmutableOrSingleton( type ) ) {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
@@ -359,16 +360,32 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}
 
 		public bool IsTypeMarkedImmutable( ITypeSymbol symbol ) {
+			return IsTypeMarkedWithAnyOfTheAttributes( symbol, Attributes.Objects.Immutable );
+		}
+
+		public bool IsTypeMarkedSingleton( ITypeSymbol symbol ) {
+			return IsTypeMarkedWithAnyOfTheAttributes( symbol, Attributes.Singleton );
+		}
+
+		public bool IsTypeMarkedImmutableOrSingleton( ITypeSymbol symbol ) {
+			return IsTypeMarkedWithAnyOfTheAttributes( 
+				symbol,
+				Attributes.Objects.Immutable,
+				Attributes.Singleton
+			);
+		}
+
+		private bool IsTypeMarkedWithAnyOfTheAttributes( ITypeSymbol symbol, params Attributes.RoslynAttribute[] attributes ) {
 			if( MarkedImmutableTypes.Contains( symbol.GetFullTypeName() ) ) {
 				return true;
 			}
-			if( Attributes.Objects.Immutable.IsDefined( symbol ) ) {
+			if( attributes.Any( attr => attr.IsDefined( symbol ) ) ) {
 				return true;
 			}
-			if( symbol.Interfaces.Any( IsTypeMarkedImmutable ) ) {
+			if( symbol.Interfaces.Any( @interface => IsTypeMarkedWithAnyOfTheAttributes( @interface, attributes ) ) ) {
 				return true;
 			}
-			if( symbol.BaseType != null && IsTypeMarkedImmutable( symbol.BaseType ) ) {
+			if( symbol.BaseType != null && IsTypeMarkedWithAnyOfTheAttributes( symbol.BaseType, attributes ) ) {
 				return true;
 			}
 			return false;
