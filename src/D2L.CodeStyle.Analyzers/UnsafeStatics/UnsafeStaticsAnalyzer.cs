@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Common;
 using Microsoft.CodeAnalysis;
@@ -73,9 +72,9 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 					context,
 					inspector,
 					location: variable.GetLocation(),
-					attributeLists: root.AttributeLists,
 					isStatic: isStatic,
 					isReadOnly: isReadOnly,
+					fieldOrProperty: symbol,
 					fieldOrPropertyType: symbol.Type,
 					fieldOrPropertyName: variable.Identifier.ValueText,
 					initializer: variable.Initializer?.Value,
@@ -108,9 +107,9 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				context,
 				inspector,
 				location: root.GetLocation(),
-				attributeLists: root.AttributeLists,
 				isStatic: isStatic,
 				isReadOnly: prop.IsReadOnly,
+				fieldOrProperty: prop,
 				fieldOrPropertyType: prop.Type,
 				fieldOrPropertyName: prop.Name,
 				initializer: root.Initializer?.Value,
@@ -138,7 +137,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			SyntaxNodeAnalysisContext context,
 			MutabilityInspector inspector,
 			Location location,
-			SyntaxList<AttributeListSyntax> attributeLists,
+			ISymbol fieldOrProperty,
 			bool isStatic,
 			bool isReadOnly,
 			ITypeSymbol fieldOrPropertyType,
@@ -161,10 +160,6 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				isAutoImplementedProperty: isAutoImplementedProperty
 			);
 
-			var attributes = attributeLists
-				.SelectMany( al => al.Attributes )
-				.ToImmutableArray();
-
 			// We're manually using enumerators here.
 			// - if we used IEnumerable directly we'd re-compute the first
 			//   diagnostic in the GatherDiagnostics generator
@@ -176,7 +171,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 					context,
 					diagnosticsEnumerator,
 					location,
-					attributes,
+					fieldOrProperty,
 					fieldOrPropertyName
 				);
 			}
@@ -186,22 +181,15 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			SyntaxNodeAnalysisContext context,
 			IEnumerator<Diagnostic> diagnostics,
 			Location location,
-			ImmutableArray<AttributeSyntax> attributes,
+			ISymbol fieldOrProperty,
 			string fieldOrPropertyName
 		) {
 			var hasDiagnostics = diagnostics.MoveNext();
 
-			// TODO: This EndsWith stuff is lame. We should do the same thing
-			// that the RpcAnalyzer does with looking up and caching the types.
-			bool hasUnauditedAnnotation = attributes
-				.Any( a => a.Name.ToFullString().EndsWith( ".Unaudited" ) );
+			bool hasUnauditedAnnotation = Attributes.Statics.Unaudited.IsDefined( fieldOrProperty );
+			bool hasAuditedAnnotation = Attributes.Statics.Audited.IsDefined( fieldOrProperty );
 
-			// TODO: This EndsWith stuff is lame. We should do the same thing
-			// that the RpcAnalyzer does with looking up and caching the types.
-			bool hasAuditedAnnotation = attributes
-				.Any( a => a.Name.ToFullString().EndsWith( ".Audited" ) );
-
-			if ( hasAuditedAnnotation && hasUnauditedAnnotation ) {
+			if( hasAuditedAnnotation && hasUnauditedAnnotation ) {
 				context.ReportDiagnostic(
 					Diagnostic.Create(
 						Diagnostics.ConflictingStaticAnnotation,
