@@ -127,7 +127,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			title: "Classes marked as a singleton should be immutable.",
 			messageFormat: "This class is marked as a singleton, but it is not immutable, because {0}. Check that all fields and properties are immutable.",
 			category: "Safety",
-			defaultSeverity: DiagnosticSeverity.Error,
+			defaultSeverity: DiagnosticSeverity.Info,
 			isEnabledByDefault: true,
 			description: "Classes marked as singleton or that implement interfaces marked as a singleton should be immutable."
 		);
