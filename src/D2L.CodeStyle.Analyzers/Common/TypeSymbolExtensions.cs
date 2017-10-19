@@ -66,7 +66,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			return fullyQualifiedName;
 		}
 
-		public static IEnumerable<ISymbol> GetExplicitNonStaticMembers( this INamespaceOrTypeSymbol type ) {
+		public static IEnumerable<ISymbol> GetExplicitNonStaticMembers( this ITypeSymbol type ) {
 
 			return type.GetMembers()
 				.Where( t => !t.IsStatic && !t.IsImplicitlyDeclared );
