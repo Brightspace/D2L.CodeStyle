@@ -123,7 +123,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		);
 
 		public static readonly DiagnosticDescriptor SingletonIsntImmutable = new DiagnosticDescriptor(
-			id: "D2L0003",
+			id: "D2L0014",
 			title: "Classes marked as a singleton should be immutable.",
 			messageFormat: "This class is marked as a singleton, but it is not immutable, because {0}. Check that all fields and properties are immutable.",
 			category: "Safety",
