@@ -15,6 +15,10 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			internal static readonly RoslynAttribute Audited = new RoslynAttribute( "D2L.CodeStyle.Annotations.Statics.Audited" );
 			internal static readonly RoslynAttribute Unaudited = new RoslynAttribute( "D2L.CodeStyle.Annotations.Statics.Unaudited" );
 		}
+		internal static class Singletons {
+			internal static readonly RoslynAttribute Audited = new RoslynAttribute( "D2L.CodeStyle.Annotations.Singletons.AuditedAttribute" );
+			internal static readonly RoslynAttribute Unaudited = new RoslynAttribute( "D2L.CodeStyle.Annotations.Singletons.UnauditedAttribute" );
+		}
 		internal static class Objects {
 			internal static readonly RoslynAttribute Immutable = new RoslynAttribute( "D2L.CodeStyle.Annotations.Objects.Immutable" );
 		}
