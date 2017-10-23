@@ -161,7 +161,7 @@ namespace D2L.CodeStyle.Analyzers.DependencyRegistrations {
 			var ctor = type.GetMembers()
 				.Where( m => m.Kind == SymbolKind.Method )
 				.Cast<IMethodSymbol>()
-				.Where( m => m.MethodKind == MethodKind.Constructor ) // todo: public
+				.Where( m => m.MethodKind == MethodKind.Constructor && m.DeclaredAccessibility == Accessibility.Public )
 				.FirstOrDefault();
 			if( ctor == null ) {
 				dependencies = ImmutableArray<ITypeSymbol>.Empty;

@@ -1,4 +1,4 @@
-// analyzer: D2L.CodeStyle.Analyzers.DependencyRegistrations.DependencyRegistrationsAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.DependencyRegistrations.DependencyRegistrationsAnalyzer
 
 using System;
 using System.Collections.Generic;
@@ -156,6 +156,9 @@ namespace SpecTests {
 			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterDynamicObjectFactory<ThingThatIsCreatedByDynamicObjectFactory, ThingThatIsCreatedByDynamicObjectFactory, string, string>( ObjectScope.Singleton ) /**/;
 			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterDynamicObjectFactory<ThingThatIsCreatedByDynamicObjectFactory, ThingThatIsCreatedByDynamicObjectFactory, string>( ObjectScope.Singleton ) /**/;
 
+			// Dyanamic object factory registrations that error out inspect IFactory<TDependencyType>
+			/* UnsafeSingletonRegistration(D2L.LP.Extensibility.Activation.Domain.IFactory<SpecTests.ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor>) */ reg.RegisterDynamicObjectFactory<ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor, ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor, string, string>( ObjectScope.Singleton ) /**/;
+
 			// Non-Singletons are not flagged.
 			reg.Register( typeof( IUnmarkedSingleton ), typeof( UnmarkedSingleton ), ObjectScope.WebRequest );
 			reg.Register<IUnmarkedSingleton, UnmarkedSingleton>( ObjectScope.WebRequest );
@@ -220,6 +223,14 @@ namespace SpecTests {
 
 	public class ThingThatIsCreatedByDynamicObjectFactory {
 		public ThingThatIsCreatedByDynamicObjectFactory(
+			string randomArg,
+			[Dependency] IUnmarkedSingleton injected
+		) { }
+	}
+
+
+	public class ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor {
+		private ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor(
 			string randomArg,
 			[Dependency] IUnmarkedSingleton injected
 		) { }
