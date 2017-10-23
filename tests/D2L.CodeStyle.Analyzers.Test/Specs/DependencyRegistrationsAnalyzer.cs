@@ -129,6 +129,7 @@ namespace SpecTests {
 			reg.ConfigureInstancePlugins<MarkedSingleton, DefaultExtensionPoint<MarkedSingleton>>( ObjectScope.Singleton );
 			reg.RegisterPluginExtensionPoint<DefaultExtensionPoint<MarkedSingleton>, MarkedSingleton>( ObjectScope.Singleton );
 			reg.RegisterPlugin<DefaultExtensionPoint<MarkedSingleton>, IMarkedSingleton, MarkedSingleton>( ObjectScope.Singleton );
+			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMarkedThing, string>( ObjectScope.Singleton );
 			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMarkedThing, string, string>( ObjectScope.Singleton );
 
 			// Unmarked Singletons are flagged.
