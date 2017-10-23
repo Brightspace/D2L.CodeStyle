@@ -149,7 +149,7 @@ namespace SpecTests {
 			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.Register<IUnmarkedSingleton>( null ) /**/;
 			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterFactory<IUnmarkedSingleton, SingletonFactory>( ObjectScope.Singleton ) /**/;
 			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterPluginFactory<IUnmarkedSingleton, SingletonFactory>( ObjectScope.Singleton ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterPluginFactory<DefaultExtensionPoint<MarkedSingleton>, IUnmarkedSingleton, SingletonFactory>( ObjectScope.Singleton ) /**/;
+			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterPluginFactory<DefaultExtensionPoint<UnmarkedSingleton>, IUnmarkedSingleton, SingletonFactory>( ObjectScope.Singleton ) /**/;
 			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterDynamicObjectFactory<IUnmarkedSingleton, MarkedSingleton, string, string>( ObjectScope.Singleton ) /**/;
 			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterDynamicObjectFactory<IUnmarkedSingleton, MarkedSingleton, string>( ObjectScope.Singleton ) /**/;
 
