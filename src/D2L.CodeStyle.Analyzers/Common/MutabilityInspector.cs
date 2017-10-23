@@ -360,32 +360,39 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}
 
 		public bool IsTypeMarkedImmutable( ITypeSymbol symbol ) {
-			return IsTypeMarkedWithAnyOfTheAttributes( symbol, Attributes.Objects.Immutable );
-		}
-
-		public bool IsTypeMarkedSingleton( ITypeSymbol symbol ) {
-			return IsTypeMarkedWithAnyOfTheAttributes( symbol, Attributes.Singleton );
-		}
-
-		public bool IsTypeMarkedImmutableOrSingleton( ITypeSymbol symbol ) {
-			return IsTypeMarkedWithAnyOfTheAttributes( 
-				symbol,
-				Attributes.Objects.Immutable,
-				Attributes.Singleton
-			);
-		}
-
-		private bool IsTypeMarkedWithAnyOfTheAttributes( ITypeSymbol symbol, params Attributes.RoslynAttribute[] attributes ) {
 			if( MarkedImmutableTypes.Contains( symbol.GetFullTypeName() ) ) {
 				return true;
 			}
-			if( attributes.Any( attr => attr.IsDefined( symbol ) ) ) {
+			if( Attributes.Objects.Immutable.IsDefined( symbol ) ) {
 				return true;
 			}
-			if( symbol.Interfaces.Any( @interface => IsTypeMarkedWithAnyOfTheAttributes( @interface, attributes ) ) ) {
+			if( symbol.Interfaces.Any( IsTypeMarkedImmutable ) ) {
 				return true;
 			}
-			if( symbol.BaseType != null && IsTypeMarkedWithAnyOfTheAttributes( symbol.BaseType, attributes ) ) {
+			if( symbol.BaseType != null && IsTypeMarkedImmutable( symbol.BaseType ) ) {
+				return true;
+			}
+			return false;
+		}
+
+		public bool IsTypeMarkedSingleton( ITypeSymbol symbol ) {
+			if( Attributes.Singleton.IsDefined( symbol ) ) {
+				return true;
+			}
+			if( symbol.Interfaces.Any( IsTypeMarkedSingleton ) ) {
+				return true;
+			}
+			if( symbol.BaseType != null && IsTypeMarkedSingleton( symbol.BaseType ) ) {
+				return true;
+			}
+			return false;
+		}
+
+		public bool IsTypeMarkedImmutableOrSingleton( ITypeSymbol symbol ) {
+			if( IsTypeMarkedImmutable( symbol ) ) {
+				return true;
+			}
+			if( IsTypeMarkedSingleton( symbol ) ) {
 				return true;
 			}
 			return false;
