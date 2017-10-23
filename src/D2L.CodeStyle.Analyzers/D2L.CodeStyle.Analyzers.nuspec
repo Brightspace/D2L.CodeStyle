@@ -11,6 +11,8 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <copyright>$copyright$</copyright>
+
+    <developmentDependency>true</developmentDependency>
     
     <frameworkAssemblies>
       <frameworkAssembly assemblyName="System" targetFramework="" />
