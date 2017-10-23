@@ -11,61 +11,41 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 
 		public ITypeSymbol FactoryType { get; }
 
-		public ITypeSymbol DynamicObjectType { get; }
-
-		public bool IsFactoryRegistration { get; }
-
-		public bool IsDynamicObjectFactoryRegistration { get; }
+		public ITypeSymbol DynamicObjectFactoryType { get; }
 
 		private DependencyRegistration(
 			ObjectScope scope,
 			ITypeSymbol dependencyType,
-			ITypeSymbol concreteType,
-			ITypeSymbol factoryType,
-			ITypeSymbol dynamicObjectType,
-			bool isFactoryRegistration,
-			bool isDynamicFactoryRegistration
+			ITypeSymbol concreteType = null,
+			ITypeSymbol factoryType = null,
+			ITypeSymbol dynamicObjectType = null
 		) {
 			ObjectScope = scope;
 			DependencyType = dependencyType;
 			ConcreteType = concreteType;
 			FactoryType = factoryType;
-			DynamicObjectType = dynamicObjectType;
-			IsFactoryRegistration = isFactoryRegistration;
-			IsDynamicObjectFactoryRegistration = isDynamicFactoryRegistration;
+			DynamicObjectFactoryType = dynamicObjectType;
 		}
 
 		internal static DependencyRegistration NonFactory( ObjectScope scope, ITypeSymbol dependencyType, ITypeSymbol concreteType )
 			=> new DependencyRegistration(
 				scope,
 				dependencyType: dependencyType,
-				concreteType: concreteType,
-				factoryType: null,
-				dynamicObjectType: null,
-				isFactoryRegistration: false,
-				isDynamicFactoryRegistration: false
+				concreteType: concreteType
 			);
 
 		internal static DependencyRegistration Factory( ObjectScope scope, ITypeSymbol dependencyType, ITypeSymbol factoryType )
 			=> new DependencyRegistration(
 				scope,
 				dependencyType: dependencyType,
-				concreteType: null,
-				factoryType: factoryType,
-				dynamicObjectType: null,
-				isFactoryRegistration: true,
-				isDynamicFactoryRegistration: false
+				factoryType: factoryType
 			);
 
 		internal static DependencyRegistration DynamicObjectFactory( ObjectScope scope, ITypeSymbol dependencyType, ITypeSymbol dynamicObjectType )
 			=> new DependencyRegistration(
 				scope,
 				dependencyType: dependencyType,
-				concreteType: null,
-				factoryType: null,
-				dynamicObjectType: dynamicObjectType,
-				isFactoryRegistration: false,
-				isDynamicFactoryRegistration: true
+				dynamicObjectType: dynamicObjectType
 			);
 	}
 

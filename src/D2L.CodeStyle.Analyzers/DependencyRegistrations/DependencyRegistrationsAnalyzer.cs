@@ -137,14 +137,14 @@ namespace D2L.CodeStyle.Analyzers.DependencyRegistrations {
 
 		private ImmutableArray<ITypeSymbol> GetTypesToInspect( DependencyRegistration registration ) {
 			// if we have a concrete type, use it
-			if( !registration.IsFactoryRegistration && !registration.ConcreteType.IsNullOrErrorType() ) {
+			if( !registration.ConcreteType.IsNullOrErrorType() ) {
 				 return ImmutableArray.Create( registration.ConcreteType );
 			}
 
-			// if we have a dynamically generated factory, use its constructor arguments
-			if( registration.IsDynamicObjectFactoryRegistration && !registration.DynamicObjectType.IsNullOrErrorType() ) {
+			// if we have a dynamically generated objectfactory, use its constructor arguments
+			if( !registration.DynamicObjectFactoryType.IsNullOrErrorType() ) {
 				ImmutableArray<ITypeSymbol> dependencies;
-				if( TryGetDependenciesFromConstructor( registration.DynamicObjectType, out dependencies ) ) {
+				if( TryGetDependenciesFromConstructor( registration.DynamicObjectFactoryType, out dependencies ) ) {
 					return dependencies;
 				}
 				// this is a dynamic object factory, but either 
