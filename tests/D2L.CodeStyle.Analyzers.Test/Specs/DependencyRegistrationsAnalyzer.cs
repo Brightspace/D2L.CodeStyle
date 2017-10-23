@@ -129,6 +129,7 @@ namespace SpecTests {
 			reg.ConfigureInstancePlugins<MarkedSingleton, DefaultExtensionPoint<MarkedSingleton>>( ObjectScope.Singleton );
 			reg.RegisterPluginExtensionPoint<DefaultExtensionPoint<MarkedSingleton>, MarkedSingleton>( ObjectScope.Singleton );
 			reg.RegisterPlugin<DefaultExtensionPoint<MarkedSingleton>, IMarkedSingleton, MarkedSingleton>( ObjectScope.Singleton );
+			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMarkedThing, string, string>( ObjectScope.Singleton );
 
 			// Unmarked Singletons are flagged.
 			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.Register<IUnmarkedSingleton>( new UnmarkedSingleton() ) /**/;
@@ -153,11 +154,11 @@ namespace SpecTests {
 			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterPluginFactory<DefaultExtensionPoint<UnmarkedSingleton>, IUnmarkedSingleton, SingletonFactory>( ObjectScope.Singleton ) /**/;
 
 			// Dyanamic object factory registrations inspect the concrete object's ctor parameters
-			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterDynamicObjectFactory<ThingThatIsCreatedByDynamicObjectFactory, ThingThatIsCreatedByDynamicObjectFactory, string, string>( ObjectScope.Singleton ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterDynamicObjectFactory<ThingThatIsCreatedByDynamicObjectFactory, ThingThatIsCreatedByDynamicObjectFactory, string>( ObjectScope.Singleton ) /**/;
+			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaUnmarkedThing, string, string>( ObjectScope.Singleton ) /**/;
+			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaUnmarkedThing, string>( ObjectScope.Singleton ) /**/;
 
 			// Dyanamic object factory registrations that error out inspect IFactory<TDependencyType>
-			/* UnsafeSingletonRegistration(D2L.LP.Extensibility.Activation.Domain.IFactory<SpecTests.ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor>) */ reg.RegisterDynamicObjectFactory<ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor, ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor, string, string>( ObjectScope.Singleton ) /**/;
+			/* UnsafeSingletonRegistration(D2L.LP.Extensibility.Activation.Domain.IFactory<SpecTests.ICreatedByDynamicFactory>) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor, string, string>( ObjectScope.Singleton ) /**/;
 
 			// Non-Singletons are not flagged.
 			reg.Register( typeof( IUnmarkedSingleton ), typeof( UnmarkedSingleton ), ObjectScope.WebRequest );
@@ -221,18 +222,25 @@ namespace SpecTests {
 	public interface IUnmarkedSingleton { }
 	public sealed class UnmarkedSingleton : IUnmarkedSingleton {}
 
-	public class ThingThatIsCreatedByDynamicObjectFactory {
-		public ThingThatIsCreatedByDynamicObjectFactory(
+	public interface ICreatedByDynamicFactory { }
+
+	public class ThingThatIsCreatedByDynamicObjectFactoryViaMarkedThing : ICreatedByDynamicFactory {
+		public ThingThatIsCreatedByDynamicObjectFactoryViaMarkedThing(
+			string randomArg,
+			[Dependency] IMarkedSingleton injected
+		) { }
+	}
+
+	public class ThingThatIsCreatedByDynamicObjectFactoryViaUnmarkedThing : ICreatedByDynamicFactory {
+		public ThingThatIsCreatedByDynamicObjectFactoryViaUnmarkedThing(
 			string randomArg,
 			[Dependency] IUnmarkedSingleton injected
 		) { }
 	}
 
-
-	public class ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor {
+	public class ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor: ICreatedByDynamicFactory {
 		private ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor(
-			string randomArg,
-			[Dependency] IUnmarkedSingleton injected
+			string randomArg
 		) { }
 	}
 
