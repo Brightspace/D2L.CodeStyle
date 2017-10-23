@@ -6,9 +6,9 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 
-namespace D2L.CodeStyle.Analyzers.Singletons {
+namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
-	public sealed class SingletonsAnalyzer : DiagnosticAnalyzer {
+	public sealed class UnsafeSingletonsAnalyzer : DiagnosticAnalyzer {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( Diagnostics.SingletonIsntImmutable );
 
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();

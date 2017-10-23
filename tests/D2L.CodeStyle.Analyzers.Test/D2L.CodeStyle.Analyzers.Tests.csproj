@@ -56,7 +56,7 @@
     <EmbeddedResource Include="Specs\DependencyRegistrationsAnalyzer.cs" />
     <EmbeddedResource Include="Specs\ClassShouldBeSealedAnalyzer.cs" />
     <EmbeddedResource Include="Specs\ImmutabilityAnalyzer.cs" />
-    <EmbeddedResource Include="Specs\SingletonsAnalyzer.cs" />
+    <EmbeddedResource Include="Specs\UnsafeSingletonsAnalyzer.cs" />
     <Compile Include="UnsafeStatics\UnsafeStaticsAnalyzerTests.cs" />
     <Compile Include="Verifiers\DiagnosticResult.cs" />
     <Compile Include="Verifiers\DiagnosticVerifier.cs" />
