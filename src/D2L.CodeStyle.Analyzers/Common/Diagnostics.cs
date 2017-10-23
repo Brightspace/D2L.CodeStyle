@@ -131,5 +131,25 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			isEnabledByDefault: true,
 			description: "Classes marked as singleton or that implement interfaces marked as a singleton should be immutable."
 		);
+
+		public static readonly DiagnosticDescriptor UnnecessarySingletonAnnotation = new DiagnosticDescriptor(
+			id: "D2L0015",
+			title: "Unnecessary singleton annotations should be removed to keep the code base clean",
+			messageFormat: "The {0} annotation is not necessary because {1} is safe. Please remove this attribute to keep our code base clean.",
+			category: "Cleanliness",
+			defaultSeverity: DiagnosticSeverity.Error, // this may seem extreme but we want to keep the amount of annotated stuff minimal
+			isEnabledByDefault: true,
+			description: "Unnecessary static annotations should be removed to keep the code base clean"
+		);
+
+		public static readonly DiagnosticDescriptor ConflictingSingletonAnnotation = new DiagnosticDescriptor(
+			id: "D2L0016",
+			title: "Singletons.Audited and Singletons.Unaudited are mutually exclusive",
+			messageFormat: "Singletons.Audited and Singletons.Unaudited are mutually exclusive. Remove at least one of them.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Singletons.Audited and Singletons.Unaudited are mutually exclusive. Remove at least one of them."
+		);
 	}
 }
