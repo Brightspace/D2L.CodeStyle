@@ -60,6 +60,7 @@
     <Compile Include="Common\Mutability\WrappedSemanticModel.cs" />
     <Compile Include="Common\TypeSymbolExtensions.cs" />
     <Compile Include="Contract\NotNullAnalyzer.cs" />
+    <Compile Include="DependencyRegistrations\DependencyRegistrationsAnalyzer.cs" />
     <Compile Include="Extensions\Microsoft.CodeAnalysis.CSharp.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzer.cs" />
     <Compile Include="Common\Mutability\Goals\ClassGoal.cs" />
@@ -73,7 +74,6 @@
     <Compile Include="RpcDependencies\RpcDependencyAnalyzer.cs" />
     <Compile Include="ServiceLocator\OldAndBrokenServiceLocatorAnalyzer.cs" />
     <Compile Include="Singletons\SingletonsAnalyzer.cs" />
-    <Compile Include="UnsafeSingletons\UnsafeSingletonsAnalyzer.cs" />
     <Compile Include="UnsafeStatics\UnsafeStaticsAnalyzer.cs" />
   </ItemGroup>
   <ItemGroup>

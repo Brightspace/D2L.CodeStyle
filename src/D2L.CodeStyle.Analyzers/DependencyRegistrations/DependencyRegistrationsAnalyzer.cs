@@ -7,9 +7,9 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
+namespace D2L.CodeStyle.Analyzers.DependencyRegistrations {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
-	public sealed class UnsafeSingletonsAnalyzer : DiagnosticAnalyzer {
+	public sealed class DependencyRegistrationsAnalyzer : DiagnosticAnalyzer {
 
 		// It might be worthwhile to refactor this to an attribute instead later.
 		private static readonly IImmutableSet<string> s_blessedClasses = ImmutableHashSet.Create(
@@ -24,7 +24,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 		);
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( 
-			Diagnostics.UnsafeSingletonField,
+			Diagnostics.UnsafeSingletonRegistration,
 			Diagnostics.SingletonRegistrationTypeUnknown,
 			Diagnostics.RegistrationKindUnknown
 		);
@@ -120,17 +120,12 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 				return;
 			}
 
-			// TODO: it probably makes more sense to iterate over the fields and emit diagnostics tied to those individual fields for more accurate red-squigglies
-			// a DI singleton should be capable of having multiple diagnostics come out of it
-			var flags = MutabilityInspectionFlags.AllowUnsealed | MutabilityInspectionFlags.IgnoreImmutabilityAttribute;
-			var result = inspector.InspectType( typeToInspect, context.Compilation.Assembly, flags );
-			if( result.IsMutable ) {
-				var reason = m_resultFormatter.Format( result );
+			var isMarkedSingleton = inspector.IsTypeMarkedSingleton( typeToInspect );
+			if( !isMarkedSingleton ) {
 				var diagnostic = Diagnostic.Create(
-					Diagnostics.UnsafeSingletonField,
+					Diagnostics.UnsafeSingletonRegistration,
 					root.GetLocation(),
-					typeToInspect.GetFullTypeNameWithGenericArguments(),
-					reason
+					typeToInspect.GetFullTypeNameWithGenericArguments()
 				);
 				context.ReportDiagnostic( diagnostic );
 			}
