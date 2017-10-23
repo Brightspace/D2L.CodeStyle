@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Common.Mutability.Goals;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -19,7 +17,7 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 
 			var decl = goal.Field
 				.DeclaringSyntaxReferences[0]
-				.GetSyntax() as FieldDeclarationSyntax;
+				.GetSyntax() as VariableDeclaratorSyntax;
 
 			if ( decl == null ) {
 				throw new NotImplementedException(
@@ -29,29 +27,11 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 
 			// When we have a variable with an initializer, the initializer's
 			// expression's type is often narrower than the declared type of
-			// the variable. So it's always better to consider the initializer
-			// when present. Fields can have multiple variables declared, e.g:
-			//
-			//   private Foo m_x, m_y = new Foo();
-			//
-			// so we need to be careful. It wouldn't be useful here to look at
-			// the initializer for m_y because m_x will necessitate us looking
-			// at Foo.
-
-			var initializers = decl.Declaration.Variables
-				.Select( d => d.Initializer )
-				.ToImmutableArray();
-
-			bool missingAnInitializer = initializers.Any( i => i == null );
-
-			// Give up if any initializer is missing
-			if ( missingAnInitializer ) {
+			// the variable. 
+			if ( decl.Initializer != null ) {
+				yield return new InitializerGoal( decl.Initializer.Value );
+			} else {
 				yield return new TypeGoal( goal.Field.Type );
-				yield break;
-			}
-
-			foreach( var init in initializers ) {
-				yield return new InitializerGoal( init.Value );
 			}
 
 			// NOTE: we may want to pass the type in the initializer goal.

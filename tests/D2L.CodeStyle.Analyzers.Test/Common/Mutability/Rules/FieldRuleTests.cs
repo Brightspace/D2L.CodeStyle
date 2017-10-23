@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Threading;
 using D2L.CodeStyle.Analyzers.Common.Mutability.Goals;
 using Microsoft.CodeAnalysis;
@@ -14,9 +13,10 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 	internal sealed class FieldRuleTests {
 		// private T x; --> ReadOnly( x ), Type( T )
 		[Test]
-		public void PropertySingleVarNoInit_ReadOnlyAndType() {
+		public void PropertyNoInit_ReadOnlyAndType() {
 			var type = new Mock<ITypeSymbol>( MockBehavior.Strict ).Object;
-			var field = CreateField( type, (ExpressionSyntax)null ).Item1;
+			ExpressionSyntax expr = null;
+			var field = CreateField( type, ref expr );
 
 			var goal = new FieldGoal( field );
 
@@ -33,17 +33,11 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 
 		// private T x = Foo(); --> ReadOnly( x ), Initializer( "Foo()" )
 		[Test]
-		public void PropertySingleVarInit_ReadOnlyAndInit() {
+		public void PropertyInit_ReadOnlyAndInit() {
 			var type = new Mock<ITypeSymbol>( MockBehavior.Strict ).Object;
+			ExpressionSyntax expr = SyntaxFactory.LiteralExpression( SyntaxKind.NullLiteralExpression );
 
-			var fieldData = CreateField(
-				type,
-				SyntaxFactory.LiteralExpression( SyntaxKind.NullLiteralExpression )
-			);
-
-			var field = fieldData.Item1;
-
-			Assert.AreEqual( 1, fieldData.Item2.Length );
+			var field = CreateField( type, ref expr );
 
 			var goal = new FieldGoal( field );
 
@@ -53,98 +47,31 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 				subgoals,
 				new Goal[] {
 					new ReadOnlyGoal( field ),
-					new InitializerGoal( fieldData.Item2[0] ),
+					new InitializerGoal( expr ),
 				}
 			);
 		}
 
-		// private T x = Foo(), y; --> ReadOnly( x ), Type( T )
-		[Test]
-		public void PropertyMixedInit_ReadOnlyAndType() {
-			var type = new Mock<ITypeSymbol>( MockBehavior.Strict ).Object;
-
-			var fieldData = CreateField(
-				type,
-				SyntaxFactory.LiteralExpression( SyntaxKind.NullLiteralExpression ),
-				null
-			);
-
-			var field = fieldData.Item1;
-
-			var goal = new FieldGoal( field );
-
-			var subgoals = FieldRule.Apply( goal ).ToImmutableArray();
-
-			CollectionAssert.AreEquivalent(
-				subgoals,
-				new Goal[] {
-					new ReadOnlyGoal( field ),
-					new TypeGoal( type ),
-				}
-			);
-		}
-
-		// private T x = Foo(), y = Bar(); --> ReadOnly( x ), Initializer( Foo() ), Initializer( Bar() )
-		[Test]
-		public void PropertyTwoInit_ReadOnlyAndInits() {
-			var type = new Mock<ITypeSymbol>( MockBehavior.Strict ).Object;
-
-			var fieldData = CreateField(
-				type,
-				SyntaxFactory.LiteralExpression( SyntaxKind.NullLiteralExpression ),
-				SyntaxFactory.LiteralExpression( SyntaxKind.NullLiteralExpression )
-			);
-
-			var field = fieldData.Item1;
-
-			Assert.AreEqual( 2, fieldData.Item2.Length );
-
-			var goal = new FieldGoal( field );
-
-			var subgoals = FieldRule.Apply( goal ).ToImmutableArray();
-
-			CollectionAssert.AreEquivalent(
-				subgoals,
-				new Goal[] {
-					new ReadOnlyGoal( field ),
-					new InitializerGoal( fieldData.Item2[0] ), 
-					new InitializerGoal( fieldData.Item2[1] ), 
-				}
-			);
-		}
-
-		private Tuple<IFieldSymbol, ImmutableArray<ExpressionSyntax>> CreateField(
+		private IFieldSymbol CreateField(
 			ITypeSymbol type,
-			params ExpressionSyntax[] initializerExprs
+			ref ExpressionSyntax initializerExpr
 		) {
-			var variables = initializerExprs
-				.Select( e => {
-					var vdecl = SyntaxFactory.VariableDeclarator(
-						SyntaxFactory.Identifier( Guid.NewGuid().ToString() )
-					);
-
-					if( e == null ) {
-						return vdecl;
-					}
-
-					return vdecl.WithInitializer(
-						SyntaxFactory.EqualsValueClause(
-							e
-						)
-					);
-				} ).ToImmutableArray();
-
-			var fDecl = SyntaxFactory.VariableDeclaration(
-				type: SyntaxFactory.ParseTypeName( "asdf" ),
-				variables: SyntaxFactory.SeparatedList( variables )
+			var vdecl = SyntaxFactory.VariableDeclarator(
+				SyntaxFactory.Identifier( Guid.NewGuid().ToString() )
 			);
 
-			var field = SyntaxFactory.FieldDeclaration( fDecl );
+			if( initializerExpr != null ) {
+				vdecl = vdecl.WithInitializer(
+					SyntaxFactory.EqualsValueClause(
+						initializerExpr
+					)
+				);
+			}
 
 			var reference = new Mock<SyntaxReference>( MockBehavior.Strict );
 			reference
 				.Setup( r => r.GetSyntax( default( CancellationToken ) ) )
-				.Returns( field );
+				.Returns( vdecl );
 
 			var fieldSymbol = new Mock<IFieldSymbol>( MockBehavior.Strict );
 
@@ -156,13 +83,9 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 				.Setup( f => f.Type )
 				.Returns( type );
 
-			return new Tuple<IFieldSymbol, ImmutableArray<ExpressionSyntax>>(
-				fieldSymbol.Object,
-				field.Declaration.Variables
-					.Where( v => v.Initializer != null )
-					.Select( v => v.Initializer.Value )
-					.ToImmutableArray()
-			);
+			initializerExpr = vdecl.Initializer?.Value;
+
+			return fieldSymbol.Object;
 		}
 	}
 }
