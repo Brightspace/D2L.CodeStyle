@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Common;
 using D2L.CodeStyle.Analyzers.Common.DependencyInjection;
@@ -109,8 +110,9 @@ namespace D2L.CodeStyle.Analyzers.DependencyRegistrations {
 				return;
 			}
 
-			var typeToInspect = GetTypeToInspect( dependencyRegistration );
-			if( typeToInspect.IsNullOrErrorType() ) {
+			var typesToInspect = GetTypesToInspect( dependencyRegistration );
+
+			if( typesToInspect.Any( t => t.IsNullOrErrorType() )) {
 				// we expected a type, but didn't get one, so fail
 				var diagnostic = Diagnostic.Create(
 					Diagnostics.SingletonRegistrationTypeUnknown,
@@ -120,23 +122,57 @@ namespace D2L.CodeStyle.Analyzers.DependencyRegistrations {
 				return;
 			}
 
-			var isMarkedSingleton = inspector.IsTypeMarkedSingleton( typeToInspect );
-			if( !isMarkedSingleton ) {
-				var diagnostic = Diagnostic.Create(
-					Diagnostics.UnsafeSingletonRegistration,
-					root.GetLocation(),
-					typeToInspect.GetFullTypeNameWithGenericArguments()
-				);
-				context.ReportDiagnostic( diagnostic );
+			foreach( var typeToInspect in typesToInspect ) {
+				var isMarkedSingleton = inspector.IsTypeMarkedSingleton( typeToInspect );
+				if( !isMarkedSingleton ) {
+					var diagnostic = Diagnostic.Create(
+						Diagnostics.UnsafeSingletonRegistration,
+						root.GetLocation(),
+						typeToInspect.GetFullTypeNameWithGenericArguments()
+					);
+					context.ReportDiagnostic( diagnostic );
+				}
 			}
 		}
 
-		private ITypeSymbol GetTypeToInspect( DependencyRegistration registration ) {
-			// if we have a concrete type, use it; otherwise, use the dependency type
+		private ImmutableArray<ITypeSymbol> GetTypesToInspect( DependencyRegistration registration ) {
+			// if we have a concrete type, use it
 			if( !registration.IsFactoryRegistration && !registration.ConcreteType.IsNullOrErrorType() ) {
-				return registration.ConcreteType;
+				 return ImmutableArray.Create( registration.ConcreteType );
 			}
-			return registration.DependencyType;
+
+			// if we have a dynamically generated factory, use its constructor arguments
+			if( registration.IsDynamicObjectFactoryRegistration && !registration.DynamicObjectType.IsNullOrErrorType() ) {
+				ImmutableArray<ITypeSymbol> dependencies;
+				if( TryGetDependenciesFromConstructor( registration.DynamicObjectType, out dependencies ) ) {
+					return dependencies;
+				}
+				// this is a dynamic object factory, but either 
+				// (1) there is no public constructor, or 
+				// (2) one of the parameter's types doesn't exist
+				// in all cases, fall back to dependency type
+			}
+
+			// other use the dependency type
+			return ImmutableArray.Create( registration.DependencyType );
+		}
+
+		private bool TryGetDependenciesFromConstructor( ITypeSymbol type, out ImmutableArray<ITypeSymbol> dependencies  ) {
+			var ctor = type.GetMembers()
+				.Where( m => m.Kind == SymbolKind.Method )
+				.Cast<IMethodSymbol>()
+				.Where( m => m.MethodKind == MethodKind.Constructor ) // todo: public
+				.FirstOrDefault();
+			if( ctor == null ) {
+				dependencies = ImmutableArray<ITypeSymbol>.Empty;
+				return false;
+			}
+
+			dependencies = ctor.Parameters
+				.Where( Attributes.Dependency.IsDefined )
+				.Select( p => p.Type )
+				.ToImmutableArray();
+			return true;
 		}
 
 		private bool IsExpressionInClassInIgnoreList( InvocationExpressionSyntax expr, SemanticModel semanticModel ) {

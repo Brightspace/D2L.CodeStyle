@@ -27,12 +27,10 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 			if( !TryGetObjectScope( arguments[0], semanticModel, out scope ) ) {
 				return null;
 			}
-			return DependencyRegistration.Factory(
+			return DependencyRegistration.DynamicObjectFactory(
 				scope: scope,
 				dependencyType: method.TypeArguments[0],
-				// the real factory is emitted at runtime, 
-				// we don't know what it is at compile time
-				factoryType: null
+				dynamicObjectType: method.TypeArguments[1]
 			);
 		}
 	}
