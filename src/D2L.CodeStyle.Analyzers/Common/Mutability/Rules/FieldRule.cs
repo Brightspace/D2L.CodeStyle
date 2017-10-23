@@ -5,7 +5,10 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 	internal static class FieldRule {
-		public static IEnumerable<Goal> Apply( FieldGoal goal ) {
+		public static IEnumerable<Goal> Apply(
+			ISemanticModel model,
+			FieldGoal goal
+		) {
 			yield return new ReadOnlyGoal( goal.Field );
 
 			if ( goal.Field.DeclaringSyntaxReferences.Length != 1 ) {

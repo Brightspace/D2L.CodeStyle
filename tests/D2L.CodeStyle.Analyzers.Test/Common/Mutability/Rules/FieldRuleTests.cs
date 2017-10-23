@@ -11,6 +11,8 @@ using NUnit.Framework;
 namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 	[TestFixture]
 	internal sealed class FieldRuleTests {
+		private readonly ISemanticModel m_model = new Mock<ISemanticModel>( MockBehavior.Strict ).Object;
+
 		// private T x; --> ReadOnly( x ), Type( T )
 		[Test]
 		public void PropertyNoInit_ReadOnlyAndType() {
@@ -20,7 +22,7 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 
 			var goal = new FieldGoal( field );
 
-			var subgoals = FieldRule.Apply( goal );
+			var subgoals = FieldRule.Apply( m_model, goal );
 
 			CollectionAssert.AreEquivalent(
 				subgoals,
@@ -41,7 +43,7 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 
 			var goal = new FieldGoal( field );
 
-			var subgoals = FieldRule.Apply( goal ).ToImmutableArray();
+			var subgoals = FieldRule.Apply( m_model, goal ).ToImmutableArray();
 
 			CollectionAssert.AreEquivalent(
 				subgoals,
