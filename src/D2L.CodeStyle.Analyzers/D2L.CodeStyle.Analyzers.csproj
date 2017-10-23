@@ -74,7 +74,6 @@
     <Compile Include="RpcDependencies\RpcDependencyAnalyzer.cs" />
     <Compile Include="ServiceLocator\OldAndBrokenServiceLocatorAnalyzer.cs" />
     <Compile Include="Singletons\SingletonsAnalyzer.cs" />
-    <Compile Include="UnsafeSingletons\UnsafeSingletonsAnalyzer.cs" />
     <Compile Include="UnsafeStatics\UnsafeStaticsAnalyzer.cs" />
   </ItemGroup>
   <ItemGroup>
