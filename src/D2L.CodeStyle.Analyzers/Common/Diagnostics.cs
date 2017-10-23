@@ -42,14 +42,14 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			description: "Dependency-injected arguments in RPC methods must preceed other parameters (other than the first context argument)"
 		);
 
-		public static readonly DiagnosticDescriptor UnsafeSingletonField = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor UnsafeSingletonRegistration = new DiagnosticDescriptor(
 			id: "D2L0006",
 			title: "Ensure that a singleton is safe in undifferentiated servers.",
-			messageFormat: "The type '{0}' is not safe to register as a singleton, because {1}.",
+			messageFormat: "The type '{0}' is not safe to register as a singleton, because it is not marked with [Singleton].",
 			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Info,
 			isEnabledByDefault: true,
-			description: "Singletons should not have client-specific or mutable data, otherwise they will not be safe in undifferentiated servers."
+			description: "Singletons should be marked with the [Singleton] attribute."
 		);
 
 		public static readonly DiagnosticDescriptor UnnecessaryStaticAnnotation = new DiagnosticDescriptor(
