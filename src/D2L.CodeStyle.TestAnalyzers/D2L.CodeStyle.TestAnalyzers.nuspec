@@ -15,6 +15,8 @@
 		<frameworkAssemblies>
 			<frameworkAssembly assemblyName="System" targetFramework="" />
 		</frameworkAssemblies>
+
+		<developmentDependency>true</developmentDependency>
 	</metadata>
 
 	<!-- The convention for analyzers is to put language agnostic dlls in analyzers\portable50 and language specific analyzers in either analyzers\portable50\cs or analyzers\portable50\vb -->

@@ -121,5 +121,15 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			isEnabledByDefault: true,
 			description: "Non-public class should be sealed because it doesn't have any subtypes."
 		);
+
+		public static readonly DiagnosticDescriptor SingletonIsntImmutable = new DiagnosticDescriptor(
+			id: "D2L0014",
+			title: "Classes marked as a singleton should be immutable.",
+			messageFormat: "This class is marked as a singleton, but it is not immutable, because {0}. Check that all fields and properties are immutable.",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Info,
+			isEnabledByDefault: true,
+			description: "Classes marked as singleton or that implement interfaces marked as a singleton should be immutable."
+		);
 	}
 }

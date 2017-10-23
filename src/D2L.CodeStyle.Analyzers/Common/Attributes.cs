@@ -18,6 +18,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		internal static class Objects {
 			internal static readonly RoslynAttribute Immutable = new RoslynAttribute( "D2L.CodeStyle.Annotations.Objects.Immutable" );
 		}
+		internal static readonly RoslynAttribute Singleton = new RoslynAttribute( "D2L.LP.Extensibility.Activation.Domain.SingletonAttribute" );
 
 		internal sealed class RoslynAttribute {
 
