@@ -41,6 +41,7 @@
     <Compile Include="Common\MutabilityInspectorTests.cs" />
     <Compile Include="Common\MutabilityInspector_IsTypeMarkedImmutableTests.cs" />
     <Compile Include="Common\Mutability\Rules\ClassAndStructRulesTests.cs" />
+    <Compile Include="Common\Mutability\Rules\FieldRuleTests.cs" />
     <Compile Include="Common\SyntaxNodeExtensionTests.cs" />
     <Compile Include="Common\TestBase.cs" />
     <Compile Include="Common\TypeSymbolExtensionsTests.cs" />
