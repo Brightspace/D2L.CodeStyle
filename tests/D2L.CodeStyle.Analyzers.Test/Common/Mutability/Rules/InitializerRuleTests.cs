@@ -16,7 +16,7 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 			var expr = SyntaxFactory.ObjectCreationExpression( SyntaxFactory.ParseTypeName( "SomeType" ) );
 
 			var model = new Mock<ISemanticModel>( MockBehavior.Strict );
-			model.Setup( m => m.GetTypeForSyntax( expr ) ).Returns( typeOfExpr );
+			model.Setup( m => m.GetTypeSymbol( expr ) ).Returns( typeOfExpr );
 
 			var goal = new InitializerGoal( type, expr );
 			var subgoals = InitializerRule.Apply( model.Object, goal );
@@ -35,7 +35,7 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 			var expr = SyntaxFactory.InvocationExpression( SyntaxFactory.IdentifierName( "SomeMethod" ) );
 
 			var model = new Mock<ISemanticModel>( MockBehavior.Strict );
-			model.Setup( m => m.GetTypeForSyntax( expr ) ).Returns( typeOfExpr );
+			model.Setup( m => m.GetTypeSymbol( expr ) ).Returns( typeOfExpr );
 
 			var goal = new InitializerGoal( type, expr );
 			var subgoals = InitializerRule.Apply( model.Object, goal );

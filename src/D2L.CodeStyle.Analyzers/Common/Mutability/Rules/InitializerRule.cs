@@ -13,7 +13,7 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 			// GetTypeInfo( expr ).ConvertedType to figure out when this is
 			// happening. The GitHub issue for this is:
 			// https://github.com/Brightspace/D2L.CodeStyle/issues/35
-			var exprType = model.GetTypeForSyntax( goal.Expr );
+			var exprType = model.GetTypeSymbol( goal.Expr );
 
 			if ( goal.Expr is ObjectCreationExpressionSyntax ) {
 				yield return new ConcreteTypeGoal( exprType );
