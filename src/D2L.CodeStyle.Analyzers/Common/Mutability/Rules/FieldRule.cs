@@ -32,7 +32,10 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 			// expression's type is often narrower than the declared type of
 			// the variable. 
 			if ( decl.Initializer != null ) {
-				yield return new InitializerGoal( decl.Initializer.Value );
+				yield return new InitializerGoal(
+					goal.Field.Type,
+					decl.Initializer.Value
+				);
 			} else {
 				yield return new TypeGoal( goal.Field.Type );
 			}
