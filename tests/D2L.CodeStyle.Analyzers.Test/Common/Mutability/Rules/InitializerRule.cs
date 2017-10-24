@@ -8,7 +8,7 @@ using NUnit.Framework;
 namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 	[TestFixture]
 	public sealed class InitializerRuleTests {
-		// private T x = new T( 1, false ); // --> ConcreteType( T )
+		// private T x = new U( 1, false ); // --> ConcreteType( U )
 		[Test]
 		public void InitializerObjectCreateionSyntax_ConcreteTypeSubgoal() {
 			var type = new Mock<ITypeSymbol>( MockBehavior.Strict ).Object;

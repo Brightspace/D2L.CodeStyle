@@ -9,8 +9,9 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 			InitializerGoal goal
 		) {
 			// TODO: this type may get implicitly converted into an unsafe
-			// type. It may be correct t
-			// instead but we need to investigate that. See this GH issue:
+			// type. We should consider goal.Type and maybe also
+			// GetTypeInfo( expr ).ConvertedType to figure out when this is
+			// happening. The GitHub issue for this is:
 			// https://github.com/Brightspace/D2L.CodeStyle/issues/35
 			var exprType = model.GetTypeForSyntax( goal.Expr );
 
