@@ -57,6 +57,8 @@
     <Compile Include="Common\MutabilityInspector.cs" />
     <Compile Include="Common\Mutability\Goals\EventGoal.cs" />
     <Compile Include="Common\Mutability\ISemanticModel.cs" />
+    <Compile Include="Common\Mutability\Goals\GenericTypeParameterGoal.cs" />
+    <Compile Include="Common\Mutability\Rules\GenericTypeParameterRule.cs" />
     <Compile Include="Common\Mutability\WrappedSemanticModel.cs" />
     <Compile Include="Common\TypeSymbolExtensions.cs" />
     <Compile Include="Contract\NotNullAnalyzer.cs" />
