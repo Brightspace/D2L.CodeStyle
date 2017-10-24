@@ -64,6 +64,7 @@
     <Compile Include="Common\Mutability\Goals\GenericTypeParameterGoal.cs" />
     <Compile Include="Common\Mutability\Rules\GenericTypeParameterRule.cs" />
     <Compile Include="Common\Mutability\Rules\InitializerRule.cs" />
+    <Compile Include="Common\Mutability\Rules\ReadOnlyRule.cs" />
     <Compile Include="Common\Mutability\WrappedSemanticModel.cs" />
     <Compile Include="Common\TypeSymbolExtensions.cs" />
     <Compile Include="Contract\NotNullAnalyzer.cs" />
