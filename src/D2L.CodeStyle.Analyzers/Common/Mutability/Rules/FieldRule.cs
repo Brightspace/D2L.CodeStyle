@@ -39,11 +39,6 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 			} else {
 				yield return new TypeGoal( goal.Field.Type );
 			}
-
-			// NOTE: we may want to pass the type in the initializer goal.
-			// implicit conversions make looking at the initializer in
-			// isolation theoretically dangerous. See this issue for more info:
-			// https://github.com/Brightspace/D2L.CodeStyle/issues/35
 		}
 	}
 }

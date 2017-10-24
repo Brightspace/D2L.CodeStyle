@@ -11,5 +11,9 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability {
 		public IAssemblySymbol Assembly() {
 			return m_model.Compilation.Assembly;
 		}
+
+		public ITypeSymbol GetTypeSymbol( SyntaxNode node ) {
+			return m_model.GetTypeInfo( node ).Type;
+		}
 	}
 }

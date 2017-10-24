@@ -6,5 +6,6 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability {
 	/// </summary>
 	internal interface ISemanticModel {
 		IAssemblySymbol Assembly();
+		ITypeSymbol GetTypeSymbol( SyntaxNode node );
 	}
 }
