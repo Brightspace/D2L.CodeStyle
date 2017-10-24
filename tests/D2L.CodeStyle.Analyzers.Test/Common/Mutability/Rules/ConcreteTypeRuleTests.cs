@@ -6,7 +6,14 @@ using NUnit.Framework;
 namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 	[TestFixture]
 	public sealed class ConcreteTypeRuleTests {
-		private readonly ISemanticModel m_model = new Mock<ISemanticModel>( MockBehavior.Strict ).Object;
+		private readonly IAssemblySymbol m_assembly = new Mock<IAssemblySymbol>( MockBehavior.Strict ).Object;
+		private readonly ISemanticModel m_model;
+
+		public ConcreteTypeRuleTests() {
+			var model = new Mock<ISemanticModel>( MockBehavior.Strict );
+			model.Setup( m => m.Assembly() ).Returns( m_assembly );
+			m_model = model.Object;
+		}
 
 		[TestCase( TypeKind.Array )]
 		[TestCase( TypeKind.Delegate )]
@@ -38,32 +45,48 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 			CollectionAssert.IsEmpty( subgoals );
 		}
 
-		[Test]
-		public void ConcreteTypeForClass() {
+		[TestCase( false )]
+		[TestCase( true )]
+		public void ConcreteTypeForClass( bool withinAssembly ) {
 			var type = new Mock<ITypeSymbol>( MockBehavior.Strict );
 			type.Setup( t => t.TypeKind ).Returns( TypeKind.Class );
+			type.Setup( t => t.ContainingAssembly ).Returns(
+				withinAssembly ? m_assembly : new Mock<IAssemblySymbol>( MockBehavior.Strict ).Object
+			);
 
 			var goal = new ConcreteTypeGoal( type.Object );
 
 			var subgoals = ConcreteTypeRule.Apply( m_model, goal );
 
+			var expectedSubgoal = withinAssembly
+				? (Goal)new ClassGoal( type.Object )
+				: goal;
+
 			CollectionAssert.AreEquivalent(
-				new[] { new ClassGoal( type.Object ) },
+				new[] { expectedSubgoal },
 				subgoals
 			);
 		}
 
-		[Test]
-		public void ConcreteTypeForStruct() {
+		[TestCase( false )]
+		[TestCase( true )]
+		public void ConcreteTypeForStruct( bool withinAssembly ) {
 			var type = new Mock<ITypeSymbol>( MockBehavior.Strict );
 			type.Setup( t => t.TypeKind ).Returns( TypeKind.Struct );
+			type.Setup( t => t.ContainingAssembly ).Returns(
+				withinAssembly ? m_assembly : new Mock<IAssemblySymbol>( MockBehavior.Strict ).Object
+			);
 
 			var goal = new ConcreteTypeGoal( type.Object );
 
 			var subgoals = ConcreteTypeRule.Apply( m_model, goal );
 
+			var expectedSubgoal = withinAssembly
+				? (Goal)new StructGoal( type.Object )
+				: goal;
+
 			CollectionAssert.AreEquivalent(
-				new[] { new StructGoal( type.Object ) },
+				new[] { expectedSubgoal },
 				subgoals
 			);
 		}

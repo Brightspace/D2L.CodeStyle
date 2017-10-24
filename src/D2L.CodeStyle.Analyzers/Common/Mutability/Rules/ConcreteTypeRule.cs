@@ -28,11 +28,19 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 					yield break;
 
 				case TypeKind.Class:
-					yield return new ClassGoal( goal.Type );
+					if ( goal.Type.ContainingAssembly != model.Assembly() ) {
+						yield return goal;
+					} else {
+						yield return new ClassGoal( goal.Type );
+					}
 					yield break;
 
 				case TypeKind.Struct: // equivalent to TypeKind.Structure (VB)
-					yield return new StructGoal( goal.Type );
+					if ( goal.Type.ContainingAssembly != model.Assembly() ) {
+						yield return goal;
+					} else {
+						yield return new StructGoal( goal.Type );
+					}
 					yield break;
 
 				case TypeKind.TypeParameter:
