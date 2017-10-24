@@ -9,7 +9,11 @@ using Microsoft.CodeAnalysis.Text;
 namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class UnsafeSingletonsAnalyzer : DiagnosticAnalyzer {
-		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( Diagnostics.SingletonIsntImmutable );
+		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
+			Diagnostics.ConflictingSingletonAnnotation,
+			Diagnostics.UnnecessarySingletonAnnotation,
+			Diagnostics.SingletonIsntImmutable 
+		);
 
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
 
@@ -42,15 +46,38 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 				return;
 			}
 
+			var location = GetLocationOfClassIdentifierAndGenericParameters( root );
+
+			var hasAuditedAttribute = Attributes.Singletons.Audited.IsDefined( symbol );
+			var hasUnauditedAttribute = Attributes.Singletons.Unaudited.IsDefined( symbol );
+			if( hasAuditedAttribute && hasUnauditedAttribute ) {
+				context.ReportDiagnostic( Diagnostic.Create(
+					Diagnostics.ConflictingSingletonAnnotation,
+					location
+				) );
+				return;
+			}
+
 			var flags = MutabilityInspectionFlags.Default 
 				| MutabilityInspectionFlags.AllowUnsealed // `symbol` is the concrete type
 				| MutabilityInspectionFlags.IgnoreImmutabilityAttribute; // we're _validating_ the attribute
 
 			var mutabilityResult = inspector.InspectType( symbol, context.Compilation.Assembly, flags );
 
+			if( hasAuditedAttribute || hasUnauditedAttribute ) {
+				if( !mutabilityResult.IsMutable ) {
+					context.ReportDiagnostic( Diagnostic.Create(
+						Diagnostics.UnnecessarySingletonAnnotation,
+						location,
+						hasAuditedAttribute ? "Singletons.Audited" : "Singletons.Unaudited",
+						symbol.GetFullTypeNameWithGenericArguments()
+					) );
+				}
+				return;
+			}
+
 			if( mutabilityResult.IsMutable ) {
 				var reason = m_resultFormatter.Format( mutabilityResult );
-				var location = GetLocationOfClassIdentifierAndGenericParameters( root );
 				var diagnostic = Diagnostic.Create( 
 					Diagnostics.SingletonIsntImmutable, 
 					location, 
