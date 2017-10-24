@@ -2,6 +2,11 @@
 
 using System;
 using D2L.CodeStyle.Annotations;
+using D2L.LP.Extensibility.Activation.Domain;
+
+namespace D2L.LP.Extensibility.Activation.Domain {
+	public sealed class SingletonAttribute : Attribute { }
+}
 
 namespace D2L.CodeStyle.Annotations {
 	public static class Objects {
@@ -36,5 +41,20 @@ namespace SpecTests {
 			internal readonly T foo;
 		}
 
+	}
+
+	class SingletonsTests {
+		[Singleton]
+		interface ISingleton { }
+
+		// another analyzer would cause a build failure here
+		internal sealed class MutableSingleton : ISingleton {
+			private string m_state;
+		}
+
+		[Objects.Immutable]
+		internal sealed class SingletonFieldIsTreatedAsImmutable {
+			private readonly ISingleton m_singleton;
+		}
 	}
 }

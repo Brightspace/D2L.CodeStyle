@@ -11,38 +11,41 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 
 		public ITypeSymbol FactoryType { get; }
 
-		public bool IsFactoryRegistration { get; }
+		public ITypeSymbol DynamicObjectFactoryType { get; }
 
 		private DependencyRegistration(
 			ObjectScope scope,
 			ITypeSymbol dependencyType,
-			ITypeSymbol concreteType,
-			ITypeSymbol factoryType,
-			bool isFactoryRegistration
+			ITypeSymbol concreteType = null,
+			ITypeSymbol factoryType = null,
+			ITypeSymbol dynamicObjectType = null
 		) {
 			ObjectScope = scope;
 			DependencyType = dependencyType;
 			ConcreteType = concreteType;
 			FactoryType = factoryType;
-			IsFactoryRegistration = isFactoryRegistration;
+			DynamicObjectFactoryType = dynamicObjectType;
 		}
 
 		internal static DependencyRegistration NonFactory( ObjectScope scope, ITypeSymbol dependencyType, ITypeSymbol concreteType )
-			=> new DependencyRegistration( 
-				scope, 
+			=> new DependencyRegistration(
+				scope,
 				dependencyType: dependencyType,
-				concreteType: concreteType, 
-				factoryType: null, 
-				isFactoryRegistration: false 
+				concreteType: concreteType
 			);
 
 		internal static DependencyRegistration Factory( ObjectScope scope, ITypeSymbol dependencyType, ITypeSymbol factoryType )
-			=> new DependencyRegistration( 
+			=> new DependencyRegistration(
 				scope,
 				dependencyType: dependencyType,
-				concreteType: null, 
-				factoryType: factoryType, 
-				isFactoryRegistration: true 
+				factoryType: factoryType
+			);
+
+		internal static DependencyRegistration DynamicObjectFactory( ObjectScope scope, ITypeSymbol dependencyType, ITypeSymbol dynamicObjectType )
+			=> new DependencyRegistration(
+				scope,
+				dependencyType: dependencyType,
+				dynamicObjectType: dynamicObjectType
 			);
 	}
 

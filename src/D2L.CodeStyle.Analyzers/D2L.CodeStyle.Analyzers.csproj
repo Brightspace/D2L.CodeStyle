@@ -61,9 +61,12 @@
     <Compile Include="Common\Mutability\Goals\TypeGoal.cs" />
     <Compile Include="Common\Mutability\ISemanticModel.cs" />
     <Compile Include="Common\Mutability\Rules\FieldRule.cs" />
+    <Compile Include="Common\Mutability\Goals\GenericTypeParameterGoal.cs" />
+    <Compile Include="Common\Mutability\Rules\GenericTypeParameterRule.cs" />
     <Compile Include="Common\Mutability\WrappedSemanticModel.cs" />
     <Compile Include="Common\TypeSymbolExtensions.cs" />
     <Compile Include="Contract\NotNullAnalyzer.cs" />
+    <Compile Include="DependencyRegistrations\DependencyRegistrationsAnalyzer.cs" />
     <Compile Include="Extensions\Microsoft.CodeAnalysis.CSharp.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzer.cs" />
     <Compile Include="Common\Mutability\Goals\ClassGoal.cs" />

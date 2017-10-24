@@ -11,6 +11,8 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 	//		ObjectScope scope
 	// ) where TConcrete : class, TOutput
 	internal sealed class RegisterDynamicObjectFactoryExpression : DependencyRegistrationExpression {
+		private const string IFactoryTypeMetadataName = "D2L.LP.Extensibility.Activation.Domain.IFactory`1";
+
 		internal override bool CanHandleMethod( IMethodSymbol method ) {
 			return method.Name == "RegisterDynamicObjectFactory"
 				&& method.IsExtensionMethod
@@ -27,13 +29,17 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 			if( !TryGetObjectScope( arguments[0], semanticModel, out scope ) ) {
 				return null;
 			}
-			return DependencyRegistration.Factory(
+			return DependencyRegistration.DynamicObjectFactory(
 				scope: scope,
-				dependencyType: method.TypeArguments[0],
-				// the real factory is emitted at runtime, 
-				// we don't know what it is at compile time
-				factoryType: null
+				dependencyType: WrapWithIFactoryType( method.TypeArguments[0], semanticModel.Compilation ),
+				dynamicObjectType: method.TypeArguments[1]
 			);
+		}
+
+		private ITypeSymbol WrapWithIFactoryType( ITypeSymbol toWrap, Compilation compilation ) {
+			var factoryType = compilation.GetTypeByMetadataName( IFactoryTypeMetadataName );
+			var wrapped = factoryType.Construct( toWrap );
+			return wrapped;
 		}
 	}
 }
