@@ -60,6 +60,7 @@
     <Compile Include="Common\Mutability\Goals\ReadOnlyGoal.cs" />
     <Compile Include="Common\Mutability\Goals\TypeGoal.cs" />
     <Compile Include="Common\Mutability\ISemanticModel.cs" />
+    <Compile Include="Common\Mutability\Rules\ConcreteTypeRule.cs" />
     <Compile Include="Common\Mutability\Rules\FieldRule.cs" />
     <Compile Include="Common\Mutability\Goals\GenericTypeParameterGoal.cs" />
     <Compile Include="Common\Mutability\Rules\GenericTypeParameterRule.cs" />
