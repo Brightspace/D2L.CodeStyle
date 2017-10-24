@@ -43,6 +43,7 @@
     <Compile Include="Common\Mutability\Rules\ClassAndStructRulesTests.cs" />
     <Compile Include="Common\Mutability\Rules\FieldRuleTests.cs" />
     <Compile Include="Common\Mutability\Rules\InitializerRuleTests.cs" />
+    <Compile Include="Common\Mutability\Rules\ReadOnlyRuleTests.cs" />
     <Compile Include="Common\SyntaxNodeExtensionTests.cs" />
     <Compile Include="Common\TestBase.cs" />
     <Compile Include="Common\TypeSymbolExtensionsTests.cs" />
