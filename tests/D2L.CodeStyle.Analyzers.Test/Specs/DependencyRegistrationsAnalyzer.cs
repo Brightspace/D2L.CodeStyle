@@ -15,6 +15,7 @@ namespace D2L.CodeStyle.Annotations {
 // and: http://search.dev.d2l/source/raw/Lms/core/lp/framework/core/D2L.LP.Foundation/LP/Extensibility/Activation/Domain/ObjectScope.cs
 namespace D2L.LP.Extensibility.Activation.Domain {
 	public sealed class SingletonAttribute : Attribute { }
+	public sealed class DependencyAttribute : Attribute { }
 	public enum ObjectScope {
 		AlwaysCreateNewInstance = 0,
 		Singleton = 1,
@@ -128,6 +129,8 @@ namespace SpecTests {
 			reg.ConfigureInstancePlugins<MarkedSingleton, DefaultExtensionPoint<MarkedSingleton>>( ObjectScope.Singleton );
 			reg.RegisterPluginExtensionPoint<DefaultExtensionPoint<MarkedSingleton>, MarkedSingleton>( ObjectScope.Singleton );
 			reg.RegisterPlugin<DefaultExtensionPoint<MarkedSingleton>, IMarkedSingleton, MarkedSingleton>( ObjectScope.Singleton );
+			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMarkedThing, string>( ObjectScope.Singleton );
+			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMarkedThing, string, string>( ObjectScope.Singleton );
 
 			// Unmarked Singletons are flagged.
 			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.Register<IUnmarkedSingleton>( new UnmarkedSingleton() ) /**/;
@@ -150,8 +153,14 @@ namespace SpecTests {
 			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterFactory<IUnmarkedSingleton, SingletonFactory>( ObjectScope.Singleton ) /**/;
 			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterPluginFactory<IUnmarkedSingleton, SingletonFactory>( ObjectScope.Singleton ) /**/;
 			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterPluginFactory<DefaultExtensionPoint<UnmarkedSingleton>, IUnmarkedSingleton, SingletonFactory>( ObjectScope.Singleton ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterDynamicObjectFactory<IUnmarkedSingleton, MarkedSingleton, string, string>( ObjectScope.Singleton ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterDynamicObjectFactory<IUnmarkedSingleton, MarkedSingleton, string>( ObjectScope.Singleton ) /**/;
+
+			// Dyanamic object factory registrations inspect the concrete object's ctor parameters
+			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaUnmarkedThing, string, string>( ObjectScope.Singleton ) /**/;
+			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaUnmarkedThing, string>( ObjectScope.Singleton ) /**/;
+
+			// Dyanamic object factory registrations that error out inspect IFactory<TDependencyType>
+			/* UnsafeSingletonRegistration(D2L.LP.Extensibility.Activation.Domain.IFactory<SpecTests.ICreatedByDynamicFactory>) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor, string>( ObjectScope.Singleton ) /**/;
+			/* UnsafeSingletonRegistration(D2L.LP.Extensibility.Activation.Domain.IFactory<SpecTests.ICreatedByDynamicFactory>) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor, string, string>( ObjectScope.Singleton ) /**/;
 
 			// Non-Singletons are not flagged.
 			reg.Register( typeof( IUnmarkedSingleton ), typeof( UnmarkedSingleton ), ObjectScope.WebRequest );
@@ -214,6 +223,28 @@ namespace SpecTests {
 
 	public interface IUnmarkedSingleton { }
 	public sealed class UnmarkedSingleton : IUnmarkedSingleton {}
+
+	public interface ICreatedByDynamicFactory { }
+
+	public class ThingThatIsCreatedByDynamicObjectFactoryViaMarkedThing : ICreatedByDynamicFactory {
+		public ThingThatIsCreatedByDynamicObjectFactoryViaMarkedThing(
+			string randomArg,
+			[Dependency] IMarkedSingleton injected
+		) { }
+	}
+
+	public class ThingThatIsCreatedByDynamicObjectFactoryViaUnmarkedThing : ICreatedByDynamicFactory {
+		public ThingThatIsCreatedByDynamicObjectFactoryViaUnmarkedThing(
+			string randomArg,
+			[Dependency] IUnmarkedSingleton injected
+		) { }
+	}
+
+	public class ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor: ICreatedByDynamicFactory {
+		private ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor(
+			string randomArg
+		) { }
+	}
 
 	public sealed class DefaultExtensionPoint<T> : ExtensionPointDescriptor, IExtensionPoint<T> {
 		public override string Name { get; } = "Default";
