@@ -49,7 +49,7 @@ namespace D2L.CodeStyle.Analyzers.Common.Mutability.Rules {
 				subgoals,
 				new Goal[] {
 					new ReadOnlyGoal( field ),
-					new InitializerGoal( expr ),
+					new InitializerGoal( type, expr ),
 				}
 			);
 		}
