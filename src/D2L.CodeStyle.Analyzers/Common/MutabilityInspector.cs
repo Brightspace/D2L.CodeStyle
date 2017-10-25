@@ -300,52 +300,66 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			); ;
 		}
 
+		private MutabilityInspectionResult InspectProperty(
+			IPropertySymbol property,
+			IAssemblySymbol rootAssembly,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			var sourceTree = property.DeclaringSyntaxReferences.FirstOrDefault();
+			var declarationSyntax = sourceTree?.GetSyntax() as PropertyDeclarationSyntax;
+			if( declarationSyntax != null && !declarationSyntax.IsAutoImplemented() ) {
+				// non-auto properties never hold state themselves
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			if( !property.IsReadOnly ) {
+				return MutabilityInspectionResult.MutableProperty( property, MutabilityCause.IsNotReadonly );
+			}
+
+			var result = InspectTypeRecursive( property.Type, rootAssembly, MutabilityInspectionFlags.Default, typeStack );
+			if( result.IsMutable ) {
+				return result.WithPrefixedMember( property.Name );
+			}
+
+			return MutabilityInspectionResult.NotMutable();
+		}
+
+		private MutabilityInspectionResult InspectField(
+			IFieldSymbol field,
+			IAssemblySymbol rootAssembly,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			if( !field.IsReadOnly ) {
+				return MutabilityInspectionResult.MutableField( field, MutabilityCause.IsNotReadonly );
+			}
+
+			var result = InspectTypeRecursive( field.Type, rootAssembly, MutabilityInspectionFlags.Default, typeStack );
+			if( result.IsMutable ) {
+				return result.WithPrefixedMember( field.Name );
+			}
+
+			return MutabilityInspectionResult.NotMutable();
+		}
+
 		private MutabilityInspectionResult InspectMemberRecursive(
 			ISymbol symbol,
 			IAssemblySymbol rootAssembly,
 			HashSet<ITypeSymbol> typeStack
 		) {
-
-			MutabilityInspectionResult result;
-
 			switch( symbol.Kind ) {
-
 				case SymbolKind.Property:
-
-					var prop = (IPropertySymbol)symbol;
-
-					var sourceTree = prop.DeclaringSyntaxReferences.FirstOrDefault();
-					var declarationSyntax = sourceTree?.GetSyntax() as PropertyDeclarationSyntax;
-					if( declarationSyntax != null && !declarationSyntax.IsAutoImplemented() ) {
-						// non-auto properties never hold state themselves
-						return MutabilityInspectionResult.NotMutable();
-					}
-
-					if( !prop.IsReadOnly ) {
-						return MutabilityInspectionResult.MutableProperty( prop, MutabilityCause.IsNotReadonly );
-					}
-
-					result = InspectTypeRecursive( prop.Type, rootAssembly, MutabilityInspectionFlags.Default, typeStack );
-					if( result.IsMutable ) {
-						return result.WithPrefixedMember( prop.Name );
-					}
-
-					return MutabilityInspectionResult.NotMutable();
+					return InspectProperty(
+						symbol as IPropertySymbol,
+						rootAssembly,
+						typeStack
+					);
 
 				case SymbolKind.Field:
-
-					var field = (IFieldSymbol)symbol;
-
-					if( !field.IsReadOnly ) {
-						return MutabilityInspectionResult.MutableField( field, MutabilityCause.IsNotReadonly );
-					}
-
-					result = InspectTypeRecursive( field.Type, rootAssembly, MutabilityInspectionFlags.Default, typeStack );
-					if( result.IsMutable ) {
-						return result.WithPrefixedMember( field.Name );
-					}
-
-					return MutabilityInspectionResult.NotMutable();
+					return InspectField(
+						symbol as IFieldSymbol, 
+						rootAssembly,
+						typeStack
+					);
 
 				case SymbolKind.Method:
 				case SymbolKind.NamedType:
