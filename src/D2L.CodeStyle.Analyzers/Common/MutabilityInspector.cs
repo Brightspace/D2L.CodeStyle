@@ -323,18 +323,12 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				);
 			}
 
-			var result = InspectTypeRecursive(
+			return InspectTypeRecursive(
 				property.Type,
 				rootAssembly,
 				MutabilityInspectionFlags.Default,
 				typeStack
-			);
-
-			if( result.IsMutable ) {
-				return result.WithPrefixedMember( property.Name );
-			}
-
-			return MutabilityInspectionResult.NotMutable();
+			).WithPrefixedMember( property.Name );
 		}
 
 		private MutabilityInspectionResult InspectField(
@@ -349,18 +343,12 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				);
 			}
 
-			var result = InspectTypeRecursive(
+			return InspectTypeRecursive(
 				field.Type,
 				rootAssembly,
 				MutabilityInspectionFlags.Default,
 				typeStack
-			);
-
-			if( result.IsMutable ) {
-				return result.WithPrefixedMember( field.Name );
-			}
-
-			return MutabilityInspectionResult.NotMutable();
+			).WithPrefixedMember( field.Name );
 		}
 
 		/// <summary>
