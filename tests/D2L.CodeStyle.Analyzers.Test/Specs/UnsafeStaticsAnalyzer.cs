@@ -1,7 +1,7 @@
 ﻿// analyzer: D2L.CodeStyle.Analyzers.UnsafeStatics.UnsafeStaticsAnalyzer
 
 using System;
-
+using D2L.CodeStyle.Analyzers.UnsafeStatics;
 using D2L.CodeStyle.Annotations;
 namespace D2L.CodeStyle.Annotations {
 	public class Statics {
@@ -102,6 +102,16 @@ namespace SpecTests {
 		public sealed class OkClassWithBase : OkBaseClass { }
 
 		private static readonly OkClassWithBase m_okWithBase = new OkClassWithBase();
+
+		private class ConcretelySafeIfYouLookAtInitializers {
+			private static OkClassWithBase Foo() { return null; }
+			private readonly OkBaseClass m_ok1 = new OkBaseClass();
+			private readonly OkBaseClass m_ok2 = Foo();
+			private readonly OkBaseClass m_ok3 = null;
+		}
+
+		private static readonly ConcretelySafeIfYouLookAtInitializers m_concretelySafeIfYouLookAtInitializers
+			= new ConcretelySafeIfYouLookAtInitializers();
 	}
 
 	public class MutableBaseClass {
@@ -113,7 +123,13 @@ namespace SpecTests {
 	public sealed class UnsafeThings {
 		private static int /* UnsafeStatic(m_mutableInt,'m_mutableInt' is not read-only) */ m_mutableInt /**/;
 
-		private static readonly ClassWithMutableBaseClass /* UnsafeStatic(m_foo,'m_foo.m_mutableInt' is not read-only) */ m_foo /**/ ;
+		private static readonly ClassWithMutableBaseClass /* UnsafeStatic(m_foo,'m_foo.m_mutableInt' is not read-only) */ m_foo /**/;
+
+		private class UnsafeThingWithInitializer {
+			private readonly MutableBaseClass m_eh = new MutableBaseClass();
+		}
+
+		private static readonly UnsafeThingWithInitializer /* UnsafeStatic(m_unsafeWithInit,'m_unsafeWithInit.m_eh.m_mutableInt' is not read-only) */ m_unsafeWithInit = new UnsafeThingWithInitializer() /**/;
 	}
 
 	public sealed class ValueTypeCases {
