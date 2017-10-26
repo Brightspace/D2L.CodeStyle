@@ -4,7 +4,9 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
+using System.Configuration;
 using D2L.CodeStyle.Analyzers.Common;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace D2L.CodeStyle.Analyzers.Common {
 
@@ -319,6 +321,45 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			); ;
 		}
 
+		private MutabilityInspectionResult InspectInitializer(
+			ExpressionSyntax expr,
+			SemanticModel model,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			// TODO: this type may get implicitly converted into an unsafe
+			// type. We should consider the type of the field and maybe look at
+			// the TypeInfo's .ConvertedType field to figure out when this is
+			// happening. The GitHub issue for this is:
+			// https://github.com/Brightspace/D2L.CodeStyle/issues/35
+			var exprType = model.GetTypeInfo( expr ).Type;
+
+			if ( expr.Kind() == SyntaxKind.NullLiteralExpression ) {
+				// This is perhaps a bit suspicious, because fields and
+				// properties have to be readonly, but it is safe...
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			if ( expr is ObjectCreationExpressionSyntax ) {
+				// If our initializer is "new Foo( ... )" we only need to
+				// consider Foo concretely; not subtypes of Foo.
+				return InspectTypeRecursive(
+					exprType,
+					model,
+					MutabilityInspectionFlags.AllowUnsealed,
+					typeStack
+				);
+			}
+
+			// In general we can use the initializers type in place of the
+			// field/properties type because it may be narrower.
+			return InspectTypeRecursive(
+				exprType,
+				model,
+				MutabilityInspectionFlags.Default,
+				typeStack
+			);
+		}
+
 		private MutabilityInspectionResult InspectProperty(
 			IPropertySymbol property,
 			SemanticModel semanticModel,
@@ -342,12 +383,23 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				);
 			}
 
-			return InspectTypeRecursive(
-				property.Type,
-				semanticModel,
-				MutabilityInspectionFlags.Default,
-				typeStack
-			).WithPrefixedMember( property.Name );
+			if ( propertySyntax.Initializer != null ) {
+				// If there is an initializer we can ignore the properties type
+				// and analyze the initializer because there are special cases.
+				return InspectInitializer(
+					propertySyntax.Initializer.Value,
+					semanticModel,
+					typeStack
+				).WithPrefixedMember( property.Name );
+			} else {
+				// By default, check the type of the property
+				return InspectTypeRecursive(
+					property.Type,
+					semanticModel,
+					MutabilityInspectionFlags.Default,
+					typeStack
+				).WithPrefixedMember( property.Name );
+			}
 		}
 
 		private MutabilityInspectionResult InspectField(
@@ -362,12 +414,25 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				);
 			}
 
-			return InspectTypeRecursive(
-				field.Type,
-				semanticModel,
-				MutabilityInspectionFlags.Default,
-				typeStack
-			).WithPrefixedMember( field.Name );
+			var fieldSyntax = GetDeclarationSyntax<VariableDeclaratorSyntax>( field );
+
+			if( fieldSyntax.Initializer != null ) {
+				// If there is an initializer we can ignore the fields type and
+				// analyze the initializer because there are special cases.
+				return InspectInitializer(
+					fieldSyntax.Initializer.Value,
+					semanticModel,
+					typeStack
+				).WithPrefixedMember( field.Name );
+			} else {
+				// By default, check the type of the field
+				return InspectTypeRecursive(
+					field.Type,
+					semanticModel,
+					MutabilityInspectionFlags.Default,
+					typeStack
+				).WithPrefixedMember( field.Name );
+			}
 		}
 
 		/// <summary>
