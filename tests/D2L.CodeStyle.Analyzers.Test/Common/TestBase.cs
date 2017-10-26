@@ -9,10 +9,10 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 	internal sealed class TestSymbol<T> where T : ISymbol {
 		internal readonly T Symbol;
-		internal readonly IAssemblySymbol CompilationAssemblySymbol;
-		public TestSymbol( T symbol, IAssemblySymbol assemblySymbol ) {
+		internal readonly SemanticModel SemanticModel;
+		public TestSymbol( T symbol, SemanticModel semanticModel ) {
 			Symbol = symbol;
-			CompilationAssemblySymbol = assemblySymbol;
+			SemanticModel = semanticModel;
 		}
 	}
 
@@ -46,7 +46,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			Assert.IsNotNull( toReturn );
 			Assert.AreNotEqual( TypeKind.Error, toReturn.TypeKind );
 
-			return new TestSymbol<ITypeSymbol>( toReturn, compilation.Assembly );
+			return new TestSymbol<ITypeSymbol>( toReturn, compilation.GetSemanticModel( toReturn.DeclaringSyntaxReferences.First().SyntaxTree ) );
 		}
 
 		internal static TestSymbol<IFieldSymbol> Field( string text ) {
@@ -56,7 +56,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			Assert.IsNotNull( toReturn );
 			Assert.AreNotEqual( TypeKind.Error, toReturn.Type.TypeKind );
 
-			return new TestSymbol<IFieldSymbol>( toReturn, type.CompilationAssemblySymbol );
+			return new TestSymbol<IFieldSymbol>( toReturn, type.SemanticModel );
 		}
 
 		internal static TestSymbol<IPropertySymbol> Property( string text ) {
@@ -66,7 +66,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			Assert.IsNotNull( toReturn );
 			Assert.AreNotEqual( TypeKind.Error, toReturn.Type.TypeKind );
 
-			return new TestSymbol<IPropertySymbol>( toReturn, type.CompilationAssemblySymbol );
+			return new TestSymbol<IPropertySymbol>( toReturn, type.SemanticModel );
 		}
 	}
 

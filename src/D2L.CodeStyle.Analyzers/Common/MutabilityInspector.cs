@@ -63,13 +63,13 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		/// <returns>Whether the type is mutable.</returns>
 		public MutabilityInspectionResult InspectType(
 			ITypeSymbol type,
-			IAssemblySymbol rootAssembly,
+			SemanticModel semanticModel,
 			MutabilityInspectionFlags flags = MutabilityInspectionFlags.Default
 		) {
 			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
 			var result = InspectTypeRecursive( 
 				type, 
-				rootAssembly, 
+				semanticModel, 
 				flags, 
 				typesInCurrentCycle
 			);
@@ -78,7 +78,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		private MutabilityInspectionResult InspectTypeRecursive(
 			ITypeSymbol type,
-			IAssemblySymbol rootAssembly,
+			SemanticModel semanticModel,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
@@ -128,7 +128,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				case TypeKind.TypeParameter:
 					return InspectTypeParameter(
 						type,
-						rootAssembly,
+						semanticModel,
 						flags,
 						typeStack
 					);
@@ -138,7 +138,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				case TypeKind.Struct: // equivalent to TypeKind.Structure
 					return InspectClassStructOrInterface(
 						type,
-						rootAssembly,
+						semanticModel,
 						flags,
 						typeStack
 					);
@@ -166,7 +166,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		private MutabilityInspectionResult InspectBaseType(
 			ITypeSymbol type,
-			IAssemblySymbol rootAssembly,
+			SemanticModel semanticModel,
 			HashSet<ITypeSymbol> typeStack
 		) {
 			if ( type.BaseType == null ) {
@@ -177,12 +177,17 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
-			return InspectTypeRecursive( type.BaseType, rootAssembly, MutabilityInspectionFlags.AllowUnsealed, typeStack );
+			return InspectTypeRecursive(
+				type.BaseType,
+				semanticModel,
+				MutabilityInspectionFlags.AllowUnsealed,
+				typeStack
+			);
 		}
 
 		private MutabilityInspectionResult InspectClassStructOrInterface(
 			ITypeSymbol type,
-			IAssemblySymbol rootAssembly,
+			SemanticModel semanticModel,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
@@ -199,13 +204,20 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
+
 			typeStack.Add( type );
 			try {
 				if( ImmutableContainerTypes.ContainsKey( type.GetFullTypeName() ) ) {
 					var namedType = type as INamedTypeSymbol;
 					for( int i = 0; i < namedType.TypeArguments.Length; i++ ) {
 						var arg = namedType.TypeArguments[ i ];
-						var result = InspectTypeRecursive( arg, rootAssembly, MutabilityInspectionFlags.Default, typeStack );
+
+						var result = InspectTypeRecursive(
+							arg,
+							semanticModel,
+							MutabilityInspectionFlags.Default,
+							typeStack
+						);
 
 						if( result.IsMutable ) {
 							if( result.Target == MutabilityTarget.Member ) {
@@ -251,19 +263,19 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 				// We have a type that is not marked immutable, is not an interface, is not an immutable container, etc..
 				// If it is defined in a different assembly, we might not have the metadata to correctly analyze it; so we fail.
-				if( type.ContainingAssembly != rootAssembly ) {
+				if( type.ContainingAssembly != semanticModel.Compilation.Assembly ) {
 					return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnExternalUnmarkedType );
 				}
 
 				foreach( ISymbol member in type.GetExplicitNonStaticMembers() ) {
-					var result = InspectMemberRecursive( member, rootAssembly, typeStack );
+					var result = InspectMemberRecursive( member, semanticModel, typeStack );
 					if( result.IsMutable ) {
 						return result;
 					}
 				}
 
 				// We descend into the base class last
-				var baseResult = InspectBaseType( type, rootAssembly, typeStack );
+				var baseResult = InspectBaseType( type, semanticModel, typeStack );
 				if ( baseResult.IsMutable ) {
 					return baseResult;
 				}
@@ -276,8 +288,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}
 
 		private MutabilityInspectionResult InspectTypeParameter(
-			ITypeSymbol symbol, 
-			IAssemblySymbol rootAssembly, 
+			ITypeSymbol symbol,
+			SemanticModel semanticModel,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
@@ -287,7 +299,14 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				// there are constraints we can check. as type constraints are unionized, we only need one 
 				// type constraint to be immutable to succeed
 				foreach( var constraintType in typeParameter.ConstraintTypes ) {
-					var result = InspectTypeRecursive( constraintType, rootAssembly, flags, typeStack );
+
+					var result = InspectTypeRecursive(
+						constraintType,
+						semanticModel,
+						flags,
+						typeStack
+					);
+
 					if( !result.IsMutable ) {
 						return MutabilityInspectionResult.NotMutable();
 					}
@@ -302,7 +321,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		private MutabilityInspectionResult InspectProperty(
 			IPropertySymbol property,
-			IAssemblySymbol rootAssembly,
+			SemanticModel semanticModel,
 			HashSet<ITypeSymbol> typeStack
 		) {
 			var propertySyntax = GetDeclarationSyntax<PropertyDeclarationSyntax>( property );
@@ -325,7 +344,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 			return InspectTypeRecursive(
 				property.Type,
-				rootAssembly,
+				semanticModel,
 				MutabilityInspectionFlags.Default,
 				typeStack
 			).WithPrefixedMember( property.Name );
@@ -333,7 +352,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		private MutabilityInspectionResult InspectField(
 			IFieldSymbol field,
-			IAssemblySymbol rootAssembly,
+			SemanticModel semanticModel,
 			HashSet<ITypeSymbol> typeStack
 		) {
 			if( !field.IsReadOnly ) {
@@ -345,7 +364,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 			return InspectTypeRecursive(
 				field.Type,
-				rootAssembly,
+				semanticModel,
 				MutabilityInspectionFlags.Default,
 				typeStack
 			).WithPrefixedMember( field.Name );
@@ -381,21 +400,21 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		private MutabilityInspectionResult InspectMemberRecursive(
 			ISymbol symbol,
-			IAssemblySymbol rootAssembly,
+			SemanticModel semanticModel,
 			HashSet<ITypeSymbol> typeStack
 		) {
 			switch( symbol.Kind ) {
 				case SymbolKind.Property:
 					return InspectProperty(
 						symbol as IPropertySymbol,
-						rootAssembly,
+						semanticModel,
 						typeStack
 					);
 
 				case SymbolKind.Field:
 					return InspectField(
 						symbol as IFieldSymbol, 
-						rootAssembly,
+						semanticModel,
 						typeStack
 					);
 
