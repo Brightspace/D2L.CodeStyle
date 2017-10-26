@@ -4,7 +4,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
-using D2L.CodeStyle.Analyzers.Common;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace D2L.CodeStyle.Analyzers.Common {
 
@@ -318,19 +318,64 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			); ;
 		}
 
+		private MutabilityInspectionResult InspectInitializer(
+			ExpressionSyntax expr,
+			Compilation compilation,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			if ( expr.Kind() == SyntaxKind.NullLiteralExpression ) {
+				// This is perhaps a bit suspicious, because fields and
+				// properties have to be readonly, but it is safe...
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			// We shouldn't have performance issues with not caching these
+			// SemanticModels because of how GetTypeInfo for
+			// InitializerExpressions works.
+			var model = compilation.GetSemanticModel( expr.SyntaxTree );
+
+			// TODO: this type may get implicitly converted into an unsafe
+			// type. We should consider the type of the field and maybe look at
+			// the TypeInfo's .ConvertedType field to figure out when this is
+			// happening. The GitHub issue for this is:
+			// https://github.com/Brightspace/D2L.CodeStyle/issues/35
+			var exprType = model.GetTypeInfo( expr ).Type;
+
+			if ( expr is ObjectCreationExpressionSyntax ) {
+				// If our initializer is "new Foo( ... )" we only need to
+				// consider Foo concretely; not subtypes of Foo.
+				return InspectTypeRecursive(
+					exprType,
+					compilation,
+					MutabilityInspectionFlags.AllowUnsealed,
+					typeStack
+				);
+			}
+
+			// In general we can use the initializers type in place of the
+			// field/properties type because it may be narrower.
+			return InspectTypeRecursive(
+				exprType,
+				compilation,
+				MutabilityInspectionFlags.Default,
+				typeStack
+			);
+		}
+
 		private MutabilityInspectionResult InspectProperty(
 			IPropertySymbol property,
 			Compilation compilation,
 			HashSet<ITypeSymbol> typeStack
 		) {
-			var propertySyntax = GetDeclarationSyntax<PropertyDeclarationSyntax>( property );
+			var propertySyntax =
+				GetDeclarationSyntax<PropertyDeclarationSyntax>( property );
 
 			// TODO: can we do this without the syntax; with only the symbol?
 			if( !propertySyntax.IsAutoImplemented() ) {
-				// Properties that are auto-implemented have an implicit backing
-				// field that may be mutable. Otherwise, properties are just sugar
-				// for getter/setter methods and don't themselves contribute to
-				// mutability.
+				// Properties that are auto-implemented have an implicit
+				// backing field that may be mutable. Otherwise, properties are
+				// just sugar for getter/setter methods and don't themselves
+				// contribute to mutability.
 				return MutabilityInspectionResult.NotMutable();
 			}
 
@@ -338,6 +383,14 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return MutabilityInspectionResult.MutableProperty(
 					property,
 					MutabilityCause.IsNotReadonly
+				);
+			}
+
+			if ( propertySyntax.Initializer != null ) {
+				return InspectInitializer(
+					propertySyntax.Initializer.Value,
+					compilation,
+					typeStack
 				);
 			}
 
@@ -358,6 +411,17 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return MutabilityInspectionResult.MutableField(
 					field,
 					MutabilityCause.IsNotReadonly
+				);
+			}
+
+			var declSyntax =
+				GetDeclarationSyntax<VariableDeclaratorSyntax>( field );
+
+			if( declSyntax.Initializer != null ) {
+				return InspectInitializer(
+					declSyntax.Initializer.Value,
+					compilation,
+					typeStack
 				);
 			}
 

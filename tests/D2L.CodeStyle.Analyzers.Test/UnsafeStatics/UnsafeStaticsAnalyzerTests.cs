@@ -745,10 +745,10 @@ namespace D2L.CodeStyle.Annotations {
 	namespace test {
 		class Tests {
 
-            private readonly static Foo foo = new Foo();
+			private readonly static Foo foo = new Foo();
 
 			internal sealed class Foo {
-				public readonly Bar Bar = null; // Bar is not sealed, so this is not immutable
+				public readonly Bar Bar = null; // this makes Foo analyze as safe because null is harmless
 			}
 
 			internal class Bar {
@@ -757,12 +757,7 @@ namespace D2L.CodeStyle.Annotations {
 		}
 	}";
 
-            AssertSingleDiagnostic( s_preamble + test, 18, 41, "foo", MutabilityInspectionResult.Mutable(
-                mutableMemberPath: "foo.Bar",
-                membersTypeName: "test.Tests.Bar",
-                kind: MutabilityTarget.Type,
-                cause: MutabilityCause.IsNotSealed
-            ) );
+			AssertNoDiagnostic( s_preamble + test );
 		}
 
 		[Test]
