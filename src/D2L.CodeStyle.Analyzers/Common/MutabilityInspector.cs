@@ -331,7 +331,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			// the TypeInfo's .ConvertedType field to figure out when this is
 			// happening. The GitHub issue for this is:
 			// https://github.com/Brightspace/D2L.CodeStyle/issues/35
-			var exprType = ModelExtensions.GetTypeInfo(model, expr ).Type;
+			var exprType = model.GetTypeInfo( expr ).Type;
 
 			if ( expr.Kind() == SyntaxKind.NullLiteralExpression ) {
 				// This is perhaps a bit suspicious, because fields and
