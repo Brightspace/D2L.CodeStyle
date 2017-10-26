@@ -305,18 +305,31 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			IAssemblySymbol rootAssembly,
 			HashSet<ITypeSymbol> typeStack
 		) {
-			var sourceTree = property.DeclaringSyntaxReferences.FirstOrDefault();
-			var declarationSyntax = sourceTree?.GetSyntax() as PropertyDeclarationSyntax;
-			if( declarationSyntax != null && !declarationSyntax.IsAutoImplemented() ) {
-				// non-auto properties never hold state themselves
+			var propertySyntax = GetDeclarationSyntax<PropertyDeclarationSyntax>( property );
+
+			// TODO: can we do this without the syntax; with only the symbol?
+			if( !propertySyntax.IsAutoImplemented() ) {
+				// Properties that are auto-implemented have an implicit backing
+				// field that may be mutable. Otherwise, properties are just sugar
+				// for getter/setter methods and don't themselves contribute to
+				// mutability.
 				return MutabilityInspectionResult.NotMutable();
 			}
 
 			if( !property.IsReadOnly ) {
-				return MutabilityInspectionResult.MutableProperty( property, MutabilityCause.IsNotReadonly );
+				return MutabilityInspectionResult.MutableProperty(
+					property,
+					MutabilityCause.IsNotReadonly
+				);
 			}
 
-			var result = InspectTypeRecursive( property.Type, rootAssembly, MutabilityInspectionFlags.Default, typeStack );
+			var result = InspectTypeRecursive(
+				property.Type,
+				rootAssembly,
+				MutabilityInspectionFlags.Default,
+				typeStack
+			);
+
 			if( result.IsMutable ) {
 				return result.WithPrefixedMember( property.Name );
 			}
@@ -330,15 +343,52 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			HashSet<ITypeSymbol> typeStack
 		) {
 			if( !field.IsReadOnly ) {
-				return MutabilityInspectionResult.MutableField( field, MutabilityCause.IsNotReadonly );
+				return MutabilityInspectionResult.MutableField(
+					field,
+					MutabilityCause.IsNotReadonly
+				);
 			}
 
-			var result = InspectTypeRecursive( field.Type, rootAssembly, MutabilityInspectionFlags.Default, typeStack );
+			var result = InspectTypeRecursive(
+				field.Type,
+				rootAssembly,
+				MutabilityInspectionFlags.Default,
+				typeStack
+			);
+
 			if( result.IsMutable ) {
 				return result.WithPrefixedMember( field.Name );
 			}
 
 			return MutabilityInspectionResult.NotMutable();
+		}
+
+		/// <summary>
+		/// Get the declaration syntax for a symbol. This is intended to be
+		/// used for fields and properties which can't have multiple
+		/// declaration nodes.
+		/// </summary>
+		private static T GetDeclarationSyntax<T>( ISymbol symbol )
+			where T: SyntaxNode
+		{
+			var decls = symbol.DeclaringSyntaxReferences;
+
+			if ( decls.Length != 1 ) {
+				throw new NotImplementedException(
+					"Unexepected number of decls: "
+					+ decls.Length
+				);
+			}
+
+			var decl = decls[0].GetSyntax() as T;
+
+			if ( decl == null ) {
+				throw new InvalidOperationException(
+					"Couldn't cast declaration syntax"
+				);
+			}
+
+			return decl;
 		}
 
 		private MutabilityInspectionResult InspectMemberRecursive(

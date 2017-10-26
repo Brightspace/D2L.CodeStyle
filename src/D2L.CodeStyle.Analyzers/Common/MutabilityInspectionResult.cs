@@ -114,6 +114,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}
 
 		public MutabilityInspectionResult WithPrefixedMember( string parentMember ) {
+
 			var newMember = string.IsNullOrWhiteSpace( this.MemberPath )
 				? parentMember
 				: $"{parentMember}.{this.MemberPath}";
