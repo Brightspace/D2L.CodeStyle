@@ -319,7 +319,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				flags |= MutabilityInspectionFlags.AllowUnsealed;
 			}
 
-			var result = inspector.InspectType( fieldOrPropertyType, model, flags );
+			var result = inspector.InspectType( fieldOrPropertyType, model.Compilation, flags );
 			if ( result.IsMutable ) {
 				result = result.WithPrefixedMember( fieldOrPropertyName );
 				yield return CreateDiagnostic( 
