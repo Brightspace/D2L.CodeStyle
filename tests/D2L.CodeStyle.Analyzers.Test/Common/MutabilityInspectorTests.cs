@@ -16,7 +16,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var field = Field( "uint foo" );
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( field.Symbol.Type, field.SemanticModel );
+			var actual = m_inspector.InspectType( field.Symbol.Type, field.Compilation );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -26,7 +26,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var field = Field( "uint? foo" );
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( field.Symbol.Type, field.SemanticModel );
+			var actual = m_inspector.InspectType( field.Symbol.Type, field.Compilation );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -44,7 +44,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var realType = ( field as IFieldSymbol ).Type;
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( realType, type.SemanticModel );
+			var actual = m_inspector.InspectType( realType, type.Compilation );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -59,7 +59,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsAnArray
 			);
 
-			var actual = m_inspector.InspectType( field.Symbol.Type, field.SemanticModel );
+			var actual = m_inspector.InspectType( field.Symbol.Type, field.Compilation );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -69,7 +69,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var field = Field( "string random" );
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( field.Symbol.Type, field.SemanticModel );
+			var actual = m_inspector.InspectType( field.Symbol.Type, field.Compilation );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -84,7 +84,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsAnInterface
 			);
 
-			var actual = m_inspector.InspectType( type.Symbol, type.SemanticModel );
+			var actual = m_inspector.InspectType( type.Symbol, type.Compilation );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -94,7 +94,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var type = Type( "enum blah {}" );
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( type.Symbol, type.SemanticModel );
+			var actual = m_inspector.InspectType( type.Symbol, type.Compilation );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -109,7 +109,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsNotSealed
 			);
 
-			var actual = m_inspector.InspectType( type.Symbol, type.SemanticModel );
+			var actual = m_inspector.InspectType( type.Symbol, type.Compilation );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -119,7 +119,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var type = Type( "sealed class foo {}" );
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( type.Symbol, type.SemanticModel );
+			var actual = m_inspector.InspectType( type.Symbol, type.Compilation );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -135,7 +135,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsNotReadonly
 			);
 
-			var actual = m_inspector.InspectType( field.Symbol.ContainingType, field.SemanticModel );
+			var actual = m_inspector.InspectType( field.Symbol.ContainingType, field.Compilation );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -151,7 +151,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsAnExternalUnmarkedType
 			);
 
-			var actual = m_inspector.InspectType( field.Symbol.Type, field.SemanticModel );
+			var actual = m_inspector.InspectType( field.Symbol.Type, field.Compilation );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -167,7 +167,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsNotReadonly
 			);
 
-			var actual = m_inspector.InspectType( field.Symbol.ContainingType, field.SemanticModel );
+			var actual = m_inspector.InspectType( field.Symbol.ContainingType, field.Compilation );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -183,7 +183,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsNotReadonly
 			);
 
-			var actual = m_inspector.InspectType( prop.Symbol.ContainingType, prop.SemanticModel );
+			var actual = m_inspector.InspectType( prop.Symbol.ContainingType, prop.Compilation );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -193,7 +193,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var field = Field( "private readonly System.Collections.Immutable.ImmutableArray<int> random" );
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( field.Symbol.Type, field.SemanticModel );
+			var actual = m_inspector.InspectType( field.Symbol.Type, field.Compilation );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -203,7 +203,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			var field = Field( "private readonly System.Collections.Generic.IEnumerable<int> random" );
 			var expected = MutabilityInspectionResult.NotMutable();
 
-			var actual = m_inspector.InspectType( field.Symbol.Type, field.SemanticModel );
+			var actual = m_inspector.InspectType( field.Symbol.Type, field.Compilation );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -218,7 +218,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				MutabilityCause.IsADelegate
 			);
 
-			var actual = m_inspector.InspectType( prop.Symbol.ContainingType, prop.SemanticModel );
+			var actual = m_inspector.InspectType( prop.Symbol.ContainingType, prop.Compilation );
 
 			AssertResultsAreEqual( expected, actual );
 		}

@@ -62,7 +62,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 				| MutabilityInspectionFlags.AllowUnsealed // `symbol` is the concrete type
 				| MutabilityInspectionFlags.IgnoreImmutabilityAttribute; // we're _validating_ the attribute
 
-			var mutabilityResult = inspector.InspectType( symbol, context.SemanticModel, flags );
+			var mutabilityResult = inspector.InspectType( symbol, context.Compilation, flags );
 
 			if( hasAuditedAttribute || hasUnauditedAttribute ) {
 				if( !mutabilityResult.IsMutable ) {
