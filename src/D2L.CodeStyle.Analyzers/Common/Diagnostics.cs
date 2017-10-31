@@ -58,7 +58,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			messageFormat: "The {0} annotation is not necessary because {1} is immutable. Please remove this attribute to keep our code base clean.",
 			category: "Cleanliness",
 			defaultSeverity: DiagnosticSeverity.Info,
-			isEnabledByDefault:true,
+			isEnabledByDefault: true,
 			description: "Unnecessary static annotations should be removed to keep the code base clean"
 		);
 
@@ -68,7 +68,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			messageFormat: "Statics.Audited and Statics.Unaudited are mutually exclusive. Remove at least one of them.",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault:true,
+			isEnabledByDefault: true,
 			description: "Statics.Audited and Statics.Unaudited are mutually exclusive. Remove at least one of them."
 		);
 
@@ -111,7 +111,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			isEnabledByDefault: true,
 			description: "All DI registrations must be known to static analyzers, to allow for thorough analysis."
 		);
-    
+
 		public static readonly DiagnosticDescriptor ClassShouldBeSealed = new DiagnosticDescriptor(
 			id: "D2L0013",
 			title: "Non-public class should be sealed because it doesn't have any subtypes.",
@@ -125,31 +125,11 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		public static readonly DiagnosticDescriptor SingletonIsntImmutable = new DiagnosticDescriptor(
 			id: "D2L0014",
 			title: "Classes marked as a singleton should be immutable.",
-			messageFormat: "This class is marked as a singleton, but it is not immutable, because {0}. Check that all fields and properties are immutable.",
+			messageFormat: "This class is marked as a singleton, but it is not marked immutable.",
 			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Info,
 			isEnabledByDefault: true,
-			description: "Classes marked as singleton or that implement interfaces marked as a singleton should be immutable."
-		);
-
-		public static readonly DiagnosticDescriptor UnnecessarySingletonAnnotation = new DiagnosticDescriptor(
-			id: "D2L0015",
-			title: "Unnecessary singleton annotations should be removed to keep the code base clean",
-			messageFormat: "The {0} annotation is not necessary because {1} is safe. Please remove this attribute to keep our code base clean.",
-			category: "Cleanliness",
-			defaultSeverity: DiagnosticSeverity.Info,
-			isEnabledByDefault: true,
-			description: "Unnecessary static annotations should be removed to keep the code base clean"
-		);
-
-		public static readonly DiagnosticDescriptor ConflictingSingletonAnnotation = new DiagnosticDescriptor(
-			id: "D2L0016",
-			title: "Singletons.Audited and Singletons.Unaudited are mutually exclusive",
-			messageFormat: "Singletons.Audited and Singletons.Unaudited are mutually exclusive. Remove at least one of them.",
-			category: "Correctness",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "Singletons.Audited and Singletons.Unaudited are mutually exclusive. Remove at least one of them."
+			description: "Classes marked as singleton or that implement interfaces marked as a singleton should be marked immutable."
 		);
 	}
 }
