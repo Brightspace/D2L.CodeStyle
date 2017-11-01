@@ -293,9 +293,9 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				yield break;
 			}
 
-			if( inspector.IsTypeMarkedImmutableOrSingleton( fieldOrPropertyType ) ) {
-				// if the type is marked immutable or is a singleton, skip checking it, to avoid reporting
-				// a diagnostic for each usage of non-immutable singletons or types that are marked
+			if( inspector.IsTypeMarkedImmutable( fieldOrPropertyType ) ) {
+				// if the type is marked immutable, skip checking it, to avoid reporting
+				// a diagnostic for each usage of types that are marked
 				// immutable (other analyzers catch those already.)
 				yield break;
 			}

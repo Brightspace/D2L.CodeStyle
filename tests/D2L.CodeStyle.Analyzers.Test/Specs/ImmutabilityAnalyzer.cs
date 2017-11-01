@@ -42,19 +42,4 @@ namespace SpecTests {
 		}
 
 	}
-
-	class SingletonsTests {
-		[Singleton]
-		interface ISingleton { }
-
-		// another analyzer would cause a build failure here
-		internal sealed class MutableSingleton : ISingleton {
-			private string m_state;
-		}
-
-		[Objects.Immutable]
-		internal sealed class SingletonFieldIsTreatedAsImmutable {
-			private readonly ISingleton m_singleton;
-		}
-	}
 }
