@@ -1,12 +1,11 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 using static D2L.CodeStyle.Analyzers.Common.RoslynSymbolFactory;
 
 namespace D2L.CodeStyle.Analyzers.Common {
 	internal sealed class MutabilityInspector_IsTypeMarkedImmutableTests {
-
-		private readonly MutabilityInspector m_inspector = new MutabilityInspector( KnownImmutableTypes.Default );
 
 		private const string s_preamble = @"
 using D2L.CodeStyle.Annotations;
@@ -16,28 +15,32 @@ namespace D2L.CodeStyle.Annotations {
 	}
 }
 ";
-
-		private ITypeSymbol CompileAndGetFooType( string source ) {
+		private TestSymbol<ITypeSymbol> CompileAndGetFooType( string source ) {
 			source = $"namespace D2L {{ {source} }}";
 			source = s_preamble + source;
 
 			var compilation = Compile( source );
-			var toReturn = compilation.GetSymbolsWithName(
+			var symbol = compilation.GetSymbolsWithName(
 				predicate: n => n == "Foo",
 				filter: SymbolFilter.Type
 			).OfType<ITypeSymbol>().FirstOrDefault();
 
-			Assert.IsNotNull( toReturn );
-			Assert.AreNotEqual( TypeKind.Error, toReturn.TypeKind );
+			Assert.IsNotNull( symbol );
+			Assert.AreNotEqual( TypeKind.Error, symbol.TypeKind );
 
-			return toReturn;
+			return new TestSymbol<ITypeSymbol>( symbol, compilation );
 		}
 
 		[Test]
 		public void IsTypeMarkedImmutable_No_ReturnsFalse() {
 			var type = CompileAndGetFooType( "class Foo {}" );
 
-			Assert.IsFalse( m_inspector.IsTypeMarkedImmutable( type ) );
+			var inspector = new MutabilityInspector(
+				type.Compilation,
+				KnownImmutableTypes.Default
+			);
+
+			Assert.IsFalse( inspector.IsTypeMarkedImmutable( type.Symbol ) );
 		}
 
 		[Test]
@@ -46,7 +49,12 @@ namespace D2L.CodeStyle.Annotations {
 				[Objects.Immutable] class Foo {}"
 			);
 
-			Assert.IsTrue( m_inspector.IsTypeMarkedImmutable( type ) );
+			var inspector = new MutabilityInspector(
+				type.Compilation,
+				KnownImmutableTypes.Default
+			);
+
+			Assert.IsTrue( inspector.IsTypeMarkedImmutable( type.Symbol ) );
 		}
 
 		[Test]
@@ -56,9 +64,14 @@ namespace D2L.CodeStyle.Annotations {
 				[Objects.Immutable] interface IFoo {}"
 			);
 
+			var inspector = new MutabilityInspector(
+				type.Compilation,
+				KnownImmutableTypes.Default
+			);
+
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
-			Assert.AreEqual( "Foo", type.MetadataName );
-			Assert.IsTrue( m_inspector.IsTypeMarkedImmutable( type ) );
+			Assert.AreEqual( "Foo", type.Symbol.MetadataName );
+			Assert.IsTrue( inspector.IsTypeMarkedImmutable( type.Symbol ) );
 		}
 
 		[Test]
@@ -69,9 +82,14 @@ namespace D2L.CodeStyle.Annotations {
 				[Objects.Immutable] interface IFoo2 { }"
 			);
 
+			var inspector = new MutabilityInspector(
+				type.Compilation,
+				KnownImmutableTypes.Default
+			);
+
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
-			Assert.AreEqual( "Foo", type.MetadataName );
-			Assert.IsTrue( m_inspector.IsTypeMarkedImmutable( type ) );
+			Assert.AreEqual( "Foo", type.Symbol.MetadataName );
+			Assert.IsTrue( inspector.IsTypeMarkedImmutable( type.Symbol ) );
 		}
 
 		[Test]
@@ -82,9 +100,14 @@ namespace D2L.CodeStyle.Annotations {
 				[Objects.Immutable] interface IFooTop {}"
 			);
 
+			var inspector = new MutabilityInspector(
+				type.Compilation,
+				KnownImmutableTypes.Default
+			);
+
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
-			Assert.AreEqual( "Foo", type.MetadataName );
-			Assert.IsTrue( m_inspector.IsTypeMarkedImmutable( type ) );
+			Assert.AreEqual( "Foo", type.Symbol.MetadataName );
+			Assert.IsTrue( inspector.IsTypeMarkedImmutable( type.Symbol ) );
 		}
 
 
@@ -95,9 +118,14 @@ namespace D2L.CodeStyle.Annotations {
 				[Objects.Immutable] class FooBase {}"
 			);
 
+			var inspector = new MutabilityInspector(
+				type.Compilation,
+				KnownImmutableTypes.Default
+			);
+
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
-			Assert.AreEqual( "Foo", type.MetadataName );
-			Assert.IsTrue( m_inspector.IsTypeMarkedImmutable( type ) );
+			Assert.AreEqual( "Foo", type.Symbol.MetadataName );
+			Assert.IsTrue( inspector.IsTypeMarkedImmutable( type.Symbol ) );
 		}
 
 		[Test]
@@ -108,9 +136,14 @@ namespace D2L.CodeStyle.Annotations {
 				[Objects.Immutable] class FooBaseOfBase { }"
 			);
 
+			var inspector = new MutabilityInspector(
+				type.Compilation,
+				KnownImmutableTypes.Default
+			);
+
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
-			Assert.AreEqual( "Foo", type.MetadataName );
-			Assert.IsTrue( m_inspector.IsTypeMarkedImmutable( type ) );
+			Assert.AreEqual( "Foo", type.Symbol.MetadataName );
+			Assert.IsTrue( inspector.IsTypeMarkedImmutable( type.Symbol ) );
 		}
 	}
 }

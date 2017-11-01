@@ -22,7 +22,10 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 		}
 
 		private void RegisterAnalysis( CompilationStartAnalysisContext context ) {
-			var inspector = new MutabilityInspector( new KnownImmutableTypes( context.Compilation.Assembly ) );
+			var inspector = new MutabilityInspector(
+				context.Compilation,
+				new KnownImmutableTypes( context.Compilation.Assembly )
+			);
 
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeClass( ctx, inspector ),
@@ -62,7 +65,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 				| MutabilityInspectionFlags.AllowUnsealed // `symbol` is the concrete type
 				| MutabilityInspectionFlags.IgnoreImmutabilityAttribute; // we're _validating_ the attribute
 
-			var mutabilityResult = inspector.InspectType( symbol, context.Compilation, flags );
+			var mutabilityResult = inspector.InspectType( symbol, flags );
 
 			if( hasAuditedAttribute || hasUnauditedAttribute ) {
 				if( !mutabilityResult.IsMutable ) {
