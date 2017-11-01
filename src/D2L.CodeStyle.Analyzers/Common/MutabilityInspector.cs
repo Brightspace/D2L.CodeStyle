@@ -48,12 +48,12 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			[ "System.Tuple" ] = new[] { "Item1", "Item2", "Item3", "Item4", "Item5", "Item6" }
 		}.ToImmutableDictionary();
 
-		private readonly KnownImmutableTypes _knownImmutableTypes;
+		private readonly KnownImmutableTypes m_knownImmutableTypes;
 
 		internal MutabilityInspector(
 			KnownImmutableTypes knownImmutableTypes
 		) {
-			_knownImmutableTypes = knownImmutableTypes;
+			m_knownImmutableTypes = knownImmutableTypes;
 		}
 
 		/// <summary>
@@ -94,7 +94,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					+ "are referenced, including transitive dependencies." );
 			}
 
-			if( _knownImmutableTypes.IsTypeKnownImmutable( type ) ) {
+			if( m_knownImmutableTypes.IsTypeKnownImmutable( type ) ) {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
