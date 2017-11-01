@@ -2,6 +2,7 @@
 using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 
@@ -309,18 +310,57 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			); ;
 		}
 
+		private MutabilityInspectionResult InspectInitializer(
+			ExpressionSyntax expr,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			if ( expr.Kind() == SyntaxKind.NullLiteralExpression ) {
+				// This is perhaps a bit suspicious, because fields and
+				// properties have to be readonly, but it is safe...
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			var model = m_compilation.GetSemanticModel( expr.SyntaxTree );
+
+			// TODO: this type may get implicitly converted into an unsafe
+			// type. We should consider the type of the field and maybe look at
+			// the TypeInfo's .ConvertedType field to figure out when this is
+			// happening. The GitHub issue for this is:
+			// https://github.com/Brightspace/D2L.CodeStyle/issues/35
+			var exprType = model.GetTypeInfo( expr ).Type;
+
+			if ( expr is ObjectCreationExpressionSyntax ) {
+				// If our initializer is "new Foo( ... )" we only need to
+				// consider Foo concretely; not subtypes of Foo.
+				return InspectTypeRecursive(
+					exprType,
+					MutabilityInspectionFlags.AllowUnsealed,
+					typeStack
+				);
+			}
+
+			// In general we can use the initializers type in place of the
+			// field/properties type because it may be narrower.
+			return InspectTypeRecursive(
+				exprType,
+				MutabilityInspectionFlags.Default,
+				typeStack
+			);
+		}
+
 		private MutabilityInspectionResult InspectProperty(
 			IPropertySymbol property,
 			HashSet<ITypeSymbol> typeStack
 		) {
-			var propertySyntax = GetDeclarationSyntax<PropertyDeclarationSyntax>( property );
+			var propertySyntax =
+				GetDeclarationSyntax<PropertyDeclarationSyntax>( property );
 
 			// TODO: can we do this without the syntax; with only the symbol?
 			if( !propertySyntax.IsAutoImplemented() ) {
-				// Properties that are auto-implemented have an implicit backing
-				// field that may be mutable. Otherwise, properties are just sugar
-				// for getter/setter methods and don't themselves contribute to
-				// mutability.
+				// Properties that are auto-implemented have an implicit
+				// backing field that may be mutable. Otherwise, properties are
+				// just sugar for getter/setter methods and don't themselves
+				// contribute to mutability.
 				return MutabilityInspectionResult.NotMutable();
 			}
 
@@ -329,6 +369,13 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					property,
 					MutabilityCause.IsNotReadonly
 				);
+			}
+
+			if ( propertySyntax.Initializer != null ) {
+				return InspectInitializer(
+					propertySyntax.Initializer.Value,
+					typeStack
+				).WithPrefixedMember( property.Name );
 			}
 
 			return InspectTypeRecursive(
@@ -347,6 +394,16 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					field,
 					MutabilityCause.IsNotReadonly
 				);
+			}
+
+			var declSyntax =
+				GetDeclarationSyntax<VariableDeclaratorSyntax>( field );
+
+			if( declSyntax.Initializer != null ) {
+				return InspectInitializer(
+					declSyntax.Initializer.Value,
+					typeStack
+				).WithPrefixedMember( field.Name );
 			}
 
 			return InspectTypeRecursive(
