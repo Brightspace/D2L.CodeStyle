@@ -12,9 +12,29 @@ namespace D2L.CodeStyle.Annotations {
 	public static class Objects {
 		public sealed class Immutable : Attribute { }
 	}
+	public static class Mutability {
+		public sealed class AuditedAttribute : Attribute { }
+		public sealed class UnauditedAttribute : Attribute { }
+	}
 }
 
 namespace SpecTests {
+
+	class AnnotationsTests {
+		[Objects.Immutable]
+		interface IImmutable { }
+
+		class /* ImmutableClassIsnt('m_bad' is not read-only) */ ClassWithMutableStateFails /**/ : IImmutable {
+			private int m_bad;
+		}
+
+		class ClassWithAnnotatedMutableStateDoesntFail : IImmutable {
+			[Mutability.Audited]
+			private int m_unauditedBad;
+			[Mutability.Unaudited]
+			private int m_auditedBad;
+		}
+	}
 
 	class GenericsTests {
 
@@ -41,20 +61,5 @@ namespace SpecTests {
 			internal readonly T foo;
 		}
 
-	}
-
-	class SingletonsTests {
-		[Singleton]
-		interface ISingleton { }
-
-		// another analyzer would cause a build failure here
-		internal sealed class MutableSingleton : ISingleton {
-			private string m_state;
-		}
-
-		[Objects.Immutable]
-		internal sealed class SingletonFieldIsTreatedAsImmutable {
-			private readonly ISingleton m_singleton;
-		}
 	}
 }

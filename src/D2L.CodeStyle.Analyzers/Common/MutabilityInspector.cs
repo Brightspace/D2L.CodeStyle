@@ -4,7 +4,6 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
-using D2L.CodeStyle.Analyzers.Common;
 
 namespace D2L.CodeStyle.Analyzers.Common {
 
@@ -187,7 +186,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			HashSet<ITypeSymbol> typeStack
 		) {
 			// If we're verifying immutability, then carry on; otherwise, bailout
-			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && IsTypeMarkedImmutableOrSingleton( type ) ) {
+			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && IsTypeMarkedImmutable( type ) ) {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
@@ -389,6 +388,14 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			ISymbol symbol,
 			HashSet<ITypeSymbol> typeStack
 		) {
+			// if the member is audited or unaudited, ignore it
+			if( Attributes.Mutability.Audited.IsDefined( symbol ) ) {
+				return MutabilityInspectionResult.NotMutable();
+			}
+			if( Attributes.Mutability.Unaudited.IsDefined( symbol ) ) {
+				return MutabilityInspectionResult.NotMutable();
+			}
+
 			switch( symbol.Kind ) {
 				case SymbolKind.Property:
 					return InspectProperty(
@@ -437,16 +444,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return true;
 			}
 			if( symbol.BaseType != null && IsTypeMarkedSingleton( symbol.BaseType ) ) {
-				return true;
-			}
-			return false;
-		}
-
-		public bool IsTypeMarkedImmutableOrSingleton( ITypeSymbol symbol ) {
-			if( IsTypeMarkedImmutable( symbol ) ) {
-				return true;
-			}
-			if( IsTypeMarkedSingleton( symbol ) ) {
 				return true;
 			}
 			return false;
