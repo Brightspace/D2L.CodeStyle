@@ -37,7 +37,10 @@ namespace D2L.CodeStyle.Analyzers.DependencyRegistrations {
 		}
 
 		private void RegisterAnalysis( CompilationStartAnalysisContext context ) {
-			var inspector = new MutabilityInspector( new KnownImmutableTypes( context.Compilation.Assembly ) );
+			var inspector = new MutabilityInspector(
+				context.Compilation,
+				new KnownImmutableTypes( context.Compilation.Assembly )
+			);
 
 			DependencyRegistry dependencyRegistry;
 			if( !DependencyRegistry.TryCreateRegistry( context.Compilation, out dependencyRegistry ) ) {

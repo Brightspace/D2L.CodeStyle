@@ -47,12 +47,15 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			[ "System.Tuple" ] = new[] { "Item1", "Item2", "Item3", "Item4", "Item5", "Item6" }
 		}.ToImmutableDictionary();
 
-		private readonly KnownImmutableTypes _knownImmutableTypes;
+		private readonly KnownImmutableTypes m_knownImmutableTypes;
+		private readonly Compilation m_compilation;
 
 		internal MutabilityInspector(
+			Compilation compilation,
 			KnownImmutableTypes knownImmutableTypes
 		) {
-			_knownImmutableTypes = knownImmutableTypes;
+			m_compilation = compilation;
+			m_knownImmutableTypes = knownImmutableTypes;
 		}
 
 		/// <summary>
@@ -62,13 +65,11 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		/// <returns>Whether the type is mutable.</returns>
 		public MutabilityInspectionResult InspectType(
 			ITypeSymbol type,
-			Compilation compilation,
 			MutabilityInspectionFlags flags = MutabilityInspectionFlags.Default
 		) {
 			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
 			var result = InspectTypeRecursive( 
 				type, 
-				compilation, 
 				flags, 
 				typesInCurrentCycle
 			);
@@ -77,7 +78,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		private MutabilityInspectionResult InspectTypeRecursive(
 			ITypeSymbol type,
-			Compilation compilation,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
@@ -93,7 +93,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					+ "are referenced, including transitive dependencies." );
 			}
 
-			if( _knownImmutableTypes.IsTypeKnownImmutable( type ) ) {
+			if( m_knownImmutableTypes.IsTypeKnownImmutable( type ) ) {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
@@ -127,7 +127,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				case TypeKind.TypeParameter:
 					return InspectTypeParameter(
 						type,
-						compilation,
 						flags,
 						typeStack
 					);
@@ -137,7 +136,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				case TypeKind.Struct: // equivalent to TypeKind.Structure
 					return InspectClassStructOrInterface(
 						type,
-						compilation,
 						flags,
 						typeStack
 					);
@@ -165,7 +163,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		private MutabilityInspectionResult InspectBaseType(
 			ITypeSymbol type,
-			Compilation compilation,
 			HashSet<ITypeSymbol> typeStack
 		) {
 			if ( type.BaseType == null ) {
@@ -178,7 +175,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 			return InspectTypeRecursive(
 				type.BaseType,
-				compilation,
 				MutabilityInspectionFlags.AllowUnsealed,
 				typeStack
 			);
@@ -186,7 +182,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		private MutabilityInspectionResult InspectClassStructOrInterface(
 			ITypeSymbol type,
-			Compilation compilation,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
@@ -212,7 +207,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 						var result = InspectTypeRecursive(
 							arg,
-							compilation,
 							MutabilityInspectionFlags.Default,
 							typeStack
 						);
@@ -261,19 +255,19 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 				// We have a type that is not marked immutable, is not an interface, is not an immutable container, etc..
 				// If it is defined in a different assembly, we might not have the metadata to correctly analyze it; so we fail.
-				if( type.ContainingAssembly != compilation.Assembly ) {
+				if( type.ContainingAssembly != m_compilation.Assembly ) {
 					return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnExternalUnmarkedType );
 				}
 
 				foreach( ISymbol member in type.GetExplicitNonStaticMembers() ) {
-					var result = InspectMemberRecursive( member, compilation, typeStack );
+					var result = InspectMemberRecursive( member, typeStack );
 					if( result.IsMutable ) {
 						return result;
 					}
 				}
 
 				// We descend into the base class last
-				var baseResult = InspectBaseType( type, compilation, typeStack );
+				var baseResult = InspectBaseType( type, typeStack );
 				if ( baseResult.IsMutable ) {
 					return baseResult;
 				}
@@ -287,7 +281,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		private MutabilityInspectionResult InspectTypeParameter(
 			ITypeSymbol symbol,
-			Compilation compilation,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
@@ -300,7 +293,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 					var result = InspectTypeRecursive(
 						constraintType,
-						compilation,
 						flags,
 						typeStack
 					);
@@ -319,7 +311,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		private MutabilityInspectionResult InspectProperty(
 			IPropertySymbol property,
-			Compilation compilation,
 			HashSet<ITypeSymbol> typeStack
 		) {
 			var propertySyntax = GetDeclarationSyntax<PropertyDeclarationSyntax>( property );
@@ -342,7 +333,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 			return InspectTypeRecursive(
 				property.Type,
-				compilation,
 				MutabilityInspectionFlags.Default,
 				typeStack
 			).WithPrefixedMember( property.Name );
@@ -350,7 +340,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		private MutabilityInspectionResult InspectField(
 			IFieldSymbol field,
-			Compilation compilation,
 			HashSet<ITypeSymbol> typeStack
 		) {
 			if( !field.IsReadOnly ) {
@@ -362,7 +351,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 			return InspectTypeRecursive(
 				field.Type,
-				compilation,
 				MutabilityInspectionFlags.Default,
 				typeStack
 			).WithPrefixedMember( field.Name );
@@ -398,7 +386,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		private MutabilityInspectionResult InspectMemberRecursive(
 			ISymbol symbol,
-			Compilation compilation,
 			HashSet<ITypeSymbol> typeStack
 		) {
 			// if the member is audited or unaudited, ignore it
@@ -413,14 +400,12 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				case SymbolKind.Property:
 					return InspectProperty(
 						symbol as IPropertySymbol,
-						compilation,
 						typeStack
 					);
 
 				case SymbolKind.Field:
 					return InspectField(
 						symbol as IFieldSymbol, 
-						compilation,
 						typeStack
 					);
 

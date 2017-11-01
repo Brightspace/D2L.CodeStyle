@@ -20,7 +20,10 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 		}
 
 		private void RegisterAnalysis( CompilationStartAnalysisContext context ) {
-			var inspector = new MutabilityInspector( new KnownImmutableTypes( context.Compilation.Assembly ) );
+			var inspector = new MutabilityInspector(
+				context.Compilation,
+				new KnownImmutableTypes( context.Compilation.Assembly )
+			);
 
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeClass( ctx, inspector ),

@@ -36,7 +36,10 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 		}
 
 		private void RegisterAnalysis( CompilationStartAnalysisContext context ) {
-			var inspector = new MutabilityInspector( new KnownImmutableTypes( context.Compilation.Assembly ) );
+			var inspector = new MutabilityInspector(
+				context.Compilation,
+				new KnownImmutableTypes( context.Compilation.Assembly )
+			);
 
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeField( ctx, inspector ),
@@ -319,7 +322,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				flags |= MutabilityInspectionFlags.AllowUnsealed;
 			}
 
-			var result = inspector.InspectType( fieldOrPropertyType, model.Compilation, flags );
+			var result = inspector.InspectType( fieldOrPropertyType, flags );
 			if ( result.IsMutable ) {
 				result = result.WithPrefixedMember( fieldOrPropertyName );
 				yield return CreateDiagnostic( 
