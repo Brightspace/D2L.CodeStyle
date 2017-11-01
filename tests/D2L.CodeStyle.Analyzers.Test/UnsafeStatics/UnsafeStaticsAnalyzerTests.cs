@@ -751,18 +751,13 @@ namespace D2L.CodeStyle.Annotations {
 				public readonly Bar Bar; // Bar is not sealed, so this is not immutable
 			}
 
-			internal class Bar {
+			internal sealed class Bar {
 				public readonly Foo Foo;
 			}
 		}
 	}";
 
-            AssertSingleDiagnostic( s_preamble + test, 18, 32, "foo", MutabilityInspectionResult.Mutable(
-                mutableMemberPath: "foo.Bar",
-                membersTypeName: "test.Tests.Bar",
-                kind: MutabilityTarget.Type,
-                cause: MutabilityCause.IsNotSealed
-            ) );
+			AssertNoDiagnostic( s_preamble + test );
 		}
 
 		[Test]
