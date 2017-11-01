@@ -401,6 +401,14 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			Compilation compilation,
 			HashSet<ITypeSymbol> typeStack
 		) {
+			// if the member is audited or unaudited, ignore it
+			if( Attributes.Mutability.Audited.IsDefined( symbol ) ) {
+				return MutabilityInspectionResult.NotMutable();
+			}
+			if( Attributes.Mutability.Unaudited.IsDefined( symbol ) ) {
+				return MutabilityInspectionResult.NotMutable();
+			}
+
 			switch( symbol.Kind ) {
 				case SymbolKind.Property:
 					return InspectProperty(

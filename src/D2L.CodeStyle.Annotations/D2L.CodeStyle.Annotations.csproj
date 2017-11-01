@@ -32,9 +32,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Contract\NotNullAttribute.cs" />
+    <Compile Include="Mutability\UnauditedAttribute.cs" />
     <Compile Include="Objects\Immutable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Because.cs" />
+    <Compile Include="Mutability\AuditedAttribute.cs" />
     <Compile Include="UndiffBucket.cs" />
     <Compile Include="Types\Audited.cs" />
     <Compile Include="Statics\Audited.cs" />
