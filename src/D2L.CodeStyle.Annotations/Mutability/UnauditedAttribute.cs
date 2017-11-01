@@ -14,7 +14,7 @@ namespace D2L.CodeStyle.Annotations {
 			}
 
 			public UnauditedAttribute( Because why, UndiffBucket bucket ) {
-				if ( why != Because.ItsStickyDataOhNooo ) {
+				if( why != Because.ItsStickyDataOhNooo ) {
 					throw new ArgumentException( "UndiffBucket is only meaningful for Because.ItsStickyDataOhNooo", nameof( bucket ) );
 				}
 				m_cuz = why;
