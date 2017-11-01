@@ -748,16 +748,21 @@ namespace D2L.CodeStyle.Annotations {
 			private readonly static Foo foo = new Foo();
 
 			internal sealed class Foo {
-				public readonly Bar Bar = null; // this makes Foo analyze as safe because null is harmless
+				public readonly Bar Bar; // Bar is not sealed, so this is not immutable
 			}
 
 			internal class Bar {
-				public readonly Foo Foo = new Foo();
+				public readonly Foo Foo;
 			}
 		}
 	}";
 
-			AssertNoDiagnostic( s_preamble + test );
+            AssertSingleDiagnostic( s_preamble + test, 18, 32, "foo", MutabilityInspectionResult.Mutable(
+                mutableMemberPath: "foo.Bar",
+                membersTypeName: "test.Tests.Bar",
+                kind: MutabilityTarget.Type,
+                cause: MutabilityCause.IsNotSealed
+            ) );
 		}
 
 		[Test]
