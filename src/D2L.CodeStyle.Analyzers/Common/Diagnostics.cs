@@ -131,5 +131,15 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			isEnabledByDefault: true,
 			description: "Classes marked as singleton or that implement interfaces marked as a singleton should be marked immutable."
 		);
+
+		public static readonly DiagnosticDescriptor SingletonLocatorMisuse = new DiagnosticDescriptor(
+			id: "D2L0017",
+			title: "Can only use OldAndBrokenSingletonLocator to inject interfaces with the [Singleton] attribute",
+			messageFormat: "Cannot use OldAndBrokenSingletonLocator to inject {0} because it lacks the [Singleton] attribute",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Can only use OldAndBrokenSingletonLocator to inject interfaces with the [Singleton] attribute"
+		);
 	}
 }
