@@ -23,8 +23,7 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 
 			// If this type lookup failed then OldAndBrokenSingletonLocator
 			// cannot resolve and we don't need to register our analyzer.
-
-			if( locatorType == null || locatorType.Kind == SymbolKind.ErrorType ) {
+			if( locatorType.IsNullOrErrorType() ) {
 				return;
 			}
 

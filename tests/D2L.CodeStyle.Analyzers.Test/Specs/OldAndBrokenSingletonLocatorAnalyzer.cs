@@ -3,6 +3,7 @@
 using System;
 using D2L.CodeStyle.Analyzers.ServiceLocator;
 using D2L.LP.Extensibility.Activation.Domain;
+using static D2L.LP.Extensibility.Activation.Domain.OldAndBrokenSingletonLocator;
 
 namespace D2L.LP.Extensibility.Activation.Domain {
 	public static class OldAndBrokenSingletonLocator {
@@ -18,7 +19,9 @@ namespace SingletonSpecTests {
 	[Singleton]
 	public interface IMarkedSingleton { }
 
-	public interface INotMarkedSingleton { }
+	public interface INotMarkedSingleton {
+		internal void SomeOtherMethod() { }
+	}
 
 	public sealed class BadClass {
 
@@ -34,6 +37,14 @@ namespace SingletonSpecTests {
 
 		public void UsesOtherMethodOnLocator() {
 			string harmless = OldAndBrokenSingletonLocator.ToString();
+		}
+
+		public void UnmarkedLocatorInChain() {
+			/* SingletonLocatorMisuse(SingletonSpecTests.INotMarkedSingleton) */ OldAndBrokenSingletonLocator.Get<INotMarkedSingleton>() /**/ .SomeOtherMethod();
+		}
+
+		public void UsingStatic() {
+			/* SingletonLocatorMisuse(SingletonSpecTests.INotMarkedSingleton) */ Get<INotMarkedSingleton>() /**/;
 		}
 	}
 }
