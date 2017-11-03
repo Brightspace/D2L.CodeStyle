@@ -83,6 +83,7 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 			"D2L",
 			"D2L.AP.S3.SISImporter",
 			"D2L.Awards",
+			"D2L.Core.Cache.CacheServiceImplementation",
 			"D2L.Core.JobManagement",
 			"D2L.Core.Metadata",
 			"D2L.Core.ReleaseConditions",
