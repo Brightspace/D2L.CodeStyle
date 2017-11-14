@@ -4,7 +4,7 @@
 namespace D2L.CodeStyle.Annotations {
 	public static partial class Mutability {
 		[Obsolete( "State marked as unaudited requires auditing. Only use this attribute as a temporary measure in assemblies." )]
-		[AttributeUsage( validOn: AttributeTargets.Field | AttributeTargets.Property )]
+		[AttributeUsage( validOn: AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Event )]
 		public sealed class UnauditedAttribute : Attribute {
 			public readonly Because m_cuz;
 			public readonly UndiffBucket m_bucket;

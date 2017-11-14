@@ -6,7 +6,7 @@ namespace D2L.CodeStyle.Annotations {
 		/// <summary>
 		/// Indicates some mutable state is safe in an otherwise immutable type
 		/// </summary>
-		[AttributeUsage( validOn: AttributeTargets.Field | AttributeTargets.Property )]
+		[AttributeUsage( validOn: AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Event )]
 		public sealed class AuditedAttribute : Attribute {
 			/// <summary>
 			/// Mark some mutable state as safe in an otherwise immutable type
