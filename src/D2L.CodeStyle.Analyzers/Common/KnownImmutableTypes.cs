@@ -45,7 +45,9 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			"System.String",
 			"System.Version",
 			"System.Workflow.ComponentModel.DependencyProperty",
-			"System.Xml.Serialization.XmlSerializer"
+			"System.Xml.Serialization.XmlSerializer",
+			"System.Xml.Linq.XName",
+			"System.Xml.Linq.XNamespace"
 		}.ToImmutableHashSet();
 
 		/// <summary>
