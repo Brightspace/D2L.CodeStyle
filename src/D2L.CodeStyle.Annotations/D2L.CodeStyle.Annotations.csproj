@@ -32,6 +32,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Contract\NotNullAttribute.cs" />
+    <Compile Include="DangerousMethodUsage\UnauditedAttribute.cs" />
+    <Compile Include="DangerousMethodUsage\AuditedAttribute.cs" />
     <Compile Include="Mutability\UnauditedAttribute.cs" />
     <Compile Include="Objects\Immutable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
