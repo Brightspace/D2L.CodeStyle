@@ -322,12 +322,12 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 			var model = m_compilation.GetSemanticModel( expr.SyntaxTree );
 
-			// TODO: this type may get implicitly converted into an unsafe
-			// type. We should consider the type of the field and maybe look at
-			// the TypeInfo's .ConvertedType field to figure out when this is
-			// happening. The GitHub issue for this is:
-			// https://github.com/Brightspace/D2L.CodeStyle/issues/35
-			var exprType = model.GetTypeInfo( expr ).Type;
+			var typeInfo = model.GetTypeInfo( expr );
+
+			// Type can be null in the case of an implicit conversion where
+			// the expression alone doesn't have a type. For example:
+			//   int[] foo = { 1, 2, 3 };
+			var exprType = typeInfo.Type ?? typeInfo.ConvertedType;
 
 			if ( expr is ObjectCreationExpressionSyntax ) {
 				// If our initializer is "new Foo( ... )" we only need to

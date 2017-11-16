@@ -112,6 +112,14 @@ namespace SpecTests {
 
 		private static readonly ConcretelySafeIfYouLookAtInitializers m_concretelySafeIfYouLookAtInitializers
 			= new ConcretelySafeIfYouLookAtInitializers();
+
+		private class ClassWithTypelessInitializerExpression {
+			private readonly int[] m_typelessExpression = { 1, 2, 3 };
+		}
+
+		[Statics.Unaudited( Because.ItsStickyDataOhNooo )]
+		private static readonly ClassWithTypelessInitializerExpression m_unsafeClassWithTypelessInitializerExpression
+			= new ClassWithTypelessInitializerExpression();
 	}
 
 	public class MutableBaseClass {
