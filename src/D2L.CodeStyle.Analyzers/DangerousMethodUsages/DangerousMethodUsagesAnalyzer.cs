@@ -58,7 +58,8 @@ namespace D2L.CodeStyle.Analyzers.DangerousMethodUsages {
 				IImmutableSet<ISymbol> dangerousMethods
 			) {
 
-			if( context.Node is InvocationExpressionSyntax invocation ) {
+			InvocationExpressionSyntax invocation = ( context.Node as InvocationExpressionSyntax );
+			if( invocation != null ) {
 				AnalyzeInnovation( context, invocation, auditedAttributeType, unauditedAttributeType, dangerousMethods );
 			}
 		}
@@ -124,7 +125,7 @@ namespace D2L.CodeStyle.Analyzers.DangerousMethodUsages {
 			if( nameArg.Value == null ) {
 				return false;
 			}
-			if( !methodSymbol.Name.Equals( nameArg.Value )) {
+			if( !methodSymbol.Name.Equals( nameArg.Value ) ) {
 				return false;
 			}
 
