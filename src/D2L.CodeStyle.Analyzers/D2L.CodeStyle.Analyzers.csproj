@@ -70,6 +70,7 @@
     <Compile Include="Common\Mutability\WrappedSemanticModel.cs" />
     <Compile Include="Common\TypeSymbolExtensions.cs" />
     <Compile Include="Contract\NotNullAnalyzer.cs" />
+    <Compile Include="DangerousMethodUsages\DangerousMethodUsagesAnalyzer.cs" />
     <Compile Include="DependencyRegistrations\DependencyRegistrationsAnalyzer.cs" />
     <Compile Include="Extensions\Microsoft.CodeAnalysis.CSharp.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzer.cs" />

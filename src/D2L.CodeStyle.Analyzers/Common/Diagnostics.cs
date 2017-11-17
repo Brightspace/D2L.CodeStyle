@@ -141,5 +141,15 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			isEnabledByDefault: true,
 			description: "Can only use OldAndBrokenSingletonLocator to inject interfaces with the [Singleton] attribute"
 		);
+
+		public static readonly DiagnosticDescriptor DangerousMethodsShouldBeAvoided = new DiagnosticDescriptor(
+			id: "D2L0018",
+			title: "Avoid using dangerous methods",
+			messageFormat: "Should not use {0} because it's considered dangerous",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Avoid using of dangerous methods"
+		);
 	}
 }
