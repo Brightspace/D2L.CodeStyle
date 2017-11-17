@@ -61,5 +61,11 @@ namespace SpecTests {
 			internal readonly T foo;
 		}
 
+		[Objects.Immutable]
+		class IndexerPropertyClass {
+			object this[ int index ] {
+				get { return null; }
+			}
+		}
 	}
 }

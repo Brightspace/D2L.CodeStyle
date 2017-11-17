@@ -352,6 +352,12 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			IPropertySymbol property,
 			HashSet<ITypeSymbol> typeStack
 		) {
+
+			if( property.IsIndexer ) {
+				// Indexer properties are just glorified method syntax and dont' hold state
+				return MutabilityInspectionResult.NotMutable();
+			}
+
 			var propertySyntax =
 				GetDeclarationSyntax<PropertyDeclarationSyntax>( property );
 
@@ -429,12 +435,19 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				);
 			}
 
-			var decl = decls[ 0 ].GetSyntax() as T;
+			SyntaxNode syntax = decls[ 0 ].GetSyntax();
 
+			var decl = syntax as T;
 			if( decl == null ) {
-				throw new InvalidOperationException(
-					"Couldn't cast declaration syntax"
-				);
+
+				string msg = String.Format(
+						"Couldn't cast declaration syntax of type '{0}' as type '{1}': {2}",
+						syntax.GetType().FullName,
+						typeof( T ).FullName,
+						symbol.ToDisplayString()
+					);
+
+				throw new InvalidOperationException( msg );
 			}
 
 			return decl;
