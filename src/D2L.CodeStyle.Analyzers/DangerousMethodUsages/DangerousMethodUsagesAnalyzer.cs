@@ -43,7 +43,7 @@ namespace D2L.CodeStyle.Analyzers.DangerousMethodUsages {
 			Compilation compilation = context.Compilation;
 			INamedTypeSymbol auditedAttributeType = compilation.GetTypeByMetadataName( AuditedAttributeFullName );
 			INamedTypeSymbol unauditedAttributeType = compilation.GetTypeByMetadataName( UnauditedAttributeFullName );
-			IImmutableSet<ISymbol> dangerousMethods = GetDangerousMethods( compilation ).ToImmutableHashSet();
+			IImmutableSet<ISymbol> dangerousMethods = GetDangerousMethods( compilation );
 
 			context.RegisterSyntaxNodeAction(
 					ctxt => AnalyzeMethod( ctxt, auditedAttributeType, unauditedAttributeType, dangerousMethods ),
@@ -156,7 +156,9 @@ namespace D2L.CodeStyle.Analyzers.DangerousMethodUsages {
 				typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
 			);
 
-		private static IEnumerable<ISymbol> GetDangerousMethods( Compilation compilation ) {
+		private static IImmutableSet<ISymbol> GetDangerousMethods( Compilation compilation ) {
+
+			ImmutableHashSet<ISymbol>.Builder builder = ImmutableHashSet.CreateBuilder<ISymbol>();
 
 			foreach( KeyValuePair<string, ImmutableArray<string>> pairs in DangerousMethods ) {
 
@@ -173,11 +175,13 @@ namespace D2L.CodeStyle.Analyzers.DangerousMethodUsages {
 							) );
 
 						foreach( ISymbol method in methods ) {
-							yield return method;
+							builder.Add( method );
 						}
 					}
 				}
 			}
+
+			return builder.ToImmutableHashSet();
 		}
 	}
 }
