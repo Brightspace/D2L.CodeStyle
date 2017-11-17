@@ -352,6 +352,12 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			IPropertySymbol property,
 			HashSet<ITypeSymbol> typeStack
 		) {
+
+			if( property.IsIndexer ) {
+				// Indexer properties are just glorified method syntax and dont' hold state
+				return MutabilityInspectionResult.NotMutable();
+			}
+
 			var propertySyntax =
 				GetDeclarationSyntax<PropertyDeclarationSyntax>( property );
 
@@ -461,14 +467,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 			switch( symbol.Kind ) {
 				case SymbolKind.Property:
-
-					IPropertySymbol property = symbol as IPropertySymbol;
-					if( property.IsIndexer ) {
-						return MutabilityInspectionResult.NotMutable();
-					}
-
 					return InspectProperty(
-						property,
+						symbol as IPropertySymbol,
 						typeStack
 					);
 
