@@ -429,12 +429,19 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				);
 			}
 
-			var decl = decls[ 0 ].GetSyntax() as T;
+			SyntaxNode syntax = decls[ 0 ].GetSyntax();
 
+			var decl = syntax as T;
 			if( decl == null ) {
-				throw new InvalidOperationException(
-					"Couldn't cast declaration syntax"
-				);
+
+				string msg = String.Format(
+						"Couldn't cast declaration syntax of type '{0}' as type '{1}': {2}",
+						syntax.GetType().FullName,
+						typeof( T ).FullName,
+						symbol.ToDisplayString()
+					);
+
+				throw new InvalidOperationException( msg );
 			}
 
 			return decl;
@@ -454,8 +461,14 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 			switch( symbol.Kind ) {
 				case SymbolKind.Property:
+
+					IPropertySymbol property = symbol as IPropertySymbol;
+					if( property.IsIndexer ) {
+						return MutabilityInspectionResult.NotMutable();
+					}
+
 					return InspectProperty(
-						symbol as IPropertySymbol,
+						property,
 						typeStack
 					);
 
