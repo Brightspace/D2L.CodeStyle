@@ -72,9 +72,10 @@ namespace D2L.CodeStyle.Analyzers.DangerousMethodUsages {
 				IImmutableSet<ISymbol> dangerousMethods
 			) {
 
-			SemanticModel model = context.Compilation.GetSemanticModel( invocation.SyntaxTree );
+			ISymbol methodSymbol = context.SemanticModel
+				.GetSymbolInfo( invocation.Expression )
+				.Symbol;
 
-			ISymbol methodSymbol = model.GetSymbolInfo( invocation.Expression ).Symbol;
 			if( methodSymbol == null ) {
 				return;
 			}
