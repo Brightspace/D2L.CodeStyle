@@ -69,9 +69,9 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			MutabilityInspectionFlags flags = MutabilityInspectionFlags.Default
 		) {
 			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
-			var result = InspectTypeRecursive( 
-				type, 
-				flags, 
+			var result = InspectTypeRecursive(
+				type,
+				flags,
 				typesInCurrentCycle
 			);
 			return result;
@@ -166,11 +166,11 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			ITypeSymbol type,
 			HashSet<ITypeSymbol> typeStack
 		) {
-			if ( type.BaseType == null ) {
+			if( type.BaseType == null ) {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
-			if ( type.BaseType is IErrorTypeSymbol ) {
+			if( type.BaseType is IErrorTypeSymbol ) {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
@@ -217,7 +217,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 								// modify the result to prefix with container member.
 								var prefix = ImmutableContainerTypes[ type.GetFullTypeName() ];
-								result = result.WithPrefixedMember( prefix[i] );
+								result = result.WithPrefixedMember( prefix[ i ] );
 
 							} else {
 
@@ -250,7 +250,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				}
 
 				// System.ValueType is the base class of all value types (obscure detail)
-				if ( flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed ) && type.SpecialType == SpecialType.System_ValueType ) {
+				if( flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed ) && type.SpecialType == SpecialType.System_ValueType ) {
 					return MutabilityInspectionResult.NotMutable();
 				}
 
@@ -269,7 +269,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 				// We descend into the base class last
 				var baseResult = InspectBaseType( type, typeStack );
-				if ( baseResult.IsMutable ) {
+				if( baseResult.IsMutable ) {
 					return baseResult;
 				}
 
@@ -287,7 +287,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		) {
 			var typeParameter = symbol as ITypeParameterSymbol;
 
-			if( typeParameter.ConstraintTypes != null  || typeParameter.ConstraintTypes.Length > 0 ) {
+			if( typeParameter.ConstraintTypes != null || typeParameter.ConstraintTypes.Length > 0 ) {
 				// there are constraints we can check. as type constraints are unionized, we only need one 
 				// type constraint to be immutable to succeed
 				foreach( var constraintType in typeParameter.ConstraintTypes ) {
@@ -314,7 +314,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			ExpressionSyntax expr,
 			HashSet<ITypeSymbol> typeStack
 		) {
-			if ( expr.Kind() == SyntaxKind.NullLiteralExpression ) {
+			if( expr.Kind() == SyntaxKind.NullLiteralExpression ) {
 				// This is perhaps a bit suspicious, because fields and
 				// properties have to be readonly, but it is safe...
 				return MutabilityInspectionResult.NotMutable();
@@ -329,7 +329,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			//   int[] foo = { 1, 2, 3 };
 			var exprType = typeInfo.Type ?? typeInfo.ConvertedType;
 
-			if ( expr is ObjectCreationExpressionSyntax ) {
+			if( expr is ObjectCreationExpressionSyntax ) {
 				// If our initializer is "new Foo( ... )" we only need to
 				// consider Foo concretely; not subtypes of Foo.
 				return InspectTypeRecursive(
@@ -371,7 +371,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				);
 			}
 
-			if ( propertySyntax.Initializer != null ) {
+			if( propertySyntax.Initializer != null ) {
 				return InspectInitializer(
 					propertySyntax.Initializer.Value,
 					typeStack
@@ -419,20 +419,19 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		/// declaration nodes.
 		/// </summary>
 		private static T GetDeclarationSyntax<T>( ISymbol symbol )
-			where T: SyntaxNode
-		{
+			where T : SyntaxNode {
 			var decls = symbol.DeclaringSyntaxReferences;
 
-			if ( decls.Length != 1 ) {
+			if( decls.Length != 1 ) {
 				throw new NotImplementedException(
 					"Unexepected number of decls: "
 					+ decls.Length
 				);
 			}
 
-			var decl = decls[0].GetSyntax() as T;
+			var decl = decls[ 0 ].GetSyntax() as T;
 
-			if ( decl == null ) {
+			if( decl == null ) {
 				throw new InvalidOperationException(
 					"Couldn't cast declaration syntax"
 				);
@@ -462,7 +461,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 				case SymbolKind.Field:
 					return InspectField(
-						symbol as IFieldSymbol, 
+						symbol as IFieldSymbol,
 						typeStack
 					);
 
