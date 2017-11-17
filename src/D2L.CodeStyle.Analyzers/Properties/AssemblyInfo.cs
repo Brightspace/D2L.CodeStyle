@@ -12,7 +12,7 @@ using System.Runtime.InteropServices;
 
 [assembly: AssemblyVersion( "0.38.0.0" )]
 [assembly: AssemblyFileVersion( "0.38.0.0" )]
-[assembly: AssemblyInformationalVersion( "0.38.0.0-alpha1" )]
+[assembly: AssemblyInformationalVersion( "0.38.0.0" )]
 
 [assembly: InternalsVisibleTo( "D2L.CodeStyle.Analyzers.Tests" )]
 [assembly: InternalsVisibleTo( "DynamicProxyGenAssembly2" )]
