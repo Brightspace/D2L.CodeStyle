@@ -4,6 +4,7 @@ pull_requests:
 skip_tags: true
 clone_depth: 5
 nuget:
+  account_feed: true
   project_feed: true
 before_build:
   - nuget restore
