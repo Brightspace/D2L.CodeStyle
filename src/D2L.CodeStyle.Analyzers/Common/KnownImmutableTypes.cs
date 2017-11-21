@@ -21,6 +21,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			"count4net.IRateCounter",
 			"count4net.IStatCounter",
 			"count4net.IValueCounter",
+			"count4net.IDurationCounter",
 			"count4net.Writers.DurationCounter",
 			"log4net.ILog",
 			"Newtonsoft.Json.JsonSerializer",
