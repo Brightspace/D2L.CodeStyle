@@ -126,9 +126,13 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					return MutabilityInspectionResult.NotMutable();
 
 				case TypeKind.TypeParameter:
+					if ( flags != MutabilityInspectionFlags.Default ) {
+						// remove this once we no longer take flags
+						throw new InvalidOperationException( "This shouldn't happen" );
+					}
+
 					return InspectTypeParameter(
 						type,
-						flags,
 						typeStack
 					);
 
@@ -282,7 +286,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		private MutabilityInspectionResult InspectTypeParameter(
 			ITypeSymbol symbol,
-			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
 			var typeParameter = symbol as ITypeParameterSymbol;
@@ -294,7 +297,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 					var result = InspectTypeRecursive(
 						constraintType,
-						flags,
+						MutabilityInspectionFlags.Default,
 						typeStack
 					);
 
@@ -307,7 +310,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			return MutabilityInspectionResult.MutableType(
 				symbol,
 				MutabilityCause.IsAGenericType
-			); ;
+			);
 		}
 
 		private MutabilityInspectionResult InspectInitializer(
