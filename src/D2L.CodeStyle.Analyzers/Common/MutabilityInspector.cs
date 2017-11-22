@@ -94,6 +94,23 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					+ "are referenced, including transitive dependencies." );
 			}
 
+			// If we're verifying immutability, then carry on; otherwise, bailout
+			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && IsTypeMarkedImmutable( type ) ) {
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			// System.Object is safe if we can allow unsealed types (i.e., the type is the concrete type). 
+			// For example, `private readonly object m_lock = new object();` is fine. 
+			// There is no state, so we finish early.
+			if( flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed ) && type.SpecialType == SpecialType.System_Object ) {
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			// System.ValueType is the base class of all value types (obscure detail)
+			if( flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed ) && type.SpecialType == SpecialType.System_ValueType ) {
+				return MutabilityInspectionResult.NotMutable();
+			}
+
 			if( m_knownImmutableTypes.IsTypeKnownImmutable( type ) ) {
 				return MutabilityInspectionResult.NotMutable();
 			}
@@ -186,11 +203,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
-			// If we're verifying immutability, then carry on; otherwise, bailout
-			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && IsTypeMarkedImmutable( type ) ) {
-				return MutabilityInspectionResult.NotMutable();
-			}
-
 			if( typeStack.Contains( type ) ) {
 				// We have a cycle. If we're here, it means that either some read-only member causes the cycle (via IsMemberMutableRecursive), 
 				// or a generic parameter to a type causes the cycle (via IsTypeMutableRecursive). This is safe if the checks above have 
@@ -240,18 +252,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 						&& !type.IsSealed
 					) {
 					return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsNotSealed );
-				}
-
-				// System.Object is safe if we can allow unsealed types (i.e., the type is the concrete type). 
-				// For example, `private readonly object m_lock = new object();` is fine. 
-				// There is no state, so we finish early.
-				if( flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed ) && type.SpecialType == SpecialType.System_Object ) {
-					return MutabilityInspectionResult.NotMutable();
-				}
-
-				// System.ValueType is the base class of all value types (obscure detail)
-				if( flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed ) && type.SpecialType == SpecialType.System_ValueType ) {
-					return MutabilityInspectionResult.NotMutable();
 				}
 
 				// We have a type that is not marked immutable, is not an interface, is not an immutable container, etc..
