@@ -120,6 +120,9 @@ namespace SpecTests {
 		[Statics.Unaudited( Because.ItsStickyDataOhNooo )]
 		private static readonly ClassWithTypelessInitializerExpression m_unsafeClassWithTypelessInitializerExpression
 			= new ClassWithTypelessInitializerExpression();
+
+		// Tuple's are a blessed "container" type
+		private static readonly Tuple<int, string> m_aTuple;
 	}
 
 	public class MutableBaseClass {
