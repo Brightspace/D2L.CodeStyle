@@ -67,5 +67,17 @@ namespace SpecTests {
 				get { return null; }
 			}
 		}
+
+		#region Infinite recursion with type parameters in the loop
+		[Objects.Immutable]
+		interface IGenericInterface<T> {
+			T Tee { get; }
+		}
+
+		[Objects.Immutable]
+		class ClassWhichHoldsARecursiveGenericType {
+			readonly IGenericInterface<ClassWhichHoldsARecursiveGenericType> r;
+		}
+		#endregion
 	}
 }
