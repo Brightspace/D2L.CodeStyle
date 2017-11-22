@@ -226,14 +226,14 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
+			// We have a type that is not marked immutable, is not an interface, is not an immutable container, etc..
+			// If it is defined in a different assembly, we might not have the metadata to correctly analyze it; so we fail.
+			if( type.ContainingAssembly != m_compilation.Assembly ) {
+				return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnExternalUnmarkedType );
+			}
+
 			typeStack.Add( type );
 			try {
-				// We have a type that is not marked immutable, is not an interface, is not an immutable container, etc..
-				// If it is defined in a different assembly, we might not have the metadata to correctly analyze it; so we fail.
-				if( type.ContainingAssembly != m_compilation.Assembly ) {
-					return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnExternalUnmarkedType );
-				}
-
 				foreach( ISymbol member in type.GetExplicitNonStaticMembers() ) {
 					var result = InspectMemberRecursive( member, typeStack );
 					if( result.IsMutable ) {
@@ -246,12 +246,11 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				if( baseResult.IsMutable ) {
 					return baseResult;
 				}
-
-				return MutabilityInspectionResult.NotMutable();
-
 			} finally {
 				typeStack.Remove( type );
 			}
+
+			return MutabilityInspectionResult.NotMutable();
 		}
 
 		private bool IsAnImmutableContainerType( ITypeSymbol type ) {
