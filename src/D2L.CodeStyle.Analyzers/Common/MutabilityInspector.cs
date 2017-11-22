@@ -119,6 +119,13 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return InspectImmutableContainerType( type, typeStack );
 			}
 
+			if( !flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed )
+					&& type.TypeKind == TypeKind.Class
+					&& !type.IsSealed
+				) {
+				return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsNotSealed );
+			}
+
 			switch( type.TypeKind ) {
 				case TypeKind.Array:
 					// Arrays are always mutable because you can rebind the
@@ -164,7 +171,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				case TypeKind.Struct: // equivalent to TypeKind.Structure
 					return InspectClassOrStruct(
 						type,
-						flags,
 						typeStack
 					);
 
@@ -210,7 +216,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		private MutabilityInspectionResult InspectClassOrStruct(
 			ITypeSymbol type,
-			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
 			if( typeStack.Contains( type ) ) {
@@ -223,13 +228,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 			typeStack.Add( type );
 			try {
-				if( !flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed )
-						&& type.TypeKind == TypeKind.Class
-						&& !type.IsSealed
-					) {
-					return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsNotSealed );
-				}
-
 				// We have a type that is not marked immutable, is not an interface, is not an immutable container, etc..
 				// If it is defined in a different assembly, we might not have the metadata to correctly analyze it; so we fail.
 				if( type.ContainingAssembly != m_compilation.Assembly ) {
