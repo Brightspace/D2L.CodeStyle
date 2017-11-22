@@ -157,10 +157,12 @@ namespace D2L.CodeStyle.Analyzers.Common {
 						typeStack
 					);
 
-				case TypeKind.Class:
 				case TypeKind.Interface:
+					return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnInterface );
+
+				case TypeKind.Class:
 				case TypeKind.Struct: // equivalent to TypeKind.Structure
-					return InspectClassStructOrInterface(
+					return InspectClassOrStruct(
 						type,
 						flags,
 						typeStack
@@ -206,7 +208,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			);
 		}
 
-		private MutabilityInspectionResult InspectClassStructOrInterface(
+		private MutabilityInspectionResult InspectClassOrStruct(
 			ITypeSymbol type,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
@@ -221,10 +223,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 			typeStack.Add( type );
 			try {
-				if( type.TypeKind == TypeKind.Interface ) {
-					return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnInterface );
-				}
-
 				if( !flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed )
 						&& type.TypeKind == TypeKind.Class
 						&& !type.IsSealed
