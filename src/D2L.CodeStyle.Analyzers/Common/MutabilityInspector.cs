@@ -115,6 +115,10 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
+			if( IsAnImmutableContainerType( type ) ) {
+				return InspectImmutableContainerType( type, typeStack );
+			}
+
 			switch( type.TypeKind ) {
 				case TypeKind.Array:
 					// Arrays are always mutable because you can rebind the
@@ -217,10 +221,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 			typeStack.Add( type );
 			try {
-				if( IsAnImmutableContainerType( type ) ) {
-					return InspectImmutableContainerType( type, typeStack );
-				}
-
 				if( type.TypeKind == TypeKind.Interface ) {
 					return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnInterface );
 				}
