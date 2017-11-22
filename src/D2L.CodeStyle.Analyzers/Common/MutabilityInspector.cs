@@ -217,34 +217,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 			typeStack.Add( type );
 			try {
-				if( ImmutableContainerTypes.ContainsKey( type.GetFullTypeName() ) ) {
-					var namedType = type as INamedTypeSymbol;
-					for( int i = 0; i < namedType.TypeArguments.Length; i++ ) {
-						var arg = namedType.TypeArguments[ i ];
-
-						var result = InspectTypeRecursive(
-							arg,
-							MutabilityInspectionFlags.Default,
-							typeStack
-						);
-
-						if( result.IsMutable ) {
-							if( result.Target == MutabilityTarget.Member ) {
-
-								// modify the result to prefix with container member.
-								var prefix = ImmutableContainerTypes[ type.GetFullTypeName() ];
-								result = result.WithPrefixedMember( prefix[ i ] );
-
-							} else {
-
-								// modify the result to target the type argument if the target is not a member
-								result = result.WithTarget( MutabilityTarget.TypeArgument );
-
-							}
-							return result;
-						}
-					}
-					return MutabilityInspectionResult.NotMutable();
+				if( IsAnImmutableContainerType( type ) ) {
+					return InspectImmutableContainerType( type, typeStack );
 				}
 
 				if( type.TypeKind == TypeKind.Interface ) {
@@ -282,6 +256,44 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			} finally {
 				typeStack.Remove( type );
 			}
+		}
+
+		private bool IsAnImmutableContainerType( ITypeSymbol type ) {
+			return ImmutableContainerTypes.ContainsKey( type.GetFullTypeName() );
+		}
+
+		private MutabilityInspectionResult InspectImmutableContainerType(
+			ITypeSymbol type,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			var namedType = type as INamedTypeSymbol;
+
+			for( int i = 0; i < namedType.TypeArguments.Length; i++ ) {
+				var arg = namedType.TypeArguments[ i ];
+
+				var result = InspectTypeRecursive(
+					arg,
+					MutabilityInspectionFlags.Default,
+					typeStack
+				);
+
+				if( result.IsMutable ) {
+					if( result.Target == MutabilityTarget.Member ) {
+						// modify the result to prefix with container member.
+						var prefix = ImmutableContainerTypes[type.GetFullTypeName()];
+						result = result.WithPrefixedMember( prefix[ i ] );
+					} else {
+						// modify the result to target the type argument if the
+						// target is not a member
+						result = result.WithTarget(
+							MutabilityTarget.TypeArgument
+						);
+					}
+					return result;
+				}
+			}
+
+			return MutabilityInspectionResult.NotMutable();
 		}
 
 		private MutabilityInspectionResult InspectTypeParameter(
