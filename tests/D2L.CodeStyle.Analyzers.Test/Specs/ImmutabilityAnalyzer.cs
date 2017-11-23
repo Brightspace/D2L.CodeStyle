@@ -85,6 +85,14 @@ namespace SpecTests {
 		public sealed class /* ImmutableClassIsnt('m_t''s type ('T') is a generic type) */ GenericWithFieldInitializer<T> /**/ {
 			private readonly T m_t = new T();
 		}
+
+		#endregion
+
+		#region Structs get checked for immutability
+		[Objects.Immutable]
+		struct /* ImmutableClassIsnt('x' is not read-only) */ Foo /**/ {
+			int x;
+		}
 		#endregion
 	}
 }
