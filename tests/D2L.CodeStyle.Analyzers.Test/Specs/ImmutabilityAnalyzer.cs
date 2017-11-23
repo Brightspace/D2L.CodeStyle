@@ -79,5 +79,12 @@ namespace SpecTests {
 			readonly IGenericInterface<ClassWhichHoldsARecursiveGenericType> r;
 		}
 		#endregion
+
+		#region Type parameter new initializer
+		[Objects.Immutable]
+		public sealed class /* ImmutableClassIsnt('m_t''s type ('T') is a generic type) */ GenericWithFieldInitializer<T> /**/ {
+			private readonly T m_t = new T();
+		}
+		#endregion
 	}
 }
