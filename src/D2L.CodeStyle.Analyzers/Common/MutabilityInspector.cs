@@ -223,7 +223,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 			// We have a type that is not marked immutable, is not an interface, is not an immutable container, etc..
 			// If it is defined in a different assembly, we might not have the metadata to correctly analyze it; so we fail.
-			if( type.ContainingAssembly != m_compilation.Assembly ) {
+			if( TypeIsFromOtherAssembly( type ) ) {
 				return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnExternalUnmarkedType );
 			}
 
@@ -522,5 +522,10 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			}
 			return false;
 		}
+
+		private bool TypeIsFromOtherAssembly( ITypeSymbol type ) {
+			return type.ContainingAssembly != m_compilation.Assembly;
+		}
+
 	}
 }
