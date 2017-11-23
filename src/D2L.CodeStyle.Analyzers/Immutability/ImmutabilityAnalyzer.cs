@@ -42,8 +42,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// ClassDeclarationSyntax and StructDeclarationSyntax
 			var root = (TypeDeclarationSyntax)context.Node;
 
-			var symbol = (ITypeSymbol)context.SemanticModel
-				.GetDeclaredSymbol( context.Node );
+			var symbol = context.SemanticModel
+				.GetDeclaredSymbol( root );
 
 			// skip classes not marked immutable
 			if( !inspector.IsTypeMarkedImmutable( symbol ) ) {
