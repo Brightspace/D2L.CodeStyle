@@ -154,11 +154,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					return MutabilityInspectionResult.NotMutable();
 
 				case TypeKind.TypeParameter:
-					if ( flags != MutabilityInspectionFlags.Default ) {
-						// remove this once we no longer take flags
-						throw new InvalidOperationException( "This shouldn't happen" );
-					}
-
 					return InspectTypeParameter(
 						type,
 						typeStack
