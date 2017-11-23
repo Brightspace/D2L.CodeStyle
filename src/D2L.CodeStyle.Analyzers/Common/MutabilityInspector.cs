@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
+using System.Collections.Concurrent;
 
 namespace D2L.CodeStyle.Analyzers.Common {
 
@@ -51,6 +52,9 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		private readonly KnownImmutableTypes m_knownImmutableTypes;
 		private readonly Compilation m_compilation;
 
+		private readonly ConcurrentDictionary<Tuple<ITypeSymbol, MutabilityInspectionFlags>, MutabilityInspectionResult> m_cache
+			= new ConcurrentDictionary<Tuple<ITypeSymbol, MutabilityInspectionFlags>, MutabilityInspectionResult>();
+
 		internal MutabilityInspector(
 			Compilation compilation,
 			KnownImmutableTypes knownImmutableTypes
@@ -69,15 +73,33 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			MutabilityInspectionFlags flags = MutabilityInspectionFlags.Default
 		) {
 			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
-			var result = InspectTypeRecursive(
+
+			return InspectType(
 				type,
 				flags,
 				typesInCurrentCycle
 			);
-			return result;
 		}
 
-		private MutabilityInspectionResult InspectTypeRecursive(
+		private MutabilityInspectionResult InspectType(
+			ITypeSymbol type,
+			MutabilityInspectionFlags flags,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			var cacheKey = new Tuple<ITypeSymbol, MutabilityInspectionFlags>(
+				type,
+				flags
+			);
+
+			return m_cache.GetOrAdd(
+				cacheKey,
+				query => {
+					var typesInCurrentCycle = new HashSet<ITypeSymbol>();
+					return InspectTypeImpl( query.Item1, query.Item2, typesInCurrentCycle );
+				} );
+		}
+
+		private MutabilityInspectionResult InspectTypeImpl(
 			ITypeSymbol type,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
@@ -202,7 +224,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
-			return InspectTypeRecursive(
+			return InspectType(
 				type.BaseType,
 				MutabilityInspectionFlags.AllowUnsealed,
 				typeStack
@@ -261,7 +283,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			for( int i = 0; i < namedType.TypeArguments.Length; i++ ) {
 				var arg = namedType.TypeArguments[ i ];
 
-				var result = InspectTypeRecursive(
+				var result = InspectType(
 					arg,
 					MutabilityInspectionFlags.Default,
 					typeStack
@@ -297,7 +319,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				// type constraint to be immutable to succeed
 				foreach( var constraintType in typeParameter.ConstraintTypes ) {
 
-					var result = InspectTypeRecursive(
+					var result = InspectType(
 						constraintType,
 						MutabilityInspectionFlags.Default,
 						typeStack
@@ -337,7 +359,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			if( expr is ObjectCreationExpressionSyntax ) {
 				// If our initializer is "new Foo( ... )" we only need to
 				// consider Foo concretely; not subtypes of Foo.
-				return InspectTypeRecursive(
+				return InspectType(
 					exprType,
 					MutabilityInspectionFlags.AllowUnsealed,
 					typeStack
@@ -346,7 +368,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 			// In general we can use the initializers type in place of the
 			// field/properties type because it may be narrower.
-			return InspectTypeRecursive(
+			return InspectType(
 				exprType,
 				MutabilityInspectionFlags.Default,
 				typeStack
@@ -389,7 +411,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				).WithPrefixedMember( property.Name );
 			}
 
-			return InspectTypeRecursive(
+			return InspectType(
 				property.Type,
 				MutabilityInspectionFlags.Default,
 				typeStack
@@ -417,7 +439,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				).WithPrefixedMember( field.Name );
 			}
 
-			return InspectTypeRecursive(
+			return InspectType(
 				field.Type,
 				MutabilityInspectionFlags.Default,
 				typeStack
