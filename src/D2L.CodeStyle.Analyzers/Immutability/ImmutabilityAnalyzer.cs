@@ -27,18 +27,23 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				ctx => AnalyzeClass( ctx, inspector ),
 				SyntaxKind.ClassDeclaration
 			);
+
+			context.RegisterSyntaxNodeAction(
+				ctx => AnalyzeClass( ctx, inspector ),
+				SyntaxKind.StructDeclaration
+			);
 		}
 
-		private void AnalyzeClass( SyntaxNodeAnalysisContext context, MutabilityInspector inspector ) {
-			var root = context.Node as ClassDeclarationSyntax;
-			if( root == null ) {
-				return;
-			}
+		private void AnalyzeClass(
+			SyntaxNodeAnalysisContext context,
+			MutabilityInspector inspector
+		) {
+			// TypeDeclarationSyntax is the base class of
+			// ClassDeclarationSyntax and StructDeclarationSyntax
+			var root = (TypeDeclarationSyntax)context.Node;
 
-			var symbol = context.SemanticModel.GetDeclaredSymbol( root );
-			if( symbol == null ) {
-				return;
-			}
+			var symbol = (ITypeSymbol)context.SemanticModel
+				.GetDeclaredSymbol( context.Node );
 
 			// skip classes not marked immutable
 			if( !inspector.IsTypeMarkedImmutable( symbol ) ) {
@@ -63,8 +68,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 		}
 
-
-		private Location GetLocationOfClassIdentifierAndGenericParameters( ClassDeclarationSyntax decl ) {
+		private Location GetLocationOfClassIdentifierAndGenericParameters(
+			TypeDeclarationSyntax decl
+		) {
 			var location = decl.Identifier.GetLocation();
 
 			if( decl.TypeParameterList != null ) {
@@ -76,7 +82,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					)
 				);
 			}
-
 
 			return location;
 		}
