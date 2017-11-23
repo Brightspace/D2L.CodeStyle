@@ -93,10 +93,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 			return m_cache.GetOrAdd(
 				cacheKey,
-				query => {
-					var typesInCurrentCycle = new HashSet<ITypeSymbol>();
-					return InspectTypeImpl( query.Item1, query.Item2, typesInCurrentCycle );
-				} );
+				query => InspectTypeImpl( query.Item1, query.Item2, typeStack )
+			);
 		}
 
 		private MutabilityInspectionResult InspectTypeImpl(
