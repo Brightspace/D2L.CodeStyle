@@ -24,17 +24,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeClass( ctx, inspector ),
+				ctx => AnalyzeClassOrStruct( ctx, inspector ),
 				SyntaxKind.ClassDeclaration
 			);
 
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeClass( ctx, inspector ),
+				ctx => AnalyzeClassOrStruct( ctx, inspector ),
 				SyntaxKind.StructDeclaration
 			);
 		}
 
-		private void AnalyzeClass(
+		private void AnalyzeClassOrStruct(
 			SyntaxNodeAnalysisContext context,
 			MutabilityInspector inspector
 		) {
