@@ -81,6 +81,20 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			);
 		}
 
+		public MutabilityInspectionResult InspectField( IFieldSymbol field ) {
+			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
+
+			return InspectField( field, typesInCurrentCycle );
+		}
+
+		public MutabilityInspectionResult InspectProperty(
+			IPropertySymbol property
+		) {
+			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
+
+			return InspectProperty( property, typesInCurrentCycle );
+		}
+
 		private MutabilityInspectionResult InspectType(
 			ITypeSymbol type,
 			MutabilityInspectionFlags flags,
