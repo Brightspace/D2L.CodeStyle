@@ -14,6 +14,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
 
 		public override void Initialize( AnalysisContext context ) {
+			context.EnableConcurrentExecution();
 			context.RegisterCompilationStartAction( RegisterAnalysis );
 		}
 

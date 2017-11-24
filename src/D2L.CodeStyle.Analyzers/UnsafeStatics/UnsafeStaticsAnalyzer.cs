@@ -30,8 +30,9 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 			// ratio.
 			context.ConfigureGeneratedCodeAnalysis(
 				GeneratedCodeAnalysisFlags.None
-			); 
+			);
 
+			context.EnableConcurrentExecution();
 			context.RegisterCompilationStartAction( RegisterAnalysis );
 		}
 
