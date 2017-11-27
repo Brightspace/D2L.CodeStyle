@@ -27,7 +27,8 @@ namespace D2L.CodeStyle.Analyzers.DependencyRegistrations {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( 
 			Diagnostics.UnsafeSingletonRegistration,
 			Diagnostics.SingletonRegistrationTypeUnknown,
-			Diagnostics.RegistrationKindUnknown
+			Diagnostics.RegistrationKindUnknown,
+			Diagnostics.AttributeRegistrationMismatch
 		);
 
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
@@ -109,11 +110,6 @@ namespace D2L.CodeStyle.Analyzers.DependencyRegistrations {
 				return;
 			}
 
-			if( dependencyRegistration.ObjectScope != ObjectScope.Singleton ) {
-				// we only care about singletons
-				return;
-			}
-
 			var typesToInspect = GetTypesToInspect( dependencyRegistration );
 
 			if( typesToInspect.Any( t => t.IsNullOrErrorType() )) {
@@ -128,9 +124,17 @@ namespace D2L.CodeStyle.Analyzers.DependencyRegistrations {
 
 			foreach( var typeToInspect in typesToInspect ) {
 				var isMarkedSingleton = inspector.IsTypeMarkedSingleton( typeToInspect );
-				if( !isMarkedSingleton ) {
+
+				if( !isMarkedSingleton && dependencyRegistration.ObjectScope == ObjectScope.Singleton ) {
 					var diagnostic = Diagnostic.Create(
 						Diagnostics.UnsafeSingletonRegistration,
+						root.GetLocation(),
+						typeToInspect.GetFullTypeNameWithGenericArguments()
+					);
+					context.ReportDiagnostic( diagnostic );
+				} else if ( isMarkedSingleton && dependencyRegistration.ObjectScope != ObjectScope.Singleton ) {
+					var diagnostic = Diagnostic.Create(
+						Diagnostics.AttributeRegistrationMismatch,
 						root.GetLocation(),
 						typeToInspect.GetFullTypeNameWithGenericArguments()
 					);
