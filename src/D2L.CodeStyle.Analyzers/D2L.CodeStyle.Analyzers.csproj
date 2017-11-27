@@ -47,10 +47,6 @@
     <Compile Include="Common\DependencyInjection\RegisterPluginForExtensionPointExpression.cs" />
     <Compile Include="Common\DependencyInjection\RegisterSubInterfaceExpression.cs" />
     <Compile Include="Common\Diagnostics.cs" />
-    <Compile Include="Common\Exemptions\Exemption.cs" />
-    <Compile Include="Common\Exemptions\ExemptionFilter.cs" />
-    <Compile Include="Common\Exemptions\ExemptionFilterBuilder.cs" />
-    <Compile Include="Common\Exemptions\ExemptionKind.cs" />
     <Compile Include="Common\KnownImmutableTypes.cs" />
     <Compile Include="Common\MutabilityInspectionResult.cs" />
     <Compile Include="Common\MutabilityInspectionResultFormatter.cs" />
