@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Concurrent;
+using D2L.CodeStyle.Analyzers.Extensions;
 
 namespace D2L.CodeStyle.Analyzers.Common {
 
@@ -17,16 +18,6 @@ namespace D2L.CodeStyle.Analyzers.Common {
 	}
 
 	internal sealed class MutabilityInspector {
-		/// <summary>
-		/// A list of marked immutable types owned externally.
-		/// </summary>
-		private static readonly ImmutableHashSet<string> MarkedImmutableTypes = new HashSet<string> {
-			"System.StringComparer",
-			"System.Text.ASCIIEncoding",
-			"System.Text.Encoding",
-			"System.Text.UTF8Encoding",
-		}.ToImmutableHashSet();
-
 		/// <summary>
 		/// A list of immutable container types (i.e., types that hold other types)
 		/// </summary>
@@ -129,7 +120,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			}
 
 			// If we're verifying immutability, then carry on; otherwise, bailout
-			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && IsTypeMarkedImmutable( type ) ) {
+			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && type.IsTypeMarkedImmutable() ) {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
@@ -528,38 +519,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			}
 		}
 
-		public bool IsTypeMarkedImmutable( ITypeSymbol symbol ) {
-			if( MarkedImmutableTypes.Contains( symbol.GetFullTypeName() ) ) {
-				return true;
-			}
-			if( Attributes.Objects.Immutable.IsDefined( symbol ) ) {
-				return true;
-			}
-			if( symbol.Interfaces.Any( IsTypeMarkedImmutable ) ) {
-				return true;
-			}
-			if( symbol.BaseType != null && IsTypeMarkedImmutable( symbol.BaseType ) ) {
-				return true;
-			}
-			return false;
-		}
-
-		public bool IsTypeMarkedSingleton( ITypeSymbol symbol ) {
-			if( Attributes.Singleton.IsDefined( symbol ) ) {
-				return true;
-			}
-			if( symbol.Interfaces.Any( IsTypeMarkedSingleton ) ) {
-				return true;
-			}
-			if( symbol.BaseType != null && IsTypeMarkedSingleton( symbol.BaseType ) ) {
-				return true;
-			}
-			return false;
-		}
-
 		private bool TypeIsFromOtherAssembly( ITypeSymbol type ) {
 			return type.ContainingAssembly != m_compilation.Assembly;
 		}
-
 	}
 }

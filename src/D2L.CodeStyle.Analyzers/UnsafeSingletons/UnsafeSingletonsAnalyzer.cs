@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Common;
+using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -44,11 +45,11 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 			}
 
 			// skip classes not marked singleton
-			if( !inspector.IsTypeMarkedSingleton( symbol ) ) {
+			if( !symbol.IsTypeMarkedSingleton() ) {
 				return;
 			}
 
-			var isMarkedImmutable = inspector.IsTypeMarkedImmutable( symbol );
+			var isMarkedImmutable = symbol.IsTypeMarkedImmutable();
 			if( !isMarkedImmutable ) {
 				var location = GetLocationOfClassIdentifierAndGenericParameters( root );
 				context.ReportDiagnostic( Diagnostic.Create(
