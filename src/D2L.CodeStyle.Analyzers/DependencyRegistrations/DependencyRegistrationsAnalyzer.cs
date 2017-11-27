@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Common;
 using D2L.CodeStyle.Analyzers.Common.DependencyInjection;
+using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -127,7 +128,7 @@ namespace D2L.CodeStyle.Analyzers.DependencyRegistrations {
 			}
 
 			foreach( var typeToInspect in typesToInspect ) {
-				var isMarkedSingleton = inspector.IsTypeMarkedSingleton( typeToInspect );
+				var isMarkedSingleton = typeToInspect.IsTypeMarkedSingleton();
 				if( !isMarkedSingleton ) {
 					var diagnostic = Diagnostic.Create(
 						Diagnostics.UnsafeSingletonRegistration,

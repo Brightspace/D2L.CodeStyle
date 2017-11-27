@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Common;
+using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -47,7 +48,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				.GetDeclaredSymbol( root );
 
 			// skip classes not marked immutable
-			if( !inspector.IsTypeMarkedImmutable( symbol ) ) {
+			if( !symbol.IsTypeMarkedImmutable() ) {
 				return;
 			}
 
