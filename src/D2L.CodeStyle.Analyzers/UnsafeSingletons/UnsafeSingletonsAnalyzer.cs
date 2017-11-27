@@ -22,18 +22,13 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 		}
 
 		private void RegisterAnalysis( CompilationStartAnalysisContext context ) {
-			var inspector = new MutabilityInspector(
-				context.Compilation,
-				new KnownImmutableTypes( context.Compilation.Assembly )
-			);
-
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeClass( ctx, inspector ),
+				AnalyzeClass,
 				SyntaxKind.ClassDeclaration
 			);
 		}
 
-		private void AnalyzeClass( SyntaxNodeAnalysisContext context, MutabilityInspector inspector ) {
+		private void AnalyzeClass( SyntaxNodeAnalysisContext context ) {
 			var root = context.Node as ClassDeclarationSyntax;
 			if( root == null ) {
 				return;
@@ -72,7 +67,6 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 					)
 				);
 			}
-
 
 			return location;
 		}
