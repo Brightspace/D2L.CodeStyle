@@ -9,6 +9,7 @@ namespace D2L.CodeStyle.Annotations {
 		WebDAV,
 		D2LWS,
 		Banner,
-		IPSIS
+		IPSIS,
+		ServiceManager
 	}
 }
