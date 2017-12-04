@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Common;
 using D2L.CodeStyle.Analyzers.Common.DependencyInjection;
+using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -39,23 +40,21 @@ namespace D2L.CodeStyle.Analyzers.DependencyRegistrations {
 		}
 
 		private void RegisterAnalysis( CompilationStartAnalysisContext context ) {
-			var inspector = new MutabilityInspector(
-				context.Compilation,
-				new KnownImmutableTypes( context.Compilation.Assembly )
-			);
-
 			DependencyRegistry dependencyRegistry;
 			if( !DependencyRegistry.TryCreateRegistry( context.Compilation, out dependencyRegistry ) ) {
 				return;
 			}
 
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeInvocation( ctx, inspector, dependencyRegistry ),
+				ctx => AnalyzeInvocation( ctx, dependencyRegistry ),
 				SyntaxKind.InvocationExpression
 			);
 		}
 
-		private void AnalyzeInvocation( SyntaxNodeAnalysisContext context, MutabilityInspector inspector, DependencyRegistry registry ) {
+		private void AnalyzeInvocation(
+			SyntaxNodeAnalysisContext context,
+			DependencyRegistry registry
+		) {
 			var root = context.Node as InvocationExpressionSyntax;
 			if( root == null ) {
 				return;
@@ -123,7 +122,7 @@ namespace D2L.CodeStyle.Analyzers.DependencyRegistrations {
 			}
 
 			foreach( var typeToInspect in typesToInspect ) {
-				var isMarkedSingleton = inspector.IsTypeMarkedSingleton( typeToInspect );
+				var isMarkedSingleton = typeToInspect.IsTypeMarkedSingleton();
 
 				if( !isMarkedSingleton && dependencyRegistration.ObjectScope == ObjectScope.Singleton ) {
 					var diagnostic = Diagnostic.Create(

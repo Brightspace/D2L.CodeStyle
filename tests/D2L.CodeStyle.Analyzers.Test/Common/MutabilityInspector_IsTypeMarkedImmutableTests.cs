@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 using static D2L.CodeStyle.Analyzers.Common.RoslynSymbolFactory;
@@ -40,7 +41,7 @@ namespace D2L.CodeStyle.Annotations {
 				KnownImmutableTypes.Default
 			);
 
-			Assert.IsFalse( inspector.IsTypeMarkedImmutable( type.Symbol ) );
+			Assert.IsFalse( type.Symbol.IsTypeMarkedImmutable() );
 		}
 
 		[Test]
@@ -54,7 +55,7 @@ namespace D2L.CodeStyle.Annotations {
 				KnownImmutableTypes.Default
 			);
 
-			Assert.IsTrue( inspector.IsTypeMarkedImmutable( type.Symbol ) );
+			Assert.IsTrue( type.Symbol.IsTypeMarkedImmutable() );
 		}
 
 		[Test]
@@ -71,7 +72,7 @@ namespace D2L.CodeStyle.Annotations {
 
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
 			Assert.AreEqual( "Foo", type.Symbol.MetadataName );
-			Assert.IsTrue( inspector.IsTypeMarkedImmutable( type.Symbol ) );
+			Assert.IsTrue( type.Symbol.IsTypeMarkedImmutable() );
 		}
 
 		[Test]
@@ -89,7 +90,7 @@ namespace D2L.CodeStyle.Annotations {
 
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
 			Assert.AreEqual( "Foo", type.Symbol.MetadataName );
-			Assert.IsTrue( inspector.IsTypeMarkedImmutable( type.Symbol ) );
+			Assert.IsTrue( type.Symbol.IsTypeMarkedImmutable() );
 		}
 
 		[Test]
@@ -107,7 +108,7 @@ namespace D2L.CodeStyle.Annotations {
 
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
 			Assert.AreEqual( "Foo", type.Symbol.MetadataName );
-			Assert.IsTrue( inspector.IsTypeMarkedImmutable( type.Symbol ) );
+			Assert.IsTrue( type.Symbol.IsTypeMarkedImmutable() );
 		}
 
 
@@ -125,7 +126,7 @@ namespace D2L.CodeStyle.Annotations {
 
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
 			Assert.AreEqual( "Foo", type.Symbol.MetadataName );
-			Assert.IsTrue( inspector.IsTypeMarkedImmutable( type.Symbol ) );
+			Assert.IsTrue( type.Symbol.IsTypeMarkedImmutable() );
 		}
 
 		[Test]
@@ -143,7 +144,7 @@ namespace D2L.CodeStyle.Annotations {
 
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
 			Assert.AreEqual( "Foo", type.Symbol.MetadataName );
-			Assert.IsTrue( inspector.IsTypeMarkedImmutable( type.Symbol ) );
+			Assert.IsTrue( type.Symbol.IsTypeMarkedImmutable() );
 		}
 	}
 }

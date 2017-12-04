@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Common;
+using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -21,18 +22,13 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 		}
 
 		private void RegisterAnalysis( CompilationStartAnalysisContext context ) {
-			var inspector = new MutabilityInspector(
-				context.Compilation,
-				new KnownImmutableTypes( context.Compilation.Assembly )
-			);
-
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeClass( ctx, inspector ),
+				AnalyzeClass,
 				SyntaxKind.ClassDeclaration
 			);
 		}
 
-		private void AnalyzeClass( SyntaxNodeAnalysisContext context, MutabilityInspector inspector ) {
+		private void AnalyzeClass( SyntaxNodeAnalysisContext context ) {
 			var root = context.Node as ClassDeclarationSyntax;
 			if( root == null ) {
 				return;
@@ -44,11 +40,11 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 			}
 
 			// skip classes not marked singleton
-			if( !inspector.IsTypeMarkedSingleton( symbol ) ) {
+			if( !symbol.IsTypeMarkedSingleton() ) {
 				return;
 			}
 
-			var isMarkedImmutable = inspector.IsTypeMarkedImmutable( symbol );
+			var isMarkedImmutable = symbol.IsTypeMarkedImmutable();
 			if( !isMarkedImmutable ) {
 				var location = GetLocationOfClassIdentifierAndGenericParameters( root );
 				context.ReportDiagnostic( Diagnostic.Create(
@@ -71,7 +67,6 @@ namespace D2L.CodeStyle.Analyzers.UnsafeSingletons {
 					)
 				);
 			}
-
 
 			return location;
 		}

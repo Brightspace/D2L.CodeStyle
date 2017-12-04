@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Common;
+using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -297,7 +298,7 @@ namespace D2L.CodeStyle.Analyzers.UnsafeStatics {
 				yield break;
 			}
 
-			if( inspector.IsTypeMarkedImmutable( fieldOrPropertyType ) ) {
+			if( fieldOrPropertyType.IsTypeMarkedImmutable() ) {
 				// if the type is marked immutable, skip checking it, to avoid reporting
 				// a diagnostic for each usage of types that are marked
 				// immutable (other analyzers catch those already.)
