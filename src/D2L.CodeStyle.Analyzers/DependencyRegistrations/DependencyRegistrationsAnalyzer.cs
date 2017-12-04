@@ -151,6 +151,13 @@ namespace D2L.CodeStyle.Analyzers.DependencyRegistrations {
 
 			// if we have a dynamically generated objectfactory, use its constructor arguments
 			if( !registration.DynamicObjectFactoryType.IsNullOrErrorType() ) {
+
+				if( registration.ObjectScope != ObjectScope.Singleton ) {
+					// non-singleton dynamic object factories cannot be marked [Singleton]
+					// and it is ok for them to depend on singletons so nothing to check
+					return ImmutableArray<ITypeSymbol>.Empty;
+				}
+
 				ImmutableArray<ITypeSymbol> dependencies;
 				if( TryGetDependenciesFromConstructor( registration.DynamicObjectFactoryType, out dependencies ) ) {
 					return dependencies;

@@ -184,6 +184,11 @@ namespace SpecTests {
 			/* AttributeRegistrationMismatch(SpecTests.MarkedSingleton) */ reg.RegisterPlugin<IMarkedSingleton, MarkedSingleton>( ObjectScope.Thread ) /**/;
 			/* AttributeRegistrationMismatch(SpecTests.IMarkedSingleton) */ reg.RegisterPluginFactory<IMarkedSingleton, SingletonFactory>( ObjectScope.WebRequest ) /**/;
 
+			// DynamicObjectFactory registrations at non-Singleton scope are safe,
+			// because the implementation is generated, so it will never be marked.
+			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMarkedThing, string>( ObjectScope.WebRequest );
+			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaUnmarkedThing, string>( ObjectScope.WebRequest );
+
 			// Types that don't exist should raise a diagnostic, so that we can be strict. 
 			/* SingletonRegistrationTypeUnknown */ reg.RegisterFactory<NonExistentTypeOrInTheMiddleOfTyping, SingletonFactory>( ObjectScope.Singleton ) /**/;
 			/* SingletonRegistrationTypeUnknown */ reg.RegisterPluginFactory<NonExistentTypeOrInTheMiddleOfTyping, SingletonFactory>( ObjectScope.Singleton ) /**/;
