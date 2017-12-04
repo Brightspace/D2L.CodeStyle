@@ -28,7 +28,8 @@ namespace D2L.CodeStyle.Analyzers.DependencyRegistrations {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( 
 			Diagnostics.UnsafeSingletonRegistration,
 			Diagnostics.SingletonRegistrationTypeUnknown,
-			Diagnostics.RegistrationKindUnknown
+			Diagnostics.RegistrationKindUnknown,
+			Diagnostics.AttributeRegistrationMismatch
 		);
 
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
@@ -108,11 +109,6 @@ namespace D2L.CodeStyle.Analyzers.DependencyRegistrations {
 				return;
 			}
 
-			if( dependencyRegistration.ObjectScope != ObjectScope.Singleton ) {
-				// we only care about singletons
-				return;
-			}
-
 			var typesToInspect = GetTypesToInspect( dependencyRegistration );
 
 			if( typesToInspect.Any( t => t.IsNullOrErrorType() )) {
@@ -127,9 +123,17 @@ namespace D2L.CodeStyle.Analyzers.DependencyRegistrations {
 
 			foreach( var typeToInspect in typesToInspect ) {
 				var isMarkedSingleton = typeToInspect.IsTypeMarkedSingleton();
-				if( !isMarkedSingleton ) {
+
+				if( !isMarkedSingleton && dependencyRegistration.ObjectScope == ObjectScope.Singleton ) {
 					var diagnostic = Diagnostic.Create(
 						Diagnostics.UnsafeSingletonRegistration,
+						root.GetLocation(),
+						typeToInspect.GetFullTypeNameWithGenericArguments()
+					);
+					context.ReportDiagnostic( diagnostic );
+				} else if ( isMarkedSingleton && dependencyRegistration.ObjectScope != ObjectScope.Singleton ) {
+					var diagnostic = Diagnostic.Create(
+						Diagnostics.AttributeRegistrationMismatch,
 						root.GetLocation(),
 						typeToInspect.GetFullTypeNameWithGenericArguments()
 					);
@@ -146,6 +150,13 @@ namespace D2L.CodeStyle.Analyzers.DependencyRegistrations {
 
 			// if we have a dynamically generated objectfactory, use its constructor arguments
 			if( !registration.DynamicObjectFactoryType.IsNullOrErrorType() ) {
+
+				if( registration.ObjectScope != ObjectScope.Singleton ) {
+					// non-singleton dynamic object factories cannot be marked [Singleton]
+					// and it is ok for them to depend on singletons so nothing to check
+					return ImmutableArray<ITypeSymbol>.Empty;
+				}
+
 				ImmutableArray<ITypeSymbol> dependencies;
 				if( TryGetDependenciesFromConstructor( registration.DynamicObjectFactoryType, out dependencies ) ) {
 					return dependencies;

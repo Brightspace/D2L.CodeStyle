@@ -151,5 +151,15 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			isEnabledByDefault: true,
 			description: "Avoid using of dangerous methods"
 		);
+
+		public static readonly DiagnosticDescriptor AttributeRegistrationMismatch = new DiagnosticDescriptor(
+			id: "D2L0019",
+			title: "Singleton attribute cannot appear on non-singleton object scopes.",
+			messageFormat: "The type '{0}' is marked as [Singleton] but is registered with a conflicting object scope.",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Non-Singletons should not be marked with the [Singleton] attribute."
+		);
 	}
 }

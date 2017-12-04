@@ -162,7 +162,7 @@ namespace SpecTests {
 			/* UnsafeSingletonRegistration(D2L.LP.Extensibility.Activation.Domain.IFactory<SpecTests.ICreatedByDynamicFactory>) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor, string>( ObjectScope.Singleton ) /**/;
 			/* UnsafeSingletonRegistration(D2L.LP.Extensibility.Activation.Domain.IFactory<SpecTests.ICreatedByDynamicFactory>) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor, string, string>( ObjectScope.Singleton ) /**/;
 
-			// Non-Singletons are not flagged.
+			// Unmarked non-Singletons are not flagged.
 			reg.Register( typeof( IUnmarkedSingleton ), typeof( UnmarkedSingleton ), ObjectScope.WebRequest );
 			reg.Register<IUnmarkedSingleton, UnmarkedSingleton>( ObjectScope.WebRequest );
 			reg.RegisterPlugin<IUnmarkedSingleton, UnmarkedSingleton>( ObjectScope.WebRequest );
@@ -175,6 +175,19 @@ namespace SpecTests {
 			reg.ConfigureInstancePlugins<UnmarkedSingleton, DefaultExtensionPoint<UnmarkedSingleton>>( ObjectScope.WebRequest );
 			reg.RegisterPluginExtensionPoint<DefaultExtensionPoint<UnmarkedSingleton>, UnmarkedSingleton>( ObjectScope.WebRequest );
 			reg.RegisterPlugin<DefaultExtensionPoint<UnmarkedSingleton>, IUnmarkedSingleton, UnmarkedSingleton>( ObjectScope.WebRequest );
+
+			// Marked non-singletons are flagged.
+			/* AttributeRegistrationMismatch(SpecTests.MarkedSingleton) */ reg.Register<IMarkedSingleton, MarkedSingleton>( ObjectScope.WebRequest ) /**/;
+			/* AttributeRegistrationMismatch(SpecTests.MarkedSingleton) */ reg.Register<IMarkedSingleton, MarkedSingleton>( ObjectScope.Thread ) /**/;
+			/* AttributeRegistrationMismatch(SpecTests.MarkedSingleton) */ reg.Register( typeof( IMarkedSingleton ), typeof( MarkedSingleton ), ObjectScope.WebRequest ) /**/;
+			/* AttributeRegistrationMismatch(SpecTests.IMarkedSingleton) */ reg.RegisterFactory<IMarkedSingleton, SingletonFactory>( ObjectScope.Thread ) /**/;
+			/* AttributeRegistrationMismatch(SpecTests.MarkedSingleton) */ reg.RegisterPlugin<IMarkedSingleton, MarkedSingleton>( ObjectScope.Thread ) /**/;
+			/* AttributeRegistrationMismatch(SpecTests.IMarkedSingleton) */ reg.RegisterPluginFactory<IMarkedSingleton, SingletonFactory>( ObjectScope.WebRequest ) /**/;
+
+			// DynamicObjectFactory registrations at non-Singleton scope are safe,
+			// because the implementation is generated, so it will never be marked.
+			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMarkedThing, string>( ObjectScope.WebRequest );
+			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaUnmarkedThing, string>( ObjectScope.WebRequest );
 
 			// Types that don't exist should raise a diagnostic, so that we can be strict. 
 			/* SingletonRegistrationTypeUnknown */ reg.RegisterFactory<NonExistentTypeOrInTheMiddleOfTyping, SingletonFactory>( ObjectScope.Singleton ) /**/;
