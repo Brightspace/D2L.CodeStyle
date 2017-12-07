@@ -231,8 +231,6 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 			"D2L.Web",
 			"D2L.Web.Common.Web",
 			"OrgUnitXMLTool",
-			"SampleExporter",
-			"SampleImporter",
 		}.ToImmutableHashSet();
 
 		private bool IsAssemblyWhitelisted( string assemblyName ) {
