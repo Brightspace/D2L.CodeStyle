@@ -51,7 +51,7 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 
 			var iFactoryType = compilation.GetTypeByMetadataName( IFactoryTypeMetadataName );
 			if( !factoryType.ConstructedFrom == iFactoryType ) {
-				return false
+				return false;
 			}
 
 			if( factoryType.TypeArguments.Length == 0 ) {
