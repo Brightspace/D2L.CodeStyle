@@ -26,8 +26,8 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 		public abstract string Name { get; }
 	}
 	public interface IExtensionPoint<T> { }
-	public interface IFactory<TDependencyType> { }
-	public interface IFactory<TDependencyType, T> { }
+	public interface IFactory<out TDependencyType> { }
+	public interface IFactory<out TDependencyType, T> { }
 	public interface IDependencyRegistry {
 
 		void Register<TDependencyType>(
@@ -122,6 +122,7 @@ namespace SpecTests {
 			reg.RegisterPlugin<IMarkedSingleton>( new MarkedSingleton() );
 			reg.RegisterPlugin( new MarkedSingleton() ); // inferred generic argument of above
 			reg.Register<ISingleton, MarkedSingleton>( ObjectScope.Singleton );
+			reg.RegisterFactory<ISingleton, ConcreteSingletonFactory>( ObjectScope.Singleton ); // looks at generic parameter in ConcreteSingletonFactory
 			reg.Register( typeof( IMarkedSingleton ), typeof( MarkedSingleton ), ObjectScope.Singleton );
 			reg.ConfigurePlugins<MarkedSingleton>( ObjectScope.Singleton );
 			reg.ConfigureOrderedPlugins<MarkedSingleton, SomeComparer<MarkedSingleton>>( ObjectScope.Singleton );
@@ -134,6 +135,7 @@ namespace SpecTests {
 
 			// Unmarked Singletons are flagged.
 			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.Register<IUnmarkedSingleton>( new UnmarkedSingleton() ) /**/;
+			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.RegisterFactory<IUnmarkedSingleton, ConcreteSingletonFactory>( ObjectScope.Singleton ) /**/; // generic parameter from ConcreteSingletonFactory
 			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.Register( new UnmarkedSingleton() ) /**/; // inferred generic argument of above
 			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.RegisterPlugin<IUnmarkedSingleton>( new UnmarkedSingleton() ) /**/;
 			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.RegisterPlugin( new UnmarkedSingleton() ) /**/; // inferred generic argument of above
@@ -230,8 +232,11 @@ namespace SpecTests {
 		}
 	}
 
+	// intentionally unmarked
+	public interface ISingleton {}
+
 	[Singleton]
-	public interface IMarkedSingleton { }
+	public interface IMarkedSingleton : ISingleton { }
 	public sealed class MarkedSingleton : IMarkedSingleton { }
 
 	public interface IUnmarkedSingleton { }
@@ -272,5 +277,11 @@ namespace SpecTests {
 		IFactory<IUnmarkedSingleton, Type>, 
 		IFactory<IMarkedSingleton>, 
 		IFactory<IMarkedSingleton, Type> { }
+
+	public sealed class ConcreteSingletonFactory : 
+		IFactory<UnmarkedSingleton>, 
+		IFactory<UnmarkedSingleton, Type>, 
+		IFactory<MarkedSingleton>, 
+		IFactory<MarkedSingleton, Type> { }
 
 }
