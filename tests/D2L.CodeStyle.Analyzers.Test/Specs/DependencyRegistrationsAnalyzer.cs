@@ -109,6 +109,10 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 				this IDependencyRegistry registry,
 				ObjectScope scope
 			) where TExtensionPoint : ExtensionPointDescriptor, new();
+		public static void RegisterSubInterface<TSubInterfaceType, TInjectableSuperInterfaceType>(
+				this IDependencyRegistry @this,
+				ObjectScope scope
+			) where TInjectableSuperInterfaceType : TSubInterfaceType;
 	}
 }
 
@@ -131,6 +135,7 @@ namespace SpecTests {
 			reg.RegisterPlugin<DefaultExtensionPoint<MarkedSingleton>, IMarkedSingleton, MarkedSingleton>( ObjectScope.Singleton );
 			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMarkedThing, string>( ObjectScope.Singleton );
 			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMarkedThing, string, string>( ObjectScope.Singleton );
+			reg.RegisterSubInterface<ISingleton, IMarkedSingleton>( ObjectScope.Singleton );
 
 			// Unmarked Singletons are flagged.
 			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.Register<IUnmarkedSingleton>( new UnmarkedSingleton() ) /**/;
@@ -145,6 +150,7 @@ namespace SpecTests {
 			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.ConfigureInstancePlugins<UnmarkedSingleton, DefaultExtensionPoint<UnmarkedSingleton>>( ObjectScope.Singleton ) /**/;
 			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.RegisterPluginExtensionPoint<DefaultExtensionPoint<UnmarkedSingleton>, UnmarkedSingleton>( ObjectScope.Singleton ) /**/;
 			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.RegisterPlugin<DefaultExtensionPoint<UnmarkedSingleton>, IUnmarkedSingleton, UnmarkedSingleton>( ObjectScope.Singleton ) /**/;
+			/* UnsafeSingletonRegistration(SpecTests.ISubUnmarkedSingleton) */ reg.RegisterSubInterface<IUnmarkedSingleton, ISubUnmarkedSingleton>( ObjectScope.Singleton ) /**/;
 
 			// And factory Singletons or singletons where concrete type is not resolved inspect the interface
 			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.Register<IUnmarkedSingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton ) /**/;
@@ -235,6 +241,7 @@ namespace SpecTests {
 	public sealed class MarkedSingleton : IMarkedSingleton { }
 
 	public interface IUnmarkedSingleton { }
+	public interface ISubUnmarkedSingleton : IUnmarkedSingleton { }
 	public sealed class UnmarkedSingleton : IUnmarkedSingleton {}
 
 	public interface ICreatedByDynamicFactory { }
