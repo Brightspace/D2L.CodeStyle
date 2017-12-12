@@ -86,5 +86,27 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			return false;
 		}
 
+		/// <summary>
+		/// Returns true iff `self = toAssign` would compile.
+		/// </summary>
+		internal static bool IsAssignableFrom( this ITypeSymbol self, ITypeSymbol toAssign ) {
+			while( toAssign != null ) {
+
+				if( self == toAssign ) {
+					return true;
+				}
+
+				foreach( var iface in toAssign.AllInterfaces ) {
+					if( self == iface ) {
+						return true;
+					}
+				}
+
+				toAssign = toAssign.BaseType;
+			}
+
+			return false;
+		}
+
 	}
 }

@@ -34,10 +34,18 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 			}
 
 			if( method.Name.Contains( "Factory" ) ) {
+
+				ITypeSymbol concreteType = GetConstructedTypeOfIFactory(
+					semanticModel,
+					method.TypeArguments[0],
+					method.TypeArguments[1]
+				);
+
 				return DependencyRegistration.Factory( 
 					scope, 
 					method.TypeArguments[1], 
-					method.TypeArguments[2] 
+					method.TypeArguments[2],
+					concreteType
 				);
 			} else {
 				return DependencyRegistration.NonFactory( 

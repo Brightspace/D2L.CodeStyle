@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -9,7 +11,6 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 	// void RegisterFactory<TDependencyType, TFactoryType>( ObjectScope scope )
 	// void RegisterPluginFactory<TDependencyType, TFactoryType>( ObjectScope scope )
 	internal sealed class FullyGenericRegisterExpression : DependencyRegistrationExpression {
-		private const string IFactoryTypeMetadataName = "D2L.LP.Extensibility.Activation.Domain.IFactory`1";
 
 		private static readonly ImmutableHashSet<string> s_validNames = ImmutableHashSet.Create(
 			"Register",
@@ -30,36 +31,44 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 				return null;
 			}
 
+			if( method.Name.Contains( "Factory" ) ) {
+				return GetFactoryRegistration( method, arguments, semanticModel );
+			}
+
+			return GetNonFactoryRegistration( method, arguments, semanticModel );
+		}
+
+		private DependencyRegistration GetNonFactoryRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
 			ObjectScope scope;
 			if( !TryGetObjectScope( arguments[0], semanticModel, out scope ) ) {
 				return null;
 			}
 
-			if( method.Name.Contains( "Factory" ) ) {
-				ITypeSymbol concreteType = null;
-				if( !TryGetConstructedTypeOfIFactory( method.TypeArguments[1], out concreteType ) ) {
-					concreteType = method.TypeArguments[1];
-				}
-				return DependencyRegistration.Factory( scope, method.TypeArguments[0], concreteType );
-			}
-
-			return DependencyRegistration.NonFactory( scope, method.TypeArguments[0], method.TypeArguments[1] );
+			return DependencyRegistration.NonFactory( 
+				scope, 
+				method.TypeArguments[0], 
+				method.TypeArguments[1] 
+			);
 		}
 
-		private bool TryGetConstructedTypeOfIFactory( ITypeSymbol factoryType, out ITypeSymbol constructedType ) {
-			constructedType = null;
-
-			var iFactoryType = compilation.GetTypeByMetadataName( IFactoryTypeMetadataName );
-			if( !factoryType.ConstructedFrom == iFactoryType ) {
-				return false;
+		private DependencyRegistration GetFactoryRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
+			ObjectScope scope;
+			if( !TryGetObjectScope( arguments[0], semanticModel, out scope ) ) {
+				return null;
 			}
 
-			if( factoryType.TypeArguments.Length == 0 ) {
-				return false;
-			}
+			ITypeSymbol concreteType = GetConstructedTypeOfIFactory(
+				semanticModel,
+				method.TypeArguments[0],
+				method.TypeArguments[1]
+			);
 
-			constructedType = factoryType.TypeArguments[0];
-			return constructedType != null;
+			return DependencyRegistration.Factory(
+				scope,
+				dependencyType: method.TypeArguments[0],
+				factoryType: method.TypeArguments[1],
+				concreteType: concreteType
+			);
 		}
 	}
 }

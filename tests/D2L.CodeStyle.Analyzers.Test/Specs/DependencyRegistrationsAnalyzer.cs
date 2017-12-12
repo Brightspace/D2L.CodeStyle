@@ -122,7 +122,8 @@ namespace SpecTests {
 			reg.RegisterPlugin<IMarkedSingleton>( new MarkedSingleton() );
 			reg.RegisterPlugin( new MarkedSingleton() ); // inferred generic argument of above
 			reg.Register<ISingleton, MarkedSingleton>( ObjectScope.Singleton );
-			reg.RegisterFactory<ISingleton, ConcreteSingletonFactory>( ObjectScope.Singleton ); // looks at generic parameter in ConcreteSingletonFactory
+			reg.RegisterFactory<ISingleton, ConcreteSingletonFactory>( ObjectScope.Singleton );
+			reg.RegisterPluginFactory<ISingleton, ConcreteSingletonFactory>( ObjectScope.Singleton );
 			reg.Register( typeof( IMarkedSingleton ), typeof( MarkedSingleton ), ObjectScope.Singleton );
 			reg.ConfigurePlugins<MarkedSingleton>( ObjectScope.Singleton );
 			reg.ConfigureOrderedPlugins<MarkedSingleton, SomeComparer<MarkedSingleton>>( ObjectScope.Singleton );
@@ -139,6 +140,7 @@ namespace SpecTests {
 			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.Register( new UnmarkedSingleton() ) /**/; // inferred generic argument of above
 			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.RegisterPlugin<IUnmarkedSingleton>( new UnmarkedSingleton() ) /**/;
 			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.RegisterPlugin( new UnmarkedSingleton() ) /**/; // inferred generic argument of above
+			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.RegisterPluginFactory<IUnmarkedSingleton, ConcreteSingletonFactory>( ObjectScope.Singleton ) /**/; // generic parameter from ConcreteSingletonFactory
 			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.Register<IUnmarkedSingleton, UnmarkedSingleton>( ObjectScope.Singleton ) /**/;
 			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.Register( typeof( IUnmarkedSingleton ), typeof( UnmarkedSingleton ), ObjectScope.Singleton ) /**/;
 			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.ConfigurePlugins<UnmarkedSingleton>( ObjectScope.Singleton ) /**/;
@@ -156,7 +158,7 @@ namespace SpecTests {
 			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterPluginFactory<IUnmarkedSingleton, SingletonFactory>( ObjectScope.Singleton ) /**/;
 			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterPluginFactory<DefaultExtensionPoint<UnmarkedSingleton>, IUnmarkedSingleton, SingletonFactory>( ObjectScope.Singleton ) /**/;
 
-			// Dyanamic object factory registrations inspect the concrete object's ctor parameters
+			// Dynamic object factory registrations inspect the concrete object's ctor parameters
 			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaUnmarkedThing, string, string>( ObjectScope.Singleton ) /**/;
 			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaUnmarkedThing, string>( ObjectScope.Singleton ) /**/;
 

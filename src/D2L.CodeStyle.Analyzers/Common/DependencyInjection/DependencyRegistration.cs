@@ -34,11 +34,12 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 				concreteType: concreteType
 			);
 
-		internal static DependencyRegistration Factory( ObjectScope scope, ITypeSymbol dependencyType, ITypeSymbol factoryType )
+		internal static DependencyRegistration Factory( ObjectScope scope, ITypeSymbol dependencyType, ITypeSymbol factoryType, ITypeSymbol concreteType )
 			=> new DependencyRegistration(
 				scope,
 				dependencyType: dependencyType,
-				factoryType: factoryType
+				factoryType: factoryType,
+				concreteType: concreteType
 			);
 
 		internal static DependencyRegistration DynamicObjectFactory( ObjectScope scope, ITypeSymbol dependencyType, ITypeSymbol dynamicObjectType )

@@ -16,10 +16,17 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 			SeparatedSyntaxList<ArgumentSyntax> arguments,
 			SemanticModel semanticModel
 		) {
+			ITypeSymbol concreteType = GetConstructedTypeOfIFactory(
+				semanticModel,
+				method.TypeArguments[0],
+				method.TypeArguments[1]
+			);
+
 			return DependencyRegistration.Factory( 
 				ObjectScope.AlwaysCreateNewInstance, 
 				method.TypeArguments[0], 
-				method.TypeArguments[1] 
+				method.TypeArguments[1],
+				concreteType
 			);
 		}
 
