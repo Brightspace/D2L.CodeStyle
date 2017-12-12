@@ -23,10 +23,10 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 			if( !TryGetObjectScope( arguments[0], semanticModel, out scope ) ) {
 				return null;
 			}
-			return DependencyRegistration.NonFactory(
+			return DependencyRegistration.Factory(
 				scope: scope,
 				dependencyType: method.TypeArguments[0],
-				concreteType: method.TypeArguments[1]
+				factoryType: method.TypeArguments[1]
 			);
 		}
 	}
