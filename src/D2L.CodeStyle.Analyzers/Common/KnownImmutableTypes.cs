@@ -32,6 +32,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			"System.Drawing.Imaging.ImageFormat",
 			"System.Drawing.Size", // only safe because it's a struct with primitive fields
 			"System.Guid",
+			"System.Random",
 			"System.Reflection.ConstructorInfo",
 			"System.Reflection.FieldInfo",
 			"System.Reflection.MemberInfo",
