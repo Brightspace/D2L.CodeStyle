@@ -17,3 +17,8 @@ namespace SpecTests {
 
 	public struct SneakyStructFeature :/* ObsoleteLaunchDarklyFramework */ IFeature /**/{ }
 }
+
+namespace MissingNamespaceUsing {
+
+	public sealed class IncompleteFeature : IFeature { }
+}
