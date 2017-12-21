@@ -53,12 +53,12 @@ namespace D2L.CodeStyle.Analyzers.LaunchDarkly {
 			SymbolInfo baseTypeSymbol = context.SemanticModel.GetSymbolInfo( baseTypeSyntax.Type );
 
 			INamedTypeSymbol baseSymbol = ( baseTypeSymbol.Symbol as INamedTypeSymbol );
-			if( baseSymbol == null ) {
+			if( baseSymbol.IsNullOrErrorType() ) {
 				return;
 			}
 
 			ISymbol originalSymbol = baseSymbol.OriginalDefinition;
-			if( originalSymbol == null ) {
+			if( originalSymbol.IsNullOrErrorType() ) {
 				return;
 			}
 
@@ -67,7 +67,7 @@ namespace D2L.CodeStyle.Analyzers.LaunchDarkly {
 			}
 
 			ISymbol valueTypeSymbol = baseSymbol.TypeArguments[ 0 ];
-			if( valueTypeSymbol == null ) {
+			if( valueTypeSymbol.IsNullOrErrorType() ) {
 				return;
 			}
 
