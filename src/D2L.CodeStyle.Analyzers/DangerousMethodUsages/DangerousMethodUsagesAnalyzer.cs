@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Reflection;
 using D2L.CodeStyle.Analyzers.Common;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -17,16 +14,6 @@ namespace D2L.CodeStyle.Analyzers.DangerousMethodUsages {
 
 		private const string AuditedAttributeFullName = "D2L.CodeStyle.Annotations.DangerousMethodUsage+AuditedAttribute";
 		private const string UnauditedAttributeFullName = "D2L.CodeStyle.Annotations.DangerousMethodUsage+UnauditedAttribute";
-
-		internal static readonly IReadOnlyDictionary<string, ImmutableArray<string>> DangerousMethods =
-			ImmutableDictionary.Create<string, ImmutableArray<string>>()
-			.Add( typeof( FieldInfo ).FullName, ImmutableArray.Create(
-				nameof( FieldInfo.SetValue ),
-				nameof( FieldInfo.SetValueDirect )
-			) )
-			.Add( typeof( PropertyInfo ).FullName, ImmutableArray.Create(
-				nameof( PropertyInfo.SetValue )
-			) );
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.DangerousMethodsShouldBeAvoided
@@ -160,7 +147,7 @@ namespace D2L.CodeStyle.Analyzers.DangerousMethodUsages {
 
 			ImmutableHashSet<ISymbol>.Builder builder = ImmutableHashSet.CreateBuilder<ISymbol>();
 
-			foreach( KeyValuePair<string, ImmutableArray<string>> pairs in DangerousMethods ) {
+			foreach( KeyValuePair<string, ImmutableArray<string>> pairs in DangerousMethods.Definitions ) {
 
 				INamedTypeSymbol type = compilation.GetTypeByMetadataName( pairs.Key );
 				if( type != null ) {
