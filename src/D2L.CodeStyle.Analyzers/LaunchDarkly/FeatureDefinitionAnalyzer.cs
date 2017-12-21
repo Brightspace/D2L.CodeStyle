@@ -34,7 +34,7 @@ namespace D2L.CodeStyle.Analyzers.LaunchDarkly {
 			Compilation compilation = context.Compilation;
 
 			INamedTypeSymbol featureDefinitionType = compilation.GetTypeByMetadataName( FeatureDefinitionFullName );
-			if( featureDefinitionType == null ) {
+			if( featureDefinitionType.IsNullOrErrorType() ) {
 				return;
 			}
 

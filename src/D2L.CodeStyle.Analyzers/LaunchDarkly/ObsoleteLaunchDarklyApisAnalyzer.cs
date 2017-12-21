@@ -26,32 +26,38 @@ namespace D2L.CodeStyle.Analyzers.LaunchDarkly {
 
 			Compilation compilation = context.Compilation;
 
+			INamedTypeSymbol featureInterfaceSymbol = compilation.GetTypeByMetadataName( IFeatureFullName );
+			if( featureInterfaceSymbol.IsNullOrErrorType() ) {
+				return;
+			}
+
 			context.RegisterSyntaxNodeAction(
-					AnalyzeSimpleBaseType,
+					c => AnalyzeSimpleBaseType( c, featureInterfaceSymbol ),
 					SyntaxKind.SimpleBaseType
 				);
 		}
 
 		private void AnalyzeSimpleBaseType(
-				SyntaxNodeAnalysisContext context
+				SyntaxNodeAnalysisContext context,
+				INamedTypeSymbol featureInterfaceSymbol
 			) {
 
 			SimpleBaseTypeSyntax baseTypeSyntax = (SimpleBaseTypeSyntax)context.Node;
-
 			SymbolInfo baseTypeSymbol = context.SemanticModel.GetSymbolInfo( baseTypeSyntax.Type );
-			if( baseTypeSymbol.Symbol == null ) {
+
+			ISymbol baseSymbol = baseTypeSymbol.Symbol;
+			if( baseSymbol.IsNullOrErrorType() ) {
 				return;
 			}
 
-			string baseTypeFullName = baseTypeSymbol.Symbol.ToDisplayString();
-			if( !baseTypeFullName.Equals( IFeatureFullName ) ) {
+			if( !baseSymbol.Equals( featureInterfaceSymbol ) ) {
 				return;
 			}
 
 			SyntaxNode classNode = baseTypeSyntax.Parent.Parent;
 
 			ISymbol featureSymbol = context.SemanticModel.GetDeclaredSymbol( classNode );
-			if( featureSymbol == null ) {
+			if( featureSymbol.IsNullOrErrorType() ) {
 				return;
 			}
 
