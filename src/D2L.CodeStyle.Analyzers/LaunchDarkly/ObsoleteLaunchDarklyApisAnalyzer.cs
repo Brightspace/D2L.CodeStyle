@@ -37,7 +37,11 @@ namespace D2L.CodeStyle.Analyzers.LaunchDarkly {
 			) {
 
 			SimpleBaseTypeSyntax baseTypeSyntax = (SimpleBaseTypeSyntax)context.Node;
+
 			SymbolInfo baseTypeSymbol = context.SemanticModel.GetSymbolInfo( baseTypeSyntax.Type );
+			if( baseTypeSymbol.Symbol == null ) {
+				return;
+			}
 
 			string baseTypeFullName = baseTypeSymbol.Symbol.ToDisplayString();
 			if( !baseTypeFullName.Equals( IFeatureFullName ) ) {
@@ -45,7 +49,11 @@ namespace D2L.CodeStyle.Analyzers.LaunchDarkly {
 			}
 
 			SyntaxNode classNode = baseTypeSyntax.Parent.Parent;
+
 			ISymbol featureSymbol = context.SemanticModel.GetDeclaredSymbol( classNode );
+			if( featureSymbol == null ) {
+				return;
+			}
 
 			string featureName = featureSymbol.ToDisplayString();
 			if( LegacyFeatureTypes.Types.Contains( featureName ) ) {
