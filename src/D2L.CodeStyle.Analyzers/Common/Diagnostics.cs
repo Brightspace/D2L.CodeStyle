@@ -172,5 +172,15 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			description: "Switch your feature definition to inherit D2L.LP.LaunchDarkly.FeatureDefinition, configure your feature for DI, and use one of the new IInstanceFlag/IOrgFlag/ICurrentOrgFlag interfaces instead"
 		);
 
+		public static readonly DiagnosticDescriptor InvalidLaunchDarklyFeatureDefinition = new DiagnosticDescriptor(
+			id: "D2L0021",
+			title: "Launch Darkly feature definitions are limited to support types",
+			messageFormat: "Invalid feature flag value type: {0}",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Must be one of: bool, int, float, string"
+		);
+
 	}
 }
