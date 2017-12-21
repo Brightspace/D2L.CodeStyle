@@ -7,7 +7,11 @@ namespace D2L.CodeStyle.Annotations {
 		/// <summary>
 		/// Indicates usages of a dangerous method are still unaudited
 		/// </summary>
-		[AttributeUsage( validOn: AttributeTargets.Method, AllowMultiple = true, Inherited = false )]
+		[AttributeUsage(
+			validOn: AttributeTargets.Method | AttributeTargets.Constructor,
+			AllowMultiple = true,
+			Inherited = false
+		)]
 		public sealed class UnauditedAttribute : Attribute {
 
 			/// <summary>
