@@ -58,6 +58,8 @@
     <Compile Include="Extensions\Microsoft.CodeAnalysis.cs" />
     <Compile Include="Extensions\Microsoft.CodeAnalysis.CSharp.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzer.cs" />
+    <Compile Include="LaunchDarkly\ObsoleteLaunchDarklyApisAnalyzer.cs" />
+    <Compile Include="LaunchDarkly\LegacyFeatureTypes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RpcDependencies\RpcDependencyAnalyzer.cs" />
     <Compile Include="ServiceLocator\OldAndBrokenServiceLocatorAnalyzer.cs" />

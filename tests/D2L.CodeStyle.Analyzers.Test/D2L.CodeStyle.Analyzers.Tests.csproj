@@ -58,6 +58,7 @@
     <EmbeddedResource Include="Specs\UnsafeSingletonsAnalyzer.cs" />
     <EmbeddedResource Include="Specs\OldAndBrokenSingletonLocatorAnalyzer.cs" />
     <EmbeddedResource Include="Specs\DangerousMethodUsagesAnalyzer.cs" />
+    <EmbeddedResource Include="Specs\ObsoleteLaunchDarklyApisAnalyzer.cs" />
     <Compile Include="UnsafeStatics\UnsafeStaticsAnalyzerTests.cs" />
     <Compile Include="Verifiers\DiagnosticResult.cs" />
     <Compile Include="Verifiers\DiagnosticVerifier.cs" />
