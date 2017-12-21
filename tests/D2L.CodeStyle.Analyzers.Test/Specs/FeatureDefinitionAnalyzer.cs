@@ -31,3 +31,9 @@ namespace MissingLaunchDarklyUsingStatement {
 
 	public sealed class ObjectDefinition : FeatureDefinition<System.TimeSpan> { }
 }
+
+namespace UnresolvedValueType {
+	using D2L.LP.LaunchDarkly;
+
+	public sealed class ObjectDefinition :/* InvalidLaunchDarklyFeatureDefinition(YMCA) */ FeatureDefinition<YMCA> /**/{ }
+}
