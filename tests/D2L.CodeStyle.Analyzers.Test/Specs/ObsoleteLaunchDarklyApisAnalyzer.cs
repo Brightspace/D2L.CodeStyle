@@ -22,3 +22,8 @@ namespace MissingNamespaceUsing {
 
 	public sealed class IncompleteFeature : IFeature { }
 }
+
+namespace UnreleatedInterfaces {
+
+	public sealed class IncompleteFeature : System.ICloneable { }
+}
