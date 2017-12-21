@@ -86,5 +86,16 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			return false;
 		}
 
+		public static bool IsNullOrErrorType( this ISymbol symbol ) {
+			if( symbol == null ) {
+				return true;
+			}
+			if( symbol.Kind == SymbolKind.ErrorType ) {
+				return true;
+			}
+
+			return false;
+		}
+
 	}
 }
