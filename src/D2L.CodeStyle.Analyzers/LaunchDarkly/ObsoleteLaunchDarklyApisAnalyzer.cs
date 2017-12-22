@@ -10,7 +10,8 @@ namespace D2L.CodeStyle.Analyzers.LaunchDarkly {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	internal sealed class ObsoleteLaunchDarklyApisAnalyzer : DiagnosticAnalyzer {
 
-		public const string IFeatureFullName = "D2L.LP.LaunchDarkly.FeatureFlagging.IFeature";
+		private const string IFeatureFullName = "D2L.LP.LaunchDarkly.FeatureFlagging.IFeature";
+		private const string ILaunchDarklyClientName = "D2L.LP.LaunchDarkly.ILaunchDarklyClient";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 				Diagnostics.ObsoleteLaunchDarklyFramework
@@ -27,14 +28,22 @@ namespace D2L.CodeStyle.Analyzers.LaunchDarkly {
 			Compilation compilation = context.Compilation;
 
 			INamedTypeSymbol featureInterfaceSymbol = compilation.GetTypeByMetadataName( IFeatureFullName );
-			if( featureInterfaceSymbol.IsNullOrErrorType() ) {
-				return;
+			if( !featureInterfaceSymbol.IsNullOrErrorType() ) {
+
+				context.RegisterSyntaxNodeAction(
+						c => AnalyzeSimpleBaseType( c, featureInterfaceSymbol ),
+						SyntaxKind.SimpleBaseType
+					);
 			}
 
-			context.RegisterSyntaxNodeAction(
-					c => AnalyzeSimpleBaseType( c, featureInterfaceSymbol ),
-					SyntaxKind.SimpleBaseType
-				);
+			IImmutableSet<ISymbol> bannedMethods;
+			if( TryGetBannedMethods( compilation, out bannedMethods ) ) {
+
+				context.RegisterSyntaxNodeAction(
+						c => AnalyzeInvocationExpression( c, bannedMethods ),
+						SyntaxKind.InvocationExpression
+					);
+			}
 		}
 
 		private void AnalyzeSimpleBaseType(
@@ -73,5 +82,62 @@ namespace D2L.CodeStyle.Analyzers.LaunchDarkly {
 
 			context.ReportDiagnostic( diagnostic );
 		}
+
+		private void AnalyzeInvocationExpression(
+				SyntaxNodeAnalysisContext context,
+				IImmutableSet<ISymbol> bannedMethods
+			) {
+
+			InvocationExpressionSyntax invocation = ( context.Node as InvocationExpressionSyntax );
+			if( invocation == null ) {
+				return;
+			}
+
+			ISymbol methodSymbol = context.SemanticModel
+				.GetSymbolInfo( invocation.Expression )
+				.Symbol;
+
+			if( methodSymbol.IsNullOrErrorType() ) {
+				return;
+			}
+
+			if( !bannedMethods.Contains( methodSymbol.OriginalDefinition ) ) {
+				return;
+			}
+
+			string methodName = context.ContainingSymbol.ToDisplayString( MethodDisplayFormat );
+			if( LegacyILaunchDarklyClientConsumers.Types.Contains( methodName ) ) {
+				return;
+			}
+
+			Diagnostic diagnostic = Diagnostic.Create(
+					Diagnostics.ObsoleteLaunchDarklyFramework,
+					invocation.GetLocation()
+				);
+
+			context.ReportDiagnostic( diagnostic );
+		}
+
+		private static bool TryGetBannedMethods(
+				Compilation compilation,
+				out IImmutableSet<ISymbol> bannedMethods
+			) {
+
+			INamedTypeSymbol type = compilation.GetTypeByMetadataName( ILaunchDarklyClientName );
+			if( type.IsNullOrErrorType() ) {
+				bannedMethods = null;
+				return false;
+			}
+
+			bannedMethods = type.GetMembers().ToImmutableHashSet();
+			return true;
+		}
+
+		private static readonly SymbolDisplayFormat MethodDisplayFormat = new SymbolDisplayFormat(
+				memberOptions: SymbolDisplayMemberOptions.IncludeContainingType,
+				localOptions: SymbolDisplayLocalOptions.IncludeType,
+				typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
+			);
+
 	}
 }
