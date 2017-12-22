@@ -60,6 +60,7 @@
     <Compile Include="Extensions\Microsoft.CodeAnalysis.CSharp.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzer.cs" />
     <Compile Include="LaunchDarkly\FeatureDefinitionAnalyzer.cs" />
+    <Compile Include="LaunchDarkly\LegacyILaunchDarklyClientConsumers.cs" />
     <Compile Include="LaunchDarkly\ObsoleteLaunchDarklyApisAnalyzer.cs" />
     <Compile Include="LaunchDarkly\LegacyFeatureTypes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
