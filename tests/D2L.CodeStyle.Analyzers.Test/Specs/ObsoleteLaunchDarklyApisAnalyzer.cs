@@ -40,7 +40,7 @@ namespace BannedMethods {
 	public sealed class NonLegacyILaunchDarklyClientConsumers {
 
 		public void Method( ILaunchDarklyClient client ) {
-			/* ObsoleteLaunchDarklyFramework */	client.Flush();/**/
+			/* ObsoleteILaunchDarklyClientClient */	client.Flush();/**/
 		}
 	}
 }

@@ -14,7 +14,8 @@ namespace D2L.CodeStyle.Analyzers.LaunchDarkly {
 		private const string ILaunchDarklyClientName = "D2L.LP.LaunchDarkly.ILaunchDarklyClient";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-				Diagnostics.ObsoleteLaunchDarklyFramework
+				Diagnostics.ObsoleteLaunchDarklyFramework,
+				Diagnostics.ObsoleteILaunchDarklyClientClient
 			);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -111,7 +112,7 @@ namespace D2L.CodeStyle.Analyzers.LaunchDarkly {
 			}
 
 			Diagnostic diagnostic = Diagnostic.Create(
-					Diagnostics.ObsoleteLaunchDarklyFramework,
+					Diagnostics.ObsoleteILaunchDarklyClientClient,
 					invocation.GetLocation()
 				);
 
