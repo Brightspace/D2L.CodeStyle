@@ -2,6 +2,7 @@
 
 using System;
 using System.Reflection;
+using System.Threading.Tasks;
 using D2L.CodeStyle.Annotations;
 using D2L.LP.Extensibility.Activation.Domain;
 
@@ -34,6 +35,10 @@ namespace SpecTests {
 		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ Method(/**/) {
 			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 			p.SetValue( "str", 7, null );
+		}
+
+		public void/* DangerousMethodsShouldBeAvoided(System.Threading.Tasks.Task.Run) */ AsyncMethod(/**/) {
+			Task.Run<int>( () => Task.FromResult( 7 ) );
 		}
 
 		public int PropertyGetter {
@@ -72,6 +77,11 @@ namespace SpecTests {
 		public void Method() {
 			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 			p.SetValue( "str", 7, null );
+		}
+
+		[DangerousMethodUsage.Audited( typeof( Task ), "Run" )]
+		public void AsyncMethod() {
+			Task.Run<int>( () => Task.FromResult( 7 ) );
 		}
 
 		public int PropertyGetter {
@@ -115,6 +125,11 @@ namespace SpecTests {
 		public void Method() {
 			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 			p.SetValue( "str", 7, null );
+		}
+
+		[DangerousMethodUsage.Unaudited( typeof( Task ), "Run" )]
+		public void AsyncMethod() {
+			Task.Run<int>( () => Task.FromResult( 7 ) );
 		}
 
 		public int PropertyGetter {

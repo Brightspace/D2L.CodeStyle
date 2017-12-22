@@ -63,11 +63,11 @@ namespace D2L.CodeStyle.Analyzers.DangerousMethodUsages {
 				.GetSymbolInfo( invocation.Expression )
 				.Symbol;
 
-			if( methodSymbol == null ) {
+			if( methodSymbol.IsNullOrErrorType() ) {
 				return;
 			}
 
-			if( !dangerousMethods.Contains( methodSymbol ) ) {
+			if( !IsDangerousMethodSymbol( methodSymbol, dangerousMethods ) ) {
 				return;
 			}
 
@@ -82,7 +82,28 @@ namespace D2L.CodeStyle.Analyzers.DangerousMethodUsages {
 			ReportDiagnostic( context, methodSymbol );
 		}
 
-		private bool IsAuditedAttribute(
+		private static bool IsDangerousMethodSymbol(
+				ISymbol methodSymbol,
+				IImmutableSet<ISymbol> dangerousMethods
+			) {
+
+			ISymbol originalDefinition = methodSymbol.OriginalDefinition;
+
+			if( dangerousMethods.Contains( originalDefinition ) ) {
+				return true;
+			}
+
+			if( !ReferenceEquals( methodSymbol, originalDefinition ) ) {
+
+				if( dangerousMethods.Contains( methodSymbol ) ) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		private static bool IsAuditedAttribute(
 				INamedTypeSymbol auditedAttributeType,
 				INamedTypeSymbol unauditedAttributeType,
 				AttributeData attr,
