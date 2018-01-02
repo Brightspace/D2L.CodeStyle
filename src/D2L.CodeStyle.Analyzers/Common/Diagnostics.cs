@@ -161,5 +161,36 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			isEnabledByDefault: true,
 			description: "Non-Singletons should not be marked with the [Singleton] attribute."
 		);
+
+		public static readonly DiagnosticDescriptor ObsoleteLaunchDarklyFramework = new DiagnosticDescriptor(
+			id: "D2L0020",
+			title: "Use the new IInstanceFlag/IOrgFlag/ICurrentOrgFlag interfaces instead",
+			messageFormat: "Should not use D2L.LP.LaunchDarkly.IFeature because it's obsolete",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Switch your feature definition to inherit D2L.LP.LaunchDarkly.FeatureDefinition, configure your feature for DI, and use one of the new IInstanceFlag/IOrgFlag/ICurrentOrgFlag interfaces instead"
+		);
+
+		public static readonly DiagnosticDescriptor InvalidLaunchDarklyFeatureDefinition = new DiagnosticDescriptor(
+			id: "D2L0021",
+			title: "Launch Darkly feature definitions are limited to support types",
+			messageFormat: "Invalid feature flag value type: {0}",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Must be one of: bool, int, float, string"
+		);
+
+		public static readonly DiagnosticDescriptor ObsoleteILaunchDarklyClientClient = new DiagnosticDescriptor(
+			id: "D2L0022",
+			title: "Use the new IInstanceFlag/IOrgFlag/ICurrentOrgFlag interfaces instead",
+			messageFormat: "Should not use D2L.LP.LaunchDarkly.ILaunchDarklyClient because it's obsolete",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Switch your feature definition to inherit D2L.LP.LaunchDarkly.FeatureDefinition, configure your feature for DI, and use one of the new IInstanceFlag/IOrgFlag/ICurrentOrgFlag interfaces instead"
+		);
+
 	}
 }

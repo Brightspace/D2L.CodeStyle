@@ -53,11 +53,16 @@
     <Compile Include="Common\MutabilityInspector.cs" />
     <Compile Include="Common\TypeSymbolExtensions.cs" />
     <Compile Include="Contract\NotNullAnalyzer.cs" />
+    <Compile Include="DangerousMethodUsages\DangerousMethods.cs" />
     <Compile Include="DangerousMethodUsages\DangerousMethodUsagesAnalyzer.cs" />
     <Compile Include="DependencyRegistrations\DependencyRegistrationsAnalyzer.cs" />
     <Compile Include="Extensions\Microsoft.CodeAnalysis.cs" />
     <Compile Include="Extensions\Microsoft.CodeAnalysis.CSharp.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzer.cs" />
+    <Compile Include="LaunchDarkly\FeatureDefinitionAnalyzer.cs" />
+    <Compile Include="LaunchDarkly\LegacyILaunchDarklyClientConsumers.cs" />
+    <Compile Include="LaunchDarkly\ObsoleteLaunchDarklyApisAnalyzer.cs" />
+    <Compile Include="LaunchDarkly\LegacyFeatureTypes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RpcDependencies\RpcDependencyAnalyzer.cs" />
     <Compile Include="ServiceLocator\OldAndBrokenServiceLocatorAnalyzer.cs" />

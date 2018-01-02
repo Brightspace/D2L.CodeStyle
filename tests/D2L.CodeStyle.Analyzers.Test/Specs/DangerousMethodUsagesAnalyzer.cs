@@ -2,6 +2,7 @@
 
 using System;
 using System.Reflection;
+using System.Threading.Tasks;
 using D2L.CodeStyle.Annotations;
 using D2L.LP.Extensibility.Activation.Domain;
 
@@ -25,10 +26,19 @@ namespace D2L.CodeStyle.Annotations {
 namespace SpecTests {
 
 	internal sealed class UnmarkedUsages {
-		
+
+		public /* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ UnmarkedUsages(/**/) {
+			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
+			p.SetValue( "str", 7, null );
+		}
+
 		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ Method(/**/) {
 			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 			p.SetValue( "str", 7, null );
+		}
+
+		public void/* DangerousMethodsShouldBeAvoided(System.Threading.Tasks.Task.Run) */ AsyncMethod(/**/) {
+			Task.Run<int>( () => Task.FromResult( 7 ) );
 		}
 
 		public int PropertyGetter {
@@ -58,9 +68,20 @@ namespace SpecTests {
 	internal sealed class AuditedUsages {
 
 		[DangerousMethodUsage.Audited( typeof( PropertyInfo ), "SetValue" )]
+		public AuditedUsages() {
+			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
+			p.SetValue( "str", 7, null );
+		}
+
+		[DangerousMethodUsage.Audited( typeof( PropertyInfo ), "SetValue" )]
 		public void Method() {
 			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 			p.SetValue( "str", 7, null );
+		}
+
+		[DangerousMethodUsage.Audited( typeof( Task ), "Run" )]
+		public void AsyncMethod() {
+			Task.Run<int>( () => Task.FromResult( 7 ) );
 		}
 
 		public int PropertyGetter {
@@ -95,9 +116,20 @@ namespace SpecTests {
 	internal sealed class UnauditedUsages {
 
 		[DangerousMethodUsage.Unaudited( typeof( PropertyInfo ), "SetValue" )]
+		public UnauditedUsages() {
+			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
+			p.SetValue( "str", 7, null );
+		}
+
+		[DangerousMethodUsage.Unaudited( typeof( PropertyInfo ), "SetValue" )]
 		public void Method() {
 			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 			p.SetValue( "str", 7, null );
+		}
+
+		[DangerousMethodUsage.Unaudited( typeof( Task ), "Run" )]
+		public void AsyncMethod() {
+			Task.Run<int>( () => Task.FromResult( 7 ) );
 		}
 
 		public int PropertyGetter {

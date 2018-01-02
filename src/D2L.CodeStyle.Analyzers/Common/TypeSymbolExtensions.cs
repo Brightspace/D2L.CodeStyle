@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Generic;
@@ -86,23 +86,12 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			return false;
 		}
 
-		/// <summary>
-		/// Returns true iff `self = toAssign` would compile.
-		/// </summary>
-		internal static bool IsAssignableFrom( this ITypeSymbol self, ITypeSymbol toAssign ) {
-			while( toAssign != null ) {
-
-				if( self == toAssign ) {
-					return true;
-				}
-
-				foreach( var iface in toAssign.AllInterfaces ) {
-					if( self == iface ) {
-						return true;
-					}
-				}
-
-				toAssign = toAssign.BaseType;
+		public static bool IsNullOrErrorType( this ISymbol symbol ) {
+			if( symbol == null ) {
+				return true;
+			}
+			if( symbol.Kind == SymbolKind.ErrorType ) {
+				return true;
 			}
 
 			return false;
