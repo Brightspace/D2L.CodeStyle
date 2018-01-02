@@ -11,7 +11,6 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 	//		ObjectScope scope
 	// ) where TConcrete : class, TOutput
 	internal sealed class RegisterDynamicObjectFactoryExpression : DependencyRegistrationExpression {
-		private const string IFactoryTypeMetadataName = "D2L.LP.Extensibility.Activation.Domain.IFactory`1";
 
 		internal override bool CanHandleMethod( IMethodSymbol method ) {
 			return method.Name == "RegisterDynamicObjectFactory"
