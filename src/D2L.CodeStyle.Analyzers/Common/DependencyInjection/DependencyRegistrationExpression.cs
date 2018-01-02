@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
@@ -36,18 +37,20 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 			return true;
 		}
 
+		/// <summary>
+		/// Gets the `T` in a factory of type `IFactory<out T>` that is assignable to `baseType`.
+		/// </summary>
+		/// <param name="semanticModel"></param>
+		/// <param name="baseType">An interface or base class that `T` is assignable to, or T itself.</param>
+		/// <param name="factoryType">IFactory<out T></param>
+		/// <returns></returns>
 		protected ITypeSymbol GetConstructedTypeOfIFactory(
 			SemanticModel semanticModel,
 			ITypeSymbol baseType,
 			ITypeSymbol factoryType
 		) {
-			var iFactoryType = semanticModel.Compilation.GetTypeByMetadataName( IFactoryTypeMetadataName );
-
-			// get IFactory<Foo> from FooFactory : IFactory<Foo>
-			var implementedIFactoryInterface = factoryType.AllInterfaces
-				.FirstOrDefault( i => {
-					return i.ConstructedFrom == iFactoryType && baseType.IsAssignableFrom( i.TypeArguments[0] );
-				} );
+			// get IFactory<Foo> from FooFactory : IFactory<Foo>, IFactory<OtherFoo>
+			var implementedIFactoryInterface = GetImplementedIFactoryInterface( factoryType, baseType, semanticModel.Compilation );
 			if( implementedIFactoryInterface == null ) {
 				return null;
 			}
@@ -59,6 +62,32 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 
 			// get T from IFactory<T>
 			return implementedIFactoryInterface.TypeArguments[0];
+		}
+
+		private static INamedTypeSymbol GetImplementedIFactoryInterface( 
+			ITypeSymbol factoryType,
+			ITypeSymbol baseType,
+			Compilation compilation 
+		) {
+			var iFactoryType = compilation.GetTypeByMetadataName( IFactoryTypeMetadataName );
+
+			var factoryInterfacesImplemented = factoryType.AllInterfaces
+				.Where( i => i.ConstructedFrom == iFactoryType );
+
+			foreach( var iface in factoryInterfacesImplemented ) {
+				var t = iface.TypeArguments[0];
+
+				if( t == baseType ) {
+					return iface;
+				}
+
+				var conversionToBaseType = compilation.ClassifyConversion( source: t, destination: baseType );
+				if( conversionToBaseType.IsImplicit ) {
+					return iface;
+				}
+			}
+
+			return null;
 		}
 	}
 }
