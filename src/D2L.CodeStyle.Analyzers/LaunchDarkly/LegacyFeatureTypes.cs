@@ -53,7 +53,6 @@ namespace D2L.CodeStyle.Analyzers.LaunchDarkly {
 			"D2L.LE.Locker.Features.DE25830_CheckOwnership",
 			"D2L.LE.Lti.Security.OAuth.CheckTrimmedLtiBodySignature",
 			"D2L.LE.Lti.Security.OAuth.RemoveOAuthBodyTrimFeature",
-			"D2L.LE.ManagerRole.Extensibility.FeatureFlags.ManagerDashboardFeature",
 			"D2L.LE.Quizzes.Activities.Features.QuizzesActivitiesFeature",
 			"D2L.LOR.FeatureToggles.SendAcceptRangesHeaderFeature",
 			"D2L.LP.Attachments.Domain.LinkAttachmentFeature",
