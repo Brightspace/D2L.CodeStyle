@@ -5,9 +5,9 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers.Common {
-	internal sealed class KnownImmutableTypes {
+	public sealed class KnownImmutableTypes {
 
-		internal static readonly KnownImmutableTypes Default = new KnownImmutableTypes( ImmutableHashSet<string>.Empty );
+		public static readonly KnownImmutableTypes Default = new KnownImmutableTypes( ImmutableHashSet<string>.Empty );
 
 		/// <summary>
 		/// A list of known immutable types.
@@ -79,14 +79,14 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		/// </summary>
 		private readonly ImmutableHashSet<string> DeclaredKnownImmutableTypes;
 
-		internal KnownImmutableTypes( ImmutableHashSet<string> declaredKnownImmutableTypes ) {
+		public KnownImmutableTypes( ImmutableHashSet<string> declaredKnownImmutableTypes ) {
 			DeclaredKnownImmutableTypes = declaredKnownImmutableTypes;
 		}
 
-		internal KnownImmutableTypes( IAssemblySymbol a )
+		public KnownImmutableTypes( IAssemblySymbol a )
 			: this( LoadFromAssembly( a ).ToImmutableHashSet() ) { }
 
-		internal bool IsTypeKnownImmutable( ITypeSymbol type ) {
+		public bool IsTypeKnownImmutable( ITypeSymbol type ) {
 			if( ImmutableSpecialTypes.Contains( type.SpecialType ) ) {
 				return true;
 			}
