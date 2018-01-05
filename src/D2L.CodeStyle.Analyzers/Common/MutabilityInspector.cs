@@ -23,6 +23,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		/// </summary>
 		private static readonly ImmutableDictionary<string, string[]> ImmutableContainerTypes = new Dictionary<string, string[]> {
 			[ "D2L.LP.Utilities.DeferredInitializer" ] = new[] { "Value" },
+			[ "D2L.LP.Extensibility.Activation.Domain.IPlugins" ] = new[] { "[]" },
 			[ "System.Collections.Immutable.ImmutableArray" ] = new[] { "[]" },
 			[ "System.Collections.Immutable.ImmutableDictionary" ] = new[] { "[].Key", "[].Value" },
 			[ "System.Collections.Immutable.ImmutableHashSet" ] = new[] { "[]" },
