@@ -7,7 +7,7 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 	// void ConfigureOrderedPlugins<TPlugin, TComparer>( this IDependencyRegistry registry, ObjectScope scope ) 
 	//		where TComparer : IComparer<TPlugin>, new()
 	internal sealed class ConfigurePluginsExpression : DependencyRegistrationExpression {
-		internal override bool CanHandleMethod( IMethodSymbol method ) {
+		public override bool CanHandleMethod( IMethodSymbol method ) {
 			return
 				( method.Name == "ConfigurePlugins"
 				&& method.IsExtensionMethod
@@ -20,7 +20,7 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 				&& method.Parameters.Length == 1 );
 		}
 
-		internal override DependencyRegistration GetRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
+		public override DependencyRegistration GetRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
 			if( arguments.Count != 1 ) {
 				return null;
 			}

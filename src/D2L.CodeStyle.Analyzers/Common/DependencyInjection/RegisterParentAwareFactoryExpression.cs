@@ -5,13 +5,13 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 	// void RegisterParentAwareFactory<TDependencyType, TFactoryType>();
 	internal sealed class RegisterParentAwareFactoryExpression : DependencyRegistrationExpression {
 
-		internal override bool CanHandleMethod( IMethodSymbol method ) {
+		public override bool CanHandleMethod( IMethodSymbol method ) {
 			return method.Name == "RegisterParentAwareFactory"
 				&& method.TypeArguments.Length == 2
 				&& method.Parameters.Length == 0;
 		}
 
-		internal override DependencyRegistration GetRegistration(
+		public override DependencyRegistration GetRegistration(
 			IMethodSymbol method,
 			SeparatedSyntaxList<ArgumentSyntax> arguments,
 			SemanticModel semanticModel

@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
-	internal sealed class DependencyRegistry {
+	public sealed class DependencyRegistry {
 
 		private static readonly ImmutableArray<DependencyRegistrationExpression> s_registrationExpressions = ImmutableArray.Create<DependencyRegistrationExpression>(
 			new RegisterParentAwareFactoryExpression(),

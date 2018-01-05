@@ -16,14 +16,14 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 	//		where TFactoryType : IFactory<TDependencyType>
 	//		where TExtensionPoint : IExtensionPoint<TDependencyType>;
 	internal sealed class RegisterPluginForExtensionPointExpression : DependencyRegistrationExpression {
-		internal override bool CanHandleMethod( IMethodSymbol method ) {
+		public override bool CanHandleMethod( IMethodSymbol method ) {
 			return ( method.Name == "RegisterPlugin" || method.Name == "RegisterPluginFactory" )
 				&& method.IsExtensionMethod
 				&& method.Parameters.Length == 1
 				&& method.TypeArguments.Length == 3;
 		}
 
-		internal override DependencyRegistration GetRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
+		public override DependencyRegistration GetRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
 			if( arguments.Count != 1 ) {
 				return null;
 			}

@@ -1,7 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
-	internal sealed class DependencyRegistration {
+	public sealed class DependencyRegistration {
 
 		public ObjectScope ObjectScope { get; }
 
@@ -27,14 +27,14 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 			DynamicObjectFactoryType = dynamicObjectType;
 		}
 
-		internal static DependencyRegistration NonFactory( ObjectScope scope, ITypeSymbol dependencyType, ITypeSymbol concreteType )
+		public static DependencyRegistration NonFactory( ObjectScope scope, ITypeSymbol dependencyType, ITypeSymbol concreteType )
 			=> new DependencyRegistration(
 				scope,
 				dependencyType: dependencyType,
 				concreteType: concreteType
 			);
 
-		internal static DependencyRegistration Factory( ObjectScope scope, ITypeSymbol dependencyType, ITypeSymbol factoryType, ITypeSymbol concreteType )
+		public static DependencyRegistration Factory( ObjectScope scope, ITypeSymbol dependencyType, ITypeSymbol factoryType, ITypeSymbol concreteType )
 			=> new DependencyRegistration(
 				scope,
 				dependencyType: dependencyType,
@@ -42,7 +42,7 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 				concreteType: concreteType
 			);
 
-		internal static DependencyRegistration DynamicObjectFactory( ObjectScope scope, ITypeSymbol dependencyType, ITypeSymbol dynamicObjectType )
+		public static DependencyRegistration DynamicObjectFactory( ObjectScope scope, ITypeSymbol dependencyType, ITypeSymbol dynamicObjectType )
 			=> new DependencyRegistration(
 				scope,
 				dependencyType: dependencyType,
@@ -54,7 +54,7 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 	/// This is copied from lp/framework/core/D2L.LP.Foundation/LP/Extensibility/Activation/Domain/ObjectScope.cs
 	/// so that the values match.
 	/// </summary>
-	internal enum ObjectScope {
+	public enum ObjectScope {
 		AlwaysCreateNewInstance = 0,
 		Singleton = 1,
 		Thread = 2,

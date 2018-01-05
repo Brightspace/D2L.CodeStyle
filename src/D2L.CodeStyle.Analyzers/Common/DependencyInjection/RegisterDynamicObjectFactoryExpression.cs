@@ -12,14 +12,14 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 	// ) where TConcrete : class, TOutput
 	internal sealed class RegisterDynamicObjectFactoryExpression : DependencyRegistrationExpression {
 
-		internal override bool CanHandleMethod( IMethodSymbol method ) {
+		public override bool CanHandleMethod( IMethodSymbol method ) {
 			return method.Name == "RegisterDynamicObjectFactory"
 				&& method.IsExtensionMethod
 				&& ( method.TypeArguments.Length == 3 || method.TypeArguments.Length == 4 )
 				&& method.Parameters.Length == 1;
 		}
 
-		internal override DependencyRegistration GetRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
+		public override DependencyRegistration GetRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
 			if( arguments.Count != 1 ) {
 				return null;
 			}
