@@ -89,6 +89,8 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common\Diagnostics.cs" />
+    <Compile Include="NUnit\TestCaseSourceStringsAnalyzer.cs" />
     <Compile Include="ParallelizableTests\ParallelizableTestsAnalyzer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
