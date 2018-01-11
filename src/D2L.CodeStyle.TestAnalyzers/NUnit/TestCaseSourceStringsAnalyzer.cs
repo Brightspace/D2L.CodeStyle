@@ -16,7 +16,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
-			context.RegisterCompilationStartActionForTestProjects( Register );
+			context.RegisterCompilationStartAction( Register );
 		}
 
 		private void Register( CompilationStartAnalysisContext compilation ) {
