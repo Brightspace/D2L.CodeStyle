@@ -17,7 +17,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		IgnoreImmutabilityAttribute = 2,
 	}
 
-	internal sealed class MutabilityInspector {
+	public sealed class MutabilityInspector {
 		/// <summary>
 		/// A list of immutable container types (i.e., types that hold other types)
 		/// </summary>
@@ -47,7 +47,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		private readonly ConcurrentDictionary<Tuple<ITypeSymbol, MutabilityInspectionFlags>, MutabilityInspectionResult> m_cache
 			= new ConcurrentDictionary<Tuple<ITypeSymbol, MutabilityInspectionFlags>, MutabilityInspectionResult>();
 
-		internal MutabilityInspector(
+		public MutabilityInspector(
 			Compilation compilation,
 			KnownImmutableTypes knownImmutableTypes
 		) {
