@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace D2L.CodeStyle.TestAnalyzers.TestCaseSourceStrings {
+namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class TestCaseSourceStringsAnalyzer : DiagnosticAnalyzer {
