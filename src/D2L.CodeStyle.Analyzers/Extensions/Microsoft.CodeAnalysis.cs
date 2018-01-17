@@ -31,6 +31,22 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			return false;
 		}
 
+		public static bool TryGetImmutableAttributeData( this ITypeSymbol symbol, out AttributeData attrData ) {
+			attrData = Attributes.Objects.Immutable.GetAll( symbol ).FirstOrDefault();
+			if( attrData != null ) {
+				return true;
+			}
+			foreach( INamedTypeSymbol interfaceSymbol in symbol.Interfaces ) {
+				if( interfaceSymbol.TryGetImmutableAttributeData( out attrData ) ) {
+					return true;
+				}
+			}
+			if( symbol.BaseType == null ) {
+				return false;
+			}
+			return symbol.BaseType.TryGetImmutableAttributeData( out attrData );
+		}
+
 		public static bool IsTypeMarkedSingleton( this ITypeSymbol symbol ) {
 			if( Attributes.Singleton.IsDefined( symbol ) ) {
 				return true;
