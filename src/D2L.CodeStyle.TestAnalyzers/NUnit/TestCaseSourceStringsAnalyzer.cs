@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
-	public sealed class TestCaseSourceStringsAnalyzer : DiagnosticAnalyzer {
+	public sealed partial class TestCaseSourceStringsAnalyzer : DiagnosticAnalyzer {
 		
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 			=> ImmutableArray.Create( Diagnostics.TestCaseSourceStrings );
