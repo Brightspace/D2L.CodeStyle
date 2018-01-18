@@ -72,6 +72,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		}
 
 		private static IImmutableSet<Because> ParseImmutabilityExceptions( int value ) {
+
 			// These values must always be kept in sync with the values in Objects.Except
 			ImmutableHashSet<Because>.Builder builder = ImmutableHashSet.CreateBuilder<Because>();
 			if( value >= 32 ) {

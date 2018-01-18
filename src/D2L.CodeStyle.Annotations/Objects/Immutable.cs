@@ -17,8 +17,21 @@ namespace D2L.CodeStyle.Annotations {
 		)]
 		public sealed class Immutable : Attribute {
 
-			public Because Except { get; set; }
+			public Except Except { get; set; }
 
+		}
+
+		[Flags]
+		public enum Except {
+
+			None = 0,
+			ItHasntBeenLookedAt = 1,
+			ItsSketchy = 2,
+			ItsStickyDataOhNooo = 4,
+			WeNeedToMakeTheAnalyzerConsiderThisSafe = 8,
+			ItsUgly = 16,
+			ItsOnDeathRow = 32
+			
 		}
 	}
 }

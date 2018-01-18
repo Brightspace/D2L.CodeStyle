@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Annotations;
@@ -19,20 +20,31 @@ namespace D2L.CodeStyle.Annotations {
 	public static class Objects {
 		public sealed class Immutable : Attribute {
 
-			public Because Except { get; set; }
+			public Except Except { get; set; }
+
+		}
+
+		[Flags]
+		public enum Except {
+
+			None = 0,
+			ItHasntBeenLookedAt = 1,
+			ItsSketchy = 2,
+			ItsStickyDataOhNooo = 4,
+			WeNeedToMakeTheAnalyzerConsiderThisSafe = 8,
+			ItsUgly = 16,
+			ItsOnDeathRow = 32
 
 		}
 	}
 
-	[Flags]
 	public enum Because {
-		None = 0,
 		ItHasntBeenLookedAt = 1,
 		ItsSketchy = 2,
-		ItsStickyDataOhNooo = 4,
-		WeNeedToMakeTheAnalyzerConsiderThisSafe = 8,
-		ItsUgly = 16,
-		ItsOnDeathRow = 32
+		ItsStickyDataOhNooo = 3,
+		WeNeedToMakeTheAnalyzerConsiderThisSafe = 4,
+		ItsUgly = 5,
+		ItsOnDeathRow = 6
 	}
 
 	public static partial class Mutability {
@@ -74,7 +86,7 @@ public class Foo { }
 		public void GetImmutabilityExceptions_WhenSpecifiedAllowedUnauditedReasons_ReturnsSpecifiedReasons() {
 
 			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"
-[Immutable( Except = Because.ItsUgly | Because.WeNeedToMakeTheAnalyzerConsiderThisSafe )]
+[Immutable( Except = Except.ItsUgly | Except.WeNeedToMakeTheAnalyzerConsiderThisSafe )]
 public class Foo { }
 " );
 
@@ -90,7 +102,7 @@ public class Foo { }
 		public void GetImmutabilityExceptions_WhenSpecifiedNoneReasons_ReturnsEmptySet() {
 
 			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"
-[Immutable( Except = Because.None )]
+[Immutable( Except = Except.None )]
 public class Foo { }
 " );
 
@@ -113,12 +125,7 @@ public class Foo {
 			Assert.That( result, Is.False );
 		}
 
-		[TestCase( Because.ItsUgly )]
-		[TestCase( Because.ItHasntBeenLookedAt )]
-		[TestCase( Because.ItsOnDeathRow )]
-		[TestCase( Because.ItsSketchy )]
-		[TestCase( Because.ItsStickyDataOhNooo )]
-		[TestCase( Because.WeNeedToMakeTheAnalyzerConsiderThisSafe )]
+		[TestCaseSource( nameof( GetBecauseReasons ) )]
 		public void TryGetUnauditedReason_WhenSymbolIsAnnotatedWithUnauditedReason_ReturnsTrueAndCorrectReason( Because expectedReason ) {
 			TestSymbol<IFieldSymbol> field = CompileAndGetFooField( $@"
 public class Foo {{
@@ -132,6 +139,10 @@ public class Foo {{
 
 			Assert.That( result, Is.True );
 			Assert.That( reason, Is.EqualTo( expectedReason ) );
+		}
+
+		private static IEnumerable<Because> GetBecauseReasons() {
+			return Enum.GetValues( typeof( Because ) ).Cast<Because>();
 		}
 
 		private static TestSymbol<ITypeSymbol> CompileAndGetFooType( string source ) {
