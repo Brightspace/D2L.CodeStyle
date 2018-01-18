@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using D2L.CodeStyle.Annotations;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace D2L.CodeStyle.Analyzers.Common {
 	internal static class BecauseHelpers {
@@ -26,21 +28,14 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return false;
 			}
 
-			int rawReason = (int)unauditedAttr
+			string rawReason = unauditedAttr
 				.ConstructorArguments
 				.FirstOrDefault()
-				.Value;
+				.ToCSharpString()
+				.Split( '.' )
+				.Last();
 
-			return TryParseUnauditedReason( rawReason, out reason );
-		}
-
-		private static bool TryParseUnauditedReason( int value, out Because reason ) {
-			if( !Enum.IsDefined( typeof( Because ), value ) ) {
-				reason = default( Because );
-				return false;
-			}
-			reason = (Because)value;
-			return true;
+			return Enum.TryParse( rawReason, out reason );
 		}
 
 		/// <summary>
@@ -58,51 +53,34 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return DefaultImmutabilityExceptions;
 			}
 
-			TypedConstant allowedReasonsConst = attrData
-				.NamedArguments
-				.FirstOrDefault( kvp => kvp.Key == "Except" )
-				.Value;
+			ImmutableArray<KeyValuePair<string, TypedConstant>> namedArgs = attrData.NamedArguments;
 
-			if( allowedReasonsConst.Value == null ) {
+			if( !namedArgs.Any( kvp => kvp.Key == "Except" ) ) {
 				return DefaultImmutabilityExceptions;
 			}
 
-			int allowedReasons = (int)allowedReasonsConst.Value;
-			return ParseImmutabilityExceptions( allowedReasons );
-		}
+			string rawAllowedReasons = namedArgs
+				.First( kvp => kvp.Key == "Except" )
+				.Value
+				.ToCSharpString();
 
-		private static IImmutableSet<Because> ParseImmutabilityExceptions( int value ) {
+			List<string> enumParseableReasons = rawAllowedReasons
+				.Split( '|' )
+				.Select( r => r.Trim().Split( '.' ).Last() )
+				.ToList();
 
-			// These values must always be kept in sync with the values in Objects.Except
-			ImmutableHashSet<Because>.Builder builder = ImmutableHashSet.CreateBuilder<Because>();
-			if( value >= 32 ) {
-				builder.Add( Because.ItsOnDeathRow );
-				value -= 32;
+			if( enumParseableReasons.Count == 1 && enumParseableReasons[0] == "None" ) {
+				return ImmutableHashSet<Because>.Empty;
 			}
-			if( value >= 16 ) {
-				builder.Add( Because.ItsUgly );
-				value -= 16;
+
+			ImmutableHashSet<Because>.Builder exceptions = ImmutableHashSet.CreateBuilder<Because>();
+			foreach( var reason in enumParseableReasons ) {
+				Because cuz;
+				if( Enum.TryParse( reason, out cuz ) ) {
+					exceptions.Add( cuz );
+				}
 			}
-			if( value >= 8 ) {
-				builder.Add( Because.WeNeedToMakeTheAnalyzerConsiderThisSafe );
-				value -= 8;
-			}
-			if( value >= 4 ) {
-				builder.Add( Because.ItsStickyDataOhNooo );
-				value -= 4;
-			}
-			if( value >= 2 ) {
-				builder.Add( Because.ItsSketchy );
-				value -= 2;
-			}
-			if( value >= 1 ) {
-				builder.Add( Because.ItHasntBeenLookedAt );
-				value -= 1;
-			}
-			if( value != 0 ) {
-				throw new Exception( "Unknown variant in allowed unaudited reasons" );
-			}
-			return builder.ToImmutable();
+			return exceptions.ToImmutable();
 		}
 
 	}
