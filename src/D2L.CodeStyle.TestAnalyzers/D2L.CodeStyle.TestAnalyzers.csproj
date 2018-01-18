@@ -90,6 +90,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\Diagnostics.cs" />
+    <Compile Include="NUnit\ValueSourceStringsAnalyzer.cs" />
     <Compile Include="NUnit\TestCaseSourceStringsAnalyzer.cs" />
     <Compile Include="ParallelizableTests\ParallelizableTestsAnalyzer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
