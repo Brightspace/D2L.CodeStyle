@@ -12,5 +12,14 @@ namespace D2L.CodeStyle.TestAnalyzers.Common {
 			description: "Using strings in TestCaseSource attributes creates false positives during dead code analysis. nameof should be used instead."
 		);
 
+		public static readonly DiagnosticDescriptor ValueSourceStrings = new DiagnosticDescriptor(
+			id: "D2LTESTS002",
+			title: "Use nameof in ValueSource attributes.",
+			messageFormat: "String arguments in ValueSource not allowed. Use nameof( {0} ) instead.",
+			category: "Cleanliness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Using strings in ValueSource attributes creates false positives during dead code analysis. nameof should be used instead."
+		);
 	}
 }
