@@ -48,6 +48,7 @@
     <Compile Include="Common\DiagnosticsTests.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzerTests.cs" />
     <EmbeddedResource Include="Specs\RpcAnalyzer.cs" />
+    <Compile Include="Immutability\ImmutabilityInheritanceAnalyzerTests.cs" />
     <Compile Include="RpcDependencies\RpcDependencyAnalyzerTests.cs" />
     <Compile Include="SpecRunner.cs" />
     <EmbeddedResource Include="Specs\UnsafeStaticsAnalyzer.cs" />

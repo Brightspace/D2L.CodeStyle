@@ -192,5 +192,25 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			description: "Switch your feature definition to inherit D2L.LP.LaunchDarkly.FeatureDefinition, configure your feature for DI, and use one of the new IInstanceFlag/IOrgFlag/ICurrentOrgFlag interfaces instead"
 		);
 
+		public static readonly DiagnosticDescriptor ImmutableMemberIsMorePermissiveThanContainingType = new DiagnosticDescriptor(
+			id: "D2L0023",
+			title: "Immutability exemptions must be a subset of containing type's.",
+			messageFormat: "This member's type is marked immutable, but it has more permissive immutability than the current type. Shrink the exempted reason list on the member's type to be a subset of {{ {0} }}.",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Immutability exemptions must be a subset of containing type's."
+		);
+
+		public static readonly DiagnosticDescriptor ImmutableTypeIsMorePermissiveThanBaseType = new DiagnosticDescriptor(
+			id: "D2L0024",
+			title: "Immutability exemptions must be a subset of all base types.",
+			messageFormat: "This type is marked immutable, but it has more permissive immutability than its base type. Shrink the exempted reason list on this type to be a subset of {{ {0} }}.",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Immutability exemptions must be a subset of all base types."
+		);
+
 	}
 }
