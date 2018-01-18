@@ -1,6 +1,16 @@
 ﻿// ReSharper disable once CheckNamespace
+
+using System;
+
 namespace D2L.CodeStyle.Annotations {
+	[Flags]
 	public enum Because {
+
+		/// <summary>
+		/// Represents no exceptions for the Unaudited Immutable check
+		/// </summary>
+		None = 0,
+
 		/// <summary>
 		/// DEPRECATED: Things marked with this attribute should be recategorized.
 		/// </summary>
@@ -17,21 +27,21 @@ namespace D2L.CodeStyle.Annotations {
 		/// <summary>
 		/// These are blockers for undiff.
 		/// </summary>
-		ItsStickyDataOhNooo = 3,
+		ItsStickyDataOhNooo = 4,
 
 		/// <summary>
 		/// These are things which could be analyzed as safe but require improvements
 		/// to the analyzer. An alternative is [Audited(...)] when we don't
 		/// expect an improvements to the analyzer to pass this variable.
 		/// </summary>
-		WeNeedToMakeTheAnalyzerConsiderThisSafe = 4,
+		WeNeedToMakeTheAnalyzerConsiderThisSafe = 8,
 
 		/// <summary>
 		/// This code is ugly and we don't feel comfortable making it
 		/// [Audited(...)] (which is a long-term acceptable bucket) we
 		/// are not prioritizing this work for undiff.
 		/// </summary>
-		ItsUgly = 5,
+		ItsUgly = 16,
 
 		/// <summary>
 		/// This code won't ship or be enabled for undiff clients. It
@@ -39,6 +49,6 @@ namespace D2L.CodeStyle.Annotations {
 		/// because there is a newer parallel implementation or it is not
 		/// compatible with next-gen hosting.
 		/// </summary>
-		ItsOnDeathRow = 6
+		ItsOnDeathRow = 32
 	}
 }

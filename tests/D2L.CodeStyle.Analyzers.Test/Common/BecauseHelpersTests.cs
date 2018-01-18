@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Immutable;
 using System.Linq;
+using D2L.CodeStyle.Annotations;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 using static D2L.CodeStyle.Analyzers.Common.RoslynSymbolFactory;
@@ -18,31 +19,20 @@ namespace D2L.CodeStyle.Annotations {
 	public static class Objects {
 		public sealed class Immutable : Attribute {
 
-			public Except Except { get; set; }
-
-		}
-
-		[Flags]
-		public enum Except {
-
-			None = 0,
-			ItHasntBeenLookedAt = 1,
-			ItsSketchy = 2,
-			ItsStickyDataOhNooo = 4,
-			WeNeedToMakeTheAnalyzerConsiderThisSafe = 8,
-			ItsUgly = 16,
-			ItsOnDeathRow = 32
+			public Because Except { get; set; }
 
 		}
 	}
 
+	[Flags]
 	public enum Because {
+		None = 0,
 		ItHasntBeenLookedAt = 1,
 		ItsSketchy = 2,
-		ItsStickyDataOhNooo = 3,
-		WeNeedToMakeTheAnalyzerConsiderThisSafe = 4,
-		ItsUgly = 5,
-		ItsOnDeathRow = 6
+		ItsStickyDataOhNooo = 4,
+		WeNeedToMakeTheAnalyzerConsiderThisSafe = 8,
+		ItsUgly = 16,
+		ItsOnDeathRow = 32
 	}
 
 	public static partial class Mutability {
@@ -84,7 +74,7 @@ public class Foo { }
 		public void GetImmutabilityExceptions_WhenSpecifiedAllowedUnauditedReasons_ReturnsSpecifiedReasons() {
 
 			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"
-[Immutable( Except = Except.ItsUgly | Except.WeNeedToMakeTheAnalyzerConsiderThisSafe )]
+[Immutable( Except = Because.ItsUgly | Because.WeNeedToMakeTheAnalyzerConsiderThisSafe )]
 public class Foo { }
 " );
 
@@ -100,7 +90,7 @@ public class Foo { }
 		public void GetImmutabilityExceptions_WhenSpecifiedNoneReasons_ReturnsEmptySet() {
 
 			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"
-[Immutable( Except = Except.None )]
+[Immutable( Except = Because.None )]
 public class Foo { }
 " );
 

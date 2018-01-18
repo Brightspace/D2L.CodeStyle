@@ -2,6 +2,7 @@
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
+using D2L.CodeStyle.Annotations;
 using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers.Common {
