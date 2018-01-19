@@ -32,6 +32,7 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 					ctx,
 					locatorType
 				),
+				SyntaxKind.SimpleMemberAccessExpression,
 				SyntaxKind.InvocationExpression
 			);
 		}
@@ -41,16 +42,23 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 			SyntaxNodeAnalysisContext context,
 			INamedTypeSymbol singletonLocatorType
 		) {
-			var root = context.Node as InvocationExpressionSyntax;
+			var root = GetRootNode( context );
 			if( root == null ) {
 				return;
 			}
-			var method = context.SemanticModel.GetSymbolInfo( root ).Symbol as IMethodSymbol;
+			var symbolinfo = context.SemanticModel.GetSymbolInfo( root );
+			var method = symbolinfo.Symbol as IMethodSymbol;
 			if( method == null ) {
-				return;
+				if( symbolinfo.CandidateSymbols != null && symbolinfo.CandidateSymbols.Length == 1 ) {
+					//This happens on method groups, such as
+					//  Func<IFoo> fooFunc = OldAndBrokenServiceLocator.Get<IFoo>;
+					method = symbolinfo.CandidateSymbols.First() as IMethodSymbol;
+				} else {
+					return;
+				}
 			}
 
-			if( singletonLocatorType != method.ContainingType ) {
+			if( !singletonLocatorType.Equals(method.ContainingType) ) {
 				return;
 			}
 
@@ -67,6 +75,28 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 			context.ReportDiagnostic(
 				Diagnostic.Create( Diagnostics.SingletonLocatorMisuse, context.Node.GetLocation(), typeArg.GetFullTypeName() )
 			);
+		}
+
+		private static ExpressionSyntax GetRootNode( SyntaxNodeAnalysisContext context ) {
+			//It turns out that depending on how you call the locator, it might contain any of:
+			//* a SimpleMemberAccessExpression
+			//* an InvocationExpression
+			//* an InvocationExpression wrapped around a SimpleMemberAccessExpression
+			//We want to count each of these as a single error (avoid double counting the last case)
+			ExpressionSyntax root = context.Node as InvocationExpressionSyntax;
+			if (root != null) {
+				return root;
+			}
+
+			root = context.Node as MemberAccessExpressionSyntax;
+			if (root == null) {
+				return null;
+			}
+
+			if( root.Parent.IsKind(SyntaxKind.InvocationExpression) ) {
+				return null;
+			}
+			return root;
 		}
 
 		private static bool IsSingletonGet( IMethodSymbol method ) {
