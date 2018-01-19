@@ -27,6 +27,16 @@ namespace SingletonSpecTests {
 
 		public BadClass() { }
 
+		public void UsesSingletonLocatorUnmarked_ViaAction() {
+			Action<INotMarkedSingleton> problemAction = /* SingletonLocatorMisuse(SingletonSpecTests.INotMarkedSingleton) */ OldAndBrokenSingletonLocator.Get<INotMarkedSingleton> /**/;
+			INotMarkedSingleton loadedIndirectly = problemAction();
+		}
+
+		public void UsesSingletonLocatorUnmarked_ViaLazy() {
+			Lazy<INotMarkedSingleton> problemLazy = () => /* SingletonLocatorMisuse(SingletonSpecTests.INotMarkedSingleton) */ OldAndBrokenSingletonLocator.Get<INotMarkedSingleton> /**/;
+			INotMarkedSingleton loadedLazily = problemLazy.Value;
+		}
+
 		public void UsesSingletonLocatorUnmarked() {
 			INotMarkedSingleton problem = /* SingletonLocatorMisuse(SingletonSpecTests.INotMarkedSingleton) */ OldAndBrokenSingletonLocator.Get<INotMarkedSingleton>() /**/;
 		}
@@ -40,7 +50,7 @@ namespace SingletonSpecTests {
 		}
 
 		public void UnmarkedLocatorInChain() {
-			/* SingletonLocatorMisuse(SingletonSpecTests.INotMarkedSingleton) */ OldAndBrokenSingletonLocator.Get<INotMarkedSingleton>() /**/ .SomeOtherMethod();
+			/* SingletonLocatorMisuse(SingletonSpecTests.INotMarkedSingleton) */ OldAndBrokenSingletonLocator.Get<INotMarkedSingleton>() /**/.SomeOtherMethod();
 		}
 
 		public void UsingStatic() {
