@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Common;
 using D2L.CodeStyle.Analyzers.Extensions;
-using D2L.CodeStyle.Annotations;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -105,8 +103,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return ImmutabilityInheritanceResult.Ok();
 			}
 
-			IImmutableSet<Because> expectedSubsetExceptions = BecauseHelpers.GetImmutabilityExceptions( expectedSubsetType );
-			IImmutableSet<Because> expectedSupersetExceptions = BecauseHelpers.GetImmutabilityExceptions( expectedSupersetType );
+			IImmutableSet<string> expectedSubsetExceptions = BecauseHelpers.GetImmutabilityExceptions( expectedSubsetType );
+			IImmutableSet<string> expectedSupersetExceptions = BecauseHelpers.GetImmutabilityExceptions( expectedSupersetType );
 
 			if( expectedSubsetExceptions.IsSubsetOf( expectedSupersetExceptions ) ) {
 				return ImmutabilityInheritanceResult.Ok();
@@ -115,19 +113,19 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return ImmutabilityInheritanceResult.TooPermissive( location, expectedSupersetExceptions );
 		}
 
-		private static string AllowedExceptionsSetToString( IEnumerable<Because> allowedExceptions ) {
-			return string.Join( ", ", allowedExceptions.Select( e => Enum.GetName( typeof( Because ), e ) ) );
+		private static string AllowedExceptionsSetToString( IEnumerable<string> allowedExceptions ) {
+			return string.Join( ", ", allowedExceptions );
 		}
 
 		private class ImmutabilityInheritanceResult {
 
-			private static readonly ImmutabilityInheritanceResult OkResult = new ImmutabilityInheritanceResult( true, null, ImmutableHashSet<Because>.Empty );
+			private static readonly ImmutabilityInheritanceResult OkResult = new ImmutabilityInheritanceResult( true, null, ImmutableHashSet<string>.Empty );
 
 			public bool IsOk { get; }
 			public Location Location { get; }
-			public IImmutableSet<Because> ExpectedExceptions { get; }
+			public IImmutableSet<string> ExpectedExceptions { get; }
 
-			private ImmutabilityInheritanceResult( bool isOk, Location location, IImmutableSet<Because> expectedExceptions ) {
+			private ImmutabilityInheritanceResult( bool isOk, Location location, IImmutableSet<string> expectedExceptions ) {
 				IsOk = isOk;
 				Location = location;
 				ExpectedExceptions = expectedExceptions;
@@ -137,7 +135,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return OkResult;
 			}
 
-			public static ImmutabilityInheritanceResult TooPermissive( Location location, IImmutableSet<Because> expectedExceptions ) {
+			public static ImmutabilityInheritanceResult TooPermissive( Location location, IImmutableSet<string> expectedExceptions ) {
 				return new ImmutabilityInheritanceResult( false, location, expectedExceptions );
 			}
 
