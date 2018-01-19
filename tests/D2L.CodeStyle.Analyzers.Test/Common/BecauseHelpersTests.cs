@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using D2L.CodeStyle.Annotations;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
 using static D2L.CodeStyle.Analyzers.Common.RoslynSymbolFactory;
@@ -64,9 +63,9 @@ namespace D2L.CodeStyle.Annotations {
 
 			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"public class Foo { }" );
 
-			IImmutableSet<Because> immutabilityExceptions = BecauseHelpers.GetImmutabilityExceptions( ty.Symbol );
+			IImmutableSet<string> immutabilityExceptions = BecauseHelpers.GetImmutabilityExceptions( ty.Symbol );
 
-			Assert.That( immutabilityExceptions, Is.EquivalentTo( Enum.GetValues( typeof( Because ) ) ) );
+			Assert.That( immutabilityExceptions, Is.EquivalentTo( BecauseHelpers.DefaultImmutabilityExceptions ) );
 		}
 
 		[Test]
@@ -77,9 +76,9 @@ namespace D2L.CodeStyle.Annotations {
 public class Foo { }
 " );
 
-			IImmutableSet<Because> immutabilityExceptions = BecauseHelpers.GetImmutabilityExceptions( ty.Symbol );
+			IImmutableSet<string> immutabilityExceptions = BecauseHelpers.GetImmutabilityExceptions( ty.Symbol );
 
-			Assert.That( immutabilityExceptions, Is.EquivalentTo( Enum.GetValues( typeof( Because ) ) ) );
+			Assert.That( immutabilityExceptions, Is.EquivalentTo( BecauseHelpers.DefaultImmutabilityExceptions ) );
 		}
 
 		[Test]
@@ -90,11 +89,11 @@ public class Foo { }
 public class Foo { }
 " );
 
-			IImmutableSet<Because> immutabilityExceptions = BecauseHelpers.GetImmutabilityExceptions( ty.Symbol );
+			IImmutableSet<string> immutabilityExceptions = BecauseHelpers.GetImmutabilityExceptions( ty.Symbol );
 
 			Assert.That( immutabilityExceptions, Is.EquivalentTo( new[] {
-				Because.WeNeedToMakeTheAnalyzerConsiderThisSafe,
-				Because.ItsUgly
+				"WeNeedToMakeTheAnalyzerConsiderThisSafe",
+				"ItsUgly"
 			} ) );
 		}
 
@@ -106,7 +105,7 @@ public class Foo { }
 public class Foo { }
 " );
 
-			IImmutableSet<Because> immutabilityExceptions = BecauseHelpers.GetImmutabilityExceptions( ty.Symbol );
+			IImmutableSet<string> immutabilityExceptions = BecauseHelpers.GetImmutabilityExceptions( ty.Symbol );
 
 			Assert.That( immutabilityExceptions, Is.Empty );
 		}
@@ -119,30 +118,37 @@ public class Foo {
 }
 " );
 
-			Because reason;
+			string reason;
 			bool result = BecauseHelpers.TryGetUnauditedReason( field.Symbol, out reason );
 
 			Assert.That( result, Is.False );
 		}
 
 		[TestCaseSource( nameof( GetBecauseReasons ) )]
-		public void TryGetUnauditedReason_WhenSymbolIsAnnotatedWithUnauditedReason_ReturnsTrueAndCorrectReason( Because expectedReason ) {
+		public void TryGetUnauditedReason_WhenSymbolIsAnnotatedWithUnauditedReason_ReturnsTrueAndCorrectReason( string expectedReason ) {
 			TestSymbol<IFieldSymbol> field = CompileAndGetFooField( $@"
 public class Foo {{
-	[Mutability.Unaudited( Because.{Enum.GetName( typeof( Because ), expectedReason )} )]
+	[Mutability.Unaudited( Because.{expectedReason} )]
 	public string foo;
 }}
 " );
 
-			Because reason;
+			string reason;
 			bool result = BecauseHelpers.TryGetUnauditedReason( field.Symbol, out reason );
 
 			Assert.That( result, Is.True );
 			Assert.That( reason, Is.EqualTo( expectedReason ) );
 		}
 
-		private static IEnumerable<Because> GetBecauseReasons() {
-			return Enum.GetValues( typeof( Because ) ).Cast<Because>();
+		private static IEnumerable<string> GetBecauseReasons() {
+			return new[] {
+				"ItHasntBeenLookedAt",
+				"ItsSketchy",
+				"ItsStickyDataOhNooo",
+				"WeNeedToMakeTheAnalyzerConsiderThisSafe",
+				"ItsUgly",
+				"ItsOnDeathRow"
+			};
 		}
 
 		private static TestSymbol<ITypeSymbol> CompileAndGetFooType( string source ) {

@@ -1,17 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
-using D2L.CodeStyle.Annotations;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace D2L.CodeStyle.Analyzers.Common {
 	internal static class BecauseHelpers {
 
-		private static readonly ImmutableHashSet<Because> DefaultImmutabilityExceptions
-			= Enum.GetValues( typeof( Because ) ).Cast<Because>().ToImmutableHashSet();
+		public static readonly IImmutableSet<string> DefaultImmutabilityExceptions = ImmutableHashSet.Create(
+				"ItHasntBeenLookedAt",
+				"ItsSketchy",
+				"ItsStickyDataOhNooo",
+				"WeNeedToMakeTheAnalyzerConsiderThisSafe",
+				"ItsUgly",
+				"ItsOnDeathRow"
+			);
 
 		/// <summary>
 		/// Gets the Because value from a field or property annotated with Mutability.Unaudited
@@ -19,23 +23,23 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		/// <param name="symbol">The symbol to get the reason for</param>
 		/// <param name="reason">The reason, if it was annotated with a valid value</param>
 		/// <returns>true if it was annotated with a valid value; false otherwise</returns>
-		public static bool TryGetUnauditedReason( ISymbol symbol, out Because reason ) {
+		public static bool TryGetUnauditedReason( ISymbol symbol, out string reason ) {
 
 			AttributeData unauditedAttr = Attributes.Mutability.Unaudited.GetAll( symbol ).FirstOrDefault();
 
 			if( unauditedAttr == null ) {
-				reason = default( Because );
+				reason = string.Empty;
 				return false;
 			}
 
-			string rawReason = unauditedAttr
+			reason = unauditedAttr
 				.ConstructorArguments
 				.FirstOrDefault()
 				.ToCSharpString()
 				.Split( '.' )
 				.Last();
 
-			return Enum.TryParse( rawReason, out reason );
+			return true;
 		}
 
 		/// <summary>
@@ -46,7 +50,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 		/// <see cref="DefaultImmutabilityExceptions"/> if the type was not immutable or specified no exceptions.
 		/// Otherwise the parsed set of exceptions.
 		/// </returns>
-		public static IImmutableSet<Because> GetImmutabilityExceptions( ITypeSymbol symbol ) {
+		public static IImmutableSet<string> GetImmutabilityExceptions( ITypeSymbol symbol ) {
 
 			AttributeData attrData;
 			if( !symbol.TryGetImmutableAttributeData( out attrData ) ) {
@@ -59,26 +63,20 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return DefaultImmutabilityExceptions;
 			}
 
-			string rawAllowedReasons = namedArgs
+			List<string> reasons = namedArgs
 				.First( kvp => kvp.Key == "Except" )
 				.Value
-				.ToCSharpString();
-
-			List<string> enumParseableReasons = rawAllowedReasons
+				.ToCSharpString()
 				.Split( '|' )
 				.Select( r => r.Trim().Split( '.' ).Last() )
 				.ToList();
 
-			if( enumParseableReasons.Count == 1 && enumParseableReasons[0] == "None" ) {
-				return ImmutableHashSet<Because>.Empty;
-			}
-
-			ImmutableHashSet<Because>.Builder exceptions = ImmutableHashSet.CreateBuilder<Because>();
-			foreach( var reason in enumParseableReasons ) {
-				Because cuz;
-				if( Enum.TryParse( reason, out cuz ) ) {
-					exceptions.Add( cuz );
+			ImmutableHashSet<string>.Builder exceptions = ImmutableHashSet.CreateBuilder<string>();
+			foreach( var reason in reasons ) {
+				if( reason == "None" ) {
+					continue;
 				}
+				exceptions.Add( reason );
 			}
 			return exceptions.ToImmutable();
 		}
