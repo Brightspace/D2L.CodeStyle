@@ -27,9 +27,9 @@ namespace SingletonSpecTests {
 
 		public BadClass() { }
 
-		public void UsesSingletonLocatorUnmarked_ViaAction() {
-			Action<INotMarkedSingleton> problemAction = /* SingletonLocatorMisuse(SingletonSpecTests.INotMarkedSingleton) */ OldAndBrokenSingletonLocator.Get<INotMarkedSingleton> /**/;
-			INotMarkedSingleton loadedIndirectly = problemAction();
+		public void UsesSingletonLocatorUnmarked_ViaFunc() {
+			Func<INotMarkedSingleton> problemFunc = /* SingletonLocatorMisuse(SingletonSpecTests.INotMarkedSingleton) */ OldAndBrokenSingletonLocator.Get<INotMarkedSingleton> /**/;
+			INotMarkedSingleton loadedIndirectly = problemFunc();
 		}
 
 		public void UsesSingletonLocatorUnmarked_ViaLazy() {
