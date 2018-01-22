@@ -26,8 +26,6 @@ namespace D2L.CodeStyle.Analyzers.LaunchDarkly {
 			"D2L.IM.IPSIS.Default.OrgUnits.CourseSections.Handlers.ReplaceCourseSectionCreateLMSSectionHandler.Process",
 			"D2L.IM.IPSIS.Default.OrgUnits.CourseTemplates.Handlers.ReplaceCourseTemplateParentsNoUpdateLMSHandler.Process",
 			"D2L.IM.IPSIS.Default.Service.QueueHandlerService.GetEnabledOrganizations",
-			"D2L.Integration.ParentPortal.Extensibility.Plugins.ParentPortalRelationshipProvider.CanSeeRelationships",
-			"D2L.Integration.ParentPortal.Extensibility.Plugins.RelationshipsUserLinkProvider.TryGetLinksForUser",
 			"D2L.Lang.Cache.AdaptiveLanguageCacheFactory.Create",
 			"D2L.Lang.Cache.Data.SystemLanguageCacheProviderFactory.Create",
 			"D2L.LE.Calendar.Domain.Copy.CalendarCopier.CopyEntryPerformanceFixFeatureFlag",
