@@ -10,10 +10,10 @@ namespace D2L.LP.LaunchDarkly.FeatureFlagging {
 	public interface IFeature { }
 }
 
-namespace D2L.Integration.ParentPortal {
+namespace D2L.Core.Users.Domain.Feature {
 	using D2L.LP.LaunchDarkly.FeatureFlagging;
 
-	public sealed class AppDynamicsFeature : IFeature { }
+	public sealed class PreferredNamesFeatureLD : IFeature { }
 }
 
 namespace SpecTests {
