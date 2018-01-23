@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using D2L.CodeStyle.Analyzers.Common;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers.ServiceLocator {
@@ -68,11 +70,20 @@ namespace D2L.CodeStyle.Analyzers.ServiceLocator {
 				return;
 			}
 
-			if (disallowedTypes.Contains( actualType )) {
-				context.ReportDiagnostic(
-					Diagnostic.Create( Diagnostics.OldAndBrokenLocatorIsObsolete, context.Node.GetLocation() )
-				);
+			if( !disallowedTypes.Contains( actualType ) ) {
+				return;
 			}
+
+			var parentClasses = context.Node.Ancestors().Where( a => a.IsKind( SyntaxKind.ClassDeclaration ) );
+			var parentSymbols = parentClasses.Select( c => context.SemanticModel.GetDeclaredSymbol( c ) );
+			if( parentSymbols.Any( s => Attributes.DIFramework.IsDefined( s ) ) ) {
+				//Classes in the DI Framework are allowed to use locators and activators
+				return;
+			}
+
+			context.ReportDiagnostic(
+				Diagnostic.Create( Diagnostics.OldAndBrokenLocatorIsObsolete, context.Node.GetLocation() )
+			);
 		}
 
 

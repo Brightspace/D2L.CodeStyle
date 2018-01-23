@@ -15,6 +15,8 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 	public class OldAndBrokenServiceLocatorFactory {
 		public IServiceLocator Create() { return null; }
 	}
+
+	public sealed class DIFrameworkAttribute : Attribute { }
 }
 
 namespace D2L.CodeStyle.Analyzers.OldAndBrokenLocator.Examples {
@@ -54,6 +56,16 @@ namespace D2L.CodeStyle.Analyzers.OldAndBrokenLocator.Examples {
 		) {
 			m_foo = injectedFoo;
 			m_bar = injectedBar;
+		}
+	}
+
+	[DIFramework]
+	public sealed class DIFrameworkClass {
+
+		public int InDIFrameworkClass() {
+			IServiceLocator ok = OldAndBrokenServiceLocator.Instance;
+			IServiceLocator alsoOk = OldAndBrokenServiceLocatorFactory.Create();
+			return 0;
 		}
 	}
 }
