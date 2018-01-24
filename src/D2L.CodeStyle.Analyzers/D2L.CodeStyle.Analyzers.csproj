@@ -33,6 +33,7 @@
   <ItemGroup>
     <Compile Include="Common\Attributes.cs" />
     <Compile Include="ClassShouldBeSealed\ClassShouldBeSealedAnalyzer.cs" />
+    <Compile Include="Common\BecauseHelpers.cs" />
     <Compile Include="Common\DependencyInjection\ConfigureInstancePluginsExpression.cs" />
     <Compile Include="Common\DependencyInjection\ConfigurePluginsExpression.cs" />
     <Compile Include="Common\DependencyInjection\DependencyRegistration.cs" />
@@ -59,6 +60,7 @@
     <Compile Include="Extensions\Microsoft.CodeAnalysis.cs" />
     <Compile Include="Extensions\Microsoft.CodeAnalysis.CSharp.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzer.cs" />
+    <Compile Include="Immutability\ImmutabilityInheritanceAnalyzer.cs" />
     <Compile Include="LaunchDarkly\FeatureDefinitionAnalyzer.cs" />
     <Compile Include="LaunchDarkly\LegacyILaunchDarklyClientConsumers.cs" />
     <Compile Include="LaunchDarkly\ObsoleteLaunchDarklyApisAnalyzer.cs" />
