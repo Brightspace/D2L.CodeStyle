@@ -14,7 +14,17 @@ namespace D2L.CodeStyle.Annotations {
 	}
 	public static class Mutability {
 		public sealed class AuditedAttribute : Attribute { }
-		public sealed class UnauditedAttribute : Attribute { }
+		public sealed class UnauditedAttribute : Attribute {
+			public UnauditedAttribute( Because why ) {}
+		}
+	}
+	public enum Because {
+		ItHasntBeenLookedAt = 1,
+		ItsSketchy = 2,
+		ItsStickyDataOhNooo = 3,
+		WeNeedToMakeTheAnalyzerConsiderThisSafe = 4,
+		ItsUgly = 5,
+		ItsOnDeathRow = 6
 	}
 }
 
@@ -31,7 +41,7 @@ namespace SpecTests {
 		class ClassWithAnnotatedMutableStateDoesntFail : IImmutable {
 			[Mutability.Audited]
 			private int m_unauditedBad;
-			[Mutability.Unaudited]
+			[Mutability.Unaudited( Because.ItsSketchy )]
 			private int m_auditedBad;
 		}
 	}
