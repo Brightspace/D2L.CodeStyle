@@ -1,52 +1,55 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.Common {
 	internal static class BecauseHelpers {
 
-		public static bool TryGetUnauditedReason( ISymbol symbol, out string reason ) {
+		public static string GetUnauditedReason( ISymbol symbol ) {
 
-			// If it's an error, don't bother parsing anything more
-			if( symbol is IErrorTypeSymbol ) {
-				reason = null;
-				return false;
+			AttributeData attrData = Attributes.Mutability.Unaudited
+				.GetAll( symbol )
+				.FirstOrDefault();
+
+			if( attrData == null ) {
+				throw new Exception( $"Unable to get Unaudited attribute on '{symbol.Name}'" );
 			}
 
-			SyntaxNode syntaxNode = Attributes.Mutability.Unaudited
-				.GetAll( symbol )
-				.FirstOrDefault()?
+			SyntaxNode syntaxNode = attrData
 				.ApplicationSyntaxReference?
 				.GetSyntax();
 
 			AttributeSyntax attrSyntax = syntaxNode as AttributeSyntax;
 
 			if( attrSyntax == null ) {
-				reason = null;
-				return false;
+				throw new Exception( $"Unable to get AttributeSyntax for Unaudited attribute on '{symbol.Name}'" );
 			}
 
 			AttributeArgumentSyntax foundArg = attrSyntax
 				.ArgumentList
 				.Arguments
-				.FirstOrDefault( arg => {
+				.FirstOrDefault(
 					// Get the first argument that is not defined by a "Name = ..." syntax and either is not named or is named "why"
-					return arg.NameEquals == null && ( arg.NameColon == null || arg.NameColon.Name.Identifier.ValueText == "why" );
-				} );
+					arg => arg.NameEquals == null && ( arg.NameColon == null || arg.NameColon.Name.Identifier.ValueText == "why" )
+				);
 
 			if( foundArg == null ) {
-				reason = null;
-				return false;
+				throw new Exception( $"Could not find Unaudited argument for Because reason in '{attrSyntax}'" );
 			}
 
 			MemberAccessExpressionSyntax expr = foundArg.Expression as MemberAccessExpressionSyntax;
 			if( expr == null ) {
-				reason = null;
-				return false;
+				throw new Exception( $"Unaudited argument for Because reason was not a MemberAccessExpression in '{attrSyntax}'" );
 			}
 
-			reason = expr.Name.Identifier.ValueText;
-			return true;
+			string reasonName = expr.Name?.Identifier.ValueText;
+
+			if( reasonName == null ) {
+				throw new Exception( $"Unable to get Because variant name in '{attrSyntax}'" );
+			}
+
+			return reasonName;
 		}
 
 	}
