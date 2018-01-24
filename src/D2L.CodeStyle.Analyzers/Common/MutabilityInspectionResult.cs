@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System.Collections.Immutable;
+using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers.Common {
 	public enum MutabilityTarget {
@@ -21,7 +22,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 	public sealed class MutabilityInspectionResult {
 
-		private readonly static MutabilityInspectionResult s_notMutableResult = new MutabilityInspectionResult( false, null, null, null, null );
+		private readonly static MutabilityInspectionResult s_notMutableResult = new MutabilityInspectionResult( false, null, null, null, null, ImmutableHashSet<string>.Empty );
 
 		public bool IsMutable { get; }
 
@@ -33,22 +34,37 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 		public MutabilityTarget? Target { get; }
 
+		public ImmutableHashSet<string> SeenUnauditedReasons { get; }
+
 		private MutabilityInspectionResult(
 			bool isMutable,
 			string memberPath,
 			string typeName,
 			MutabilityTarget? target,
-			MutabilityCause? cause
+			MutabilityCause? cause,
+			ImmutableHashSet<string> seenUnauditedReasons
 		) {
 			IsMutable = isMutable;
 			MemberPath = memberPath;
 			TypeName = typeName;
 			Target = target;
 			Cause = cause;
+			SeenUnauditedReasons = seenUnauditedReasons;
 		}
 
 		public static MutabilityInspectionResult NotMutable() {
 			return s_notMutableResult;
+		}
+
+		public static MutabilityInspectionResult NotMutable( ImmutableHashSet<string> seenUnauditedReasons ) {
+			return new MutabilityInspectionResult(
+					false,
+					null,
+					null,
+					null,
+					null,
+					seenUnauditedReasons
+				);
 		}
 
 		public static MutabilityInspectionResult Mutable(
@@ -62,7 +78,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				mutableMemberPath,
 				membersTypeName,
 				kind,
-				cause
+				cause,
+				ImmutableHashSet<string>.Empty
 			);
 		}
 
@@ -127,7 +144,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				newMember,
 				this.TypeName,
 				this.Target,
-				this.Cause
+				this.Cause,
+				this.SeenUnauditedReasons
 			);
 		}
 
@@ -137,7 +155,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				this.MemberPath,
 				this.TypeName,
 				newTarget,
-				this.Cause
+				this.Cause,
+				this.SeenUnauditedReasons
 			);
 		}
 
