@@ -38,17 +38,14 @@ namespace D2L.CodeStyle.Annotations {
 ";
 
 		[Test]
-		public void TryGetUnauditedReason_WhenSymbolDoesNotHaveUnauditedAttribute_ReturnsFalse() {
+		public void TryGetUnauditedReason_WhenSymbolDoesNotHaveUnauditedAttribute_ThrowsException() {
 			TestSymbol<IFieldSymbol> field = CompileAndGetFooField( @"
 public class Foo {
 	public string foo;
 }
 " );
 
-			string reason;
-			bool result = BecauseHelpers.TryGetUnauditedReason( field.Symbol, out reason );
-
-			Assert.That( result, Is.False );
+			Assert.That( () => BecauseHelpers.GetUnauditedReason( field.Symbol ), Throws.Exception );
 		}
 
 		private static readonly string[] BecauseReasons = {
@@ -61,7 +58,7 @@ public class Foo {
 		};
 
 		[TestCaseSource( nameof( BecauseReasons ) )]
-		public void TryGetUnauditedReason_WhenSymbolIsAnnotatedWithUnauditedReason_ReturnsTrueAndCorrectReason( string expectedReason ) {
+		public void TryGetUnauditedReason_WhenSymbolIsAnnotatedWithUnauditedReason_ReturnsCorrectReason( string expectedReason ) {
 			TestSymbol<IFieldSymbol> field = CompileAndGetFooField( $@"
 public class Foo {{
 	[Mutability.Unaudited( Because.{expectedReason} )]
@@ -69,15 +66,13 @@ public class Foo {{
 }}
 " );
 
-			string reason;
-			bool result = BecauseHelpers.TryGetUnauditedReason( field.Symbol, out reason );
+			string reason = BecauseHelpers.GetUnauditedReason( field.Symbol );
 
-			Assert.That( result, Is.True );
 			Assert.That( reason, Is.EqualTo( expectedReason ) );
 		}
 
 		[TestCaseSource( nameof( BecauseReasons ) )]
-		public void TryGetUnauditedReason_WhenSymbolIsAnnotatedWithUnauditedReason_UsingNamedParameters_ReturnsTrueAndCorrectReason( string expectedReason ) {
+		public void TryGetUnauditedReason_WhenSymbolIsAnnotatedWithUnauditedReason_UsingNamedParameters_ReturnsCorrectReason( string expectedReason ) {
 			TestSymbol<IFieldSymbol> field = CompileAndGetFooField( $@"
 public class Foo {{
 	[Mutability.Unaudited( why: Because.{expectedReason} )]
@@ -85,15 +80,13 @@ public class Foo {{
 }}
 " );
 
-			string reason;
-			bool result = BecauseHelpers.TryGetUnauditedReason( field.Symbol, out reason );
+			string reason = BecauseHelpers.GetUnauditedReason( field.Symbol );
 
-			Assert.That( result, Is.True );
 			Assert.That( reason, Is.EqualTo( expectedReason ) );
 		}
 
 		[TestCaseSource( nameof( BecauseReasons ) )]
-		public void TryGetUnauditedReason_WhenSymbolIsAnnotatedWithUnauditedReasonAndHasBucket_ReturnsTrueAndCorrectReason( string expectedReason ) {
+		public void TryGetUnauditedReason_WhenSymbolIsAnnotatedWithUnauditedReasonAndHasBucket_ReturnsCorrectReason( string expectedReason ) {
 			TestSymbol<IFieldSymbol> field = CompileAndGetFooField( $@"
 public class Foo {{
 	[Mutability.Unaudited( Because.{expectedReason}, UndiffBucket.Core )]
@@ -101,15 +94,13 @@ public class Foo {{
 }}
 " );
 
-			string reason;
-			bool result = BecauseHelpers.TryGetUnauditedReason( field.Symbol, out reason );
+			string reason = BecauseHelpers.GetUnauditedReason( field.Symbol );
 
-			Assert.That( result, Is.True );
 			Assert.That( reason, Is.EqualTo( expectedReason ) );
 		}
 
 		[TestCaseSource( nameof( BecauseReasons ) )]
-		public void TryGetUnauditedReason_WhenSymbolIsAnnotatedWithUnauditedReasonAndHasBucket_UsingNamedParameters_ReturnsTrueAndCorrectReason( string expectedReason ) {
+		public void TryGetUnauditedReason_WhenSymbolIsAnnotatedWithUnauditedReasonAndHasBucket_UsingNamedParameters_ReturnsCorrectReason( string expectedReason ) {
 			TestSymbol<IFieldSymbol> field = CompileAndGetFooField( $@"
 public class Foo {{
 	[Mutability.Unaudited( why: Because.{expectedReason}, bucket: UndiffBucket.Core )]
@@ -117,15 +108,13 @@ public class Foo {{
 }}
 " );
 
-			string reason;
-			bool result = BecauseHelpers.TryGetUnauditedReason( field.Symbol, out reason );
+			string reason = BecauseHelpers.GetUnauditedReason( field.Symbol );
 
-			Assert.That( result, Is.True );
 			Assert.That( reason, Is.EqualTo( expectedReason ) );
 		}
 
 		[TestCaseSource( nameof( BecauseReasons ) )]
-		public void TryGetUnauditedReason_WhenSymbolIsAnnotatedWithUnauditedReasonAndHasBucket_UsingNamedParametersWithReversedOrder_ReturnsTrueAndCorrectReason( string expectedReason ) {
+		public void TryGetUnauditedReason_WhenSymbolIsAnnotatedWithUnauditedReasonAndHasBucket_UsingNamedParametersWithReversedOrder_ReturnsCorrectReason( string expectedReason ) {
 			TestSymbol<IFieldSymbol> field = CompileAndGetFooField( $@"
 public class Foo {{
 	[Mutability.Unaudited( bucket: UndiffBucket.Core, why: Because.{expectedReason} )]
@@ -133,10 +122,8 @@ public class Foo {{
 }}
 " );
 
-			string reason;
-			bool result = BecauseHelpers.TryGetUnauditedReason( field.Symbol, out reason );
+			string reason = BecauseHelpers.GetUnauditedReason( field.Symbol );
 
-			Assert.That( result, Is.True );
 			Assert.That( reason, Is.EqualTo( expectedReason ) );
 		}
 
