@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Immutable;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Moq;
 using NUnit.Framework;
@@ -310,12 +311,141 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			AssertResultsAreEqual( expected, actual );
 		}
 
+		private const string AnnotationsPreamble = @"
+using System;
+using D2L.CodeStyle.Annotations;
+using static D2L.CodeStyle.Annotations.Objects;
+ 
+namespace D2L.CodeStyle.Annotations {
+	public enum Because {
+		ItHasntBeenLookedAt,
+		ItsSketchy,
+		ItsStickyDataOhNooo,
+		WeNeedToMakeTheAnalyzerConsiderThisSafe,
+		ItsUgly,
+		ItsOnDeathRow
+	}
+
+	public enum UndiffBucket {
+		Core
+	}
+ 
+	public static class Mutability {
+		public sealed class UnauditedAttribute : Attribute {
+ 
+			public UnauditedAttribute( Because why ) { }
+
+			public UnauditedAttribute( Because why, UndiffBucket bucket ) { }
+		}
+	}
+
+	public static class Objects {
+		public sealed class Immutable : Attribute {
+		}
+	}
+}
+";
+
+		[Test]
+		public void InspectType_TypeHasNoUnauditedMembers_NoUnauditedReasons() {
+
+			const string source = AnnotationsPreamble + @"
+sealed class Foo {
+	public int Bar { get; }
+}
+
+[Immutable]
+sealed class Bar { }
+";
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
+
+			AssertUnauditedReasonsResult( ty );
+		}
+
+		[Test]
+		public void InspectType_TypeHasOneUnauditedMember_ReturnsUnauditedReason() {
+
+			const string source = AnnotationsPreamble + @"
+sealed class Foo {
+	[Mutability.Unaudited( Because.ItsSketchy )]
+	public Func<string> Bar { get; }
+}
+";
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
+
+			AssertUnauditedReasonsResult( ty, "ItsSketchy" );
+		}
+
+		[Test]
+		public void InspectType_TypeHasMultipleDifferentUnauditedMembers_ReturnsAllUnauditedReasons() {
+
+			const string source = AnnotationsPreamble + @"
+sealed class Foo {
+	[Mutability.Unaudited( Because.ItsSketchy )]
+	public Func<string> Bar { get; }
+	[Mutability.Unaudited( Because.ItsUgly )]
+	public Func<string> Baz { get; }
+}
+";
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
+
+			AssertUnauditedReasonsResult( ty, "ItsSketchy", "ItsUgly" );
+		}
+
+		[Test]
+		public void InspectType_TypeHasMultipleIdenticalUnauditedMembers_ReturnsAllUnauditedReasons() {
+
+			const string source = AnnotationsPreamble + @"
+sealed class Foo {
+	[Mutability.Unaudited( Because.ItsSketchy )]
+	public Func<string> Bar { get; }
+	[Mutability.Unaudited( Because.ItsSketchy )]
+	public Func<string> Baz { get; }
+}
+";
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
+
+			AssertUnauditedReasonsResult( ty, "ItsSketchy" );
+		}
+
+		private TestSymbol<ITypeSymbol> CompileAndGetFooType( string source ) {
+			var compilation = Compile( source );
+
+			var ty = compilation.GetSymbolsWithName(
+				predicate: n => true,
+				filter: SymbolFilter.Type
+			).OfType<ITypeSymbol>().FirstOrDefault( s => s.Name == "Foo" );
+
+			return new TestSymbol<ITypeSymbol>( ty, compilation );
+		}
+
+		private void AssertUnauditedReasonsResult( TestSymbol<ITypeSymbol> ty, params string[] expectedUnauditedReasons ) {
+
+			var inspector = new MutabilityInspector(
+				ty.Compilation,
+				KnownImmutableTypes.Default
+			);
+
+			var expected = MutabilityInspectionResult.NotMutable(
+				ImmutableHashSet.Create( expectedUnauditedReasons )
+			);
+
+			var actual = inspector.InspectType( ty.Symbol );
+
+			AssertResultsAreEqual( expected, actual );
+		}
+
 		private void AssertResultsAreEqual( MutabilityInspectionResult expected, MutabilityInspectionResult actual ) {
 			Assert.AreEqual( expected.IsMutable, actual.IsMutable, "IsMutable does not match" );
 			Assert.AreEqual( expected.MemberPath, actual.MemberPath, "MemberPath does not match" );
 			Assert.AreEqual( expected.Target, actual.Target, "Target does not match" );
 			Assert.AreEqual( expected.Cause, actual.Cause, "Cause does not match" );
 			Assert.AreEqual( expected.TypeName, actual.TypeName, "TypeName does not match" );
+			CollectionAssert.AreEquivalent( expected.SeenUnauditedReasons, actual.SeenUnauditedReasons, "SeenUnauditedReasons did not match" );
 		}
 
 	}
