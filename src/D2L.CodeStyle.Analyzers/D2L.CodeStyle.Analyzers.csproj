@@ -33,6 +33,7 @@
   <ItemGroup>
     <Compile Include="Common\Attributes.cs" />
     <Compile Include="ClassShouldBeSealed\ClassShouldBeSealedAnalyzer.cs" />
+    <Compile Include="Common\BecauseHelpers.cs" />
     <Compile Include="Common\DependencyInjection\ConfigureInstancePluginsExpression.cs" />
     <Compile Include="Common\DependencyInjection\ConfigurePluginsExpression.cs" />
     <Compile Include="Common\DependencyInjection\DependencyRegistration.cs" />
