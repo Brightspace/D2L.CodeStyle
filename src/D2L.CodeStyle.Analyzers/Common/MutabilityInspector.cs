@@ -122,6 +122,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 
 			// If we're verifying immutability, then carry on; otherwise, bailout
 			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && type.IsTypeMarkedImmutable() ) {
+				// TODO: Get immutable exceptions and add them to the result's SeenUnauditedReasons
 				return MutabilityInspectionResult.NotMutable();
 			}
 
@@ -253,6 +254,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnExternalUnmarkedType );
 			}
 
+			ImmutableHashSet<string>.Builder seenUnauditedReasonsBuilder = ImmutableHashSet.CreateBuilder<string>();
+
 			typeStack.Add( type );
 			try {
 				foreach( ISymbol member in type.GetExplicitNonStaticMembers() ) {
@@ -260,6 +263,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 					if( result.IsMutable ) {
 						return result;
 					}
+					seenUnauditedReasonsBuilder.UnionWith( result.SeenUnauditedReasons );
 				}
 
 				// We descend into the base class last
@@ -267,11 +271,12 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				if( baseResult.IsMutable ) {
 					return baseResult;
 				}
+				seenUnauditedReasonsBuilder.UnionWith( baseResult.SeenUnauditedReasons );
 			} finally {
 				typeStack.Remove( type );
 			}
 
-			return MutabilityInspectionResult.NotMutable();
+			return MutabilityInspectionResult.NotMutable( seenUnauditedReasonsBuilder.ToImmutable() );
 		}
 
 		private bool IsAnImmutableContainerType( ITypeSymbol type ) {
@@ -493,6 +498,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return MutabilityInspectionResult.NotMutable();
 			}
 			if( Attributes.Mutability.Unaudited.IsDefined( symbol ) ) {
+				// TODO: Add the unaudited reason into the result
 				return MutabilityInspectionResult.NotMutable();
 			}
 
