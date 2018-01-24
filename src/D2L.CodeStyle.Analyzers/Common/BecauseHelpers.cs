@@ -27,7 +27,7 @@ namespace D2L.CodeStyle.Analyzers.Common {
 			}
 
 			AttributeArgumentSyntax foundArg = attrSyntax
-				.ArgumentList
+				.ArgumentList?
 				.Arguments
 				.FirstOrDefault(
 					// Get the first argument that is not defined by a "Name = ..." syntax and either is not named or is named "why"
