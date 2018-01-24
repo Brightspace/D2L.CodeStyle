@@ -37,6 +37,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Common\BecauseHelpersTests.cs" />
+    <Compile Include="Common\ImmutableHelpersTests.cs" />
     <Compile Include="Common\KnownImmutableTypesTests.cs" />
     <Compile Include="Common\MutabilityInspectionResultFormatterTests.cs" />
     <Compile Include="Common\MutabilityInspectorTests.cs" />
