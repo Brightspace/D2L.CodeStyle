@@ -498,8 +498,8 @@ namespace D2L.CodeStyle.Analyzers.Common {
 				return MutabilityInspectionResult.NotMutable();
 			}
 			if( Attributes.Mutability.Unaudited.IsDefined( symbol ) ) {
-				// TODO: Add the unaudited reason into the result
-				return MutabilityInspectionResult.NotMutable();
+				string unauditedReason = BecauseHelpers.GetUnauditedReason( symbol );
+				return MutabilityInspectionResult.NotMutable( ImmutableHashSet.Create( unauditedReason ) );
 			}
 
 			switch( symbol.Kind ) {
