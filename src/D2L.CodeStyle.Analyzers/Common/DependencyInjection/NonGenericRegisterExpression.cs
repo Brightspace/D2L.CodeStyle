@@ -4,13 +4,13 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 	// void Register( Type dependencyType, Type concreteType, ObjectScope scope );
 	internal sealed class NonGenericRegisterExpression : DependencyRegistrationExpression {
-		internal override bool CanHandleMethod( IMethodSymbol method ) {
+		public override bool CanHandleMethod( IMethodSymbol method ) {
 			return method.Name == "Register"
 				&& !method.IsGenericMethod
 				&& method.Parameters.Length == 3;
 		}
 
-		internal override DependencyRegistration GetRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
+		public override DependencyRegistration GetRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
 			if( arguments.Count != 3 ) {
 				return null;
 			}

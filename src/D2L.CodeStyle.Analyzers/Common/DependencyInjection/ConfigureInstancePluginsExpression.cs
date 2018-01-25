@@ -11,7 +11,7 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 	//			ObjectScope scope
 	//		) where TExtensionPoint : ExtensionPointDescriptor, new();
 	internal sealed class ConfigureInstancePluginsExpression : DependencyRegistrationExpression {
-		internal override bool CanHandleMethod( IMethodSymbol method ) {
+		public override bool CanHandleMethod( IMethodSymbol method ) {
 			return
 				( method.Name == "ConfigureInstancePlugins"
 				&& method.IsExtensionMethod
@@ -24,7 +24,7 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 				&& method.Parameters.Length == 1 );
 		}
 
-		internal override DependencyRegistration GetRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
+		public override DependencyRegistration GetRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
 			if( arguments.Count != 1 ) {
 				return null;
 			}

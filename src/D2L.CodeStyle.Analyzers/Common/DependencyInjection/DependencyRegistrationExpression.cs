@@ -4,15 +4,15 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
-	internal abstract class DependencyRegistrationExpression {
+	public abstract class DependencyRegistrationExpression {
 
 		protected const string IFactoryTypeMetadataName = "D2L.LP.Extensibility.Activation.Domain.IFactory`1";
 
-		internal abstract bool CanHandleMethod(
+		public abstract bool CanHandleMethod(
 			IMethodSymbol method
 		);
 
-		internal abstract DependencyRegistration GetRegistration(
+		public abstract DependencyRegistration GetRegistration(
 			IMethodSymbol method, 
 			SeparatedSyntaxList<ArgumentSyntax> arguments, 
 			SemanticModel semanticModel

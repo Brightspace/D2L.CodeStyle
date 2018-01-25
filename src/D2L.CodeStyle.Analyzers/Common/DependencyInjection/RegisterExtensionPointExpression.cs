@@ -7,14 +7,14 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 	//			ObjectScope scope
 	//		) where TExtensionPoint : IExtensionPoint<T>;
 	internal sealed class RegisterExtensionPointExpression : DependencyRegistrationExpression {
-		internal override bool CanHandleMethod( IMethodSymbol method ) {
+		public override bool CanHandleMethod( IMethodSymbol method ) {
 			return method.Name == "RegisterPluginExtensionPoint"
 				&& method.IsExtensionMethod
 				&& method.Parameters.Length == 1
 				&& method.TypeArguments.Length == 2;
 		}
 
-		internal override DependencyRegistration GetRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
+		public override DependencyRegistration GetRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
 			if( arguments.Count != 1 ) {
 				return null;
 			}

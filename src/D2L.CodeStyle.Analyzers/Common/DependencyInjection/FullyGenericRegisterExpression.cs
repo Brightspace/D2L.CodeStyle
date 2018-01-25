@@ -19,14 +19,14 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 			"RegisterPluginFactory"
 		);
 
-		internal override bool CanHandleMethod( IMethodSymbol method ) {
+		public override bool CanHandleMethod( IMethodSymbol method ) {
 			return s_validNames.Contains( method.Name )
 				&& method.IsGenericMethod 
 				&& method.TypeArguments.Length == 2 
 				&& method.Parameters.Length == 1;
 		}
 
-		internal override DependencyRegistration GetRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
+		public override DependencyRegistration GetRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
 			if( arguments.Count != 1 ) {
 				return null;
 			}

@@ -5,14 +5,14 @@ namespace D2L.CodeStyle.Analyzers.Common.DependencyInjection {
 	// void Register<TDependencyType>( TDependencyType instance );
 	// void RegisterPlugin<TDependencyType>( TDependencyType instance );
 	internal sealed class RegisterInstantiatedObjectExpression : DependencyRegistrationExpression {
-		internal override bool CanHandleMethod( IMethodSymbol method ) {
+		public override bool CanHandleMethod( IMethodSymbol method ) {
 			return ( method.Name == "Register" || method.Name == "RegisterPlugin" )
 				&& method.IsGenericMethod 
 				&& method.TypeParameters.Length == 1 
 				&& method.Parameters.Length == 1;
 		}
 
-		internal override DependencyRegistration GetRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
+		public override DependencyRegistration GetRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
 			if( arguments.Count != 1 ) {
 				return null;
 			}
