@@ -36,20 +36,20 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Common\BecauseHelpersTests.cs" />
-    <Compile Include="Common\ImmutableHelpersTests.cs" />
-    <Compile Include="Common\KnownImmutableTypesTests.cs" />
-    <Compile Include="Common\MutabilityInspectionResultFormatterTests.cs" />
-    <Compile Include="Common\MutabilityInspectorTests.cs" />
-    <Compile Include="Common\MutabilityInspector_IsTypeMarkedImmutableTests.cs" />
-    <Compile Include="Common\SyntaxNodeExtensionTests.cs" />
-    <Compile Include="Common\TestBase.cs" />
-    <Compile Include="Common\TypeSymbolExtensionsTests.cs" />
-    <Compile Include="Contracts\NotNullAnalyzerTests.cs" />
-    <Compile Include="Common\DiagnosticsTests.cs" />
+    <Compile Include="Immutability\BecauseHelpersTests.cs" />
+    <Compile Include="Immutability\ImmutableHelpersTests.cs" />
+    <Compile Include="Immutability\KnownImmutableTypesTests.cs" />
+    <Compile Include="Immutability\MutabilityInspectionResultFormatterTests.cs" />
+    <Compile Include="Immutability\MutabilityInspectorTests.cs" />
+    <Compile Include="Immutability\MutabilityInspector_IsTypeMarkedImmutableTests.cs" />
+    <Compile Include="Extensions\SyntaxNodeExtensionTests.cs" />
+    <Compile Include="TestBase.cs" />
+    <Compile Include="Extensions\TypeSymbolExtensionsTests.cs" />
+    <Compile Include="ApiUsage\NotNullAnalyzerTests.cs" />
+    <Compile Include="DiagnosticsTests.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzerTests.cs" />
     <EmbeddedResource Include="Specs\RpcAnalyzer.cs" />
-    <Compile Include="RpcDependencies\RpcDependencyAnalyzerTests.cs" />
+    <Compile Include="ApiUsage\RpcAnalyzerTests.cs" />
     <Compile Include="SpecRunner.cs" />
     <EmbeddedResource Include="Specs\UnsafeStaticsAnalyzer.cs" />
     <EmbeddedResource Include="Specs\OldAndBrokenServiceLocatorAnalyzer.cs" />
@@ -62,7 +62,7 @@
     <EmbeddedResource Include="Specs\DangerousMethodUsagesAnalyzer.cs" />
     <EmbeddedResource Include="Specs\ObsoleteLaunchDarklyApisAnalyzer.cs" />
     <EmbeddedResource Include="Specs\FeatureDefinitionAnalyzer.cs" />
-    <Compile Include="UnsafeStatics\UnsafeStaticsAnalyzerTests.cs" />
+    <Compile Include="Immutability\UnsafeStaticsAnalyzerTests.cs" />
     <Compile Include="Verifiers\DiagnosticResult.cs" />
     <Compile Include="Verifiers\DiagnosticVerifier.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

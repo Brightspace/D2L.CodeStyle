@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.Extensions {
-	internal static partial class Extensions {
+	internal static partial class RoslynExtensions {
 
 		// Adapted from /src/Workspaces/CSharp/Portable/Extensions/ArgumentSyntaxExtensions.cs in Roslyn
 		// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.

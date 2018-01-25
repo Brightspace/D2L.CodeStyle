@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.LaunchDarkly.ObsoleteLaunchDarklyApisAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly.ObsoleteLaunchDarklyApisAnalyzer
 
 namespace D2L.LP.LaunchDarkly {
 	public interface ILaunchDarklyClient {

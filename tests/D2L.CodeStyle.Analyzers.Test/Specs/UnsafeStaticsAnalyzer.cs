@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.UnsafeStatics.UnsafeStaticsAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.Immutability.UnsafeStaticsAnalyzer
 
 using System;
 using D2L.CodeStyle.Analyzers.UnsafeStatics;

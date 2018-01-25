@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.RpcDependencies.RpcDependencyAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.RpcAnalyzer
 
 using System;
 using D2L.LP.Extensibility.Activation.Domain;

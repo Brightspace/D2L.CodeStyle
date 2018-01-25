@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.RpcDependencies.RpcDependencyAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.RpcAnalyzer
 
 using System;
 namespace D2L.Web {

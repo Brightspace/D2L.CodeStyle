@@ -31,52 +31,48 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Common\Attributes.cs" />
-    <Compile Include="ClassShouldBeSealed\ClassShouldBeSealedAnalyzer.cs" />
-    <Compile Include="Common\BecauseHelpers.cs" />
-    <Compile Include="Common\DependencyInjection\ConfigureInstancePluginsExpression.cs" />
-    <Compile Include="Common\DependencyInjection\ConfigurePluginsExpression.cs" />
-    <Compile Include="Common\DependencyInjection\DependencyRegistration.cs" />
-    <Compile Include="Common\DependencyInjection\DependencyRegistrationExpression.cs" />
-    <Compile Include="Common\DependencyInjection\DependencyRegistry.cs" />
-    <Compile Include="Common\DependencyInjection\FullyGenericRegisterExpression.cs" />
-    <Compile Include="Common\DependencyInjection\NonGenericRegisterExpression.cs" />
-    <Compile Include="Common\DependencyInjection\RegisterDynamicObjectFactoryExpression.cs" />
-    <Compile Include="Common\DependencyInjection\RegisterExtensionPointExpression.cs" />
-    <Compile Include="Common\DependencyInjection\RegisterInstantiatedObjectExpression.cs" />
-    <Compile Include="Common\DependencyInjection\RegisterParentAwareFactoryExpression.cs" />
-    <Compile Include="Common\DependencyInjection\RegisterPluginForExtensionPointExpression.cs" />
-    <Compile Include="Common\DependencyInjection\RegisterSubInterfaceExpression.cs" />
-    <Compile Include="Common\Diagnostics.cs" />
-    <Compile Include="Common\ImmutableHelpers.cs" />
-    <Compile Include="Common\KnownImmutableTypes.cs" />
-    <Compile Include="Common\MutabilityInspectionResult.cs" />
-    <Compile Include="Common\MutabilityInspectionResultFormatter.cs" />
-    <Compile Include="Common\MutabilityInspector.cs" />
-    <Compile Include="Common\TypeSymbolExtensions.cs" />
-    <Compile Include="Contract\NotNullAnalyzer.cs" />
-    <Compile Include="DangerousMethodUsages\DangerousMethods.cs" />
-    <Compile Include="DangerousMethodUsages\DangerousMethodUsagesAnalyzer.cs" />
-    <Compile Include="DependencyRegistrations\DependencyRegistrationsAnalyzer.cs" />
+    <Compile Include="Attributes.cs" />
+    <Compile Include="Extensions\Microsoft.CodeAnalysis.CSharp.Syntax.cs" />
+    <Compile Include="Language\ClassShouldBeSealedAnalyzer.cs" />
+    <Compile Include="Immutability\BecauseHelpers.cs" />
+    <Compile Include="ApiUsage\DependencyInjection\Domain\ConfigureInstancePluginsExpression.cs" />
+    <Compile Include="ApiUsage\DependencyInjection\Domain\ConfigurePluginsExpression.cs" />
+    <Compile Include="ApiUsage\DependencyInjection\Domain\DependencyRegistration.cs" />
+    <Compile Include="ApiUsage\DependencyInjection\Domain\DependencyRegistrationExpression.cs" />
+    <Compile Include="ApiUsage\DependencyInjection\Domain\DependencyRegistry.cs" />
+    <Compile Include="ApiUsage\DependencyInjection\Domain\FullyGenericRegisterExpression.cs" />
+    <Compile Include="ApiUsage\DependencyInjection\Domain\NonGenericRegisterExpression.cs" />
+    <Compile Include="ApiUsage\DependencyInjection\Domain\RegisterDynamicObjectFactoryExpression.cs" />
+    <Compile Include="ApiUsage\DependencyInjection\Domain\RegisterExtensionPointExpression.cs" />
+    <Compile Include="ApiUsage\DependencyInjection\Domain\RegisterInstantiatedObjectExpression.cs" />
+    <Compile Include="ApiUsage\DependencyInjection\Domain\RegisterParentAwareFactoryExpression.cs" />
+    <Compile Include="ApiUsage\DependencyInjection\Domain\RegisterPluginForExtensionPointExpression.cs" />
+    <Compile Include="ApiUsage\DependencyInjection\Domain\RegisterSubInterfaceExpression.cs" />
+    <Compile Include="Diagnostics.cs" />
+    <Compile Include="Immutability\ImmutableHelpers.cs" />
+    <Compile Include="Immutability\KnownImmutableTypes.cs" />
+    <Compile Include="Immutability\MutabilityInspectionResult.cs" />
+    <Compile Include="Immutability\MutabilityInspectionResultFormatter.cs" />
+    <Compile Include="Immutability\MutabilityInspector.cs" />
+    <Compile Include="ApiUsage\NotNullAnalyzer.cs" />
+    <Compile Include="ApiUsage\DangerousMethodUsages\DangerousMethods.cs" />
+    <Compile Include="ApiUsage\DangerousMethodUsages\DangerousMethodUsagesAnalyzer.cs" />
+    <Compile Include="ApiUsage\DependencyInjection\DependencyRegistrationsAnalyzer.cs" />
     <Compile Include="Extensions\Microsoft.CodeAnalysis.cs" />
     <Compile Include="Extensions\Microsoft.CodeAnalysis.CSharp.cs" />
     <Compile Include="Immutability\ImmutabilityAnalyzer.cs" />
-    <Compile Include="LaunchDarkly\FeatureDefinitionAnalyzer.cs" />
-    <Compile Include="LaunchDarkly\LegacyILaunchDarklyClientConsumers.cs" />
-    <Compile Include="LaunchDarkly\ObsoleteLaunchDarklyApisAnalyzer.cs" />
-    <Compile Include="LaunchDarkly\LegacyFeatureTypes.cs" />
+    <Compile Include="ApiUsage\LaunchDarkly\FeatureDefinitionAnalyzer.cs" />
+    <Compile Include="ApiUsage\LaunchDarkly\LegacyILaunchDarklyClientConsumers.cs" />
+    <Compile Include="ApiUsage\LaunchDarkly\ObsoleteLaunchDarklyApisAnalyzer.cs" />
+    <Compile Include="ApiUsage\LaunchDarkly\LegacyFeatureTypes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RpcDependencies\RpcDependencyAnalyzer.cs" />
-    <Compile Include="ServiceLocator\OldAndBrokenServiceLocatorAnalyzer.cs" />
-    <Compile Include="ServiceLocator\OldAndBrokenSingletonLocatorAnalyzer.cs" />
-    <Compile Include="UnsafeSingletons\UnsafeSingletonsAnalyzer.cs" />
-    <Compile Include="UnsafeStatics\UnsafeStaticsAnalyzer.cs" />
+    <Compile Include="ApiUsage\RpcAnalyzer.cs" />
+    <Compile Include="ApiUsage\ServiceLocator\OldAndBrokenServiceLocatorAnalyzer.cs" />
+    <Compile Include="ApiUsage\ServiceLocator\OldAndBrokenSingletonLocatorAnalyzer.cs" />
+    <Compile Include="ApiUsage\DependencyInjection\UnsafeSingletonsAnalyzer.cs" />
+    <Compile Include="Immutability\UnsafeStaticsAnalyzer.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="D2L.CodeStyle.Analyzers.nuspec">
-      <SubType>Designer</SubType>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Include="packages.config" />
     <None Include="tools\install.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

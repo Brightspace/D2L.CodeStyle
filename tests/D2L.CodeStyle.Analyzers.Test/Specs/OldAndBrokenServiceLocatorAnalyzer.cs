@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.ServiceLocator.OldAndBrokenServiceLocatorAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator.OldAndBrokenServiceLocatorAnalyzer
 
 using System;
 using D2L.LP.Extensibility.Activation.Domain;
