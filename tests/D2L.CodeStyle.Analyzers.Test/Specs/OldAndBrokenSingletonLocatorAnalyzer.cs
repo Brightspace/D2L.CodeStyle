@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.ServiceLocator.OldAndBrokenSingletonLocatorAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator.OldAndBrokenSingletonLocatorAnalyzer
 
 using System;
 using D2L.CodeStyle.Analyzers.ServiceLocator;

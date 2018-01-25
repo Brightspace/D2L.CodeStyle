@@ -1,11 +1,10 @@
-using D2L.CodeStyle.Analyzers.Common;
 using D2L.CodeStyle.Analyzers.Immutability;
 using D2L.CodeStyle.Analyzers.Test.Verifiers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using NUnit.Framework;
 
-namespace D2L.CodeStyle.Analyzers {
+namespace D2L.CodeStyle.Analyzers.Immutability {
 
 	internal sealed class ImmutabilityAnalyzerTests : DiagnosticVerifier {
 		protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer() {

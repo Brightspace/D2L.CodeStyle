@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.UnsafeSingletons.UnsafeSingletonsAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.UnsafeSingletonsAnalyzer
 
 using System;
 using D2L.CodeStyle.Annotations;

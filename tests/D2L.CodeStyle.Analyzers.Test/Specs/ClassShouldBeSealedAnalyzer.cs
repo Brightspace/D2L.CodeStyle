@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.ClassShouldBeSealed.ClassShouldBeSealedAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.Language.ClassShouldBeSealedAnalyzer
 
 namespace D2L.CodeStyle.Analyzers.Specs {
 	public class PublicClass { } // no diagnostic because its public

@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.DependencyRegistrations.DependencyRegistrationsAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.DependencyRegistrationsAnalyzer
 
 using System;
 using System.Collections.Generic;
