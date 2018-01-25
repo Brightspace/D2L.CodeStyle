@@ -405,6 +405,27 @@ sealed class Bar { }
 		}
 
 		[Test]
+		public void InspectType_TypeHasImmutableMemberWithInheritedExceptions_ReturnsThoseExceptionsAsSeenUnauditedReasons() {
+
+			const string source = AnnotationsPreamble + @"
+sealed class Foo {
+	public Bar Bar { get; }
+}
+
+[Immutable( Except = Except.ItsUgly | Except.ItsSketchy )]
+interface IBar { }
+[Immutable( Except = Except.ItsUgly | Except.ItHasntBeenLookedAt )]
+interface IBaz { }
+
+sealed class Bar : IBar, IBaz { }
+";
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
+
+			AssertUnauditedReasonsResult( ty, "ItsUgly" );
+		}
+
+		[Test]
 		public void InspectType_TypeHasOneUnauditedMember_ReturnsUnauditedReasonAsSeenUnauditedReasons() {
 
 			const string source = AnnotationsPreamble + @"

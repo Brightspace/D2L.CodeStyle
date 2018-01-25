@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
@@ -22,13 +23,50 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		);
 
 		/// <summary>
+		/// Gets all of the [Immutable] attribute exceptions for this type, including inherited exceptions.
+		/// </summary>
+		public static ImmutableHashSet<string> GetAllImmutableExceptions( this ITypeSymbol ty ) {
+
+			ImmutableHashSet<string> directExceptions;
+			if( ty.TryGetDirectImmutableExceptions( out directExceptions ) ) {
+				// If the type has direct exceptions, we can assume that the inherited exceptions are already
+				// being properly analyzed for correctness, so we just return these.
+				return directExceptions;
+			}
+
+			ImmutableDictionary<ISymbol, ImmutableHashSet<string>> inheritedImmutableExceptions = ty.GetInheritedImmutableExceptions();
+
+			if( inheritedImmutableExceptions.IsEmpty ) {
+				throw new Exception( "Tried to get all [Immutable] exceptions from a type that was not directly marked [Immutable] and inherited from no [Immutable] types." );
+			}
+
+			ImmutableHashSet<string>.Builder builder = ImmutableHashSet.CreateBuilder<string>();
+
+			builder.UnionWith( inheritedImmutableExceptions.First().Value );
+
+			foreach( KeyValuePair<ISymbol, ImmutableHashSet<string>> inheritedImmutableException in inheritedImmutableExceptions.Skip( 1 ) ) {
+				builder.IntersectWith( inheritedImmutableException.Value );
+			}
+
+			return builder.ToImmutable();
+		}
+
+		/// <summary>
 		/// Parses the Except values from a type's [Immutable] attribute.
 		/// </summary>
-		public static ImmutableHashSet<string> GetActualImmutableExceptions( this ITypeSymbol ty ) {
+		public static bool TryGetDirectImmutableExceptions( this ITypeSymbol ty, out ImmutableHashSet<string> exceptions ) {
+
+			// Externally owned immutable types have no annotation to pull exceptions from, but we want to treat them
+			// as if they have no exceptions for the purposes of aggregating allowed Unaudited reasons.
+			if( ty.IsExternallyOwnedMarkedImmutableType() ) {
+				exceptions = ImmutableHashSet<string>.Empty;
+				return true;
+			}
 
 			AttributeData attrData = Attributes.Objects.Immutable.GetAll( ty ).FirstOrDefault();
 			if( attrData == null ) {
-				throw new Exception( $"Unable to get Immutable attribute from type '{ty.GetFullTypeName()}'" );
+				exceptions = null;
+				return false;
 			}
 
 			SyntaxNode syntaxNode = attrData
@@ -67,11 +105,36 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			if( flagsExpression == null ) {
 				// We have the Immutable attribute but no Except value, so we just return the defaults
-				return DefaultImmutabilityExceptions;
+				exceptions = DefaultImmutabilityExceptions;
+				return true;
 			}
 
-			ImmutableHashSet<string> exceptions = ExceptFlagValuesToSet( flagsExpression );
-			return exceptions;
+			exceptions = ExceptFlagValuesToSet( flagsExpression );
+			return true;
+		}
+
+		/// <summary>
+		/// Gets all [Immutable] attribute exceptions from this type's inherited types
+		/// </summary>
+		public static ImmutableDictionary<ISymbol, ImmutableHashSet<string>> GetInheritedImmutableExceptions( this ITypeSymbol ty ) {
+
+			ImmutableDictionary<ISymbol, ImmutableHashSet<string>>.Builder builder = ImmutableDictionary.CreateBuilder<ISymbol, ImmutableHashSet<string>>();
+
+			if( ty.BaseType != null ) {
+				ImmutableHashSet<string> baseTyExceptions;
+				if( ty.BaseType.TryGetDirectImmutableExceptions( out baseTyExceptions ) ) {
+					builder.Add( ty.BaseType, baseTyExceptions );
+				}
+			}
+
+			foreach( INamedTypeSymbol iface in ty.Interfaces ) {
+				ImmutableHashSet<string> ifaceExceptions;
+				if( iface.TryGetDirectImmutableExceptions( out ifaceExceptions ) ) {
+					builder.Add( iface, ifaceExceptions );
+				}
+			}
+
+			return builder.ToImmutable();
 		}
 
 		private static ImmutableHashSet<string> ExceptFlagValuesToSet( ExpressionSyntax expr ) {

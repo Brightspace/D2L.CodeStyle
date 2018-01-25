@@ -16,7 +16,7 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 		);
 
 		public static bool IsTypeMarkedImmutable( this ITypeSymbol symbol ) {
-			if( MarkedImmutableTypes.Contains( symbol.GetFullTypeName() ) ) {
+			if( symbol.IsExternallyOwnedMarkedImmutableType() ) {
 				return true;
 			}
 			if( Attributes.Objects.Immutable.IsDefined( symbol ) ) {
@@ -29,6 +29,10 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 				return true;
 			}
 			return false;
+		}
+
+		public static bool IsExternallyOwnedMarkedImmutableType( this ITypeSymbol symbol ) {
+			return MarkedImmutableTypes.Contains( symbol.GetFullTypeName() );
 		}
 
 		public static bool IsTypeMarkedSingleton( this ITypeSymbol symbol ) {
