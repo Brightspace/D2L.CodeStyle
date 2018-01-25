@@ -47,7 +47,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly {
 			"D2L.LP.Auth.Webpages.Login.LoginFailedOpenRedirectFeature",
 			"D2L.LP.Communication.ExternalEmail.EmailVerification.AllUsersEmailVerificationFeature",
 			"D2L.LP.Communication.ExternalEmail.EmailVerification.EmailVerificationFeature",
-			"D2L.LP.Distributed.Events.ExternalPublish.Aggregation.Default.CannedMetronIdsFeature",
 			"D2L.LP.Distributed.Queues.Domain.DateQueuedFlag",
 			"D2L.LP.Distributed.Queues.Service.Verification.Tasks.UndiffVerificationMessageEnqueuingFeature",
 			"D2L.LP.Enrollments.FeatureToggles.GroupTypeSelfEnrollmentQuicklinkFeature",
