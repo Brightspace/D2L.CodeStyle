@@ -323,8 +323,7 @@ namespace D2L.CodeStyle.Annotations {
 		ItsStickyDataOhNooo,
 		WeNeedToMakeTheAnalyzerConsiderThisSafe,
 		ItsUgly,
-		ItsOnDeathRow,
-		SomeNewReason
+		ItsOnDeathRow
 	}
 
 	public enum UndiffBucket {
@@ -342,28 +341,21 @@ namespace D2L.CodeStyle.Annotations {
 
 	public static class Objects {
 		public sealed class Immutable : Attribute {
-			public Except Except { get; }
-		}
-
-		[Flags]
-		public enum Except {
-			None = 0,
-			ItHasntBeenLookedAt = 1,
-			ItsSketchy = 2,
-			ItsStickyDataOhNooo = 4,
-			WeNeedToMakeTheAnalyzerConsiderThisSafe = 8,
-			ItsUgly = 16,
-			ItsOnDeathRow = 32
 		}
 	}
 }
 ";
 
 		[Test]
-		public void InspectType_TypeHasNoMembers_NoUnauditedReasons() {
+		public void InspectType_TypeHasNoUnauditedMembers_NoUnauditedReasons() {
 
 			const string source = AnnotationsPreamble + @"
-sealed class Foo {}
+sealed class Foo {
+	public int Bar { get; }
+}
+
+[Immutable]
+sealed class Bar { }
 ";
 
 			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
@@ -372,41 +364,7 @@ sealed class Foo {}
 		}
 
 		[Test]
-		public void InspectType_TypeHasDefaultImmutableMember_ReturnsDefaultImmutabilityExceptionsAsSeenUnauditedReasons() {
-
-			const string source = AnnotationsPreamble + @"
-sealed class Foo {
-	public Bar Bar { get; }
-}
-
-[Immutable]
-sealed class Bar { }
-";
-
-			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
-
-			AssertUnauditedReasonsResult( ty, ImmutableHelpers.DefaultImmutabilityExceptions.ToArray() );
-		}
-
-		[Test]
-		public void InspectType_TypeHasImmutableMemberWithSpecifiedExceptions_ReturnsThoseExceptionsAsSeenUnauditedReasons() {
-
-			const string source = AnnotationsPreamble + @"
-sealed class Foo {
-	public Bar Bar { get; }
-}
-
-[Immutable( Except = Except.ItsUgly | Except.ItsSketchy )]
-sealed class Bar { }
-";
-
-			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
-
-			AssertUnauditedReasonsResult( ty, "ItsUgly", "ItsSketchy" );
-		}
-
-		[Test]
-		public void InspectType_TypeHasOneUnauditedMember_ReturnsUnauditedReasonAsSeenUnauditedReasons() {
+		public void InspectType_TypeHasOneUnauditedMember_ReturnsUnauditedReason() {
 
 			const string source = AnnotationsPreamble + @"
 sealed class Foo {
@@ -421,7 +379,7 @@ sealed class Foo {
 		}
 
 		[Test]
-		public void InspectType_TypeHasMultipleDifferentUnauditedMembers_ReturnsAllUnauditedReasonsAsSeenUnauditedReasons() {
+		public void InspectType_TypeHasMultipleDifferentUnauditedMembers_ReturnsAllUnauditedReasons() {
 
 			const string source = AnnotationsPreamble + @"
 sealed class Foo {
@@ -438,7 +396,7 @@ sealed class Foo {
 		}
 
 		[Test]
-		public void InspectType_TypeHasMultipleIdenticalUnauditedMembers_ReturnsAllUnauditedReasonsAsSeenUnauditedReasons() {
+		public void InspectType_TypeHasMultipleIdenticalUnauditedMembers_ReturnsAllUnauditedReasons() {
 
 			const string source = AnnotationsPreamble + @"
 sealed class Foo {
@@ -452,90 +410,6 @@ sealed class Foo {
 			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
 
 			AssertUnauditedReasonsResult( ty, "ItsSketchy" );
-		}
-
-		[Test]
-		public void InspectType_TypeHasUnauditedMembersAndDefaultImmutableMember_ReturnsDefaultImmutabilityExceptionsAsSeenUnauditedReasons() {
-			const string source = AnnotationsPreamble + @"
-sealed class Foo {
-	[Mutability.Unaudited( Because.ItsSketchy )]
-	public Func<string> Bar { get; }
-	[Mutability.Unaudited( Because.ItsUgly )]
-	public Func<string> Baz { get; }
-
-	public Bar XYZ { get; }
-}
-
-[Immutable]
-sealed class Bar { }
-";
-
-			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
-
-			AssertUnauditedReasonsResult( ty, ImmutableHelpers.DefaultImmutabilityExceptions.ToArray() );
-		}
-
-		[Test]
-		public void InspectType_TypeHasUnauditedMembersAndImmutableMemberWithSharedExceptions_ReturnsUnionOfExceptionsAndReasonsAsSeenUnauditedReasons() {
-			const string source = AnnotationsPreamble + @"
-sealed class Foo {
-	[Mutability.Unaudited( Because.ItsSketchy )]
-	public Func<string> Bar { get; }
-	[Mutability.Unaudited( Because.ItsUgly )]
-	public Func<string> Baz { get; }
-
-	public Bar XYZ { get; }
-}
-
-[Immutable( Except = Except.ItHasntBeenLookedAt )]
-sealed class Bar { }
-";
-
-			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
-
-			AssertUnauditedReasonsResult( ty, "ItsSketchy", "ItsUgly", "ItHasntBeenLookedAt" );
-		}
-
-		[Test]
-		public void InspectType_TypeHasUnauditedMembersAndImmutableMemberWithNoExceptions_ReturnsUnauditedReasonsAsSeenUnauditedReasons() {
-			const string source = AnnotationsPreamble + @"
-sealed class Foo {
-	[Mutability.Unaudited( Because.ItsSketchy )]
-	public Func<string> Bar { get; }
-	[Mutability.Unaudited( Because.ItsUgly )]
-	public Func<string> Baz { get; }
-
-	public Bar XYZ { get; }
-}
-
-[Immutable( Except = Except.None )]
-sealed class Bar { }
-";
-
-			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
-
-			AssertUnauditedReasonsResult( ty, "ItsSketchy", "ItsUgly" );
-		}
-
-		[Test]
-		public void InspectType_TypeHasNonDefaultUnauditedMembersAndDefaultImmutableMember_ReturnsUnionOfDefaultExceptionsAndNonDefaultReasonAsSeenUnauditedReasons() {
-			const string source = AnnotationsPreamble + @"
-sealed class Foo {
-	[Mutability.Unaudited( Because.ItsSketchy )]
-	public Func<string> Bar { get; }
-	[Mutability.Unaudited( Because.SomeNewReason )]
-	public Func<string> Baz { get; }
-
-	public Bar XYZ { get; }
-}
-
-[Immutable]
-sealed class Bar { }
-";
-
-			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
-
-			AssertUnauditedReasonsResult( ty, ImmutableHelpers.DefaultImmutabilityExceptions.Add( "SomeNewReason" ).ToArray() );
 		}
 
 		private TestSymbol<ITypeSymbol> CompileAndGetFooType( string source ) {
@@ -560,7 +434,7 @@ sealed class Bar { }
 				ImmutableHashSet.Create( expectedUnauditedReasons )
 			);
 
-			var actual = inspector.InspectType( ty.Symbol, MutabilityInspectionFlags.IgnoreImmutabilityAttribute );
+			var actual = inspector.InspectType( ty.Symbol );
 
 			AssertResultsAreEqual( expected, actual );
 		}
