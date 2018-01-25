@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
@@ -37,36 +38,43 @@ namespace D2L.CodeStyle.Annotations {
 ";
 
 		[Test]
-		public void GetActualImmutableExceptions_WhenTypeDoesNotHaveImmutableAttribute_ThrowsException() {
+		public void TryGetDirectImmutableExceptions_WhenTypeDoesNotHaveImmutableAttribute_ReturnsFalse() {
 
 			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"public class Foo { }" );
 
-			Assert.That( () => ty.Symbol.GetActualImmutableExceptions(), Throws.Exception );
+			ImmutableHashSet<string> exceptions;
+			bool result = ty.Symbol.TryGetDirectImmutableExceptions( out exceptions );
+
+			Assert.That( result, Is.False );
 		}
 
 		[Test]
-		public void GetActualImmutableExceptions_WhenNoSpecifiedExceptions_ReturnsDefaultReasons() {
+		public void TryGetDirectImmutableExceptions_WhenNoSpecifiedExceptions_ReturnsDefaultReasons() {
 
 			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"
 [Immutable]
 public class Foo { }
 " );
 
-			IImmutableSet<string> immutabilityExceptions = ty.Symbol.GetActualImmutableExceptions();
+			ImmutableHashSet<string> immutabilityExceptions;
+			bool result = ty.Symbol.TryGetDirectImmutableExceptions( out immutabilityExceptions );
 
+			Assert.That( result, Is.True );
 			Assert.That( immutabilityExceptions, Is.EquivalentTo( ImmutableHelpers.DefaultImmutabilityExceptions ) );
 		}
 
 		[Test]
-		public void GetActualImmutableExceptions_WhenSpecifiedExceptions_ReturnsSpecifiedExceptions() {
+		public void TryGetDirectImmutableExceptions_WhenSpecifiedExceptions_ReturnsSpecifiedExceptions() {
 
 			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"
 [Immutable( Except = Except.ItsUgly | Except.WeNeedToMakeTheAnalyzerConsiderThisSafe | Except.ItsSketchy )]
 public class Foo { }
 " );
 
-			IImmutableSet<string> immutabilityExceptions = ty.Symbol.GetActualImmutableExceptions();
+			ImmutableHashSet<string> immutabilityExceptions;
+			bool result = ty.Symbol.TryGetDirectImmutableExceptions( out immutabilityExceptions );
 
+			Assert.That( result, Is.True );
 			Assert.That( immutabilityExceptions, Is.EquivalentTo( new[] {
 				"WeNeedToMakeTheAnalyzerConsiderThisSafe",
 				"ItsUgly",
@@ -75,16 +83,140 @@ public class Foo { }
 		}
 
 		[Test]
-		public void GetActualImmutableExceptions_WhenSpecifiedNoneReasons_ReturnsEmptySet() {
+		public void TryGetDirectImmutableExceptions_WhenSpecifiedNoneReasons_ReturnsEmptySet() {
 
 			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"
 [Immutable( Except = Except.None )]
 public class Foo { }
 " );
 
-			IImmutableSet<string> immutabilityExceptions = ty.Symbol.GetActualImmutableExceptions();
+			ImmutableHashSet<string> immutabilityExceptions;
+			bool result = ty.Symbol.TryGetDirectImmutableExceptions( out immutabilityExceptions );
 
+			Assert.That( result, Is.True );
 			Assert.That( immutabilityExceptions, Is.Empty );
+		}
+
+		[Test]
+		public void GetInheritedImmutableExceptions_WhenNoInheritedTypes_ReturnsEmptyDict() {
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"
+public class Foo { }
+" );
+
+			ImmutableDictionary<ISymbol, ImmutableHashSet<string>> inheritedExceptions = ty.Symbol.GetInheritedImmutableExceptions();
+
+			Assert.That( inheritedExceptions, Is.Empty );
+		}
+
+		[Test]
+		public void GetInheritedImmutableExceptions_WhenNoImmutableInheritedTypes_ReturnsEmptyDict() {
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"
+public interface IFoo { }
+public class FooBase { }
+
+public sealed class Foo : FooBase, IFoo { }
+" );
+
+			ImmutableDictionary<ISymbol, ImmutableHashSet<string>> inheritedExceptions = ty.Symbol.GetInheritedImmutableExceptions();
+
+			Assert.That( inheritedExceptions, Is.Empty );
+		}
+
+		[Test]
+		public void GetInheritedImmutableExceptions_WhenImmutableInheritedTypes_ReturnsEachInheritedTypesExceptions() {
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"
+[Immutable( Except = Except.ItHasntBeenLookedAt )]
+public interface IFoo { }
+[Immutable( Except = Except.ItsUgly | Except.ItsSketchy )]
+public class FooBase { }
+
+public sealed class Foo : FooBase, IFoo { }
+" );
+
+			ImmutableDictionary<ISymbol, ImmutableHashSet<string>> inheritedExceptions = ty.Symbol.GetInheritedImmutableExceptions();
+
+			Assert.That( inheritedExceptions, Has.Count.EqualTo( 2 ) );
+
+			ISymbol ifooSymbol = inheritedExceptions.Keys.FirstOrDefault( s => s.Name == "IFoo" );
+			Assert.That( ifooSymbol, Is.Not.Null );
+
+			Assert.That( inheritedExceptions[ifooSymbol], Is.EquivalentTo( new[] { "ItHasntBeenLookedAt" } ) );
+
+			ISymbol fooBaseSymbol = inheritedExceptions.Keys.FirstOrDefault( s => s.Name == "FooBase" );
+			Assert.That( fooBaseSymbol, Is.Not.Null );
+
+			Assert.That( inheritedExceptions[fooBaseSymbol], Is.EquivalentTo( new[] { "ItsUgly", "ItsSketchy" } ) );
+		}
+
+		[Test]
+		public void GetAllImmutableExceptions_WhenNotImmutableAndNoInheritedTypes_ThrowsException() {
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"
+public sealed class Foo { }
+" );
+
+			Assert.That( () => ty.Symbol.GetAllImmutableExceptions(), Throws.Exception );
+		}
+
+		[Test]
+		public void GetAllImmutableExceptions_WhenNotImmutableAndNoImmutableInheritedTypes_ThrowsException() {
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"
+public interface IFoo { }
+public class FooBase { }
+
+public sealed class Foo : FooBase, IFoo { }
+" );
+
+			Assert.That( () => ty.Symbol.GetAllImmutableExceptions(), Throws.Exception );
+		}
+
+		[Test]
+		public void GetAllImmutableExceptions_WhenImmutableAndNoImmutableInheritedTypes_ReturnsDefinedExceptions() {
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"
+public interface IFoo { }
+public class FooBase { }
+
+[Immutable( Except = Except.ItsUgly | Except.ItsSketchy )]
+public sealed class Foo : FooBase, IFoo { }
+" );
+			ImmutableHashSet<string> allExceptions = ty.Symbol.GetAllImmutableExceptions();
+			Assert.That( allExceptions, Is.EquivalentTo( new[] { "ItsUgly", "ItsSketchy" } ) );
+		}
+
+		[Test]
+		public void GetAllImmutableExceptions_WhenNotMarkedImmutableAndImmutableInheritedTypes_ReturnsIntersectionOfInheritedExceptions() {
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"
+[Immutable( Except = Except.ItsUgly | Except.ItHasntBeenLookedAt )]
+public interface IFoo { }
+[Immutable( Except = Except.ItsUgly | Except.ItsSketchy )]
+public class FooBase { }
+
+public sealed class Foo : FooBase, IFoo { }
+" );
+			ImmutableHashSet<string> allExceptions = ty.Symbol.GetAllImmutableExceptions();
+			Assert.That( allExceptions, Is.EquivalentTo( new[] { "ItsUgly" } ) );
+		}
+
+		[Test]
+		public void GetAllImmutableExceptions_WhenMarkedImmutableAndImmutableInheritedTypes_ReturnsDirectlyDefinedExceptions() {
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"
+[Immutable( Except = Except.ItsUgly )]
+public interface IFoo { }
+[Immutable( Except = Except.ItsUgly )]
+public class FooBase { }
+
+[Immutable( Except = Except.ItsSketchy )]
+public sealed class Foo : FooBase, IFoo { }
+" );
+			ImmutableHashSet<string> allExceptions = ty.Symbol.GetAllImmutableExceptions();
+			Assert.That( allExceptions, Is.EquivalentTo( new[] { "ItsSketchy" } ) );
 		}
 
 		private static TestSymbol<ITypeSymbol> CompileAndGetFooType( string source ) {

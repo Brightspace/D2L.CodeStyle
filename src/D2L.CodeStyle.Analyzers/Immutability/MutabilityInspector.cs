@@ -120,8 +120,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			// If we're verifying immutability, then carry on; otherwise, bailout
 			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && type.IsTypeMarkedImmutable() ) {
-				ImmutableHashSet<string> actualImmutableExceptions = type.GetActualImmutableExceptions();
-				return MutabilityInspectionResult.NotMutable( actualImmutableExceptions );
+				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
+				return MutabilityInspectionResult.NotMutable( immutableExceptions );
 			}
 
 			// System.Object is safe if we can allow unsealed types (i.e., the type is the concrete type). 
