@@ -312,6 +312,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private const string AnnotationsPreamble = @"
 using System;
+using System.Collections.Generic;
 using D2L.CodeStyle.Annotations;
 using static D2L.CodeStyle.Annotations.Objects;
  
@@ -558,6 +559,25 @@ sealed class Bar { }
 			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
 
 			AssertUnauditedReasonsResult( ty, ImmutableHelpers.DefaultImmutabilityExceptions.Add( "SomeNewReason" ).ToArray() );
+		}
+
+		[Test]
+		public void InspectType_TypeHasImmutableCollectionMember_ReturnsUnionOfExceptionsInCollectionTypes() {
+			const string source = AnnotationsPreamble + @"
+sealed class Foo {
+	public IReadOnlyDictionary<Bar, Baz> XYZ { get; }
+}
+
+[Immutable( Except = Except.ItsUgly )]
+sealed class Bar { }
+
+[Immutable( Except = Except.ItHasntBeenLookedAt )]
+sealed class Baz { }
+";
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
+
+			AssertUnauditedReasonsResult( ty, "ItsUgly", "ItHasntBeenLookedAt" );
 		}
 
 		private TestSymbol<ITypeSymbol> CompileAndGetFooType( string source ) {
