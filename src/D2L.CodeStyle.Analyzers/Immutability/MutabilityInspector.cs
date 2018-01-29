@@ -287,6 +287,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			var namedType = type as INamedTypeSymbol;
 
+			ImmutableHashSet<string>.Builder unauditedReasonsBuilder = ImmutableHashSet.CreateBuilder<string>();
+
 			for( int i = 0; i < namedType.TypeArguments.Length; i++ ) {
 				var arg = namedType.TypeArguments[ i ];
 
@@ -310,9 +312,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					}
 					return result;
 				}
+
+				unauditedReasonsBuilder.UnionWith( result.SeenUnauditedReasons );
 			}
 
-			return MutabilityInspectionResult.NotMutable();
+			return MutabilityInspectionResult.NotMutable( unauditedReasonsBuilder.ToImmutable() );
 		}
 
 		private MutabilityInspectionResult InspectTypeParameter(
@@ -333,7 +337,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					);
 
 					if( !result.IsMutable ) {
-						return MutabilityInspectionResult.NotMutable();
+						return result;
 					}
 				}
 			}
