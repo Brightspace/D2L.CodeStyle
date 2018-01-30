@@ -31,6 +31,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ApiUsage\DangerousAttributeUsages\DangerousAttributes.cs" />
+    <Compile Include="ApiUsage\DangerousAttributeUsages\DangerousAttributeUsages.cs" />
     <Compile Include="Attributes.cs" />
     <Compile Include="Extensions\Microsoft.CodeAnalysis.CSharp.Syntax.cs" />
     <Compile Include="Language\ClassShouldBeSealedAnalyzer.cs" />

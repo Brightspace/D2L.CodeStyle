@@ -192,5 +192,15 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "Switch your feature definition to inherit D2L.LP.LaunchDarkly.FeatureDefinition, configure your feature for DI, and use one of the new IInstanceFlag/IOrgFlag/ICurrentOrgFlag interfaces instead"
 		);
 
+		public static readonly DiagnosticDescriptor DangerousAttributesShouldBeAvoided = new DiagnosticDescriptor(
+			id: "D2L0023",
+			title: "Avoid using dangerous attributes",
+			messageFormat: "Should not use {0} because it's considered dangerous",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: false,
+			description: "Avoid using dangerous attributes"
+		);
+
 	}
 }
