@@ -323,6 +323,8 @@ namespace D2L.CodeStyle.Annotations {
 		WeNeedToMakeTheAnalyzerConsiderThisSafe,
 		ItsUgly,
 		ItsOnDeathRow,
+		// This variant doesn't actually exist. It's being used to test scenarios where a new variant
+		// is added to ensure the analyzer is still able to handle it.
 		SomeNewReason
 	}
 

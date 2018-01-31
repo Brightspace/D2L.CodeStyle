@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
@@ -25,26 +24,26 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// <summary>
 		/// Gets all of the [Immutable] attribute exceptions for this type, including inherited exceptions.
 		/// </summary>
-		public static ImmutableHashSet<string> GetAllImmutableExceptions( this ITypeSymbol ty ) {
+		public static ImmutableHashSet<string> GetAllImmutableExceptions( this ITypeSymbol type ) {
 
 			ImmutableHashSet<string> directExceptions;
-			if( ty.TryGetDirectImmutableExceptions( out directExceptions ) ) {
+			if( type.TryGetDirectImmutableExceptions( out directExceptions ) ) {
 				// If the type has direct exceptions, we can assume that the inherited exceptions are already
 				// being properly analyzed for correctness, so we just return these.
 				return directExceptions;
 			}
 
-			ImmutableDictionary<ISymbol, ImmutableHashSet<string>> inheritedImmutableExceptions = ty.GetInheritedImmutableExceptions();
+			var inheritedImmutableExceptions = type.GetInheritedImmutableExceptions();
 
 			if( inheritedImmutableExceptions.IsEmpty ) {
 				throw new Exception( "Tried to get all [Immutable] exceptions from a type that was not directly marked [Immutable] and inherited from no [Immutable] types." );
 			}
 
-			ImmutableHashSet<string>.Builder builder = ImmutableHashSet.CreateBuilder<string>();
+			var builder = ImmutableHashSet.CreateBuilder<string>();
 
 			builder.UnionWith( inheritedImmutableExceptions.First().Value );
 
-			foreach( KeyValuePair<ISymbol, ImmutableHashSet<string>> inheritedImmutableException in inheritedImmutableExceptions.Skip( 1 ) ) {
+			foreach( var inheritedImmutableException in inheritedImmutableExceptions.Skip( 1 ) ) {
 				builder.IntersectWith( inheritedImmutableException.Value );
 			}
 
@@ -116,18 +115,18 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// <summary>
 		/// Gets all [Immutable] attribute exceptions from this type's inherited types
 		/// </summary>
-		public static ImmutableDictionary<ISymbol, ImmutableHashSet<string>> GetInheritedImmutableExceptions( this ITypeSymbol ty ) {
+		public static ImmutableDictionary<ISymbol, ImmutableHashSet<string>> GetInheritedImmutableExceptions( this ITypeSymbol type ) {
 
-			ImmutableDictionary<ISymbol, ImmutableHashSet<string>>.Builder builder = ImmutableDictionary.CreateBuilder<ISymbol, ImmutableHashSet<string>>();
+			var builder = ImmutableDictionary.CreateBuilder<ISymbol, ImmutableHashSet<string>>();
 
-			if( ty.BaseType != null ) {
+			if( type.BaseType != null ) {
 				ImmutableHashSet<string> baseTyExceptions;
-				if( ty.BaseType.TryGetDirectImmutableExceptions( out baseTyExceptions ) ) {
-					builder.Add( ty.BaseType, baseTyExceptions );
+				if( type.BaseType.TryGetDirectImmutableExceptions( out baseTyExceptions ) ) {
+					builder.Add( type.BaseType, baseTyExceptions );
 				}
 			}
 
-			foreach( INamedTypeSymbol iface in ty.Interfaces ) {
+			foreach( INamedTypeSymbol iface in type.Interfaces ) {
 				ImmutableHashSet<string> ifaceExceptions;
 				if( iface.TryGetDirectImmutableExceptions( out ifaceExceptions ) ) {
 					builder.Add( iface, ifaceExceptions );
@@ -139,7 +138,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private static ImmutableHashSet<string> ExceptFlagValuesToSet( ExpressionSyntax expr ) {
 
-			ImmutableHashSet<string>.Builder builder = ImmutableHashSet.CreateBuilder<string>();
+			var builder = ImmutableHashSet.CreateBuilder<string>();
 
 			ExceptFlagValuesToSetRecursive( expr, builder );
 
@@ -149,7 +148,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private static void ExceptFlagValuesToSetRecursive( ExpressionSyntax expr, ImmutableHashSet<string>.Builder builder ) {
 
 			if( expr is MemberAccessExpressionSyntax ) {
-				MemberAccessExpressionSyntax memEx = (MemberAccessExpressionSyntax)expr;
+
+				var memEx = (MemberAccessExpressionSyntax)expr;
+
 				string value = memEx.Name.Identifier.ValueText;
 				// "None" values are skipped over. If there was only the one None value, the empty set will be returned as
 				// expected. If there were other values, None is irrelevant since we only support OR operations.
@@ -160,7 +161,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			if( expr is BinaryExpressionSyntax ) {
-				BinaryExpressionSyntax binEx = (BinaryExpressionSyntax)expr;
+
+				var binEx = (BinaryExpressionSyntax)expr;
 
 				if( binEx.Kind() != SyntaxKind.BitwiseOrExpression ) {
 					throw new Exception( $"Flags are being created with unsupported operator: '{binEx}" );
