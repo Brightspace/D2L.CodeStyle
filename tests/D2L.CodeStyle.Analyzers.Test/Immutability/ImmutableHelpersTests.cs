@@ -152,6 +152,27 @@ public sealed class Foo : FooBase, IFoo { }
 		}
 
 		[Test]
+		public void GetInheritedImmutableExceptions_WhenBaseTypeIndirectlyImmutable_ReturnsInheritedTypesExceptions() {
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"
+[Immutable( Except = Except.ItHasntBeenLookedAt )]
+public interface IFoo { }
+public class FooBase : IFoo { }
+
+public sealed class Foo : FooBase { }
+" );
+
+			ImmutableDictionary<ISymbol, ImmutableHashSet<string>> inheritedExceptions = ty.Symbol.GetInheritedImmutableExceptions();
+
+			Assert.That( inheritedExceptions, Has.Count.EqualTo( 1 ) );
+
+			ISymbol fooBaseSymbol = inheritedExceptions.Keys.FirstOrDefault( s => s.Name == "FooBase" );
+			Assert.That( fooBaseSymbol, Is.Not.Null );
+
+			Assert.That( inheritedExceptions[fooBaseSymbol], Is.EquivalentTo( new[] { "ItHasntBeenLookedAt" } ) );
+		}
+
+		[Test]
 		public void GetAllImmutableExceptions_WhenNotImmutableAndNoInheritedTypes_ThrowsException() {
 
 			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"

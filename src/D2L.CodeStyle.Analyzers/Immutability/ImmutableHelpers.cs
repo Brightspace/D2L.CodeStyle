@@ -36,7 +36,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			var inheritedImmutableExceptions = type.GetInheritedImmutableExceptions();
 
 			if( inheritedImmutableExceptions.IsEmpty ) {
-				throw new Exception( "Tried to get all [Immutable] exceptions from a type that was not directly marked [Immutable] and inherited from no [Immutable] types." );
+				throw new Exception( $"Tried to get all [Immutable] exceptions from a type ({type.GetFullTypeName()}) that was not directly marked [Immutable] and inherited from no [Immutable] types." );
 			}
 
 			var builder = ImmutableHashSet.CreateBuilder<string>();
@@ -119,11 +119,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			var builder = ImmutableDictionary.CreateBuilder<ISymbol, ImmutableHashSet<string>>();
 
-			if( type.BaseType != null ) {
-				ImmutableHashSet<string> baseTyExceptions;
-				if( type.BaseType.TryGetDirectImmutableExceptions( out baseTyExceptions ) ) {
-					builder.Add( type.BaseType, baseTyExceptions );
-				}
+			if( type.BaseType != null && type.BaseType.IsTypeMarkedImmutable() ) {
+				builder.Add( type.BaseType, type.BaseType.GetAllImmutableExceptions() );
 			}
 
 			foreach( INamedTypeSymbol iface in type.Interfaces ) {
