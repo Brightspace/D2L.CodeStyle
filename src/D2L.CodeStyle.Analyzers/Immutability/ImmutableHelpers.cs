@@ -37,24 +37,40 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			AttributeSyntax attrSyntax = syntaxNode as AttributeSyntax;
 
+			ExpressionSyntax flagsExpression;
+
+			// If we can't get the attribute syntax but we know the Immutable attribute exists, we're analyzing a type
+			// from another assembly. We can analyze it by parsing its value back into syntax.
 			if( attrSyntax == null ) {
-				throw new Exception( $"Unable to get AttributeSyntax for Immutable attribute on '{ty.GetFullTypeName()}'" );
+
+				TypedConstant exceptValue = attrData
+					.NamedArguments
+					.FirstOrDefault( kvp => kvp.Key == "Except" )
+					.Value;
+
+				flagsExpression = exceptValue.IsNull
+					? null
+					: SyntaxFactory.ParseExpression( exceptValue.ToCSharpString() );
+
+			} else {
+
+				AttributeArgumentSyntax foundArg = attrSyntax
+					.ArgumentList?
+					.Arguments
+					.FirstOrDefault(
+						// Get the first argument that is defined by the "Except = ..." syntax
+						arg => arg.NameEquals?.Name?.Identifier.ValueText == "Except"
+					);
+
+				flagsExpression = foundArg?.Expression;
 			}
 
-			AttributeArgumentSyntax foundArg = attrSyntax
-				.ArgumentList?
-				.Arguments
-				.FirstOrDefault(
-					// Get the first argument that is defined by the "Except = ..." syntax
-					arg => arg.NameEquals?.Name?.Identifier.ValueText == "Except"
-				);
-
-			if( foundArg == null ) {
+			if( flagsExpression == null ) {
 				// We have the Immutable attribute but no Except value, so we just return the defaults
 				return DefaultImmutabilityExceptions;
 			}
 
-			ImmutableHashSet<string> exceptions = ExceptFlagValuesToSet( foundArg.Expression );
+			ImmutableHashSet<string> exceptions = ExceptFlagValuesToSet( flagsExpression );
 			return exceptions;
 		}
 
