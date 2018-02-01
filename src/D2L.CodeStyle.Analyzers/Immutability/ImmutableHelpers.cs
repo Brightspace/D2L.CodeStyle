@@ -119,13 +119,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			var builder = ImmutableDictionary.CreateBuilder<ISymbol, ImmutableHashSet<string>>();
 
-			if( type.BaseType != null ) {
-				// Interfaces of the base type are covered in AllInterfaces below, so we only need to get direct exceptions
+			ITypeSymbol baseType = type.BaseType;
+			while( baseType != null ) {
+				// Interfaces of the base types are covered in AllInterfaces below, so we only need to get direct exceptions
 				// if they exist.
 				ImmutableHashSet<string> baseTypeExceptions;
-				if( type.BaseType.TryGetDirectImmutableExceptions( out baseTypeExceptions ) ) {
-					builder.Add( type.BaseType, baseTypeExceptions );
+				if( baseType.TryGetDirectImmutableExceptions( out baseTypeExceptions ) ) {
+					builder.Add( baseType, baseTypeExceptions );
 				}
+				baseType = baseType.BaseType;
 			}
 
 			foreach( INamedTypeSymbol iface in type.AllInterfaces ) {
