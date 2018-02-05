@@ -196,7 +196,7 @@ namespace D2L.CodeStyle.Analyzers {
 			id: "D2L0023",
 			title: "Immutability exceptions must be a subset of containing type's",
 			messageFormat: "One or more members on this type have unaudited reasons that are not excepted. Resolve the Unaudited members or relax exceptions on this type to a superset of {{ {0} }}.",
-			category:"Safety",
+			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
 			description: "Type's members' allowed and used unaudited reasons must be a subset of the type's immutable exceptions."
@@ -212,5 +212,14 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "Immutable exceptions must be a subset of all parent types' exceptions."
 		);
 
+		public static readonly DiagnosticDescriptor ObsoleteJsonParamBinder = new DiagnosticDescriptor(
+			id: "D2L0025",
+			title: "Use the new JsonConvertParameterBinder instead",
+			messageFormat: "Should not use JsonParamBinder because it is obsolete",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "JsonParamBinder uses the custom D2L JSON framework, so use JsonConvertParameterBinder (which uses Newtonsoft.Json) instead."
+		);
 	}
 }
