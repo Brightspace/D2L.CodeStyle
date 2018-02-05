@@ -44,6 +44,7 @@
     <Compile Include="Immutability\MutabilityInspectorTests.cs" />
     <Compile Include="Immutability\MutabilityInspector_IsTypeMarkedImmutableTests.cs" />
     <Compile Include="Extensions\SyntaxNodeExtensionTests.cs" />
+    <EmbeddedResource Include="Specs\JsonParamBinderAnalyzer.cs" />
     <Compile Include="TestBase.cs" />
     <Compile Include="Extensions\TypeSymbolExtensionsTests.cs" />
     <Compile Include="ApiUsage\NotNullAnalyzerTests.cs" />
