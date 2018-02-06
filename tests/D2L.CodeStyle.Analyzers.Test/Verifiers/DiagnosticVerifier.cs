@@ -82,7 +82,10 @@ namespace D2L.CodeStyle.Analyzers.Test.Verifiers {
 		/// <param name="diagnostics">The list of Diagnostics to be sorted</param>
 		/// <returns>An IEnumerable containing the Diagnostics in order of Location</returns>
 		private Diagnostic[] SortDiagnostics( IEnumerable<Diagnostic> diagnostics ) {
-			return diagnostics.OrderBy( d => d.Location.SourceSpan.Start ).ToArray();
+			return diagnostics
+				.OrderBy( d => d.Location.SourceSpan.Start )
+				.ThenBy( d => d.GetMessage() )
+				.ToArray();
 		}
 
 		#endregion
