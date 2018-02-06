@@ -1,5 +1,4 @@
 ﻿using System.Collections.Immutable;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -20,6 +19,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 		}
 
 		private void RegisterAnalysis( CompilationStartAnalysisContext context ) {
+
+			var attributeType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Web.Rest.Attributes.JsonParamBinder" );
+			if( attributeType == null ) {
+				// Attribute is presumably not being used, so no need to register our analyzer
+				return;
+			}
 
 			context.RegisterSyntaxNodeAction(
 				AnalyzeAttribute,

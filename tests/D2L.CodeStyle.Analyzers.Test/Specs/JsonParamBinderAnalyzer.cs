@@ -3,8 +3,9 @@
 using System;
 using D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute;
 using D2L.CodeStyle.Annotations;
+using D2L.LP.Web.Rest.Attributes;
 
-namespace D2L.CodeStyle.Annotations {
+namespace D2L.LP.Web.Rest.Attributes {
 
 	public sealed class JsonParamBinder : Attribute { }
 
