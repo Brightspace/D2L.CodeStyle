@@ -202,5 +202,15 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "Type's members' allowed and used unaudited reasons must be a subset of the type's immutable exceptions."
 		);
 
+		public static readonly DiagnosticDescriptor ImmutableExceptionInheritanceIsInvalid = new DiagnosticDescriptor(
+			id: "D2L0024",
+			title: "Immutable exceptions are not valid for this type.",
+			messageFormat: "This type is marked immutable, but it has more permissive immutability than its base type '{0}'. {1}",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Immutable exceptions must be a subset of all parent types' exceptions."
+		);
+
 	}
 }
