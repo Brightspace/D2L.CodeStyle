@@ -38,14 +38,13 @@ namespace D2L.CodeStyle.Annotations {
 ";
 
 		[Test]
-		public void TryGetDirectImmutableExceptions_WhenTypeDoesNotHaveImmutableAttribute_ReturnsFalse() {
+		public void TryGetDirectImmutableExceptions_WhenTypeDoesNotHaveImmutableAttribute_ReturnsEmpty() {
 
 			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"public class Foo { }" );
 
-			ImmutableHashSet<string> exceptions;
-			bool result = ty.Symbol.TryGetDirectImmutableExceptions( out exceptions );
+			ImmutableHashSet<string> exceptions = ty.Symbol.GetDirectImmutableExceptions();
 
-			Assert.That( result, Is.False );
+			Assert.That( exceptions, Is.Empty );
 		}
 
 		[Test]
@@ -56,10 +55,8 @@ namespace D2L.CodeStyle.Annotations {
 public class Foo { }
 " );
 
-			ImmutableHashSet<string> immutabilityExceptions;
-			bool result = ty.Symbol.TryGetDirectImmutableExceptions( out immutabilityExceptions );
+			ImmutableHashSet<string> immutabilityExceptions = ty.Symbol.GetDirectImmutableExceptions();
 
-			Assert.That( result, Is.True );
 			Assert.That( immutabilityExceptions, Is.EquivalentTo( ImmutableHelpers.DefaultImmutabilityExceptions ) );
 		}
 
@@ -71,10 +68,8 @@ public class Foo { }
 public class Foo { }
 " );
 
-			ImmutableHashSet<string> immutabilityExceptions;
-			bool result = ty.Symbol.TryGetDirectImmutableExceptions( out immutabilityExceptions );
+			ImmutableHashSet<string> immutabilityExceptions = ty.Symbol.GetDirectImmutableExceptions();
 
-			Assert.That( result, Is.True );
 			Assert.That( immutabilityExceptions, Is.EquivalentTo( new[] {
 				"WeNeedToMakeTheAnalyzerConsiderThisSafe",
 				"ItsUgly",
@@ -90,10 +85,8 @@ public class Foo { }
 public class Foo { }
 " );
 
-			ImmutableHashSet<string> immutabilityExceptions;
-			bool result = ty.Symbol.TryGetDirectImmutableExceptions( out immutabilityExceptions );
+			ImmutableHashSet<string> immutabilityExceptions = ty.Symbol.GetDirectImmutableExceptions();
 
-			Assert.That( result, Is.True );
 			Assert.That( immutabilityExceptions, Is.Empty );
 		}
 
@@ -221,7 +214,7 @@ public sealed class Foo : IFoo2 { }
 public sealed class Foo { }
 " );
 
-			Assert.That( () => ty.Symbol.GetAllImmutableExceptions(), Throws.Exception );
+			Assert.That( () => ty.Symbol.GetAllImmutableExceptions(), Throws.Nothing );
 		}
 
 		[Test]
@@ -234,7 +227,7 @@ public class FooBase { }
 public sealed class Foo : FooBase, IFoo { }
 " );
 
-			Assert.That( () => ty.Symbol.GetAllImmutableExceptions(), Throws.Exception );
+			Assert.That( () => ty.Symbol.GetAllImmutableExceptions(), Throws.Nothing );
 		}
 
 		[Test]
