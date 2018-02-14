@@ -297,8 +297,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				yield break;
 			}
 
-			if( fieldOrPropertyType.IsTypeMarkedImmutable() ) {
-				// if the type is marked immutable, skip checking it, to avoid reporting
+			var immutabilityScope = fieldOrPropertyType.GetImmutabilityScope();
+			if( immutabilityScope == ImmutabilityScope.SelfAndChildren ) {
+				// if the type is marked fully immutable, skip checking it, to avoid reporting
 				// a diagnostic for each usage of types that are marked
 				// immutable (other analyzers catch those already.)
 				yield break;

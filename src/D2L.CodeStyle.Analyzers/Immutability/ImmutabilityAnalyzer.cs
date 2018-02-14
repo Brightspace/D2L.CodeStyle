@@ -50,7 +50,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				.GetDeclaredSymbol( root );
 
 			// skip classes not marked immutable
-			if( !symbol.IsTypeMarkedImmutable() ) {
+			var scope = symbol.GetImmutabilityScope();
+			if( scope == ImmutabilityScope.None ) {
 				return;
 			}
 

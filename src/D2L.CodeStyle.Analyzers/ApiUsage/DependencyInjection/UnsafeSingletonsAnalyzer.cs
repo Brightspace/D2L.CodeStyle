@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Extensions;
+using D2L.CodeStyle.Analyzers.Immutability;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -41,7 +42,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 				return;
 			}
 
-			var isMarkedImmutable = symbol.IsTypeMarkedImmutable();
+			var immutabilityScope = symbol.GetImmutabilityScope();
+			var isMarkedImmutable = immutabilityScope == ImmutabilityScope.SelfAndChildren;
 			if( !isMarkedImmutable ) {
 				var location = GetLocationOfClassIdentifierAndGenericParameters( root );
 				context.ReportDiagnostic( Diagnostic.Create(
