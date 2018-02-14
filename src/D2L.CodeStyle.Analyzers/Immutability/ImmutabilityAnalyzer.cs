@@ -9,7 +9,10 @@ using Microsoft.CodeAnalysis.Text;
 namespace D2L.CodeStyle.Analyzers.Immutability {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class ImmutabilityAnalyzer : DiagnosticAnalyzer {
-		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( Diagnostics.ImmutableClassIsnt );
+		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
+				Diagnostics.ImmutableClassIsnt,
+				Diagnostics.InvalidUnauditedReasonInImmutable
+			);
 
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
 
@@ -66,6 +69,24 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					reason 
 				);
 				context.ReportDiagnostic( diagnostic );
+
+			} else if( mutabilityResult.SeenUnauditedReasons.Count > 0 ) {
+
+				ImmutableHashSet<string> immutableExceptions = symbol.GetAllImmutableExceptions();
+
+				if( !mutabilityResult.SeenUnauditedReasons.IsSubsetOf( immutableExceptions ) ) {
+
+					string relaxMsg = string.Join( ", ", mutabilityResult.SeenUnauditedReasons );
+
+					var location = GetLocationOfClassIdentifierAndGenericParameters( root );
+					var diagnostic = Diagnostic.Create(
+						Diagnostics.InvalidUnauditedReasonInImmutable,
+						location,
+						relaxMsg
+					);
+
+					context.ReportDiagnostic( diagnostic );
+				}
 			}
 		}
 

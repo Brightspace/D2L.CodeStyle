@@ -159,10 +159,52 @@ public sealed class Foo : FooBase { }
 
 			Assert.That( inheritedExceptions, Has.Count.EqualTo( 1 ) );
 
+			ISymbol ifooSymbol = inheritedExceptions.Keys.FirstOrDefault( s => s.Name == "IFoo" );
+			Assert.That( ifooSymbol, Is.Not.Null );
+
+			Assert.That( inheritedExceptions[ifooSymbol], Is.EquivalentTo( new[] { "ItHasntBeenLookedAt" } ) );
+		}
+
+		[Test]
+		public void GetInheritedImmutableExceptions_WhenBaseTypeIndirectlyImmutableThroughBaseType_ReturnsInheritedTypesExceptions() {
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"
+[Immutable( Except = Except.ItHasntBeenLookedAt )]
+public class FooBase { }
+public class FooBase2 : FooBase { }
+
+public sealed class Foo : FooBase2 { }
+" );
+
+			ImmutableDictionary<ISymbol, ImmutableHashSet<string>> inheritedExceptions = ty.Symbol.GetInheritedImmutableExceptions();
+
+			Assert.That( inheritedExceptions, Has.Count.EqualTo( 1 ) );
+
 			ISymbol fooBaseSymbol = inheritedExceptions.Keys.FirstOrDefault( s => s.Name == "FooBase" );
 			Assert.That( fooBaseSymbol, Is.Not.Null );
 
 			Assert.That( inheritedExceptions[fooBaseSymbol], Is.EquivalentTo( new[] { "ItHasntBeenLookedAt" } ) );
+		}
+
+		[Test]
+		public void GetInheritedImmutableExceptions_WhenInterfaceIndirectlyImmutable_ReturnsInheritedTypesExceptions() {
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( @"
+[Immutable( Except = Except.ItHasntBeenLookedAt )]
+public interface IFoo { }
+public interface IFoo2 : IFoo { }
+
+public sealed class Foo : IFoo2 { }
+" );
+
+			ImmutableDictionary<ISymbol, ImmutableHashSet<string>> inheritedExceptions = ty.Symbol.GetInheritedImmutableExceptions();
+
+			Assert.That( inheritedExceptions, Has.Count.EqualTo( 1 ) );
+
+			ISymbol ifooSymbol = inheritedExceptions.Keys.FirstOrDefault( s => s.Name == "IFoo" );
+			Assert.That( ifooSymbol, Is.Not.Null );
+
+			Assert.That( inheritedExceptions[ifooSymbol], Is.EquivalentTo( new[] { "ItHasntBeenLookedAt" } ) );
 		}
 
 		[Test]
