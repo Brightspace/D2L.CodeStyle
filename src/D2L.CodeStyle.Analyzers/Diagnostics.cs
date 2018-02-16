@@ -195,7 +195,7 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor InvalidUnauditedReasonInImmutable = new DiagnosticDescriptor(
 			id: "D2L0023",
 			title: "Immutability exceptions must be a subset of containing type's",
-			messageFormat: "One or more members on this type have unaudited reasons that are not excepted. Resolve the Unaudited members or relax exceptions on this type to a superset of {{ {0} }}.",
+			messageFormat: "One or more members on this type have unaudited reasons that are not excepted. Resolve the Unaudited members or add {{ {0} }} to the type's immutable exceptions.",
 			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,

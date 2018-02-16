@@ -37,7 +37,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Immutability\BecauseHelpersTests.cs" />
-    <Compile Include="Immutability\ImmutabilityExceptionInheritanceAnalyzerTests.cs" />
     <Compile Include="Immutability\ImmutableHelpersTests.cs" />
     <Compile Include="Immutability\KnownImmutableTypesTests.cs" />
     <Compile Include="Immutability\MutabilityInspectionResultFormatterTests.cs" />
@@ -45,6 +44,7 @@
     <Compile Include="Immutability\MutabilityInspector_IsTypeMarkedImmutableTests.cs" />
     <Compile Include="Extensions\SyntaxNodeExtensionTests.cs" />
     <EmbeddedResource Include="Specs\JsonParamBinderAnalyzer.cs" />
+    <EmbeddedResource Include="Specs\ImmutabilityExceptionInheritanceAnalyzer.cs" />
     <Compile Include="TestBase.cs" />
     <Compile Include="Extensions\TypeSymbolExtensionsTests.cs" />
     <Compile Include="ApiUsage\NotNullAnalyzerTests.cs" />
