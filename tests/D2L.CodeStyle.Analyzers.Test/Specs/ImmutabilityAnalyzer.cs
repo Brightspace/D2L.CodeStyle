@@ -10,7 +10,20 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 
 namespace D2L.CodeStyle.Annotations {
 	public static class Objects {
-		public sealed class Immutable : Attribute { }
+		public sealed class Immutable : Attribute {
+			public Except Except { get; set; }
+		}
+
+		[Flags]
+		public enum Except {
+			None = 0,
+			ItHasntBeenLookedAt = 1,
+			ItsSketchy = 2,
+			ItsStickyDataOhNooo = 4,
+			WeNeedToMakeTheAnalyzerConsiderThisSafe = 8,
+			ItsUgly = 16,
+			ItsOnDeathRow = 32
+		}
 	}
 	public static class Mutability {
 		public sealed class AuditedAttribute : Attribute { }
@@ -137,5 +150,60 @@ namespace SpecTests {
 		sealed class Z {}
 
 		#endregion
+	}
+
+	class ImmutableExceptionTests {
+
+		[Objects.Immutable( Except = Objects.Except.ItsUgly )]
+		sealed class /* InvalidUnauditedReasonInImmutable(ItsSketchy) */ ClassWithNotExceptedUnauditedReasonFails /**/ {
+			[Mutability.Unaudited( Because.ItsSketchy )]
+			private int m_auditedBad;
+		}
+
+		[Objects.Immutable( Except = Objects.Except.ItsUgly )]
+		sealed class ClassWithExceptedUnauditedReasonSucceeds {
+			[Mutability.Unaudited( Because.ItsUgly )]
+			private int m_auditedGood;
+		}
+
+		[Objects.Immutable( Except = Objects.Except.ItsUgly )]
+		class InheritedImmutable { }
+
+		sealed class /* InvalidUnauditedReasonInImmutable(ItsSketchy) */ ClassWithInheritedNotExceptedUnauditedReasonFails /**/ : InheritedImmutable {
+			[Mutability.Unaudited( Because.ItsSketchy )]
+			private int m_auditedBad;
+		}
+
+		sealed class ClassWithInheritedExceptedUnauditedReasonSucceeds : InheritedImmutable {
+			[Mutability.Unaudited( Because.ItsUgly )]
+			private int m_auditedGood;
+		}
+
+		[Objects.Immutable( Except = Objects.Except.ItsUgly )]
+		interface IImplementedImmutable { }
+
+		sealed class /* InvalidUnauditedReasonInImmutable(ItsSketchy) */ ClassWithImplementedNotExceptedUnauditedReasonFails /**/ : IImplementedImmutable {
+			[Mutability.Unaudited( Because.ItsSketchy )]
+			private int m_auditedBad;
+		}
+
+		sealed class ClassWithImplementedExceptedUnauditedReasonSucceeds : IImplementedImmutable {
+			[Mutability.Unaudited( Because.ItsUgly )]
+			private int m_auditedGood;
+		}
+
+		[Objects.Immutable( Except = Objects.Except.ItsSketchy )]
+		interface IImmutableMember { }
+
+		[Objects.Immutable( Except = Objects.Except.ItsUgly )]
+		sealed class /* InvalidUnauditedReasonInImmutable(ItsSketchy) */ ClassWithNotExceptedImmutableMemberFails /**/ {
+			private readonly IImmutableMember m_auditedBad;
+		}
+
+		[Objects.Immutable( Except = Objects.Except.ItsSketchy )]
+		sealed class ClassWithExceptedImmutableMemberSucceeds {
+			private readonly IImmutableMember m_auditedBad;
+		}
+
 	}
 }

@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -46,13 +48,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			var allInheritedExceptions = symbol.GetInheritedImmutableExceptions();
 
-			foreach( KeyValuePair<ISymbol, ImmutableHashSet<string>> inheritedExceptions in allInheritedExceptions ) {
+			foreach( var inheritedExceptions in allInheritedExceptions ) {
 				
 				if( !directExceptions.IsSubsetOf( inheritedExceptions.Value ) ) {
 
 					var suggestedFix = inheritedExceptions.Value.IsEmpty
 						? "Set the [Immutable] exceptions on this type to Except.None."
-						: $"Reduce the [Immutable] exceptions on this type to a subset of {{ {string.Join( ", ", inheritedExceptions.Value )} }}.";
+						: $"Reduce the [Immutable] exceptions on this type to a subset of {{ {string.Join( ", ", inheritedExceptions.Value.OrderBy( v => v ) )} }}.";
 
 					var location = GetLocationOfClassIdentifierAndGenericParameters( root );
 					var diagnostic = Diagnostic.Create(
