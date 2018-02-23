@@ -78,7 +78,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly {
 			"D2L.LP.Web.UI.GoogleAnalytics.GoogleAnalyticsPageElementLoader.LoadPageElements",
 			"D2L.LP.Web.UI.Polymer.WebComponentPolyfillEarlyJavaScriptBlock.LoadPolyfill",
 			"D2L.LP.Web.UI.Polymer.WebComponentPolyfillEarlyJavaScriptBlock.TryGetBlock",
-			"D2L.LP.Web.UI.TelemetryAnalytics.TelemetryAnalyticsPageElementLoader.LoadPageElements",
 			"D2L.PlatformTools.DataPurgeArchive.Web.Desktop.Default.DataPurgeButtonSplitReplacementSwitch.IsEnabled",
 			"D2L.PlatformTools.Navbars.Web.Desktop.Default.DaylightNavbarEditPageSwitch.IsEnabled",
 			"D2L.PlatformTools.Navbars.Web.Desktop.Default.DaylightThemeEditPageSwitch.IsEnabled",
