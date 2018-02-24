@@ -32,6 +32,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Attributes.cs" />
+    <Compile Include="Attributes.ImmutableAttribute.cs" />
     <Compile Include="Extensions\Microsoft.CodeAnalysis.CSharp.Syntax.cs" />
     <Compile Include="Language\ClassShouldBeSealedAnalyzer.cs" />
     <Compile Include="Immutability\BecauseHelpers.cs" />

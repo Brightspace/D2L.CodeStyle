@@ -3,7 +3,7 @@ using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers {
-	internal static class Attributes {
+	internal static partial class Attributes {
 		internal static class Types {
 			internal static readonly RoslynAttribute Audited = new RoslynAttribute( "D2L.CodeStyle.Annotations.Types.Audited" );
 		}
@@ -15,7 +15,7 @@ namespace D2L.CodeStyle.Analyzers {
 			internal static readonly RoslynAttribute Unaudited = new RoslynAttribute( "D2L.CodeStyle.Annotations.Statics.Unaudited" );
 		}
 		internal static class Objects {
-			internal static readonly RoslynAttribute Immutable = new RoslynAttribute( "D2L.CodeStyle.Annotations.Objects.Immutable" );
+			internal static readonly ImmutableAttribute Immutable = new ImmutableAttribute();
 		}
 		internal static class Mutability {
 			internal static readonly RoslynAttribute Audited = new RoslynAttribute( "D2L.CodeStyle.Annotations.Mutability.AuditedAttribute" );
@@ -25,7 +25,7 @@ namespace D2L.CodeStyle.Analyzers {
 		internal static readonly RoslynAttribute DIFramework = new RoslynAttribute( "D2L.LP.Extensibility.Activation.Domain.DIFrameworkAttribute" );
 		internal static readonly RoslynAttribute Dependency = new RoslynAttribute( "D2L.LP.Extensibility.Activation.Domain.DependencyAttribute" );
 
-		internal sealed class RoslynAttribute {
+		internal class RoslynAttribute {
 
 			private readonly string m_fullTypeName;
 

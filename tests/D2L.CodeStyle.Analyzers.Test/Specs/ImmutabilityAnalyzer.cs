@@ -10,7 +10,9 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 
 namespace D2L.CodeStyle.Annotations {
 	public static class Objects {
-		public sealed class Immutable : Attribute { }
+		public sealed class Immutable : Attribute {
+			public bool Inherited { get; set; }
+		}
 	}
 	public static class Mutability {
 		public sealed class AuditedAttribute : Attribute { }
@@ -44,6 +46,29 @@ namespace SpecTests {
 			[Mutability.Unaudited( Because.ItsSketchy )]
 			private int m_auditedBad;
 		}
+	}
+
+	class InheritedTests {
+
+		[Objects.Immutable( Inherited = true )]
+		class AlwaysImmutableExplicitly { }
+
+		[Objects.Immutable]
+		class AlwaysImmutableByDefault { }
+
+		[Objects.Immutable( Inherited = false )]
+		class ConcretelyImmutable { }
+
+		class /* ImmutableClassIsnt('m_bad' is not read-only) */ ShouldBeRequiredImmutable1 /**/ : AlwaysImmutableByDefault {
+			private int m_bad;
+		}
+		class /* ImmutableClassIsnt('m_bad' is not read-only) */ ShouldBeRequiredImmutable2 /**/ : AlwaysImmutableExplicitly {
+			private int m_bad;
+		}
+		class ShouldNotBeRequiredImmutable2 : ConcretelyImmutable {
+			private int m_bad;
+		}
+
 	}
 
 	class GenericsTests {
