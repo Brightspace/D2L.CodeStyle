@@ -77,13 +77,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 				if( !mutabilityResult.SeenUnauditedReasons.IsSubsetOf( immutableExceptions ) ) {
 
-					string relaxMsg = string.Join( ", ", mutabilityResult.SeenUnauditedReasons );
+					string missingExceptions = string.Join( ", ", mutabilityResult.SeenUnauditedReasons.Except( immutableExceptions ) );
 
 					var location = GetLocationOfClassIdentifierAndGenericParameters( root );
 					var diagnostic = Diagnostic.Create(
 						Diagnostics.InvalidUnauditedReasonInImmutable,
 						location,
-						relaxMsg
+						missingExceptions
 					);
 
 					context.ReportDiagnostic( diagnostic );

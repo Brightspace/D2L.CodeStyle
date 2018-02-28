@@ -195,12 +195,31 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor InvalidUnauditedReasonInImmutable = new DiagnosticDescriptor(
 			id: "D2L0023",
 			title: "Immutability exceptions must be a subset of containing type's",
-			messageFormat: "One or more members on this type have unaudited reasons that are not excepted. Resolve the Unaudited members or relax exceptions on this type to a superset of {{ {0} }}.",
-			category:"Safety",
+			messageFormat: "One or more members on this type have unaudited reasons that are not excepted. Resolve the Unaudited members or add {{ {0} }} to the type's immutable exceptions.",
+			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
 			description: "Type's members' allowed and used unaudited reasons must be a subset of the type's immutable exceptions."
 		);
 
+		public static readonly DiagnosticDescriptor ImmutableExceptionInheritanceIsInvalid = new DiagnosticDescriptor(
+			id: "D2L0024",
+			title: "Immutable exceptions are not valid for this type.",
+			messageFormat: "This type is marked immutable, but it has more permissive immutability than its base type '{0}'. {1}",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Immutable exceptions must be a subset of all parent types' exceptions."
+		);
+
+		public static readonly DiagnosticDescriptor ObsoleteJsonParamBinder = new DiagnosticDescriptor(
+			id: "D2L0025",
+			title: "Use the new JsonConvertParameterBinder instead",
+			messageFormat: "Should not use JsonParamBinder because it is obsolete",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "JsonParamBinder uses the custom D2L JSON framework, so use JsonConvertParameterBinder (which uses Newtonsoft.Json) instead."
+		);
 	}
 }
