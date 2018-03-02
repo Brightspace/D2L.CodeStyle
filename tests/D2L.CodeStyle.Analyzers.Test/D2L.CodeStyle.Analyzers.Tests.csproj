@@ -45,6 +45,7 @@
     <Compile Include="Extensions\SyntaxNodeExtensionTests.cs" />
     <EmbeddedResource Include="Specs\JsonParamBinderAnalyzer.cs" />
     <EmbeddedResource Include="Specs\ImmutabilityExceptionInheritanceAnalyzer.cs" />
+    <EmbeddedResource Include="Specs\ImmutableGenericAttributeAnalyzer.cs" />
     <Compile Include="TestBase.cs" />
     <Compile Include="Extensions\TypeSymbolExtensionsTests.cs" />
     <Compile Include="ApiUsage\NotNullAnalyzerTests.cs" />
