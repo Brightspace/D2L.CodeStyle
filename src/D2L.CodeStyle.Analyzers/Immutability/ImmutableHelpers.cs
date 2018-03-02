@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
@@ -62,27 +63,23 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return true;
 			}
 
-			AttributeData immutableAttribute = Attributes.Objects.Immutable.GetAll( ty ).FirstOrDefault();
-			AttributeData immutableBaseClassAttribute = Attributes.Objects.ImmutableBaseClass.GetAll( ty ).FirstOrDefault();
-			if( immutableAttribute == null && immutableBaseClassAttribute == null ) {
+			var immutableAttributes = ty.GetAllImmutableAttributesApplied().ToArray();
+			if( immutableAttributes.Length == 0 ) {
 				exceptions = null;
 				return false;
 			}
 
 			var builder = ImmutableHashSet.CreateBuilder<string>();
 
-			if( immutableAttribute != null ) {
+			foreach( var immutableAttribute in immutableAttributes ) {
 				var excepts = GetDirectImmutableException( immutableAttribute );
-				builder.UnionWith( excepts );
-			}
-			if( immutableBaseClassAttribute != null ) {
-				var excepts = GetDirectImmutableException( immutableBaseClassAttribute );
 				builder.UnionWith( excepts );
 			}
 
 			exceptions = builder.ToImmutable();
 			return true;
 		}
+
 
 		private static ImmutableHashSet<string> GetDirectImmutableException( AttributeData attrData ) {
 			SyntaxNode syntaxNode = attrData

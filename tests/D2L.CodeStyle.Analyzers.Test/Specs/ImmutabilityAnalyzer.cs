@@ -4,6 +4,10 @@ using System;
 using D2L.CodeStyle.Annotations;
 using D2L.LP.Extensibility.Activation.Domain;
 
+[assembly: Objects.ImmutableGeneric(
+	type: typeof(SpecTests.GenericsTests.IFactory<Version>) 
+)]
+
 namespace D2L.LP.Extensibility.Activation.Domain {
 	public sealed class SingletonAttribute : Attribute { }
 }
@@ -15,6 +19,11 @@ namespace D2L.CodeStyle.Annotations {
     }
 		public sealed class Immutable : ImmutableAttributeBase { }
 		public sealed class ImmutableBaseClassAttribute : ImmutableAttributeBase { }
+
+		[AttributeUsage( validOn: AttributeTargets.Assembly )]
+		public sealed class ImmutableGenericAttribute : Attribute {
+			public ImmutableGenericAttribute( Type type ) { }
+		}
 
 		[Flags]
 		public enum Except {
@@ -149,6 +158,23 @@ namespace SpecTests {
 		[Objects.Immutable]
 		struct /* ImmutableClassIsnt('x' is not read-only) */ Foo /**/ {
 			int x;
+		}
+		#endregion
+
+		#region Immutable generic types marked for certain `T`s
+		public interface IFactory<T> { }
+
+		[Objects.Immutable]
+		public sealed class UsesMarkedImmutableTypeArg {
+			private readonly IFactory<Version> m_safeFactory;
+		}
+		[Objects.Immutable]
+		public sealed class /* ImmutableClassIsnt('m_unsafeFactory''s type ('SpecTests.GenericsTests.IFactory') is an interface that is not marked with `[Objects.Immutable]`) */ UsesUnsafeTypeArg /**/ {
+			private readonly IFactory<string> m_unsafeFactory;
+		}
+
+		public sealed class /* ImmutableClassIsnt('bad' is not read-only) */ MutableButSubClassesImmutableGeneric /**/ : IFactory<Version> {
+			private int bad;
 		}
 		#endregion
 
