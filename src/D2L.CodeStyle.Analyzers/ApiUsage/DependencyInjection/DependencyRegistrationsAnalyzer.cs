@@ -2,6 +2,7 @@
 using System.Linq;
 using D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain;
 using D2L.CodeStyle.Analyzers.Extensions;
+using D2L.CodeStyle.Analyzers.Immutability;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -25,7 +26,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( 
 			Diagnostics.UnsafeSingletonRegistration,
-			Diagnostics.SingletonRegistrationTypeUnknown,
 			Diagnostics.RegistrationKindUnknown,
 			Diagnostics.AttributeRegistrationMismatch
 		);
@@ -105,54 +105,52 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 				return;
 			}
 
-			var typesToInspect = GetTypesToInspect( dependencyRegistration );
-
-			if( typesToInspect.Any( t => t.IsNullOrErrorType() )) {
-				// we expected a type, but didn't get one, so fail
-				var diagnostic = Diagnostic.Create(
-					Diagnostics.SingletonRegistrationTypeUnknown,
-					root.GetLocation()
-				);
-				context.ReportDiagnostic( diagnostic );
-				return;
-			}
-
-			foreach( var typeToInspect in typesToInspect ) {
-				var isMarkedSingleton = typeToInspect.IsTypeMarkedSingleton();
-
-				if( !isMarkedSingleton && dependencyRegistration.ObjectScope == ObjectScope.Singleton ) {
-					var diagnostic = Diagnostic.Create(
-						Diagnostics.UnsafeSingletonRegistration,
-						root.GetLocation(),
-						typeToInspect.GetFullTypeNameWithGenericArguments()
-					);
-					context.ReportDiagnostic( diagnostic );
-				} else if ( isMarkedSingleton && dependencyRegistration.ObjectScope != ObjectScope.Singleton ) {
-					var diagnostic = Diagnostic.Create(
-						Diagnostics.AttributeRegistrationMismatch,
-						root.GetLocation(),
-						typeToInspect.GetFullTypeNameWithGenericArguments()
-					);
-					context.ReportDiagnostic( diagnostic );
-				}
-			}
+			InspectRegistration( dependencyRegistration, context );
 		}
 
-		private ImmutableArray<ITypeSymbol> GetTypesToInspect( DependencyRegistration registration ) {
+		private void InspectRegistration( DependencyRegistration registration, SyntaxNodeAnalysisContext ctx ) {
+			if( registration.ObjectScope == ObjectScope.Singleton ) {
+				var typesToInspect = GetTypesRequiredToBeImmutableForSingletonRegistration( registration );
+				foreach( var type in typesToInspect ) {
+
+					// We require full immutability here,
+					// because we don't know if it's a concrete type
+					//
+					// TODO: could make this better by exposing the minimum
+					// scope required for each type
+					var immutabilityScope = type.GetImmutabilityScope();
+					if( !type.IsNullOrErrorType() && immutabilityScope != ImmutabilityScope.SelfAndChildren ) {
+						var diagnostic = Diagnostic.Create(
+							Diagnostics.UnsafeSingletonRegistration,
+							ctx.Node.GetLocation(),
+							type.GetFullTypeNameWithGenericArguments()
+						);
+						ctx.ReportDiagnostic( diagnostic );
+					}
+				}
+			}
+
+			// ensure webrequest isn't marked Singleton
+			var isMarkedSingleton = registration.DependencyType.IsTypeMarkedSingleton();
+			if( isMarkedSingleton && registration.ObjectScope != ObjectScope.Singleton ) {
+				var diagnostic = Diagnostic.Create(
+					Diagnostics.AttributeRegistrationMismatch,
+					ctx.Node.GetLocation(),
+					registration.DependencyType.GetFullTypeNameWithGenericArguments()
+				);
+				ctx.ReportDiagnostic( diagnostic );
+			}
+
+		}
+
+		private ImmutableArray<ITypeSymbol> GetTypesRequiredToBeImmutableForSingletonRegistration( DependencyRegistration registration ) {
 			// if we have a concrete type, use it
 			if( !registration.ConcreteType.IsNullOrErrorType() ) {
-				 return ImmutableArray.Create( registration.ConcreteType );
+				return ImmutableArray.Create( registration.ConcreteType );
 			}
 
 			// if we have a dynamically generated objectfactory, use its constructor arguments
 			if( !registration.DynamicObjectFactoryType.IsNullOrErrorType() ) {
-
-				if( registration.ObjectScope != ObjectScope.Singleton ) {
-					// non-singleton dynamic object factories cannot be marked [Singleton]
-					// and it is ok for them to depend on singletons so nothing to check
-					return ImmutableArray<ITypeSymbol>.Empty;
-				}
-
 				ImmutableArray<ITypeSymbol> dependencies;
 				if( TryGetDependenciesFromConstructor( registration.DynamicObjectFactoryType, out dependencies ) ) {
 					return dependencies;
@@ -163,7 +161,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 				// in all cases, fall back to dependency type
 			}
 
-			// other use the dependency type
+			// otherwise use the dependency type
 			return ImmutableArray.Create( registration.DependencyType );
 		}
 

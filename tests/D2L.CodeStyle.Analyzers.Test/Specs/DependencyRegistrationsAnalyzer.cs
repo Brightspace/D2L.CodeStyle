@@ -121,87 +121,66 @@ namespace SpecTests {
 		public void DoesntMatter( IDependencyRegistry reg ) {
 
 			// Marked Singletons are not flagged.
-			reg.Register<IMarkedSingleton>( new MarkedSingleton() );
-			reg.Register( new MarkedSingleton() ); // inferred generic argument of above
-			reg.RegisterPlugin<IMarkedSingleton>( new MarkedSingleton() );
-			reg.RegisterPlugin( new MarkedSingleton() ); // inferred generic argument of above
-			reg.Register<ISingleton, MarkedSingleton>( ObjectScope.Singleton );
-			reg.RegisterFactory<ISingleton, ConcreteSingletonFactory>( ObjectScope.Singleton );
-			reg.RegisterPluginFactory<ISingleton, ConcreteSingletonFactory>( ObjectScope.Singleton );
-			reg.Register( typeof( IMarkedSingleton ), typeof( MarkedSingleton ), ObjectScope.Singleton );
-			reg.ConfigurePlugins<MarkedSingleton>( ObjectScope.Singleton );
-			reg.ConfigureOrderedPlugins<MarkedSingleton, SomeComparer<MarkedSingleton>>( ObjectScope.Singleton );
-			reg.ConfigureInstancePlugins<MarkedSingleton>( ObjectScope.Singleton );
-			reg.ConfigureInstancePlugins<MarkedSingleton, DefaultExtensionPoint<MarkedSingleton>>( ObjectScope.Singleton );
-			reg.RegisterPluginExtensionPoint<DefaultExtensionPoint<MarkedSingleton>, MarkedSingleton>( ObjectScope.Singleton );
-			reg.RegisterPlugin<DefaultExtensionPoint<MarkedSingleton>, IMarkedSingleton, MarkedSingleton>( ObjectScope.Singleton );
-			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMarkedThing, string>( ObjectScope.Singleton );
-			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMarkedThing, string, string>( ObjectScope.Singleton );
-			reg.RegisterSubInterface<ISingleton, IMarkedSingleton>( ObjectScope.Singleton );
-
-			// Unmarked Singletons are flagged.
-			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.Register<IUnmarkedSingleton>( new UnmarkedSingleton() ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.RegisterFactory<IUnmarkedSingleton, ConcreteSingletonFactory>( ObjectScope.Singleton ) /**/; // generic parameter from ConcreteSingletonFactory
-			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.Register( new UnmarkedSingleton() ) /**/; // inferred generic argument of above
-			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.RegisterPlugin<IUnmarkedSingleton>( new UnmarkedSingleton() ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.RegisterPlugin( new UnmarkedSingleton() ) /**/; // inferred generic argument of above
-			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.RegisterPluginFactory<IUnmarkedSingleton, ConcreteSingletonFactory>( ObjectScope.Singleton ) /**/; // generic parameter from ConcreteSingletonFactory
-			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.Register<IUnmarkedSingleton, UnmarkedSingleton>( ObjectScope.Singleton ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.Register( typeof( IUnmarkedSingleton ), typeof( UnmarkedSingleton ), ObjectScope.Singleton ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.ConfigurePlugins<UnmarkedSingleton>( ObjectScope.Singleton ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.ConfigureOrderedPlugins<UnmarkedSingleton, SomeComparer<UnmarkedSingleton>>( ObjectScope.Singleton ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.ConfigureInstancePlugins<UnmarkedSingleton>( ObjectScope.Singleton ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.ConfigureInstancePlugins<UnmarkedSingleton, DefaultExtensionPoint<UnmarkedSingleton>>( ObjectScope.Singleton ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.RegisterPluginExtensionPoint<DefaultExtensionPoint<UnmarkedSingleton>, UnmarkedSingleton>( ObjectScope.Singleton ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.UnmarkedSingleton) */ reg.RegisterPlugin<DefaultExtensionPoint<UnmarkedSingleton>, IUnmarkedSingleton, UnmarkedSingleton>( ObjectScope.Singleton ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.ISubUnmarkedSingleton) */ reg.RegisterSubInterface<IUnmarkedSingleton, ISubUnmarkedSingleton>( ObjectScope.Singleton ) /**/;
+			reg.Register<ISingleton>( new ImmutableThing() );
+			reg.Register( new ImmutableThing() ); // inferred generic argument of above
+			reg.RegisterPlugin<ISingleton>( new ImmutableThing() );
+			reg.RegisterPlugin( new ImmutableThing() ); // inferred generic argument of above
+			reg.Register<ISingleton, ImmutableThing>( ObjectScope.Singleton );
+			reg.RegisterFactory<ISingleton, ImmutableThingFactory>( ObjectScope.Singleton );
+			reg.RegisterPluginFactory<ISingleton, ImmutableThingFactory>( ObjectScope.Singleton );
+			reg.Register( typeof( ISingleton ), typeof( ImmutableThing ), ObjectScope.Singleton );
+			reg.ConfigurePlugins<ImmutableThing>( ObjectScope.Singleton );
+			reg.ConfigureOrderedPlugins<ImmutableThing, SomeComparer<ImmutableThing>>( ObjectScope.Singleton );
+			reg.ConfigureInstancePlugins<ImmutableThing>( ObjectScope.Singleton );
+			reg.ConfigureInstancePlugins<ImmutableThing, DefaultExtensionPoint<ImmutableThing>>( ObjectScope.Singleton );
+			reg.RegisterPluginExtensionPoint<DefaultExtensionPoint<ImmutableThing>, ImmutableThing>( ObjectScope.Singleton );
+			reg.RegisterPlugin<DefaultExtensionPoint<ImmutableThing>, IMarkedSingleton, ImmutableThing>( ObjectScope.Singleton );
+			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaImmutableThing, string>( ObjectScope.Singleton );
+			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaImmutableThing, string, string>( ObjectScope.Singleton );
+			reg.RegisterSubInterface<ISingleton, IImmutableSubSingleton>( ObjectScope.Singleton );
 
 			// And factory Singletons or singletons where concrete type is not resolved inspect the interface
-			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.Register<IUnmarkedSingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterPlugin<IUnmarkedSingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.Register<IUnmarkedSingleton>( null ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterFactory<IUnmarkedSingleton, SingletonFactory>( ObjectScope.Singleton ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterPluginFactory<IUnmarkedSingleton, SingletonFactory>( ObjectScope.Singleton ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterPluginFactory<DefaultExtensionPoint<UnmarkedSingleton>, IUnmarkedSingleton, SingletonFactory>( ObjectScope.Singleton ) /**/;
+			reg.Register<IImmutableSingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton );
+			reg.RegisterPlugin<IImmutableSingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton );
+			reg.Register<IImmutableSingleton>( null );
+			reg.RegisterFactory<IImmutableSingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton );
+			reg.RegisterPluginFactory<IImmutableSingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton );
+			reg.RegisterPluginFactory<DefaultExtensionPoint<IImmutableSingleton>, IImmutableSingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton );
 
 			// Dynamic object factory registrations inspect the concrete object's ctor parameters
-			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaUnmarkedThing, string, string>( ObjectScope.Singleton ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.IUnmarkedSingleton) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaUnmarkedThing, string>( ObjectScope.Singleton ) /**/;
+			/* UnsafeSingletonRegistration(SpecTests.ISingleton) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMutableThing, string, string>( ObjectScope.Singleton ) /**/;
+			/* UnsafeSingletonRegistration(SpecTests.ISingleton) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMutableThing, string>( ObjectScope.Singleton ) /**/;
 
 			// Dyanamic object factory registrations that error out inspect IFactory<TDependencyType>
 			/* UnsafeSingletonRegistration(D2L.LP.Extensibility.Activation.Domain.IFactory<SpecTests.ICreatedByDynamicFactory>) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor, string>( ObjectScope.Singleton ) /**/;
 			/* UnsafeSingletonRegistration(D2L.LP.Extensibility.Activation.Domain.IFactory<SpecTests.ICreatedByDynamicFactory>) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor, string, string>( ObjectScope.Singleton ) /**/;
 
-			// Unmarked non-Singletons are not flagged.
-			reg.Register( typeof( IUnmarkedSingleton ), typeof( UnmarkedSingleton ), ObjectScope.WebRequest );
-			reg.Register<IUnmarkedSingleton, UnmarkedSingleton>( ObjectScope.WebRequest );
-			reg.RegisterPlugin<IUnmarkedSingleton, UnmarkedSingleton>( ObjectScope.WebRequest );
-			reg.RegisterFactory<IUnmarkedSingleton, SingletonFactory>( ObjectScope.Thread );
-			reg.RegisterPluginFactory<IUnmarkedSingleton, SingletonFactory>( ObjectScope.WebRequest );
-			reg.RegisterParentAwareFactory<IUnmarkedSingleton, SingletonFactory>();
-			reg.ConfigurePlugins<UnmarkedSingleton>( ObjectScope.WebRequest );
-			reg.ConfigureOrderedPlugins<UnmarkedSingleton, SomeComparer<UnmarkedSingleton>>( ObjectScope.WebRequest );
-			reg.ConfigureInstancePlugins<UnmarkedSingleton>( ObjectScope.WebRequest );
-			reg.ConfigureInstancePlugins<UnmarkedSingleton, DefaultExtensionPoint<UnmarkedSingleton>>( ObjectScope.WebRequest );
-			reg.RegisterPluginExtensionPoint<DefaultExtensionPoint<UnmarkedSingleton>, UnmarkedSingleton>( ObjectScope.WebRequest );
-			reg.RegisterPlugin<DefaultExtensionPoint<UnmarkedSingleton>, IUnmarkedSingleton, UnmarkedSingleton>( ObjectScope.WebRequest );
+			// Non-Singletons are not flagged.
+			reg.Register( typeof( INotSingleton ), typeof( DoesntMatter ), ObjectScope.WebRequest );
+			reg.Register<INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
+			reg.RegisterPlugin<INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
+			reg.RegisterFactory<INotSingleton, DoesntMatter>( ObjectScope.Thread );
+			reg.RegisterPluginFactory<INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
+			reg.RegisterParentAwareFactory<INotSingleton, DoesntMatter>();
+			reg.ConfigurePlugins<INotSingleton>( ObjectScope.WebRequest );
+			reg.ConfigureOrderedPlugins<INotSingleton, SomeComparer<DoesntMatter>>( ObjectScope.WebRequest );
+			reg.ConfigureInstancePlugins<INotSingleton>( ObjectScope.WebRequest );
+			reg.ConfigureInstancePlugins<INotSingleton, DefaultExtensionPoint<INotSingleton>>( ObjectScope.WebRequest );
+			reg.RegisterPluginExtensionPoint<DefaultExtensionPoint<INotSingleton>, DoesntMatter>( ObjectScope.WebRequest );
+			reg.RegisterPlugin<DefaultExtensionPoint<INotSingleton>, INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
 
-			// Marked non-singletons are flagged.
-			/* AttributeRegistrationMismatch(SpecTests.MarkedSingleton) */ reg.Register<IMarkedSingleton, MarkedSingleton>( ObjectScope.WebRequest ) /**/;
-			/* AttributeRegistrationMismatch(SpecTests.MarkedSingleton) */ reg.Register<IMarkedSingleton, MarkedSingleton>( ObjectScope.Thread ) /**/;
-			/* AttributeRegistrationMismatch(SpecTests.MarkedSingleton) */ reg.Register( typeof( IMarkedSingleton ), typeof( MarkedSingleton ), ObjectScope.WebRequest ) /**/;
-			/* AttributeRegistrationMismatch(SpecTests.IMarkedSingleton) */ reg.RegisterFactory<IMarkedSingleton, SingletonFactory>( ObjectScope.Thread ) /**/;
-			/* AttributeRegistrationMismatch(SpecTests.MarkedSingleton) */ reg.RegisterPlugin<IMarkedSingleton, MarkedSingleton>( ObjectScope.Thread ) /**/;
-			/* AttributeRegistrationMismatch(SpecTests.IMarkedSingleton) */ reg.RegisterPluginFactory<IMarkedSingleton, SingletonFactory>( ObjectScope.WebRequest ) /**/;
+			// Interfaces marked as singleton cannot have web request registrations.
+			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.Register<ISingleton, DoesntMatter>( ObjectScope.WebRequest ) /**/;
+			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.Register<ISingleton, DoesntMatter>( ObjectScope.Thread ) /**/;
+			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.Register( typeof( ISingleton ), typeof( DoesntMatter ), ObjectScope.WebRequest ) /**/;
+			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.RegisterFactory<ISingleton, DoesntMatter>( ObjectScope.Thread ) /**/;
+			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.RegisterPlugin<ISingleton, DoesntMatter>( ObjectScope.Thread ) /**/;
+			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.RegisterPluginFactory<ISingleton, DoesntMatter>( ObjectScope.WebRequest ) /**/;
 
 			// DynamicObjectFactory registrations at non-Singleton scope are safe,
 			// because the implementation is generated, so it will never be marked.
-			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMarkedThing, string>( ObjectScope.WebRequest );
-			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaUnmarkedThing, string>( ObjectScope.WebRequest );
-
-			// Types that don't exist should raise a diagnostic, so that we can be strict. 
-			/* SingletonRegistrationTypeUnknown */ reg.RegisterFactory<NonExistentTypeOrInTheMiddleOfTyping, SingletonFactory>( ObjectScope.Singleton ) /**/;
-			/* SingletonRegistrationTypeUnknown */ reg.RegisterPluginFactory<NonExistentTypeOrInTheMiddleOfTyping, SingletonFactory>( ObjectScope.Singleton ) /**/;
+			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaImmutableThing, string>( ObjectScope.WebRequest );
+			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMutableThing, string>( ObjectScope.WebRequest );
 
 			// Unhandled registration methods should raise a diagnostic.
 			/* RegistrationKindUnknown */ reg.UnhandledRegisterMethod() /**/;
@@ -232,7 +211,7 @@ namespace SpecTests {
 
 		public static class OnlyRegistrationMethodsOnIDependencyRegistryMatter {
 			public static void DoesntMatter( IDependencyRegistry reg ) {
-				Register<UnmarkedSingleton>( null );
+				Register<INotSingleton>( null );
 			}
 			public static void Register<TDependencyType>(
 				TDependencyType instance
@@ -240,34 +219,35 @@ namespace SpecTests {
 		}
 	}
 
-	// intentionally unmarked
-	public interface ISingleton {}
-
 	[Singleton]
-	public interface IMarkedSingleton : ISingleton { }
-	public sealed class MarkedSingleton : IMarkedSingleton { }
+	public interface ISingleton { }
+	public interface INotSingleton { }
 
-	public interface IUnmarkedSingleton { }
-	public interface ISubUnmarkedSingleton : IUnmarkedSingleton { }
-	public sealed class UnmarkedSingleton : IUnmarkedSingleton {}
+	[Objects.Immutable]
+	public interface IImmutableSingleton : ISingleton { }
+
+	public interface IImmutableSubSingleton : IImmutableSingleton { }
+
+	[Objects.Immutable]
+	public sealed class ImmutableThing : ISingleton, INotSingleton { }
 
 	public interface ICreatedByDynamicFactory { }
 
-	public class ThingThatIsCreatedByDynamicObjectFactoryViaMarkedThing : ICreatedByDynamicFactory {
-		public ThingThatIsCreatedByDynamicObjectFactoryViaMarkedThing(
+	public class ThingThatIsCreatedByDynamicObjectFactoryViaImmutableThing : ICreatedByDynamicFactory {
+		public ThingThatIsCreatedByDynamicObjectFactoryViaImmutableThing(
 			string randomArg,
-			[Dependency] IMarkedSingleton injected
+			[Dependency] ImmutableThing injected
 		) { }
 	}
 
-	public class ThingThatIsCreatedByDynamicObjectFactoryViaUnmarkedThing : ICreatedByDynamicFactory {
-		public ThingThatIsCreatedByDynamicObjectFactoryViaUnmarkedThing(
+	public class ThingThatIsCreatedByDynamicObjectFactoryViaMutableThing : ICreatedByDynamicFactory {
+		public ThingThatIsCreatedByDynamicObjectFactoryViaMutableThing(
 			string randomArg,
-			[Dependency] IUnmarkedSingleton injected
+			[Dependency] ISingleton injected
 		) { }
 	}
 
-	public class ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor: ICreatedByDynamicFactory {
+	public class ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor: ISingletonCreatedByDynamicFactory, INotSingletonCreatedByDynamicFactory {
 		private ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor(
 			string randomArg
 		) { }
@@ -281,16 +261,9 @@ namespace SpecTests {
 			throw new NotImplementedException();
 		}
 	}
-	public sealed class SingletonFactory : 
-		IFactory<IUnmarkedSingleton>, 
-		IFactory<IUnmarkedSingleton, Type>, 
-		IFactory<IMarkedSingleton>, 
-		IFactory<IMarkedSingleton, Type> { }
 
-	public sealed class ConcreteSingletonFactory : 
-		IFactory<UnmarkedSingleton>, 
-		IFactory<UnmarkedSingleton, Type>, 
-		IFactory<MarkedSingleton>, 
-		IFactory<MarkedSingleton, Type> { }
+	public sealed class ImmutableThingFactory : 
+		IFactory<ImmutableThing>, 
+		IFactory<ImmutableThing, Type> { }
 
 }

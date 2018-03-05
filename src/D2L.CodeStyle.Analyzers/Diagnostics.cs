@@ -45,11 +45,11 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor UnsafeSingletonRegistration = new DiagnosticDescriptor(
 			id: "D2L0006",
 			title: "Ensure that a singleton is safe in undifferentiated servers.",
-			messageFormat: "The type '{0}' is not safe to register as a singleton, because it is not marked with [Singleton].",
+			messageFormat: "The type '{0}' is not safe to register as a singleton, because it is not marked with [Immutable].",
 			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Info,
 			isEnabledByDefault: true,
-			description: "Singletons should be marked with the [Singleton] attribute."
+			description: "Singletons should be marked with the [Immutable] attribute."
 		);
 
 		public static readonly DiagnosticDescriptor UnnecessaryStaticAnnotation = new DiagnosticDescriptor(
