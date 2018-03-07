@@ -56,10 +56,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			var flags = MutabilityInspectionFlags.Default 
-				| MutabilityInspectionFlags.AllowUnsealed // `symbol` is the concrete type
 				| MutabilityInspectionFlags.IgnoreImmutabilityAttribute; // we're _validating_ the attribute
 
-			var mutabilityResult = inspector.InspectType( symbol, flags );
+			var mutabilityResult = inspector.InspectConcreteType( symbol, flags );
 
 			if( mutabilityResult.IsMutable ) {
 				var reason = m_resultFormatter.Format( mutabilityResult );

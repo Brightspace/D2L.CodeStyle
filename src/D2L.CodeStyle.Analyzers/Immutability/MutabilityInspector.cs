@@ -231,21 +231,27 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 		}
 
-		private MutabilityInspectionResult InspectBaseType(
+		public MutabilityInspectionResult InspectConcreteType(
 			ITypeSymbol type,
-			HashSet<ITypeSymbol> typeStack
+			MutabilityInspectionFlags flags
 		) {
-			if( type.BaseType == null ) {
-				return MutabilityInspectionResult.NotMutable();
-			}
+			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
 
-			if( type.BaseType is IErrorTypeSymbol ) {
+			return InspectConcreteType( type, typesInCurrentCycle, flags );
+		}
+
+		private MutabilityInspectionResult InspectConcreteType(
+			ITypeSymbol type,
+			HashSet<ITypeSymbol> typeStack,
+			MutabilityInspectionFlags flags = MutabilityInspectionFlags.Default
+		) {
+			if( type is IErrorTypeSymbol ) {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
 			return InspectType(
-				type.BaseType,
-				MutabilityInspectionFlags.AllowUnsealed,
+				type,
+				flags | MutabilityInspectionFlags.AllowUnsealed,
 				typeStack
 			);
 		}
@@ -281,11 +287,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				}
 
 				// We descend into the base class last
-				var baseResult = InspectBaseType( type, typeStack );
-				if( baseResult.IsMutable ) {
-					return baseResult;
+				if ( type.BaseType != null ) {
+					var baseResult = InspectConcreteType( type.BaseType, typeStack );
+
+					if( baseResult.IsMutable ) {
+						return baseResult;
+					}
+					seenUnauditedReasonsBuilder.UnionWith( baseResult.SeenUnauditedReasons );
 				}
-				seenUnauditedReasonsBuilder.UnionWith( baseResult.SeenUnauditedReasons );
 			} finally {
 				typeStack.Remove( type );
 			}
@@ -386,11 +395,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			if( expr is ObjectCreationExpressionSyntax ) {
 				// If our initializer is "new Foo( ... )" we only need to
 				// consider Foo concretely; not subtypes of Foo.
-				return InspectType(
-					exprType,
-					MutabilityInspectionFlags.AllowUnsealed,
-					typeStack
-				);
+				return InspectConcreteType( exprType, typeStack );
 			}
 
 			// In general we can use the initializers type in place of the

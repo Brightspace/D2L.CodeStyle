@@ -310,13 +310,16 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				}
 			}
 
+			MutabilityInspectionResult result;
+
 			// When we know the concrete type as in "new T()" we don't have to
 			// be paranoid about mutable derived classes.
 			if ( initializationExpression is ObjectCreationExpressionSyntax ) {
-				flags |= MutabilityInspectionFlags.AllowUnsealed;
+				result = inspector.InspectConcreteType( fieldOrPropertyType, flags );
+			} else {
+				result = inspector.InspectType( fieldOrPropertyType, flags );
 			}
 
-			var result = inspector.InspectType( fieldOrPropertyType, flags );
 			if ( result.IsMutable ) {
 				result = result.WithPrefixedMember( fieldOrPropertyName );
 				yield return CreateDiagnostic( 
