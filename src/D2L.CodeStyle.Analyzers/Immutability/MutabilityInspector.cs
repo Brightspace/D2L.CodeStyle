@@ -131,7 +131,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			var scope = type.GetImmutabilityScope();
 			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && scope != ImmutabilityScope.None ) {
 				// if we're fully immutable or we allow unsealed (i.e., base classes), then bailout
-				if( scope == ImmutabilityScope.SelfAndChildren || flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed ) && scope == ImmutabilityScope.Self ) {
+				if( scope == ImmutabilityScope.SelfAndChildren ) {
+					ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
+					return MutabilityInspectionResult.NotMutable( immutableExceptions );
+				} else if( scope == ImmutabilityScope.Self && flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed ) ) {
 					ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
 					return MutabilityInspectionResult.NotMutable( immutableExceptions );
 				}
