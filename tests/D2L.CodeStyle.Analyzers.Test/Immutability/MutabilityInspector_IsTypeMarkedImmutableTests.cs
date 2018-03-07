@@ -40,7 +40,7 @@ namespace D2L.CodeStyle.Annotations {
 				KnownImmutableTypes.Default
 			);
 
-			Assert.IsFalse( type.Symbol.IsTypeMarkedImmutable() );
+			Assert.IsFalse( IsTypeMarkedFullyImmutable( type.Symbol ) );
 		}
 
 		[Test]
@@ -54,7 +54,7 @@ namespace D2L.CodeStyle.Annotations {
 				KnownImmutableTypes.Default
 			);
 
-			Assert.IsTrue( type.Symbol.IsTypeMarkedImmutable() );
+			Assert.IsTrue( IsTypeMarkedFullyImmutable( type.Symbol ) );
 		}
 
 		[Test]
@@ -71,7 +71,7 @@ namespace D2L.CodeStyle.Annotations {
 
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
 			Assert.AreEqual( "Foo", type.Symbol.MetadataName );
-			Assert.IsTrue( type.Symbol.IsTypeMarkedImmutable() );
+			Assert.IsTrue( IsTypeMarkedFullyImmutable( type.Symbol ) );
 		}
 
 		[Test]
@@ -89,7 +89,7 @@ namespace D2L.CodeStyle.Annotations {
 
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
 			Assert.AreEqual( "Foo", type.Symbol.MetadataName );
-			Assert.IsTrue( type.Symbol.IsTypeMarkedImmutable() );
+			Assert.IsTrue( IsTypeMarkedFullyImmutable( type.Symbol ) );
 		}
 
 		[Test]
@@ -107,7 +107,7 @@ namespace D2L.CodeStyle.Annotations {
 
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
 			Assert.AreEqual( "Foo", type.Symbol.MetadataName );
-			Assert.IsTrue( type.Symbol.IsTypeMarkedImmutable() );
+			Assert.IsTrue( IsTypeMarkedFullyImmutable( type.Symbol ) );
 		}
 
 
@@ -125,7 +125,7 @@ namespace D2L.CodeStyle.Annotations {
 
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
 			Assert.AreEqual( "Foo", type.Symbol.MetadataName );
-			Assert.IsTrue( type.Symbol.IsTypeMarkedImmutable() );
+			Assert.IsTrue( IsTypeMarkedFullyImmutable( type.Symbol ) );
 		}
 
 		[Test]
@@ -143,7 +143,12 @@ namespace D2L.CodeStyle.Annotations {
 
 			// we have multiple types defined, so ensure that we're asserting on the correct one first.
 			Assert.AreEqual( "Foo", type.Symbol.MetadataName );
-			Assert.IsTrue( type.Symbol.IsTypeMarkedImmutable() );
+			Assert.IsTrue( IsTypeMarkedFullyImmutable( type.Symbol ) );
+		}
+
+		private static bool IsTypeMarkedFullyImmutable( ITypeSymbol type ) {
+			var scope = type.GetImmutabilityScope();
+			return scope == ImmutabilityScope.SelfAndChildren;
 		}
 	}
 }

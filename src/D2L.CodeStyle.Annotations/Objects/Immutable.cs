@@ -3,6 +3,11 @@
 // ReSharper disable once CheckNamespace
 namespace D2L.CodeStyle.Annotations {
 	public static class Objects {
+
+		public abstract class ImmutableAttributeBase : Attribute {
+			public Except Except { get; set; }
+		}
+
 		/// <summary>
 		/// If a class, struct or interface is marked with this annotation it
 		/// means that it's type is immutable. This includes all subtypes of
@@ -15,11 +20,16 @@ namespace D2L.CodeStyle.Annotations {
 			       | AttributeTargets.Interface
 			       | AttributeTargets.Struct
 		)]
-		public sealed class Immutable : Attribute {
+		public sealed class Immutable : ImmutableAttributeBase { }
 
-			public Except Except { get; set; }
-
-		}
+		/// <summary>
+		/// If a class is marked with this annotation it means that it is immutable
+		/// but other mutable classes may sub-class it.
+		/// It is always safe to add this annotation because an analyzer will check
+		/// that it is valid.
+		/// </summary>
+		[AttributeUsage( validOn: AttributeTargets.Class )]
+		public sealed class ImmutableBaseClassAttribute : ImmutableAttributeBase { }
 
 		[Flags]
 		public enum Except {

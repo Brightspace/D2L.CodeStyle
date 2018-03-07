@@ -51,7 +51,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		/// <summary>
-		/// Parses the Except values from a type's [Immutable] attribute.
+		/// Parses the Except values from a type's [Immutable] or [ImmutableBaseClass] attribute.
 		/// </summary>
 		public static bool TryGetDirectImmutableExceptions( this ITypeSymbol ty, out ImmutableHashSet<string> exceptions ) {
 
@@ -62,12 +62,29 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return true;
 			}
 
-			AttributeData attrData = Attributes.Objects.Immutable.GetAll( ty ).FirstOrDefault();
-			if( attrData == null ) {
+			AttributeData immutableAttribute = Attributes.Objects.Immutable.GetAll( ty ).FirstOrDefault();
+			AttributeData immutableBaseClassAttribute = Attributes.Objects.ImmutableBaseClass.GetAll( ty ).FirstOrDefault();
+			if( immutableAttribute == null && immutableBaseClassAttribute == null ) {
 				exceptions = null;
 				return false;
 			}
 
+			var builder = ImmutableHashSet.CreateBuilder<string>();
+
+			if( immutableAttribute != null ) {
+				var excepts = GetDirectImmutableException( immutableAttribute );
+				builder.UnionWith( excepts );
+			}
+			if( immutableBaseClassAttribute != null ) {
+				var excepts = GetDirectImmutableException( immutableBaseClassAttribute );
+				builder.UnionWith( excepts );
+			}
+
+			exceptions = builder.ToImmutable();
+			return true;
+		}
+
+		private static ImmutableHashSet<string> GetDirectImmutableException( AttributeData attrData ) {
 			SyntaxNode syntaxNode = attrData
 				.ApplicationSyntaxReference?
 				.GetSyntax();
@@ -104,16 +121,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			if( flagsExpression == null ) {
 				// We have the Immutable attribute but no Except value, so we just return the defaults
-				exceptions = DefaultImmutabilityExceptions;
-				return true;
+				return DefaultImmutabilityExceptions;
 			}
 
-			exceptions = ExceptFlagValuesToSet( flagsExpression );
-			return true;
+			var set = ExceptFlagValuesToSet( flagsExpression );
+			return set;
 		}
 
 		/// <summary>
-		/// Gets all [Immutable] attribute exceptions from this type's inherited types
+		/// Gets all [Immutable] and [ImmutableBaseClass] attribute exceptions from this type's inherited types
 		/// </summary>
 		public static ImmutableDictionary<ISymbol, ImmutableHashSet<string>> GetInheritedImmutableExceptions( this ITypeSymbol type ) {
 

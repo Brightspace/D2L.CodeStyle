@@ -15,6 +15,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		IgnoreImmutabilityAttribute = 2,
 	}
 
+	/// <summary>
+	/// Determines what kind of immutable a type has.
+	/// </summary>
+	internal enum ImmutabilityScope {
+		None,
+		Self,
+		SelfAndChildren
+	}
+
 	internal sealed class MutabilityInspector {
 		/// <summary>
 		/// A list of immutable container types (i.e., types that hold other types)
@@ -118,10 +127,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					+ "are referenced, including transitive dependencies." );
 			}
 
-			// If we're verifying immutability, then carry on; otherwise, bailout
-			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && type.IsTypeMarkedImmutable() ) {
-				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
-				return MutabilityInspectionResult.NotMutable( immutableExceptions );
+			// If we're not verifying immutability, we might be able to bail out early
+			var scope = type.GetImmutabilityScope();
+			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && scope != ImmutabilityScope.None ) {
+				// if we're fully immutable or we allow unsealed (i.e., base classes), then bailout
+				if( scope == ImmutabilityScope.SelfAndChildren ) {
+					ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
+					return MutabilityInspectionResult.NotMutable( immutableExceptions );
+				} else if( scope == ImmutabilityScope.Self && flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed ) ) {
+					ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
+					return MutabilityInspectionResult.NotMutable( immutableExceptions );
+				}
 			}
 
 			// System.Object is safe if we can allow unsealed types (i.e., the type is the concrete type). 

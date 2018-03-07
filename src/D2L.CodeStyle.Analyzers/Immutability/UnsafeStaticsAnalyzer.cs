@@ -297,13 +297,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				yield break;
 			}
 
-			if( fieldOrPropertyType.IsTypeMarkedImmutable() ) {
-				// if the type is marked immutable, skip checking it, to avoid reporting
-				// a diagnostic for each usage of types that are marked
-				// immutable (other analyzers catch those already.)
-				yield break;
-			}
-
 			var flags = MutabilityInspectionFlags.Default;
 			// Always prefer the type from the initializer if it exists because
 			// it may be more specific.
