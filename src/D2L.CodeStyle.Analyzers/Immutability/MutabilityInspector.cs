@@ -94,6 +94,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return InspectProperty( property, typesInCurrentCycle );
 		}
 
+		public MutabilityInspectionResult InspectConcreteType(
+			ITypeSymbol type,
+			MutabilityInspectionFlags flags
+		) {
+			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
+
+			return InspectConcreteType( type, typesInCurrentCycle, flags );
+		}
+
 		private MutabilityInspectionResult InspectType(
 			ITypeSymbol type,
 			MutabilityInspectionFlags flags,
@@ -138,18 +147,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
 					return MutabilityInspectionResult.NotMutable( immutableExceptions );
 				}
-			}
-
-			// System.Object is safe if we can allow unsealed types (i.e., the type is the concrete type). 
-			// For example, `private readonly object m_lock = new object();` is fine. 
-			// There is no state, so we finish early.
-			if( flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed ) && type.SpecialType == SpecialType.System_Object ) {
-				return MutabilityInspectionResult.NotMutable();
-			}
-
-			// System.ValueType is the base class of all value types (obscure detail)
-			if( flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed ) && type.SpecialType == SpecialType.System_ValueType ) {
-				return MutabilityInspectionResult.NotMutable();
 			}
 
 			if( m_knownImmutableTypes.IsTypeKnownImmutable( type ) ) {
@@ -231,21 +228,23 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 		}
 
-		public MutabilityInspectionResult InspectConcreteType(
-			ITypeSymbol type,
-			MutabilityInspectionFlags flags
-		) {
-			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
-
-			return InspectConcreteType( type, typesInCurrentCycle, flags );
-		}
-
 		private MutabilityInspectionResult InspectConcreteType(
 			ITypeSymbol type,
 			HashSet<ITypeSymbol> typeStack,
 			MutabilityInspectionFlags flags = MutabilityInspectionFlags.Default
 		) {
 			if( type is IErrorTypeSymbol ) {
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			// The concrete type System.Object is empty (and therefore safe.)
+			// For example, `private readonly object m_lock = new object();` is fine. 
+			if( type.SpecialType == SpecialType.System_Object ) {
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			// System.ValueType is the base class of all value types (obscure detail)
+			if( type.SpecialType == SpecialType.System_ValueType ) {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
