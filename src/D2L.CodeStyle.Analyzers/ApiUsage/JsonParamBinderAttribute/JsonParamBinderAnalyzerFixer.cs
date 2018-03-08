@@ -27,7 +27,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 
 			SyntaxNode root = await context.Document.GetSyntaxRootAsync(
 				                  context.CancellationToken
-			                  ).ConfigureAwait( false );
+			                  ).ConfigureAwait( continueOnCapturedContext: false );
 
 			AttributeSyntax oldAttribute = root.FindToken(sourceSpan.Start)
 				.Parent.AncestorsAndSelf().OfType<AttributeSyntax>().First();
@@ -47,7 +47,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 			CancellationToken ct 
 		) {
 			SyntaxNode root = await document.GetSyntaxRootAsync( ct )
-				                  .ConfigureAwait( false );
+				                  .ConfigureAwait( continueOnCapturedContext: false );
 
 			AttributeSyntax newAttribute = SyntaxFactory.Attribute(
 				SyntaxFactory.IdentifierName( "JsonConvertParameterBinder" ) );
