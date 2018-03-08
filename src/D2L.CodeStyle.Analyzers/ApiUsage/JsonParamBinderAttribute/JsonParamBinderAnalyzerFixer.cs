@@ -25,7 +25,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 			Diagnostic diagnostic = context.Diagnostics.First();
 			TextSpan sourceSpan = diagnostic.Location.SourceSpan;
 
-			SyntaxNode root = await context.Document.GetSyntaxRootAsync(context.CancellationToken);
+			SyntaxNode root = await context.Document.GetSyntaxRootAsync(
+				                  context.CancellationToken
+			                  ).ConfigureAwait( false );
 
 			AttributeSyntax oldAttribute = root.FindToken(sourceSpan.Start)
 				.Parent.AncestorsAndSelf().OfType<AttributeSyntax>().First();
@@ -39,8 +41,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 			);
 		}
 
-		private async Task<Document> SwapAttributes( Document document, AttributeSyntax oldAttribute, CancellationToken ct ) {
-			SyntaxNode root = await document.GetSyntaxRootAsync(ct);
+		private async Task<Document> SwapAttributes( 
+			Document document, 
+			AttributeSyntax oldAttribute, 
+			CancellationToken ct 
+		) {
+			SyntaxNode root = await document.GetSyntaxRootAsync( ct )
+				                  .ConfigureAwait( false );
 
 			AttributeSyntax newAttribute = SyntaxFactory.Attribute(
 				SyntaxFactory.IdentifierName( "JsonConvertParameterBinder" ) );
