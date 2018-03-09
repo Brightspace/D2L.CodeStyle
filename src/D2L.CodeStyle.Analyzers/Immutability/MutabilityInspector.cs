@@ -138,15 +138,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			// If we're not verifying immutability, we might be able to bail out early
 			var scope = type.GetImmutabilityScope();
-			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && scope != ImmutabilityScope.None ) {
-				// if we're fully immutable or we allow unsealed (i.e., base classes), then bailout
-				if( scope == ImmutabilityScope.SelfAndChildren ) {
-					ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
-					return MutabilityInspectionResult.NotMutable( immutableExceptions );
-				} else if( scope == ImmutabilityScope.Self && flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed ) ) {
-					ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
-					return MutabilityInspectionResult.NotMutable( immutableExceptions );
-				}
+			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && scope == ImmutabilityScope.SelfAndChildren ) {
+				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
+				return MutabilityInspectionResult.NotMutable( immutableExceptions );
 			}
 
 			if( m_knownImmutableTypes.IsTypeKnownImmutable( type ) ) {
@@ -246,6 +240,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// System.ValueType is the base class of all value types (obscure detail)
 			if( type.SpecialType == SpecialType.System_ValueType ) {
 				return MutabilityInspectionResult.NotMutable();
+			}
+
+			var scope = type.GetImmutabilityScope();
+			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && scope != ImmutabilityScope.None ) {
+				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
+				return MutabilityInspectionResult.NotMutable( immutableExceptions );
 			}
 
 			return InspectType(
