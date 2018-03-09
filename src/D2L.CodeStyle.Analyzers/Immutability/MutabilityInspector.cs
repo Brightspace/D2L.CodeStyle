@@ -96,7 +96,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		public MutabilityInspectionResult InspectConcreteType(
 			ITypeSymbol type,
-			MutabilityInspectionFlags flags
+			MutabilityInspectionFlags flags = MutabilityInspectionFlags.Default
 		) {
 			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
 

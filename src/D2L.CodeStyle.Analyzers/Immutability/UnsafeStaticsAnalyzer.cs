@@ -297,7 +297,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				yield break;
 			}
 
-			var flags = MutabilityInspectionFlags.Default;
 			// Always prefer the type from the initializer if it exists because
 			// it may be more specific.
 			if( initializationExpression != null ) {
@@ -315,9 +314,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// When we know the concrete type as in "new T()" we don't have to
 			// be paranoid about mutable derived classes.
 			if ( initializationExpression is ObjectCreationExpressionSyntax ) {
-				result = inspector.InspectConcreteType( fieldOrPropertyType, flags );
+				result = inspector.InspectConcreteType( fieldOrPropertyType );
 			} else {
-				result = inspector.InspectType( fieldOrPropertyType, flags );
+				result = inspector.InspectType( fieldOrPropertyType );
 			}
 
 			if ( result.IsMutable ) {
