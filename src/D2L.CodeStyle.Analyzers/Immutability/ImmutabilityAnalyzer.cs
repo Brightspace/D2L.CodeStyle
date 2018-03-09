@@ -55,10 +55,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
-			var flags = MutabilityInspectionFlags.Default 
-				| MutabilityInspectionFlags.IgnoreImmutabilityAttribute; // we're _validating_ the attribute
-
-			var mutabilityResult = inspector.InspectConcreteType( symbol, flags );
+			var mutabilityResult = inspector.InspectConcreteType(
+				symbol,
+				MutabilityInspectionFlags.IgnoreImmutabilityAttribute // we're _validating_ the attribute
+			);
 
 			if( mutabilityResult.IsMutable ) {
 				var reason = m_resultFormatter.Format( mutabilityResult );
