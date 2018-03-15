@@ -48,6 +48,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.SystemCollectionsImmutable {
 			var specificType = context.SemanticModel.GetTypeInfo( context.Node ).Type
 				as INamedTypeSymbol;
 
+			// This happens for generic types
+			if ( specificType == null ) {
+				return;
+			}
+
 			// We only care about ImmutableArray`1
 			if( specificType.OriginalDefinition != immutableArrayType ) {
 				return;
