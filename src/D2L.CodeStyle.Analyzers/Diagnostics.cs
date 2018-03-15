@@ -252,14 +252,6 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "ImmutableGeneric can only be applied to closed (fully bound) generic types."
 		);
 
-		public static readonly DiagnosticDescriptor DontUseImmutableArrayConstructor = new DiagnosticDescriptor(
-			id: "D2L0029",
-			title: "Don't use the default constructor for ImmutableArray<T>",
-			messageFormat: "The default constructor for ImmutableArray<T> doesn't correctly initialize the object and leads to runtime errors. Use ImmutableArray<T>.Empty for empty arrays, ImmutableArray.Create() for simple cases and ImmutableArray.Builder<T> for more complicated cases.",
-			category: "Correctness",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "The default constructor for ImmutableArray<T> doesn't correctly initialize the object and leads to runtime errors. Use ImmutableArray<T>.Empty for empty arrays, ImmutableArray.Create() for simple cases and ImmutableArray.Builder<T> for more complicated cases."
-		);
+
 	}
 }
