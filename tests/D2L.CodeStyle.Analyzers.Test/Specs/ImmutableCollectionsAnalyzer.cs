@@ -11,6 +11,7 @@ namespace D2L.CodeStyle.Analyzers.Specs {
 		public IEnumerable<int> m_good3 = new List<int> { };
 		public IEnumerable<int> m_good4 = ImmutableArray.Create( 1, 2, 3 );
 		public ImmutableArray<int> m_good5 = ImmutableArray<int>.Empty;
+		public int[] m_good6 = new int[0](); // FYI: not an ObjectionCreationSyntax - there is a distinct ArrayCreationSyntax
 
 		public ImmutableArray<int> m_neutral = new ImmutableArray<int>( 1 ); // we don't need to report for this, there is no such constructor.
 		public ImmutableArray<int> m_neutral2 = new ImmutableArray<int>( new int[] { 1, 2, 3 } ); // this constructor is internal
@@ -27,6 +28,17 @@ namespace D2L.CodeStyle.Analyzers.Specs {
 			var bad = /* DontUseImmutableArrayConstructor */ new ImmutableArray<int>() /**/;
 			var good = ImmutableArray.Create( 1, 2, 3 );
 			var good2 = new object();
+		}
+
+		public static T GenericMethod<T>() where T : new() {
+			return new T();
+		}
+
+		public void SomeOtherMethod() {
+			// We don't catch this. In general doing so would be too
+			// complicated for an analyzer: we'd need to look up the defn of
+			// GenericMethod, do data-flow analysis etc.
+			var whoops = GenericMethod<ImmutableArray<int>>();
 		}
 	}
 }
