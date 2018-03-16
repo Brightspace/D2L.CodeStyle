@@ -77,7 +77,14 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			if( type.ContainingAssembly.TryGetImmutableGenericAnnotation( type, out ignore ) ) {
 				return true;
 			}
+
 			foreach( var typeArgument in type.TypeArguments ) {
+				// Can happen with generics, but I don't fully understand when
+				// it does, exactly.
+				if ( typeArgument.ContainingAssembly == null ) {
+					continue;
+				}
+
 				if( typeArgument.ContainingAssembly.TryGetImmutableGenericAnnotation( type, out ignore ) ) {
 					return true;
 				}

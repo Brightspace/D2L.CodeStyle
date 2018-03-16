@@ -173,6 +173,20 @@ namespace SpecTests {
 			private readonly IFactory<string> m_unsafeFactory;
 		}
 
+		public sealed class GenericTypeHoldingGenericType<T> {
+			private readonly IFactory<T> m_unsafeFactory;
+		}
+
+		[Objects.Immutable]
+		public sealed class /* ImmutableClassIsnt('m_indirectThing.m_unsafeFactory''s type ('SpecTests.GenericsTests.IFactory') is an interface that is not marked with `[Objects.Immutable]`) */ OtherGenericClass<T> /**/ {
+			// The string[] is important: when we go to look for an ImmutableGeneric for
+			// that type parameter we bail out early because there is no containing
+			// assembly for string[]. Switching GenericTypeHoldingGenericType here to
+			// IFactory<string[]> doesn't exhibit the issue though, we need the
+			// indirection... not sure exactly what's up.
+			private readonly GenericTypeHoldingGenericType<string[]> m_indirectThing;
+		}
+
 		public sealed class /* ImmutableClassIsnt('bad' is not read-only) */ MutableButSubClassesImmutableGeneric /**/ : IFactory<Version> {
 			private int bad;
 		}
