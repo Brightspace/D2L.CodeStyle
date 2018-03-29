@@ -60,6 +60,12 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 		}
 
 		private static bool IsMarkedImmutableGeneric( this ITypeSymbol symbol ) {
+			AttributeData ignore;
+			return TryGetImmutableGenericAnnotation( symbol, out ignore );
+		}
+
+		private static bool TryGetImmutableGenericAnnotation( this ITypeSymbol symbol, out AttributeData attribute ) {
+			attribute = null;
 			var type = symbol as INamedTypeSymbol;
 			if( type == null ) {
 				return false;
@@ -73,8 +79,7 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			 *  (1) symbol's assembly,
 			 *  (2) any of symbol's type arguments's assemblies
 			 */
-			AttributeData ignore;
-			if( type.ContainingAssembly.TryGetImmutableGenericAnnotation( type, out ignore ) ) {
+			if( type.ContainingAssembly.TryGetImmutableGenericAnnotation( type, out attribute ) ) {
 				return true;
 			}
 
@@ -85,11 +90,11 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 					continue;
 				}
 
-				if( typeArgument.ContainingAssembly.TryGetImmutableGenericAnnotation( type, out ignore ) ) {
+				if( typeArgument.ContainingAssembly.TryGetImmutableGenericAnnotation( type, out attribute ) ) {
 					return true;
 				}
 			}
-
+			attribute = null;
 			return false;
 		}
 
@@ -126,7 +131,7 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			}
 
 			AttributeData immutableGeneric;
-			if( type.ContainingAssembly.TryGetImmutableGenericAnnotation( type, out immutableGeneric ) ) {
+			if( TryGetImmutableGenericAnnotation( type, out immutableGeneric ) ) {
 				yield return immutableGeneric;
 			}
 		}
