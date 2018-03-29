@@ -104,7 +104,8 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 				}
 
 				var arg = attr.ConstructorArguments[0];
-				if( arg.Value.Equals( type ) ) {
+				//Using ToString, otherwise it sometimes fails to match, and the test behaviour does not match the real behaviour
+				if( arg.Value.ToString().Equals( type.ToString() ) ) {
 					attribute = attr;
 					return true;
 				}

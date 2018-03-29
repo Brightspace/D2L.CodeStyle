@@ -8,6 +8,10 @@ using D2L.LP.Extensibility.Activation.Domain;
 	type: typeof(SpecTests.GenericsTests.IFactory<Version>) 
 )]
 
+[assembly: Objects.ImmutableGeneric(
+	type: typeof( IComparable<SpecTests.GenericsTests.ILocallyDefined> )
+)]
+
 namespace D2L.LP.Extensibility.Activation.Domain {
 	public sealed class SingletonAttribute : Attribute { }
 }
@@ -111,6 +115,8 @@ namespace SpecTests {
 
 		interface IGenericImmutableWithTypeConstraint<T> : IImmutable where T : IImmutable { }
 
+		interface ILocallyDefined { }
+
 		class GenericClassWithoutStateIsSafe<T> : IGenericImmutable<T> { }
 
 		class /* ImmutableClassIsnt('foo''s type ('T') is a generic type) */ GenericClassWithStateIsUnsafe<T> /**/ : IGenericImmutable<T> {
@@ -189,6 +195,10 @@ namespace SpecTests {
 
 		public sealed class /* ImmutableClassIsnt('bad' is not read-only) */ MutableButSubClassesImmutableGeneric /**/ : IFactory<Version> {
 			private int bad;
+		}
+
+		public sealed class ImplementsImmutableGeneric : IComparable<ILocallyDefined> {
+			private readonly IImmutable m_safeDependency;
 		}
 		#endregion
 
