@@ -31,6 +31,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="DependencyScope\DependencyScopeAnalyzer.cs" />
     <Compile Include="Immutability\ImmutableGenericAttributeAnalyzer.cs" />
     <Compile Include="ApiUsage\JsonParamBinderAttribute\JsonParamBinderAnalyzer.cs" />
     <Compile Include="ApiUsage\JsonParamBinderAttribute\JsonParamBinderAnalyzerFixer.cs" />

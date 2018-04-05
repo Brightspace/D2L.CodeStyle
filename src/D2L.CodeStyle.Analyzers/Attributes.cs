@@ -24,6 +24,7 @@ namespace D2L.CodeStyle.Analyzers {
 			internal static readonly RoslynAttribute Unaudited = new RoslynAttribute( "D2L.CodeStyle.Annotations.Mutability.UnauditedAttribute" );
 		}
 		internal static readonly RoslynAttribute Singleton = new RoslynAttribute( "D2L.LP.Extensibility.Activation.Domain.SingletonAttribute" );
+		internal static readonly RoslynAttribute WebRequest = new RoslynAttribute( "D2L.LP.Extensibility.Activation.Domain.WebRequestAttribute" );
 		internal static readonly RoslynAttribute DIFramework = new RoslynAttribute( "D2L.LP.Extensibility.Activation.Domain.DIFrameworkAttribute" );
 		internal static readonly RoslynAttribute Dependency = new RoslynAttribute( "D2L.LP.Extensibility.Activation.Domain.DependencyAttribute" );
 
