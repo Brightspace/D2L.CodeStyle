@@ -310,7 +310,7 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
 			description: "Classes marked as singleton or that implement interfaces marked as a singleton cannot hold dependencies with customer state."
-	   );
+	   	);
 
 		public static readonly DiagnosticDescriptor PublicClassHasHiddenCustomerState = new DiagnosticDescriptor(
 			id: "D2L0036",
@@ -320,6 +320,7 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
 			description: "Classes visible to singletons that are not public but contain dependencies that have customer state must be marked with [CustomerState] to facilitate cross-assembly analysis."
-	   );
+	   	);
+
 	}
 }

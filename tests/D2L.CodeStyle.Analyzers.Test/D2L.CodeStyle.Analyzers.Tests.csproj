@@ -47,6 +47,7 @@
     <EmbeddedResource Include="Specs\ImmutabilityExceptionInheritanceAnalyzer.cs" />
     <EmbeddedResource Include="Specs\ImmutableCollectionsAnalyzer.cs" />
     <EmbeddedResource Include="Specs\ImmutableGenericAttributeAnalyzer.cs" />
+    <EmbeddedResource Include="Specs\CustomerStateAnalyzer.cs" />
     <EmbeddedResource Include="Specs\CorsHeaderAppenderUsageAnalyzer.cs" />
     <EmbeddedResource Include="Specs\RequireNamedArgumentsAnalyzer.cs" />
     <Compile Include="TestBase.cs" />

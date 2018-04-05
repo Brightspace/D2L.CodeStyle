@@ -87,7 +87,7 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			foreach( var typeArgument in type.TypeArguments ) {
 				// Can happen with generics, but I don't fully understand when
 				// it does, exactly.
-				if ( typeArgument.ContainingAssembly == null ) {
+				if( typeArgument.ContainingAssembly == null ) {
 					continue;
 				}
 
@@ -148,6 +148,31 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			if( symbol.BaseType != null && IsTypeMarkedSingleton( symbol.BaseType ) ) {
 				return true;
 			}
+			return false;
+		}
+
+		public static bool IsTypeMarkedWith( 
+			this ITypeSymbol symbol, 
+			INamedTypeSymbol targetSymbol
+		) {
+			if( symbol.GetAttributes().Any( attr => {
+				return attr.AttributeClass.Equals(targetSymbol); } ) 
+			) {
+				return true;
+			}
+
+			if( symbol.Interfaces.Any( interfaceSymbol => {
+				return interfaceSymbol.IsTypeMarkedWith( targetSymbol ); } ) 
+			) {
+				return true;
+			}
+
+			if( symbol.BaseType != null 
+				&& symbol.BaseType.IsTypeMarkedWith( targetSymbol ) 
+			) {
+				return true;
+			}
+
 			return false;
 		}
 
