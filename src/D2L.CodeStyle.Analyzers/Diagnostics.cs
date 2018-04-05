@@ -261,5 +261,15 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "The default constructor for ImmutableArray<T> doesn't correctly initialize the object and leads to runtime errors. Use ImmutableArray<T>.Empty for empty arrays, ImmutableArray.Create() for simple cases and ImmutableArray.Builder<T> for more complicated cases."
 		);
+
+		public static readonly DiagnosticDescriptor SingletonDependencyHasCustomerState = new DiagnosticDescriptor(
+			id: "D2L0030",
+			title: "Singleton holding a dependency containing customer state.",
+			messageFormat: "This class is marked as a singleton and holds a dependency with customer state.",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Classes marked as singleton or that implement interfaces marked as a singleton cannot hold dependencies with customer state."
+		);
 	}
 }
