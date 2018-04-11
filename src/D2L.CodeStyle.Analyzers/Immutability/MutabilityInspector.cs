@@ -103,6 +103,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return InspectConcreteType( type, typesInCurrentCycle, flags );
 		}
 
+		public MutabilityInspectionResult InspectMember( ISymbol symbol ) {
+			var seen = new HashSet<ITypeSymbol>();
+
+			return InspectMemberRecursive( symbol, seen );
+		}
+
 		private MutabilityInspectionResult InspectType(
 			ITypeSymbol type,
 			MutabilityInspectionFlags flags,

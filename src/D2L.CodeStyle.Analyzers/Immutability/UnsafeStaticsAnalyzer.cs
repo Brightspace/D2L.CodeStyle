@@ -11,7 +11,6 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace D2L.CodeStyle.Analyzers.Immutability {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class UnsafeStaticsAnalyzer : DiagnosticAnalyzer {
-
 		public const string PROPERTY_FIELDORPROPNAME = "FieldOrProprName";
 		public const string PROPERTY_OFFENDINGTYPE = "OffendingType";
 
@@ -53,7 +52,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 		}
 
-		private void AnalyzeField( SyntaxNodeAnalysisContext context, MutabilityInspector inspector ) {
+		private void AnalyzeField(
+			SyntaxNodeAnalysisContext context,
+			MutabilityInspector inspector
+		) {
 			var root = context.Node as FieldDeclarationSyntax;
 
 			if( root == null ) {
@@ -61,10 +63,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			bool isStatic = root.Modifiers.Any( SyntaxKind.StaticKeyword );
-			bool isReadOnly = root.Modifiers.Any( SyntaxKind.ReadOnlyKeyword );
 
 			foreach( var variable in root.Declaration.Variables ) {
-				var symbol = context.SemanticModel.GetDeclaredSymbol( variable ) as IFieldSymbol;
+				var symbol = context
+					.SemanticModel
+					.GetDeclaredSymbol( variable )
+					as IFieldSymbol;
 
 				if( symbol == null ) {
 					// Could this happen? We are not emitting diagnostics in this
@@ -75,20 +79,19 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				InspectFieldOrProperty(
 					context,
 					inspector,
+					fieldOrProperty: symbol,
 					location: variable.GetLocation(),
 					isStatic: isStatic,
-					isReadOnly: isReadOnly,
-					fieldOrProperty: symbol,
 					fieldOrPropertyType: symbol.Type,
-					fieldOrPropertyName: variable.Identifier.ValueText,
-					initializer: variable.Initializer?.Value,
-					isProperty: false,
-					isAutoImplementedProperty: false
+					fieldOrPropertyName: variable.Identifier.ValueText
 				);
 			}
 		}
 
-		private void AnalyzeProperty( SyntaxNodeAnalysisContext context, MutabilityInspector inspector ) {
+		private void AnalyzeProperty(
+			SyntaxNodeAnalysisContext context,
+			MutabilityInspector inspector
+		) {
 			var root = context.Node as PropertyDeclarationSyntax;
 
 			if( root == null ) {
@@ -105,20 +108,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
-			bool isAutoImplementedProperty = root.IsAutoImplemented();
-
 			InspectFieldOrProperty(
 				context,
 				inspector,
+				fieldOrProperty: prop,
 				location: root.GetLocation(),
 				isStatic: isStatic,
-				isReadOnly: prop.IsReadOnly,
-				fieldOrProperty: prop,
 				fieldOrPropertyType: prop.Type,
-				fieldOrPropertyName: prop.Name,
-				initializer: root.Initializer?.Value,
-				isProperty: true,
-				isAutoImplementedProperty: isAutoImplementedProperty
+				fieldOrPropertyName: prop.Name
 			);
 		}
 
@@ -140,28 +137,20 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private void InspectFieldOrProperty(
 			SyntaxNodeAnalysisContext context,
 			MutabilityInspector inspector,
-			Location location,
 			ISymbol fieldOrProperty,
+			Location location,
 			bool isStatic,
-			bool isReadOnly,
 			ITypeSymbol fieldOrPropertyType,
-			string fieldOrPropertyName,
-			ExpressionSyntax initializer,
-			bool isProperty,
-			bool isAutoImplementedProperty
+			string fieldOrPropertyName
 		) {
 
 			var diagnostics = GatherDiagnostics(
-				context.SemanticModel,
 				inspector,
+				fieldOrProperty: fieldOrProperty,
 				location: location,
 				isStatic: isStatic,
-				isReadOnly: isReadOnly,
 				fieldOrPropertyType: fieldOrPropertyType,
-				fieldOrPropertyName: fieldOrPropertyName,
-				initializationExpression: initializer,
-				isProperty: isProperty,
-				isAutoImplementedProperty: isAutoImplementedProperty
+				fieldOrPropertyName: fieldOrPropertyName
 			);
 
 			// We're manually using enumerators here.
@@ -174,8 +163,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				ProcessDiagnostics(
 					context,
 					diagnosticsEnumerator,
-					location,
 					fieldOrProperty,
+					location,
 					fieldOrPropertyName
 				);
 			}
@@ -184,8 +173,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private void ProcessDiagnostics(
 			SyntaxNodeAnalysisContext context,
 			IEnumerator<Diagnostic> diagnostics,
-			Location location,
 			ISymbol fieldOrProperty,
+			Location location,
 			string fieldOrPropertyName
 		) {
 			var hasDiagnostics = diagnostics.MoveNext();
@@ -251,76 +240,20 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// diagnostics.
 		/// </summary>
 		private IEnumerable<Diagnostic> GatherDiagnostics(
-			SemanticModel model,
 			MutabilityInspector inspector,
+			ISymbol fieldOrProperty,
+			ITypeSymbol fieldOrPropertyType,
 			Location location,
 			bool isStatic,
-			bool isReadOnly,
-			ITypeSymbol fieldOrPropertyType,
-			string fieldOrPropertyName,
-			ExpressionSyntax initializationExpression,
-			bool isProperty,
-			bool isAutoImplementedProperty
+			string fieldOrPropertyName
 		) {
 			if ( !isStatic ) {
 				yield break;
 			}
 
-			if( isProperty && !isAutoImplementedProperty ) {
-				// non-auto-implemented properties don't hold their own state.
-				// We should never emit diagnostics for them.
-				yield break;
-			}
-
-			// Auto-implemented properties should be treated similar to fields:
-			// 1. They should not have a setter (i.e. isReadOnly)
-			// 2. Their type should be immutable
-			//    a. Unless an initializer ensures it isn't
-
-			if( !isReadOnly ) {
-				yield return CreateDiagnostic(
-					location,
-					fieldOrPropertyName,
-					fieldOrPropertyType.GetFullTypeNameWithGenericArguments(),
-					MutabilityInspectionResult.Mutable(
-						fieldOrPropertyName,
-						fieldOrPropertyType.GetFullTypeNameWithGenericArguments(),
-						MutabilityTarget.Member,
-						MutabilityCause.IsNotReadonly
-					)
-				);
-
-				// TODO: it'd probably be reasonable to not bail here. However
-				// we need to update the unsafestatics report because it counts
-				// the number of diagnostics that come out (it assumes at most one
-				// error per-field.)
-				yield break;
-			}
-
-			// Always prefer the type from the initializer if it exists because
-			// it may be more specific.
-			if( initializationExpression != null ) {
-				var initializerType = model.GetTypeInfo( initializationExpression ).Type;
-
-				// Fall back to the declaration type if we can't get a type for
-				// the initializer.
-				if( initializerType != null && !( initializerType is IErrorTypeSymbol ) ) {
-					fieldOrPropertyType = initializerType;
-				}
-			}
-
-			MutabilityInspectionResult result;
-
-			// When we know the concrete type as in "new T()" we don't have to
-			// be paranoid about mutable derived classes.
-			if ( initializationExpression is ObjectCreationExpressionSyntax ) {
-				result = inspector.InspectConcreteType( fieldOrPropertyType );
-			} else {
-				result = inspector.InspectType( fieldOrPropertyType );
-			}
+			var result = inspector.InspectMember( fieldOrProperty );
 
 			if ( result.IsMutable ) {
-				result = result.WithPrefixedMember( fieldOrPropertyName );
 				yield return CreateDiagnostic( 
 					location, 
 					fieldOrPropertyName, 
