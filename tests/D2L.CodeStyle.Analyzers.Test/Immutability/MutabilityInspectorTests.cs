@@ -478,6 +478,25 @@ sealed class Foo {
 		}
 
 		[Test]
+		public void InspectType_TypeHasUniqueNestedUnauditedMembers_DoesNotReturnNestedUnauditedReasonsAsSeenUnauditedReasons() {
+
+			const string source = AnnotationsPreamble + @"
+sealed class Foo {
+	[Mutability.Unaudited( Because.ItsSketchy )]
+	public Bar XYZ { get; }
+}
+
+sealed class Bar {
+	[Mutability.Unaudited( Because.ItsUgly )]
+	public Func<string> Baz { get; }
+}";
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
+
+			AssertUnauditedReasonsResult( ty, "ItsSketchy" );
+		}
+
+		[Test]
 		public void InspectType_TypeHasUnauditedMembersAndDefaultImmutableMember_ReturnsDefaultImmutabilityExceptionsAsSeenUnauditedReasons() {
 			const string source = AnnotationsPreamble + @"
 sealed class Foo {
