@@ -10,15 +10,16 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		[Test]
 		public void InspectType_PrimitiveType_NotMutable() {
 			var field = Field( "uint foo" );
+			var typeToInspect = field.Symbol.Type;
 
 			var inspector = new MutabilityInspector(
 				field.Compilation,
 				KnownImmutableTypes.Default
 			);
 
-			var expected = MutabilityInspectionResult.NotMutable();
+			var expected = MutabilityInspectionResult.NotMutable( typeToInspect );
 
-			var actual = inspector.InspectType( field.Symbol.Type );
+			var actual = inspector.InspectType( typeToInspect );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -26,15 +27,16 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		[Test]
 		public void InspectType_NullablePrimitiveType_NotMutable() {
 			var field = Field( "uint? foo" );
+			var typeToInspect = field.Symbol.Type;
 
 			var inspector = new MutabilityInspector(
 				field.Compilation,
 				KnownImmutableTypes.Default
 			);
 
-			var expected = MutabilityInspectionResult.NotMutable();
+			var expected = MutabilityInspectionResult.NotMutable( typeToInspect );
 
-			var actual = inspector.InspectType( field.Symbol.Type );
+			var actual = inspector.InspectType( typeToInspect );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -56,7 +58,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				KnownImmutableTypes.Default
 			);
 
-			var expected = MutabilityInspectionResult.NotMutable();
+			var expected = MutabilityInspectionResult.NotMutable( realType );
 
 			var actual = inspector.InspectType( realType );
 
@@ -66,7 +68,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		[Test]
 		public void InspectType_ArrayType_True() {
 			var field = Field( "int[] random" );
+			var typeToInspect = field.Symbol.Type;
+
 			var expected = MutabilityInspectionResult.Mutable(
+				typeToInspect,
 				null,
 				"System.Int32[]",
 				MutabilityTarget.Type,
@@ -78,7 +83,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				KnownImmutableTypes.Default
 			);
 
-			var actual = inspector.InspectType( field.Symbol.Type );
+			var actual = inspector.InspectType( typeToInspect );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -86,15 +91,16 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		[Test]
 		public void InspectType_KnownImmutableType_False() {
 			var field = Field( "string random" );
+			var typeToInspect = field.Symbol.Type;
 
 			var inspector = new MutabilityInspector(
 				field.Compilation,
 				KnownImmutableTypes.Default
 			);
 
-			var expected = MutabilityInspectionResult.NotMutable();
+			var expected = MutabilityInspectionResult.NotMutable( typeToInspect );
 
-			var actual = inspector.InspectType( field.Symbol.Type );
+			var actual = inspector.InspectType( typeToInspect );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -102,6 +108,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		[Test]
 		public void InspectType_Interface_True() {
 			var type = Type( "interface foo {}" );
+			var typeToInspect = type.Symbol;
 
 			var inspector = new MutabilityInspector(
 				type.Compilation,
@@ -109,13 +116,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 
 			var expected = MutabilityInspectionResult.Mutable(
+				typeToInspect,
 				null,
 				$"{RootNamespace}.foo",
 				MutabilityTarget.Type,
 				MutabilityCause.IsAnInterface
 			);
 
-			var actual = inspector.InspectType( type.Symbol );
+			var actual = inspector.InspectType( typeToInspect );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -123,15 +131,16 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		[Test]
 		public void InspectType_Enum_False() {
 			var type = Type( "enum blah {}" );
+			var typeToInspect = type.Symbol;
 
 			var inspector = new MutabilityInspector(
 				type.Compilation,
 				KnownImmutableTypes.Default
 			);
 
-			var expected = MutabilityInspectionResult.NotMutable();
+			var expected = MutabilityInspectionResult.NotMutable( typeToInspect );
 
-			var actual = inspector.InspectType( type.Symbol );
+			var actual = inspector.InspectType( typeToInspect );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -146,6 +155,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 
 			var expected = MutabilityInspectionResult.Mutable(
+				type.Symbol,
 				null,
 				$"{RootNamespace}.foo",
 				MutabilityTarget.Type,
@@ -160,15 +170,16 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		[Test]
 		public void InspectType_SealedClass_False() {
 			var type = Type( "sealed class foo {}" );
+			var typeToInspect = type.Symbol;
 
 			var inspector = new MutabilityInspector(
 				type.Compilation,
 				KnownImmutableTypes.Default
 			);
 
-			var expected = MutabilityInspectionResult.NotMutable();
+			var expected = MutabilityInspectionResult.NotMutable( typeToInspect );
 
-			var actual = inspector.InspectType( type.Symbol );
+			var actual = inspector.InspectType( typeToInspect );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -183,6 +194,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 
 			var expected = MutabilityInspectionResult.Mutable(
+				field.Symbol,
 				"random",
 				"System.String",
 				MutabilityTarget.Member,
@@ -197,6 +209,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		[Test]
 		public void InspectType_DoesNotLookAtMembersInExternalType() {
 			var field = Field( "public readonly System.Text.StringBuilder random" );
+			var typeToInspect = field.Symbol.Type;
 
 			var inspector = new MutabilityInspector(
 				field.Compilation,
@@ -204,13 +217,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 
 			var expected = MutabilityInspectionResult.Mutable(
+				typeToInspect,
 				null,
 				"System.Text.StringBuilder",
 				MutabilityTarget.Type,
 				MutabilityCause.IsAnExternalUnmarkedType
 			);
 
-			var actual = inspector.InspectType( field.Symbol.Type );
+			var actual = inspector.InspectType( typeToInspect );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -225,6 +239,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 
 			var expected = MutabilityInspectionResult.Mutable(
+				field.Symbol,
 				"random",
 				"System.String",
 				MutabilityTarget.Member,
@@ -246,6 +261,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 
 			var expected = MutabilityInspectionResult.Mutable(
+				prop.Symbol,
 				"random",
 				"System.String",
 				MutabilityTarget.Member,
@@ -260,15 +276,16 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		[Test]
 		public void InspectType_ImmutableGenericCollectionWithValueTypeElement_ReturnsFalse() {
 			var field = Field( "private readonly System.Collections.Immutable.ImmutableArray<int> random" );
+			var typeToInspect = field.Symbol.Type;
 
 			var inspector = new MutabilityInspector(
 				field.Compilation,
 				KnownImmutableTypes.Default
 			);
 
-			var expected = MutabilityInspectionResult.NotMutable();
+			var expected = MutabilityInspectionResult.NotMutable( typeToInspect );
 
-			var actual = inspector.InspectType( field.Symbol.Type );
+			var actual = inspector.InspectType( typeToInspect );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -276,15 +293,16 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		[Test]
 		public void InspectType_IEnumerableGenericCollectionWithImmutableElement_ReturnsFalse() {
 			var field = Field( "private readonly System.Collections.Generic.IEnumerable<int> random" );
+			var typeToInspect = field.Symbol.Type;
 
 			var inspector = new MutabilityInspector(
 				field.Compilation,
 				KnownImmutableTypes.Default
 			);
 
-			var expected = MutabilityInspectionResult.NotMutable();
+			var expected = MutabilityInspectionResult.NotMutable( typeToInspect );
 
-			var actual = inspector.InspectType( field.Symbol.Type );
+			var actual = inspector.InspectType( typeToInspect );
 
 			AssertResultsAreEqual( expected, actual );
 		}
@@ -299,6 +317,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 
 			var expected = MutabilityInspectionResult.Mutable(
+				prop.Symbol.Type,
 				"StringGetter",
 				"System.Func",
 				MutabilityTarget.Type,
@@ -618,6 +637,7 @@ sealed class Baz { }
 			);
 
 			var expected = MutabilityInspectionResult.NotMutable(
+				ty.Symbol,
 				ImmutableHashSet.Create( expectedUnauditedReasons )
 			);
 
@@ -631,6 +651,7 @@ sealed class Baz { }
 			Assert.AreEqual( expected.MemberPath, actual.MemberPath, "MemberPath does not match" );
 			Assert.AreEqual( expected.Target, actual.Target, "Target does not match" );
 			Assert.AreEqual( expected.Cause, actual.Cause, "Cause does not match" );
+			Assert.AreEqual( expected.Symbol, actual.Symbol, "TypeName does not match" );
 			Assert.AreEqual( expected.TypeName, actual.TypeName, "TypeName does not match" );
 			CollectionAssert.AreEquivalent( expected.SeenUnauditedReasons, actual.SeenUnauditedReasons, "SeenUnauditedReasons did not match" );
 		}
