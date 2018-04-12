@@ -127,12 +127,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		///    members don't come from a base class/interface so we can't do
 		///    this generically.
 		/// 2. Fields can define multiple variables and we may wish to output
-		///    multiple diagnostics (individual ariables in a field declaration
+		///    multiple diagnostics (individual variables in a field declaration
 		///    may be alright because of their initializers.)
-		///
-		/// The arguments are organized roughly based on the common grammar of
-		/// fields and properties: attributes, modifiers, type, name,
-		/// initializer.
 		/// </summary>
 		private void InspectFieldOrProperty(
 			SyntaxNodeAnalysisContext context,
@@ -143,44 +139,36 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ITypeSymbol fieldOrPropertyType,
 			string fieldOrPropertyName
 		) {
+			bool hasUnauditedAnnotation = Attributes.Statics.Unaudited
+				.IsDefined( fieldOrProperty );
 
-			var diagnostics = GatherDiagnostics(
-				inspector,
-				fieldOrProperty: fieldOrProperty,
-				location: location,
-				isStatic: isStatic,
-				fieldOrPropertyType: fieldOrPropertyType,
-				fieldOrPropertyName: fieldOrPropertyName
-			);
+			bool hasAuditedAnnotation = Attributes.Statics.Audited
+				.IsDefined( fieldOrProperty );
 
-			// We're manually using enumerators here.
-			// - if we used IEnumerable directly we'd re-compute the first
-			//   diagnostic in the GatherDiagnostics generator
-			// - if we did .ToArray() early then we would avoid multiple
-			//   enumeration but would compute diagnostics even when we
-			//   ultimately ignore them due to annotations
-			using( var diagnosticsEnumerator = diagnostics.GetEnumerator() ) {
-				ProcessDiagnostics(
-					context,
-					diagnosticsEnumerator,
-					fieldOrProperty,
-					location,
-					fieldOrPropertyName
+			bool hasAnnotation = hasUnauditedAnnotation || hasAuditedAnnotation;
+
+			if ( !isStatic && hasAnnotation ) {
+				// non-statics don't need these annotations.
+				// TODO: Consider dropping the static-specific annotations in
+				// favour of Mutability.Audited/Unaudited. Will require some
+				// effort due to the reporting we do but it'll make things
+				// simpler once we merge the analyzers.
+				context.ReportDiagnostic(
+					Diagnostic.Create(
+						Diagnostics.UnnecessaryStaticAnnotation,
+						location,
+						ImmutableDictionary<string, string>.Empty,
+						hasAuditedAnnotation ? "Statics.Audited" : "Statics.Unaudited",
+						fieldOrPropertyName
+					)
 				);
-			}
-		}
-		
-		private void ProcessDiagnostics(
-			SyntaxNodeAnalysisContext context,
-			IEnumerator<Diagnostic> diagnostics,
-			ISymbol fieldOrProperty,
-			Location location,
-			string fieldOrPropertyName
-		) {
-			var hasDiagnostics = diagnostics.MoveNext();
 
-			bool hasUnauditedAnnotation = Attributes.Statics.Unaudited.IsDefined( fieldOrProperty );
-			bool hasAuditedAnnotation = Attributes.Statics.Audited.IsDefined( fieldOrProperty );
+				return;
+			}
+
+			if( !isStatic ) {
+				return;
+			}
 
 			if( hasAuditedAnnotation && hasUnauditedAnnotation ) {
 				context.ReportDiagnostic(
@@ -195,7 +183,19 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
-			bool hasAnnotations = hasAuditedAnnotation || hasUnauditedAnnotation;
+			var result = inspector.InspectMember( fieldOrProperty );
+
+			Diagnostic diagnostic = null;
+			if ( result.IsMutable ) {
+				diagnostic = CreateDiagnostic( 
+					location, 
+					fieldOrPropertyName,
+					fieldOrPropertyType.GetFullTypeNameWithGenericArguments(), 
+					result 
+				);
+			}
+
+			var hasDiagnostic = diagnostic != null;
 
 			// Unnecessary annotations clutter the code base. Because
 			// Statics.Audited and Statics.Unaudited enable things to build
@@ -205,7 +205,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// that we previously wouldn't due to an analyzer change (the
 			// existing Statics.Audited and Statics.Unaudited serve as test
 			// cases in a way.)
-			if( hasAnnotations && !hasDiagnostics ) {
+			if( hasAnnotation && !hasDiagnostic ) {
 				context.ReportDiagnostic(
 					Diagnostic.Create(
 						Diagnostics.UnnecessaryStaticAnnotation,
@@ -216,50 +216,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					)
 				);
 
-				// this bail-out isn't important because !hasDiagnostics
+				// this bail-out isn't important because !hasDiagnostic
 				return;
 			}
 
-			if ( hasAnnotations ) {
+			if ( hasAnnotation ) {
 				// the annotations supress remaining diagnostics
 				return;
 			}
 
-			while ( hasDiagnostics ) {
-				context.ReportDiagnostic( diagnostics.Current );
-				hasDiagnostics = diagnostics.MoveNext();
-			}
-		}
-
-		/// <summary>
-		/// All logic relating to either emitting or not emitting diagnostics other
-		/// than the ones about unnecessary annotations belong in this function.
-		/// This allows InspectMember to implement the logic around the unnecessary
-		/// annotations diagnostic. Any time we bail early in AnalyzeField or
-		/// AnalyzeProperty we risk not emitting unnecessary annotation
-		/// diagnostics.
-		/// </summary>
-		private IEnumerable<Diagnostic> GatherDiagnostics(
-			MutabilityInspector inspector,
-			ISymbol fieldOrProperty,
-			ITypeSymbol fieldOrPropertyType,
-			Location location,
-			bool isStatic,
-			string fieldOrPropertyName
-		) {
-			if ( !isStatic ) {
-				yield break;
-			}
-
-			var result = inspector.InspectMember( fieldOrProperty );
-
-			if ( result.IsMutable ) {
-				yield return CreateDiagnostic( 
-					location, 
-					fieldOrPropertyName, 
-					fieldOrPropertyType.GetFullTypeNameWithGenericArguments(), 
-					result 
-				);
+			if ( hasDiagnostic ) {
+				context.ReportDiagnostic( diagnostic );
 			}
 		}
 
