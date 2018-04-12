@@ -329,6 +329,22 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			AssertResultsAreEqual( expected, actual );
 		}
 
+		[Test]
+		public void InspectField_StringInitializedNull_NotMutable() {
+			var field = Field( "public readonly string NullStringInitialized = null" );
+
+			var inspector = new MutabilityInspector(
+				field.Compilation,
+				KnownImmutableTypes.Default
+			);
+
+			var expected = MutabilityInspectionResult.NotMutable( field.Symbol.Type );
+
+			var actual = inspector.InspectField( field.Symbol );
+
+			AssertResultsAreEqual( expected, actual );
+		}
+
 		private const string AnnotationsPreamble = @"
 using System;
 using System.Collections.Generic;

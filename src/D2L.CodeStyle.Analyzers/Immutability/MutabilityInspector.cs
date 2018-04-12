@@ -382,12 +382,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ExpressionSyntax expr,
 			HashSet<ITypeSymbol> typeStack
 		) {
-			if( expr.Kind() == SyntaxKind.NullLiteralExpression ) {
-				// This is perhaps a bit suspicious, because fields and
-				// properties have to be readonly, but it is safe...
-				return MutabilityInspectionResult.NotMutable( null );
-			}
-
 			var model = m_compilation.GetSemanticModel( expr.SyntaxTree );
 
 			var typeInfo = model.GetTypeInfo( expr );
@@ -396,6 +390,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// the expression alone doesn't have a type. For example:
 			//   int[] foo = { 1, 2, 3 };
 			var exprType = typeInfo.Type ?? typeInfo.ConvertedType;
+
+			if( expr.Kind() == SyntaxKind.NullLiteralExpression ) {
+				// This is perhaps a bit suspicious, because fields and
+				// properties have to be readonly, but it is safe...
+				return MutabilityInspectionResult.NotMutable( exprType );
+			}
 
 			if( expr is ObjectCreationExpressionSyntax ) {
 				// If our initializer is "new Foo( ... )" we only need to
