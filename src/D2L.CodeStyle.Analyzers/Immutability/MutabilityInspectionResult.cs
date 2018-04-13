@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
 	public enum MutabilityTarget {
@@ -23,7 +24,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 	public sealed class MutabilityInspectionResult {
 
-		private readonly static MutabilityInspectionResult s_notMutableResult = new MutabilityInspectionResult( false, null, null, null, null, ImmutableHashSet<string>.Empty );
+		private readonly static MutabilityInspectionResult s_notMutableResult = new MutabilityInspectionResult(
+			false,
+			null,
+			null,
+			null,
+			null,
+			ImmutableHashSet<string>.Empty,
+			ImmutableHashSet<AttributeSyntax>.Empty
+		);
 
 		public bool IsMutable { get; }
 
@@ -37,13 +46,16 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		public ImmutableHashSet<string> SeenUnauditedReasons { get; }
 
+		public ImmutableHashSet<AttributeSyntax> UnnecessaryAnnotations { get; }
+
 		private MutabilityInspectionResult(
 			bool isMutable,
 			string memberPath,
 			string typeName,
 			MutabilityTarget? target,
 			MutabilityCause? cause,
-			ImmutableHashSet<string> seenUnauditedReasons
+			ImmutableHashSet<string> seenUnauditedReasons,
+			ImmutableHashSet<AttributeSyntax> unnecessaryAnnotations
 		) {
 			IsMutable = isMutable;
 			MemberPath = memberPath;
@@ -51,10 +63,25 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			Target = target;
 			Cause = cause;
 			SeenUnauditedReasons = seenUnauditedReasons;
+			UnnecessaryAnnotations = unnecessaryAnnotations;
 		}
 
 		public static MutabilityInspectionResult NotMutable() {
 			return s_notMutableResult;
+		}
+
+		public static MutabilityInspectionResult Audited(
+			MutabilityInspectionResult inspectionResult,
+			AttributeSyntax syntax
+		) {
+			if( inspectionResult.IsMutable ) {
+				return s_notMutableResult;
+			}
+
+			return s_notMutableResult
+					.WithUnnecessaryAnnotations(
+						inspectionResult.UnnecessaryAnnotations.Add( syntax )
+					);
 		}
 
 		public static MutabilityInspectionResult NotMutable( ImmutableHashSet<string> seenUnauditedReasons ) {
@@ -64,7 +91,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					null,
 					null,
 					null,
-					seenUnauditedReasons
+					seenUnauditedReasons,
+					ImmutableHashSet<AttributeSyntax>.Empty
 				);
 		}
 
@@ -80,7 +108,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				membersTypeName,
 				kind,
 				cause,
-				ImmutableHashSet<string>.Empty
+				ImmutableHashSet<string>.Empty,
+				ImmutableHashSet<AttributeSyntax>.Empty
 			);
 		}
 
@@ -146,7 +175,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				this.TypeName,
 				this.Target,
 				this.Cause,
-				this.SeenUnauditedReasons
+				this.SeenUnauditedReasons,
+				this.UnnecessaryAnnotations
 			);
 		}
 
@@ -157,7 +187,22 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				this.TypeName,
 				newTarget,
 				this.Cause,
-				this.SeenUnauditedReasons
+				this.SeenUnauditedReasons,
+				this.UnnecessaryAnnotations
+			);
+		}
+
+		public MutabilityInspectionResult WithUnnecessaryAnnotations(
+			ImmutableHashSet<AttributeSyntax> unnecessaryAnnotations
+		) {
+			return new MutabilityInspectionResult(
+				this.IsMutable,
+				this.MemberPath,
+				this.TypeName,
+				this.Target,
+				this.Cause,
+				this.SeenUnauditedReasons,
+				this.UnnecessaryAnnotations.Union( unnecessaryAnnotations )
 			);
 		}
 

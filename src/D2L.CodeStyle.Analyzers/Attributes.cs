@@ -1,6 +1,9 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
+using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers {
 	internal static class Attributes {
@@ -33,6 +36,22 @@ namespace D2L.CodeStyle.Analyzers {
 
 			public RoslynAttribute( string fullTypeName ) {
 				m_fullTypeName = fullTypeName;
+			}
+
+			internal AttributeSyntax GetAttributeSyntax( ISymbol symbol ) {
+				AttributeData attrData = GetAll( symbol ).FirstOrDefault();
+
+				if( attrData == null ) {
+					throw new Exception( $"Unable to get Unaudited attribute on '{symbol.Name}'" );
+				}
+
+				SyntaxNode syntaxNode = attrData
+					.ApplicationSyntaxReference?
+					.GetSyntax();
+
+				AttributeSyntax attrSyntax = syntaxNode as AttributeSyntax;
+
+				return attrSyntax;
 			}
 
 			internal ImmutableArray<AttributeData> GetAll( ISymbol s ) {
