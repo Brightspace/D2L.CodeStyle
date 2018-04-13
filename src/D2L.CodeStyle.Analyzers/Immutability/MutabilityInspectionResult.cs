@@ -23,13 +23,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 	public sealed class MutabilityInspectionResult {
 
-		private readonly static MutabilityInspectionResult s_notMutableResult = new MutabilityInspectionResult( false, null, null, null, null, ImmutableHashSet<string>.Empty );
-
 		public bool IsMutable { get; }
 
 		public string MemberPath { get; }
 
 		public string TypeName { get; }
+
+		public ISymbol Symbol { get; }
 
 		public MutabilityCause? Cause { get; }
 
@@ -41,6 +41,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			bool isMutable,
 			string memberPath,
 			string typeName,
+			ISymbol symbol,
 			MutabilityTarget? target,
 			MutabilityCause? cause,
 			ImmutableHashSet<string> seenUnauditedReasons
@@ -48,27 +49,41 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			IsMutable = isMutable;
 			MemberPath = memberPath;
 			TypeName = typeName;
+			Symbol = symbol;
 			Target = target;
 			Cause = cause;
 			SeenUnauditedReasons = seenUnauditedReasons;
 		}
 
-		public static MutabilityInspectionResult NotMutable() {
-			return s_notMutableResult;
+		public static MutabilityInspectionResult NotMutable( ISymbol symbol ) {
+			return new MutabilityInspectionResult(
+				isMutable: false,
+				memberPath: null,
+				typeName: null,
+				symbol: symbol,
+				target: null,
+				cause: null,
+				seenUnauditedReasons: ImmutableHashSet<string>.Empty
+			); ;
 		}
 
-		public static MutabilityInspectionResult NotMutable( ImmutableHashSet<string> seenUnauditedReasons ) {
+		public static MutabilityInspectionResult NotMutable(
+			ISymbol symbol,
+			ImmutableHashSet<string> seenUnauditedReasons
+		) {
 			return new MutabilityInspectionResult(
-					false,
-					null,
-					null,
-					null,
-					null,
-					seenUnauditedReasons
+					isMutable: false,
+					memberPath: null,
+					typeName: null,
+					symbol: symbol,
+					target: null,
+					cause: null,
+					seenUnauditedReasons: seenUnauditedReasons
 				);
 		}
 
 		public static MutabilityInspectionResult Mutable(
+			ISymbol symbol,
 			string mutableMemberPath,
 			string membersTypeName,
 			MutabilityTarget kind,
@@ -78,6 +93,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				true,
 				mutableMemberPath,
 				membersTypeName,
+				symbol,
 				kind,
 				cause,
 				ImmutableHashSet<string>.Empty
@@ -89,6 +105,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			MutabilityCause cause
 		) {
 			return Mutable(
+				type,
 				null,
 				type.GetFullTypeName(),
 				MutabilityTarget.Type,
@@ -101,6 +118,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			MutabilityCause cause
 		) {
 			return Mutable(
+				field,
 				field.Name,
 				field.Type.GetFullTypeName(),
 				MutabilityTarget.Member,
@@ -113,6 +131,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			MutabilityCause cause
 		) {
 			return Mutable(
+				property,
 				property.Name,
 				property.Type.GetFullTypeName(),
 				MutabilityTarget.Member,
@@ -124,6 +143,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ISymbol member
 		) {
 			return Mutable(
+				member,
 				member.Name,
 				null,
 				MutabilityTarget.Member,
@@ -144,6 +164,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				this.IsMutable,
 				newMember,
 				this.TypeName,
+				this.Symbol,
 				this.Target,
 				this.Cause,
 				this.SeenUnauditedReasons
@@ -155,6 +176,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				this.IsMutable,
 				this.MemberPath,
 				this.TypeName,
+				this.Symbol,
 				newTarget,
 				this.Cause,
 				this.SeenUnauditedReasons

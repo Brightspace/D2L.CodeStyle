@@ -134,7 +134,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// This only happens for code that otherwise won't compile. Our
 				// analyzer doesn't need to validate these types. It only needs
 				// to be strict for valid code.
-				return MutabilityInspectionResult.NotMutable();
+				return MutabilityInspectionResult.NotMutable( type );
 			}
 
 			if( type == null ) {
@@ -146,11 +146,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			var scope = type.GetImmutabilityScope();
 			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && scope == ImmutabilityScope.SelfAndChildren ) {
 				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
-				return MutabilityInspectionResult.NotMutable( immutableExceptions );
+				return MutabilityInspectionResult.NotMutable( type, immutableExceptions );
 			}
 
 			if( m_knownImmutableTypes.IsTypeKnownImmutable( type ) ) {
-				return MutabilityInspectionResult.NotMutable();
+				return MutabilityInspectionResult.NotMutable( type );
 			}
 
 			if( IsAnImmutableContainerType( type ) ) {
@@ -189,7 +189,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 				case TypeKind.Enum:
 					// Enums are just fancy ints.
-					return MutabilityInspectionResult.NotMutable();
+					return MutabilityInspectionResult.NotMutable( type );
 
 				case TypeKind.TypeParameter:
 					return InspectTypeParameter(
@@ -212,7 +212,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// (more fundamental) reasons. We only need to be strict
 					// for otherwise-successful builds, so we bail analysis in
 					// this case.
-					return MutabilityInspectionResult.NotMutable();
+					return MutabilityInspectionResult.NotMutable( type );
 
 				case TypeKind.Unknown:
 					// Looking at the Roslyn source this doesn't appear to
@@ -234,24 +234,24 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			MutabilityInspectionFlags flags = MutabilityInspectionFlags.Default
 		) {
 			if( type is IErrorTypeSymbol ) {
-				return MutabilityInspectionResult.NotMutable();
+				return MutabilityInspectionResult.NotMutable( type );
 			}
 
 			// The concrete type System.Object is empty (and therefore safe.)
 			// For example, `private readonly object m_lock = new object();` is fine. 
 			if( type.SpecialType == SpecialType.System_Object ) {
-				return MutabilityInspectionResult.NotMutable();
+				return MutabilityInspectionResult.NotMutable( type );
 			}
 
 			// System.ValueType is the base class of all value types (obscure detail)
 			if( type.SpecialType == SpecialType.System_ValueType ) {
-				return MutabilityInspectionResult.NotMutable();
+				return MutabilityInspectionResult.NotMutable( type );
 			}
 
 			var scope = type.GetImmutabilityScope();
 			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && scope != ImmutabilityScope.None ) {
 				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
-				return MutabilityInspectionResult.NotMutable( immutableExceptions );
+				return MutabilityInspectionResult.NotMutable( type, immutableExceptions );
 			}
 
 			return InspectType(
@@ -270,7 +270,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// or a generic parameter to a type causes the cycle (via IsTypeMutableRecursive). This is safe if the checks above have 
 				// passed and the remaining members are read-only immutable. So we can skip the current check, and allow the type to continue 
 				// to be evaluated.
-				return MutabilityInspectionResult.NotMutable();
+				return MutabilityInspectionResult.NotMutable( type );
 			}
 
 			// We have a type that is not marked immutable, is not an interface, is not an immutable container, etc..
@@ -304,7 +304,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				typeStack.Remove( type );
 			}
 
-			return MutabilityInspectionResult.NotMutable( seenUnauditedReasonsBuilder.ToImmutable() );
+			return MutabilityInspectionResult.NotMutable( type, seenUnauditedReasonsBuilder.ToImmutable() );
 		}
 
 		private bool IsAnImmutableContainerType( ITypeSymbol type ) {
@@ -346,7 +346,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				unauditedReasonsBuilder.UnionWith( result.SeenUnauditedReasons );
 			}
 
-			return MutabilityInspectionResult.NotMutable( unauditedReasonsBuilder.ToImmutable() );
+			return MutabilityInspectionResult.NotMutable( type, unauditedReasonsBuilder.ToImmutable() );
 		}
 
 		private MutabilityInspectionResult InspectTypeParameter(
@@ -382,12 +382,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ExpressionSyntax expr,
 			HashSet<ITypeSymbol> typeStack
 		) {
-			if( expr.Kind() == SyntaxKind.NullLiteralExpression ) {
-				// This is perhaps a bit suspicious, because fields and
-				// properties have to be readonly, but it is safe...
-				return MutabilityInspectionResult.NotMutable();
-			}
-
 			var model = m_compilation.GetSemanticModel( expr.SyntaxTree );
 
 			var typeInfo = model.GetTypeInfo( expr );
@@ -396,6 +390,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// the expression alone doesn't have a type. For example:
 			//   int[] foo = { 1, 2, 3 };
 			var exprType = typeInfo.Type ?? typeInfo.ConvertedType;
+
+			if( expr.Kind() == SyntaxKind.NullLiteralExpression ) {
+				// This is perhaps a bit suspicious, because fields and
+				// properties have to be readonly, but it is safe...
+				return MutabilityInspectionResult.NotMutable( exprType );
+			}
 
 			if( expr is ObjectCreationExpressionSyntax ) {
 				// If our initializer is "new Foo( ... )" we only need to
@@ -419,7 +419,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			if( property.IsIndexer ) {
 				// Indexer properties are just glorified method syntax and dont' hold state
-				return MutabilityInspectionResult.NotMutable();
+				return MutabilityInspectionResult.NotMutable( property );
 			}
 
 			var propertySyntax =
@@ -431,7 +431,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// backing field that may be mutable. Otherwise, properties are
 				// just sugar for getter/setter methods and don't themselves
 				// contribute to mutability.
-				return MutabilityInspectionResult.NotMutable();
+				return MutabilityInspectionResult.NotMutable( property );
 			}
 
 			if( !property.IsReadOnly ) {
@@ -523,11 +523,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			// if the member is audited or unaudited, ignore it
 			if( Attributes.Mutability.Audited.IsDefined( symbol ) ) {
-				return MutabilityInspectionResult.NotMutable();
+				return MutabilityInspectionResult.NotMutable( symbol );
 			}
 			if( Attributes.Mutability.Unaudited.IsDefined( symbol ) ) {
 				string unauditedReason = BecauseHelpers.GetUnauditedReason( symbol );
-				return MutabilityInspectionResult.NotMutable( ImmutableHashSet.Create( unauditedReason ) );
+				return MutabilityInspectionResult.NotMutable( symbol, ImmutableHashSet.Create( unauditedReason ) );
 			}
 
 			switch( symbol.Kind ) {
@@ -546,7 +546,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				case SymbolKind.Method:
 				case SymbolKind.NamedType:
 					// ignore these symbols, because they do not contribute to immutability
-					return MutabilityInspectionResult.NotMutable();
+					return MutabilityInspectionResult.NotMutable( symbol );
 
 				default:
 					// we've got a member (event, etc.) that we can't currently be smart about, so fail

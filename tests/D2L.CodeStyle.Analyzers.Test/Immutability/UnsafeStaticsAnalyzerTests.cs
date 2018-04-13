@@ -82,13 +82,16 @@ namespace D2L.CodeStyle.Annotations {
 
         }
     }";
+
 			var diag1 = CreateDiagnosticResult( 20, 44, "Default", MutabilityInspectionResult.Mutable(
+				null,
 				mutableMemberPath: "Default.uhoh",
 				membersTypeName: "test.Tests.Foo",
 				kind: MutabilityTarget.Member,
 				cause: MutabilityCause.IsNotReadonly
 			) );
 			var diag2 = CreateDiagnosticResult( 22, 40, "good", MutabilityInspectionResult.Mutable(
+				null,
 				mutableMemberPath: "good.uhoh",
 				membersTypeName: "test.Tests.Foo",
 				kind: MutabilityTarget.Member,
@@ -114,6 +117,7 @@ namespace D2L.CodeStyle.Annotations {
         }
     }";
 			AssertSingleDiagnostic( s_preamble + test, 22, 31, "bad", MutabilityInspectionResult.Mutable(
+				null,
 				mutableMemberPath: "bad",
 				membersTypeName: "test.Tests.Foo",
 				kind: MutabilityTarget.Member,
@@ -179,6 +183,7 @@ namespace D2L.CodeStyle.Annotations {
         }
     }";
 			AssertSingleDiagnostic( s_preamble + test, 22, 40, "bad", MutabilityInspectionResult.Mutable(
+				null,
 				mutableMemberPath: "bad.ClientsName",
 				membersTypeName: "test.Tests.Foo",
 				kind: MutabilityTarget.Member,
@@ -226,6 +231,7 @@ namespace D2L.CodeStyle.Annotations {
 			// inside GetFoo to see that its returning a concrete Foo and
 			// not some derived class.
 			AssertSingleDiagnostic( s_preamble + test, 22, 40, "bad", MutabilityInspectionResult.Mutable(
+				null,
 				mutableMemberPath: "bad",
 				membersTypeName: "test.Tests.Foo",
 				kind: MutabilityTarget.Type,
@@ -330,6 +336,7 @@ namespace D2L.CodeStyle.Annotations {
         }
     }";
 			AssertSingleDiagnostic( s_preamble + test, 23, 41, "bad", MutabilityInspectionResult.Mutable(
+				null,
 				mutableMemberPath: "bad.ClientsName",
 				membersTypeName: "System.String",
 				kind: MutabilityTarget.Member,
@@ -349,6 +356,7 @@ namespace D2L.CodeStyle.Annotations {
         }
     }";
 			AssertSingleDiagnostic( s_preamble + test, 17, 61, "bad", MutabilityInspectionResult.Mutable(
+				null,
 				mutableMemberPath: "bad",
 				membersTypeName: "System.Collections.IList",
 				kind: MutabilityTarget.Type,
@@ -368,6 +376,7 @@ namespace D2L.CodeStyle.Annotations {
         }
     }";
 			AssertSingleDiagnostic( s_preamble + test, 17, 76, "bad", MutabilityInspectionResult.Mutable(
+				null,
 				mutableMemberPath: "bad",
 				membersTypeName: "System.Collections.Generic.List",
 				kind: MutabilityTarget.Type,
@@ -387,6 +396,7 @@ namespace D2L.CodeStyle.Annotations {
         }
     }";
 			AssertSingleDiagnostic( s_preamble + test, 17, 87, "bad", MutabilityInspectionResult.Mutable(
+				null,
 				mutableMemberPath: "bad",
 				membersTypeName: "System.Object",
 				kind: MutabilityTarget.TypeArgument,
@@ -445,6 +455,7 @@ namespace D2L.CodeStyle.Annotations {
         }
     }";
 			AssertSingleDiagnostic( s_preamble + test, 22, 13, "bad", MutabilityInspectionResult.Mutable(
+				null,
 				mutableMemberPath: "bad",
 				membersTypeName: "test.Tests.Foo",
 				kind: MutabilityTarget.Member,
@@ -510,6 +521,7 @@ namespace D2L.CodeStyle.Annotations {
         }
     }";
 			AssertSingleDiagnostic( s_preamble + test, 22, 13, "bad", MutabilityInspectionResult.Mutable(
+				null,
 				mutableMemberPath: "bad.ClientsName",
 				membersTypeName: "System.String",
 				kind: MutabilityTarget.Member,
@@ -569,6 +581,7 @@ namespace D2L.CodeStyle.Annotations {
         }
     }";
 			AssertSingleDiagnostic( s_preamble + test, 22, 13, "bad", MutabilityInspectionResult.Mutable(
+				null,
 				mutableMemberPath: "bad",
 				membersTypeName: "test.Tests.Foo",
 				kind: MutabilityTarget.Member,
@@ -658,6 +671,7 @@ namespace D2L.CodeStyle.Annotations {
         }
     }";
 			AssertSingleDiagnostic( s_preamble + test, 23, 13, "bad", MutabilityInspectionResult.Mutable(
+				null,
 				mutableMemberPath: "bad.ClientsName",
 				membersTypeName: "System.String",
 				kind: MutabilityTarget.Member,
@@ -701,6 +715,7 @@ namespace D2L.CodeStyle.Annotations {
 	}";
 
 			AssertSingleDiagnostic( s_preamble + test, 18, 41, "foo", MutabilityInspectionResult.Mutable(
+				null,
 				mutableMemberPath: "foo.Instance",
 				membersTypeName: "test.Tests.Foo",
 				kind: MutabilityTarget.Member,
@@ -773,6 +788,7 @@ namespace D2L.CodeStyle.Annotations {
 	}";
 
 			AssertSingleDiagnostic( s_preamble + test, 23, 36, "foo", MutabilityInspectionResult.Mutable(
+				null,
 				mutableMemberPath: "foo",
 				membersTypeName: "test.Tests.Safe",
 				kind: MutabilityTarget.Type,
@@ -834,6 +850,7 @@ namespace D2L.CodeStyle.Annotations {
 		}
 	}";
 			AssertSingleDiagnostic( s_preamble + test, 26, 32, "foo", MutabilityInspectionResult.Mutable(
+				null,
 				mutableMemberPath: "foo.x",
 				membersTypeName: "System.Int32",
 				kind: MutabilityTarget.Member,
@@ -936,6 +953,7 @@ namespace test {
     }
 }";
 			AssertSingleDiagnostic( s_preamble + test, 15, 9, "PropertyWithSetter", MutabilityInspectionResult.Mutable(
+				null,
 				mutableMemberPath: "PropertyWithSetter",
 				membersTypeName: "Widget",
 				kind: MutabilityTarget.Member,
