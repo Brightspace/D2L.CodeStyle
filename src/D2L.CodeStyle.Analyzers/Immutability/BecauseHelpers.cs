@@ -8,9 +8,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		public static string GetUnauditedReason( ISymbol symbol ) {
 
-			AttributeSyntax attrSyntax = Attributes.Mutability.Unaudited.GetAttributeSyntax( symbol );
-
-			if( attrSyntax == null ) {
+			AttributeSyntax attrSyntax;
+			if( !Attributes.Mutability.Unaudited.TryGetAttributeSyntax( symbol, out attrSyntax ) ) {
 				throw new Exception( $"Unable to get AttributeSyntax for Unaudited attribute on '{symbol.Name}'" );
 			}
 

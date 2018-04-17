@@ -605,10 +605,12 @@ sealed class Baz { }
 			AssertUnauditedReasonsResult( ty, "ItsUgly", "ItHasntBeenLookedAt" );
 		}
 
-		[Test]
-		public void InspectType_TypeHasMutableAuditedMember_ReturnsEmptyUnnecessaryAnnotations() {
+		[TestCase( @"Mutability.Audited( ""bar"", ""bar"", ""bar"" )" )]
+		[TestCase( @"Mutability.Unaudited( Because.ItsSketchy )" )]
+		public void InspectType_TypeHasAnnotatedMutableAuditedMember_ReturnsEmptyUnnecessaryAnnotations(
+			string barAuditedAnnotation
+		) {
 
-			const string barAuditedAnnotation = @"Mutability.Audited( ""bar"", ""bar"", ""bar"" )";
 			string source = AnnotationsPreamble + @"
 sealed class Foo {
 	[barAuditedAnnotation]
@@ -621,10 +623,12 @@ sealed class Foo {
 			AssertUnnecessaryAnnotations( ty );
 		}
 
-		[Test]
-		public void InspectType_TypeHasImmutableAuditedMember_ReturnsUnnecessaryAnnotations() {
+		[TestCase( @"Mutability.Audited( ""bar"", ""bar"", ""bar"" )" )]
+		[TestCase( @"Mutability.Unaudited( Because.ItsSketchy )" )]
+		public void InspectType_TypeHasAnnotatedImmutableMember_ReturnsUnnecessaryAnnotations(
+			string barAuditedAnnotation
+		) {
 
-			const string barAuditedAnnotation = @"Mutability.Audited( ""bar"", ""bar"", ""bar"" )";
 			string source = AnnotationsPreamble + @"
 sealed class Foo {
 	[barAuditedAnnotation]
@@ -638,11 +642,22 @@ sealed class Foo {
 			AssertUnnecessaryAnnotations( ty, barAuditedAnnotation );
 		}
 
-		[Test]
-		public void InspectType_TypeHasNestedImmutableAuditedMember_ReturnsAllUnnecessaryAnnotations() {
-
-			const string barAuditedAnnotation = @"Mutability.Audited( ""bar"", ""bar"", ""bar"" )";
-			const string bazAuditedAnnotation = @"Mutability.Audited( ""baz"", ""baz"", ""baz"" )";
+		[TestCase(
+			@"Mutability.Audited( ""bar"", ""bar"", ""bar"" )",
+			@"Mutability.Audited( ""baz"", ""baz"", ""baz"" )" )]
+		[TestCase(
+			@"Mutability.Unaudited( Because.ItsSketchy )",
+			@"Mutability.Unaudited( Because.ItHasntBeenLookedAt )" )]
+		[TestCase(
+			@"Mutability.Unaudited( Because.ItsSketchy )",
+			@"Mutability.Audited( ""baz"", ""baz"", ""baz"" )" )]
+		[TestCase(
+			@"Mutability.Audited( ""bar"", ""bar"", ""bar"" )",
+			@"Mutability.Unaudited( Because.ItHasntBeenLookedAt )" )]
+		public void InspectType_TypeHasNestedAnnotatedImmutableMember_ReturnsAllUnnecessaryAnnotations(
+			string barAuditedAnnotation,
+			string bazAuditedAnnotation
+		) {
 
 			string source = AnnotationsPreamble + @"
 sealed class Foo {
@@ -663,11 +678,22 @@ sealed class Bar {
 			AssertUnnecessaryAnnotations( ty, barAuditedAnnotation, bazAuditedAnnotation );
 		}
 
-		[Test]
-		public void InspectType_TypeHasInnerMutableAuditedMember_ReturnsTopLevelAnnotation() {
-
-			const string barAuditedAnnotation = @"Mutability.Audited( ""bar"", ""bar"", ""bar"" )";
-			const string bazAuditedAnnotation = @"Mutability.Audited( ""baz"", ""baz"", ""baz"" )";
+		[TestCase(
+			@"Mutability.Audited( ""bar"", ""bar"", ""bar"" )",
+			@"Mutability.Audited( ""baz"", ""baz"", ""baz"" )" )]
+		[TestCase(
+			@"Mutability.Unaudited( Because.ItsSketchy )",
+			@"Mutability.Unaudited( Because.ItHasntBeenLookedAt )" )]
+		[TestCase(
+			@"Mutability.Unaudited( Because.ItsSketchy )",
+			@"Mutability.Audited( ""baz"", ""baz"", ""baz"" )" )]
+		[TestCase(
+			@"Mutability.Audited( ""bar"", ""bar"", ""bar"" )",
+			@"Mutability.Unaudited( Because.ItHasntBeenLookedAt )" )]
+		public void InspectType_TypeHasInnerMutableAuditedMember_ReturnsTopLevelAnnotation(
+			string barAuditedAnnotation,
+			string bazAuditedAnnotation
+		) {
 
 			string source = AnnotationsPreamble + @"
 sealed class Foo {

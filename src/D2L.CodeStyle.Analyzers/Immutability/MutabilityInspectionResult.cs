@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -70,9 +71,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return s_notMutableResult;
 		}
 
-		public static MutabilityInspectionResult Audited(
+		public static MutabilityInspectionResult Annotated(
 			MutabilityInspectionResult inspectionResult,
-			AttributeSyntax syntax
+			IEnumerable<AttributeSyntax> attributeSyntaxes
 		) {
 			if( inspectionResult.IsMutable ) {
 				return s_notMutableResult;
@@ -80,7 +81,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			return s_notMutableResult
 					.WithUnnecessaryAnnotations(
-						inspectionResult.UnnecessaryAnnotations.Add( syntax )
+						inspectionResult.UnnecessaryAnnotations.Union( attributeSyntaxes )
 					);
 		}
 
@@ -188,6 +189,20 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				newTarget,
 				this.Cause,
 				this.SeenUnauditedReasons,
+				this.UnnecessaryAnnotations
+			);
+		}
+
+		public MutabilityInspectionResult WithSeenUnauditedReason(
+			string unnecessaryAnnotation
+		) {
+			return new MutabilityInspectionResult(
+				this.IsMutable,
+				this.MemberPath,
+				this.TypeName,
+				this.Target,
+				this.Cause,
+				this.SeenUnauditedReasons.Add( unnecessaryAnnotation ),
 				this.UnnecessaryAnnotations
 			);
 		}

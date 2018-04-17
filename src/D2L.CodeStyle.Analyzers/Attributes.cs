@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
@@ -25,7 +26,24 @@ namespace D2L.CodeStyle.Analyzers {
 		internal static class Mutability {
 			internal static readonly RoslynAttribute Audited = new RoslynAttribute( "D2L.CodeStyle.Annotations.Mutability.AuditedAttribute" );
 			internal static readonly RoslynAttribute Unaudited = new RoslynAttribute( "D2L.CodeStyle.Annotations.Mutability.UnauditedAttribute" );
+
+			internal static bool IsDefined( ISymbol symbol ) {
+				return Audited.IsDefined( symbol ) || Unaudited.IsDefined( symbol );
+			}
+
+			internal static IEnumerable<AttributeSyntax> GetAllAttributeSyntax(
+				ISymbol symbol
+			) {
+				if( Audited.TryGetAttributeSyntax(symbol, out AttributeSyntax auditedSyntax ) ) {
+					yield return auditedSyntax;
+				}
+				if( Unaudited.TryGetAttributeSyntax(symbol, out AttributeSyntax unauditedSyntax ) ) {
+					yield return unauditedSyntax;
+				}
+			}
+
 		}
+
 		internal static readonly RoslynAttribute Singleton = new RoslynAttribute( "D2L.LP.Extensibility.Activation.Domain.SingletonAttribute" );
 		internal static readonly RoslynAttribute DIFramework = new RoslynAttribute( "D2L.LP.Extensibility.Activation.Domain.DIFrameworkAttribute" );
 		internal static readonly RoslynAttribute Dependency = new RoslynAttribute( "D2L.LP.Extensibility.Activation.Domain.DependencyAttribute" );
@@ -38,20 +56,24 @@ namespace D2L.CodeStyle.Analyzers {
 				m_fullTypeName = fullTypeName;
 			}
 
-			internal AttributeSyntax GetAttributeSyntax( ISymbol symbol ) {
+			internal bool TryGetAttributeSyntax(
+				ISymbol symbol,
+				out AttributeSyntax attrSyntax
+			) {
 				AttributeData attrData = GetAll( symbol ).FirstOrDefault();
 
 				if( attrData == null ) {
-					throw new Exception( $"Unable to get Unaudited attribute on '{symbol.Name}'" );
+					attrSyntax = null;
+					return false;
 				}
 
 				SyntaxNode syntaxNode = attrData
 					.ApplicationSyntaxReference?
 					.GetSyntax();
 
-				AttributeSyntax attrSyntax = syntaxNode as AttributeSyntax;
+				attrSyntax = syntaxNode as AttributeSyntax;
 
-				return attrSyntax;
+				return true;
 			}
 
 			internal ImmutableArray<AttributeData> GetAll( ISymbol s ) {

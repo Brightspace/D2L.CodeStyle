@@ -528,20 +528,22 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			HashSet<ITypeSymbol> typeStack
 		) {
 			// if the member is audited or unaudited, check if valid
-			if( Attributes.Mutability.Audited.IsDefined( symbol ) ) {
+			if( Attributes.Mutability.IsDefined( symbol ) ) {
 
-				var auditedAttributeSyntax = Attributes.Mutability.Audited.GetAttributeSyntax( symbol );
-				var auditedInspectionResult = InspectMemberRecursive( symbol, typeStack );
+				var annotedAttributes = Attributes.Mutability.GetAllAttributeSyntax( symbol );
+				var annotatedInspectionResult = InspectMemberRecursive( symbol, typeStack );
 
-				return MutabilityInspectionResult.Audited(
-					auditedInspectionResult,
-					auditedAttributeSyntax
+				var annotatedResult = MutabilityInspectionResult.Annotated(
+					annotatedInspectionResult,
+					annotedAttributes
 				);
 
-			}
-			if( Attributes.Mutability.Unaudited.IsDefined( symbol ) ) {
-				string unauditedReason = BecauseHelpers.GetUnauditedReason( symbol );
-				return MutabilityInspectionResult.NotMutable( ImmutableHashSet.Create( unauditedReason ) );
+				if( Attributes.Mutability.Unaudited.IsDefined( symbol ) ) {
+					string unauditedReason = BecauseHelpers.GetUnauditedReason( symbol );
+					return annotatedResult.WithSeenUnauditedReason( unauditedReason );
+				}
+
+				return annotatedResult;
 			}
 
 			return InspectMemberRecursive( symbol, typeStack );
