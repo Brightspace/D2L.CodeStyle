@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace D2L.CodeStyle.Analyzers.ApiUsage {
+namespace D2L.CodeStyle.Analyzers.Visibility {
 
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	internal sealed class CorsHeaderAppenderUsageAnalyzer : DiagnosticAnalyzer {

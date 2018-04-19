@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.CorsHeaderAppenderUsageAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.Visibility.CorsHeaderAppenderUsageAnalyzer
 
 using D2L.LP.Web.Cors;
 
