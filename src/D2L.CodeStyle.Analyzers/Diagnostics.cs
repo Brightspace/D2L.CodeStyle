@@ -271,5 +271,15 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "Unnecessary mutability annotations should be removed to keep the code base clean"
 		);
+
+		public static readonly DiagnosticDescriptor DangerousUsageOfCorsHeaderAppender = new DiagnosticDescriptor(
+			id: "D2L0031",
+			title: "ICorsHeaderAppender should not be used, as it can introduce security vulnerabilities.",
+			messageFormat: "ICorsHeaderAppender should not be used, as it can introduce security vulnerabilities.",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "ICorsHeaderAppender should not be used, as it can introduce security vulnerabilities."
+		);
 	}
 }
