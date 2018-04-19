@@ -15,17 +15,23 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		private const string CorsInterface = "D2L.LP.Web.Cors.ICorsHeaderAppender";
 		private const string CorsClass = "D2L.LP.Web.Cors.CorsHeaderAppender";
 
-		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-			Diagnostics.DangerousUsageOfCorsHeaderAppender
-		);
+		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
+			=> ImmutableArray.Create(
+				Diagnostics.DangerousUsageOfCorsHeaderAppender
+			);
 
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
-			context.RegisterCompilationStartAction( RegisterCorsHeadersUsageAnalyzer );
+			context.RegisterCompilationStartAction(
+				RegisterCorsHeadersUsageAnalyzer
+			);
 		}
 
-		public void RegisterCorsHeadersUsageAnalyzer( CompilationStartAnalysisContext context ) {
-			INamedTypeSymbol interfaceType = context.Compilation.GetTypeByMetadataName( CorsInterface );
+		public void RegisterCorsHeadersUsageAnalyzer(
+			CompilationStartAnalysisContext context
+		) {
+			INamedTypeSymbol interfaceType = context.Compilation
+				.GetTypeByMetadataName( CorsInterface );
 
 			if( !interfaceType.IsNullOrErrorType() ) {
 				context.RegisterSyntaxNodeAction(
@@ -37,7 +43,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				);
 			}
 
-			INamedTypeSymbol classType = context.Compilation.GetTypeByMetadataName( CorsClass );
+			INamedTypeSymbol classType = context.Compilation
+				.GetTypeByMetadataName( CorsClass );
 
 			if( !classType.IsNullOrErrorType() ) {
 				context.RegisterSyntaxNodeAction(
@@ -52,57 +59,74 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		}
 
 		/// <summary>
-		/// Prevent injection of the ICorsHttpHeaderHelper interface except in a specific whitelist of classes.
+		/// Prevent injection of the ICorsHttpHeaderHelper interface except in
+		/// a specific whitelist of classes.
 		/// </summary>
 		private static void PreventInjection(
 			SyntaxNodeAnalysisContext context,
 			INamedTypeSymbol interfaceType
 		) {
-			ConstructorDeclarationSyntax constructor = context.Node as ConstructorDeclarationSyntax;
+			var constructor = context.Node as ConstructorDeclarationSyntax;
 			if( constructor == null ) {
 				return;
 			}
 
 			foreach( var parameter in constructor.ParameterList.Parameters ) {
-				INamedTypeSymbol baseType = context.SemanticModel.GetTypeInfo( parameter.Type ).Type as INamedTypeSymbol;
+				INamedTypeSymbol paramType = context.SemanticModel
+					.GetTypeInfo( parameter.Type )
+					.Type as INamedTypeSymbol;
 
-				if( baseType.IsNullOrErrorType() || !baseType.Equals( interfaceType ) ) {
+				if( paramType == null || !paramType.Equals( interfaceType ) ) {
 					return;
 				}
 
-				var parentClasses = context.Node.Ancestors().Where( a => a.IsKind( SyntaxKind.ClassDeclaration ) );
-				var parentSymbols = parentClasses.Select( c => context.SemanticModel.GetDeclaredSymbol( c ) );
+				var parentClasses = context.Node
+					.Ancestors()
+					.Where( a => a.IsKind( SyntaxKind.ClassDeclaration ) );
 
-				if( parentSymbols.Any( s => IsClassWhitelisted( s.ToString() ) ) ) {
+				var parentSymbols = parentClasses.Select(
+					c => context.SemanticModel.GetDeclaredSymbol( c )
+				);
+
+				if( parentSymbols.Any( IsClassWhitelisted ) ) {
 					return;
 				}
 
 				context.ReportDiagnostic(
-					Diagnostic.Create( Diagnostics.DangerousUsageOfCorsHeaderAppender, parameter.GetLocation() )
+					Diagnostic.Create(
+						Diagnostics.DangerousUsageOfCorsHeaderAppender,
+						parameter.GetLocation()
+					)
 				);
 			}
 		}
 
 		/// <summary>
-		/// We never want to allow manual instantiation of this object, so no whitelist here.
+		/// We never want to allow manual instantiation of this object, so no
+		/// whitelist here.
 		/// </summary>
 		private static void PreventManualInstantiation(
 			SyntaxNodeAnalysisContext context,
 			INamedTypeSymbol classType
 		) {
-			ObjectCreationExpressionSyntax instantiation = context.Node as ObjectCreationExpressionSyntax;
+			var instantiation = context.Node as ObjectCreationExpressionSyntax;
 			if( instantiation == null ) {
 				return;
 			}
 
-			INamedTypeSymbol baseType = context.SemanticModel.GetTypeInfo( instantiation ).Type as INamedTypeSymbol;
+			INamedTypeSymbol baseType = context.SemanticModel
+				.GetTypeInfo( instantiation )
+				.Type as INamedTypeSymbol;
 
-			if( baseType.IsNullOrErrorType() || !baseType.Equals( classType ) ) {
+			if( baseType == null || !baseType.Equals( classType ) ) {
 				return;
 			}
 
 			context.ReportDiagnostic(
-				Diagnostic.Create( Diagnostics.DangerousUsageOfCorsHeaderAppender, context.Node.GetLocation() )
+				Diagnostic.Create(
+					Diagnostics.DangerousUsageOfCorsHeaderAppender,
+					context.Node.GetLocation()
+				)
 			);
 		}
 
@@ -115,8 +139,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			"D2L.LP.Web.Files.FileViewing.Default.StreamFileViewerResultFactory"
 		}.ToImmutableHashSet();
 
-		private static bool IsClassWhitelisted( string className ) {
-			return WhitelistedClasses.Contains( className );
+		private static bool IsClassWhitelisted( ISymbol classSymbol ) {
+			return WhitelistedClasses.Contains( classSymbol.ToString() );
 		}
 	}
 }
