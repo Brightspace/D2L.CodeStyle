@@ -1,3 +1,4 @@
+using System.Linq;
 using D2L.CodeStyle.Analyzers.Test.Verifiers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -12,14 +13,42 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private const string s_preamble = @"
 using System;
+using D2L.CodeStyle.Annotations;
 using static D2L.CodeStyle.Annotations.Objects;
  
 namespace D2L.CodeStyle.Annotations {
+	public enum Because {
+		ItHasntBeenLookedAt,
+		ItsSketchy,
+		ItsStickyDataOhNooo,
+		WeNeedToMakeTheAnalyzerConsiderThisSafe,
+		ItsUgly,
+		ItsOnDeathRow
+	}
+
+	public enum UndiffBucket {
+		Core
+	}
+
 	public class Objects {
 		public class Immutable : Attribute {}
 	}
+
+	public static class Mutability {
+		public sealed class UnauditedAttribute : Attribute {
+
+			public UnauditedAttribute( Because why ) { }
+
+			public UnauditedAttribute( Because why, UndiffBucket bucket ) { }
+		}
+		public sealed class AuditedAttribute : Attribute {
+
+			public AuditedAttribute( string owner, string auditedDate, string rationale ) { }
+		}
+	}
 }
 ";
+		private static readonly int s_preambleLines = s_preamble.Count( c => c == '\n' );
 
 		private readonly MutabilityInspectionResultFormatter m_formatter = new MutabilityInspectionResultFormatter();
 
@@ -42,12 +71,14 @@ namespace D2L.CodeStyle.Annotations {
 
 		}
 	}";
-			AssertSingleDiagnostic( s_preamble + test, 13, 9, MutabilityInspectionResult.Mutable(
-				"bad",
-				"System.DateTime",
-				MutabilityTarget.Member,
-				MutabilityCause.IsNotReadonly
-			) );
+			AssertSingleDiagnostic( s_preamble + test, s_preambleLines + 4, 9,
+				MutabilityInspectionResult.Mutable(
+					"bad",
+					"System.DateTime",
+					MutabilityTarget.Member,
+					MutabilityCause.IsNotReadonly
+				)
+			);
 		}
 
 		[Test]
@@ -62,12 +93,14 @@ namespace D2L.CodeStyle.Annotations {
 
 		}
 	}";
-			AssertSingleDiagnostic( s_preamble + test, 13, 9, MutabilityInspectionResult.Mutable(
-				"bad",
-				"System.DateTime",
-				MutabilityTarget.Member,
-				MutabilityCause.IsNotReadonly
-			) );
+			AssertSingleDiagnostic( s_preamble + test, s_preambleLines + 4, 9,
+				MutabilityInspectionResult.Mutable(
+					"bad",
+					"System.DateTime",
+					MutabilityTarget.Member,
+					MutabilityCause.IsNotReadonly
+				)
+			);
 		}
 
 		[Test]
@@ -83,12 +116,14 @@ namespace D2L.CodeStyle.Annotations {
 
 		}
 	}";
-			AssertSingleDiagnostic( s_preamble + test, 14, 9, MutabilityInspectionResult.Mutable( 
-				"bad",
-				"System.DateTime",
-				MutabilityTarget.Member,
-				MutabilityCause.IsNotReadonly
-			) );
+			AssertSingleDiagnostic( s_preamble + test, s_preambleLines + 5, 9,
+				MutabilityInspectionResult.Mutable(
+					"bad",
+					"System.DateTime",
+					MutabilityTarget.Member,
+					MutabilityCause.IsNotReadonly
+				)
+			);
 		}
 
 		[Test]
