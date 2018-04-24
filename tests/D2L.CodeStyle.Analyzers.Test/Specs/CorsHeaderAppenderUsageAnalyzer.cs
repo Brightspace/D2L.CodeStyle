@@ -32,6 +32,18 @@ namespace D2L.LP.Web.ContentHandling.Handlers {
 
 }
 
+namespace D2L.LP.Web.ContentHandling.Mapping {
+
+	public class ContentHttpHandlerMapper { // Whitelisted by necessity
+
+		public ContentHttpHandlerMapper(
+			ICorsHeaderAppender corsHelper
+		) { }
+
+	}
+
+}
+
 namespace D2L.LP.Web.Files.FileViewing { // Whitelisted by necessity
 
 	public class StreamFileViewerResult {

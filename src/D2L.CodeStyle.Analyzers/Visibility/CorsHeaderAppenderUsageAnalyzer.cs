@@ -135,6 +135,7 @@ namespace D2L.CodeStyle.Analyzers.Visibility {
 		/// </summary>
 		private static readonly ImmutableHashSet<string> WhitelistedClasses = new HashSet<string> {
 			"D2L.LP.Web.ContentHandling.Handlers.ContentHttpHandler",
+			"D2L.LP.Web.ContentHandling.Mapping.ContentHttpHandlerMapper",
 			"D2L.LP.Web.Files.FileViewing.StreamFileViewerResult",
 			"D2L.LP.Web.Files.FileViewing.Default.StreamFileViewerResultFactory"
 		}.ToImmutableHashSet();
