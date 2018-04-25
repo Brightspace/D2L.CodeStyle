@@ -36,6 +36,7 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ApiUsage\JsonParamBinderAnalyzerFixerTests.cs" />
     <Compile Include="Immutability\BecauseHelpersTests.cs" />
     <Compile Include="Immutability\ImmutableHelpersTests.cs" />
     <Compile Include="Immutability\KnownImmutableTypesTests.cs" />
@@ -68,6 +69,7 @@
     <EmbeddedResource Include="Specs\ObsoleteLaunchDarklyApisAnalyzer.cs" />
     <EmbeddedResource Include="Specs\FeatureDefinitionAnalyzer.cs" />
     <Compile Include="Immutability\UnsafeStaticsAnalyzerTests.cs" />
+    <Compile Include="Verifiers\CodeFixVerifier.cs" />
     <Compile Include="Verifiers\DiagnosticResult.cs" />
     <Compile Include="Verifiers\DiagnosticVerifier.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
