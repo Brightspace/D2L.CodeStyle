@@ -15,6 +15,8 @@ namespace D2L {
 		public void _arg10( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10 ) { }
 		public void _arg11( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11 ) { }
 
+		public void funcWithParams( int a, int b, int c, params int[] ps ) { }
+
 		public static void Test() {
 			_arg0();
 			_arg1( 1 );
@@ -48,6 +50,10 @@ namespace D2L {
 			_arg11( 1, 2, 3, 4, 5, 6, 7, 8, 9, a10: 10, a11: 11 );
 
 			/* UseNamedArgsForInvocationWithLotsOfArgs */ _arg11( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, a11: 11 ) /**/;
+
+			funcWithParams( 1, 2, 3 );
+			funcWithParams( 1, 2, 3, 4 );
+			funcWithParams( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 );
 		}
 	}
 }
