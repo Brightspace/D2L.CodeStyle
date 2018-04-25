@@ -291,5 +291,15 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "This function takes lots of arguments which makes it confusing. Please used named arguments so future readers can figure it out and so that it's clearer that the arguments are in the right order."
 		);
+
+		public static readonly DiagnosticDescriptor InterfaceImplementationParamNameMismatch = new DiagnosticDescriptor(
+			id: "D2L0033",
+			title: "Interface implementation parameter names should match the interface",
+			messageFormat: "Expected implementation parameter name to be '{0}', saw '{1}'",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Interface implementation parameter names should match the interface"
+		);
 	}
 }

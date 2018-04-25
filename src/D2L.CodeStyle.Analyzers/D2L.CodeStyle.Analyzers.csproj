@@ -33,6 +33,7 @@
   <ItemGroup>
     <Compile Include="Language\UseNamedArgumentsCodeFix.cs" />
     <Compile Include="Language\RequireNamedArgumentsAnalyzer.cs" />
+    <Compile Include="Language\ParamNamesShouldMatchInterfaceAnalyzer.cs" />
     <Compile Include="Visibility\CorsHeaderAppenderUsageAnalyzer.cs" />
     <Compile Include="Immutability\ImmutableGenericAttributeAnalyzer.cs" />
     <Compile Include="ApiUsage\JsonParamBinderAttribute\JsonParamBinderAnalyzer.cs" />
