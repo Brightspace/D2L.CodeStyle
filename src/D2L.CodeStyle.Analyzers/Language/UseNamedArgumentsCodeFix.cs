@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -59,6 +58,12 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			}
 		}
 
+		private static SyntaxToken CommaNewline( object _ ) {
+			return SyntaxFactory
+				.Token( SyntaxKind.CommaToken )
+				.WithTrailingTrivia( SyntaxFactory.CarriageReturnLineFeed );
+		}
+
 		private static Task<Document> UseNamedArgs(
 			Document orig,
 			SyntaxNode root,
@@ -68,10 +73,15 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		) {
 			var namedArgs = GetNamedArgs( args, argNames );
 
-			var newArgs = args
-				.WithArguments(
-					SyntaxFactory.SeparatedList( namedArgs )
-				);
+			var newArgs = SyntaxFactory.ArgumentList(
+				openParenToken: args.OpenParenToken,
+				arguments: SyntaxFactory.SeparatedList(
+					nodes: namedArgs,
+					separators: args.Arguments.GetSeparators()
+				),
+				closeParenToken: args.CloseParenToken
+			);
+
 
 			var newRoot = root.ReplaceNode( args, newArgs );
 			var newDoc = orig.WithSyntaxRoot( newRoot );
@@ -91,9 +101,6 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					yield return arg;
 					continue;
 				}
-
-				// TODO: get whitespace to at least preserve. More D2Ly would
-				// be to split onto multi lines but that has some edge-cases...
 
 				yield return arg
 					.WithNameColon(
