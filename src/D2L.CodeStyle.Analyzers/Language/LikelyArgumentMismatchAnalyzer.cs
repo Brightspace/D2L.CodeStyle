@@ -52,6 +52,12 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
+			// this is currently n!, so, bail out for long lists
+			// (which may be where its needed most!)
+			if( sourceMatching.Length > 6 ) {
+				return;
+			}
+
 			ImmutableArray<Edge> bestMatching = GenerateBestMatching( sourceMatching );
 
 			ImmutableDictionary<int, Edge> sourceEdges = sourceMatching
