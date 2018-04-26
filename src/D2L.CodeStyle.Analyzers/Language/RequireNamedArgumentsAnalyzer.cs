@@ -9,6 +9,23 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace D2L.CodeStyle.Analyzers.Language {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class RequireNamedArgumentsAnalyzer : DiagnosticAnalyzer {
+
+		public sealed class ArgParamBinding {
+			public ArgParamBinding(
+				int position,
+				string paramName,
+				ArgumentSyntax syntax
+			) {
+				Position = position;
+				ParamName = paramName;
+				Syntax = syntax;
+			}
+
+			public int Position { get; }
+			public string ParamName { get; }
+			public ArgumentSyntax Syntax { get; }
+		}
+
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.UseNamedArgsForInvocationWithLotsOfArgs
 		);
@@ -46,10 +63,18 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			).ToImmutableArray();
 
 			if ( unnamedArgs.Length >= TOO_MANY_UNNAMED_ARGS ) {
+				// Pass the names and positions for each unnamed arg to the
+				// codefix.
+				var fixerContext = unnamedArgs.ToImmutableDictionary(
+					keySelector: binding => binding.Position.ToString(),
+					elementSelector: binding => binding.ParamName
+				);
+
 				ctx.ReportDiagnostic(
 					Diagnostic.Create(
 						descriptor: Diagnostics.UseNamedArgsForInvocationWithLotsOfArgs,
-						location: expr.GetLocation()
+						location: expr.GetLocation(),
+						properties: fixerContext
 					)
 				);
 			}
@@ -64,11 +89,13 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		/// <summary>
 		/// Get the arguments which are unnamed and not "params"
 		/// </summary>
-		private static IEnumerable<ArgumentSyntax> GetUnnamedArgs(
+		private static IEnumerable<ArgParamBinding> GetUnnamedArgs(
 			SemanticModel model,
 			ArgumentListSyntax args
 		) {
-			foreach( var arg in args.Arguments ) {
+			for( var idx = 0; idx < args.Arguments.Count; idx++ ) {
+				var arg = args.Arguments[idx];
+
 				// Ignore args that are already named. This will mean that args
 				// can be partially named which is sometimes helpful (the named
 				// args have to be at the end of the list though.)
@@ -103,7 +130,11 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					continue;
 				}
 
-				yield return arg;
+				yield return new ArgParamBinding(
+					position: idx,
+					paramName: param.Name,
+					syntax: arg
+				);
 			}
 		}
 	}
