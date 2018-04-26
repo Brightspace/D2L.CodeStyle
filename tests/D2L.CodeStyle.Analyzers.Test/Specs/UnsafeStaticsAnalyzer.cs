@@ -8,6 +8,21 @@ namespace D2L.CodeStyle.Annotations {
 		public class Audited : Attribute { }
 		public class Unaudited : Attribute { }
 	}
+	public static class Mutability {
+		public sealed class AuditedAttribute : Attribute { }
+		public sealed class UnauditedAttribute : Attribute {
+			public UnauditedAttribute( Because why ) { }
+		}
+	}
+	public enum Because {
+		ItHasntBeenLookedAt = 1,
+		ItsSketchy = 2,
+		ItsStickyDataOhNooo = 3,
+		WeNeedToMakeTheAnalyzerConsiderThisSafe = 4,
+		ItsUgly = 5,
+		ItsOnDeathRow = 6
+	}
+
 	public class Objects {
 		public class Immutable : Attribute { }
 	}
@@ -132,6 +147,9 @@ namespace SpecTests {
 	public sealed class ClassWithMutableBaseClass : MutableBaseClass {}
 
 	public sealed class UnsafeThings {
+		[Mutability.Unaudited( Because.ItsSketchy )]
+		private static int /* UnsafeStatic(m_mutableIntMutabilityAudited,'m_mutableIntMutabilityAudited' is not read-only) */ m_mutableIntMutabilityAudited /**/;
+
 		private static int /* UnsafeStatic(m_mutableInt,'m_mutableInt' is not read-only) */ m_mutableInt /**/;
 
 		private static readonly ClassWithMutableBaseClass /* UnsafeStatic(m_foo,'m_foo.m_mutableInt' is not read-only) */ m_foo /**/;
