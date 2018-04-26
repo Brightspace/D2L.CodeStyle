@@ -91,13 +91,14 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					allowParams: false
 				);
 
-				// We presumably can't name this param anyway
+				// Not sure if this can happen but it'd be hard to name this
+				// param so ignore it.
 				if ( param == null ) {
 					continue;
 				}
 
 				// IParameterSymbol.Name is documented to be possibly empty in
-				// which case it is unnamed, so ignore it.
+				// which case it is "unnamed", so ignore it.
 				if ( param.Name == "" ) {
 					continue;
 				}
