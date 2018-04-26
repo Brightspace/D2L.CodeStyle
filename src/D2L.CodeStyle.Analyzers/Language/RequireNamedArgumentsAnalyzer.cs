@@ -73,7 +73,10 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				// can be partially named which is sometimes helpful (the named
 				// args have to be at the end of the list though.)
 				if ( arg.NameColon != null ) {
-					continue;
+					// We can stop as soon as we see one; named arguments have
+					// to be at the end of the arguments so the rest will be
+					// named too.
+					yield break;
 				}
 
 				var param = arg.DetermineParameter(
