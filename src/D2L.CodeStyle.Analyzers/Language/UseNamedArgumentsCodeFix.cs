@@ -58,12 +58,6 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			}
 		}
 
-		private static SyntaxToken CommaNewline( object _ ) {
-			return SyntaxFactory
-				.Token( SyntaxKind.CommaToken )
-				.WithTrailingTrivia( SyntaxFactory.CarriageReturnLineFeed );
-		}
-
 		private static Task<Document> UseNamedArgs(
 			Document orig,
 			SyntaxNode root,
@@ -102,9 +96,15 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					continue;
 				}
 
+				SyntaxTriviaList leadingTrivia =
+					arg.RefOrOutKeyword.Kind() == SyntaxKind.None
+					? arg.Expression.GetLeadingTrivia()
+					: arg.RefOrOutKeyword.LeadingTrivia;
+
 				yield return arg
 					.WithNameColon(
 						SyntaxFactory.NameColon( argNames[idx] )
+							.WithLeadingTrivia( leadingTrivia )
 					);
 			}
 		}
