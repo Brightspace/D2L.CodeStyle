@@ -281,5 +281,15 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "ICorsHeaderAppender should not be used, as it can introduce security vulnerabilities."
 		);
+
+		public static readonly DiagnosticDescriptor IdTypeParameterMismatch = new DiagnosticDescriptor(
+			id: "D2L0032",
+			title: "A user/org identifier was passed to a mismatched parameter",
+			messageFormat: "A user/org identifier was passed to a mismatched parameter",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "A user/org identifier was passed to a mismatched parameter"
+		);
 	}
 }
