@@ -34,8 +34,9 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				var invocation = (InvocationExpressionSyntax)root.FindNode( span );
 				var args = invocation.ArgumentList;
 
-				// The names to add to arguments was stored in the diagnostic
-				var argNames = diagnostic.Properties
+				// The analyzer stored the names to add to arguments in the
+				// diagnostic.
+				var paramNames = diagnostic.Properties
 					.ToImmutableDictionary(
 						kvp => int.Parse( kvp.Key ),
 						kvp => kvp.Value
@@ -49,7 +50,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 								ctx.Document,
 								root,
 								args,
-								argNames,
+								paramNames,
 								ct
 							)
 					),
@@ -62,10 +63,10 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			Document orig,
 			SyntaxNode root,
 			ArgumentListSyntax args,
-			ImmutableDictionary<int, string> argNames,
+			ImmutableDictionary<int, string> paramNames,
 			CancellationToken cancellationToken
 		) {
-			var namedArgs = GetNamedArgs( args, argNames );
+			var namedArgs = GetNamedArgs( args, paramNames );
 
 			var newArgs = SyntaxFactory.ArgumentList(
 				openParenToken: args.OpenParenToken,
@@ -85,13 +86,13 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 		private static IEnumerable<ArgumentSyntax> GetNamedArgs(
 			ArgumentListSyntax args,
-			ImmutableDictionary<int, string> argNames
+			ImmutableDictionary<int, string> paramNames
 		) {
 			for( var idx = 0; idx < args.Arguments.Count; idx ++ ) {
 				var arg = args.Arguments[idx];
 
 				// Some args might already be named
-				if ( !argNames.ContainsKey( idx ) ) {
+				if ( !paramNames.ContainsKey( idx ) ) {
 					yield return arg;
 					continue;
 				}
@@ -103,7 +104,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 				yield return arg
 					.WithNameColon(
-						SyntaxFactory.NameColon( argNames[idx] )
+						SyntaxFactory.NameColon( paramNames[idx] )
 							.WithLeadingTrivia( leadingTrivia )
 					);
 			}
