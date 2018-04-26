@@ -16,7 +16,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		);
 
 		public override void Initialize( AnalysisContext context ) {
-			// context.EnableConcurrentExecution();
+			context.EnableConcurrentExecution();
 			context.RegisterCompilationStartAction( RegisterAnalyzer );
 		}
 
@@ -42,91 +42,112 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
-			ImmutableArray<Edge> matchedArgs = MatchArguments(
+			// get bipartite matching of the source
+			ImmutableArray<Edge> sourceMatching = MatchArguments(
 				context.SemanticModel,
 				expr.ArgumentList.Arguments
 			).ToImmutableArray();
 
-			if( matchedArgs.Length <= 1 ) {
+			if( sourceMatching.Length <= 1 ) {
 				return;
 			}
 
-			var args = matchedArgs.Select( x => Tuple.Create( x.Arg, x.ArgNum ) ).ToImmutableArray();
-			var @params = matchedArgs.Select( x => x.Param ).ToImmutableArray();
+			ImmutableArray<Edge> bestMatching = GenerateBestMatching( sourceMatching );
 
-			var baseCostByArg = matchedArgs.ToImmutableDictionary( x => x.ArgNum, x => x.Cost );
-			var permutations = Permutations( args.ToArray(), @params.ToArray() );
-
-			var permutationsThatDontIncreaseAnyCost = permutations
-				.Where( x => x.All( e => e.Cost <= baseCostByArg[ e.ArgNum ] ) );
-			
-			var minCost = int.MaxValue;
-			ImmutableArray<Edge> bestPermutation;
-			foreach( var perm in permutationsThatDontIncreaseAnyCost ) {
-				var cost = perm.Sum( e => e.Cost );
-				if( cost < minCost ) {
-					minCost = cost;
-					bestPermutation = perm;
-				}
-			}
-
-			foreach( var edge in bestPermutation ) {
-				var baseEdge = matchedArgs.Single( b => b.ArgNum == edge.ArgNum );
-				if( edge.Param != baseEdge.Param ) {
+			ImmutableDictionary<int, Edge> sourceEdges = sourceMatching
+				.ToImmutableDictionary( x => x.ArgId, x => x );
+			foreach( var edge in bestMatching ) {
+				Edge sourceEdge = sourceEdges[ edge.ArgId ];
+				if( edge.Param != sourceEdge.Param ) {
 					context.ReportDiagnostic( Diagnostic.Create(
 						Diagnostics.LikelyArgumentMismatch,
-						baseEdge.Arg.GetLocation(),
-						baseEdge.Arg.Identifier.Text,
+						sourceEdge.Arg.GetLocation(),
+						sourceEdge.Arg.Identifier.Text,
 						edge.Param,
-						baseEdge.Param
+						sourceEdge.Param
 					) );
 				}
 			}
 		}
 
-		private static ImmutableArray<ImmutableArray<Edge>> Permutations( Tuple<IdentifierNameSyntax, int>[] args, string[] @params ) {
-			List<Edge[]> perms = new List<Edge[]>();
-			Permutations( args, @params, new Edge[0], perms );
-			return perms.Select( x => x.ToImmutableArray() ).ToImmutableArray();
-		}
+		private static ImmutableArray<Edge> GenerateBestMatching( ImmutableArray<Edge> sourceMatching ) {
+			ImmutableDictionary<int, int> sourceCost = sourceMatching
+				.ToImmutableDictionary( x => x.ArgId, x => x.Cost );
 
-		private static T[] Without<T>( T[] arr, int i ) {
-			List<T> result = new List<T>();
-			for( int j = 0; j < arr.Length; ++j ) {
-				if( i != j ) {
-					result.Add( arr[ j ] );
+			// split the args and parameters
+			var args = sourceMatching.Select( x => Tuple.Create( x.Arg, x.ArgId ) ).ToImmutableArray();
+			var @params = sourceMatching.Select( x => x.Param ).ToImmutableArray();
+
+			// get all the matchings. this is super naive and could be selected better
+			ImmutableArray<ImmutableArray<Edge>> allMatchings = Permutate( args, @params );
+
+			// never increase the cost of a given edge
+			ImmutableArray<ImmutableArray<Edge>> candidateMatchings = allMatchings
+				.Where( x => x.All( e => e.Cost <= sourceCost[ e.ArgId ] ) )
+				.ToImmutableArray();
+
+			// Select the matching with the minimum cost
+			int minCost = int.MaxValue;
+			ImmutableArray<Edge> bestMatching;
+			foreach( var matching in candidateMatchings ) {
+				var cost = matching.Sum( e => e.Cost );
+				if( cost < minCost ) {
+					minCost = cost;
+					bestMatching = matching;
 				}
 			}
-			return result.ToArray();
+
+			return bestMatching;
 		}
 
-		private static void Permutations( Tuple<IdentifierNameSyntax, int>[] args, string[] @params, Edge[] start, List<Edge[]> perms ) {
+		private static ImmutableArray<ImmutableArray<Edge>> Permutate(
+			ImmutableArray<Tuple<IdentifierNameSyntax, int>> args,
+			ImmutableArray<string> @params
+		) {
+			var result = ImmutableArray.CreateBuilder<ImmutableArray<Edge>>();
+			Permutate( args, @params, ImmutableArray<Edge>.Empty, result );
+			return result.ToImmutableArray();
+		}
+
+		private static void Permutate(
+			ImmutableArray<Tuple<IdentifierNameSyntax, int>> args,
+			ImmutableArray<string> @params,
+			ImmutableArray<Edge> current,
+			ImmutableArray<ImmutableArray<Edge>>.Builder result
+		) {
 			if( args.Length == 0 ) {
-				perms.Add( start );
+				result.Add( current );
 				return;
 			}
 
 			for( int i = 0; i < args.Length; ++i ) {
 				for( int j = 0; j < @params.Length; ++j ) {
-					Edge[] perm = new Edge[ start.Length + 1 ];
-					start.CopyTo( perm, 0 );
-					perm[ perm.Length - 1 ] = new Edge( args[ i ].Item1, args[ i ].Item2, @params[ j ] );
+					ImmutableArray<Edge> perm = current.Add( new Edge(
+						args[ i ].Item1,
+						args[ i ].Item2,
+						@params[ j ]
+					) );
 
-					Permutations( Without( args, i ), Without( @params, j ), perm, perms );
+					Permutate(
+						args.RemoveAt( i ),
+						@params.RemoveAt( j ),
+						perm,
+						result
+					);
 				}
 			}
 		}
 
 		private class Edge {
-			internal Edge( IdentifierNameSyntax arg, int argNum, string param ) {
+			internal Edge( IdentifierNameSyntax arg, int argId, string param ) {
 				Arg = arg;
-				ArgNum = argNum;
+				ArgId = argId;
 				Param = param;
 				Cost = LevenshteinDistance( arg.Identifier.Text, param );
 			}
 
 			internal IdentifierNameSyntax Arg { get; }
-			internal int ArgNum { get; }
+			internal int ArgId { get; }
 			internal string Param { get; }
 			internal int Cost { get; }
 		}
@@ -143,6 +164,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					yield break;
 				}
 
+				// Not a variable, so no name to compare
 				var identifer = arg.Expression as IdentifierNameSyntax;
 				if( identifer == null ) {
 					continue;
@@ -153,17 +175,19 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					allowParams: false
 				);
 
+				// Couldn't get param for some reason, whatever
 				if( param == null ) {
 					continue;
 				}
 
+				// .Name documented as possibly empty, nothing to compare
 				if( param.Name == "" ) {
 					continue;
 				}
 
 				yield return new Edge(
 					arg: identifer,
-					argNum: i++,
+					argId: i++,
 					param: param.Name
 				);
 			}
@@ -203,8 +227,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				v0 = v1;
 				v1 = tmp;
 			}
-
-			// Return the computed edit distance
+			
 			return v0[ n ];
 		}
 	}
