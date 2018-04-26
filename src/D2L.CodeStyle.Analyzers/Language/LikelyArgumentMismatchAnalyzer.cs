@@ -234,7 +234,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				v1 = tmp;
 			}
 
-			return v0[ n ] + Math.Abs( m - n );
+			return v0[ n ];
 		}
 	}
 }
