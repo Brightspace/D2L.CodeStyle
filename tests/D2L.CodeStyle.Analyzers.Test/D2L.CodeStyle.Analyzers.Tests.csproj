@@ -48,6 +48,7 @@
     <EmbeddedResource Include="Specs\ImmutableCollectionsAnalyzer.cs" />
     <EmbeddedResource Include="Specs\ImmutableGenericAttributeAnalyzer.cs" />
     <EmbeddedResource Include="Specs\CorsHeaderAppenderUsageAnalyzer.cs" />
+    <EmbeddedResource Include="Specs\RequireNamedArgumentsAnalyzer.cs" />
     <Compile Include="TestBase.cs" />
     <Compile Include="Extensions\TypeSymbolExtensionsTests.cs" />
     <Compile Include="ApiUsage\NotNullAnalyzerTests.cs" />
