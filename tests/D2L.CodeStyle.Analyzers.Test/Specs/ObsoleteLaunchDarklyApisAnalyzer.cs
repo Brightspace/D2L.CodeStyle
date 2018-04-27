@@ -6,34 +6,6 @@ namespace D2L.LP.LaunchDarkly {
 	}
 }
 
-namespace D2L.LP.LaunchDarkly.FeatureFlagging {
-	public interface IFeature { }
-}
-
-namespace D2L.Core.Users.Domain.Feature {
-	using D2L.LP.LaunchDarkly.FeatureFlagging;
-
-	public sealed class PreferredNamesFeatureLD : IFeature { }
-}
-
-namespace SpecTests {
-	using D2L.LP.LaunchDarkly.FeatureFlagging;
-
-	public sealed class SpyCamFeature :/* ObsoleteLaunchDarklyFramework */ IFeature /**/{ }
-
-	public struct SneakyStructFeature :/* ObsoleteLaunchDarklyFramework */ IFeature /**/{ }
-}
-
-namespace MissingNamespaceUsing {
-
-	public sealed class IncompleteFeature : IFeature { }
-}
-
-namespace UnreleatedInterfaces {
-
-	public sealed class IncompleteFeature : System.ICloneable { }
-}
-
 namespace BannedMethods {
 	using D2L.LP.LaunchDarkly;
 

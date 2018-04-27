@@ -9,11 +9,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	internal sealed class ObsoleteLaunchDarklyApisAnalyzer : DiagnosticAnalyzer {
 
-		private const string IFeatureFullName = "D2L.LP.LaunchDarkly.FeatureFlagging.IFeature";
 		private const string ILaunchDarklyClientName = "D2L.LP.LaunchDarkly.ILaunchDarklyClient";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-				Diagnostics.ObsoleteLaunchDarklyFramework,
 				Diagnostics.ObsoleteILaunchDarklyClientClient
 			);
 
@@ -27,15 +25,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly {
 
 			Compilation compilation = context.Compilation;
 
-			INamedTypeSymbol featureInterfaceSymbol = compilation.GetTypeByMetadataName( IFeatureFullName );
-			if( !featureInterfaceSymbol.IsNullOrErrorType() ) {
-
-				context.RegisterSyntaxNodeAction(
-						c => AnalyzeSimpleBaseType( c, featureInterfaceSymbol ),
-						SyntaxKind.SimpleBaseType
-					);
-			}
-
 			IImmutableSet<ISymbol> bannedMethods;
 			if( TryGetBannedMethods( compilation, out bannedMethods ) ) {
 
@@ -44,43 +33,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly {
 						SyntaxKind.InvocationExpression
 					);
 			}
-		}
-
-		private void AnalyzeSimpleBaseType(
-				SyntaxNodeAnalysisContext context,
-				INamedTypeSymbol featureInterfaceSymbol
-			) {
-
-			SimpleBaseTypeSyntax baseTypeSyntax = (SimpleBaseTypeSyntax)context.Node;
-			SymbolInfo baseTypeSymbol = context.SemanticModel.GetSymbolInfo( baseTypeSyntax.Type );
-
-			ISymbol baseSymbol = baseTypeSymbol.Symbol;
-			if( baseSymbol.IsNullOrErrorType() ) {
-				return;
-			}
-
-			if( !baseSymbol.Equals( featureInterfaceSymbol ) ) {
-				return;
-			}
-
-			SyntaxNode classNode = baseTypeSyntax.Parent.Parent;
-
-			ISymbol featureSymbol = context.SemanticModel.GetDeclaredSymbol( classNode );
-			if( featureSymbol.IsNullOrErrorType() ) {
-				return;
-			}
-
-			string featureName = featureSymbol.ToDisplayString();
-			if( LegacyFeatureTypes.Types.Contains( featureName ) ) {
-				return;
-			}
-
-			Diagnostic diagnostic = Diagnostic.Create(
-					Diagnostics.ObsoleteLaunchDarklyFramework,
-					baseTypeSyntax.GetLocation()
-				);
-
-			context.ReportDiagnostic( diagnostic );
 		}
 
 		private void AnalyzeInvocationExpression(
