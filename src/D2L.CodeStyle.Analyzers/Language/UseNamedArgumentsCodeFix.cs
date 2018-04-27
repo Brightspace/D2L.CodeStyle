@@ -66,6 +66,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			ImmutableDictionary<int, string> paramNames,
 			CancellationToken cancellationToken
 		) {
+
 			var namedArgs = GetNamedArgs( args, paramNames );
 
 			var newArgs = SyntaxFactory.ArgumentList(
