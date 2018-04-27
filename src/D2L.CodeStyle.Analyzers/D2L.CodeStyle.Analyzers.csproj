@@ -31,6 +31,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Language\UseNamedArgumentsCodeFix.cs" />
     <Compile Include="Language\RequireNamedArgumentsAnalyzer.cs" />
     <Compile Include="Visibility\CorsHeaderAppenderUsageAnalyzer.cs" />
     <Compile Include="Immutability\ImmutableGenericAttributeAnalyzer.cs" />
