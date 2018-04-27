@@ -73,7 +73,6 @@
     <Compile Include="ApiUsage\LaunchDarkly\FeatureDefinitionAnalyzer.cs" />
     <Compile Include="ApiUsage\LaunchDarkly\LegacyILaunchDarklyClientConsumers.cs" />
     <Compile Include="ApiUsage\LaunchDarkly\ObsoleteLaunchDarklyApisAnalyzer.cs" />
-    <Compile Include="ApiUsage\LaunchDarkly\LegacyFeatureTypes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ApiUsage\RpcAnalyzer.cs" />
     <Compile Include="ApiUsage\ServiceLocator\OldAndBrokenServiceLocatorAnalyzer.cs" />
