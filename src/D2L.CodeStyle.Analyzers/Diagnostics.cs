@@ -297,7 +297,7 @@ namespace D2L.CodeStyle.Analyzers {
 			title: "Interface implementation parameter names should match the interface",
 			messageFormat: "Expected implementation parameter name to be '{0}', saw '{1}'",
 			category: "Correctness",
-			defaultSeverity: DiagnosticSeverity.Error,
+			defaultSeverity: DiagnosticSeverity.Warning,
 			isEnabledByDefault: true,
 			description: "Interface implementation parameter names should match the interface"
 		);
