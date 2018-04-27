@@ -60,6 +60,11 @@ namespace D2L.CodeStyle.Analyzers.Language {
 						continue;
 					}
 
+					// don't know when this happens
+					if( implParameter.DeclaringSyntaxReferences.Length == 0 ) {
+						continue;
+					}
+
 					Location location = implParameter.DeclaringSyntaxReferences.First().GetSyntax().GetLocation();
 					context.ReportDiagnostic( Diagnostic.Create(
 						Diagnostics.InterfaceImplementationParamNameMismatch,
