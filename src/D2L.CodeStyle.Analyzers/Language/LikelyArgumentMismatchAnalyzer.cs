@@ -127,6 +127,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			}
 
 			for( int i = 0; i < args.Length; ++i ) {
+				var remainingArgs = args.RemoveAt( i );
+
 				for( int j = 0; j < @params.Length; ++j ) {
 					ImmutableArray<Edge> perm = current.Add( new Edge(
 						args[ i ].Item1,
@@ -135,7 +137,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					) );
 
 					Permutate(
-						args.RemoveAt( i ),
+						remainingArgs,
 						@params.RemoveAt( j ),
 						perm,
 						result
