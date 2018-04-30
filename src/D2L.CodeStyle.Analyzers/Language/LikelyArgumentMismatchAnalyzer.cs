@@ -60,28 +60,28 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			ImmutableArray<Edge> bestMatching = GenerateBestMatching( sourceMatching );
 
-			ImmutableDictionary<int, Edge> sourceEdges = sourceMatching
-				.ToImmutableDictionary( x => x.ArgId, x => x );
+			ImmutableDictionary<ArgumentDetails, Edge> sourceEdges = sourceMatching
+				.ToImmutableDictionary( x => x.Arg, x => x );
 			foreach( var edge in bestMatching ) {
-				Edge sourceEdge = sourceEdges[ edge.ArgId ];
+				Edge sourceEdge = sourceEdges[ edge.Arg ];
 				if( edge.Param != sourceEdge.Param ) {
 					context.ReportDiagnostic( Diagnostic.Create(
 						Diagnostics.LikelyArgumentMismatch,
-						sourceEdge.Arg.GetLocation(),
-						sourceEdge.Arg.Identifier.Text,
-						edge.Param,
-						sourceEdge.Param
+						sourceEdge.Arg.Location,
+						sourceEdge.Arg.Name,
+						edge.Param.Name,
+						sourceEdge.Param.Name
 					) );
 				}
 			}
 		}
 
 		private static ImmutableArray<Edge> GenerateBestMatching( ImmutableArray<Edge> sourceMatching ) {
-			ImmutableDictionary<int, int> sourceCost = sourceMatching
-				.ToImmutableDictionary( x => x.ArgId, x => x.Cost );
+			ImmutableDictionary<ArgumentDetails, int> sourceCost = sourceMatching
+				.ToImmutableDictionary( x => x.Arg, x => x.Cost );
 
 			// split the args and parameters
-			var args = sourceMatching.Select( x => Tuple.Create( x.Arg, x.ArgId ) ).ToImmutableArray();
+			var args = sourceMatching.Select( x => x.Arg ).ToImmutableArray();
 			var @params = sourceMatching.Select( x => x.Param ).ToImmutableArray();
 
 			// get all the matchings. this is super naive and could be selected better
@@ -89,7 +89,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			// never increase the cost of a given edge
 			ImmutableArray<ImmutableArray<Edge>> candidateMatchings = allMatchings
-				.Where( x => x.All( e => e.Cost <= sourceCost[ e.ArgId ] ) )
+				.Where( x => x.All( e => e.Cost <= sourceCost[ e.Arg ] ) )
 				.ToImmutableArray();
 
 			// Select the matching with the minimum cost
@@ -107,8 +107,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		}
 
 		private static ImmutableArray<ImmutableArray<Edge>> Permutate(
-			ImmutableArray<Tuple<IdentifierNameSyntax, int>> args,
-			ImmutableArray<string> @params
+			ImmutableArray<ArgumentDetails> args,
+			ImmutableArray<ParameterDetails> @params
 		) {
 			var result = ImmutableArray.CreateBuilder<ImmutableArray<Edge>>();
 			Permutate( args, @params, ImmutableArray<Edge>.Empty, result );
@@ -116,8 +116,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		}
 
 		private static void Permutate(
-			ImmutableArray<Tuple<IdentifierNameSyntax, int>> args,
-			ImmutableArray<string> @params,
+			ImmutableArray<ArgumentDetails> args,
+			ImmutableArray<ParameterDetails> @params,
 			ImmutableArray<Edge> current,
 			ImmutableArray<ImmutableArray<Edge>>.Builder result
 		) {
@@ -131,8 +131,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 				for( int j = 0; j < @params.Length; ++j ) {
 					ImmutableArray<Edge> perm = current.Add( new Edge(
-						args[ i ].Item1,
-						args[ i ].Item2,
+						args[ i ],
 						@params[ j ]
 					) );
 
@@ -147,24 +146,55 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		}
 
 		private class Edge {
-			internal Edge( IdentifierNameSyntax arg, int argId, string param ) {
+			internal Edge( ArgumentDetails arg, ParameterDetails param ) {
 				Arg = arg;
-				ArgId = argId;
 				Param = param;
-				Cost = LevenshteinDistance( arg.Identifier.Text, param );
+				Cost = ComputeCost();
 			}
 
-			internal IdentifierNameSyntax Arg { get; }
-			internal int ArgId { get; }
-			internal string Param { get; }
+			internal ArgumentDetails Arg { get; }
+			internal ParameterDetails Param { get; }
 			internal int Cost { get; }
+
+			private int ComputeCost() {
+				if( !Arg.Type.Equals( Param.Type ) ) {
+					return int.MaxValue;
+				}
+
+				return LevenshteinDistance( Arg.Name, Param.Name );
+			}
+		}
+
+		private class ArgumentDetails {
+			internal ArgumentDetails(
+				string name,
+				ITypeSymbol type,
+				Location location
+			) {
+				Name = name;
+				Type = type;
+				Location = location;
+			}
+
+			internal string Name { get; }
+			internal ITypeSymbol Type { get; }
+			internal Location Location { get; }
+		}
+
+		private class ParameterDetails {
+			internal ParameterDetails( string name, ITypeSymbol type ) {
+				Name = name;
+				Type = type;
+			}
+
+			internal string Name { get; }
+			internal ITypeSymbol Type { get; }
 		}
 
 		private static IEnumerable<Edge> MatchArguments(
 			SemanticModel model,
 			SeparatedSyntaxList<ArgumentSyntax> arguments
 		) {
-			int i = 0;
 			foreach( var arg in arguments ) {
 				// Matched explicitly to a parameter
 				// Trust the developer
@@ -177,6 +207,12 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				if( identifer == null ) {
 					continue;
 				}
+
+				var argDetails = new ArgumentDetails(
+					name: GetArgName( identifer ),
+					type: GetArgType( model, identifer ),
+					location: identifer.GetLocation()
+				);
 
 				IParameterSymbol param = arg.DetermineParameter(
 					model,
@@ -193,12 +229,30 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					continue;
 				}
 
+				var paramDetails = new ParameterDetails(
+					name: param.Name,
+					type: param.Type
+				);
+
 				yield return new Edge(
-					arg: identifer,
-					argId: i++,
-					param: param.Name
+					arg: argDetails,
+					param: paramDetails
 				);
 			}
+		}
+
+		private static string GetArgName( IdentifierNameSyntax arg ) {
+			return arg.Identifier.Text;
+		}
+
+		private static ITypeSymbol GetArgType( SemanticModel model, IdentifierNameSyntax arg ) {
+			var symbol = model.GetSymbolInfo( arg ).Symbol as IParameterSymbol;
+
+			if( symbol == null ) {
+				throw new Exception();
+			}
+
+			return symbol.Type;
 		}
 
 		// Adapted from https://en.wikipedia.org/wiki/Levenshtein_distance
