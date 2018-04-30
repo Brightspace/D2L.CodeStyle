@@ -246,13 +246,16 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		}
 
 		private static ITypeSymbol GetArgType( SemanticModel model, IdentifierNameSyntax arg ) {
-			var symbol = model.GetSymbolInfo( arg ).Symbol as IParameterSymbol;
+			var symbol = model.GetSymbolInfo( arg ).Symbol;
 
-			if( symbol == null ) {
-				throw new Exception();
+			switch( symbol ) {
+				case IParameterSymbol param:
+					return param.Type;
+				case ILocalSymbol local:
+					return local.Type;
+				default:
+					throw new Exception();
 			}
-
-			return symbol.Type;
 		}
 
 		// Adapted from https://en.wikipedia.org/wiki/Levenshtein_distance
