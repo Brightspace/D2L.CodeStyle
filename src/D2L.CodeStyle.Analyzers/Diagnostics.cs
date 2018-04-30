@@ -272,7 +272,7 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "ICorsHeaderAppender should not be used, as it can introduce security vulnerabilities."
 		);
 
-		public static readonly DiagnosticDescriptor UseNamedArgsForInvocationWithLotsOfArgs = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor UseNamedArgsWhenTooManyArgs = new DiagnosticDescriptor(
 			id: "D2L0032",
 			title: "This function takes lots of arguments which makes it confusing. Please used named arguments so future readers can figure it out and so that it's clearer that the arguments are in the right order.",
 			messageFormat: "This function takes lots of arguments which makes it confusing. Please used named arguments so future readers can figure it out and so that it's clearer that the arguments are in the right order.",

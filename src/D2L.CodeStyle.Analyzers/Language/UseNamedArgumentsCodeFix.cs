@@ -8,6 +8,7 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 
 namespace D2L.CodeStyle.Analyzers.Language {
 	[ExportCodeFixProvider(
@@ -17,14 +18,17 @@ namespace D2L.CodeStyle.Analyzers.Language {
 	public sealed class UseNamedArgumentsCodeFix : CodeFixProvider {
 		public override ImmutableArray<string> FixableDiagnosticIds
 			=> ImmutableArray.Create(
-				Diagnostics.UseNamedArgsForInvocationWithLotsOfArgs.Id
+				Diagnostics.UseNamedArgsWhenTooManyArgs.Id
 			);
 
 		public override FixAllProvider GetFixAllProvider() {
 			return WellKnownFixAllProviders.BatchFixer;
 		}
 
-		public override async Task RegisterCodeFixesAsync( CodeFixContext ctx ) {
+
+		public override async Task RegisterCodeFixesAsync(
+			CodeFixContext ctx
+		) {
 			var root = await ctx.Document
 				.GetSyntaxRootAsync( ctx.CancellationToken )
 				.ConfigureAwait( false );
@@ -32,17 +36,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			foreach( var diagnostic in ctx.Diagnostics ) {
 				var span = diagnostic.Location.SourceSpan;
 
-				// FindNode() may identify a parent of the InvocationExpression
-				// we'd like to fix that has an equal line-span. We're grabbing
-				// the "first" child InvocationExpressionSyntax. I'm guessing
-				// that will work out right.
-				var invocation = root
-					.FindNode( span )
-					.DescendantNodes()
-					.OfType<InvocationExpressionSyntax>()
-					.First();
-
-				var args = invocation.ArgumentList;
+				var args = GetArgs( root, ctx.Span );
 
 				// The analyzer stored the names to add to arguments in the
 				// diagnostic.
@@ -120,5 +114,37 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					);
 			}
 		}
+
+		public static ArgumentListSyntax GetArgs(
+			SyntaxNode root,
+			TextSpan span
+		) {
+			// FindNode() may identify a parent of the ExpressionSyntax
+			// we'd like to fix that has an equal span. We're grabbing the
+			// "first" child InvocationExpressionSyntax. I'm guessing that will
+			// work out right.
+			return root
+				.FindNode( span )
+				.DescendantNodes()
+				.Select( GetArgs )
+				.Where( s => s != null )
+				.First();
+		}
+
+		// Not an extension method because there may be more cases (e.g. in the
+		// future) and if more than this fix + its analyzer used this logic
+		// there could be undesirable coupling if we handled more cases.
+		internal static ArgumentListSyntax GetArgs( SyntaxNode syntax ) {
+			if ( syntax is InvocationExpressionSyntax ) {
+				return ((InvocationExpressionSyntax)syntax).ArgumentList;
+			}
+
+			if ( syntax is ObjectCreationExpressionSyntax ) {
+				return ((ObjectCreationExpressionSyntax)syntax).ArgumentList;
+			}
+
+			return null;
+		}
+
 	}
 }

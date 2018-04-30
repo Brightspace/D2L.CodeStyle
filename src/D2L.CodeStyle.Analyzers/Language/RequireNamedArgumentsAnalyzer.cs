@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
@@ -27,7 +28,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		}
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-			Diagnostics.UseNamedArgsForInvocationWithLotsOfArgs
+			Diagnostics.UseNamedArgsWhenTooManyArgs
 		);
 
 		// TODO: shrink this number over time. Maybe 5 would be good?
@@ -37,29 +38,35 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			context.EnableConcurrentExecution();
 
 			context.RegisterSyntaxNodeAction(
-				AnalyzeInvocation,
+				AnalyzeCallSyntax,
 				SyntaxKind.InvocationExpression
+			);
+
+			context.RegisterSyntaxNodeAction(
+				AnalyzeCallSyntax,
+				SyntaxKind.ObjectCreationExpression
 			);
 		}
 
-		private static void AnalyzeInvocation(
+		private static void AnalyzeCallSyntax(
 			SyntaxNodeAnalysisContext ctx
 		) {
-			var expr = (InvocationExpressionSyntax)ctx.Node;
+			var expr = (ExpressionSyntax)ctx.Node;
+			var args = UseNamedArgumentsCodeFix.GetArgs( expr );
 
-			if ( expr.ArgumentList == null ) {
+			if ( args == null ) {
 				return;
 			}
 
 			// Don't complain about single argument functions because they're
 			// very likely to be understandable
-			if ( expr.ArgumentList.Arguments.Count <= 1 ) {
+			if ( args.Arguments.Count <= 1 ) {
 				return;
 			}
 
 			var unnamedArgs = GetUnnamedArgs(
 				ctx.SemanticModel,
-				expr.ArgumentList
+				args
 			).ToImmutableArray();
 
 			if ( unnamedArgs.Length >= TOO_MANY_UNNAMED_ARGS ) {
@@ -72,7 +79,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 				ctx.ReportDiagnostic(
 					Diagnostic.Create(
-						descriptor: Diagnostics.UseNamedArgsForInvocationWithLotsOfArgs,
+						descriptor: Diagnostics.UseNamedArgsWhenTooManyArgs,
 						location: expr.GetLocation(),
 						properties: fixerContext
 					)
