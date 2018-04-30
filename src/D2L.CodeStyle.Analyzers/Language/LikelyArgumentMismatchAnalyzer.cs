@@ -60,6 +60,11 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			ImmutableArray<Edge> bestMatching = GenerateBestMatching( sourceMatching );
 
+			// We weren't able to find a better matching
+			if( bestMatching == null ) {
+				return;
+			}
+
 			ImmutableDictionary<ArgumentDetails, Edge> sourceEdges = sourceMatching
 				.ToImmutableDictionary( x => x.Arg, x => x );
 			foreach( var edge in bestMatching ) {
