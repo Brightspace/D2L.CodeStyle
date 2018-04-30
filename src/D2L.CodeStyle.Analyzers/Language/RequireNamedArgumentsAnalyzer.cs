@@ -52,7 +52,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			SyntaxNodeAnalysisContext ctx
 		) {
 			var expr = (ExpressionSyntax)ctx.Node;
-			var args = UseNamedArgumentsCodeFix.GetArgs( expr );
+			var args = GetArgs( expr );
 
 			if ( args == null ) {
 				return;
@@ -143,6 +143,21 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					syntax: arg
 				);
 			}
+		}
+
+		// Not an extension method because there may be more cases (e.g. in the
+		// future) and if more than this fix + its analyzer used this logic
+		// there could be undesirable coupling if we handled more cases.
+		internal static ArgumentListSyntax GetArgs( SyntaxNode syntax ) {
+			if ( syntax is InvocationExpressionSyntax ) {
+				return ((InvocationExpressionSyntax)syntax).ArgumentList;
+			}
+
+			if ( syntax is ObjectCreationExpressionSyntax ) {
+				return ((ObjectCreationExpressionSyntax)syntax).ArgumentList;
+			}
+
+			return null;
 		}
 	}
 }
