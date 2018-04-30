@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -31,7 +32,16 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			foreach( var diagnostic in ctx.Diagnostics ) {
 				var span = diagnostic.Location.SourceSpan;
 
-				var invocation = (InvocationExpressionSyntax)root.FindNode( span );
+				// FindNode() may identify a parent of the InvocationExpression
+				// we'd like to fix that has an equal line-span. We're grabbing
+				// the "first" child InvocationExpressionSyntax. I'm guessing
+				// that will work out right.
+				var invocation = root
+					.FindNode( span )
+					.DescendantNodes()
+					.OfType<InvocationExpressionSyntax>()
+					.First();
+
 				var args = invocation.ArgumentList;
 
 				// The analyzer stored the names to add to arguments in the
