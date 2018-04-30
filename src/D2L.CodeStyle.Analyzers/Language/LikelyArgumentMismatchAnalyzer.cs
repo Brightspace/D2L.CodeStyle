@@ -96,7 +96,9 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			int minCost = int.MaxValue;
 			ImmutableArray<Edge> bestMatching;
 			foreach( var matching in candidateMatchings ) {
-				var cost = matching.Sum( e => e.Cost );
+				var cost = matching.Any( x => x.Cost == int.MaxValue )
+					? int.MaxValue
+					: matching.Sum( x => x.Cost );
 				if( cost < minCost ) {
 					minCost = cost;
 					bestMatching = matching;
