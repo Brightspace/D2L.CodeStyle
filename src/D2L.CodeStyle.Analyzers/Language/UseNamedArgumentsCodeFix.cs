@@ -119,16 +119,15 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			SyntaxNode root,
 			TextSpan span
 		) {
-			// FindNode() may identify a parent of the ExpressionSyntax
-			// we'd like to fix that has an equal span. We're grabbing the
-			// "first" child expression with arguments. I'm guessing that
-			// will work out right.
-			return root
-				.FindNode( span )
-				.DescendantNodes()
-				.Select( RequireNamedArgumentsAnalyzer.GetArgs )
-				.Where( s => s != null )
-				.First();
+			var node = root
+				.FindNode(
+					span,
+					getInnermostNodeForTie: true
+				);
+
+			var args = RequireNamedArgumentsAnalyzer.GetArgs( node );
+
+			return args;
 		}
 	}
 }
