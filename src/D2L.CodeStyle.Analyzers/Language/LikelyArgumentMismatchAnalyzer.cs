@@ -139,17 +139,22 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				var remainingArgs = args.RemoveAt( i );
 
 				for( int j = 0; j < @params.Length; ++j ) {
-					ImmutableArray<Edge> perm = current.Add( new Edge(
+					var assignment = new Edge(
 						model,
 						args[ i ],
 						@params[ j ]
-					) );
+					);
+
+					// Don't continue with impossible branches
+					if( assignment.Cost == int.MaxValue ) {
+						continue;
+					}
 
 					Permutate(
 						model,
 						remainingArgs,
 						@params.RemoveAt( j ),
-						perm,
+						current.Add( assignment ),
 						result
 					);
 				}
