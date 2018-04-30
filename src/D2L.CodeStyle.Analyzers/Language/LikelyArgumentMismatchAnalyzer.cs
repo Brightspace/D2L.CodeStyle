@@ -58,7 +58,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
-			ImmutableArray<Edge> bestMatching = GenerateBestMatching( sourceMatching );
+			ImmutableArray<Edge> bestMatching = GenerateBestMatching( context.SemanticModel, sourceMatching );
 
 			// We weren't able to find a better matching
 			if( bestMatching == null ) {
@@ -81,7 +81,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			}
 		}
 
-		private static ImmutableArray<Edge> GenerateBestMatching( ImmutableArray<Edge> sourceMatching ) {
+		private static ImmutableArray<Edge> GenerateBestMatching( SemanticModel model, ImmutableArray<Edge> sourceMatching ) {
 			ImmutableDictionary<ArgumentDetails, int> sourceCost = sourceMatching
 				.ToImmutableDictionary( x => x.Arg, x => x.Cost );
 
@@ -90,7 +90,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			var @params = sourceMatching.Select( x => x.Param ).ToImmutableArray();
 
 			// get all the matchings. this is super naive and could be selected better
-			ImmutableArray<ImmutableArray<Edge>> allMatchings = Permutate( args, @params );
+			ImmutableArray<ImmutableArray<Edge>> allMatchings = Permutate( model, args, @params );
 
 			// never increase the cost of a given edge
 			ImmutableArray<ImmutableArray<Edge>> candidateMatchings = allMatchings
@@ -114,15 +114,17 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		}
 
 		private static ImmutableArray<ImmutableArray<Edge>> Permutate(
+			SemanticModel model,
 			ImmutableArray<ArgumentDetails> args,
 			ImmutableArray<ParameterDetails> @params
 		) {
 			var result = ImmutableArray.CreateBuilder<ImmutableArray<Edge>>();
-			Permutate( args, @params, ImmutableArray<Edge>.Empty, result );
+			Permutate( model, args, @params, ImmutableArray<Edge>.Empty, result );
 			return result.ToImmutableArray();
 		}
 
 		private static void Permutate(
+			SemanticModel model,
 			ImmutableArray<ArgumentDetails> args,
 			ImmutableArray<ParameterDetails> @params,
 			ImmutableArray<Edge> current,
@@ -138,11 +140,13 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 				for( int j = 0; j < @params.Length; ++j ) {
 					ImmutableArray<Edge> perm = current.Add( new Edge(
+						model,
 						args[ i ],
 						@params[ j ]
 					) );
 
 					Permutate(
+						model,
 						remainingArgs,
 						@params.RemoveAt( j ),
 						perm,
@@ -153,18 +157,19 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		}
 
 		private class Edge {
-			internal Edge( ArgumentDetails arg, ParameterDetails param ) {
+			internal Edge( SemanticModel model, ArgumentDetails arg, ParameterDetails param ) {
 				Arg = arg;
 				Param = param;
-				Cost = ComputeCost();
+				Cost = ComputeCost( model );
 			}
 
 			internal ArgumentDetails Arg { get; }
 			internal ParameterDetails Param { get; }
 			internal int Cost { get; }
 
-			private int ComputeCost() {
-				if( !Arg.Type.Equals( Param.Type ) ) {
+			private int ComputeCost( SemanticModel model ) {
+				Conversion conversion = model.ClassifyConversion( Arg.Syntax, Param.Type );
+				if( !conversion.Exists ) {
 					return int.MaxValue;
 				}
 
@@ -175,16 +180,16 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		private class ArgumentDetails {
 			internal ArgumentDetails(
 				string name,
-				ITypeSymbol type,
+				ExpressionSyntax syntax,
 				Location location
 			) {
 				Name = name;
-				Type = type;
+				Syntax = syntax;
 				Location = location;
 			}
 
 			internal string Name { get; }
-			internal ITypeSymbol Type { get; }
+			internal ExpressionSyntax Syntax { get; }
 			internal Location Location { get; }
 		}
 
@@ -217,7 +222,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 				var argDetails = new ArgumentDetails(
 					name: GetArgName( identifer ),
-					type: GetArgType( model, identifer ),
+					syntax: identifer,
 					location: identifer.GetLocation()
 				);
 
@@ -242,6 +247,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				);
 
 				yield return new Edge(
+					model: model,
 					arg: argDetails,
 					param: paramDetails
 				);
