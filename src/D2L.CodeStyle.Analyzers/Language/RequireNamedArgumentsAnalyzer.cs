@@ -149,15 +149,14 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		// future) and if more than this fix + its analyzer used this logic
 		// there could be undesirable coupling if we handled more cases.
 		internal static ArgumentListSyntax GetArgs( SyntaxNode syntax ) {
-			if ( syntax is InvocationExpressionSyntax invocation ) {
-				return invocation.ArgumentList;
+			switch( syntax ) {
+				case InvocationExpressionSyntax invocation:
+					return invocation.ArgumentList;
+				case ObjectCreationExpressionSyntax objectCreation:
+					return objectCreation.ArgumentList;
+				default:
+					return null;
 			}
-
-			if ( syntax is ObjectCreationExpressionSyntax objectCreation ) {
-				return objectCreation.ArgumentList;
-			}
-
-			return null;
 		}
 	}
 }
