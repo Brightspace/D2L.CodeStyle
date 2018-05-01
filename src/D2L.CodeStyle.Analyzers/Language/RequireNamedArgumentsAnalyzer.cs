@@ -27,7 +27,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		}
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-			Diagnostics.TooManyUnnamedArgs
+			Diagnostics.TooManyUnnamedArgs,
+			Diagnostics.LiteralArgShouldBeNamed
 		);
 
 		// TODO: shrink this number over time. Maybe 5 would be good?
@@ -63,29 +64,52 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			).ToImmutableArray();
 
 			if ( unnamedArgs.Length >= TOO_MANY_UNNAMED_ARGS ) {
-				// Pass the names and positions for each unnamed arg to the
-				// codefix.
-				var fixerContext = unnamedArgs.ToImmutableDictionary(
-					keySelector: binding => binding.Position.ToString(),
-					elementSelector: binding => binding.ParamName
-				);
-
 				ctx.ReportDiagnostic(
 					Diagnostic.Create(
 						descriptor: Diagnostics.TooManyUnnamedArgs,
 						location: expr.GetLocation(),
-						properties: fixerContext
+						properties: GetDiagnosticContext( unnamedArgs )
 					)
 				);
+
+				// Since this applies to all arguments and the suggested fix is
+				// to add names to all args we'll stop emitting diagnostics at
+				// this point.
+				return;
 			}
 
-			// TODO: literal args should always be named
+			foreach( var binding in unnamedArgs ) {
+				if ( binding.Syntax.Expression is LiteralExpressionSyntax ) {
+					ctx.ReportDiagnostic(
+						Diagnostic.Create(
+							descriptor: Diagnostics.LiteralArgShouldBeNamed,
+							location: expr.GetLocation(),
+							properties: GetDiagnosticContext( unnamedArgs ),
+							messageArgs: binding.ParamName
+						)
+					);
 
-			// TODO: if there are duplicate typed args then they should be named
-			// These will create a bit more cleanup. Fix should probably name
-			// all the args instead to avoid craziness with overloading.
+					// Don't need any more diagnostics for this argument
+					continue;
+				}
+
+				// TODO: if this arg could be swapped elsewhere emit a
+				// diagnostic.
+			}
 		}
-		
+
+		private static ImmutableDictionary<string, string> GetDiagnosticContext(
+			ImmutableArray<ArgParamBinding> bindings
+		) {
+			// Pass the names and positions for each unnamed arg to the
+			// codefix.
+
+			return bindings.ToImmutableDictionary(
+				keySelector: binding => binding.Position.ToString(),
+				elementSelector: binding => binding.ParamName
+			);
+		}
+
 		/// <summary>
 		/// Get the arguments which are unnamed and not "params"
 		/// </summary>
