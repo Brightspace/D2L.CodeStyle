@@ -30,8 +30,8 @@ namespace D2L {
 			#endregion
 
 			#region diagnostic for too many unnamed args
-			/* UseNamedArgsForInvocationWithLotsOfArgs */ _arg31( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31 ) /**/;
-			/* UseNamedArgsForInvocationWithLotsOfArgs */ _arg32( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 ) /**/;
+			/* TooManyUnnamedArgs */ _arg31( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31 ) /**/;
+			/* TooManyUnnamedArgs */ _arg32( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 ) /**/;
 			#endregion
 
 			#region all named args is usually preferred if there are lots of args
@@ -76,7 +76,7 @@ namespace D2L {
 			#endregion
 
 			#region need to have enough named args, though
-			/* UseNamedArgsForInvocationWithLotsOfArgs */ _arg32( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, a32: 32 ) /**/;
+			/* TooManyUnnamedArgs */ _arg32( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, a32: 32 ) /**/;
 			#endregion
 
 			#region params don't count against the unnamed args budget
@@ -88,7 +88,7 @@ namespace D2L {
 			#region delegates
 			((delegate0Args)null)();
 			((delegate1Args)null)( 1 );
-			/* UseNamedArgsForInvocationWithLotsOfArgs */ ((delegate31Args)null)( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31 ) /**/;
+			/* TooManyUnnamedArgs */ ((delegate31Args)null)( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31 ) /**/;
 			((delegate31Args)null)( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, a31: 31 );
 			#endregion
 		}
