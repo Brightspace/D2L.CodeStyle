@@ -17,7 +17,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 	public sealed class UseNamedArgumentsCodeFix : CodeFixProvider {
 		public override ImmutableArray<string> FixableDiagnosticIds
 			=> ImmutableArray.Create(
-				Diagnostics.UseNamedArgsForInvocationWithLotsOfArgs.Id
+				Diagnostics.TooManyUnnamedArgs.Id
 			);
 
 		public override FixAllProvider GetFixAllProvider() {
