@@ -272,14 +272,34 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "ICorsHeaderAppender should not be used, as it can introduce security vulnerabilities."
 		);
 
-		public static readonly DiagnosticDescriptor UseNamedArgsWhenTooManyArgs = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor TooManyUnnamedArgs = new DiagnosticDescriptor(
 			id: "D2L0032",
-			title: "This function takes lots of arguments which makes it confusing. Please used named arguments so future readers can figure it out and so that it's clearer that the arguments are in the right order.",
-			messageFormat: "This function takes lots of arguments which makes it confusing. Please used named arguments so future readers can figure it out and so that it's clearer that the arguments are in the right order.",
+			title: "There are a lot of arguments here. Please use named arguments for readability.",
+			messageFormat: "There are a lot of arguments here. Please use named arguments for readability.",
 			category: "Readability",
-			defaultSeverity: DiagnosticSeverity.Error,
+			defaultSeverity: DiagnosticSeverity.Info,
 			isEnabledByDefault: true,
-			description: "This function takes lots of arguments which makes it confusing. Please used named arguments so future readers can figure it out and so that it's clearer that the arguments are in the right order."
+			description: "There are a lot of arguments here. Please use named arguments for readability."
+		);
+
+		public static readonly DiagnosticDescriptor LiteralArgShouldBeNamed = new DiagnosticDescriptor(
+			id: "D2L0033",
+			title: "Literal arguments should be named for readability.",
+			messageFormat: "The argument for the {0} parameter is a literal expression. It's often hard to tell what the parameter for the argument is at the call-site in this case. Please use a named argument for readability.",
+			category: "Readability",
+			defaultSeverity: DiagnosticSeverity.Info,
+			isEnabledByDefault: true,
+			description: "Literal arguments should be named for readability."
+		);
+
+		public static readonly DiagnosticDescriptor ArgumentsWithInterchangableTypesShouldBeNamed = new DiagnosticDescriptor(
+			id: "D2L0034",
+			title: "Arguments that map to parameters with interchangable types should be named.",
+			messageFormat: "The parameters {0} and {1} have interchangable types. There is a risk of not passing arguments to the right parameters. Please use named arguments for readability.",
+			category: "Readability",
+			defaultSeverity: DiagnosticSeverity.Info,
+			isEnabledByDefault: true,
+			description: "Arguments that map to parameters with interchangable types should be named."
 		);
 	}
 }

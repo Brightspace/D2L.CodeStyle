@@ -27,7 +27,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		}
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-			Diagnostics.UseNamedArgsWhenTooManyArgs
+			Diagnostics.TooManyUnnamedArgs
 		);
 
 		// TODO: shrink this number over time. Maybe 5 would be good?
@@ -78,7 +78,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 				ctx.ReportDiagnostic(
 					Diagnostic.Create(
-						descriptor: Diagnostics.UseNamedArgsWhenTooManyArgs,
+						descriptor: Diagnostics.TooManyUnnamedArgs,
 						location: expr.GetLocation(),
 						properties: fixerContext
 					)
