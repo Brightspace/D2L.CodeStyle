@@ -19,6 +19,13 @@ namespace D2L {
 		public delegate void delegate1Args( int a1 );
 		public delegate void delegate31Args( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17, int a18, int a19, int a20, int a21, int a22, int a23, int a24, int a25, int a26, int a27, int a28, int a29, int a30, int a31 );
 
+		public sealed class SomeClass {
+			public SomeClass() { }
+			public SomeClass( int a1 ) { }
+			public SomeClass( int a1, int a2 ) { }
+			public SomeClass( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17, int a18, int a19, int a20, int a21, int a22, int a23, int a24, int a25, int a26, int a27, int a28, int a29, int a30, int a31 );
+		}
+
 		public static void Test() {
 			#region "low" number of args doesn't require naming
 			_arg0();
@@ -90,6 +97,17 @@ namespace D2L {
 			((delegate1Args)null)( 1 );
 			/* TooManyUnnamedArgs */ ((delegate31Args)null)( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31 ) /**/;
 			((delegate31Args)null)( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, a31: 31 );
+			#endregion
+
+			#region class constructors should behave the same way
+			// these aren't InvocationExpressions like the above but should
+			// behave just the same.
+			new SomeClass();
+			new SomeClass( 1 );
+			new SomeClass( 1, 2 );
+			/* TooManyUnnamedArgs */ new SomeClass( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31 ) /**/;
+			new SomeClass( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, a31:31 );
+
 			#endregion
 		}
 	}
