@@ -31,7 +31,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		);
 
 		// TODO: shrink this number over time. Maybe 5 would be good?
-		public const int TOO_MANY_UNNAMED_ARGS = 31;
+		public const int TOO_MANY_UNNAMED_ARGS = 20;
 
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
