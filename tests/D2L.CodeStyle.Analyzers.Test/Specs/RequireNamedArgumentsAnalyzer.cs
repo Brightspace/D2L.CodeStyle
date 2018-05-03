@@ -9,21 +9,21 @@ namespace D2L {
 		public void _arg4( int a1, int a2, int a3, int a4 ) { }
 
 		// These will shrink as we shrink the max *blush*
-		public void _arg30( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17, int a18, int a19, int a20, int a21, int a22, int a23, int a24, int a25, int a26, int a27, int a28, int a29, int a30 );
-		public void _arg31( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17, int a18, int a19, int a20, int a21, int a22, int a23, int a24, int a25, int a26, int a27, int a28, int a29, int a30, int a31 );
-		public void _arg32( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17, int a18, int a19, int a20, int a21, int a22, int a23, int a24, int a25, int a26, int a27, int a28, int a29, int a30, int a31, int a32 );
+		public void _arg19( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17, int a18, int a19 );
+		public void _arg20( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17, int a18, int a19, int a20 );
+		public void _arg21( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17, int a18, int a19, int a20, int a21 );
 
 		public void funcWithParams( int a, int b, int c, params int[] ps ) { }
 
 		public delegate void delegate0Args();
 		public delegate void delegate1Args( int a1 );
-		public delegate void delegate31Args( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17, int a18, int a19, int a20, int a21, int a22, int a23, int a24, int a25, int a26, int a27, int a28, int a29, int a30, int a31 );
+		public delegate void delegate20Args( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17, int a18, int a19, int a20 );
 
 		public sealed class SomeClass {
 			public SomeClass() { }
 			public SomeClass( int a1 ) { }
 			public SomeClass( int a1, int a2 ) { }
-			public SomeClass( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17, int a18, int a19, int a20, int a21, int a22, int a23, int a24, int a25, int a26, int a27, int a28, int a29, int a30, int a31 );
+			public SomeClass( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17, int a18, int a19, int a20 );
 		}
 
 		public static void Test() {
@@ -33,16 +33,16 @@ namespace D2L {
 			_arg2( 1, 2 );
 			_arg3( 1, 2, 3 );
 			_arg4( 1, 2, 3, 4 );
-			_arg30( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 );
+			_arg19( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 );
 			#endregion
 
 			#region diagnostic for too many unnamed args
-			/* TooManyUnnamedArgs */ _arg31( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31 ) /**/;
-			/* TooManyUnnamedArgs */ _arg32( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 ) /**/;
+			/* TooManyUnnamedArgs */ _arg20( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 ) /**/;
+			/* TooManyUnnamedArgs */ _arg21( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21 ) /**/;
 			#endregion
 
 			#region all named args is usually preferred if there are lots of args
-			_arg31(
+			_arg20(
 				a1: 1,
 				a2: 2,
 				a3: 3,
@@ -62,28 +62,17 @@ namespace D2L {
 				a17: 17,
 				a18: 18,
 				a19: 19,
-				a20: 20,
-				a21: 21,
-				a22: 22,
-				a23: 23,
-				a24: 24,
-				a25: 25,
-				a26: 26,
-				a27: 27,
-				a28: 28,
-				a29: 29,
-				a30: 30,
-				a31: 31
+				a20: 20
 			);
 			#endregion
 
 			#region named args don't count against the unnamed args budget
-			_arg31( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, a31: 31 );
-			_arg32( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, a31: 31, a32: 32 );
+			_arg20( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, a20: 20 );
+			_arg21( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, a20: 20, a21: 21 );
 			#endregion
 
 			#region need to have enough named args, though
-			/* TooManyUnnamedArgs */ _arg32( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, a32: 32 ) /**/;
+			/* TooManyUnnamedArgs */ _arg21( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, a21: 21 ) /**/;
 			#endregion
 
 			#region params don't count against the unnamed args budget
@@ -95,8 +84,8 @@ namespace D2L {
 			#region delegates
 			((delegate0Args)null)();
 			((delegate1Args)null)( 1 );
-			/* TooManyUnnamedArgs */ ((delegate31Args)null)( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31 ) /**/;
-			((delegate31Args)null)( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, a31: 31 );
+			/* TooManyUnnamedArgs */ ((delegate20Args)null)( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 ) /**/;
+			((delegate20Args)null)( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, a20: 20 );
 			#endregion
 
 			#region class constructors should behave the same way
@@ -105,9 +94,8 @@ namespace D2L {
 			new SomeClass();
 			new SomeClass( 1 );
 			new SomeClass( 1, 2 );
-			/* TooManyUnnamedArgs */ new SomeClass( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31 ) /**/;
-			new SomeClass( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, a31:31 );
-
+			/* TooManyUnnamedArgs */ new SomeClass( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 ) /**/;
+			new SomeClass( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, a20: 20 );
 			#endregion
 		}
 	}
