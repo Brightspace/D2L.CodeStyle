@@ -92,6 +92,11 @@ namespace SpecTests {
 		class ImmutableEncoding : System.Text.Encoding {
 			private readonly int m_bad;
 		}
+
+		[Objects.Immutable]
+		class EnclosedExternalImmutable {
+			private readonly System.Text.Encoding m_encoding;
+		}
 	}
 
 	class ImmutableBaseClassTests {
