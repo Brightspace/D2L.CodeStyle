@@ -11,6 +11,42 @@ namespace D2L.CodeStyle.Analyzers.Specs {
 			);
 		}
 
+		void Foo(
+			long userId,
+			long orgId,
+			long orgUnitId,
+			long x1,
+			long x2,
+			long x3,
+			long x4,
+			long x5,
+			long x6,
+			long x7,
+			long x8,
+			long x9,
+			long x10,
+			long x11,
+			string x12
+		) {
+			Foo(
+				/* LikelyArgumentMismatch(orgId,orgId,userId) */ orgId /**/,
+				/* LikelyArgumentMismatch(orgUnitId,orgUnitId,orgId) */ orgUnitId /**/,
+				/* LikelyArgumentMismatch(userId,userId,orgUnitId) */ userId /**/,
+				x1,
+				x2,
+				x3,
+				x4,
+				x5,
+				x6,
+				x7,
+				x8,
+				x9,
+				x10,
+				x11,
+				x12
+			);
+		}
+
 
 		struct IdTypeA {
 

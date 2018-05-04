@@ -52,13 +52,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
-			// this is currently n!, so, bail out for long lists
-			// (which may be where its needed most!)
-			if( sourceMatching.Length > 6 ) {
-				return;
-			}
-
-			ImmutableArray<Edge> bestMatching = GenerateBestMatching( context.SemanticModel, sourceMatching );
+			ImmutableArray<Edge> bestMatching = GenerateBestMatching( context, expr );
 
 			// We weren't able to find a better matching
 			if( bestMatching == null ) {
@@ -81,84 +75,165 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			}
 		}
 
-		private static ImmutableArray<Edge> GenerateBestMatching( SemanticModel model, ImmutableArray<Edge> sourceMatching ) {
-			ImmutableDictionary<ArgumentDetails, int> sourceCost = sourceMatching
-				.ToImmutableDictionary( x => x.Arg, x => x.Cost );
+		private static ImmutableArray<Edge> GenerateBestMatching(
+			SyntaxNodeAnalysisContext context,
+			InvocationExpressionSyntax expr
+		) {
+			var parameters = GetPossibleParameters( context, expr );
 
-			// split the args and parameters
-			var args = sourceMatching.Select( x => x.Arg ).ToImmutableArray();
-			var @params = sourceMatching.Select( x => x.Param ).ToImmutableArray();
+			int[,] costMatrix = GetCostMatrix(
+				expr.ArgumentList.Arguments,
+				parameters,
+				context.SemanticModel
+			);
 
-			// get all the matchings. this is super naive and could be selected better
-			ImmutableArray<ImmutableArray<Edge>> allMatchings = Permutate( model, args, @params );
+			int[] assignments = HungarianAlgorithm.FindAssignments( costMatrix );
+			ImmutableArray<Edge> matching = ConvertToMatching(
+				assignments,
+				expr.ArgumentList.Arguments,
+				parameters
+			);
 
-			// never increase the cost of a given edge
-			ImmutableArray<ImmutableArray<Edge>> candidateMatchings = allMatchings
-				.Where( x => x.All( e => e.Cost <= sourceCost[ e.Arg ] ) )
-				.ToImmutableArray();
-
-			// Select the matching with the minimum cost
-			int minCost = int.MaxValue;
-			ImmutableArray<Edge> bestMatching;
-			foreach( var matching in candidateMatchings ) {
-				var cost = matching.Any( x => x.Cost == int.MaxValue )
-					? int.MaxValue
-					: matching.Sum( x => x.Cost );
-				if( cost < minCost ) {
-					minCost = cost;
-					bestMatching = matching;
-				}
-			}
-
-			return bestMatching;
+			return matching;
 		}
 
-		private static ImmutableArray<ImmutableArray<Edge>> Permutate(
-			SemanticModel model,
-			ImmutableArray<ArgumentDetails> args,
-			ImmutableArray<ParameterDetails> @params
+		private static int[,] GetCostMatrix(
+			SeparatedSyntaxList<ArgumentSyntax> arguments,
+			ImmutableArray<IParameterSymbol> parameters,
+			SemanticModel model
 		) {
-			var result = ImmutableArray.CreateBuilder<ImmutableArray<Edge>>();
-			Permutate( model, args, @params, ImmutableArray<Edge>.Empty, result );
-			return result.ToImmutableArray();
+			int[,] matrix = new int[ arguments.Count, parameters.Count() ];
+
+			int i = 0;
+			foreach( ArgumentSyntax arg in arguments ) {
+
+				int j = 0;
+				foreach( IParameterSymbol parameter in parameters ) {
+					int cost = GetCost( arg, parameter, model );
+					matrix[ i, j ] = cost;
+					j++;
+				}
+
+				i++;
+			}
+
+			return matrix;
 		}
 
-		private static void Permutate(
-			SemanticModel model,
-			ImmutableArray<ArgumentDetails> args,
-			ImmutableArray<ParameterDetails> @params,
-			ImmutableArray<Edge> current,
-			ImmutableArray<ImmutableArray<Edge>>.Builder result
+		private static int GetCost(
+			ArgumentSyntax arg,
+			IParameterSymbol parameter,
+			SemanticModel model
 		) {
-			if( args.Length == 0 ) {
-				result.Add( current );
-				return;
+			if( arg.NameColon != null && !arg.NameColon.IsMissing ) {
+				// named parameter, trust the developer
+				return 0;
 			}
 
-			for( int i = 0; i < args.Length; ++i ) {
-				var remainingArgs = args.RemoveAt( i );
+			// Not a variable, so no name to compare, must be correct
+			var identifer = arg.Expression as IdentifierNameSyntax;
+			if( identifer == null ) {
+				return 0;
+			}
 
-				for( int j = 0; j < @params.Length; ++j ) {
-					var assignment = new Edge(
-						model,
-						args[ i ],
-						@params[ j ]
-					);
+			ITypeSymbol argType = model.GetTypeInfo( identifer ).Type;
+			ITypeSymbol parameterType = parameter.Type;
 
-					// Don't continue with impossible branches
-					if( assignment.Cost == int.MaxValue ) {
-						continue;
-					}
+			int costMultiplier = 1;
+			Conversion conversion = model.ClassifyConversion( identifer, parameterType );
+			if( !conversion.Exists ) {
+				// if the types don't match, make the cost large so we don't choose it
+				costMultiplier = 10;
+			}
 
-					Permutate(
-						model,
-						remainingArgs,
-						@params.RemoveAt( j ),
-						current.Add( assignment ),
-						result
-					);
+			// Couldn't get param for some reason, whatever
+			if( parameter == null ) {
+				return 0;
+			}
+
+			// .Name documented as possibly empty, nothing to compare
+			if( parameter.Name == "" ) {
+				return 0;
+			}
+
+			int cost = LevenshteinDistance(
+				identifer.Identifier.Text,
+				parameter.Name
+			) * costMultiplier;
+
+			return cost;
+		}
+
+		private static ImmutableArray<Edge> ConvertToMatching(
+			int[] assignments,
+			SeparatedSyntaxList<ArgumentSyntax> arguments,
+			ImmutableArray<IParameterSymbol> parameters
+		) {
+			List<Edge> edges = new List<Edge>();
+
+			int i = -1;
+			foreach( ArgumentSyntax arg in arguments ) {
+				i++;
+				int paramIndex = assignments[ i ];
+				IParameterSymbol param = parameters.ElementAt( paramIndex );
+
+				var identifer = arg.Expression as IdentifierNameSyntax;
+				if( identifer == null ) {
+					continue;
 				}
+
+				// Couldn't get param for some reason, whatever
+				if( param == null ) {
+					continue;
+				}
+
+				// .Name documented as possibly empty, nothing to compare
+				if( param.Name == "" ) {
+					continue;
+				}
+
+				var argDetails = new ArgumentDetails(
+					name: GetArgName( identifer ),
+					syntax: identifer,
+					location: identifer.GetLocation()
+				);
+
+				var paramDetails = new ParameterDetails(
+					name: param.Name,
+					type: param.Type
+				);
+
+				edges.Add( new Edge(
+					arg: argDetails,
+					param: paramDetails
+				) );
 			}
+
+			return edges.ToImmutableArray();
+		}
+
+		private static ImmutableArray<IParameterSymbol> GetPossibleParameters(
+			SyntaxNodeAnalysisContext context,
+			InvocationExpressionSyntax expr
+		) {
+			ImmutableArray < IParameterSymbol > parameters = ImmutableArray<IParameterSymbol>.Empty;
+
+			var symbol = context.SemanticModel.GetSymbolInfo( expr ).Symbol;
+			if( symbol == null ) {
+				return parameters;
+			}
+
+			// This is MS's GetParameters extension, inlined.
+			// It's ugly because we don't have new C# features yet.
+			if( symbol is IMethodSymbol ) {
+				parameters = ( (IMethodSymbol)symbol ).Parameters;
+			} else if( symbol is IPropertySymbol ) {
+				parameters = ( (IPropertySymbol)symbol ).Parameters;
+			} else {
+				parameters = ImmutableArray.Create<IParameterSymbol>();
+			}
+
+			return parameters;
 		}
 
 		private class Edge {
@@ -166,6 +241,11 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				Arg = arg;
 				Param = param;
 				Cost = ComputeCost( model );
+			}
+
+			internal Edge( ArgumentDetails arg, ParameterDetails param ) {
+				Arg = arg;
+				Param = param;
 			}
 
 			internal ArgumentDetails Arg { get; }
@@ -196,6 +276,27 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			internal string Name { get; }
 			internal ExpressionSyntax Syntax { get; }
 			internal Location Location { get; }
+
+			public override bool Equals( object obj ) {
+				if( obj == null ) {
+					return false;
+				}
+
+				var other = obj as ArgumentDetails;
+				if( other == null ) {
+					return false;
+				}
+
+				return this.Name == other.Name;
+			}
+
+			public override int GetHashCode() {
+				unchecked {
+					int hash = 13;
+					hash = ( hash * 7 ) + this.Name.GetHashCode();
+					return hash;
+				}
+			}
 		}
 
 		private class ParameterDetails {
@@ -206,6 +307,36 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			internal string Name { get; }
 			internal ITypeSymbol Type { get; }
+
+			public override bool Equals( object obj ) {
+				if( obj == null ) {
+					return false;
+				}
+
+				var other = obj as ParameterDetails;
+				if( other == null ) {
+					return false;
+				}
+
+				return this.Name == other.Name;
+			}
+
+			public override int GetHashCode() {
+				unchecked {
+					int hash = 13;
+					hash = ( hash * 7 ) + this.Name.GetHashCode();
+
+					return hash;
+				}
+			}
+
+			public static bool operator == (ParameterDetails p1, ParameterDetails p2 ) {
+				return p1.Name == p2.Name;
+			}
+
+			public static bool operator !=( ParameterDetails p1, ParameterDetails p2 ) {
+				return p1.Name != p2.Name;
+			}
 		}
 
 		private static IEnumerable<Edge> MatchArguments(
@@ -292,7 +423,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			int[] v0 = new int[ n + 1 ];
 			int[] v1 = new int[ n + 1 ];
 
-			for( int i = 0; i < n; ++i ) {
+			for( int i = 0; i < n + 1; ++i ) {
 				v0[ i ] = i;
 			}
 
@@ -302,7 +433,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					int deletionCost = v0[ j + 1 ] + 1;
 					int insertionCost = v1[ j ] + 1;
 					int substituionCost = v0[ j ] +
-						x[ i ] == y[ j ] ? 0 : 1;
+						( x[ i ] == y[ j ] ? 0 : 1 );
 					v1[ j + 1 ] = Math.Min( deletionCost, Math.Min( insertionCost, substituionCost ) );
 				}
 
@@ -313,5 +444,330 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			return v0[ n ];
 		}
+
+
+		#region Hungarian Algorithm
+		// https://github.com/vivet/HungarianAlgorithm/blob/master/HungarianAlgorithm/HungarianAlgorithm.cs
+		/// <summary>
+		/// Hungarian Algorithm.
+		/// </summary>
+		private static class HungarianAlgorithm {
+			/// <summary>
+			/// Finds the optimal assignments for a given matrix of agents and costed tasks such that the total cost is minimized.
+			/// </summary>
+			/// <param name="costs">A cost matrix; the element at row <em>i</em> and column <em>j</em> represents the cost of agent <em>i</em> performing task <em>j</em>.</param>
+			/// <returns>A matrix of assignments; the value of element <em>i</em> is the column of the task assigned to agent <em>i</em>.</returns>
+			/// <exception cref="ArgumentNullException"><paramref name="costs"/> is null.</exception>
+			public static int[] FindAssignments( int[,] costs ) {
+				if( costs == null )
+					throw new ArgumentNullException( nameof( costs ) );
+
+				var h = costs.GetLength( 0 );
+				var w = costs.GetLength( 1 );
+
+				for( var i = 0; i < h; i++ ) {
+					var min = int.MaxValue;
+
+					for( var j = 0; j < w; j++ ) {
+						min = Math.Min( min, costs[ i, j ] );
+					}
+
+					for( var j = 0; j < w; j++ ) {
+						costs[ i, j ] -= min;
+					}
+				}
+
+				var masks = new byte[ h, w ];
+				var rowsCovered = new bool[ h ];
+				var colsCovered = new bool[ w ];
+
+				for( var i = 0; i < h; i++ ) {
+					for( var j = 0; j < w; j++ ) {
+						if( costs[ i, j ] == 0 && !rowsCovered[ i ] && !colsCovered[ j ] ) {
+							masks[ i, j ] = 1;
+							rowsCovered[ i ] = true;
+							colsCovered[ j ] = true;
+						}
+					}
+				}
+
+				HungarianAlgorithm.ClearCovers( rowsCovered, colsCovered, w, h );
+
+				var path = new Location[ w * h ];
+				var pathStart = default( Location );
+				var step = 1;
+
+				while( step != -1 ) {
+					switch( step ) {
+						case 1:
+							step = HungarianAlgorithm.RunStep1( masks, colsCovered, w, h );
+							break;
+
+						case 2:
+							step = HungarianAlgorithm.RunStep2( costs, masks, rowsCovered, colsCovered, w, h, ref pathStart );
+							break;
+
+						case 3:
+							step = HungarianAlgorithm.RunStep3( masks, rowsCovered, colsCovered, w, h, path, pathStart );
+							break;
+
+						case 4:
+							step = HungarianAlgorithm.RunStep4( costs, rowsCovered, colsCovered, w, h );
+							break;
+					}
+				}
+
+				var agentsTasks = new int[ h ];
+
+				for( var i = 0; i < h; i++ ) {
+					for( var j = 0; j < w; j++ ) {
+						if( masks[ i, j ] == 1 ) {
+							agentsTasks[ i ] = j;
+							break;
+						}
+					}
+				}
+
+				return agentsTasks;
+			}
+
+			private static int RunStep1( byte[,] masks, bool[] colsCovered, int w, int h ) {
+				if( masks == null )
+					throw new ArgumentNullException( nameof( masks ) );
+
+				if( colsCovered == null )
+					throw new ArgumentNullException( nameof( colsCovered ) );
+
+				for( var i = 0; i < h; i++ ) {
+					for( var j = 0; j < w; j++ ) {
+						if( masks[ i, j ] == 1 )
+							colsCovered[ j ] = true;
+					}
+				}
+
+				var colsCoveredCount = 0;
+
+				for( var j = 0; j < w; j++ ) {
+					if( colsCovered[ j ] )
+						colsCoveredCount++;
+				}
+
+				if( colsCoveredCount == h )
+					return -1;
+
+				return 2;
+			}
+			private static int RunStep2( int[,] costs, byte[,] masks, bool[] rowsCovered, bool[] colsCovered, int w, int h, ref Location pathStart ) {
+				if( costs == null )
+					throw new ArgumentNullException( nameof( costs ) );
+
+				if( masks == null )
+					throw new ArgumentNullException( nameof( masks ) );
+
+				if( rowsCovered == null )
+					throw new ArgumentNullException( nameof( rowsCovered ) );
+
+				if( colsCovered == null )
+					throw new ArgumentNullException( nameof( colsCovered ) );
+
+				while( true ) {
+					var loc = HungarianAlgorithm.FindZero( costs, rowsCovered, colsCovered, w, h );
+					if( loc.row == -1 )
+						return 4;
+
+					masks[ loc.row, loc.column ] = 2;
+
+					var starCol = HungarianAlgorithm.FindStarInRow( masks, w, loc.row );
+					if( starCol != -1 ) {
+						rowsCovered[ loc.row ] = true;
+						colsCovered[ starCol ] = false;
+					} else {
+						pathStart = loc;
+						return 3;
+					}
+				}
+			}
+			private static int RunStep3( byte[,] masks, bool[] rowsCovered, bool[] colsCovered, int w, int h, Location[] path, Location pathStart ) {
+				if( masks == null )
+					throw new ArgumentNullException( nameof( masks ) );
+
+				if( rowsCovered == null )
+					throw new ArgumentNullException( nameof( rowsCovered ) );
+
+				if( colsCovered == null )
+					throw new ArgumentNullException( nameof( colsCovered ) );
+
+				var pathIndex = 0;
+				path[ 0 ] = pathStart;
+
+				while( true ) {
+					var row = HungarianAlgorithm.FindStarInColumn( masks, h, path[ pathIndex ].column );
+					if( row == -1 )
+						break;
+
+					pathIndex++;
+					path[ pathIndex ] = new Location( row, path[ pathIndex - 1 ].column );
+
+					var col = HungarianAlgorithm.FindPrimeInRow( masks, w, path[ pathIndex ].row );
+
+					pathIndex++;
+					path[ pathIndex ] = new Location( path[ pathIndex - 1 ].row, col );
+				}
+
+				HungarianAlgorithm.ConvertPath( masks, path, pathIndex + 1 );
+				HungarianAlgorithm.ClearCovers( rowsCovered, colsCovered, w, h );
+				HungarianAlgorithm.ClearPrimes( masks, w, h );
+
+				return 1;
+			}
+			private static int RunStep4( int[,] costs, bool[] rowsCovered, bool[] colsCovered, int w, int h ) {
+				if( costs == null )
+					throw new ArgumentNullException( nameof( costs ) );
+
+				if( rowsCovered == null )
+					throw new ArgumentNullException( nameof( rowsCovered ) );
+
+				if( colsCovered == null )
+					throw new ArgumentNullException( nameof( colsCovered ) );
+
+				var minValue = HungarianAlgorithm.FindMinimum( costs, rowsCovered, colsCovered, w, h );
+
+				for( var i = 0; i < h; i++ ) {
+					for( var j = 0; j < w; j++ ) {
+						if( rowsCovered[ i ] )
+							costs[ i, j ] += minValue;
+						if( !colsCovered[ j ] )
+							costs[ i, j ] -= minValue;
+					}
+				}
+				return 2;
+			}
+
+			private static int FindMinimum( int[,] costs, bool[] rowsCovered, bool[] colsCovered, int w, int h ) {
+				if( costs == null )
+					throw new ArgumentNullException( nameof( costs ) );
+
+				if( rowsCovered == null )
+					throw new ArgumentNullException( nameof( rowsCovered ) );
+
+				if( colsCovered == null )
+					throw new ArgumentNullException( nameof( colsCovered ) );
+
+				var minValue = int.MaxValue;
+
+				for( var i = 0; i < h; i++ ) {
+					for( var j = 0; j < w; j++ ) {
+						if( !rowsCovered[ i ] && !colsCovered[ j ] )
+							minValue = Math.Min( minValue, costs[ i, j ] );
+					}
+				}
+
+				return minValue;
+			}
+			private static int FindStarInRow( byte[,] masks, int w, int row ) {
+				if( masks == null )
+					throw new ArgumentNullException( nameof( masks ) );
+
+				for( var j = 0; j < w; j++ ) {
+					if( masks[ row, j ] == 1 )
+						return j;
+				}
+
+				return -1;
+			}
+			private static int FindStarInColumn( byte[,] masks, int h, int col ) {
+				if( masks == null )
+					throw new ArgumentNullException( nameof( masks ) );
+
+				for( var i = 0; i < h; i++ ) {
+					if( masks[ i, col ] == 1 )
+						return i;
+				}
+
+				return -1;
+			}
+			private static int FindPrimeInRow( byte[,] masks, int w, int row ) {
+				if( masks == null )
+					throw new ArgumentNullException( nameof( masks ) );
+
+				for( var j = 0; j < w; j++ ) {
+					if( masks[ row, j ] == 2 )
+						return j;
+				}
+
+				return -1;
+			}
+			private static Location FindZero( int[,] costs, bool[] rowsCovered, bool[] colsCovered, int w, int h ) {
+				if( costs == null )
+					throw new ArgumentNullException( nameof( costs ) );
+
+				if( rowsCovered == null )
+					throw new ArgumentNullException( nameof( rowsCovered ) );
+
+				if( colsCovered == null )
+					throw new ArgumentNullException( nameof( colsCovered ) );
+
+				for( var i = 0; i < h; i++ ) {
+					for( var j = 0; j < w; j++ ) {
+						if( costs[ i, j ] == 0 && !rowsCovered[ i ] && !colsCovered[ j ] )
+							return new Location( i, j );
+					}
+				}
+
+				return new Location( -1, -1 );
+			}
+			private static void ConvertPath( byte[,] masks, Location[] path, int pathLength ) {
+				if( masks == null )
+					throw new ArgumentNullException( nameof( masks ) );
+
+				if( path == null )
+					throw new ArgumentNullException( nameof( path ) );
+
+				for( var i = 0; i < pathLength; i++ ) {
+					if( masks[ path[ i ].row, path[ i ].column ] == 1 ) {
+						masks[ path[ i ].row, path[ i ].column ] = 0;
+					} else if( masks[ path[ i ].row, path[ i ].column ] == 2 ) {
+						masks[ path[ i ].row, path[ i ].column ] = 1;
+					}
+				}
+			}
+			private static void ClearPrimes( byte[,] masks, int w, int h ) {
+				if( masks == null )
+					throw new ArgumentNullException( nameof( masks ) );
+
+				for( var i = 0; i < h; i++ ) {
+					for( var j = 0; j < w; j++ ) {
+						if( masks[ i, j ] == 2 )
+							masks[ i, j ] = 0;
+					}
+				}
+			}
+			private static void ClearCovers( bool[] rowsCovered, bool[] colsCovered, int w, int h ) {
+				if( rowsCovered == null )
+					throw new ArgumentNullException( nameof( rowsCovered ) );
+
+				if( colsCovered == null )
+					throw new ArgumentNullException( nameof( colsCovered ) );
+
+				for( var i = 0; i < h; i++ ) {
+					rowsCovered[ i ] = false;
+				}
+
+				for( var j = 0; j < w; j++ ) {
+					colsCovered[ j ] = false;
+				}
+			}
+
+			private struct Location {
+				public readonly int row;
+				public readonly int column;
+
+				public Location( int row, int col ) {
+					this.row = row;
+					this.column = col;
+				}
+			}
+		}
+		#endregion
 	}
 }
