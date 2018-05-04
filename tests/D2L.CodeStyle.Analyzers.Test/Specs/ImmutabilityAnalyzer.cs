@@ -74,6 +74,26 @@ namespace SpecTests {
 		}
 	}
 
+	class ExternalMarkedImmutableTests {
+		class /* ImmutableClassIsnt('m_bad' is not read-only) */ MutableEncoding /**/ : System.Text.Encoding {
+			private int m_bad;
+		}
+
+		class AuditedMutableEncoding : System.Text.Encoding {
+			[Mutability.Audited]
+			private int m_bad;
+		}
+
+		class /* InvalidUnauditedReasonInImmutable(ItHasntBeenLookedAt) */ UnauditedMutableEncoding /**/ : System.Text.Encoding {
+			[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
+			private int m_bad;
+		}
+
+		class ImmutableEncoding : System.Text.Encoding {
+			private readonly int m_bad;
+		}
+	}
+
 	class ImmutableBaseClassTests {
 
 		[Objects.ImmutableBaseClass]
