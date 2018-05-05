@@ -104,4 +104,13 @@ namespace D2L.CodeStyle.Analyzers.Specs {
 			}
 		}
 	}
+
+	public sealed class ReusedArg {
+		void Foo( long a, long b, long c ) {
+			{
+				long x = 0;
+				Foo( x, x, x );
+			}
+		}
+	}
 }
