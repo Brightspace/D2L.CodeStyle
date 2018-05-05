@@ -114,17 +114,29 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			ArgumentDetails argument,
 			ParameterDetails parameter
 		) {
-			int costMultiplier = 1;
+			double cost = 10;
+			double costMultiplier = 1;
+
 			Conversion conversion = model.ClassifyConversion( argument.Syntax, parameter.Type );
 			if( !conversion.Exists ) {
 				// if the types don't match, make the cost large so we don't choose it
-				costMultiplier = 10;
+				return int.MaxValue;
 			}
 
-			int cost = LevenshteinDistance( argument.Name, parameter.Name );
+			if( !conversion.IsIdentity && !conversion.IsUserDefined ) {
+				costMultiplier = 1.1;
+			}
+
+			int editCost = LevenshteinDistance( argument.Name, parameter.Name );
+			if( editCost == 0 ) {
+				return 0;
+			} else {
+				cost += editCost;
+			}
+
 			cost *= costMultiplier;
 
-			return cost;
+			return ( int )Math.Ceiling( cost );
 		}
 
 		private static ImmutableArray<Edge> ConvertToMatching(

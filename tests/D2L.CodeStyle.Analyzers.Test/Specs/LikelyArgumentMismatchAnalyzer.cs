@@ -95,4 +95,13 @@ namespace D2L.CodeStyle.Analyzers.Specs {
 		}
 
 	}
+
+	public sealed class GlobalContextFactory {
+		void Create( long userId, long orgId, long ouId ) {
+			{
+				long m_userId = 0, orgId = 0, preferredOrgUnitId = 0;
+				Create( m_userId, orgId, preferredOrgUnitId );
+			}
+		}
+	}
 }
