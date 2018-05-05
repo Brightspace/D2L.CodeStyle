@@ -301,5 +301,15 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "Arguments that map to parameters with interchangable types should be named."
 		);
+
+		public static readonly DiagnosticDescriptor LikelyArgumentMismatch = new DiagnosticDescriptor(
+			id: "D2LXXXX",
+			title: "Invocation arguments have likely been ordered incorrectly",
+			messageFormat: "Suspect argument '{0}' should be passed to parameter '{1}', but saw '{2}'",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Invocation arguments have likely been ordered incorrectly"
+		);
 	}
 }
