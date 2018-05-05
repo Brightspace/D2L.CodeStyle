@@ -407,6 +407,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			}
 		}
 
+		#region Levenschtein Distance
 		// Adapted from https://en.wikipedia.org/wiki/Levenshtein_distance
 		private static int LevenshteinDistance( string x, string y ) {
 			int m = x.Length;
@@ -444,6 +445,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			return v0[ n ];
 		}
+		#endregion
 
 
 		#region Hungarian Algorithm
