@@ -52,18 +52,13 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
-			ImmutableArray<Edge> bestMatching = GenerateBestMatching( context, expr );
-
-			// We weren't able to find a better matching
-			if( bestMatching == null ) {
-				return;
-			}
+			ImmutableArray<Edge> bestMatching = GenerateBestMatching( context, sourceMatching );
 
 			ImmutableDictionary<ArgumentDetails, Edge> sourceEdges = sourceMatching
 				.ToImmutableDictionary( x => x.Arg, x => x );
-			foreach( var edge in bestMatching ) {
+			foreach( Edge edge in bestMatching ) {
 				Edge sourceEdge = sourceEdges[ edge.Arg ];
-				if( edge.Param != sourceEdge.Param ) {
+				if( !sourceEdge.Equals( edge ) ) {
 					context.ReportDiagnostic( Diagnostic.Create(
 						Diagnostics.LikelyArgumentMismatch,
 						sourceEdge.Arg.Location,
@@ -77,20 +72,17 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 		private static ImmutableArray<Edge> GenerateBestMatching(
 			SyntaxNodeAnalysisContext context,
-			InvocationExpressionSyntax expr
+			ImmutableArray<Edge> sourceMatching
 		) {
-			var parameters = GetPossibleParameters( context, expr );
+			ImmutableArray<ArgumentDetails> arguments = sourceMatching.Select( x => x.Arg ).ToImmutableArray();
+			ImmutableArray<ParameterDetails> parameters = sourceMatching.Select( x => x.Param ).ToImmutableArray();
 
-			int[,] costMatrix = GetCostMatrix(
-				expr.ArgumentList.Arguments,
-				parameters,
-				context.SemanticModel
-			);
+			int[,] costMatrix = GetCostMatrix( context.SemanticModel, arguments, parameters );
 
 			int[] assignments = HungarianAlgorithm.FindAssignments( costMatrix );
 			ImmutableArray<Edge> matching = ConvertToMatching(
 				assignments,
-				expr.ArgumentList.Arguments,
+				arguments,
 				parameters
 			);
 
@@ -98,150 +90,56 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		}
 
 		private static int[,] GetCostMatrix(
-			SeparatedSyntaxList<ArgumentSyntax> arguments,
-			ImmutableArray<IParameterSymbol> parameters,
-			SemanticModel model
+			SemanticModel model,
+			ImmutableArray<ArgumentDetails> arguments,
+			ImmutableArray<ParameterDetails> parameters
 		) {
-			int[,] matrix = new int[ arguments.Count, parameters.Count() ];
+			int[,] matrix = new int[ arguments.Length, parameters.Length ];
 
-			int i = 0;
-			foreach( ArgumentSyntax arg in arguments ) {
-
-				int j = 0;
-				foreach( IParameterSymbol parameter in parameters ) {
-					int cost = GetCost( arg, parameter, model );
-					matrix[ i, j ] = cost;
-					j++;
+			for( int i = 0; i < arguments.Length; ++i ) {
+				for( int j = 0; j < parameters.Length; ++j ) {
+					matrix[ i, j ] = GetCost(
+						model,
+						arguments[ i ],
+						parameters[ j ]
+					);
 				}
-
-				i++;
 			}
 
 			return matrix;
 		}
 
 		private static int GetCost(
-			ArgumentSyntax arg,
-			IParameterSymbol parameter,
-			SemanticModel model
+			SemanticModel model,
+			ArgumentDetails argument,
+			ParameterDetails parameter
 		) {
-			if( arg.NameColon != null && !arg.NameColon.IsMissing ) {
-				// named parameter, trust the developer
-				return 0;
-			}
-
-			// Not a variable, so no name to compare, must be correct
-			var identifer = arg.Expression as IdentifierNameSyntax;
-			if( identifer == null ) {
-				return 0;
-			}
-
-			ITypeSymbol argType = model.GetTypeInfo( identifer ).Type;
-			ITypeSymbol parameterType = parameter.Type;
-
 			int costMultiplier = 1;
-			Conversion conversion = model.ClassifyConversion( identifer, parameterType );
+			Conversion conversion = model.ClassifyConversion( argument.Syntax, parameter.Type );
 			if( !conversion.Exists ) {
 				// if the types don't match, make the cost large so we don't choose it
 				costMultiplier = 10;
 			}
 
-			// Couldn't get param for some reason, whatever
-			if( parameter == null ) {
-				return 0;
-			}
-
-			// .Name documented as possibly empty, nothing to compare
-			if( parameter.Name == "" ) {
-				return 0;
-			}
-
-			int cost = LevenshteinDistance(
-				identifer.Identifier.Text,
-				parameter.Name
-			) * costMultiplier;
+			int cost = LevenshteinDistance( argument.Name, parameter.Name );
+			cost *= costMultiplier;
 
 			return cost;
 		}
 
 		private static ImmutableArray<Edge> ConvertToMatching(
 			int[] assignments,
-			SeparatedSyntaxList<ArgumentSyntax> arguments,
-			ImmutableArray<IParameterSymbol> parameters
+			ImmutableArray<ArgumentDetails> arguments,
+			ImmutableArray<ParameterDetails> parameters
 		) {
-			List<Edge> edges = new List<Edge>();
+			ImmutableArray<Edge> matching = assignments
+				.Select( ( paramIndex, argIndex ) => new Edge( arguments[ argIndex ], parameters[ paramIndex ] ) )
+				.ToImmutableArray();
 
-			int i = -1;
-			foreach( ArgumentSyntax arg in arguments ) {
-				i++;
-				int paramIndex = assignments[ i ];
-				IParameterSymbol param = parameters.ElementAt( paramIndex );
-
-				var identifer = arg.Expression as IdentifierNameSyntax;
-				if( identifer == null ) {
-					continue;
-				}
-
-				// Couldn't get param for some reason, whatever
-				if( param == null ) {
-					continue;
-				}
-
-				// .Name documented as possibly empty, nothing to compare
-				if( param.Name == "" ) {
-					continue;
-				}
-
-				var argDetails = new ArgumentDetails(
-					name: GetArgName( identifer ),
-					syntax: identifer,
-					location: identifer.GetLocation()
-				);
-
-				var paramDetails = new ParameterDetails(
-					name: param.Name,
-					type: param.Type
-				);
-
-				edges.Add( new Edge(
-					arg: argDetails,
-					param: paramDetails
-				) );
-			}
-
-			return edges.ToImmutableArray();
-		}
-
-		private static ImmutableArray<IParameterSymbol> GetPossibleParameters(
-			SyntaxNodeAnalysisContext context,
-			InvocationExpressionSyntax expr
-		) {
-			ImmutableArray < IParameterSymbol > parameters = ImmutableArray<IParameterSymbol>.Empty;
-
-			var symbol = context.SemanticModel.GetSymbolInfo( expr ).Symbol;
-			if( symbol == null ) {
-				return parameters;
-			}
-
-			// This is MS's GetParameters extension, inlined.
-			// It's ugly because we don't have new C# features yet.
-			if( symbol is IMethodSymbol ) {
-				parameters = ( (IMethodSymbol)symbol ).Parameters;
-			} else if( symbol is IPropertySymbol ) {
-				parameters = ( (IPropertySymbol)symbol ).Parameters;
-			} else {
-				parameters = ImmutableArray.Create<IParameterSymbol>();
-			}
-
-			return parameters;
+			return matching;
 		}
 
 		private class Edge {
-			internal Edge( SemanticModel model, ArgumentDetails arg, ParameterDetails param ) {
-				Arg = arg;
-				Param = param;
-				Cost = ComputeCost( model );
-			}
 
 			internal Edge( ArgumentDetails arg, ParameterDetails param ) {
 				Arg = arg;
@@ -250,15 +148,18 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			internal ArgumentDetails Arg { get; }
 			internal ParameterDetails Param { get; }
-			internal int Cost { get; }
 
-			private int ComputeCost( SemanticModel model ) {
-				Conversion conversion = model.ClassifyConversion( Arg.Syntax, Param.Type );
-				if( !conversion.Exists ) {
-					return int.MaxValue;
+			public override bool Equals( object obj ) {
+				if( obj is Edge other ) {
+					return Arg.Equals( other.Arg )
+						&& Param.Equals( other.Param );
 				}
 
-				return LevenshteinDistance( Arg.Name, Param.Name );
+				return false;
+			}
+
+			public override int GetHashCode() {
+				return Arg.GetHashCode() ^ Param.GetHashCode();
 			}
 		}
 
@@ -278,16 +179,11 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			internal Location Location { get; }
 
 			public override bool Equals( object obj ) {
-				if( obj == null ) {
-					return false;
+				if( obj is ArgumentDetails other ) {
+					return Name.Equals( other.Name );
 				}
 
-				var other = obj as ArgumentDetails;
-				if( other == null ) {
-					return false;
-				}
-
-				return this.Name == other.Name;
+				return false;
 			}
 
 			public override int GetHashCode() {
@@ -309,16 +205,11 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			internal ITypeSymbol Type { get; }
 
 			public override bool Equals( object obj ) {
-				if( obj == null ) {
-					return false;
+				if( obj is ParameterDetails other ) {
+					return Name.Equals( other.Name );
 				}
 
-				var other = obj as ParameterDetails;
-				if( other == null ) {
-					return false;
-				}
-
-				return this.Name == other.Name;
+				return false;
 			}
 
 			public override int GetHashCode() {
@@ -328,14 +219,6 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 					return hash;
 				}
-			}
-
-			public static bool operator == (ParameterDetails p1, ParameterDetails p2 ) {
-				return p1.Name == p2.Name;
-			}
-
-			public static bool operator !=( ParameterDetails p1, ParameterDetails p2 ) {
-				return p1.Name != p2.Name;
 			}
 		}
 
@@ -383,7 +266,6 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				);
 
 				yield return new Edge(
-					model: model,
 					arg: argDetails,
 					param: paramDetails
 				);
