@@ -172,16 +172,6 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "Must be one of: bool, int, float, string"
 		);
 
-		public static readonly DiagnosticDescriptor ObsoleteILaunchDarklyClientClient = new DiagnosticDescriptor(
-			id: "D2L0022",
-			title: "Use the new IInstanceFlag/IOrgFlag/ICurrentOrgFlag interfaces instead",
-			messageFormat: "Should not use D2L.LP.LaunchDarkly.ILaunchDarklyClient because it's obsolete",
-			category: "Correctness",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "Switch your feature definition to inherit D2L.LP.LaunchDarkly.FeatureDefinition, configure your feature for DI, and use one of the new IInstanceFlag/IOrgFlag/ICurrentOrgFlag interfaces instead"
-		);
-
 		public static readonly DiagnosticDescriptor InvalidUnauditedReasonInImmutable = new DiagnosticDescriptor(
 			id: "D2L0023",
 			title: "Immutability exceptions must be a subset of containing type's",
