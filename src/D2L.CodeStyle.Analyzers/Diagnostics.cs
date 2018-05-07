@@ -301,5 +301,25 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "Arguments that map to parameters with interchangable types should be named."
 		);
+
+		public static readonly DiagnosticDescriptor SingletonDependencyHasCustomerState = new DiagnosticDescriptor(
+			id: "D2L0035",
+			title: "Singleton holding a dependency containing customer state.",
+			messageFormat: "This class is marked as a singleton and holds a dependency with customer state.",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Classes marked as singleton or that implement interfaces marked as a singleton cannot hold dependencies with customer state."
+	   );
+
+		public static readonly DiagnosticDescriptor PublicClassHasHiddenCustomerState = new DiagnosticDescriptor(
+			id: "D2L0036",
+			title: "Missing CustomerState attribute.",
+			messageFormat: "Public class holding private customer state dependency.",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Classes visible to singletons that are not public but contain dependencies that have customer state must be marked with [CustomerState] to facilitate cross-assembly analysis."
+	   );
 	}
 }
