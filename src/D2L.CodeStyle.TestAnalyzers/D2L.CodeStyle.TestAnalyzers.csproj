@@ -90,6 +90,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\Diagnostics.cs" />
+    <Compile Include="NUnit\AssertIsBool\AssertIsBoolAnalyzer.cs" />
+    <Compile Include="NUnit\AssertIsBool\AssertIsBoolBinaryExpressions.cs" />
+    <Compile Include="NUnit\AssertIsBool\AssertIsBoolDiagnosticProvider.cs" />
     <Compile Include="NUnit\TestCaseSourceStringsAnalyzer.CodeFix.cs" />
     <Compile Include="NUnit\ValueSourceStringsAnalyzer.cs" />
     <Compile Include="NUnit\TestCaseSourceStringsAnalyzer.cs" />
