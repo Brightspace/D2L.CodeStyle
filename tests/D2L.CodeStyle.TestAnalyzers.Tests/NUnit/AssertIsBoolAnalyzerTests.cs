@@ -153,41 +153,71 @@ namespace Test {{
 				const string isTrueSymbolName = "NUnit.Framework.Assert.IsTrue";
 				const string isFalseSymbolName = "NUnit.Framework.Assert.IsFalse";
 
-				TestCaseData GetDiagTestCase( string testCode, string symbolName, string expectedRecommendation ) =>
-					new TestCaseData(
-						GetCompleteTestClass( testCode ), new[] {
-							new DiagnosticResult {
-								Id = Diagnostics.MisusedAssertIsTrueOrFalse.Id,
-								Message = string.Format( Diagnostics.MisusedAssertIsTrueOrFalse.MessageFormat.ToString(), symbolName, expectedRecommendation ),
-								Severity = DiagnosticSeverity.Warning,
-								Locations = new[] {
-									new DiagnosticResultLocation( "Test0.cs", 8, 0 )
-								}
+				DiagnosticResult GetExpectedDiagnostic( string symbolName, string expectedRecommendation, int lineNumber = 8 ) {
+
+					string message = string.Format( 
+							Diagnostics.MisusedAssertIsTrueOrFalse.MessageFormat.ToString(), 
+							symbolName, 
+							expectedRecommendation 
+						);
+
+					return new DiagnosticResult {
+						Id = Diagnostics.MisusedAssertIsTrueOrFalse.Id,
+						Message = message,
+						Severity = DiagnosticSeverity.Warning,
+						Locations = new[] {
+								new DiagnosticResultLocation( "Test0.cs", lineNumber, 0 )
 							}
-						}
-					).SetName( testCode );
+					};
+				}
+
+				TestCaseData GetDiagTestCase( string testCode, params DiagnosticResult[] expecDiagnosticResults ) =>
+					new TestCaseData(
+							GetCompleteTestClass( testCode ), 
+							expecDiagnosticResults
+						).SetName( testCode );
 
 				foreach( var test in testCases ) {
 
-					yield return GetDiagTestCase( $"Assert.IsTrue( {test.Item1} );", isTrueSymbolName, test.Item2 );
-
-					yield return GetDiagTestCase( $"Assert.IsFalse( {test.Item1} );", isFalseSymbolName, test.Item3 );
+					yield return GetDiagTestCase( 
+							$"Assert.IsTrue( {test.Item1} );", 
+							GetExpectedDiagnostic( isTrueSymbolName, test.Item2 ) 
+						);
+					yield return GetDiagTestCase( 
+							$"Assert.IsFalse( {test.Item1} );", 
+							GetExpectedDiagnostic( isFalseSymbolName, test.Item3 ) 
+						);
 				}
 
 				// fqn test
 				var fqnTest = testCases[0];
-				yield return GetDiagTestCase( $"NUnit.Framework.Assert.IsTrue( {fqnTest.Item1} );", isTrueSymbolName, fqnTest.Item2 );
-				yield return GetDiagTestCase( $"NUnit.Framework.Assert.IsFalse( {fqnTest.Item1} );", isFalseSymbolName, fqnTest.Item3 );
+				yield return GetDiagTestCase( 
+						$"NUnit.Framework.Assert.IsTrue( {fqnTest.Item1} );", 
+						GetExpectedDiagnostic( isTrueSymbolName, fqnTest.Item2 ) 
+					);
+				yield return GetDiagTestCase( 
+						$"NUnit.Framework.Assert.IsFalse( {fqnTest.Item1} );", 
+						GetExpectedDiagnostic( isFalseSymbolName, fqnTest.Item3 ) 
+					);
+
+				// multiple diagnostic messages
+				var testLine1 = $"NUnit.Framework.Assert.IsTrue( {testCases[ 0 ].Item1} );";
+				var testLine2 = $"NUnit.Framework.Assert.IsFalse( {testCases[ 1 ].Item1} );";
+				yield return GetDiagTestCase(
+						$"{testLine1}{Environment.NewLine}{testLine2}",
+						GetExpectedDiagnostic( isTrueSymbolName, testCases[ 0 ].Item2, lineNumber: 8 ),
+						GetExpectedDiagnostic( isFalseSymbolName, testCases[ 1 ].Item3, lineNumber: 9 )
+					);
 			}
 		}
 
 		private static readonly MetadataReference NUnitReference = MetadataReference.CreateFromFile( 
-			typeof( Assert ).Assembly.Location 
-		);
+				typeof( Assert ).Assembly.Location 
+			);
 
 		protected override MetadataReference[] GetAdditionalReferences() => new[] {
-			NUnitReference
-		};
+				NUnitReference
+			};
 
 		protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer() {
 			return new AssertIsBoolAnalyzer();
