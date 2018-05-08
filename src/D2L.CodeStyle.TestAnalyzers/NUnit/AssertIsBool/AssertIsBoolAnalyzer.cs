@@ -13,12 +13,6 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => 
 			ImmutableArray.Create( Diagnostics.MisusedAssertIsTrueOrFalse );
 
-		private static readonly SymbolDisplayFormat MethodDisplayFormat = new SymbolDisplayFormat(
-			memberOptions: SymbolDisplayMemberOptions.IncludeContainingType,
-			localOptions: SymbolDisplayLocalOptions.IncludeType,
-			typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
-		);
-
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
 
@@ -40,8 +34,8 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 				.GetSymbolInfo( invocation.Expression )
 				.Symbol;
 
-			string symbolName = symbol.ToDisplayString( MethodDisplayFormat );
-			if( !AssertIsBoolDiagnosticProvider.CanDiagnoseSymbol( symbolName ) ) {
+			string symbolName = AssertIsBoolSymbols.GetSymbolName( symbol );
+			if( !AssertIsBoolSymbols.IsMatch( symbolName ) ) {
 				return;
 			}
 
