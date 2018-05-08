@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -8,49 +9,58 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 
 	internal static class AssertIsBoolBinaryExpressions {
 
-		private static readonly AssertIsBoolDiagnosticProvider<BinaryExpressionSyntax> m_equalsEqualsDiagnosticProvider =
-			new AssertIsBoolDiagnosticProvider<BinaryExpressionSyntax>(
-				e => GetEqualityOperatorsDiagnostic( e, "AreEqual", "IsNull" ),
-				e => GetEqualityOperatorsDiagnostic( e, "AreNotEqual", "IsNotNull" )
+		private static readonly Func<BinaryExpressionSyntax, AssertIsBoolDiagnosticProvider> m_equalsEqualsDiagnosticProviderFactory =
+			e => new AssertIsBoolDiagnosticProvider(
+				() => GetEqualityOperatorsDiagnostic( e, "AreEqual", "IsNull" ),
+				() => GetEqualityOperatorsDiagnostic( e, "AreNotEqual", "IsNotNull" )
 			);
-		private static readonly AssertIsBoolDiagnosticProvider<BinaryExpressionSyntax> m_lessThanDiagnosticProvider =
-			new AssertIsBoolDiagnosticProvider<BinaryExpressionSyntax>(
-				e => GetComparisonDiagnostic( e, "Less" ),
-				e => GetComparisonDiagnostic( e, "Greater" )
+		private static readonly Func<BinaryExpressionSyntax, AssertIsBoolDiagnosticProvider> m_lessThanDiagnosticProviderFactory =
+			e => new AssertIsBoolDiagnosticProvider(
+				() => GetComparisonDiagnostic( e, "Less" ),
+				() => GetComparisonDiagnostic( e, "Greater" )
 			);
-		private static readonly AssertIsBoolDiagnosticProvider<BinaryExpressionSyntax> m_lessThanEqualsDiagnosticProvider =
-			new AssertIsBoolDiagnosticProvider<BinaryExpressionSyntax>(
-				e => GetComparisonDiagnostic( e, "LessOrEqual" ),
-				e => GetComparisonDiagnostic( e, "GreaterOrEqual" )
+		private static readonly Func<BinaryExpressionSyntax, AssertIsBoolDiagnosticProvider> m_lessThanEqualsDiagnosticProviderFactory =
+			e => new AssertIsBoolDiagnosticProvider(
+				() => GetComparisonDiagnostic( e, "LessOrEqual" ),
+				() => GetComparisonDiagnostic( e, "GreaterOrEqual" )
 			);
-		private static readonly AssertIsBoolDiagnosticProvider<BinaryExpressionSyntax> m_isKeywordDiagnosticProvider =
-			new AssertIsBoolDiagnosticProvider<BinaryExpressionSyntax>(
-				e => GetIsKeywordDiagnostic( e, "IsInstanceOf" ),
-				e => GetIsKeywordDiagnostic( e, "IsNotInstanceOf" )
+		private static readonly Func<BinaryExpressionSyntax, AssertIsBoolDiagnosticProvider> m_isKeywordDiagnosticProviderFactory =
+			e => new AssertIsBoolDiagnosticProvider(
+				() => GetIsKeywordDiagnostic( e, "IsInstanceOf" ),
+				() => GetIsKeywordDiagnostic( e, "IsNotInstanceOf" )
 			);
 
-		private static readonly ImmutableDictionary<SyntaxKind, AssertIsBoolDiagnosticProvider<BinaryExpressionSyntax>> m_diagnosticProviders =
-			new Dictionary<SyntaxKind, AssertIsBoolDiagnosticProvider<BinaryExpressionSyntax>> {
-				{ SyntaxKind.EqualsEqualsToken, m_equalsEqualsDiagnosticProvider },
-				{ SyntaxKind.ExclamationEqualsToken, m_equalsEqualsDiagnosticProvider.Opposite() },
+		private static readonly ImmutableDictionary<SyntaxKind, Func<BinaryExpressionSyntax, AssertIsBoolDiagnosticProvider>> m_diagnosticProviders =
+			new Dictionary<SyntaxKind, Func<BinaryExpressionSyntax, AssertIsBoolDiagnosticProvider>> {
+				{ SyntaxKind.EqualsEqualsToken, m_equalsEqualsDiagnosticProviderFactory },
+				{ SyntaxKind.ExclamationEqualsToken, e => m_equalsEqualsDiagnosticProviderFactory( e ).Opposite() },
 
-				{ SyntaxKind.LessThanToken, m_lessThanDiagnosticProvider },
-				{ SyntaxKind.GreaterThanToken, m_lessThanDiagnosticProvider.Opposite() },
+				{ SyntaxKind.LessThanToken, m_lessThanDiagnosticProviderFactory },
+				{ SyntaxKind.GreaterThanToken, e => m_lessThanDiagnosticProviderFactory( e ).Opposite() },
 
-				{ SyntaxKind.LessThanEqualsToken, m_lessThanEqualsDiagnosticProvider },
-				{ SyntaxKind.GreaterThanEqualsToken, m_lessThanEqualsDiagnosticProvider.Opposite() },
+				{ SyntaxKind.LessThanEqualsToken, m_lessThanEqualsDiagnosticProviderFactory },
+				{ SyntaxKind.GreaterThanEqualsToken, e => m_lessThanEqualsDiagnosticProviderFactory( e ).Opposite() },
 
-				{ SyntaxKind.IsKeyword, m_isKeywordDiagnosticProvider }
+				{ SyntaxKind.IsKeyword, m_isKeywordDiagnosticProviderFactory }
 			}.ToImmutableDictionary();
 
 		public static bool TryGetDiagnosticProvider(
 			BinaryExpressionSyntax binaryExpression,
-			out AssertIsBoolDiagnosticProvider<BinaryExpressionSyntax> diagnosticProvider
+			out AssertIsBoolDiagnosticProvider diagnosticProvider
 		) {
-			return m_diagnosticProviders.TryGetValue( 
+			Func<BinaryExpressionSyntax, AssertIsBoolDiagnosticProvider> diagnosticProviderFactory;
+			bool knownExpression = m_diagnosticProviders.TryGetValue( 
 					binaryExpression.OperatorToken.Kind(), 
-					out diagnosticProvider
+					out diagnosticProviderFactory
 				);
+
+			if( !knownExpression ) {
+				diagnosticProvider = null;
+				return false;
+			}
+
+			diagnosticProvider = diagnosticProviderFactory( binaryExpression );
+			return true;
 		}
 
 		private static string GetComparisonDiagnostic(

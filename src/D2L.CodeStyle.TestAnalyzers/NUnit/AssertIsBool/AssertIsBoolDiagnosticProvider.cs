@@ -1,31 +1,37 @@
 ﻿using System;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 
-	internal sealed class AssertIsBoolDiagnosticProvider<T> where T : ExpressionSyntax {
+	internal sealed class AssertIsBoolDiagnosticProvider {
 
-		private readonly Func<T, string> m_isTrueDiagnostic;
-		private readonly Func<T, string> m_isFalseDiagnostic;
+		private const string AssertIsTrue = "NUnit.Framework.Assert.IsTrue";
+		private const string AssertIsFalse = "NUnit.Framework.Assert.IsFalse";
+
+		public static bool CanDiagnoseSymbol( string symbolName ) {
+			return symbolName == AssertIsTrue || symbolName == AssertIsFalse;
+		}
+
+		private readonly Func<string> m_isTrueDiagnostic;
+		private readonly Func<string> m_isFalseDiagnostic;
 
 		public AssertIsBoolDiagnosticProvider(
-			Func<T, string> isTrueDiagnostic,
-			Func<T, string> isFalseDiagnostic
+			Func<string> isTrueDiagnostic,
+			Func<string> isFalseDiagnostic
 		) {
 			m_isTrueDiagnostic = isTrueDiagnostic;
 			m_isFalseDiagnostic = isFalseDiagnostic;
 		}
 
-		public AssertIsBoolDiagnosticProvider<T> Opposite() =>
-			new AssertIsBoolDiagnosticProvider<T>( m_isFalseDiagnostic, m_isTrueDiagnostic );
+		public AssertIsBoolDiagnosticProvider Opposite() =>
+			new AssertIsBoolDiagnosticProvider( m_isFalseDiagnostic, m_isTrueDiagnostic );
 
-		public Func<T, string> GetDiagnosticFunc( string symbolName ) {
-			Func<T, string> getDiagnosticFunc;
+		public Func<string> GetDiagnosticFunc( string symbolName ) {
+			Func<string> getDiagnosticFunc;
 			switch( symbolName ) {
-				case AssertIsBoolAnalyzer.AssertIsTrue:
+				case AssertIsTrue:
 					getDiagnosticFunc = m_isTrueDiagnostic;
 					break;
-				case AssertIsBoolAnalyzer.AssertIsFalse:
+				case AssertIsFalse:
 					getDiagnosticFunc = m_isFalseDiagnostic;
 					break;
 				default:

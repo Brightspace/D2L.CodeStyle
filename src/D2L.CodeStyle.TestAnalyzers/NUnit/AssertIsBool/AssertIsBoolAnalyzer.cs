@@ -10,14 +10,8 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class AssertIsBoolAnalyzer : DiagnosticAnalyzer {
 
-		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
-			=> ImmutableArray.Create( Diagnostics.MisusedAssertIsTrueOrFalse );
-
-		public const string AssertIsTrue = "NUnit.Framework.Assert.IsTrue";
-		public const string AssertIsFalse = "NUnit.Framework.Assert.IsFalse";
-
-		private static readonly ImmutableHashSet<string> AnalyzedSymbols =
-			new[] { AssertIsTrue, AssertIsFalse }.ToImmutableHashSet();
+		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => 
+			ImmutableArray.Create( Diagnostics.MisusedAssertIsTrueOrFalse );
 
 		private static readonly SymbolDisplayFormat MethodDisplayFormat = new SymbolDisplayFormat(
 			memberOptions: SymbolDisplayMemberOptions.IncludeContainingType,
@@ -47,20 +41,20 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 				.Symbol;
 
 			string symbolName = symbol.ToDisplayString( MethodDisplayFormat );
-			if( !AnalyzedSymbols.Contains( symbolName ) ) {
+			if( !AssertIsBoolDiagnosticProvider.CanDiagnoseSymbol( symbolName ) ) {
 				return;
 			}
 
 			ArgumentSyntax firstArgument = invocation.ArgumentList.Arguments[ 0 ];
 			if( firstArgument.Expression is BinaryExpressionSyntax binaryExpression ) {
 
-				AssertIsBoolDiagnosticProvider<BinaryExpressionSyntax> diagnosticProvider;
+				AssertIsBoolDiagnosticProvider diagnosticProvider;
 				if( !AssertIsBoolBinaryExpressions.TryGetDiagnosticProvider( binaryExpression, out diagnosticProvider ) ) {
 					// if we don't know it; we leave it
 					return;
 				}
 
-				string diagnosticMessage = diagnosticProvider.GetDiagnosticFunc( symbolName )( binaryExpression );
+				string diagnosticMessage = diagnosticProvider.GetDiagnosticFunc( symbolName )();
 				ReportDiagnostic( ctx, symbolName, diagnosticMessage );
 			}
 		}

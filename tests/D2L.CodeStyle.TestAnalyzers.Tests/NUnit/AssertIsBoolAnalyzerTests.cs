@@ -12,18 +12,6 @@ namespace D2L.CodeStyle.TestAnalyzers.Tests.NUnit {
 	[TestFixture]
 	internal sealed class AssertIsBoolAnalyzerTests : DiagnosticVerifier {
 
-		private static string GetCompleteTestClass( string testCode, params object[] args ) => string.Format( @"
-using NUnit.Framework;
-namespace Test {{
-	[TestFixture]
-	class Test {{
-		[Test]
-		public void Test() {{
-" + testCode + @"
-		}}
-	}}
-}}", args );
-
 		[TestCaseSource( nameof( NoDiagnosticTestCases ) )]
 		public void NoDiag( string test ) {
 
@@ -86,6 +74,19 @@ namespace Test {{
 
 		private static IEnumerable<TestCaseData> DiagnosticTestCases {
 			get {
+
+				string GetCompleteTestClass( string testCode, params object[] args ) => string.Format( @"
+using NUnit.Framework;
+namespace Test {{
+	[TestFixture]
+	class Test {{
+		[Test]
+		public void Test() {{
+" + testCode + @"
+		}}
+	}}
+}}", args );
+
 				Tuple<string, string, string>[] testCases = {
 					new Tuple<string, string, string>( 
 							"3 < 4", 
@@ -149,6 +150,9 @@ namespace Test {{
 						),
 				};
 
+				const string isTrueSymbolName = "NUnit.Framework.Assert.IsTrue";
+				const string isFalseSymbolName = "NUnit.Framework.Assert.IsFalse";
+
 				TestCaseData GetDiagTestCase( string testCode, string symbolName, string expectedRecommendation ) =>
 					new TestCaseData(
 						GetCompleteTestClass( testCode ), new[] {
@@ -165,15 +169,15 @@ namespace Test {{
 
 				foreach( var test in testCases ) {
 
-					yield return GetDiagTestCase( $"Assert.IsTrue( {test.Item1} );", AssertIsBoolAnalyzer.AssertIsTrue, test.Item2 );
+					yield return GetDiagTestCase( $"Assert.IsTrue( {test.Item1} );", isTrueSymbolName, test.Item2 );
 
-					yield return GetDiagTestCase( $"Assert.IsFalse( {test.Item1} );", AssertIsBoolAnalyzer.AssertIsFalse, test.Item3 );
+					yield return GetDiagTestCase( $"Assert.IsFalse( {test.Item1} );", isFalseSymbolName, test.Item3 );
 				}
 
 				// fqn test
 				var fqnTest = testCases[0];
-				yield return GetDiagTestCase( $"NUnit.Framework.Assert.IsTrue( {fqnTest.Item1} );", AssertIsBoolAnalyzer.AssertIsTrue, fqnTest.Item2 );
-				yield return GetDiagTestCase( $"NUnit.Framework.Assert.IsFalse( {fqnTest.Item1} );", AssertIsBoolAnalyzer.AssertIsFalse, fqnTest.Item3 );
+				yield return GetDiagTestCase( $"NUnit.Framework.Assert.IsTrue( {fqnTest.Item1} );", isTrueSymbolName, fqnTest.Item2 );
+				yield return GetDiagTestCase( $"NUnit.Framework.Assert.IsFalse( {fqnTest.Item1} );", isFalseSymbolName, fqnTest.Item3 );
 			}
 		}
 
