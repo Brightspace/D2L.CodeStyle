@@ -96,6 +96,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="NUnit\AssertIsBoolAnalyzerTests.cs" />
     <Compile Include="NUnit\ValueSourceStringsAnalyzerTests.cs" />
     <Compile Include="ParallelizableTests\ParallelizableTestsAnalyzerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
