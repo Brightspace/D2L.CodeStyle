@@ -4,13 +4,6 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 
 	internal sealed class AssertIsBoolDiagnosticProvider {
 
-		private const string AssertIsTrue = "NUnit.Framework.Assert.IsTrue";
-		private const string AssertIsFalse = "NUnit.Framework.Assert.IsFalse";
-
-		public static bool CanDiagnoseSymbol( string symbolName ) {
-			return symbolName == AssertIsTrue || symbolName == AssertIsFalse;
-		}
-
 		private readonly Func<string> m_isTrueDiagnostic;
 		private readonly Func<string> m_isFalseDiagnostic;
 
@@ -28,10 +21,10 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 		public Func<string> GetDiagnosticFunc( string symbolName ) {
 			Func<string> getDiagnosticFunc;
 			switch( symbolName ) {
-				case AssertIsTrue:
+				case AssertIsBoolSymbols.IsTrue:
 					getDiagnosticFunc = m_isTrueDiagnostic;
 					break;
-				case AssertIsFalse:
+				case AssertIsBoolSymbols.IsFalse:
 					getDiagnosticFunc = m_isFalseDiagnostic;
 					break;
 				default:
