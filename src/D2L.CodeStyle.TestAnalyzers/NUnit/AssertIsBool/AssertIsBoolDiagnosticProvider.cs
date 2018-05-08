@@ -18,7 +18,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 		public AssertIsBoolDiagnosticProvider Opposite() =>
 			new AssertIsBoolDiagnosticProvider( m_isFalseDiagnostic, m_isTrueDiagnostic );
 
-		public Func<string> GetDiagnosticFunc( string symbolName ) {
+		public string GetDiagnostic( string symbolName ) {
 			Func<string> getDiagnosticFunc;
 			switch( symbolName ) {
 				case AssertIsBoolSymbols.IsTrue:
@@ -31,7 +31,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 					throw new InvalidOperationException( $"unknown '{symbolName}' symbol" );
 			}
 
-			return getDiagnosticFunc;
+			return getDiagnosticFunc();
 		}
 	}
 }
