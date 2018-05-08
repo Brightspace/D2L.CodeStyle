@@ -48,7 +48,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 					return;
 				}
 
-				string diagnosticMessage = diagnosticProvider.GetDiagnosticFunc( symbolName )();
+				string diagnosticMessage = diagnosticProvider.GetDiagnostic( symbolName );
 				ReportDiagnostic( ctx, symbolName, diagnosticMessage );
 			}
 		}
