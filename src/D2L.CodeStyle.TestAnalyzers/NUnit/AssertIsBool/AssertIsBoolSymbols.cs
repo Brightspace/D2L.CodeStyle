@@ -13,12 +13,19 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 				typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
 			);
 
-		public static string GetSymbolName( ISymbol symbol ) {
-			return symbol.ToDisplayString( MethodDisplayFormat );
-		}
+		public static bool TryGetName( ISymbol symbol, out string symbolName ) {
+			if( symbol == null ) {
+				symbolName = null;
+				return false;
+			}
 
-		public static bool IsMatch( string symbolName ) {
-			return symbolName == IsTrue || symbolName == IsFalse;
+			symbolName = symbol.ToDisplayString( MethodDisplayFormat );
+			if( symbolName == IsTrue || symbolName == IsFalse ) {
+				return true;
+			}
+
+			symbolName = null;
+			return false;
 		}
 	}
 }

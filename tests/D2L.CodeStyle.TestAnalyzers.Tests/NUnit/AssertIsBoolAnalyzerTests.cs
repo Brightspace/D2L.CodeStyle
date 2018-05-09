@@ -12,6 +12,31 @@ namespace D2L.CodeStyle.TestAnalyzers.Tests.NUnit {
 	[TestFixture]
 	internal sealed class AssertIsBoolAnalyzerTests : DiagnosticVerifier {
 
+		/// <summary>
+		/// "nameof" is an InvocationExpressionSyntax, but it is not represented in the semantic model (i.e. the symbol is null).
+		/// Make sure that it does not make the analyzer crash with a NullReferenceException.
+		/// </summary>
+		[Test]
+		public void NoSymbol_NoDiag() {
+
+			const string test = @"
+using NUnit.Framework;
+namespace Test {
+	[TestFixture]
+	class Test {
+		[Test]
+		public void Test() {
+
+			int testVar = 1;
+
+			Assert.AreNotEqual( ""test"", nameof( testVar ) );
+		}
+	}
+}";
+
+			VerifyCSharpDiagnostic( test );
+		}
+
 		[TestCaseSource( nameof( NoDiagnosticTestCases ) )]
 		public void NoDiag( string test ) {
 

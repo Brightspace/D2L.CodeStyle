@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using D2L.CodeStyle.TestAnalyzers.Common;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -34,8 +35,12 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 				.GetSymbolInfo( invocation.Expression )
 				.Symbol;
 
-			string symbolName = AssertIsBoolSymbols.GetSymbolName( symbol );
-			if( !AssertIsBoolSymbols.IsMatch( symbolName ) ) {
+			if( symbol == null ) {
+				return;
+			}
+
+			string symbolName;
+			if( !AssertIsBoolSymbols.TryGetName( symbol, out symbolName ) ) {
 				return;
 			}
 
