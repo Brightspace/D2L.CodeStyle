@@ -31,35 +31,41 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		);
 
 		// TODO: shrink this number over time. Maybe 5 would be good?
-		public const int TOO_MANY_UNNAMED_ARGS = 31;
+		public const int TOO_MANY_UNNAMED_ARGS = 20;
 
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
 
 			context.RegisterSyntaxNodeAction(
-				AnalyzeInvocation,
+				AnalyzeCallSyntax,
 				SyntaxKind.InvocationExpression
+			);
+
+			context.RegisterSyntaxNodeAction(
+				AnalyzeCallSyntax,
+				SyntaxKind.ObjectCreationExpression
 			);
 		}
 
-		private static void AnalyzeInvocation(
+		private static void AnalyzeCallSyntax(
 			SyntaxNodeAnalysisContext ctx
 		) {
-			var expr = (InvocationExpressionSyntax)ctx.Node;
+			var expr = (ExpressionSyntax)ctx.Node;
+			var args = GetArgs( expr );
 
-			if ( expr.ArgumentList == null ) {
+			if ( args == null ) {
 				return;
 			}
 
 			// Don't complain about single argument functions because they're
 			// very likely to be understandable
-			if ( expr.ArgumentList.Arguments.Count <= 1 ) {
+			if ( args.Arguments.Count <= 1 ) {
 				return;
 			}
 
 			var unnamedArgs = GetUnnamedArgs(
 				ctx.SemanticModel,
-				expr.ArgumentList
+				args
 			).ToImmutableArray();
 
 			if ( unnamedArgs.Length >= TOO_MANY_UNNAMED_ARGS ) {
@@ -135,6 +141,20 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					paramName: param.Name,
 					syntax: arg
 				);
+			}
+		}
+
+		// Not an extension method because there may be more cases (e.g. in the
+		// future) and if more than this fix + its analyzer used this logic
+		// there could be undesirable coupling if we handled more cases.
+		internal static ArgumentListSyntax GetArgs( SyntaxNode syntax ) {
+			switch( syntax ) {
+				case InvocationExpressionSyntax invocation:
+					return invocation.ArgumentList;
+				case ObjectCreationExpressionSyntax objectCreation:
+					return objectCreation.ArgumentList;
+				default:
+					return null;
 			}
 		}
 	}

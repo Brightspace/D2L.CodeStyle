@@ -14,7 +14,8 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			"System.StringComparer",
 			"System.Text.ASCIIEncoding",
 			"System.Text.Encoding",
-			"System.Text.UTF8Encoding"
+			"System.Text.UTF8Encoding",
+			"System.IO.Abstractions.IFileSystem"
 		);
 
 		public static ImmutabilityScope GetImmutabilityScope( this ITypeSymbol type ) {

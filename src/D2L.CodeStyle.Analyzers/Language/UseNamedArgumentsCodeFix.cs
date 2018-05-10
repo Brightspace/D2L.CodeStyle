@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -8,6 +7,7 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 
 namespace D2L.CodeStyle.Analyzers.Language {
 	[ExportCodeFixProvider(
@@ -24,7 +24,10 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			return WellKnownFixAllProviders.BatchFixer;
 		}
 
-		public override async Task RegisterCodeFixesAsync( CodeFixContext ctx ) {
+
+		public override async Task RegisterCodeFixesAsync(
+			CodeFixContext ctx
+		) {
 			var root = await ctx.Document
 				.GetSyntaxRootAsync( ctx.CancellationToken )
 				.ConfigureAwait( false );
@@ -32,17 +35,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			foreach( var diagnostic in ctx.Diagnostics ) {
 				var span = diagnostic.Location.SourceSpan;
 
-				// FindNode() may identify a parent of the InvocationExpression
-				// we'd like to fix that has an equal line-span. We're grabbing
-				// the "first" child InvocationExpressionSyntax. I'm guessing
-				// that will work out right.
-				var invocation = root
-					.FindNode( span )
-					.DescendantNodes()
-					.OfType<InvocationExpressionSyntax>()
-					.First();
-
-				var args = invocation.ArgumentList;
+				var args = GetArgs( root, ctx.Span );
 
 				// The analyzer stored the names to add to arguments in the
 				// diagnostic.
@@ -119,6 +112,21 @@ namespace D2L.CodeStyle.Analyzers.Language {
 							.WithLeadingTrivia( leadingTrivia )
 					);
 			}
+		}
+
+		public static ArgumentListSyntax GetArgs(
+			SyntaxNode root,
+			TextSpan span
+		) {
+			var node = root
+				.FindNode(
+					span,
+					getInnermostNodeForTie: true
+				);
+
+			var args = RequireNamedArgumentsAnalyzer.GetArgs( node );
+
+			return args;
 		}
 	}
 }
