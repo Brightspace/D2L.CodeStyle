@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using D2L.CodeStyle.TestAnalyzers.Common;
 using Microsoft.CodeAnalysis;
@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
-	public sealed class AssertIsBoolAnalyzer : DiagnosticAnalyzer {
+	public sealed partial class AssertIsBoolAnalyzer : DiagnosticAnalyzer {
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => 
 			ImmutableArray.Create( Diagnostics.MisusedAssertIsTrueOrFalse );
@@ -44,32 +44,30 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 				return;
 			}
 
-			ArgumentSyntax firstArgument = invocation.ArgumentList.Arguments[ 0 ];
-			if( firstArgument.Expression is BinaryExpressionSyntax binaryExpression ) {
-
-				AssertIsBoolDiagnosticProvider diagnosticProvider;
-				if( !AssertIsBoolBinaryExpressions.TryGetDiagnosticProvider( binaryExpression, out diagnosticProvider ) ) {
-					// if we don't know it; we leave it
-					return;
-				}
-
-				string diagnosticMessage = diagnosticProvider.GetDiagnostic( symbolName );
-				ReportDiagnostic( ctx, symbolName, diagnosticMessage );
+			if( AssertIsBoolBinaryExpressions.TryGetDiagnosticProvider(
+				invocation,
+				out AssertIsBoolDiagnosticProvider diagnosticProvider ) 
+			) {
+				AssertIsBoolDiagnostic diagnostic = diagnosticProvider.GetDiagnostic( symbolName );
+				ReportDiagnostic( ctx, symbolName, diagnostic );
 			}
 		}
 
 		private static void ReportDiagnostic(
 			SyntaxNodeAnalysisContext ctx,
 			string symbolName,
-			string diagnosticMessage
+			AssertIsBoolDiagnostic diagnostic
 		) {
-			Diagnostic diagnostic = Diagnostic.Create(
+			ImmutableDictionary<string, string> properties =
+				new Dictionary<string, string> { { "replacement", diagnostic.Replacement.ToFullString() } }.ToImmutableDictionary();
+			Diagnostic analysisDiagnostic = Diagnostic.Create(
 					Diagnostics.MisusedAssertIsTrueOrFalse,
 					ctx.Node.GetLocation(),
+					properties,
 					symbolName,
-					diagnosticMessage 
+					diagnostic.Message 
 				);
-			ctx.ReportDiagnostic( diagnostic );
+			ctx.ReportDiagnostic( analysisDiagnostic );
 		}
 	}
 }
