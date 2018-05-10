@@ -115,70 +115,75 @@ namespace Test {{
 				Tuple<string, string, string>[] testCases = {
 					new Tuple<string, string, string>( 
 							"3 < 4", 
-							"Assert.Less( 3, 4 )", 
-							"Assert.Greater( 3, 4 )" 
+							"Assert.Less", 
+							"Assert.Greater" 
 						),
 					new Tuple<string, string, string>(
 							"3 < 4, \"test message {{0}}\", \"with replacement\"",
-							"Assert.Less( 3, 4, \"test message {0}\", \"with replacement\" )",
-							"Assert.Greater( 3, 4, \"test message {0}\", \"with replacement\" )"
+							"Assert.Less",
+							"Assert.Greater"
 						),
 					new Tuple<string, string, string>( 
 							"3 <= 4", 
-							"Assert.LessOrEqual( 3, 4 )", 
-							"Assert.GreaterOrEqual( 3, 4 )" 
+							"Assert.LessOrEqual", 
+							"Assert.GreaterOrEqual" 
 						),
 					new Tuple<string, string, string>( 
 							"3 > 4", 
-							"Assert.Greater( 3, 4 )", 
-							"Assert.Less( 3, 4 )" 
+							"Assert.Greater", 
+							"Assert.Less" 
 						),
 					new Tuple<string, string, string>( 
 							"3 >= 4", 
-							"Assert.GreaterOrEqual( 3, 4 )", 
-							"Assert.LessOrEqual( 3, 4 )" 
+							"Assert.GreaterOrEqual", 
+							"Assert.LessOrEqual" 
 						),
 					new Tuple<string, string, string>( 
 							"3 == 4", 
-							"Assert.AreEqual( 3, 4 )", 
-							"Assert.AreNotEqual( 3, 4 )" 
+							"Assert.AreEqual", 
+							"Assert.AreNotEqual" 
 						),
 					new Tuple<string, string, string>(
 							"3 == 4, \"test message\"",
-							"Assert.AreEqual( 3, 4, \"test message\" )",
-							"Assert.AreNotEqual( 3, 4, \"test message\" )"
+							"Assert.AreEqual",
+							"Assert.AreNotEqual"
 						),
 					new Tuple<string, string, string>( 
 							"3 == null", 
-							"Assert.IsNull( 3 )", 
-							"Assert.IsNotNull( 3 )" 
+							"Assert.IsNull", 
+							"Assert.IsNotNull" 
 						),
 					new Tuple<string, string, string>( 
 							"null == 3", 
-							"Assert.IsNull( 3 )", 
-							"Assert.IsNotNull( 3 )" 
+							"Assert.IsNull", 
+							"Assert.IsNotNull" 
 						),
 					new Tuple<string, string, string>(
 							"null == 3, \"test message\"",
-							"Assert.IsNull( 3, \"test message\" )",
-							"Assert.IsNotNull( 3, \"test message\" )"
+							"Assert.IsNull",
+							"Assert.IsNotNull"
 						),
 					new Tuple<string, string, string>( 
-							"3 is IEnumerable", 
-							"Assert.IsInstanceOf<IEnumerable>( 3 )", 
-							"Assert.IsNotInstanceOf<IEnumerable>( 3 )" 
+							"3 is IEnumerable",
+							"Assert.IsInstanceOf<IEnumerable>",
+							"Assert.IsNotInstanceOf<IEnumerable>"
 						),
 					new Tuple<string, string, string>(
 							"3 is IEnumerable, \"test message {{0}}\", \"with replacement\"",
-							"Assert.IsInstanceOf<IEnumerable>( 3, \"test message {0}\", \"with replacement\" )",
-							"Assert.IsNotInstanceOf<IEnumerable>( 3, \"test message {0}\", \"with replacement\" )"
+							"Assert.IsInstanceOf<IEnumerable>",
+							"Assert.IsNotInstanceOf<IEnumerable>"
 						),
+					new Tuple<string, string, string>(
+						"3 is IList<string>",
+						"Assert.IsInstanceOf<IList<string>>",
+						"Assert.IsNotInstanceOf<IList<string>>"
+					),
 				};
 
 				const string isTrueSymbolName = "NUnit.Framework.Assert.IsTrue";
 				const string isFalseSymbolName = "NUnit.Framework.Assert.IsFalse";
 
-				DiagnosticResult GetExpectedDiagnostic( string symbolName, string expectedRecommendation, int lineNumber = 8 ) {
+				DiagnosticResult GetExpectedDiagnostic( string symbolName, string expectedRecommendation, int lineNumber = 8, int columnNumber = 0 ) {
 
 					string message = string.Format( 
 							Diagnostics.MisusedAssertIsTrueOrFalse.MessageFormat.ToString(), 
@@ -191,7 +196,7 @@ namespace Test {{
 						Message = message,
 						Severity = DiagnosticSeverity.Warning,
 						Locations = new[] {
-								new DiagnosticResultLocation( "Test0.cs", lineNumber, 0 )
+								new DiagnosticResultLocation( "Test0.cs", lineNumber, columnNumber )
 							}
 					};
 				}
@@ -200,7 +205,7 @@ namespace Test {{
 					new TestCaseData(
 							GetCompleteTestClass( testCode ), 
 							expecDiagnosticResults
-						).SetName( testCode );
+						).SetName( testCode.Trim() );
 
 				foreach( var test in testCases ) {
 
@@ -218,20 +223,29 @@ namespace Test {{
 				var fqnTest = testCases[0];
 				yield return GetDiagTestCase( 
 						$"NUnit.Framework.Assert.IsTrue( {fqnTest.Item1} );", 
-						GetExpectedDiagnostic( isTrueSymbolName, fqnTest.Item2 ) 
+						GetExpectedDiagnostic( isTrueSymbolName, $"NUnit.Framework.{fqnTest.Item2}" ) 
 					);
 				yield return GetDiagTestCase( 
 						$"NUnit.Framework.Assert.IsFalse( {fqnTest.Item1} );", 
-						GetExpectedDiagnostic( isFalseSymbolName, fqnTest.Item3 ) 
+						GetExpectedDiagnostic( isFalseSymbolName, $"NUnit.Framework.{fqnTest.Item3}" ) 
 					);
+
+				// trivia
+				yield return GetDiagTestCase( $@"
+		/*some test comment*/ Assert.IsTrue(
+				{fqnTest.Item1},
+				""test message""
+			);",
+					GetExpectedDiagnostic( isTrueSymbolName, fqnTest.Item2, lineNumber: 9, columnNumber: 25 )
+				);
 
 				// multiple diagnostic messages
 				var testLine1 = $"NUnit.Framework.Assert.IsTrue( {testCases[ 0 ].Item1} );";
 				var testLine2 = $"NUnit.Framework.Assert.IsFalse( {testCases[ 1 ].Item1} );";
 				yield return GetDiagTestCase(
 						$"{testLine1}{Environment.NewLine}{testLine2}",
-						GetExpectedDiagnostic( isTrueSymbolName, testCases[ 0 ].Item2, lineNumber: 8 ),
-						GetExpectedDiagnostic( isFalseSymbolName, testCases[ 1 ].Item3, lineNumber: 9 )
+						GetExpectedDiagnostic( isTrueSymbolName, $"NUnit.Framework.{testCases[ 0 ].Item2}", lineNumber: 8 ),
+						GetExpectedDiagnostic( isFalseSymbolName, $"NUnit.Framework.{testCases[ 1 ].Item3}", lineNumber: 9 )
 					);
 			}
 		}
