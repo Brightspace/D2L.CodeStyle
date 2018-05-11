@@ -100,6 +100,9 @@ namespace Test {{
 		private static IEnumerable<TestCaseData> DiagnosticTestCases {
 			get {
 
+				const string isTrueSymbolName = "NUnit.Framework.Assert.IsTrue";
+				const string isFalseSymbolName = "NUnit.Framework.Assert.IsFalse";
+
 				string GetCompleteTestClass( string testCode, params object[] args ) => string.Format( @"
 using NUnit.Framework;
 namespace Test {{
@@ -180,9 +183,6 @@ namespace Test {{
 					),
 				};
 
-				const string isTrueSymbolName = "NUnit.Framework.Assert.IsTrue";
-				const string isFalseSymbolName = "NUnit.Framework.Assert.IsFalse";
-
 				DiagnosticResult GetExpectedDiagnostic( string symbolName, string expectedRecommendation, int lineNumber = 8, int columnNumber = 0 ) {
 
 					string message = string.Format( 
@@ -232,11 +232,11 @@ namespace Test {{
 
 				// trivia
 				yield return GetDiagTestCase( $@"
-		/*some test comment*/ Assert.IsTrue(
-				{fqnTest.Item1},
-				""test message""
-			);",
-					GetExpectedDiagnostic( isTrueSymbolName, fqnTest.Item2, lineNumber: 9, columnNumber: 25 )
+					/*some test comment*/ Assert.IsTrue(
+							{fqnTest.Item1},
+							""test message""
+						);",
+					GetExpectedDiagnostic( isTrueSymbolName, fqnTest.Item2, lineNumber: 9, columnNumber: 28 )
 				);
 
 				// multiple diagnostic messages
