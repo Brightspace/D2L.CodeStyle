@@ -167,25 +167,25 @@ namespace Test {{
 							"Assert.IsNotNull"
 						),
 					new Tuple<string, string, string>(
-						"3 == 0",
-						"Assert.Zero",
-						"Assert.NotZero"
-					),
+							"3 == 0",
+							"Assert.Zero",
+							"Assert.NotZero"
+						),
 					new Tuple<string, string, string>(
-						"0 == 3",
-						"Assert.Zero",
-						"Assert.NotZero"
-					),
+							"0 == 3",
+							"Assert.Zero",
+							"Assert.NotZero"
+						),
 					new Tuple<string, string, string>(
-						"null == 0",
-						"Assert.IsNull",
-						"Assert.IsNotNull"
-					),
+							"null == 0",
+							"Assert.IsNull",
+							"Assert.IsNotNull"
+						),
 					new Tuple<string, string, string>(
-						"0 == null",
-						"Assert.IsNull",
-						"Assert.IsNotNull"
-					),
+							"0 == null",
+							"Assert.IsNull",
+							"Assert.IsNotNull"
+						),
 					new Tuple<string, string, string>( 
 							"3 is IEnumerable",
 							"Assert.IsInstanceOf<IEnumerable>",
@@ -197,10 +197,10 @@ namespace Test {{
 							"Assert.IsNotInstanceOf<IEnumerable>"
 						),
 					new Tuple<string, string, string>(
-						"3 is IList<string>",
-						"Assert.IsInstanceOf<IList<string>>",
-						"Assert.IsNotInstanceOf<IList<string>>"
-					),
+							"3 is IList<string>",
+							"Assert.IsInstanceOf<IList<string>>",
+							"Assert.IsNotInstanceOf<IList<string>>"
+						),
 				};
 
 				DiagnosticResult GetExpectedDiagnostic( string symbolName, string expectedRecommendation, int lineNumber = 8, int columnNumber = 0 ) {

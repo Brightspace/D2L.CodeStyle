@@ -210,14 +210,14 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 			);
 
 			ExpressionSyntax expt = SyntaxFactory.InvocationExpression(
-				SyntaxFactory.MemberAccessExpression(
-					SyntaxKind.SimpleMemberAccessExpression,
-					classNameSyntax,
-					SyntaxFactory.Token( SyntaxKind.DotToken ),
-					replacementMethodNameSyntax
-				),
-				newArgumentList
-			);
+					SyntaxFactory.MemberAccessExpression(
+							SyntaxKind.SimpleMemberAccessExpression,
+							classNameSyntax,
+							SyntaxFactory.Token( SyntaxKind.DotToken ),
+							replacementMethodNameSyntax
+						),
+					newArgumentList
+				);
 
 			string message = $"{classNameSyntax}.{replacementMethodNameSyntax}";
 
