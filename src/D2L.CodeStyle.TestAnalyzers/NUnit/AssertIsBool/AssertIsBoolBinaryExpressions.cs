@@ -49,8 +49,12 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 			InvocationExpressionSyntax invocation,
 			out AssertIsBoolDiagnosticProvider diagnosticProvider
 		) {
-			ArgumentSyntax firstArgument = invocation.ArgumentList.Arguments[ 0 ];
-			if( !( firstArgument.Expression is BinaryExpressionSyntax binaryExpression ) ) {
+			if( invocation.ArgumentList.Arguments.Count == 0 ) {
+				diagnosticProvider = null;
+				return false;
+			}
+
+			if( !( invocation.ArgumentList.Arguments[ 0 ].Expression is BinaryExpressionSyntax binaryExpression ) ) {
 				diagnosticProvider = null;
 				return false;
 			}
