@@ -247,6 +247,22 @@ namespace Test {{
 						GetExpectedDiagnostic( isTrueSymbolName, $"NUnit.Framework.{testCases[ 0 ].Item2}", lineNumber: 8 ),
 						GetExpectedDiagnostic( isFalseSymbolName, $"NUnit.Framework.{testCases[ 1 ].Item3}", lineNumber: 9 )
 					);
+
+				// alias test
+				yield return new TestCaseData(
+					@"
+using NunitAssert = NUnit.Framework.Assert;
+namespace Test {
+	[TestFixture]
+	class Test {
+		[Test]
+		public void Test() {
+			NunitAssert.IsTrue( 3 < 4 );
+		}
+	}
+}",
+					new[] { GetExpectedDiagnostic( isTrueSymbolName, "NunitAssert.Less", columnNumber: 4 ) }
+				).SetName( "alias test" );
 			}
 		}
 
