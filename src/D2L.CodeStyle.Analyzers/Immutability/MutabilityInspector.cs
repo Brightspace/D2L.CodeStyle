@@ -106,7 +106,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		public MutabilityInspectionResult InspectMember( ISymbol symbol ) {
 			var seen = new HashSet<ITypeSymbol>();
 
-			return InspectMemberRecursive( symbol, seen );
+			return InspectMember( symbol, seen );
 		}
 
 		private MutabilityInspectionResult InspectType(
@@ -280,15 +280,18 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			ImmutableHashSet<string>.Builder seenUnauditedReasonsBuilder = ImmutableHashSet.CreateBuilder<string>();
+			ImmutableHashSet<AttributeSyntax>.Builder unnecessaryAttributes =
+				ImmutableHashSet.CreateBuilder<AttributeSyntax>();
 
 			typeStack.Add( type );
 			try {
 				foreach( ISymbol member in type.GetExplicitNonStaticMembers() ) {
-					var result = InspectMemberRecursive( member, typeStack );
+					var result = InspectMember( member, typeStack );
 					if( result.IsMutable ) {
 						return result;
 					}
 					seenUnauditedReasonsBuilder.UnionWith( result.SeenUnauditedReasons );
+					unnecessaryAttributes.UnionWith( result.UnnecessaryAnnotations );
 				}
 
 				// We descend into the base class last
@@ -299,12 +302,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						return baseResult;
 					}
 					seenUnauditedReasonsBuilder.UnionWith( baseResult.SeenUnauditedReasons );
+					unnecessaryAttributes.UnionWith( baseResult.UnnecessaryAnnotations );
 				}
 			} finally {
 				typeStack.Remove( type );
 			}
 
-			return MutabilityInspectionResult.NotMutable( seenUnauditedReasonsBuilder.ToImmutable() );
+			return MutabilityInspectionResult
+					.NotMutable( seenUnauditedReasonsBuilder.ToImmutable() )
+					.WithUnnecessaryAnnotations( unnecessaryAttributes.ToImmutable() );
 		}
 
 		private bool IsAnImmutableContainerType( ITypeSymbol type ) {
@@ -517,19 +523,36 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return decl;
 		}
 
+		private MutabilityInspectionResult InspectMember(
+			ISymbol symbol,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			// if the member is audited or unaudited, check if valid
+			if( Attributes.Mutability.IsDefined( symbol ) ) {
+
+				var annotedAttributes = Attributes.Mutability.GetAllAttributeSyntax( symbol );
+				var annotatedInspectionResult = InspectMemberRecursive( symbol, typeStack );
+
+				var annotatedResult = MutabilityInspectionResult.Annotated(
+					annotatedInspectionResult,
+					annotedAttributes
+				);
+
+				if( Attributes.Mutability.Unaudited.IsDefined( symbol ) ) {
+					string unauditedReason = BecauseHelpers.GetUnauditedReason( symbol );
+					return annotatedResult.WithSeenUnauditedReason( unauditedReason );
+				}
+
+				return annotatedResult;
+			}
+
+			return InspectMemberRecursive( symbol, typeStack );
+		}
+
 		private MutabilityInspectionResult InspectMemberRecursive(
 			ISymbol symbol,
 			HashSet<ITypeSymbol> typeStack
 		) {
-			// if the member is audited or unaudited, ignore it
-			if( Attributes.Mutability.Audited.IsDefined( symbol ) ) {
-				return MutabilityInspectionResult.NotMutable();
-			}
-			if( Attributes.Mutability.Unaudited.IsDefined( symbol ) ) {
-				string unauditedReason = BecauseHelpers.GetUnauditedReason( symbol );
-				return MutabilityInspectionResult.NotMutable( ImmutableHashSet.Create( unauditedReason ) );
-			}
-
 			switch( symbol.Kind ) {
 				case SymbolKind.Property:
 					return InspectProperty(

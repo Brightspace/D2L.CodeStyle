@@ -1,4 +1,6 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
@@ -340,6 +342,10 @@ namespace D2L.CodeStyle.Annotations {
 
 			public UnauditedAttribute( Because why, UndiffBucket bucket ) { }
 		}
+		public sealed class AuditedAttribute : Attribute {
+ 
+			public AuditedAttribute( string owner, string auditedDate, string rationale ) { }
+		}
 	}
 
 	public static class Objects {
@@ -599,6 +605,115 @@ sealed class Baz { }
 			AssertUnauditedReasonsResult( ty, "ItsUgly", "ItHasntBeenLookedAt" );
 		}
 
+		[TestCase( @"Mutability.Audited( ""bar"", ""bar"", ""bar"" )" )]
+		[TestCase( @"Mutability.Unaudited( Because.ItsSketchy )" )]
+		public void InspectType_TypeHasAnnotatedMutableAuditedMember_ReturnsEmptyUnnecessaryAnnotations(
+			string barAuditedAnnotation
+		) {
+
+			string source = AnnotationsPreamble + @"
+sealed class Foo {
+	[barAuditedAnnotation]
+	public Func<string> Bar { get; }
+}
+".Replace( "barAuditedAnnotation", barAuditedAnnotation );
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
+
+			AssertUnnecessaryAnnotations( ty );
+		}
+
+		[TestCase( @"Mutability.Audited( ""bar"", ""bar"", ""bar"" )" )]
+		[TestCase( @"Mutability.Unaudited( Because.ItsSketchy )" )]
+		public void InspectType_TypeHasAnnotatedImmutableMember_ReturnsUnnecessaryAnnotations(
+			string barAuditedAnnotation
+		) {
+
+			string source = AnnotationsPreamble + @"
+sealed class Foo {
+	[barAuditedAnnotation]
+	public string Bar { get; }
+}
+".Replace( "barAuditedAnnotation", barAuditedAnnotation );
+
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
+
+			AssertUnnecessaryAnnotations( ty, barAuditedAnnotation );
+		}
+
+		[TestCase(
+			@"Mutability.Audited( ""bar"", ""bar"", ""bar"" )",
+			@"Mutability.Audited( ""baz"", ""baz"", ""baz"" )" )]
+		[TestCase(
+			@"Mutability.Unaudited( Because.ItsSketchy )",
+			@"Mutability.Unaudited( Because.ItHasntBeenLookedAt )" )]
+		[TestCase(
+			@"Mutability.Unaudited( Because.ItsSketchy )",
+			@"Mutability.Audited( ""baz"", ""baz"", ""baz"" )" )]
+		[TestCase(
+			@"Mutability.Audited( ""bar"", ""bar"", ""bar"" )",
+			@"Mutability.Unaudited( Because.ItHasntBeenLookedAt )" )]
+		public void InspectType_TypeHasNestedAnnotatedImmutableMember_ReturnsAllUnnecessaryAnnotations(
+			string barAuditedAnnotation,
+			string bazAuditedAnnotation
+		) {
+
+			string source = AnnotationsPreamble + @"
+sealed class Foo {
+	[barAuditedAnnotation]
+	public Bar bar { get; }
+}
+sealed class Bar {
+	[bazAuditedAnnotation]
+	public string baz { get; }
+}
+"
+.Replace( "barAuditedAnnotation", barAuditedAnnotation )
+.Replace( "bazAuditedAnnotation", bazAuditedAnnotation );
+
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
+
+			AssertUnnecessaryAnnotations( ty, barAuditedAnnotation, bazAuditedAnnotation );
+		}
+
+		[TestCase(
+			@"Mutability.Audited( ""bar"", ""bar"", ""bar"" )",
+			@"Mutability.Audited( ""baz"", ""baz"", ""baz"" )" )]
+		[TestCase(
+			@"Mutability.Unaudited( Because.ItsSketchy )",
+			@"Mutability.Unaudited( Because.ItHasntBeenLookedAt )" )]
+		[TestCase(
+			@"Mutability.Unaudited( Because.ItsSketchy )",
+			@"Mutability.Audited( ""baz"", ""baz"", ""baz"" )" )]
+		[TestCase(
+			@"Mutability.Audited( ""bar"", ""bar"", ""bar"" )",
+			@"Mutability.Unaudited( Because.ItHasntBeenLookedAt )" )]
+		public void InspectType_TypeHasInnerMutableAuditedMember_ReturnsTopLevelAnnotation(
+			string barAuditedAnnotation,
+			string bazAuditedAnnotation
+		) {
+
+			string source = AnnotationsPreamble + @"
+sealed class Foo {
+	[barAuditedAnnotation]
+	public Bar bar { get; }
+}
+sealed class Bar {
+	[bazAuditedAnnotation]
+	public string baz { get; set; }
+}
+"
+.Replace( "barAuditedAnnotation", barAuditedAnnotation )
+.Replace( "bazAuditedAnnotation", bazAuditedAnnotation );
+
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
+
+			AssertUnnecessaryAnnotations( ty, barAuditedAnnotation );
+		}
+
 		private TestSymbol<ITypeSymbol> CompileAndGetFooType( string source ) {
 			var compilation = Compile( source );
 
@@ -608,6 +723,20 @@ sealed class Baz { }
 			).OfType<ITypeSymbol>().FirstOrDefault( s => s.Name == "Foo" );
 
 			return new TestSymbol<ITypeSymbol>( ty, compilation );
+		}
+
+		private void AssertUnnecessaryAnnotations(
+			TestSymbol<ITypeSymbol> ty,
+			params string[] unnecessaryAnnotations
+		) {
+			var inspector = new MutabilityInspector(
+				ty.Compilation,
+				KnownImmutableTypes.Default
+			);
+	
+			var actual = inspector.InspectType( ty.Symbol, MutabilityInspectionFlags.IgnoreImmutabilityAttribute );
+
+			AssertUnnecessaryAnnotationSyntax( unnecessaryAnnotations, actual );
 		}
 
 		private void AssertUnauditedReasonsResult( TestSymbol<ITypeSymbol> ty, params string[] expectedUnauditedReasons ) {
@@ -633,6 +762,20 @@ sealed class Baz { }
 			Assert.AreEqual( expected.Cause, actual.Cause, "Cause does not match" );
 			Assert.AreEqual( expected.TypeName, actual.TypeName, "TypeName does not match" );
 			CollectionAssert.AreEquivalent( expected.SeenUnauditedReasons, actual.SeenUnauditedReasons, "SeenUnauditedReasons did not match" );
+		}
+
+		private void AssertUnnecessaryAnnotationSyntax(
+			IEnumerable<string> expectedUnnecessaryAnnotationTxts,
+			MutabilityInspectionResult actual
+		) {
+			var actualUnnecessaryAnnotationTxts = 
+				actual.UnnecessaryAnnotations.Select( attributeSyntax => attributeSyntax.ToString() );
+
+			CollectionAssert.AreEquivalent(
+				expectedUnnecessaryAnnotationTxts,
+				actualUnnecessaryAnnotationTxts,
+				"UnnecessaryAnnotations do not match"
+			);
 		}
 
 	}
