@@ -164,15 +164,24 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 
 			List<ArgumentSyntax> newArgs = new List<ArgumentSyntax>();
 
-			// first arg has correct leading trivia, or the arg list open parentheses has it;
-			// either way, it does not need any additional trivia
 			if( firstArgReplacements.Length > 0 ) {
-				newArgs.Add( SyntaxFactory.Argument( firstArgReplacements[ 0 ] ) );
+				// first arg has correct leading trivia, or the arg list open parentheses has it;
+				// either way, it does not need any additional trivia
+				newArgs.Add( SyntaxFactory.Argument( firstArgReplacements[ 0 ].WithoutTrailingTrivia() ) );
+
+				// subsequent new args need the leading trivia for proper alignment
+				newArgs.AddRange( firstArgReplacements.Skip( 1 ).Select( 
+						r => SyntaxFactory.Argument( r ).WithLeadingTrivia( argLeadingTrivia ).WithoutTrailingTrivia()
+					) );
+
+				if( invocation.ArgumentList.Arguments.Count == 1 ) {
+					// add back the first argument expression's trivia before the closing parantheses
+					SyntaxTriviaList trailingTrivia = invocation.ArgumentList.Arguments[ 0 ].Expression.GetTrailingTrivia();
+					int lastIdx = newArgs.Count - 1;
+					newArgs[ lastIdx ] = newArgs[ lastIdx ].WithTrailingTrivia( trailingTrivia );
+				}
 			}
-			// subsequent new args need the leading trivia for proper alignment
-			newArgs.AddRange( firstArgReplacements.Skip( 1 ).Select( 
-					r => SyntaxFactory.Argument( r ).WithLeadingTrivia( argLeadingTrivia ) 
-				) );
+
 			newArgs.AddRange( invocation.ArgumentList.Arguments.Skip( 1 ) );
 
 			List<SyntaxToken> newSeparators = new List<SyntaxToken>();
