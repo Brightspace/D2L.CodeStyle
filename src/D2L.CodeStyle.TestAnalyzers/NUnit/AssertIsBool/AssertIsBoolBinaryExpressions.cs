@@ -78,14 +78,13 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 			string replacementMethodName
 		) {
 			BinaryExpressionSyntax binaryExpression = (BinaryExpressionSyntax) invocation.ArgumentList.Arguments[ 0 ].Expression;
-			ExpressionSyntax[] firstArgReplacements = {
+
+			return GetDiagnostic( 
+					invocation,
+					SyntaxFactory.IdentifierName( replacementMethodName ),
 					binaryExpression.Left,
 					binaryExpression.Right
-				};
-
-			SimpleNameSyntax replacementMethodNameSyntax = SyntaxFactory.IdentifierName( replacementMethodName );
-
-			return GetDiagnostic( invocation, replacementMethodNameSyntax, firstArgReplacements );
+				);
 		}
 
 		private static AssertIsBoolDiagnostic GetEqualityOperatorsDiagnostic(
@@ -135,15 +134,14 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 		) {
 			BinaryExpressionSyntax binaryExpression = (BinaryExpressionSyntax) invocation.ArgumentList.Arguments[ 0 ].Expression;
 
-			ExpressionSyntax[] firstArgReplacements = { binaryExpression.Left };
-
+			TypeSyntax genericType = SyntaxFactory.ParseTypeName( binaryExpression.Right.ToString() );
 			SimpleNameSyntax replacementMethodNameSyntax = SyntaxFactory.GenericName( 
 					SyntaxFactory.Identifier( replacementMethodName ),
 					SyntaxFactory.TypeArgumentList(
-							SyntaxFactory.SingletonSeparatedList( SyntaxFactory.ParseTypeName( binaryExpression.Right.ToString() ) )
+							SyntaxFactory.SingletonSeparatedList( genericType )
 						) );
 
-			return GetDiagnostic( invocation, replacementMethodNameSyntax, firstArgReplacements );
+			return GetDiagnostic( invocation, replacementMethodNameSyntax, binaryExpression.Left );
 		}
 
 		private static ArgumentListSyntax FormatArgumentList(
