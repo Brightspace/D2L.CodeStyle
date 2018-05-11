@@ -13,7 +13,5 @@ A suite of Roslyn analyzers and tools for D2L's C# code.
 
 3. Ensure that all tests pass
 
-4. `rebase` your changes against master. *Do not merge*.
-
-5. Submit a pull request to this repository. Wait for tests to run and someone
+4. Submit a pull request to this repository. Wait for tests to run and someone
    to chime in.
