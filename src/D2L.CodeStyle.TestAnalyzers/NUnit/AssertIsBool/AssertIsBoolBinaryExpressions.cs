@@ -12,8 +12,8 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 
 		private static readonly Func<InvocationExpressionSyntax, AssertIsBoolDiagnosticProvider> m_equalsEqualsDiagnosticProviderFactory =
 			e => new AssertIsBoolDiagnosticProvider(
-				() => GetEqualityOperatorsDiagnostic( e, "AreEqual", "IsNull" ),
-				() => GetEqualityOperatorsDiagnostic( e, "AreNotEqual", "IsNotNull" )
+				() => GetEqualityOperatorsDiagnostic( e, "AreEqual", "IsNull", "Zero" ),
+				() => GetEqualityOperatorsDiagnostic( e, "AreNotEqual", "IsNotNull", "NotZero" )
 			);
 		private static readonly Func<InvocationExpressionSyntax, AssertIsBoolDiagnosticProvider> m_lessThanDiagnosticProviderFactory =
 			e => new AssertIsBoolDiagnosticProvider(
@@ -86,28 +86,44 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 
 		private static AssertIsBoolDiagnostic GetEqualityOperatorsDiagnostic(
 			InvocationExpressionSyntax invocation,
-			string nonNullReplacementMethodName,
-			string nullReplacementMethodName
+			string comparisonReplacementMethodName,
+			string nullReplacementMethodName,
+			string zeroReplacementMethodName
 		) {
 			BinaryExpressionSyntax binaryExpression = (BinaryExpressionSyntax) invocation.ArgumentList.Arguments[ 0 ].Expression;
 
-			ExpressionSyntax nonNullOperand = null;
+			string replacementMethodName;
+			ExpressionSyntax[] firstParameterReplacements;
+
 			if( binaryExpression.Left.Kind() == SyntaxKind.NullLiteralExpression ) {
-				nonNullOperand = binaryExpression.Right;
+				replacementMethodName = nullReplacementMethodName;
+				firstParameterReplacements = new[] { binaryExpression.Right };
 			} else if( binaryExpression.Right.Kind() == SyntaxKind.NullLiteralExpression ) {
-				nonNullOperand = binaryExpression.Left;
+				replacementMethodName = nullReplacementMethodName;
+				firstParameterReplacements = new[] { binaryExpression.Left };
+			} else if( IsZeroLiteral( binaryExpression.Left ) ) {
+				replacementMethodName = zeroReplacementMethodName;
+				firstParameterReplacements = new[] { binaryExpression.Right };
+			} else if( IsZeroLiteral( binaryExpression.Right ) ) {
+				replacementMethodName = zeroReplacementMethodName;
+				firstParameterReplacements = new[] { binaryExpression.Left };
+			} else {
+				replacementMethodName = comparisonReplacementMethodName;
+				// switch left and right expressions order because:
+				// 1. from what I've seen so far, the first equality operand is the one under test, most of the times
+				// 2. most Assert methods usually take the expected value first and the actual value second
+				firstParameterReplacements = new[] { binaryExpression.Right, binaryExpression.Left };
 			}
 
-			if( nonNullOperand == null ) {
-				return GetComparisonDiagnostic( invocation, nonNullReplacementMethodName );
-			}
-
-			ExpressionSyntax[] firstArgReplacements = { nonNullOperand };
-
-			SimpleNameSyntax replacementMethodNameSyntax = SyntaxFactory.IdentifierName( nullReplacementMethodName );
-
-			return GetDiagnostic( invocation, replacementMethodNameSyntax, firstArgReplacements );
+			return GetDiagnostic(
+					invocation,
+					SyntaxFactory.IdentifierName( replacementMethodName ),
+					firstParameterReplacements
+				);
 		}
+
+		private static bool IsZeroLiteral( ExpressionSyntax expression ) => 
+			expression.Kind() == SyntaxKind.NumericLiteralExpression && expression.ToString() == "0";
 
 		private static AssertIsBoolDiagnostic GetIsKeywordDiagnostic(
 			InvocationExpressionSyntax invocation,
@@ -173,7 +189,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 		private static AssertIsBoolDiagnostic GetDiagnostic(
 			InvocationExpressionSyntax invocation,
 			SimpleNameSyntax replacementMethodNameSyntax,
-			ExpressionSyntax[] firstArgReplacements
+			params ExpressionSyntax[] firstArgReplacements
 		) {
 			ExpressionSyntax classNameSyntax = ( (MemberAccessExpressionSyntax) invocation.Expression ).Expression;
 

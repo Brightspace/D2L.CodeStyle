@@ -166,6 +166,26 @@ namespace Test {{
 							"Assert.IsNull",
 							"Assert.IsNotNull"
 						),
+					new Tuple<string, string, string>(
+						"3 == 0",
+						"Assert.Zero",
+						"Assert.NotZero"
+					),
+					new Tuple<string, string, string>(
+						"0 == 3",
+						"Assert.Zero",
+						"Assert.NotZero"
+					),
+					new Tuple<string, string, string>(
+						"null == 0",
+						"Assert.IsNull",
+						"Assert.IsNotNull"
+					),
+					new Tuple<string, string, string>(
+						"0 == null",
+						"Assert.IsNull",
+						"Assert.IsNotNull"
+					),
 					new Tuple<string, string, string>( 
 							"3 is IEnumerable",
 							"Assert.IsInstanceOf<IEnumerable>",
