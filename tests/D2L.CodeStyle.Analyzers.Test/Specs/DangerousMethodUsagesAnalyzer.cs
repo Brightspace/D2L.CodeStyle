@@ -24,6 +24,15 @@ namespace D2L.CodeStyle.Annotations {
 	public sealed class ImmutableAttribute : Attribute { }
 }
 
+namespace System.Web.Hosting {
+
+	public static class HostingEnvironment {
+
+		public static string MapPath( string virtualPath ) => virtualPath + " mapped";
+
+	}
+}
+
 namespace SpecTests {
 
 	internal sealed class UnmarkedUsages {

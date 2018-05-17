@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using System.Web;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -350,12 +349,6 @@ namespace D2L.CodeStyle.Analyzers {
 					projectId,
 					MetadataReference
 						.CreateFromFile( typeof( Enumerable ).Assembly.Location ) )
-
-				// system.web
-				.AddMetadataReference(
-					projectId,
-					MetadataReference
-						.CreateFromFile( typeof( HttpServerUtility ).Assembly.Location ) )
 
 				.AddDocument( documentId, filename, SourceText.From( source ) );
 
