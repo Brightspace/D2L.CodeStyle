@@ -2,10 +2,6 @@
 using System.Collections.Immutable;
 using System.Reflection;
 using System.Threading.Tasks;
-using System.Web;
-using System.Web.Configuration;
-using System.Web.Hosting;
-using System.Web.UI;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMethodUsages {
 	internal static class DangerousMethods {
@@ -21,47 +17,17 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMethodUsages {
 			.Add<Task>(
 				nameof( Task.Run )
 			)
-			.AddMapPathMethods();
-
-		private static ImmutableDictionary<string, ImmutableArray<string>> AddMapPathMethods( 
-				this ImmutableDictionary<string, ImmutableArray<string>> types 
-			) {
-
-			return types
-				.Add<HttpServerUtility>(
-					nameof( HttpServerUtility.MapPath ) 
-				)
-				.Add<HttpServerUtilityBase>(
-					nameof( HttpServerUtilityBase.MapPath )
-				)
-				.Add<HttpServerUtilityWrapper>(
-					nameof( HttpServerUtilityWrapper.MapPath )
-				)
-				.Add<HttpRequest>(
-					nameof( HttpRequest.MapPath )
-				)
-				.Add<HttpRequestBase>(
-					nameof( HttpRequestBase.MapPath )
-				)
-				.Add<HttpRequestWrapper>(
-					nameof( HttpRequestWrapper.MapPath )
-				)
-				.Add<HttpWorkerRequest>(
-					nameof( HttpWorkerRequest.MapPath )
-				)
-				.Add<HostingEnvironment>(
-					nameof( HostingEnvironment.MapPath )
-				)
-				.Add<UserMapPath>(
-					nameof( UserMapPath.MapPath )
-				)
-				.Add<Page>(
-					nameof( Page.MapPath )
-				)
-				.Add<UserControl>(
-					nameof( UserControl.MapPath )
-				);
-		}
+			.AddMapPathMethod( "System.Web.HttpServerUtility" )
+			.AddMapPathMethod( "System.Web.HttpServerUtilityBase" )
+			.AddMapPathMethod( "System.Web.HttpServerUtilityWrapper" )
+			.AddMapPathMethod( "System.Web.HttpRequest" )
+			.AddMapPathMethod( "System.Web.HttpRequestBase" )
+			.AddMapPathMethod( "System.Web.HttpRequestWrapper" )
+			.AddMapPathMethod( "System.Web.HttpWorkerRequest" )
+			.AddMapPathMethod( "System.Web.Hosting.HostingEnvironment" )
+			.AddMapPathMethod( "System.Web.UI.Page" )
+			.AddMapPathMethod( "System.Web.UI.UserControl" )
+			.AddMapPathMethod( "System.Web.Configuration.UserMapPath" );
 
 		private static ImmutableDictionary<string, ImmutableArray<string>> Add<T>(
 				this ImmutableDictionary<string, ImmutableArray<string>> types,
@@ -72,6 +38,18 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMethodUsages {
 				typeof( T ).FullName,
 				ImmutableArray.Create( methodNames )
 			);
+		}
+
+		/// <remarks>
+		/// Type parameter is a string on purpose, to avoid having to add a reference to System.Web.
+		/// Referencing it would prevent us from shipping a netstandard/.NET core build of the analyzers.
+		/// </remarks>
+		private static ImmutableDictionary<string, ImmutableArray<string>> AddMapPathMethod(
+			this ImmutableDictionary<string, ImmutableArray<string>> types,
+			string containingTypeFullName
+		) {
+
+			return types.Add( containingTypeFullName, ImmutableArray.Create( "MapPath" ) );
 		}
 	}
 }
