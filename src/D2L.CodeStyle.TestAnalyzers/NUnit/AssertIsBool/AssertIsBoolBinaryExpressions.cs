@@ -115,8 +115,20 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 			string replacementMethodName;
 			ExpressionSyntax[] firstParameterReplacements;
 
+			bool IsNullLiteral( ExpressionSyntax expression ) =>
+				expression.Kind() == SyntaxKind.NullLiteralExpression;
+
+			bool IsZeroLiteral( ExpressionSyntax expression ) =>
+				expression.Kind() == SyntaxKind.NumericLiteralExpression && expression.ToString() == "0";
+
+			bool IsTrueLiteral( ExpressionSyntax expression ) =>
+				expression.Kind() == SyntaxKind.TrueLiteralExpression;
+
+			bool IsFalseLiteral( ExpressionSyntax expression ) =>
+				expression.Kind() == SyntaxKind.FalseLiteralExpression;
+
 			ExpressionSyntax otherOperand;
-			if( binaryExpression.TryGetSingleOperandForEqualityReplacement( op => op.Kind() == SyntaxKind.NullLiteralExpression, out otherOperand ) ) {
+			if( binaryExpression.TryGetSingleOperandForEqualityReplacement( IsNullLiteral, out otherOperand ) ) {
 				replacementMethodName = nullReplacementMethodName;
 				firstParameterReplacements = new[] { otherOperand };
 			} else if( binaryExpression.TryGetSingleOperandForEqualityReplacement( IsZeroLiteral, out otherOperand ) ) {
@@ -158,15 +170,6 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 
 			return otherOperand != null;
 		}
-
-		private static bool IsZeroLiteral( ExpressionSyntax expression ) => 
-			expression.Kind() == SyntaxKind.NumericLiteralExpression && expression.ToString() == "0";
-
-		private static bool IsTrueLiteral( ExpressionSyntax expression ) =>
-			expression.Kind() == SyntaxKind.TrueLiteralExpression;
-
-		private static bool IsFalseLiteral( ExpressionSyntax expression ) =>
-			expression.Kind() == SyntaxKind.FalseLiteralExpression;
 
 		private static AssertIsBoolDiagnostic GetIsKeywordDiagnostic(
 			InvocationExpressionSyntax invocation,
