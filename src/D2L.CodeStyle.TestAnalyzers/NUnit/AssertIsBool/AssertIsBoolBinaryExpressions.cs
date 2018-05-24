@@ -5,6 +5,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using NUnit.Framework;
 
 namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 
@@ -14,35 +15,35 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 			e => new AssertIsBoolDiagnosticProvider(
 				() => GetEqualityOperatorsDiagnostic( 
 						e, 
-						comparisonReplacementMethodName: "AreEqual", 
-						nullReplacementMethodName: "IsNull", 
-						zeroReplacementMethodName: "Zero", 
-						trueReplacementMethodName: "IsTrue", 
-						falseReplacementMethodName: "IsFalse" 
+						comparisonReplacementMethodName: nameof( Assert.AreEqual ), 
+						nullReplacementMethodName: nameof( Assert.IsNull ), 
+						zeroReplacementMethodName: nameof( Assert.Zero ), 
+						trueReplacementMethodName: nameof( Assert.IsTrue ), 
+						falseReplacementMethodName: nameof( Assert.IsFalse ) 
 					),
 				() => GetEqualityOperatorsDiagnostic( 
 						e, 
-						comparisonReplacementMethodName: "AreNotEqual", 
-						nullReplacementMethodName: "IsNotNull", 
-						zeroReplacementMethodName: "NotZero", 
-						trueReplacementMethodName: "IsFalse", 
-						falseReplacementMethodName: "IsTrue" 
+						comparisonReplacementMethodName: nameof( Assert.AreNotEqual ), 
+						nullReplacementMethodName: nameof( Assert.IsNotNull ), 
+						zeroReplacementMethodName: nameof( Assert.NotZero ), 
+						trueReplacementMethodName: nameof( Assert.IsFalse ), 
+						falseReplacementMethodName: nameof( Assert.IsTrue ) 
 					)
 			);
 		private static readonly Func<InvocationExpressionSyntax, AssertIsBoolDiagnosticProvider> m_lessThanDiagnosticProviderFactory =
 			e => new AssertIsBoolDiagnosticProvider(
-				() => GetComparisonDiagnostic( e, "Less" ),
-				() => GetComparisonDiagnostic( e, "Greater" )
+				() => GetComparisonDiagnostic( e, nameof( Assert.Less ) ),
+				() => GetComparisonDiagnostic( e, nameof( Assert.Greater ) )
 			);
 		private static readonly Func<InvocationExpressionSyntax, AssertIsBoolDiagnosticProvider> m_lessThanEqualsDiagnosticProviderFactory =
 			e => new AssertIsBoolDiagnosticProvider(
-				() => GetComparisonDiagnostic( e, "LessOrEqual" ),
-				() => GetComparisonDiagnostic( e, "GreaterOrEqual" )
+				() => GetComparisonDiagnostic( e, nameof( Assert.LessOrEqual ) ),
+				() => GetComparisonDiagnostic( e, nameof( Assert.GreaterOrEqual ) )
 			);
 		private static readonly Func<InvocationExpressionSyntax, AssertIsBoolDiagnosticProvider> m_isKeywordDiagnosticProviderFactory =
 			e => new AssertIsBoolDiagnosticProvider(
-				() => GetIsKeywordDiagnostic( e, "IsInstanceOf" ),
-				() => GetIsKeywordDiagnostic( e, "IsNotInstanceOf" )
+				() => GetIsKeywordDiagnostic( e, nameof( Assert.IsInstanceOf ) ),
+				() => GetIsKeywordDiagnostic( e, nameof( Assert.IsNotInstanceOf ) )
 			);
 
 		private static readonly ImmutableDictionary<SyntaxKind, Func<InvocationExpressionSyntax, AssertIsBoolDiagnosticProvider>> m_diagnosticProviders =
