@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using NUnit.Framework;
 
-namespace D2L.CodeStyle.TestAnalyzers.Tests.NUnit {
+namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
 	[TestFixture]
 	internal sealed class AssertIsBoolAnalyzerTests : DiagnosticVerifier {
