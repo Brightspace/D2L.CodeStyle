@@ -33,12 +33,12 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 		private static readonly Func<InvocationExpressionSyntax, AssertIsBoolDiagnosticProvider> m_lessThanDiagnosticProviderFactory =
 			e => new AssertIsBoolDiagnosticProvider(
 				() => GetComparisonDiagnostic( e, nameof( Assert.Less ) ),
-				() => GetComparisonDiagnostic( e, nameof( Assert.Greater ) )
+				() => GetComparisonDiagnostic( e, nameof( Assert.GreaterOrEqual ) )
 			);
 		private static readonly Func<InvocationExpressionSyntax, AssertIsBoolDiagnosticProvider> m_lessThanEqualsDiagnosticProviderFactory =
 			e => new AssertIsBoolDiagnosticProvider(
 				() => GetComparisonDiagnostic( e, nameof( Assert.LessOrEqual ) ),
-				() => GetComparisonDiagnostic( e, nameof( Assert.GreaterOrEqual ) )
+				() => GetComparisonDiagnostic( e, nameof( Assert.Greater ) )
 			);
 		private static readonly Func<InvocationExpressionSyntax, AssertIsBoolDiagnosticProvider> m_isKeywordDiagnosticProviderFactory =
 			e => new AssertIsBoolDiagnosticProvider(
@@ -52,10 +52,10 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 				{ SyntaxKind.ExclamationEqualsToken, e => m_equalsEqualsDiagnosticProviderFactory( e ).Opposite() },
 
 				{ SyntaxKind.LessThanToken, m_lessThanDiagnosticProviderFactory },
-				{ SyntaxKind.GreaterThanToken, e => m_lessThanDiagnosticProviderFactory( e ).Opposite() },
+				{ SyntaxKind.GreaterThanToken, e => m_lessThanEqualsDiagnosticProviderFactory( e ).Opposite() },
 
 				{ SyntaxKind.LessThanEqualsToken, m_lessThanEqualsDiagnosticProviderFactory },
-				{ SyntaxKind.GreaterThanEqualsToken, e => m_lessThanEqualsDiagnosticProviderFactory( e ).Opposite() },
+				{ SyntaxKind.GreaterThanEqualsToken, e => m_lessThanDiagnosticProviderFactory( e ).Opposite() },
 
 				{ SyntaxKind.IsKeyword, m_isKeywordDiagnosticProviderFactory }
 			}.ToImmutableDictionary();

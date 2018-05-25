@@ -118,28 +118,28 @@ namespace Test {{
 				Tuple<string, string, string>[] testCases = {
 					new Tuple<string, string, string>( 
 							"3 < 4", 
-							"Assert.Less", 
-							"Assert.Greater" 
+							"Assert.Less",
+							"Assert.GreaterOrEqual"
 						),
 					new Tuple<string, string, string>(
 							"3 < 4, \"test message {{0}}\", \"with replacement\"",
 							"Assert.Less",
-							"Assert.Greater"
+							"Assert.GreaterOrEqual"
 						),
 					new Tuple<string, string, string>( 
 							"3 <= 4", 
 							"Assert.LessOrEqual", 
-							"Assert.GreaterOrEqual" 
+							"Assert.Greater" 
 						),
 					new Tuple<string, string, string>( 
 							"3 > 4", 
-							"Assert.Greater", 
-							"Assert.Less" 
+							"Assert.Greater",
+							"Assert.LessOrEqual"
 						),
 					new Tuple<string, string, string>( 
 							"3 >= 4", 
 							"Assert.GreaterOrEqual", 
-							"Assert.LessOrEqual" 
+							"Assert.Less" 
 						),
 					new Tuple<string, string, string>( 
 							"3 == 4", 
