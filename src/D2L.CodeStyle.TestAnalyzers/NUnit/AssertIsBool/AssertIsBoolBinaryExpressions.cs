@@ -131,26 +131,31 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 
 			if( binaryExpression.TryGetSingleOperandForEqualityReplacement( IsNullLiteral, out otherOperand ) ) {
 				// Assert.IsTrue/IsFalse( x == null ) -> Assert.IsNull/IsNotNull( x )
+				// Assert.IsTrue/IsFalse( x != null ) -> Assert.IsNotNull/IsNull( x )
 				replacementMethodName = nullReplacementMethodName;
 				firstParameterReplacements = new[] { otherOperand };
 
 			} else if( binaryExpression.TryGetSingleOperandForEqualityReplacement( IsZeroLiteral, out otherOperand ) ) {
 				// Assert.IsTrue/IsFalse( x == 0 ) -> Assert.Zero/NotZero( x )
+				// Assert.IsTrue/IsFalse( x != 0 ) -> Assert.NotZero/Zero( x )
 				replacementMethodName = zeroReplacementMethodName;
 				firstParameterReplacements = new[] { otherOperand };
 
 			} else if( binaryExpression.TryGetSingleOperandForEqualityReplacement( IsTrueLiteral, out otherOperand ) ) {
 				// Assert.IsTrue/IsFalse( x == true ) -> Assert.IsTrue/IsFalse( x )
+				// Assert.IsTrue/IsFalse( x != true ) -> Assert.IsFalse/IsTrue( x )
 				replacementMethodName = trueReplacementMethodName;
 				firstParameterReplacements = new[] { otherOperand };
 
 			} else if( binaryExpression.TryGetSingleOperandForEqualityReplacement( IsFalseLiteral, out otherOperand ) ) {
 				// Assert.IsTrue/IsFalse( x == false ) -> Assert.IsFalse/IsTrue( x )
+				// Assert.IsTrue/IsFalse( x != false ) -> Assert.IsTrue/IsFalse( x )
 				replacementMethodName = falseReplacementMethodName;
 				firstParameterReplacements = new[] { otherOperand };
 
 			} else {
 				// Assert.IsTrue/IsFalse( x == y ) -> Assert.AreEqual/AreNotEqual( y, x )
+				// Assert.IsTrue/IsFalse( x != y ) -> Assert.AreNotEqual/AreEqual( y, x )
 				replacementMethodName = comparisonReplacementMethodName;
 				// switch left and right expressions order because:
 				// 1. from what I've seen so far, the first equality operand is the one under test, most of the times
