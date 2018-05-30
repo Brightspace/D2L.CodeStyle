@@ -223,9 +223,10 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 			List<ArgumentSyntax> newArgs = new List<ArgumentSyntax>();
 
 			if( firstArgReplacements.Length > 0 ) {
-				// first arg has correct leading trivia, or the arg list open parentheses has it;
-				// either way, it does not need any additional trivia
-				newArgs.Add( SyntaxFactory.Argument( firstArgReplacements[ 0 ].WithoutTrailingTrivia() ) );
+				// transfer the leading trivia from the old first argument
+				newArgs.Add( SyntaxFactory.Argument( 
+						firstArgReplacements[ 0 ].WithLeadingTrivia( oldFirstArg.GetLeadingTrivia() ).WithoutTrailingTrivia() ) 
+					);
 
 				// subsequent new args need the leading trivia for proper alignment
 				newArgs.AddRange( firstArgReplacements.Skip( 1 ).Select( 
