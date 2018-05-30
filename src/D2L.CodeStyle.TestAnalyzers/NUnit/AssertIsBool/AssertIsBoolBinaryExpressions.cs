@@ -208,7 +208,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 		) {
 			ArgumentListSyntax oldArgumentList = invocation.ArgumentList;
 
-			SyntaxToken separator = SyntaxFactory.Token( SyntaxKind.CommaToken );
+			SyntaxToken separator = SyntaxFactory.Token( SyntaxKind.CommaToken ).WithTrailingTrivia( SyntaxFactory.TriviaList( SyntaxFactory.Space ) );
 			if( oldArgumentList.Arguments.Count > 1 ) {
 				// get argument separator incl. trivia
 				separator = oldArgumentList.Arguments.GetSeparator( 0 );
@@ -218,7 +218,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 			ArgumentSyntax oldFirstArg = oldArgumentList.Arguments[ 0 ];
 			SyntaxTriviaList argLeadingTrivia = oldFirstArg.HasLeadingTrivia 
 				? oldFirstArg.GetLeadingTrivia() 
-				: SyntaxFactory.TriviaList( SyntaxFactory.Space );
+				: SyntaxTriviaList.Empty;
 
 			List<ArgumentSyntax> newArgs = new List<ArgumentSyntax>();
 
