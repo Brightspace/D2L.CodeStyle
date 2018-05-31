@@ -208,10 +208,11 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 		) {
 			ArgumentListSyntax oldArgumentList = invocation.ArgumentList;
 
-			SyntaxToken separator = SyntaxFactory.Token( SyntaxKind.CommaToken ).WithTrailingTrivia( SyntaxFactory.TriviaList( SyntaxFactory.Space ) );
+			SyntaxToken firstArgReplacementsSeparator = SyntaxFactory.Token( SyntaxKind.CommaToken )
+				.WithTrailingTrivia( SyntaxFactory.TriviaList( SyntaxFactory.Space ) );
 			if( oldArgumentList.Arguments.Count > 1 ) {
 				// get argument separator incl. trivia
-				separator = oldArgumentList.Arguments.GetSeparator( 0 );
+				firstArgReplacementsSeparator = oldArgumentList.Arguments.GetSeparator( 0 );
 			}
 
 			// trying to align the new args with the existing ones
@@ -244,7 +245,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 			newArgs.AddRange( invocation.ArgumentList.Arguments.Skip( 1 ) );
 
 			List<SyntaxToken> newSeparators = new List<SyntaxToken>();
-			newSeparators.AddRange( firstArgReplacements.Skip( 1 ).Select( r => separator ) );
+			newSeparators.AddRange( firstArgReplacements.Skip( 1 ).Select( r => firstArgReplacementsSeparator ) );
 			newSeparators.AddRange( oldArgumentList.Arguments.GetSeparators() );
 
 			ArgumentListSyntax newArgumentList = SyntaxFactory.ArgumentList(
