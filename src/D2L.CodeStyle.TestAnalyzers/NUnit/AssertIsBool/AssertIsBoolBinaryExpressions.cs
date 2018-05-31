@@ -214,6 +214,8 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 				// get argument separator incl. trivia
 				firstArgReplacementsSeparator = oldArgumentList.Arguments.GetSeparator( 0 );
 			}
+			// this is to properly handle args split accross multi-lines (the new-feed trivia can be on the open paranthesys)
+			firstArgReplacementsSeparator = firstArgReplacementsSeparator.WithTrailingTrivia( oldArgumentList.OpenParenToken.TrailingTrivia );
 
 			// trying to align the new args with the existing ones
 			ArgumentSyntax oldFirstArg = oldArgumentList.Arguments[ 0 ];
