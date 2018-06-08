@@ -13,22 +13,8 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 
 		private static readonly Func<InvocationExpressionSyntax, AssertIsBoolDiagnosticProvider> m_equalsEqualsDiagnosticProviderFactory =
 			e => new AssertIsBoolDiagnosticProvider(
-				() => GetEqualityOperatorsDiagnostic( 
-						e, 
-						comparisonReplacementMethodName: nameof( Assert.AreEqual ), 
-						nullReplacementMethodName: nameof( Assert.IsNull ), 
-						zeroReplacementMethodName: nameof( Assert.Zero ), 
-						trueReplacementMethodName: nameof( Assert.IsTrue ), 
-						falseReplacementMethodName: nameof( Assert.IsFalse ) 
-					),
-				() => GetEqualityOperatorsDiagnostic( 
-						e, 
-						comparisonReplacementMethodName: nameof( Assert.AreNotEqual ), 
-						nullReplacementMethodName: nameof( Assert.IsNotNull ), 
-						zeroReplacementMethodName: nameof( Assert.NotZero ), 
-						trueReplacementMethodName: nameof( Assert.IsFalse ), 
-						falseReplacementMethodName: nameof( Assert.IsTrue ) 
-					)
+				() => GetEqualityOperatorsDiagnostic( e ),
+				() => GetEqualityOperatorsDiagnostic( e, isNegative: true )
 			);
 		private static readonly Func<InvocationExpressionSyntax, AssertIsBoolDiagnosticProvider> m_lessThanDiagnosticProviderFactory =
 			e => new AssertIsBoolDiagnosticProvider(
@@ -42,8 +28,8 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 			);
 		private static readonly Func<InvocationExpressionSyntax, AssertIsBoolDiagnosticProvider> m_isKeywordDiagnosticProviderFactory =
 			e => new AssertIsBoolDiagnosticProvider(
-				() => GetIsKeywordDiagnostic( e, nameof( Assert.IsInstanceOf ) ),
-				() => GetIsKeywordDiagnostic( e, nameof( Assert.IsNotInstanceOf ) )
+				() => GetIsKeywordDiagnostic( e ),
+				() => GetIsKeywordDiagnostic( e, isNegative: true )
 			);
 
 		private static readonly ImmutableDictionary<SyntaxKind, Func<InvocationExpressionSyntax, AssertIsBoolDiagnosticProvider>> m_diagnosticProviders =
@@ -102,13 +88,12 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 				);
 		}
 
+		private static string GetReplacementMethodName( string methodName, string negativeMethodName, bool negative ) => 
+			negative ? negativeMethodName : methodName;
+
 		private static AssertIsBoolDiagnostic GetEqualityOperatorsDiagnostic(
 			InvocationExpressionSyntax invocation,
-			string comparisonReplacementMethodName,
-			string nullReplacementMethodName,
-			string zeroReplacementMethodName,
-			string trueReplacementMethodName,
-			string falseReplacementMethodName
+			bool isNegative = false
 		) {
 			BinaryExpressionSyntax binaryExpression = (BinaryExpressionSyntax) invocation.ArgumentList.Arguments[ 0 ].Expression;
 
@@ -132,31 +117,51 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 			if( binaryExpression.TryGetSingleOperandForEqualityReplacement( IsNullLiteral, out otherOperand ) ) {
 				// Assert.IsTrue/IsFalse( x == null ) -> Assert.IsNull/IsNotNull( x )
 				// Assert.IsTrue/IsFalse( x != null ) -> Assert.IsNotNull/IsNull( x )
-				replacementMethodName = nullReplacementMethodName;
+				replacementMethodName = GetReplacementMethodName( 
+						nameof( Assert.IsNull ), 
+						nameof( Assert.IsNotNull ), 
+						isNegative
+					);
 				firstParameterReplacements = new[] { otherOperand };
 
 			} else if( binaryExpression.TryGetSingleOperandForEqualityReplacement( IsZeroLiteral, out otherOperand ) ) {
 				// Assert.IsTrue/IsFalse( x == 0 ) -> Assert.Zero/NotZero( x )
 				// Assert.IsTrue/IsFalse( x != 0 ) -> Assert.NotZero/Zero( x )
-				replacementMethodName = zeroReplacementMethodName;
+				replacementMethodName = GetReplacementMethodName( 
+						nameof( Assert.Zero ), 
+						nameof( Assert.NotZero ), 
+						isNegative 
+					);
 				firstParameterReplacements = new[] { otherOperand };
 
 			} else if( binaryExpression.TryGetSingleOperandForEqualityReplacement( IsTrueLiteral, out otherOperand ) ) {
 				// Assert.IsTrue/IsFalse( x == true ) -> Assert.IsTrue/IsFalse( x )
 				// Assert.IsTrue/IsFalse( x != true ) -> Assert.IsFalse/IsTrue( x )
-				replacementMethodName = trueReplacementMethodName;
+				replacementMethodName = GetReplacementMethodName( 
+						nameof( Assert.IsTrue ), 
+						nameof( Assert.IsFalse ), 
+						isNegative 
+					);
 				firstParameterReplacements = new[] { otherOperand };
 
 			} else if( binaryExpression.TryGetSingleOperandForEqualityReplacement( IsFalseLiteral, out otherOperand ) ) {
 				// Assert.IsTrue/IsFalse( x == false ) -> Assert.IsFalse/IsTrue( x )
 				// Assert.IsTrue/IsFalse( x != false ) -> Assert.IsTrue/IsFalse( x )
-				replacementMethodName = falseReplacementMethodName;
+				replacementMethodName = GetReplacementMethodName( 
+						nameof( Assert.IsFalse ), 
+						nameof( Assert.IsTrue ), 
+						isNegative 
+					);
 				firstParameterReplacements = new[] { otherOperand };
 
 			} else {
 				// Assert.IsTrue/IsFalse( x == y ) -> Assert.AreEqual/AreNotEqual( y, x )
 				// Assert.IsTrue/IsFalse( x != y ) -> Assert.AreNotEqual/AreEqual( y, x )
-				replacementMethodName = comparisonReplacementMethodName;
+				replacementMethodName = GetReplacementMethodName( 
+						nameof( Assert.AreEqual ), 
+						nameof( Assert.AreNotEqual ), 
+						isNegative 
+					);
 				// switch left and right expressions order because:
 				// 1. from what I've seen so far, the first equality operand is the one under test, most of the times
 				// 2. most Assert methods usually take the expected value first and the actual value second
@@ -188,8 +193,14 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit.AssertIsBool {
 
 		private static AssertIsBoolDiagnostic GetIsKeywordDiagnostic(
 			InvocationExpressionSyntax invocation,
-			string replacementMethodName
+			bool isNegative = false
 		) {
+			string replacementMethodName = GetReplacementMethodName(
+					nameof( Assert.IsInstanceOf ),
+					nameof( Assert.IsNotInstanceOf ),
+					isNegative
+				);
+
 			BinaryExpressionSyntax binaryExpression = (BinaryExpressionSyntax) invocation.ArgumentList.Arguments[ 0 ].Expression;
 
 			TypeSyntax genericType = SyntaxFactory.ParseTypeName( binaryExpression.Right.ToString() );
