@@ -3,6 +3,7 @@
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Web.Hosting;
 using D2L.CodeStyle.Annotations;
 using D2L.LP.Extensibility.Activation.Domain;
 
@@ -21,6 +22,15 @@ namespace D2L.CodeStyle.Annotations {
 	}
 
 	public sealed class ImmutableAttribute : Attribute { }
+}
+
+namespace System.Web.Hosting {
+
+	public static class HostingEnvironment {
+
+		public static string MapPath( string virtualPath ) => virtualPath + " mapped";
+
+	}
 }
 
 namespace SpecTests {
@@ -62,6 +72,10 @@ namespace SpecTests {
 				PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 				p.SetValue( "str", 7, null );
 			};
+		}
+
+		public void/* DangerousMethodsShouldBeAvoided(System.Web.Hosting.HostingEnvironment.MapPath) */ MethodWithMapPath(/**/) {
+			System.Web.Hosting.HostingEnvironment.MapPath( "/d2l" );
 		}
 	}
 
@@ -111,6 +125,11 @@ namespace SpecTests {
 				p.SetValue( "str", 7, null );
 			};
 		}
+
+		[DangerousMethodUsage.Audited( typeof( HostingEnvironment ), "MapPath" )]
+		public void MethodWithMapPath() {
+			HostingEnvironment.MapPath( "/d2l" );
+		}
 	}
 
 	internal sealed class UnauditedUsages {
@@ -159,6 +178,11 @@ namespace SpecTests {
 				p.SetValue( "str", 7, null );
 			};
 		}
+
+		[DangerousMethodUsage.Unaudited( typeof( HostingEnvironment ), "MapPath" )]
+		public void MethodWithMapPath() {
+			HostingEnvironment.MapPath( "/d2l" );
+		}
 	}
 
 	internal sealed class MismatchedAuditedUsages {
@@ -191,6 +215,11 @@ namespace SpecTests {
 		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ MissingParameters(/**/) {
 			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 			p.SetValue( "str", 7, null );
+		}
+
+		[DangerousMethodUsage.Unaudited( null, "MapPath" )]
+		public void/* DangerousMethodsShouldBeAvoided(System.Web.Hosting.HostingEnvironment.MapPath) */ MethodWithMapPath(/**/) {
+			HostingEnvironment.MapPath( "/d2l" );
 		}
 	}
 

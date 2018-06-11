@@ -100,7 +100,7 @@ namespace D2L.CodeStyle.Analyzers {
 				.Intersect(
 					m_expectedDiagnostics,
 					DiagnosticComparer.Instance
-				).ToImmutableHashSet();
+				).ToImmutableHashSet( DiagnosticComparer.Instance );
 		}
 
 		[Test]
@@ -120,10 +120,7 @@ namespace D2L.CodeStyle.Analyzers {
 		[Test]
 		public void ExpectedDiagnostics() {
 			var missingDiagnostics = m_expectedDiagnostics
-				.Where( d => !m_matchedDiagnostics.Contains(
-					d,
-					DiagnosticComparer.Instance
-				) );
+				.Where( d => !m_matchedDiagnostics.Contains( d ) );
 
 			CollectionAssert.IsEmpty( missingDiagnostics );
 		}
