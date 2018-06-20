@@ -202,5 +202,34 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 
 			return false;
 		}
+
+		public static bool IsGenericType( this ISymbol symbol ) {
+			if( symbol is INamedTypeSymbol ) {
+				var namedType = symbol as INamedTypeSymbol;
+				return ( namedType.TypeParameters.Length > 0 );
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Find the matching type argument in the base interface
+		/// that corresponds to this type parameter.  That is,
+		/// if we have Foo<S, T>: IFoo<S>, IBar<T>, this will
+		/// match up the Foo S, to the IFoo S, but will get -1
+		/// from IBar since it doesn't have S.
+		/// </summary>
+		public static int IndexOfArgument( 
+			this INamedTypeSymbol intf, string name 
+		) {
+
+			for (int ordinal = 0; ordinal < intf.TypeArguments.Length; ordinal++ ) {
+				if (string.Equals(intf.TypeArguments[ordinal].Name, name, StringComparison.Ordinal)) {
+					return ordinal;
+				}
+			}
+
+			return -1;
+		}
 	}
 }
