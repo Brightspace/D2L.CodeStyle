@@ -5,7 +5,7 @@ using D2L.CodeStyle.Annotations;
 using D2L.LP.Extensibility.Activation.Domain;
 
 [assembly: Objects.ImmutableGeneric(
-	type: typeof(SpecTests.GenericsTests.IFactory<Version>) 
+	type: typeof( SpecTests.GenericsTests.IFactory<Version> )
 )]
 
 [assembly: Objects.ImmutableGeneric(
@@ -18,9 +18,9 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 
 namespace D2L.CodeStyle.Annotations {
 	public static class Objects {
-		public abstract class ImmutableAttributeBase : Attribute { 
+		public abstract class ImmutableAttributeBase : Attribute {
 			public Except Except { get; set; }
-    }
+		}
 		public sealed class Immutable : ImmutableAttributeBase { }
 		public sealed class ImmutableBaseClassAttribute : ImmutableAttributeBase { }
 
@@ -43,7 +43,7 @@ namespace D2L.CodeStyle.Annotations {
 	public static class Mutability {
 		public sealed class AuditedAttribute : Attribute { }
 		public sealed class UnauditedAttribute : Attribute {
-			public UnauditedAttribute( Because why ) {}
+			public UnauditedAttribute( Because why ) { }
 		}
 	}
 	public enum Because {
@@ -57,6 +57,17 @@ namespace D2L.CodeStyle.Annotations {
 }
 
 namespace SpecTests {
+
+	// Items used in multiple test spaces are defined outside of the spaces
+	sealed class ImmutableClass {
+		private readonly string m_ImmutableClass;
+	}
+
+	sealed class MutableClass {
+		private string m_MutableClass;
+	}
+
+
 
 	class AnnotationsTests {
 		[Objects.Immutable]
@@ -160,7 +171,7 @@ namespace SpecTests {
 
 		[Objects.Immutable]
 		class IndexerPropertyClass {
-			object this[ int index ] {
+			object this[int index] {
 				get { return null; }
 			}
 		}
@@ -256,7 +267,7 @@ namespace SpecTests {
 		sealed class W { readonly X x1, x2, x3; }
 		sealed class X { readonly Y y1, y2, y3; }
 		sealed class Y { readonly Z z1, z2, z3; }
-		sealed class Z {}
+		sealed class Z { }
 
 		#endregion
 	}
@@ -315,4 +326,86 @@ namespace SpecTests {
 		}
 
 	}
+
+	class GenericTypeFieldTests {
+		// Generic type parameter state with mutable and immutable concrete types
+
+		[Objects.Immutable]
+		sealed class GenericClassWithImmutableState<[Objects.Immutable] T> {
+			internal readonly T m_GenericClassWithImmutableState;
+		}
+
+		[Objects.Immutable]
+		class /* ImmutableClassIsnt('m_ConcreteClassWithMutableGenericType.m_GenericClassWithImmutableState.m_MutableClass' is not read-only) */ ConcreteClassWithMutableGenericType /**/ {
+			internal readonly GenericClassWithImmutableState<MutableClass> m_ConcreteClassWithMutableGenericType;
+		}
+
+		[Objects.Immutable]
+		class ConcreteClassWithImmutableGenericType {
+			internal readonly GenericClassWithImmutableState<ImmutableClass> m_ConcreteClassWithImmutableGenericType;
+		}
+	}
+
+	class GenericTypeParameterTests {
+		// Ensures generic type parameters from an interface are examined
+
+		[Objects.Immutable]
+		interface ImmutableGenericInterface<[Objects.Immutable] T> {
+		}
+
+		[Objects.Immutable]
+		sealed class GenericClassWithImmutableInterface<T> : ImmutableGenericInterface<T> {
+			internal readonly T m_GenericClassWithImmutableInterface;
+		}
+
+		[Objects.Immutable]
+		class ConcreteClassWithImmutableInterfaceImmutableType {
+			internal readonly ImmutableGenericInterface<ImmutableClass> m_ConcreteClassWithImmutableInterfaceImmutableType;
+		}
+
+		[Objects.Immutable]
+		class /* ImmutableClassIsnt('m_ConcreteClassWithImmutableInterfaceMutableType''s type ('SpecTests.MutableClass') is a type parameter that must be marked with `[Objects.Immutable]`) */ ConcreteClassWithImmutableInterfaceMutableType /**/ {
+			internal readonly ImmutableGenericInterface<MutableClass> m_ConcreteClassWithImmutableInterfaceMutableType;
+		}
+	}
+
+	class MultipleGenericParameterTests {
+		// Tests when there is a mixed set of mutable and immutable type parameters
+
+		[Objects.Immutable]
+		sealed class MultiGenericClassWithOneImmutable<[Objects.Immutable] T, S> {
+			internal readonly T m_MultiGenericClassWithOneImmutable;
+		}
+
+		[Objects.Immutable]
+		sealed class ConcreteHoldingMixedModeGeneric {
+			internal readonly MultiGenericClassWithOneImmutable<ImmutableClass, MutableClass> m_ConcreteHoldingMixedModeGeneric;
+		}
+
+		[Objects.Immutable]
+		sealed class /* ImmutableClassIsnt('m_ConcreteHoldingMixedModeGenericWrongOrder.m_MultiGenericClassWithOneImmutable.m_MutableClass' is not read-only) */ ConcreteHoldingMixedModeGenericWrongOrder /**/ {
+			internal readonly MultiGenericClassWithOneImmutable<MutableClass, ImmutableClass> m_ConcreteHoldingMixedModeGenericWrongOrder;
+		}
+	}
+
+	class MultipleGenericInterfaceParameterTests {
+		[Objects.Immutable]
+		interface MultiGeneric<[Objects.Immutable] S, T> {
+		}
+
+		sealed class MultiGenericFromInterface<S, T> : MultiGeneric<S, T> {
+			internal readonly S m_MultiGenericFromInterface;
+		}
+
+		[Objects.Immutable]
+		sealed class ConcreteUsingMultiGenericFromInterface {
+			internal readonly MultiGenericFromInterface<ImmutableClass, NonReadOnlyClass> m_ConcreteUsingMultiGenericFromInterface;
+		}
+
+		[Objects.Immutable]
+		sealed class /* ImmutableClassIsnt('m_ConcreteUsingMultiGenericFromInterfaceWrongOrder.m_MultiGenericFromInterface.m_MutableClass' is not read-only) */ ConcreteUsingMultiGenericFromInterfaceWrongOrder /**/ {
+			internal readonly MultiGenericFromInterface<MutableClass, ImmutableClass> m_ConcreteUsingMultiGenericFromInterfaceWrongOrder;
+		}
+	}
+
 }

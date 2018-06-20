@@ -29,23 +29,23 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// A list of immutable container types (i.e., types that hold other types)
 		/// </summary>
 		private static readonly ImmutableDictionary<string, string[]> ImmutableContainerTypes = new Dictionary<string, string[]> {
-			[ "D2L.LP.Utilities.DeferredInitializer" ] = new[] { "Value" },
-			[ "D2L.LP.Extensibility.Activation.Domain.IPlugins" ] = new[] { "[]" },
-			[ "System.Collections.Immutable.ImmutableArray" ] = new[] { "[]" },
-			[ "System.Collections.Immutable.ImmutableDictionary" ] = new[] { "[].Key", "[].Value" },
-			[ "System.Collections.Immutable.ImmutableHashSet" ] = new[] { "[]" },
-			[ "System.Collections.Immutable.ImmutableList" ] = new[] { "[]" },
-			[ "System.Collections.Immutable.ImmutableQueue" ] = new[] { "[]" },
-			[ "System.Collections.Immutable.ImmutableSortedDictionary" ] = new[] { "[].Key", "[].Value" },
-			[ "System.Collections.Immutable.ImmutableSortedSet" ] = new[] { "[]" },
-			[ "System.Collections.Immutable.ImmutableStack" ] = new[] { "[]" },
-			[ "System.Collections.Generic.IReadOnlyCollection" ] = new[] { "[]" },
-			[ "System.Collections.Generic.IReadOnlyList" ] = new[] { "[]" },
-			[ "System.Collections.Generic.IReadOnlyDictionary" ] = new[] { "[].Key", "[].Value" },
-			[ "System.Collections.Generic.IEnumerable" ] = new[] { "[]" },
-			[ "System.Lazy" ] = new[] { "Value" },
-			[ "System.Nullable" ] = new[] { "Value" },
-			[ "System.Tuple" ] = new[] { "Item1", "Item2", "Item3", "Item4", "Item5", "Item6" }
+			["D2L.LP.Utilities.DeferredInitializer"] = new[] { "Value" },
+			["D2L.LP.Extensibility.Activation.Domain.IPlugins"] = new[] { "[]" },
+			["System.Collections.Immutable.ImmutableArray"] = new[] { "[]" },
+			["System.Collections.Immutable.ImmutableDictionary"] = new[] { "[].Key", "[].Value" },
+			["System.Collections.Immutable.ImmutableHashSet"] = new[] { "[]" },
+			["System.Collections.Immutable.ImmutableList"] = new[] { "[]" },
+			["System.Collections.Immutable.ImmutableQueue"] = new[] { "[]" },
+			["System.Collections.Immutable.ImmutableSortedDictionary"] = new[] { "[].Key", "[].Value" },
+			["System.Collections.Immutable.ImmutableSortedSet"] = new[] { "[]" },
+			["System.Collections.Immutable.ImmutableStack"] = new[] { "[]" },
+			["System.Collections.Generic.IReadOnlyCollection"] = new[] { "[]" },
+			["System.Collections.Generic.IReadOnlyList"] = new[] { "[]" },
+			["System.Collections.Generic.IReadOnlyDictionary"] = new[] { "[].Key", "[].Value" },
+			["System.Collections.Generic.IEnumerable"] = new[] { "[]" },
+			["System.Lazy"] = new[] { "Value" },
+			["System.Nullable"] = new[] { "Value" },
+			["System.Tuple"] = new[] { "Item1", "Item2", "Item3", "Item4", "Item5", "Item6" }
 		}.ToImmutableDictionary();
 
 		private readonly KnownImmutableTypes m_knownImmutableTypes;
@@ -142,9 +142,19 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					+ "are referenced, including transitive dependencies." );
 			}
 
+			// We can't short-circuit below if this is a generic type because
+			// while the type can be marked immutable we can't be certain
+			// all type parameters have been marked immutable at some point
+			// in their heirarchy.
+			bool isGenericType = false;
+			if (type is INamedTypeSymbol) {
+				var namedType = type as INamedTypeSymbol;
+				isGenericType = ( namedType.TypeParameters.Length > 0 );
+			}
+
 			// If we're not verifying immutability, we might be able to bail out early
 			var scope = type.GetImmutabilityScope();
-			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && scope == ImmutabilityScope.SelfAndChildren ) {
+			if( !isGenericType && !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && scope == ImmutabilityScope.SelfAndChildren ) {
 				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
 				return MutabilityInspectionResult.NotMutable( immutableExceptions );
 			}
@@ -198,7 +208,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					);
 
 				case TypeKind.Interface:
-					return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnInterface );
+					return InspectInterface(
+						type,
+						typeStack
+						);
 
 				case TypeKind.Class:
 				case TypeKind.Struct: // equivalent to TypeKind.Structure
@@ -292,7 +305,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				}
 
 				// We descend into the base class last
-				if ( type.BaseType != null ) {
+				if( type.BaseType != null ) {
 					var baseResult = InspectConcreteType( type.BaseType, typeStack );
 
 					if( baseResult.IsMutable ) {
@@ -320,7 +333,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ImmutableHashSet<string>.Builder unauditedReasonsBuilder = ImmutableHashSet.CreateBuilder<string>();
 
 			for( int i = 0; i < namedType.TypeArguments.Length; i++ ) {
-				var arg = namedType.TypeArguments[ i ];
+				var arg = namedType.TypeArguments[i];
 
 				var result = InspectType(
 					arg,
@@ -332,7 +345,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					if( result.Target == MutabilityTarget.Member ) {
 						// modify the result to prefix with container member.
 						var prefix = ImmutableContainerTypes[type.GetFullTypeName()];
-						result = result.WithPrefixedMember( prefix[ i ] );
+						result = result.WithPrefixedMember( prefix[i] );
 					} else {
 						// modify the result to target the type argument if the
 						// target is not a member
@@ -347,6 +360,35 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			return MutabilityInspectionResult.NotMutable( unauditedReasonsBuilder.ToImmutable() );
+		}
+
+		private MutabilityInspectionResult InspectInterface(
+			ITypeSymbol symbol,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			var typeSymbol = symbol as INamedTypeSymbol;
+
+			// Detects if the interface itself is marked with Immutable
+			var scope = typeSymbol.GetImmutabilityScope();
+
+			for( var parameterIndex = 0; parameterIndex < typeSymbol.TypeArguments.Length; parameterIndex++ ) {
+				var parameterType = typeSymbol.TypeArguments[parameterIndex];
+				var isToBeImmutable = InspectInterfaceTypeParameter( parameterIndex, symbol );
+				var result = InspectType( parameterType );
+				if( result.IsMutable && isToBeImmutable ) {
+					return MutabilityInspectionResult.MutableType( parameterType, MutabilityCause.IsMutableTypeParameter );
+				}
+			}
+
+			// If the immutability scope survived to here, it is
+			// assumed to be immutable
+			if( scope != ImmutabilityScope.None) {
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			// If we've reached here, it's an interface with no type parameters
+			// that is not marked Immutable
+			return MutabilityInspectionResult.MutableType( symbol, MutabilityCause.IsAnInterface );
 		}
 
 		private MutabilityInspectionResult InspectTypeParameter(
@@ -372,10 +414,73 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				}
 			}
 
+			// We have to walk all base types and interfaces to find the
+			// type param in the same position and examine those to see if
+			// the immutability attribute is present.
+			var parameterIndex = typeParameter.ContainingType.TypeParameters.IndexOf( typeParameter );
+			var currentType = typeParameter.ContainingType;
+			while( currentType != null ) {
+				// Check all interfaces
+				foreach( var intf in currentType.Interfaces ) {
+					if( InspectInterfaceTypeParameter( parameterIndex, intf ) ) {
+						return MutabilityInspectionResult.NotMutable();
+					}
+				}
+				// Check the type
+				if( IsTypeParameterToBeImmutable( parameterIndex, currentType ) ) {
+					return MutabilityInspectionResult.NotMutable();
+				}
+
+				// Walk up the type heirarchy
+				currentType = currentType.BaseType;
+			}
+
 			return MutabilityInspectionResult.MutableType(
 				symbol,
 				MutabilityCause.IsAGenericType
 			);
+		}
+
+		// Walks all ancestors to this type parameter to determine if it was
+		// intended that the type be immutable.  If *any* ancestor says the
+		// type was supposed to be immutable, then the type will be 
+		// assumed to mandatory immutable.
+		private bool InspectInterfaceTypeParameter(
+			int parameterIndex,
+			ITypeSymbol symbol
+		) {
+			if( symbol == default ) {
+				return false;
+			}
+
+			if( IsTypeParameterToBeImmutable( parameterIndex, symbol as INamedTypeSymbol ) ) {
+				return true;
+			}
+
+			foreach( var intf in symbol.Interfaces ) {
+				if( InspectInterfaceTypeParameter( parameterIndex, intf ) ) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		// Indicates if the type parameter at the specified slot is marked
+		// for immutability.
+		private bool IsTypeParameterToBeImmutable(
+			int parameterIndex,
+			INamedTypeSymbol symbol
+		) {
+			if( symbol.TypeParameters.Length <= parameterIndex ) {
+				// This type ends the chain of inspection since the generic
+				// type can't line up here
+				return false;
+			}
+			var parameter = symbol.TypeParameters[parameterIndex];
+			var scope = parameter.GetImmutabilityScope();
+
+			return scope != ImmutabilityScope.None;
 		}
 
 		private MutabilityInspectionResult InspectInitializer(
@@ -499,7 +604,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				);
 			}
 
-			SyntaxNode syntax = decls[ 0 ].GetSyntax();
+			SyntaxNode syntax = decls[0].GetSyntax();
 
 			var decl = syntax as T;
 			if( decl == null ) {

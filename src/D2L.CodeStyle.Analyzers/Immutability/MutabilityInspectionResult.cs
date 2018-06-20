@@ -18,7 +18,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		IsAnArray,
 		IsPotentiallyMutable,
 		IsDynamic,
-		IsAGenericType
+		IsAGenericType,
+		IsMutableTypeParameter
 	}
 
 	public sealed class MutabilityInspectionResult {
