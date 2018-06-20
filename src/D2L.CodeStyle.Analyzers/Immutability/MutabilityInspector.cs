@@ -441,48 +441,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 		}
 
-		// Walks all ancestors to this type parameter to determine if it was
-		// intended that the type be immutable.  If *any* ancestor says the
-		// type was supposed to be immutable, then the type will be 
-		// assumed to mandatory immutable.
-		private bool InspectInterfaceTypeParameter(
-			int parameterIndex,
-			ITypeSymbol symbol
-		) {
-			if( symbol == default ) {
-				return false;
-			}
-
-			if( IsTypeParameterToBeImmutable( parameterIndex, symbol as INamedTypeSymbol ) ) {
-				return true;
-			}
-
-			foreach( var intf in symbol.Interfaces ) {
-				if( InspectInterfaceTypeParameter( parameterIndex, intf ) ) {
-					return true;
-				}
-			}
-
-			return false;
-		}
-
-		// Indicates if the type parameter at the specified slot is marked
-		// for immutability.
-		private bool IsTypeParameterToBeImmutable(
-			int parameterIndex,
-			INamedTypeSymbol symbol
-		) {
-			if( symbol.TypeParameters.Length <= parameterIndex ) {
-				// This type ends the chain of inspection since the generic
-				// type can't line up here
-				return false;
-			}
-			var parameter = symbol.TypeParameters[parameterIndex];
-			var scope = parameter.GetImmutabilityScope();
-
-			return scope != ImmutabilityScope.None;
-		}
-
 		private MutabilityInspectionResult InspectInitializer(
 			ExpressionSyntax expr,
 			HashSet<ITypeSymbol> typeStack
@@ -586,6 +544,61 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				MutabilityInspectionFlags.Default,
 				typeStack
 			).WithPrefixedMember( field.Name );
+		}
+
+		/// <summary>
+		/// Walks all ancestors to this type parameter to determine if it was
+		/// intended that the type be immutable.  If *any* ancestor says the
+		/// type was supposed to be immutable, then the type will be 
+		/// assumed to mandatory immutable.
+		/// </summary>
+		/// <param name="parameterIndex">The position of the parameter in the symbols TypeParameter array.</param>
+		/// <param name="symbol">The symbol containing the set of type parameters to be inspected.</param>
+		/// <returns>Returns <code>True</code> if the type parameter or any ancestor
+		/// type parameter in the specified <paramref name="parameterIndex"/> position is
+		/// marked for immutability.</returns>
+		private static bool InspectInterfaceTypeParameter(
+			int parameterIndex,
+			ITypeSymbol symbol
+		) {
+			if( symbol == default ) {
+				return false;
+			}
+
+			if( IsTypeParameterToBeImmutable( parameterIndex, symbol as INamedTypeSymbol ) ) {
+				return true;
+			}
+
+			foreach( var intf in symbol.Interfaces ) {
+				if( InspectInterfaceTypeParameter( parameterIndex, intf ) ) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Determines if the <code>TypeParameter</code> at the 
+		/// <code>parameterIndex</code> position is marked for immutability.
+		/// </summary>
+		/// <param name="parameterIndex">The index of the type parameter to be examined.</param>
+		/// <param name="symbol">The symbol containing the type parameters to be examined.</param>
+		/// <returns>Return <code>True</code> if the type parameter is marked for immutability,
+		/// otherwise returns <code>False</code>.</returns>
+		private static bool IsTypeParameterToBeImmutable(
+			int parameterIndex,
+			INamedTypeSymbol symbol
+		) {
+			if( symbol.TypeParameters.Length <= parameterIndex ) {
+				// This type ends the chain of inspection since the generic
+				// type can't line up here
+				return false;
+			}
+			var parameter = symbol.TypeParameters[parameterIndex];
+			var scope = parameter.GetImmutabilityScope();
+
+			return scope != ImmutabilityScope.None;
 		}
 
 		/// <summary>

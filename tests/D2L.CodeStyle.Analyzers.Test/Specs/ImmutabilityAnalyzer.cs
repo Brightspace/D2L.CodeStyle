@@ -330,6 +330,16 @@ namespace SpecTests {
 	class GenericTypeFieldTests {
 		// Generic type parameter state with mutable and immutable concrete types
 
+		sealed class GenericClassWithNoState<[Objects.Immutable] T> {
+			// Test to ensure that marking a type parameter and not holding it has no effect
+		}
+
+		sealed class MutableGenericClassWithImmutableState<[Objects.Immutable] T> {
+			// Test to ensure that marking a type parameter and holding it, but 
+			// not being yourself immutable causes no problems
+			internal T m_GenericClassWithImmutableState;
+		}
+
 		[Objects.Immutable]
 		sealed class GenericClassWithImmutableState<[Objects.Immutable] T> {
 			internal readonly T m_GenericClassWithImmutableState;
@@ -378,6 +388,17 @@ namespace SpecTests {
 		}
 
 		[Objects.Immutable]
+		sealed class MultiImmutable<[Objects.Immutable] S, [Objects.Immutable] T> {
+			internal readonly S m_MultiGenericClassWithOneImmutableS;
+			internal readonly T m_MultiGenericClassWithOneImmutableT;
+		}
+
+		[Objects.Immutable]
+		sealed class MultiImmutableState {
+			private readonly MultiImmutable<ImmutableClass, ImmutableClass> m_MultiImmutableState;
+		}
+
+		[Objects.Immutable]
 		sealed class ConcreteHoldingMixedModeGeneric {
 			internal readonly MultiGenericClassWithOneImmutable<ImmutableClass, MutableClass> m_ConcreteHoldingMixedModeGeneric;
 		}
@@ -406,6 +427,22 @@ namespace SpecTests {
 		sealed class /* ImmutableClassIsnt('m_ConcreteUsingMultiGenericFromInterfaceWrongOrder.m_MultiGenericFromInterface.m_MutableClass' is not read-only) */ ConcreteUsingMultiGenericFromInterfaceWrongOrder /**/ {
 			internal readonly MultiGenericFromInterface<MutableClass, ImmutableClass> m_ConcreteUsingMultiGenericFromInterfaceWrongOrder;
 		}
+
+		[Objects.Immutable]
+		interface MultiImmutable<[Objects.Immutable] S, [Objects.Immutable] T> {
+		}
+
+		[Objects.Immutable]
+		sealed class MultiImmutableFromInterface<S, T> : MultiImmutable<S, T> {
+			internal readonly S m_MultiGenericFromInterfaceS;
+			internal readonly T m_MultiGenericFromInterfaceT;
+		}
+
+		[Objects.Immutable]
+		sealed class MultiImmutableState {
+			internal readonly MultiImmutableFromInterface<ImmutableClass, ImmutableClass> m_MultiImmutableState;
+		}
+
 	}
 
 }
