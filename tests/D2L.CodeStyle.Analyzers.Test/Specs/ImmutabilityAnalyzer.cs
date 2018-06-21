@@ -378,16 +378,10 @@ namespace SpecTests {
 			internal readonly ImmutableGenericInterface<MutableClass> m_ConcreteClassWithImmutableInterfaceMutableType;
 		}
 
-		/*
 		[Objects.Immutable]
-		class ConcreteImmutableFromInterface: ImmutableGenericInterface<MutableClass> {
-		}
-
-		[Objects.Immutable]
-		class ConcreteImmutableFromInterface : ImmutableGenericInterface<MutableClass> {
+		class /* ImmutableClassIsnt('m_mutableClass.m_MutableClass' is not read-only) */ ConcreteImmutableFromInterface /**/ : ImmutableGenericInterface<MutableClass> {
 			private readonly MutableClass m_mutableClass;
 		}
-		*/
 	}
 
 	class MultipleGenericParameterTests {
