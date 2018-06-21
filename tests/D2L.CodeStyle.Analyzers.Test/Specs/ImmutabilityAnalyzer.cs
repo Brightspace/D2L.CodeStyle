@@ -330,11 +330,11 @@ namespace SpecTests {
 	class GenericTypeFieldTests {
 		// Generic type parameter state with mutable and immutable concrete types
 
-		sealed class GenericClassWithNoState<[Objects.Immutable] T> {
+		class GenericClassWithNoState<[Objects.Immutable] T> {
 			// Test to ensure that marking a type parameter and not holding it has no effect
 		}
 
-		sealed class MutableGenericClassWithImmutableState<[Objects.Immutable] T> {
+		class MutableGenericClassWithImmutableState<[Objects.Immutable] T> {
 			// Test to ensure that marking a type parameter and holding it, but 
 			// not being yourself immutable causes no problems
 			internal T m_GenericClassWithImmutableState;
@@ -377,6 +377,17 @@ namespace SpecTests {
 		class /* ImmutableClassIsnt('m_ConcreteClassWithImmutableInterfaceMutableType''s type ('SpecTests.MutableClass') is a type parameter that must be marked with `[Objects.Immutable]`) */ ConcreteClassWithImmutableInterfaceMutableType /**/ {
 			internal readonly ImmutableGenericInterface<MutableClass> m_ConcreteClassWithImmutableInterfaceMutableType;
 		}
+
+		/*
+		[Objects.Immutable]
+		class ConcreteImmutableFromInterface: ImmutableGenericInterface<MutableClass> {
+		}
+
+		[Objects.Immutable]
+		class ConcreteImmutableFromInterface : ImmutableGenericInterface<MutableClass> {
+			private readonly MutableClass m_mutableClass;
+		}
+		*/
 	}
 
 	class MultipleGenericParameterTests {
@@ -445,4 +456,20 @@ namespace SpecTests {
 
 	}
 
+	class GenericBaseClassTests {
+		// Generic type parameter state with mutable and immutable concrete types
+
+		[Objects.ImmutableBaseClass]
+		class ImmutableBase<[Objects.Immutable] T> {
+			internal readonly T m_ImmutableBase;
+		}
+
+		[Objects.Immutable]
+		sealed class /* ImmutableClassIsnt('m_ImmutableBase.m_MutableClass' is not read-only) */ MutableImpl /**/ : ImmutableBase<MutableClass> {
+		}
+
+		[Objects.Immutable]
+		sealed class ImmutableImpl : ImmutableBase<ImmutableClass> {
+		}
+	}
 }

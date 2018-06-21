@@ -261,8 +261,18 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
+			// We can't short-circuit below if this is a generic type because
+			// while the type can be marked immutable we can't be certain
+			// all type parameters have been marked immutable at some point
+			// in their heirarchy.
+			bool isGenericType = false;
+			if( type is INamedTypeSymbol ) {
+				var namedType = type as INamedTypeSymbol;
+				isGenericType = ( namedType.TypeParameters.Length > 0 );
+			}
+
 			var scope = type.GetImmutabilityScope();
-			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && scope != ImmutabilityScope.None ) {
+			if( !isGenericType && !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && scope != ImmutabilityScope.None ) {
 				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
 				return MutabilityInspectionResult.NotMutable( immutableExceptions );
 			}
