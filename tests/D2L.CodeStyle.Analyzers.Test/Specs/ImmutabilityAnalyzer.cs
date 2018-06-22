@@ -466,4 +466,28 @@ namespace SpecTests {
 		sealed class ImmutableImpl : ImmutableBase<ImmutableClass> {
 		}
 	}
+
+	class BaseParameterInspectionTests {
+
+		[Objects.Immutable]
+		interface IImmutableRoot<[Objects.Immutable] W> {
+		}
+
+		interface IMiddle<T> : IImmutableRoot<T> {
+		}
+
+		interface IMutableRoot<T> {
+		}
+
+		[Objects.ImmutableBaseClass]
+		class MixinBase<U, V> : IMutableRoot<U>, IMiddle<V> {
+			private readonly V m_V;
+		}
+
+		class ImmutableConcrete : MixinBase<MutableClass, ImmutableClass> {
+		}
+
+		class /* ImmutableClassIsnt('m_V.m_MutableClass' is not read-only) */ MutableConcrete /**/ : MixinBase<ImmutableClass, MutableClass> {
+		}
+	}
 }
