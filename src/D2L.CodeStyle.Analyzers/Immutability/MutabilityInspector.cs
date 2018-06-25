@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -143,19 +142,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					+ "are referenced, including transitive dependencies." );
 			}
 
-			// We can't short-circuit below if this is a generic type because
-			// while the type can be marked immutable we can't be certain
-			// all type parameters have been marked immutable at some point
-			// in their heirarchy.
-			bool isGenericType = false;
-			if (type is INamedTypeSymbol) {
-				var namedType = type as INamedTypeSymbol;
-				isGenericType = ( namedType.TypeParameters.Length > 0 );
-			}
-
-			// If we're not verifying immutability, we might be able to bail out early
-			var scope = type.GetImmutabilityScope();
-			if( !isGenericType && !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && scope == ImmutabilityScope.SelfAndChildren ) {
+			// If we're not verifying immutability, we might be able to bail 
+			// out earl, but we will not exit early if the type is simply 
+			// marked immutable if the type is generic since we need to 
+			// actually examine the generic type parameters.
+			ImmutabilityScope scope = type.GetImmutabilityScope();
+			if( !type.IsGenericType() 
+				&& !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) 
+				&& scope == ImmutabilityScope.SelfAndChildren 
+			) {
 				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
 				return MutabilityInspectionResult.NotMutable( immutableExceptions );
 			}
@@ -262,18 +257,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
-			// We can't short-circuit below if this is a generic type because
-			// while the type can be marked immutable we can't be certain
-			// all type parameters have been marked immutable at some point
-			// in their heirarchy.
-			bool isGenericType = false;
-			if( type is INamedTypeSymbol ) {
-				var namedType = type as INamedTypeSymbol;
-				isGenericType = ( namedType.TypeParameters.Length > 0 );
-			}
-
-			var scope = type.GetImmutabilityScope();
-			if( !isGenericType && !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && scope != ImmutabilityScope.None ) {
+			// We need to *not* bail early if the type is generic otherwise
+			// we will assume that anything marked with [Immutable] is
+			// sufficiently immutable, and we also need to ensure the
+			// immutability of the type parameters is also appropriate.
+			ImmutabilityScope scope = type.GetImmutabilityScope();
+			if( !type.IsGenericType() 
+				&& !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) 
+				&& scope != ImmutabilityScope.None 
+			) {
 				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
 				return MutabilityInspectionResult.NotMutable( immutableExceptions );
 			}
@@ -379,23 +371,31 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			var typeSymbol = symbol as INamedTypeSymbol;
 
-			// Detects if the interface itself is marked with Immutable
-			var scope = typeSymbol.GetImmutabilityScope();
-
 			// There is a 1:1 correlation between TypeParameters and TypeArguments.
 			// TypeParameters is the "S", or "T" definition.
 			// TypeArguments are the actual *types* passed to S or T.
 			for (int ordinal = 0; ordinal < typeSymbol.TypeParameters.Length; ordinal++) {
-				var parameterType = typeSymbol.TypeArguments[ordinal];
-				var isToBeImmutable = IsTypeArgumentImmutable( typeSymbol.TypeParameters[ordinal], ordinal, typeSymbol );
-				var result = InspectType( parameterType );
-				if( result.IsMutable && isToBeImmutable ) {
-					return MutabilityInspectionResult.MutableType( parameterType, MutabilityCause.IsMutableTypeParameter );
+
+				bool isToBeImmutable = IsTypeArgumentImmutable( 
+					typeSymbol.TypeParameters[ordinal], 
+					ordinal, 
+					typeSymbol );
+
+				if (!isToBeImmutable) {
+					continue;
+				}
+
+				ITypeSymbol parameterType = typeSymbol.TypeArguments[ordinal];
+				MutabilityInspectionResult result = InspectType( parameterType );
+				if( result.IsMutable ) {
+					return MutabilityInspectionResult.MutableType( 
+						parameterType, 
+						MutabilityCause.IsMutableTypeParameter );
 				}
 			}
 
-			// If the immutability scope survived to here, it is
-			// assumed to be immutable
+			// Detects if the interface itself is marked with Immutable
+			ImmutabilityScope scope = typeSymbol.GetImmutabilityScope();
 			if( scope != ImmutabilityScope.None) {
 				return MutabilityInspectionResult.NotMutable();
 			}
@@ -411,12 +411,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			var typeParameter = symbol as ITypeParameterSymbol;
 
-			if( typeParameter.ConstraintTypes != null || typeParameter.ConstraintTypes.Length > 0 ) {
-				// there are constraints we can check. as type constraints are unionized, we only need one 
-				// type constraint to be immutable to succeed
+			if( typeParameter.ConstraintTypes != null 
+				|| typeParameter.ConstraintTypes.Length > 0 ) {
+				// there are constraints we can check. as type constraints are 
+				// unionized, we only need one type constraint to be immutable 
+				// to succeed
 				foreach( var constraintType in typeParameter.ConstraintTypes ) {
 
-					var result = InspectType(
+					MutabilityInspectionResult result = InspectType(
 						constraintType,
 						MutabilityInspectionFlags.Default,
 						typeStack
@@ -431,32 +433,25 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// We have to walk all base types and interfaces to find the
 			// type param in the same position and examine those to see if
 			// the immutability attribute is present.
-			var currentType = typeParameter.ContainingType;
+			INamedTypeSymbol currentType = typeParameter.ContainingType;
 			while( currentType != null ) {
 				// Check all interfaces
-				foreach( var intf in currentType.Interfaces ) {
-					// Find the matching type argument in the base interface
-					// that corresponds to this type parameter.  That is,
-					// if we have Foo<S, T>: IFoo<S>, IBar<T>, this will
-					// match up the Foo S, to the IFoo S, but will get -1
-					// from IBar since it doesn't have S.
-					var ordinal = intf.TypeArguments
-						.IndexOf( intf.TypeArguments
-							.FirstOrDefault( tp => tp.Name == typeParameter.Name ) );
+				foreach( INamedTypeSymbol intf in currentType.Interfaces ) {
 
-					// If it doesn't have a matching type argument then the
-					// type we're inspecting isn't defined in this interface.
-					if ( ordinal < 0) {
+					// Find out if this interface exposes a type argument
+					// with the specified type name.  If it doesn't, this 
+					// interface doesn't contribute to the immutability chain.
+					var ordinal = intf.IndexOfArgument( typeParameter.Name );
+					if (ordinal < 0) {
 						continue;
 					}
 
-					// Grab the implemented interfaces version of the type 
-					// argument and then pass it down for inspection
-					var subTypeParameter = intf.TypeArguments[ordinal] as ITypeParameterSymbol;
-					if( IsTypeArgumentImmutable( subTypeParameter, ordinal, intf ) ) {
+					var subTypeSymbol = intf.TypeArguments[ordinal] as ITypeParameterSymbol;
+					if( IsTypeArgumentImmutable( subTypeSymbol, ordinal, intf ) ) {
 						return MutabilityInspectionResult.NotMutable();
 					}
 				}
+
 				// Check the type
 				if( typeParameter.GetImmutabilityScope() != ImmutabilityScope.None ) {
 					return MutabilityInspectionResult.NotMutable();
@@ -592,20 +587,32 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return false;
 			}
 
-			var isMarkedImmutable = symbol.TypeParameters[parameterOrdinal].GetImmutabilityScope() != ImmutabilityScope.None;
+			if (typeParameter == default) {
+				return false;
+			}
+
+			// We needt the TypeParameter here, otherwise we're inspecting
+			// the type and not the declaration.  We need to inspect the 
+			// declaration because that's the symbol that will have the
+			// [Immutable] attached to it.
+			var isMarkedImmutable = symbol.TypeParameters[parameterOrdinal]
+				.GetImmutabilityScope() != ImmutabilityScope.None;
+
 			if( isMarkedImmutable ) {
 				return true;
 			}
 
 			foreach( var intf in symbol.Interfaces ) {
-				var ordinal = intf.TypeArguments
-					.IndexOf( intf.TypeArguments
-						.FirstOrDefault( tp => tp.Name == typeParameter.Name ) );
+				int ordinal = intf.IndexOfArgument( typeParameter.Name );
 
 				if (ordinal < 0) {
 					continue;
 				}
 
+				// We pass through the type argument otherwise the "name"
+				// applied to the type will drift based on the declaration
+				// and be impossible to track.  Using this means that the
+				// name declared at the top is consistent all the way down.
 				var subTypeParameter = intf.TypeArguments[ordinal] as ITypeParameterSymbol;
 				if( IsTypeArgumentImmutable( subTypeParameter, ordinal, intf ) ) {
 					return true;
