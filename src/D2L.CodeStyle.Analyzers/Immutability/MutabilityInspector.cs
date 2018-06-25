@@ -334,6 +334,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			var namedType = type as INamedTypeSymbol;
 
+			// If we can't determine what the symbol is then we'll bail with
+			// a general mutability response, otherwise we're going to have a
+			// lot of NREs below.
+			if( namedType == default ) {
+				return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsPotentiallyMutable );
+			}
+
 			ImmutableHashSet<string>.Builder unauditedReasonsBuilder = ImmutableHashSet.CreateBuilder<string>();
 
 			for( int i = 0; i < namedType.TypeArguments.Length; i++ ) {
@@ -372,10 +379,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			var typeSymbol = symbol as INamedTypeSymbol;
 
+			// If we can't determine what the symbol is then we'll bail with
+			// a general mutability response, otherwise we're going to have a
+			// lot of NREs below.
+			if( typeSymbol == default ) {
+				return MutabilityInspectionResult.MutableType( symbol, MutabilityCause.IsPotentiallyMutable );
+			}
+
 			// There is a 1:1 correlation between TypeParameters and TypeArguments.
 			// TypeParameters is the "S", or "T" definition.
 			// TypeArguments are the actual *types* passed to S or T.
-			for (int ordinal = 0; ordinal < typeSymbol.TypeParameters.Length; ordinal++) {
+			for( int ordinal = 0; ordinal < typeSymbol.TypeParameters.Length; ordinal++) {
 
 				bool isToBeImmutable = IsTypeArgumentImmutable( 
 					typeSymbol.TypeParameters[ordinal], 
@@ -411,6 +425,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			HashSet<ITypeSymbol> typeStack
 		) {
 			var typeParameter = symbol as ITypeParameterSymbol;
+
+			// If we can't determine what the symbol is then we'll bail with
+			// a general mutability response, otherwise we're going to have a
+			// lot of NREs below.
+			if( typeParameter == default) {
+				return MutabilityInspectionResult.MutableType( symbol, MutabilityCause.IsAGenericType );
+			}
 
 			if( typeParameter.ConstraintTypes != null 
 				|| typeParameter.ConstraintTypes.Length > 0 ) {
