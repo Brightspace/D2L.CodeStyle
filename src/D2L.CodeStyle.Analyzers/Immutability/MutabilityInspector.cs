@@ -301,7 +301,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			typeStack.Add( type );
 			try {
 				foreach( ISymbol member in type.GetExplicitNonStaticMembers() ) {
-					var result = InspectMemberRecursive( member, typeStack );
+					MutabilityInspectionResult result = InspectMemberRecursive( member, typeStack );
 					if( result.IsMutable ) {
 						return result;
 					}
@@ -310,7 +310,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 				// We descend into the base class last
 				if( type.BaseType != null ) {
-					var baseResult = InspectConcreteType( type.BaseType, typeStack );
+					MutabilityInspectionResult baseResult = InspectConcreteType( type.BaseType, typeStack );
 
 					if( baseResult.IsMutable ) {
 						return baseResult;
@@ -337,9 +337,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ImmutableHashSet<string>.Builder unauditedReasonsBuilder = ImmutableHashSet.CreateBuilder<string>();
 
 			for( int i = 0; i < namedType.TypeArguments.Length; i++ ) {
-				var arg = namedType.TypeArguments[i];
+				ITypeSymbol arg = namedType.TypeArguments[i];
 
-				var result = InspectType(
+				MutabilityInspectionResult result = InspectType(
 					arg,
 					MutabilityInspectionFlags.Default,
 					typeStack
@@ -348,7 +348,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				if( result.IsMutable ) {
 					if( result.Target == MutabilityTarget.Member ) {
 						// modify the result to prefix with container member.
-						var prefix = ImmutableContainerTypes[type.GetFullTypeName()];
+						string[] prefix = ImmutableContainerTypes[type.GetFullTypeName()];
 						result = result.WithPrefixedMember( prefix[i] );
 					} else {
 						// modify the result to target the type argument if the
@@ -417,7 +417,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// there are constraints we can check. as type constraints are 
 				// unionized, we only need one type constraint to be immutable 
 				// to succeed
-				foreach( var constraintType in typeParameter.ConstraintTypes ) {
+				foreach( ITypeSymbol constraintType in typeParameter.ConstraintTypes ) {
 
 					MutabilityInspectionResult result = InspectType(
 						constraintType,
@@ -442,7 +442,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// Find out if this interface exposes a type argument
 					// with the specified type name.  If it doesn't, this 
 					// interface doesn't contribute to the immutability chain.
-					var ordinal = intf.IndexOfArgument( typeParameter.Name );
+					int ordinal = intf.IndexOfArgument( typeParameter.Name );
 					if (ordinal < 0) {
 						continue;
 					}
@@ -478,14 +478,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
-			var model = m_compilation.GetSemanticModel( expr.SyntaxTree );
+			SemanticModel model = m_compilation.GetSemanticModel( expr.SyntaxTree );
 
-			var typeInfo = model.GetTypeInfo( expr );
+			TypeInfo typeInfo = model.GetTypeInfo( expr );
 
 			// Type can be null in the case of an implicit conversion where
 			// the expression alone doesn't have a type. For example:
 			//   int[] foo = { 1, 2, 3 };
-			var exprType = typeInfo.Type ?? typeInfo.ConvertedType;
+			ITypeSymbol exprType = typeInfo.Type ?? typeInfo.ConvertedType;
 
 			if( expr is ObjectCreationExpressionSyntax ) {
 				// If our initializer is "new Foo( ... )" we only need to
@@ -512,7 +512,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
-			var propertySyntax =
+			PropertyDeclarationSyntax propertySyntax =
 				GetDeclarationSyntax<PropertyDeclarationSyntax>( property );
 
 			// TODO: can we do this without the syntax; with only the symbol?
@@ -556,7 +556,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				);
 			}
 
-			var declSyntax =
+			VariableDeclaratorSyntax declSyntax =
 				GetDeclarationSyntax<VariableDeclaratorSyntax>( field );
 
 			if( declSyntax.Initializer != null ) {
@@ -596,14 +596,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// the type and not the declaration.  We need to inspect the 
 			// declaration because that's the symbol that will have the
 			// [Immutable] attached to it.
-			var isMarkedImmutable = symbol.TypeParameters[parameterOrdinal]
+			bool isMarkedImmutable = symbol.TypeParameters[parameterOrdinal]
 				.GetImmutabilityScope() != ImmutabilityScope.None;
 
 			if( isMarkedImmutable ) {
 				return true;
 			}
 
-			foreach( var intf in symbol.Interfaces ) {
+			foreach( INamedTypeSymbol intf in symbol.Interfaces ) {
 				int ordinal = intf.IndexOfArgument( typeParameter.Name );
 
 				if (ordinal < 0) {
@@ -630,7 +630,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// </summary>
 		private static T GetDeclarationSyntax<T>( ISymbol symbol )
 			where T : SyntaxNode {
-			var decls = symbol.DeclaringSyntaxReferences;
+			ImmutableArray<SyntaxReference> decls = symbol.DeclaringSyntaxReferences;
 
 			if( decls.Length != 1 ) {
 				throw new NotImplementedException(
