@@ -63,10 +63,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			if( mutabilityResult.IsMutable ) {
 				var reason = m_resultFormatter.Format( mutabilityResult );
 				var location = GetLocationOfClassIdentifierAndGenericParameters( root );
-				var diagnostic = Diagnostic.Create( 
-					Diagnostics.ImmutableClassIsnt, 
-					location, 
-					reason 
+				var diagnostic = Diagnostic.Create(
+					Diagnostics.ImmutableClassIsnt,
+					location,
+					reason
 				);
 				context.ReportDiagnostic( diagnostic );
 
