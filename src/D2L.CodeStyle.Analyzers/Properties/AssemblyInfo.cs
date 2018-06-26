@@ -6,13 +6,13 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription( "D2L.CodeStyle analyzers" )]
 [assembly: AssemblyCompany( "D2L" )]
 [assembly: AssemblyProduct( "D2L.CodeStyle.Analyzers" )]
-[assembly: AssemblyCopyright( "Copyright © D2L 2017" )]
+[assembly: AssemblyCopyright( "Copyright © D2L 2018" )]
 
 [assembly: ComVisible( false )]
 
-[assembly: AssemblyVersion( "0.71.1.0" )]
-[assembly: AssemblyFileVersion( "0.71.1.0" )]
-[assembly: AssemblyInformationalVersion( "0.71.1.0" )]
+[assembly: AssemblyVersion( "0.72.1.0" )]
+[assembly: AssemblyFileVersion( "0.72.1.0" )]
+[assembly: AssemblyInformationalVersion( "0.72.1.0" )]
 
 [assembly: InternalsVisibleTo( "D2L.CodeStyle.Analyzers.Tests" )]
 [assembly: InternalsVisibleTo( "DynamicProxyGenAssembly2" )]
