@@ -144,7 +144,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			// If we're not verifying immutability, we might be able to bail 
-			// out earl, but we will not exit early if the type is simply 
+			// out early, but we will not exit early if the type is simply 
 			// marked immutable if the type is generic since we need to 
 			// actually examine the generic type parameters.
 			ImmutabilityScope scope = type.GetImmutabilityScope();
@@ -433,8 +433,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return MutabilityInspectionResult.MutableType( symbol, MutabilityCause.IsAGenericType );
 			}
 
-			if( typeParameter.ConstraintTypes != null
-				|| typeParameter.ConstraintTypes.Length > 0 ) {
+			if( typeParameter.ConstraintTypes != null ) {
+
 				// there are constraints we can check. as type constraints are 
 				// unionized, we only need one type constraint to be immutable 
 				// to succeed
@@ -453,7 +453,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			// We have to walk all base types and interfaces to find the
-			// type param in the same position and examine those to see if
+			// type param with the same name and examine those to see if
 			// the immutability attribute is present.
 			INamedTypeSymbol currentType = typeParameter.ContainingType;
 			while( currentType != null ) {
@@ -614,7 +614,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return false;
 			}
 
-			// We needt the TypeParameter here, otherwise we're inspecting
+			// We need the TypeParameter here, otherwise we're inspecting
 			// the type and not the declaration.  We need to inspect the 
 			// declaration because that's the symbol that will have the
 			// [Immutable] attached to it.
@@ -626,8 +626,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			foreach( INamedTypeSymbol intf in symbol.Interfaces ) {
-				int ordinal = intf.IndexOfArgument( typeParameter.Name );
 
+				int ordinal = intf.IndexOfArgument( typeParameter.Name );
 				if( ordinal < 0 ) {
 					continue;
 				}
