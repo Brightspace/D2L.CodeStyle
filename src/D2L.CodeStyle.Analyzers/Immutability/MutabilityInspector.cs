@@ -52,8 +52,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private readonly KnownImmutableTypes m_knownImmutableTypes;
 		private readonly Compilation m_compilation;
 
-		private readonly ConcurrentDictionary<Tuple<ITypeSymbol, MutabilityInspectionFlags>, MutabilityInspectionResult> m_cache
-			= new ConcurrentDictionary<Tuple<ITypeSymbol, MutabilityInspectionFlags>, MutabilityInspectionResult>();
+		private readonly ConcurrentDictionary<(ITypeSymbol Symbol, MutabilityInspectionFlags Flags), MutabilityInspectionResult> m_cache
+			= new ConcurrentDictionary<(ITypeSymbol Symbol, MutabilityInspectionFlags Flags), MutabilityInspectionResult>();
 
 		internal MutabilityInspector(
 			Compilation compilation,
@@ -77,14 +77,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return InspectType(
 				type,
 				flags,
-				typesInCurrentCycle
+				typesInCurrentCycle,
+				type
 			);
 		}
 
 		public MutabilityInspectionResult InspectField( IFieldSymbol field ) {
 			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
 
-			return InspectField( field, typesInCurrentCycle );
+			return InspectField( field, typesInCurrentCycle, default );
 		}
 
 		public MutabilityInspectionResult InspectProperty(
@@ -92,7 +93,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
 
-			return InspectProperty( property, typesInCurrentCycle );
+			return InspectProperty( property, typesInCurrentCycle, default );
 		}
 
 		public MutabilityInspectionResult InspectConcreteType(
@@ -104,32 +105,35 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return InspectConcreteType( type, typesInCurrentCycle, flags );
 		}
 
-		public MutabilityInspectionResult InspectMember( ISymbol symbol ) {
+		public MutabilityInspectionResult InspectMember( 
+			ISymbol symbol
+		) {
 			var seen = new HashSet<ITypeSymbol>();
 
-			return InspectMemberRecursive( symbol, seen );
+			return InspectMemberRecursive( symbol, seen, default );
 		}
 
 		private MutabilityInspectionResult InspectType(
 			ITypeSymbol type,
 			MutabilityInspectionFlags flags,
-			HashSet<ITypeSymbol> typeStack
+			HashSet<ITypeSymbol> typeStack,
+			ITypeSymbol hostSymbol
 		) {
-			var cacheKey = new Tuple<ITypeSymbol, MutabilityInspectionFlags>(
-				type,
-				flags
-			);
+			var cacheKey = (Symbol: type, Flags: flags);
 
 			return m_cache.GetOrAdd(
 				cacheKey,
-				query => InspectTypeImpl( query.Item1, query.Item2, typeStack )
+				query => {
+					return InspectTypeImpl( query.Symbol, query.Flags, typeStack, hostSymbol );
+				}
 			);
 		}
 
 		private MutabilityInspectionResult InspectTypeImpl(
 			ITypeSymbol type,
 			MutabilityInspectionFlags flags,
-			HashSet<ITypeSymbol> typeStack
+			HashSet<ITypeSymbol> typeStack,
+			ITypeSymbol hostSymbol
 		) {
 			if( type is IErrorTypeSymbol ) {
 				// This only happens for code that otherwise won't compile. Our
@@ -143,12 +147,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					+ "are referenced, including transitive dependencies." );
 			}
 
-			// If we're not verifying immutability, we might be able to bail 
-			// out early, but we will not exit early if the type is simply 
-			// marked immutable if the type is generic since we need to 
-			// actually examine the generic type parameters.
+			// Don't short-circuit if it's a generic since we need to be sure
+			// the type arguments are appropriately immutable as well,
+			// otherwise we would simply see the [Immutable] attribute on the
+			// class and return NotMutable.
 			ImmutabilityScope scope = type.GetImmutabilityScope();
-			if( !type.IsGenericType()
+			if( !type.IsGenericType() 
 				&& !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute )
 				&& scope == ImmutabilityScope.SelfAndChildren
 			) {
@@ -201,7 +205,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				case TypeKind.TypeParameter:
 					return InspectTypeParameter(
 						type,
-						typeStack
+						typeStack,
+						hostSymbol
 					);
 
 				case TypeKind.Interface:
@@ -258,15 +263,43 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
-			// We need to *not* bail early if the type is generic otherwise
-			// we will assume that anything marked with [Immutable] is
-			// sufficiently immutable, and we also need to ensure the
-			// immutability of the type parameters is also appropriate.
+
 			ImmutabilityScope scope = type.GetImmutabilityScope();
-			if( !type.IsGenericType()
-				&& !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute )
+			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute )
 				&& scope != ImmutabilityScope.None
 			) {
+				if( type.IsGenericType() ) {
+					// This is some kind of immutable generic class, now we 
+					// need to check that the types specified are appropriate
+					var genericSymbol = type as INamedTypeSymbol;
+					foreach( ITypeSymbol typeArgument in genericSymbol.TypeArguments ) {
+
+						// First, check to see if we care about the immutability
+						// of this argument, otherwise we'll perform an
+						// inspection on a type that doesn't matter.
+						var ordinal = genericSymbol.IndexOfArgument( typeArgument.Name );
+						bool isToBeImmutable = IsTypeArgumentImmutable(
+							genericSymbol.TypeParameters[ordinal],
+							ordinal,
+							genericSymbol );
+
+						if (isToBeImmutable) {
+
+							MutabilityInspectionResult argumentResult = InspectType(
+								typeArgument,
+								MutabilityInspectionFlags.AllowUnsealed,
+								typeStack,
+								type );
+
+							if( argumentResult.IsMutable ) {
+								return argumentResult;
+							}
+						}
+					}
+				}
+
+				// If we didn't bail before here then all the type arguments
+				// are valid, so it's not mutable-ish.
 				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
 				return MutabilityInspectionResult.NotMutable( immutableExceptions );
 			}
@@ -274,7 +307,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return InspectType(
 				type,
 				flags | MutabilityInspectionFlags.AllowUnsealed,
-				typeStack
+				typeStack,
+				type
 			);
 		}
 
@@ -301,7 +335,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			typeStack.Add( type );
 			try {
 				foreach( ISymbol member in type.GetExplicitNonStaticMembers() ) {
-					MutabilityInspectionResult result = InspectMemberRecursive( member, typeStack );
+					MutabilityInspectionResult result = InspectMemberRecursive( member, typeStack, type );
 					if( result.IsMutable ) {
 						return result;
 					}
@@ -349,7 +383,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				MutabilityInspectionResult result = InspectType(
 					arg,
 					MutabilityInspectionFlags.Default,
-					typeStack
+					typeStack,
+					type
 				);
 
 				if( result.IsMutable ) {
@@ -422,9 +457,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private MutabilityInspectionResult InspectTypeParameter(
 			ITypeSymbol symbol,
-			HashSet<ITypeSymbol> typeStack
+			HashSet<ITypeSymbol> typeStack,
+			ITypeSymbol hostSymbol
 		) {
 			var typeParameter = symbol as ITypeParameterSymbol;
+
+			var hostType = hostSymbol as INamedTypeSymbol;
 
 			// If we can't determine what the symbol is then we'll bail with
 			// a general mutability response, otherwise we're going to have a
@@ -442,8 +480,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 					MutabilityInspectionResult result = InspectType(
 						constraintType,
-						MutabilityInspectionFlags.Default,
-						typeStack
+						MutabilityInspectionFlags.AllowUnsealed,
+						typeStack,
+						hostSymbol
 					);
 
 					if( !result.IsMutable ) {
@@ -452,11 +491,63 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				}
 			}
 
+			// Inspect the type parameter as part of its host symbol
+			if (hostType != default) {
+				var ordinal = hostType.IndexOfArgument( typeParameter.Name );
+
+				// If the ordinal is negative then the type parameter isn't
+				// declared in the host symbol type arguments and that should
+				// be impossible.
+				if (ordinal < 0) {
+					throw new InvalidOperationException( $"Unexpected type declaration in type '{symbol.ContainingType.Name}'" );
+				}
+
+				var typeArgument = hostType.TypeArguments[ordinal];
+				var argumentScope = typeArgument.GetImmutabilityScope();
+
+				// Must be SelfAndChildren otherwise we might accept something
+				// that is a descendant of [ImmutableBaseClass], which is
+				// potentially mutable.
+				if (argumentScope == ImmutabilityScope.SelfAndChildren) {
+					return MutabilityInspectionResult.NotMutable();
+				}
+
+				// We also need to check to see if the type parameter is marked
+				// immutable, since that could also provide restriction on the
+				// types immutability.
+
+				var hostTypeParameter = hostType.TypeParameters[ordinal];
+				var parameterScope = hostTypeParameter.GetImmutabilityScope();
+
+				// Must be SelfAndChildren otherwise we might accept something
+				// that is a descendant of [ImmutableBaseClass], which is
+				// potentially mutable.
+				if( parameterScope == ImmutabilityScope.SelfAndChildren ) {
+					return MutabilityInspectionResult.NotMutable();
+				}
+			}
+			
+
 			// We have to walk all base types and interfaces to find the
 			// type param with the same name and examine those to see if
 			// the immutability attribute is present.
-			INamedTypeSymbol currentType = typeParameter.ContainingType;
+			var currentType = hostSymbol as INamedTypeSymbol;
 			while( currentType != null ) {
+
+				// Check the type
+				int ordinal = currentType.IndexOfArgument( typeParameter.Name );
+				if( ordinal >= 0 ) {
+
+					var typeArgument = currentType.TypeArguments[ordinal];
+
+					// Must be SelfAndChildren otherwise we're saying that
+					// we could take something marked ImmutableBaseClass
+					// and hold a mutable child implementation.
+					ImmutabilityScope argumentScope = typeArgument.GetImmutabilityScope();
+					if( argumentScope == ImmutabilityScope.SelfAndChildren ) {
+						return MutabilityInspectionResult.NotMutable();
+					}
+				}
 
 				// Check all interfaces
 				foreach( INamedTypeSymbol intf in currentType.Interfaces ) {
@@ -464,7 +555,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// Find out if this interface exposes a type argument
 					// with the specified type name.  If it doesn't, this 
 					// interface doesn't contribute to the immutability chain.
-					int ordinal = intf.IndexOfArgument( typeParameter.Name );
+					ordinal = intf.IndexOfArgument( typeParameter.Name );
 					if( ordinal < 0 ) {
 						continue;
 					}
@@ -475,18 +566,16 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					}
 				}
 
-				// Check the type
-				if( typeParameter.GetImmutabilityScope() != ImmutabilityScope.None ) {
-					return MutabilityInspectionResult.NotMutable();
-				}
-
 				// Walk up the type heirarchy
 				currentType = currentType.BaseType;
 			}
 
+			// We couldn't definitively prove that the type is constrained
+			// to immutable types, so we have to punt and say it's potentially
+			// immutable.
 			return MutabilityInspectionResult.MutableType(
 				symbol,
-				MutabilityCause.IsAGenericType
+				MutabilityCause.IsPotentiallyMutable
 			);
 		}
 
@@ -520,13 +609,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return InspectType(
 				exprType,
 				MutabilityInspectionFlags.Default,
-				typeStack
+				typeStack,
+				exprType
 			);
 		}
 
 		private MutabilityInspectionResult InspectProperty(
 			IPropertySymbol property,
-			HashSet<ITypeSymbol> typeStack
+			HashSet<ITypeSymbol> typeStack,
+			ITypeSymbol hostSymbol
 		) {
 
 			if( property.IsIndexer ) {
@@ -563,13 +654,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return InspectType(
 				property.Type,
 				MutabilityInspectionFlags.Default,
-				typeStack
+				typeStack,
+				hostSymbol
 			).WithPrefixedMember( property.Name );
 		}
 
 		private MutabilityInspectionResult InspectField(
 			IFieldSymbol field,
-			HashSet<ITypeSymbol> typeStack
+			HashSet<ITypeSymbol> typeStack,
+			ITypeSymbol hostSymbol
 		) {
 			if( !field.IsReadOnly ) {
 				return MutabilityInspectionResult.MutableField(
@@ -591,7 +684,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return InspectType(
 				field.Type,
 				MutabilityInspectionFlags.Default,
-				typeStack
+				typeStack,
+				hostSymbol
 			).WithPrefixedMember( field.Name );
 		}
 
@@ -625,18 +719,22 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return true;
 			}
 
+			// Also check the type argument for immutability
+			var typeArgument = symbol.TypeArguments[parameterOrdinal];
+			isMarkedImmutable = typeArgument.GetImmutabilityScope() != ImmutabilityScope.None;
+
+			if (isMarkedImmutable) {
+				return true;
+			}
+
 			foreach( INamedTypeSymbol intf in symbol.Interfaces ) {
 
-				int ordinal = intf.IndexOfArgument( typeParameter.Name );
+				int ordinal = intf.IndexOfArgument( typeArgument.Name );
 				if( ordinal < 0 ) {
 					continue;
 				}
 
-				// We pass through the type argument otherwise the "name"
-				// applied to the type will drift based on the declaration
-				// and be impossible to track.  Using this means that the
-				// name declared at the top is consistent all the way down.
-				var subTypeParameter = intf.TypeArguments[ ordinal ] as ITypeParameterSymbol;
+				ITypeParameterSymbol subTypeParameter = intf.TypeParameters[ ordinal ];
 				if( IsTypeArgumentImmutable( subTypeParameter, ordinal, intf ) ) {
 					return true;
 				}
@@ -681,7 +779,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private MutabilityInspectionResult InspectMemberRecursive(
 			ISymbol symbol,
-			HashSet<ITypeSymbol> typeStack
+			HashSet<ITypeSymbol> typeStack,
+			ITypeSymbol hostSymbol
 		) {
 			// if the member is audited or unaudited, ignore it
 			if( Attributes.Mutability.Audited.IsDefined( symbol ) ) {
@@ -696,13 +795,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				case SymbolKind.Property:
 					return InspectProperty(
 						symbol as IPropertySymbol,
-						typeStack
+						typeStack,
+						hostSymbol
 					);
 
 				case SymbolKind.Field:
 					return InspectField(
 						symbol as IFieldSymbol,
-						typeStack
+						typeStack,
+						hostSymbol
 					);
 
 				case SymbolKind.Method:
