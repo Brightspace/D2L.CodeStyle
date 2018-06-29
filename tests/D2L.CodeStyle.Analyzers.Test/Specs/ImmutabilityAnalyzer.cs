@@ -64,10 +64,8 @@ namespace SpecTests {
 	}
 
 	sealed class MutableClass {
-		private string m_MutableClass;
+		private object m_MutableClass;
 	}
-
-
 
 	class AnnotationsTests {
 		[Objects.Immutable]
@@ -155,13 +153,13 @@ namespace SpecTests {
 
 		class GenericClassWithoutStateIsSafe<T> : IGenericImmutable<T> { }
 
-		class /* ImmutableClassIsnt('foo''s type ('T') is a generic type) */ GenericClassWithStateIsUnsafe<T> /**/ : IGenericImmutable<T> {
+		class /* ImmutableClassIsnt('foo''s type ('T') is not deterministically immutable) */ GenericClassWithStateIsUnsafe<T> /**/ : IGenericImmutable<T> {
 			internal readonly T foo;
 		}
 
 		// todo: we should try and map generic parameters with arguments on implemented interfaces
 		// and extract any constraints that we can
-		class /* ImmutableClassIsnt('foo''s type ('T') is a generic type) */ IndirectlyConstrainedGenericClassWithStateIsUnsafe<T> /**/ : IGenericImmutableWithTypeConstraint<T> {
+		class /* ImmutableClassIsnt('foo''s type ('T') is not deterministically immutable) */ IndirectlyConstrainedGenericClassWithStateIsUnsafe<T> /**/ : IGenericImmutableWithTypeConstraint<T> {
 			internal readonly T foo;
 		}
 
@@ -190,7 +188,7 @@ namespace SpecTests {
 
 		#region Type parameter new initializer
 		[Objects.Immutable]
-		public sealed class /* ImmutableClassIsnt('m_t''s type ('T') is a generic type) */ GenericWithFieldInitializer<T> /**/ {
+		public sealed class /* ImmutableClassIsnt('m_t''s type ('T') is not deterministically immutable) */ GenericWithFieldInitializer<T> /**/ {
 			private readonly T m_t = new T();
 		}
 
@@ -459,7 +457,7 @@ namespace SpecTests {
 		}
 
 		[Objects.Immutable]
-		sealed class /* ImmutableClassIsnt('m_ImmutableBase.m_MutableClass' is not read-only) */ MutableImpl /**/ : ImmutableBase<MutableClass> {
+		sealed class /* ImmutableClassIsnt('m_MutableClass' is not read-only) */ MutableImpl /**/ : ImmutableBase<MutableClass> {
 		}
 
 		[Objects.Immutable]
@@ -487,7 +485,121 @@ namespace SpecTests {
 		class ImmutableConcrete : MixinBase<MutableClass, ImmutableClass> {
 		}
 
-		class /* ImmutableClassIsnt('m_V.m_MutableClass' is not read-only) */ MutableConcrete /**/ : MixinBase<ImmutableClass, MutableClass> {
+		class /* ImmutableClassIsnt('m_MutableClass' is not read-only) */ MutableConcrete /**/ : MixinBase<ImmutableClass, MutableClass> {
+		}
+	}
+
+	class GenericConstraintTests {
+
+		[Objects.Immutable]
+		public abstract class ImmutableConstraint {
+			private readonly string m_ImmutableConstraint;
+		}
+
+		public abstract class MutableConstraint {
+			private readonly object m_MutableConstraint;
+		}
+
+		[Objects.Immutable]
+		public abstract class GenericImmutableConstraint<T> where T : ImmutableConstraint {
+
+			public T m_GenericImmutableConstraint { get; }
+		}
+
+		[Objects.Immutable]
+		public abstract class /* ImmutableClassIsnt('m_GenericMutableConstraint''s type ('T') is not deterministically immutable) */ GenericMutableConstraint<T> /**/ where T : MutableConstraint {
+
+			public T m_GenericMutableConstraint { get; }
+		}
+
+	}
+
+	class ImmutableBaseAndConstraintTests {
+		// Test to set up and confirm various ways in which the code is actually
+		// written will pass
+
+		[Objects.Immutable]
+		public abstract class ImmutableGenericConstraint<[Objects.Immutable] T> {
+
+			public T Value { get; }
+		}
+
+		[Objects.Immutable]
+		public interface IImmutableInterface {
+		}
+
+		// Gets Immutable from the interface, and the property U
+		// gets its Immutable from the constraint
+		internal class ImmutableGenericBase<U, V>
+			: IImmutableInterface
+			where U : ImmutableGenericConstraint<V> {
+
+			private readonly U m_feature;
+		}
+
+		[Objects.Immutable]
+		internal class ImmutableClassWithImmutableConstrainedState<T>
+			where T : ImmutableGenericConstraint<T> {
+
+			private readonly T m_ImmutableClass;
+		}
+
+		class ConcreteGeneric : ImmutableGenericBase<ImmutableGenericConstraint<ImmutableClass>, ImmutableClass> {
+		}
+
+		class /* ImmutableClassIsnt('Value.m_MutableClass' is not read-only) */ BadConcreteGeneric /**/: ImmutableGenericBase<ImmutableGenericConstraint<MutableClass>, MutableClass> {
+		}
+
+	}
+
+	class AuditedBaseTests {
+		[Objects.Immutable]
+		public abstract class AuditedConstraint<TValue> {
+
+			[Mutability.Audited(
+				owner: "Test",
+				auditedDate: "26-Jun-2018",
+				rationale: "Testing audited in tests"
+			)]
+			public TValue Value { get; }
+		}
+
+		[Objects.Immutable]
+		public interface IAuditedItem<TDefinition, TValue>
+			where TDefinition : AuditedConstraint<TValue> {
+
+			TValue GetValue();
+		}
+
+		internal sealed class Audited<TDefinition, TValue>
+			: IAuditedItem<TDefinition, TValue>
+			where TDefinition : AuditedConstraint<TValue> {
+
+			private readonly TDefinition m_feature;
+		}
+
+		internal class ConcreteAudited : Audited<AuditedConstraint<ImmutableClass>, ImmutableClass> {
+		}
+
+		// This should still pass because the Audited attribute is saying it's
+		// okay to pass it mutable types, they're all used in a safe manner.
+		internal class MutableConcreteAudited : Audited<AuditedConstraint<MutableClass>, MutableClass> {
+		}
+	}
+
+	class BaseGenericMixinTests {
+
+		[Objects.ImmutableBaseClass]
+		class BaseState<S, [Objects.Immutable] T> {
+			private readonly T m_BaseState;
+		}
+
+		[Objects.Immutable]
+		class WithState : BaseState<MutableClass, ImmutableClass> {
+		}
+
+		[Objects.Immutable]
+		class /* ImmutableClassIsnt('m_MutableClass' is not read-only) */ WithBadState /**/ : BaseState<ImmutableClass, MutableClass> {
 		}
 	}
 }

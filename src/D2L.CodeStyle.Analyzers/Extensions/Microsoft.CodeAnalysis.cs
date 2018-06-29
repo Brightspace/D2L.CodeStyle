@@ -65,7 +65,10 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			return TryGetImmutableGenericAnnotation( symbol, out ignore );
 		}
 
-		private static bool TryGetImmutableGenericAnnotation( this ITypeSymbol symbol, out AttributeData attribute ) {
+		private static bool TryGetImmutableGenericAnnotation( 
+			this ITypeSymbol symbol, 
+			out AttributeData attribute 
+		) {
 			attribute = null;
 			var type = symbol as INamedTypeSymbol;
 			if( type == null ) {
@@ -99,7 +102,11 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			return false;
 		}
 
-		private static bool TryGetImmutableGenericAnnotation( this IAssemblySymbol assembly, ITypeSymbol type, out AttributeData attribute ) {
+		private static bool TryGetImmutableGenericAnnotation(
+			this IAssemblySymbol assembly,
+			ITypeSymbol type,
+			out AttributeData attribute
+		) {
 			attribute = null;
 
 			var attributes = Attributes.Objects.ImmutableGeneric.GetAll( assembly );
@@ -109,7 +116,7 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 					continue;
 				}
 
-				var arg = attr.ConstructorArguments[ 0 ];
+				var arg = attr.ConstructorArguments[0];
 				//Using ToString, otherwise it sometimes fails to match, and the test behaviour does not match the real behaviour
 				if( arg.Value.ToString().Equals( type.ToString() ) ) {
 					attribute = attr;
@@ -225,7 +232,7 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 		) {
 
 			for( int ordinal = 0; ordinal < intf.TypeArguments.Length; ordinal++ ) {
-				if( string.Equals( intf.TypeArguments[ ordinal ].Name, name, StringComparison.Ordinal ) ) {
+				if( string.Equals( intf.TypeArguments[ordinal].Name, name, StringComparison.Ordinal ) ) {
 					return ordinal;
 				}
 			}
