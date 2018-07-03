@@ -18,6 +18,83 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			"System.IO.Abstractions.IFileSystem"
 		);
 
+		/// <summary>
+		/// A list of immutable container types (i.e., types that hold other types)
+		/// </summary>
+		private static readonly ImmutableDictionary<string, string[]> ImmutableContainerTypes = new Dictionary<string, string[]> {
+			["D2L.LP.Utilities.DeferredInitializer"] = new[] { "Value" },
+			["D2L.LP.Extensibility.Activation.Domain.IPlugins"] = new[] { "[]" },
+			["System.Collections.Immutable.IImmutableSet"] = new[] { "[]" },
+			["System.Collections.Immutable.ImmutableArray"] = new[] { "[]" },
+			["System.Collections.Immutable.ImmutableDictionary"] = new[] { "[].Key", "[].Value" },
+			["System.Collections.Immutable.ImmutableHashSet"] = new[] { "[]" },
+			["System.Collections.Immutable.ImmutableList"] = new[] { "[]" },
+			["System.Collections.Immutable.ImmutableQueue"] = new[] { "[]" },
+			["System.Collections.Immutable.ImmutableSortedDictionary"] = new[] { "[].Key", "[].Value" },
+			["System.Collections.Immutable.ImmutableSortedSet"] = new[] { "[]" },
+			["System.Collections.Immutable.ImmutableStack"] = new[] { "[]" },
+			["System.Collections.Generic.IReadOnlyCollection"] = new[] { "[]" },
+			["System.Collections.Generic.IReadOnlyList"] = new[] { "[]" },
+			["System.Collections.Generic.IReadOnlyDictionary"] = new[] { "[].Key", "[].Value" },
+			["System.Collections.Generic.IEnumerable"] = new[] { "[]" },
+			["System.Lazy"] = new[] { "Value" },
+			["System.Nullable"] = new[] { "Value" },
+			["System.Tuple"] = new[] { "Item1", "Item2", "Item3", "Item4", "Item5", "Item6" }
+		}.ToImmutableDictionary();
+
+		public static bool TypeIsFromOtherAssembly( this ITypeSymbol type, Compilation compilation ) {
+			return type.ContainingAssembly != compilation.Assembly;
+		}
+
+		/// <summary>
+		/// Get the declaration syntax for a symbol. This is intended to be
+		/// used for fields and properties which can't have multiple
+		/// declaration nodes.
+		/// </summary>
+		public static T GetDeclarationSyntax<T>( this ISymbol symbol )
+			where T : SyntaxNode {
+			ImmutableArray<SyntaxReference> decls = symbol.DeclaringSyntaxReferences;
+
+			if( decls.Length != 1 ) {
+				throw new NotImplementedException(
+					"Unexepected number of decls: "
+					+ decls.Length
+				);
+			}
+
+			SyntaxNode syntax = decls[0].GetSyntax();
+
+			var decl = syntax as T;
+			if( decl == null ) {
+
+				string msg = String.Format(
+						"Couldn't cast declaration syntax of type '{0}' as type '{1}': {2}",
+						syntax.GetType().FullName,
+						typeof( T ).FullName,
+						symbol.ToDisplayString()
+					);
+
+				throw new InvalidOperationException( msg );
+			}
+
+			return decl;
+		}
+
+		public static bool IsAnImmutableContainerType( this ITypeSymbol type ) {
+			return ImmutableContainerTypes.ContainsKey( type.GetFullTypeName() );
+		}
+
+		public static string[] GetImmutableContainerTypePrefixes( this ITypeSymbol type ) {
+			string fullTypeName = type.GetFullTypeName();
+
+			if( ImmutableContainerTypes.ContainsKey( fullTypeName ) ) {
+				return ImmutableContainerTypes[fullTypeName];
+			}
+
+			// Not found, so return an empty array
+			return new string[] { };
+		}
+
 		public static ImmutabilityScope GetImmutabilityScope( this ITypeSymbol type ) {
 			if( type.IsTypeMarkedImmutable() ) {
 				return ImmutabilityScope.SelfAndChildren;
@@ -109,7 +186,7 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 					continue;
 				}
 
-				var arg = attr.ConstructorArguments[ 0 ];
+				var arg = attr.ConstructorArguments[0];
 				//Using ToString, otherwise it sometimes fails to match, and the test behaviour does not match the real behaviour
 				if( arg.Value.ToString().Equals( type.ToString() ) ) {
 					attribute = attr;
@@ -225,12 +302,63 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 		) {
 
 			for( int ordinal = 0; ordinal < intf.TypeArguments.Length; ordinal++ ) {
-				if( string.Equals( intf.TypeArguments[ ordinal ].Name, name, StringComparison.Ordinal ) ) {
+				if( string.Equals( intf.TypeArguments[ordinal].Name, name, StringComparison.Ordinal ) ) {
 					return ordinal;
 				}
 			}
 
 			return -1;
 		}
+
+		/// <summary>
+		/// Walks all ancestors to this type parameter to determine if it was
+		/// intended that the type be immutable.  If *any* ancestor says the
+		/// type was supposed to be immutable, then the type will be 
+		/// assumed to mandatory immutable.
+		/// </summary>
+		public static bool IsTypeArgumentImmutable(
+			this ITypeParameterSymbol typeParameter,
+			int parameterOrdinal,
+			INamedTypeSymbol symbol
+		) {
+			if( symbol == default ) {
+				return false;
+			}
+
+			if( typeParameter == default ) {
+				return false;
+			}
+
+			// We need the TypeParameter here, otherwise we're inspecting
+			// the type and not the declaration.  We need to inspect the 
+			// declaration because that's the symbol that will have the
+			// [Immutable] attached to it.
+			bool isMarkedImmutable = symbol.TypeParameters[parameterOrdinal]
+				.GetImmutabilityScope() != ImmutabilityScope.None;
+
+			if( isMarkedImmutable ) {
+				return true;
+			}
+
+			foreach( INamedTypeSymbol intf in symbol.Interfaces ) {
+
+				int ordinal = intf.IndexOfArgument( typeParameter.Name );
+				if( ordinal < 0 ) {
+					continue;
+				}
+
+				// We pass through the type argument otherwise the "name"
+				// applied to the type will drift based on the declaration
+				// and be impossible to track.  Using this means that the
+				// name declared at the top is consistent all the way down.
+				var subTypeParameter = intf.TypeArguments[ordinal] as ITypeParameterSymbol;
+				if( IsTypeArgumentImmutable( subTypeParameter, ordinal, intf ) ) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
 	}
 }
