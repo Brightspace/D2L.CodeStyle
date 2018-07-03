@@ -25,29 +25,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 	}
 
 	internal sealed class MutabilityInspector {
-		/// <summary>
-		/// A list of immutable container types (i.e., types that hold other types)
-		/// </summary>
-		private static readonly ImmutableDictionary<string, string[]> ImmutableContainerTypes = new Dictionary<string, string[]> {
-			["D2L.LP.Utilities.DeferredInitializer"] = new[] { "Value" },
-			["D2L.LP.Extensibility.Activation.Domain.IPlugins"] = new[] { "[]" },
-			["System.Collections.Immutable.IImmutableSet"] = new[] { "[]" },
-			["System.Collections.Immutable.ImmutableArray"] = new[] { "[]" },
-			["System.Collections.Immutable.ImmutableDictionary"] = new[] { "[].Key", "[].Value" },
-			["System.Collections.Immutable.ImmutableHashSet"] = new[] { "[]" },
-			["System.Collections.Immutable.ImmutableList"] = new[] { "[]" },
-			["System.Collections.Immutable.ImmutableQueue"] = new[] { "[]" },
-			["System.Collections.Immutable.ImmutableSortedDictionary"] = new[] { "[].Key", "[].Value" },
-			["System.Collections.Immutable.ImmutableSortedSet"] = new[] { "[]" },
-			["System.Collections.Immutable.ImmutableStack"] = new[] { "[]" },
-			["System.Collections.Generic.IReadOnlyCollection"] = new[] { "[]" },
-			["System.Collections.Generic.IReadOnlyList"] = new[] { "[]" },
-			["System.Collections.Generic.IReadOnlyDictionary"] = new[] { "[].Key", "[].Value" },
-			["System.Collections.Generic.IEnumerable"] = new[] { "[]" },
-			["System.Lazy"] = new[] { "Value" },
-			["System.Nullable"] = new[] { "Value" },
-			["System.Tuple"] = new[] { "Item1", "Item2", "Item3", "Item4", "Item5", "Item6" }
-		}.ToImmutableDictionary();
 
 		private readonly KnownImmutableTypes m_knownImmutableTypes;
 		private readonly Compilation m_compilation;
@@ -157,7 +134,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
-			if( IsAnImmutableContainerType( type ) ) {
+			if( type.IsAnImmutableContainerType() ) {
 				return InspectImmutableContainerType( type, typeStack );
 			}
 
@@ -321,10 +298,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return MutabilityInspectionResult.NotMutable( seenUnauditedReasonsBuilder.ToImmutable() );
 		}
 
-		private bool IsAnImmutableContainerType( ITypeSymbol type ) {
-			return ImmutableContainerTypes.ContainsKey( type.GetFullTypeName() );
-		}
-
 		private MutabilityInspectionResult InspectImmutableContainerType(
 			ITypeSymbol type,
 			HashSet<ITypeSymbol> typeStack
@@ -352,7 +325,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				if( result.IsMutable ) {
 					if( result.Target == MutabilityTarget.Member ) {
 						// modify the result to prefix with container member.
-						string[] prefix = ImmutableContainerTypes[type.GetFullTypeName()];
+						string[] prefix = type.GetImmutableContainerTypePrefixes();
 						result = result.WithPrefixedMember( prefix[i] );
 					} else {
 						// modify the result to target the type argument if the
