@@ -528,10 +528,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 		}
 
-		private bool TypeIsFromOtherAssembly( ITypeSymbol type ) {
-			return type.ContainingAssembly != m_compilation.Assembly;
-		}
-
 		private MutabilityInspectionResult InspectTypeImpl(
 			ITypeSymbol type,
 			MutabilityInspectionFlags flags,
@@ -658,7 +654,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			// We have a type that is not marked immutable, is not an interface, is not an immutable container, etc..
 			// If it is defined in a different assembly, we might not have the metadata to correctly analyze it; so we fail.
-			if( TypeIsFromOtherAssembly( type ) ) {
+			if( type.IsFromOtherAssembly( m_compilation ) ) {
 				return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnExternalUnmarkedType );
 			}
 

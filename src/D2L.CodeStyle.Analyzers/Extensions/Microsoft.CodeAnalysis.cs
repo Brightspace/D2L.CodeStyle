@@ -18,6 +18,10 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			"System.IO.Abstractions.IFileSystem"
 		);
 
+		public static bool IsFromOtherAssembly( this ITypeSymbol type, Compilation compilation ) {
+			return type.ContainingAssembly != compilation.Assembly;
+		}
+
 		public static ImmutabilityScope GetImmutabilityScope( this ITypeSymbol type ) {
 			if( type.IsTypeMarkedImmutable() ) {
 				return ImmutabilityScope.SelfAndChildren;
