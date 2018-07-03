@@ -51,7 +51,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
 
-			return InspectType(
+			return DoInspectType(
 				type,
 				flags,
 				typesInCurrentCycle
@@ -61,7 +61,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		public MutabilityInspectionResult InspectField( IFieldSymbol field ) {
 			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
 
-			return InspectField( field, typesInCurrentCycle );
+			return DoInspectField( field, typesInCurrentCycle );
 		}
 
 		public MutabilityInspectionResult InspectProperty(
@@ -69,7 +69,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
 
-			return InspectProperty( property, typesInCurrentCycle );
+			return DoInspectProperty( property, typesInCurrentCycle );
 		}
 
 		public MutabilityInspectionResult InspectConcreteType(
@@ -78,16 +78,16 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
 
-			return InspectConcreteType( type, typesInCurrentCycle, flags );
+			return DoInspectConcreteType( type, typesInCurrentCycle, flags );
 		}
 
 		public MutabilityInspectionResult InspectMember( ISymbol symbol ) {
 			var seen = new HashSet<ITypeSymbol>();
 
-			return InspectMemberRecursive( symbol, seen );
+			return PerformMemberInspection( symbol, seen );
 		}
 
-		private MutabilityInspectionResult InspectType(
+		private MutabilityInspectionResult DoInspectType(
 			ITypeSymbol type,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
@@ -96,11 +96,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			return m_cache.GetOrAdd(
 				cacheKey,
-				query => InspectTypeImpl( query.Item1, query.Item2, typeStack )
+				query => PerformTypeInspection( query.Item1, query.Item2, typeStack )
 			);
 		}
 
-		private MutabilityInspectionResult InspectConcreteType(
+		private MutabilityInspectionResult DoInspectConcreteType(
 			ITypeSymbol type,
 			HashSet<ITypeSymbol> typeStack,
 			MutabilityInspectionFlags flags = MutabilityInspectionFlags.Default
@@ -133,7 +133,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return MutabilityInspectionResult.NotMutable( immutableExceptions );
 			}
 
-			return InspectType(
+			return DoInspectType(
 				type,
 				flags | MutabilityInspectionFlags.AllowUnsealed,
 				typeStack
@@ -158,7 +158,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			for( int i = 0; i < namedType.TypeArguments.Length; i++ ) {
 				ITypeSymbol arg = namedType.TypeArguments[i];
 
-				MutabilityInspectionResult result = InspectType(
+				MutabilityInspectionResult result = DoInspectType(
 					arg,
 					MutabilityInspectionFlags.Default,
 					typeStack
@@ -185,7 +185,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return MutabilityInspectionResult.NotMutable( unauditedReasonsBuilder.ToImmutable() );
 		}
 
-		private MutabilityInspectionResult InspectInterface(
+		private MutabilityInspectionResult DoInspectInterface(
 			ITypeSymbol symbol,
 			HashSet<ITypeSymbol> typeStack
 		) {
@@ -232,7 +232,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return MutabilityInspectionResult.MutableType( symbol, MutabilityCause.IsAnInterface );
 		}
 
-		private MutabilityInspectionResult InspectTypeParameter(
+		private MutabilityInspectionResult DoInspectTypeParameter(
 			ITypeSymbol symbol,
 			HashSet<ITypeSymbol> typeStack
 		) {
@@ -252,7 +252,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// to succeed
 				foreach( ITypeSymbol constraintType in typeParameter.ConstraintTypes ) {
 
-					MutabilityInspectionResult result = InspectType(
+					MutabilityInspectionResult result = DoInspectType(
 						constraintType,
 						MutabilityInspectionFlags.Default,
 						typeStack
@@ -302,7 +302,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 		}
 
-		private MutabilityInspectionResult InspectInitializer(
+		private MutabilityInspectionResult DoInspectInitializer(
 			ExpressionSyntax expr,
 			HashSet<ITypeSymbol> typeStack
 		) {
@@ -324,19 +324,19 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			if( expr is ObjectCreationExpressionSyntax ) {
 				// If our initializer is "new Foo( ... )" we only need to
 				// consider Foo concretely; not subtypes of Foo.
-				return InspectConcreteType( exprType, typeStack );
+				return DoInspectConcreteType( exprType, typeStack );
 			}
 
 			// In general we can use the initializers type in place of the
 			// field/properties type because it may be narrower.
-			return InspectType(
+			return DoInspectType(
 				exprType,
 				MutabilityInspectionFlags.Default,
 				typeStack
 			);
 		}
 
-		private MutabilityInspectionResult InspectProperty(
+		private MutabilityInspectionResult DoInspectProperty(
 			IPropertySymbol property,
 			HashSet<ITypeSymbol> typeStack
 		) {
@@ -366,20 +366,20 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			if( propertySyntax.Initializer != null ) {
-				return InspectInitializer(
+				return DoInspectInitializer(
 					propertySyntax.Initializer.Value,
 					typeStack
 				).WithPrefixedMember( property.Name );
 			}
 
-			return InspectType(
+			return DoInspectType(
 				property.Type,
 				MutabilityInspectionFlags.Default,
 				typeStack
 			).WithPrefixedMember( property.Name );
 		}
 
-		private MutabilityInspectionResult InspectField(
+		private MutabilityInspectionResult DoInspectField(
 			IFieldSymbol field,
 			HashSet<ITypeSymbol> typeStack
 		) {
@@ -394,13 +394,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				GetDeclarationSyntax<VariableDeclaratorSyntax>( field );
 
 			if( declSyntax.Initializer != null ) {
-				return InspectInitializer(
+				return DoInspectInitializer(
 					declSyntax.Initializer.Value,
 					typeStack
 				).WithPrefixedMember( field.Name );
 			}
 
-			return InspectType(
+			return DoInspectType(
 				field.Type,
 				MutabilityInspectionFlags.Default,
 				typeStack
@@ -491,7 +491,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return decl;
 		}
 
-		private MutabilityInspectionResult InspectMemberRecursive(
+		private MutabilityInspectionResult PerformMemberInspection(
 			ISymbol symbol,
 			HashSet<ITypeSymbol> typeStack
 		) {
@@ -506,13 +506,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			switch( symbol.Kind ) {
 				case SymbolKind.Property:
-					return InspectProperty(
+					return DoInspectProperty(
 						symbol as IPropertySymbol,
 						typeStack
 					);
 
 				case SymbolKind.Field:
-					return InspectField(
+					return DoInspectField(
 						symbol as IFieldSymbol,
 						typeStack
 					);
@@ -528,7 +528,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 		}
 
-		private MutabilityInspectionResult InspectTypeImpl(
+		private MutabilityInspectionResult PerformTypeInspection(
 			ITypeSymbol type,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
@@ -601,13 +601,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					return MutabilityInspectionResult.NotMutable();
 
 				case TypeKind.TypeParameter:
-					return InspectTypeParameter(
+					return DoInspectTypeParameter(
 						type,
 						typeStack
 					);
 
 				case TypeKind.Interface:
-					return InspectInterface(
+					return DoInspectInterface(
 						type,
 						typeStack
 					);
@@ -663,7 +663,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			typeStack.Add( type );
 			try {
 				foreach( ISymbol member in type.GetExplicitNonStaticMembers() ) {
-					MutabilityInspectionResult result = InspectMemberRecursive( member, typeStack );
+					MutabilityInspectionResult result = PerformMemberInspection( member, typeStack );
 					if( result.IsMutable ) {
 						return result;
 					}
@@ -672,7 +672,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 				// We descend into the base class last
 				if( type.BaseType != null ) {
-					MutabilityInspectionResult baseResult = InspectConcreteType( type.BaseType, typeStack );
+					MutabilityInspectionResult baseResult = DoInspectConcreteType( type.BaseType, typeStack );
 
 					if( baseResult.IsMutable ) {
 						return baseResult;
