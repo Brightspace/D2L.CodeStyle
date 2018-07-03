@@ -100,118 +100,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 		}
 
-		private MutabilityInspectionResult InspectTypeImpl(
-			ITypeSymbol type,
-			MutabilityInspectionFlags flags,
-			HashSet<ITypeSymbol> typeStack
-		) {
-			if( type is IErrorTypeSymbol ) {
-				// This only happens for code that otherwise won't compile. Our
-				// analyzer doesn't need to validate these types. It only needs
-				// to be strict for valid code.
-				return MutabilityInspectionResult.NotMutable();
-			}
-
-			if( type == null ) {
-				throw new Exception( "Type cannot be resolved. Please ensure all dependencies "
-					+ "are referenced, including transitive dependencies." );
-			}
-
-			// If we're not verifying immutability, we might be able to bail 
-			// out early, but we will not exit early if the type is simply 
-			// marked immutable if the type is generic since we need to 
-			// actually examine the generic type parameters.
-			ImmutabilityScope scope = type.GetImmutabilityScope();
-			if( !type.IsGenericType()
-				&& !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute )
-				&& scope == ImmutabilityScope.SelfAndChildren
-			) {
-				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
-				return MutabilityInspectionResult.NotMutable( immutableExceptions );
-			}
-
-			if( m_knownImmutableTypes.IsTypeKnownImmutable( type ) ) {
-				return MutabilityInspectionResult.NotMutable();
-			}
-
-			if( type.IsAnImmutableContainerType() ) {
-				return InspectImmutableContainerType( type, typeStack );
-			}
-
-			if( !flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed )
-					&& type.TypeKind == TypeKind.Class
-					&& !type.IsSealed
-				) {
-				return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsNotSealed );
-			}
-
-			switch( type.TypeKind ) {
-				case TypeKind.Array:
-					// Arrays are always mutable because you can rebind the
-					// individual elements.
-					return MutabilityInspectionResult.MutableType(
-						type,
-						MutabilityCause.IsAnArray
-					);
-
-				case TypeKind.Delegate:
-					// Delegates can hold state so are mutable in general.
-					return MutabilityInspectionResult.MutableType(
-						type,
-						MutabilityCause.IsADelegate
-					);
-
-				case TypeKind.Dynamic:
-					// Dynamic types are always mutable
-					return MutabilityInspectionResult.MutableType(
-						type,
-						MutabilityCause.IsDynamic
-					);
-
-				case TypeKind.Enum:
-					// Enums are just fancy ints.
-					return MutabilityInspectionResult.NotMutable();
-
-				case TypeKind.TypeParameter:
-					return InspectTypeParameter(
-						type,
-						typeStack
-					);
-
-				case TypeKind.Interface:
-					return InspectInterface(
-						type,
-						typeStack
-					);
-
-				case TypeKind.Class:
-				case TypeKind.Struct: // equivalent to TypeKind.Structure
-					return InspectClassOrStruct(
-						type,
-						typeStack
-					);
-
-				case TypeKind.Error:
-					// This only happens when the build is failing for other
-					// (more fundamental) reasons. We only need to be strict
-					// for otherwise-successful builds, so we bail analysis in
-					// this case.
-					return MutabilityInspectionResult.NotMutable();
-
-				case TypeKind.Unknown:
-					// Looking at the Roslyn source this doesn't appear to
-					// happen outside their tests. It is value 0 in the enum so
-					// it may just be a safety guard.
-					throw new NotImplementedException();
-
-				default:
-					// not handled: Module, Pointer, Submission.
-					throw new NotImplementedException(
-						$"TypeKind.{type.Kind} not handled by analysis"
-					);
-			}
-		}
-
 		private MutabilityInspectionResult InspectConcreteType(
 			ITypeSymbol type,
 			HashSet<ITypeSymbol> typeStack,
@@ -250,52 +138,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				flags | MutabilityInspectionFlags.AllowUnsealed,
 				typeStack
 			);
-		}
-
-		private MutabilityInspectionResult InspectClassOrStruct(
-			ITypeSymbol type,
-			HashSet<ITypeSymbol> typeStack
-		) {
-			if( typeStack.Contains( type ) ) {
-				// We have a cycle. If we're here, it means that either some read-only member causes the cycle (via IsMemberMutableRecursive), 
-				// or a generic parameter to a type causes the cycle (via IsTypeMutableRecursive). This is safe if the checks above have 
-				// passed and the remaining members are read-only immutable. So we can skip the current check, and allow the type to continue 
-				// to be evaluated.
-				return MutabilityInspectionResult.NotMutable();
-			}
-
-			// We have a type that is not marked immutable, is not an interface, is not an immutable container, etc..
-			// If it is defined in a different assembly, we might not have the metadata to correctly analyze it; so we fail.
-			if( TypeIsFromOtherAssembly( type ) ) {
-				return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnExternalUnmarkedType );
-			}
-
-			ImmutableHashSet<string>.Builder seenUnauditedReasonsBuilder = ImmutableHashSet.CreateBuilder<string>();
-
-			typeStack.Add( type );
-			try {
-				foreach( ISymbol member in type.GetExplicitNonStaticMembers() ) {
-					MutabilityInspectionResult result = InspectMemberRecursive( member, typeStack );
-					if( result.IsMutable ) {
-						return result;
-					}
-					seenUnauditedReasonsBuilder.UnionWith( result.SeenUnauditedReasons );
-				}
-
-				// We descend into the base class last
-				if( type.BaseType != null ) {
-					MutabilityInspectionResult baseResult = InspectConcreteType( type.BaseType, typeStack );
-
-					if( baseResult.IsMutable ) {
-						return baseResult;
-					}
-					seenUnauditedReasonsBuilder.UnionWith( baseResult.SeenUnauditedReasons );
-				}
-			} finally {
-				typeStack.Remove( type );
-			}
-
-			return MutabilityInspectionResult.NotMutable( seenUnauditedReasonsBuilder.ToImmutable() );
 		}
 
 		private MutabilityInspectionResult InspectImmutableContainerType(
@@ -689,5 +531,164 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private bool TypeIsFromOtherAssembly( ITypeSymbol type ) {
 			return type.ContainingAssembly != m_compilation.Assembly;
 		}
+
+		private MutabilityInspectionResult InspectTypeImpl(
+			ITypeSymbol type,
+			MutabilityInspectionFlags flags,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			if( type is IErrorTypeSymbol ) {
+				// This only happens for code that otherwise won't compile. Our
+				// analyzer doesn't need to validate these types. It only needs
+				// to be strict for valid code.
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			if( type == null ) {
+				throw new Exception( "Type cannot be resolved. Please ensure all dependencies "
+					+ "are referenced, including transitive dependencies." );
+			}
+
+			// If we're not verifying immutability, we might be able to bail 
+			// out early, but we will not exit early if the type is simply 
+			// marked immutable if the type is generic since we need to 
+			// actually examine the generic type parameters.
+			ImmutabilityScope scope = type.GetImmutabilityScope();
+			if( !type.IsGenericType()
+				&& !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute )
+				&& scope == ImmutabilityScope.SelfAndChildren
+			) {
+				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
+				return MutabilityInspectionResult.NotMutable( immutableExceptions );
+			}
+
+			if( m_knownImmutableTypes.IsTypeKnownImmutable( type ) ) {
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			if( type.IsAnImmutableContainerType() ) {
+				return InspectImmutableContainerType( type, typeStack );
+			}
+
+			if( !flags.HasFlag( MutabilityInspectionFlags.AllowUnsealed )
+					&& type.TypeKind == TypeKind.Class
+					&& !type.IsSealed
+				) {
+				return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsNotSealed );
+			}
+
+			switch( type.TypeKind ) {
+				case TypeKind.Array:
+					// Arrays are always mutable because you can rebind the
+					// individual elements.
+					return MutabilityInspectionResult.MutableType(
+						type,
+						MutabilityCause.IsAnArray
+					);
+
+				case TypeKind.Delegate:
+					// Delegates can hold state so are mutable in general.
+					return MutabilityInspectionResult.MutableType(
+						type,
+						MutabilityCause.IsADelegate
+					);
+
+				case TypeKind.Dynamic:
+					// Dynamic types are always mutable
+					return MutabilityInspectionResult.MutableType(
+						type,
+						MutabilityCause.IsDynamic
+					);
+
+				case TypeKind.Enum:
+					// Enums are just fancy ints.
+					return MutabilityInspectionResult.NotMutable();
+
+				case TypeKind.TypeParameter:
+					return InspectTypeParameter(
+						type,
+						typeStack
+					);
+
+				case TypeKind.Interface:
+					return InspectInterface(
+						type,
+						typeStack
+					);
+
+				case TypeKind.Class:
+				case TypeKind.Struct: // equivalent to TypeKind.Structure
+					return InspectClassOrStruct(
+						type,
+						typeStack
+					);
+
+				case TypeKind.Error:
+					// This only happens when the build is failing for other
+					// (more fundamental) reasons. We only need to be strict
+					// for otherwise-successful builds, so we bail analysis in
+					// this case.
+					return MutabilityInspectionResult.NotMutable();
+
+				case TypeKind.Unknown:
+					// Looking at the Roslyn source this doesn't appear to
+					// happen outside their tests. It is value 0 in the enum so
+					// it may just be a safety guard.
+					throw new NotImplementedException();
+
+				default:
+					// not handled: Module, Pointer, Submission.
+					throw new NotImplementedException(
+						$"TypeKind.{type.Kind} not handled by analysis"
+					);
+			}
+		}
+
+		private MutabilityInspectionResult InspectClassOrStruct(
+			ITypeSymbol type,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			if( typeStack.Contains( type ) ) {
+				// We have a cycle. If we're here, it means that either some read-only member causes the cycle (via IsMemberMutableRecursive), 
+				// or a generic parameter to a type causes the cycle (via IsTypeMutableRecursive). This is safe if the checks above have 
+				// passed and the remaining members are read-only immutable. So we can skip the current check, and allow the type to continue 
+				// to be evaluated.
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			// We have a type that is not marked immutable, is not an interface, is not an immutable container, etc..
+			// If it is defined in a different assembly, we might not have the metadata to correctly analyze it; so we fail.
+			if( TypeIsFromOtherAssembly( type ) ) {
+				return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnExternalUnmarkedType );
+			}
+
+			ImmutableHashSet<string>.Builder seenUnauditedReasonsBuilder = ImmutableHashSet.CreateBuilder<string>();
+
+			typeStack.Add( type );
+			try {
+				foreach( ISymbol member in type.GetExplicitNonStaticMembers() ) {
+					MutabilityInspectionResult result = InspectMemberRecursive( member, typeStack );
+					if( result.IsMutable ) {
+						return result;
+					}
+					seenUnauditedReasonsBuilder.UnionWith( result.SeenUnauditedReasons );
+				}
+
+				// We descend into the base class last
+				if( type.BaseType != null ) {
+					MutabilityInspectionResult baseResult = InspectConcreteType( type.BaseType, typeStack );
+
+					if( baseResult.IsMutable ) {
+						return baseResult;
+					}
+					seenUnauditedReasonsBuilder.UnionWith( baseResult.SeenUnauditedReasons );
+				}
+			} finally {
+				typeStack.Remove( type );
+			}
+
+			return MutabilityInspectionResult.NotMutable( seenUnauditedReasonsBuilder.ToImmutable() );
+		}
+
 	}
 }
