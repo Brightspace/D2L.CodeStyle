@@ -18,6 +18,40 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			"System.IO.Abstractions.IFileSystem"
 		);
 
+		/// <summary>
+		/// Get the declaration syntax for a symbol. This is intended to be
+		/// used for fields and properties which can't have multiple
+		/// declaration nodes.
+		/// </summary>
+		public static T GetDeclarationSyntax<T>( this ISymbol symbol )
+			where T : SyntaxNode {
+			ImmutableArray<SyntaxReference> decls = symbol.DeclaringSyntaxReferences;
+
+			if( decls.Length != 1 ) {
+				throw new NotImplementedException(
+					"Unexepected number of decls: "
+					+ decls.Length
+				);
+			}
+
+			SyntaxNode syntax = decls[0].GetSyntax();
+
+			var decl = syntax as T;
+			if( decl == null ) {
+
+				string msg = String.Format(
+						"Couldn't cast declaration syntax of type '{0}' as type '{1}': {2}",
+						syntax.GetType().FullName,
+						typeof( T ).FullName,
+						symbol.ToDisplayString()
+					);
+
+				throw new InvalidOperationException( msg );
+			}
+
+			return decl;
+		}
+
 		public static bool IsFromOtherAssembly( this ITypeSymbol type, Compilation compilation ) {
 			return type.ContainingAssembly != compilation.Assembly;
 		}
