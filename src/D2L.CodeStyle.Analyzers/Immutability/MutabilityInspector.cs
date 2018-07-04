@@ -135,10 +135,49 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// sufficiently immutable, and we also need to ensure the
 			// immutability of the type parameters is also appropriate.
 			ImmutabilityScope scope = type.GetImmutabilityScope();
-			if( !type.IsGenericType()
-				&& !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute )
+			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute )
 				&& scope != ImmutabilityScope.None
 			) {
+				if( type.IsGenericType() ) {
+					// This is some kind of immutable generic class, now we 
+					// need to check that the types specified are appropriate
+					var genericSymbol = type as INamedTypeSymbol;
+
+					if( genericSymbol == default ) {
+						// ITypeSymbols that are generic are always 
+						// INamedTypeSymbols, but just in case, we'll return 
+						// here in order to not explode the analysis.
+						return MutabilityInspectionResult.MutableType(
+							type,
+							MutabilityCause.IsPotentiallyMutable );
+					}
+
+					foreach( ITypeSymbol typeArgument in genericSymbol.TypeArguments ) {
+
+						// First, check to see if we care about the immutability
+						// of this argument, otherwise we'll perform an
+						// inspection on a type that doesn't matter.
+						int ordinal = genericSymbol.IndexOfArgument( typeArgument.Name );
+						bool isToBeImmutable = IsTypeArgumentImmutable(
+							genericSymbol.TypeParameters[ordinal],
+							ordinal,
+							genericSymbol );
+
+						if( isToBeImmutable ) {
+
+							MutabilityInspectionResult argumentResult = DoInspectType(
+								typeArgument,
+								type,
+								MutabilityInspectionFlags.AllowUnsealed,
+								typeStack );
+
+							if( argumentResult.IsMutable ) {
+								return argumentResult;
+							}
+						}
+					}
+				}
+
 				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
 				return MutabilityInspectionResult.NotMutable( immutableExceptions );
 			}
