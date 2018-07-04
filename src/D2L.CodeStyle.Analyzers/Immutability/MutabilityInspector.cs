@@ -198,6 +198,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private MutabilityInspectionResult DoInspectInterface(
 			ITypeSymbol symbol,
+			ITypeSymbol hostSymbol,
 			HashSet<ITypeSymbol> typeStack
 		) {
 			var typeSymbol = symbol as INamedTypeSymbol;
@@ -224,7 +225,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				}
 
 				ITypeSymbol parameterType = typeSymbol.TypeArguments[ordinal];
-				MutabilityInspectionResult result = InspectType( parameterType );
+				MutabilityInspectionResult result = DoInspectType( 
+					type: parameterType,
+					hostSymbol: hostSymbol,
+					flags: MutabilityInspectionFlags.AllowUnsealed,
+					typeStack: typeStack );
+
 				if( result.IsMutable ) {
 					return MutabilityInspectionResult.MutableType(
 						parameterType,
@@ -554,6 +560,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				case TypeKind.Interface:
 					return DoInspectInterface(
 						type,
+						hostSymbol,
 						typeStack
 					);
 
