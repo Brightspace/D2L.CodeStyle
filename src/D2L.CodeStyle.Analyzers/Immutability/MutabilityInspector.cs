@@ -255,6 +255,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			HashSet<ITypeSymbol> typeStack
 		) {
 			var typeParameter = symbol as ITypeParameterSymbol;
+			var hostType = hostSymbol as INamedTypeSymbol;
 
 			// If we can't determine what the symbol is then we'll bail with
 			// a general mutability response, otherwise we're going to have a
@@ -283,10 +284,46 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				}
 			}
 
+			// Inspect the type parameter as part of its host symbol
+			if( hostType != default ) {
+				int ordinal = hostType.IndexOfArgument( typeParameter.Name );
+
+				// If the ordinal is negative then the type parameter isn't
+				// declared in the host symbol type arguments and that should
+				// be impossible.
+				if( ordinal < 0 ) {
+					throw new InvalidOperationException( $"Unexpected type declaration in type '{symbol.ContainingType.Name}'" );
+				}
+
+				ITypeSymbol typeArgument = hostType.TypeArguments[ordinal];
+				ImmutabilityScope argumentScope = typeArgument.GetImmutabilityScope();
+
+				// Must be SelfAndChildren otherwise we might accept something
+				// that is a descendant of [ImmutableBaseClass], which is
+				// potentially mutable.
+				if( argumentScope == ImmutabilityScope.SelfAndChildren ) {
+					return MutabilityInspectionResult.NotMutable();
+				}
+
+				// We also need to check to see if the type parameter is marked
+				// immutable, since that could also provide restriction on the
+				// types immutability.
+
+				ITypeParameterSymbol hostTypeParameter = hostType.TypeParameters[ordinal];
+				ImmutabilityScope parameterScope = hostTypeParameter.GetImmutabilityScope();
+
+				// Must be SelfAndChildren otherwise we might accept something
+				// that is a descendant of [ImmutableBaseClass], which is
+				// potentially mutable.
+				if( parameterScope == ImmutabilityScope.SelfAndChildren ) {
+					return MutabilityInspectionResult.NotMutable();
+				}
+			}
+
 			// We have to walk all base types and interfaces to find the
 			// type param with the same name and examine those to see if
 			// the immutability attribute is present.
-			INamedTypeSymbol currentType = typeParameter.ContainingType;
+			INamedTypeSymbol currentType = hostType;
 			while( currentType != null ) {
 
 				// Check all interfaces
