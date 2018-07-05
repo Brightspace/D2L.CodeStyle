@@ -130,13 +130,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
-			// We need to *not* bail early if the type is generic otherwise
-			// we will assume that anything marked with [Immutable] is
-			// sufficiently immutable, and we also need to ensure the
-			// immutability of the type parameters is also appropriate.
 			ImmutabilityScope scope = type.GetImmutabilityScope();
-			if( !type.IsGenericType()
-				&& !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute )
+			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute )
 				&& scope != ImmutabilityScope.None
 			) {
 				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
@@ -210,34 +205,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return MutabilityInspectionResult.MutableType( symbol, MutabilityCause.IsPotentiallyMutable );
 			}
 
-			// There is a 1:1 correlation between TypeParameters and TypeArguments.
-			// TypeParameters is the "S", or "T" definition.
-			// TypeArguments are the actual *types* passed to S or T.
-			for( int ordinal = 0; ordinal < typeSymbol.TypeParameters.Length; ordinal++ ) {
-
-				bool isToBeImmutable = IsTypeArgumentImmutable(
-					typeSymbol.TypeParameters[ordinal],
-					ordinal,
-					typeSymbol );
-
-				if( !isToBeImmutable ) {
-					continue;
-				}
-
-				ITypeSymbol parameterType = typeSymbol.TypeArguments[ordinal];
-				MutabilityInspectionResult result = DoInspectType( 
-					type: parameterType,
-					hostSymbol: hostSymbol,
-					flags: MutabilityInspectionFlags.AllowUnsealed,
-					typeStack: typeStack );
-
-				if( result.IsMutable ) {
-					return MutabilityInspectionResult.MutableType(
-						parameterType,
-						MutabilityCause.IsMutableTypeParameter );
-				}
-			}
-
 			// Detects if the interface itself is marked with Immutable
 			ImmutabilityScope scope = typeSymbol.GetImmutabilityScope();
 			if( scope != ImmutabilityScope.None ) {
@@ -281,38 +248,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						return result;
 					}
 				}
-			}
-
-			// We have to walk all base types and interfaces to find the
-			// type param with the same name and examine those to see if
-			// the immutability attribute is present.
-			INamedTypeSymbol currentType = typeParameter.ContainingType;
-			while( currentType != null ) {
-
-				// Check all interfaces
-				foreach( INamedTypeSymbol intf in currentType.Interfaces ) {
-
-					// Find out if this interface exposes a type argument
-					// with the specified type name.  If it doesn't, this 
-					// interface doesn't contribute to the immutability chain.
-					int ordinal = intf.IndexOfArgument( typeParameter.Name );
-					if( ordinal < 0 ) {
-						continue;
-					}
-
-					var subTypeSymbol = intf.TypeArguments[ordinal] as ITypeParameterSymbol;
-					if( IsTypeArgumentImmutable( subTypeSymbol, ordinal, intf ) ) {
-						return MutabilityInspectionResult.NotMutable();
-					}
-				}
-
-				// Check the type
-				if( typeParameter.GetImmutabilityScope() != ImmutabilityScope.None ) {
-					return MutabilityInspectionResult.NotMutable();
-				}
-
-				// Walk up the type heirarchy
-				currentType = currentType.BaseType;
 			}
 
 			return MutabilityInspectionResult.MutableType(
@@ -495,13 +430,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					+ "are referenced, including transitive dependencies." );
 			}
 
-			// If we're not verifying immutability, we might be able to bail 
-			// out early, but we will not exit early if the type is simply 
-			// marked immutable if the type is generic since we need to 
-			// actually examine the generic type parameters.
 			ImmutabilityScope scope = type.GetImmutabilityScope();
-			if( !type.IsGenericType()
-				&& !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute )
+			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute )
 				&& scope == ImmutabilityScope.SelfAndChildren
 			) {
 				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
