@@ -567,55 +567,5 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			return MutabilityInspectionResult.NotMutable( seenUnauditedReasonsBuilder.ToImmutable() );
 		}
-
-		/// <summary>
-		/// Walks all ancestors to this type parameter to determine if it was
-		/// intended that the type be immutable.  If *any* ancestor says the
-		/// type was supposed to be immutable, then the type will be 
-		/// assumed to mandatory immutable.
-		/// </summary>
-		private static bool IsTypeArgumentImmutable(
-			ITypeParameterSymbol typeParameter,
-			int parameterOrdinal,
-			INamedTypeSymbol symbol
-		) {
-			if( symbol == default ) {
-				return false;
-			}
-
-			if( typeParameter == default ) {
-				return false;
-			}
-
-			// We need the TypeParameter here, otherwise we're inspecting
-			// the type and not the declaration.  We need to inspect the 
-			// declaration because that's the symbol that will have the
-			// [Immutable] attached to it.
-			bool isMarkedImmutable = symbol.TypeParameters[parameterOrdinal]
-				.GetImmutabilityScope() != ImmutabilityScope.None;
-
-			if( isMarkedImmutable ) {
-				return true;
-			}
-
-			foreach( INamedTypeSymbol intf in symbol.Interfaces ) {
-
-				int ordinal = intf.IndexOfArgument( typeParameter.Name );
-				if( ordinal < 0 ) {
-					continue;
-				}
-
-				// We pass through the type argument otherwise the "name"
-				// applied to the type will drift based on the declaration
-				// and be impossible to track.  Using this means that the
-				// name declared at the top is consistent all the way down.
-				var subTypeParameter = intf.TypeArguments[ordinal] as ITypeParameterSymbol;
-				if( IsTypeArgumentImmutable( subTypeParameter, ordinal, intf ) ) {
-					return true;
-				}
-			}
-
-			return false;
-		}
 	}
 }
