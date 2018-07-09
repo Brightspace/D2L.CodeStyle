@@ -457,6 +457,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					+ "are referenced, including transitive dependencies." );
 			}
 
+			// Check the type arguments to see if they are supposed to be 
+			// marked immutable
+			if( type.IsGenericType() ) {
+				MutabilityInspectionResult argumentResult =
+					PerformTypeArgumentInspection( type );
+
+				if( argumentResult.IsMutable ) {
+					return argumentResult;
+				}
+			}
+
 			ImmutabilityScope scope = type.GetImmutabilityScope();
 			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute )
 				&& scope == ImmutabilityScope.SelfAndChildren
@@ -547,6 +558,118 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						$"TypeKind.{type.Kind} not handled by analysis"
 					);
 			}
+		}
+
+		private MutabilityInspectionResult PerformTypeArgumentInspection(
+			ITypeSymbol symbol
+		) {
+			var symbolType = symbol as INamedTypeSymbol;
+
+			if( symbolType == default ) {
+				// We got in here because this is a generic type so this should
+				// not be possible, but just in case, we'll return so we
+				// fail-safe instead of exploding.
+				return MutabilityInspectionResult.PotentiallyMutableMember( symbol );
+			}
+
+			// For every type argument we need to see if the base class,
+			// any interface, or constraint demands that the argument be
+			// be marked immutable
+			foreach( ITypeSymbol argument in symbolType.TypeArguments ) {
+
+				ImmutabilityScope scope = argument.GetImmutabilityScope();
+				if( scope == ImmutabilityScope.SelfAndChildren ) {
+					// The argument is already marked immutable, nothing to do
+					// but move on to the next argument
+					continue;
+				}
+
+				// Check to see if the base type says that the type argument
+				// should be immutable
+				var baseType = symbol.BaseType as INamedTypeSymbol;
+				if( baseType != default ) {
+					// We only need to check the base type if it's also generic
+					// or indeed, even has a base type.
+
+					int ordinal = baseType.IndexOfArgument( argument.Name );
+					if( ordinal >= 0 ) {
+						ImmutabilityScope baseScope =
+							baseType.TypeParameters[ordinal].GetImmutabilityScope();
+
+						// The base type scope says it needs to be marked
+						// immutable, so we need to bail here.
+						if( baseScope == ImmutabilityScope.SelfAndChildren ) {
+							return MutabilityInspectionResult.MutableType( argument, MutabilityCause.IsMutableTypeParameter );
+						}
+					}
+				}
+
+				// Check all of the implemented interfaces to see if any of
+				// them expose the type argument with [Immutable]
+				foreach( ITypeSymbol intf in symbolType.Interfaces ) {
+					// Find the type argument on the interface
+					INamedTypeSymbol intfType = intf as INamedTypeSymbol;
+
+					if( intfType == default ) {
+						// If it's not a named type symbol either something
+						// went wrong or it's not a generic type. Either way
+						// we're not interested.
+						continue;
+					}
+
+					int ordinal = intfType.IndexOfArgument( argument.Name );
+					if( ordinal < 0 ) {
+						// This interface does not contain this type, so 
+						// we can just carry on
+						continue;
+					}
+
+					ImmutabilityScope argumentScope =
+						intfType.TypeParameters[ordinal].GetImmutabilityScope();
+
+					if( argumentScope == ImmutabilityScope.SelfAndChildren ) {
+						// There exists an interface that says the type
+						// argument should be immutable, so we need to bail
+						return MutabilityInspectionResult.MutableType(
+							argument,
+							MutabilityCause.IsMutableTypeParameter );
+					}
+				}
+
+				// Now we check the constraints
+				int argumentOrdinal = symbolType.IndexOfArgument( argument.Name );
+				ITypeParameterSymbol argumentTypeParameter =
+					symbolType.TypeParameters[argumentOrdinal];
+				foreach( ITypeSymbol constraint in argumentTypeParameter.ConstraintTypes ) {
+					var constraintType = constraint as INamedTypeSymbol;
+
+					if( constraintType == default ) {
+						// It's not generic, so we aren't interested in this 
+						// constraint
+						continue;
+					}
+
+					var constraintOrdinal =
+						constraintType.IndexOfArgument( argument.Name );
+					if( constraintOrdinal < 0 ) {
+						// This constraint doesn't have the argument type
+						// so it is of no interest to us
+						continue;
+					}
+
+					ImmutabilityScope constraintScope =
+						constraintType.TypeParameters[constraintOrdinal].GetImmutabilityScope();
+					if( constraintScope == ImmutabilityScope.SelfAndChildren ) {
+						// There exists a constraint that says the type
+						// argument should be immutable, so we need to bail
+						return MutabilityInspectionResult.MutableType(
+							argument,
+							MutabilityCause.IsMutableTypeParameter );
+					}
+				}
+			}
+
+			return MutabilityInspectionResult.NotMutable();
 		}
 
 		private MutabilityInspectionResult InspectClassOrStruct(

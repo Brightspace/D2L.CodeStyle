@@ -1,4 +1,5 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.Immutability.ImmutabilityAnalyzer
+﻿
+// analyzer: D2L.CodeStyle.Analyzers.Immutability.ImmutabilityAnalyzer
 
 using System;
 using D2L.CodeStyle.Annotations;
@@ -13,7 +14,7 @@ using D2L.LP.Extensibility.Activation.Domain;
 )]
 
 namespace D2L.LP.Extensibility.Activation.Domain {
-	public sealed class SingletonAttribute : Attribute { }
+		public sealed class SingletonAttribute : Attribute { }
 }
 
 namespace D2L.CodeStyle.Annotations {
@@ -363,4 +364,46 @@ namespace SpecTests {
 			private readonly T m_field;
 		}
 	}
+
+
+	class ImmutableTypeArgumentTests {
+
+		[Objects.Immutable]
+		interface BaseInterface<[Objects.Immutable] T> {
+		}
+
+		[Objects.Immutable]
+		class /* ImmutableClassIsnt(its type ('T') is a type parameter that must be marked with `[Objects.Immutable]`) */ ImplementedWithoutImmutable<T> /**/: BaseInterface<T> {
+		}
+
+		[Objects.Immutable]
+		class ImplementedWithImmutable<[Objects.Immutable] T> : BaseInterface<T> {
+		}
+
+		[Objects.ImmutableBaseClass]
+		class BaseClass<[Objects.Immutable] T> {
+		}
+
+		[Objects.Immutable]
+		class /* ImmutableClassIsnt(its type ('T') is a type parameter that must be marked with `[Objects.Immutable]`) */ DescendantWithoutImmutable<T> /**/: BaseClass<T> {
+		}
+
+		[Objects.Immutable]
+		class DescendantWithImmutable<[Objects.Immutable] T> : BaseClass<T> {
+		}
+
+		[Objects.ImmutableBaseClass]
+		class BaseClass<[Objects.Immutable] T> {
+		}
+
+		[Objects.Immutable]
+		class /* ImmutableClassIsnt(its type ('T') is a type parameter that must be marked with `[Objects.Immutable]`) */ DescendantWithoutImmutable<T> /**/ where T : BaseClass<T> {
+		}
+
+		[Objects.Immutable]
+		class DescendantWithImmutable<[Objects.Immutable] T> where T : BaseClass<T> {
+		}
+	}
+}
+
 }
