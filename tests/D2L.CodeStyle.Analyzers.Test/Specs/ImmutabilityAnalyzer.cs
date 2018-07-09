@@ -67,8 +67,6 @@ namespace SpecTests {
 		private string m_MutableClass;
 	}
 
-
-
 	class AnnotationsTests {
 		[Objects.Immutable]
 		interface IImmutable { }
@@ -190,7 +188,7 @@ namespace SpecTests {
 
 		#region Type parameter new initializer
 		[Objects.Immutable]
-		public sealed class /* ImmutableClassIsnt('m_t''s type ('T') is a generic type) */ GenericWithFieldInitializer<T> /**/ {
+		public sealed class /* ImmutableClassIsnt('m_t''s type ('T') is not deterministically immutable) */ GenericWithFieldInitializer<T> /**/ {
 			private readonly T m_t = new T();
 		}
 
@@ -325,5 +323,44 @@ namespace SpecTests {
 			private readonly IImmutableMember m_auditedBad;
 		}
 
+	}
+
+	class ImmutableGenericArgumentTests {
+		[Objects.Immutable]
+		public class /* ImmutableClassIsnt('m_field''s type ('T') is a generic type) */ MutableState<T> /**/ {
+			private readonly T m_field;
+		}
+
+		[Objects.Immutable]
+		public class ImmutableState<[Objects.Immutable] T> {
+			private readonly T m_field;
+		}
+
+		[Objects.ImmutableBaseClass]
+		public class ImmutableBaseClass<T> {
+		}
+
+		public interface GenericInterface<T> {
+		}
+
+		[Objects.Immutable]
+		public class NotFirstArgument<S, [Objects.Immutable] T>: ImmutableBaseClass<S>, GenericInterface<T> {
+			private readonly T m_field;
+		}
+
+		public class MutableGenericBase<T> {
+			private T m_field;
+		}
+
+		// Tests below are to ensure that the new attribute does not 
+		// interfere with any existing rules
+
+		[Objects.Immutable]
+		public class /* ImmutableClassIsnt('m_field' is not read-only) */ ConcreteMutableBase<[Objects.Immutable] T> /**/: MutableGenericBase<T> {
+		}
+
+		public class MutableClassImmutableState<[Objects.Immutable] T> {
+			private readonly T m_field;
+		}
 	}
 }

@@ -223,6 +223,33 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			var typeParameter = symbol as ITypeParameterSymbol;
 
+			var hostType = hostSymbol as INamedTypeSymbol;
+
+			if (hostType == default) {
+				// As a generic type, this case should not be possible, but to
+				// ensure the analysis completes without explosion we will
+				// just mark the type as mutable for a fail-safe fallback.
+				return MutabilityInspectionResult.MutableType( symbol, MutabilityCause.IsPotentiallyMutable );
+			}
+
+			int ordinal = hostType.IndexOfArgument( typeParameter.Name );
+			if (ordinal < 0) {
+				// We're examing a T inside a Foo<T>, this shouldn't be possible
+				// but again, we'll return the type is potentially mutable to
+				// ensure the analysis won't allow something bad, but also
+				// doesn't explode.
+				return MutabilityInspectionResult.MutableType( symbol, MutabilityCause.IsPotentiallyMutable );
+			}
+
+			ImmutabilityScope argumentScope = 
+				hostType.TypeArguments[ordinal].GetImmutabilityScope();
+
+			if (argumentScope == ImmutabilityScope.SelfAndChildren) {
+				// We can assume T is immutable since it's marked for
+				// immutability in the class declaration
+				return MutabilityInspectionResult.NotMutable();
+			}
+
 			// If we can't determine what the symbol is then we'll bail with
 			// a general mutability response, otherwise we're going to have a
 			// lot of NREs below.
