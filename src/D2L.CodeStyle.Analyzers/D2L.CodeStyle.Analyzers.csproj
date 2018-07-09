@@ -33,7 +33,7 @@
     <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Immutability\ImmutableTypeArgument.cs" />
+    <Compile Include="Immutability\ImmutableGenericArgument.cs" />
     <Compile Include="Immutability\ImmutableContainerMethods.cs" />
     <Compile Include="Language\UseNamedArgumentsCodeFix.cs" />
     <Compile Include="Language\RequireNamedArgumentsAnalyzer.cs" />

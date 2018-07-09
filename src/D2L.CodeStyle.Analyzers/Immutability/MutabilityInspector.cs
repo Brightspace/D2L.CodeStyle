@@ -461,7 +461,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// marked immutable
 			if( type.IsGenericType() ) {
 				MutabilityInspectionResult argumentResult =
-					PerformTypeArgumentInspection( type );
+					PerformGenericArgumentInspection( type );
 
 				if( argumentResult.IsMutable ) {
 					return argumentResult;
@@ -560,7 +560,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 		}
 
-		private MutabilityInspectionResult PerformTypeArgumentInspection(
+		private MutabilityInspectionResult PerformGenericArgumentInspection(
 			ITypeSymbol symbol
 		) {
 			var symbolType = symbol as INamedTypeSymbol;
@@ -579,9 +579,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					continue;
 				}
 
-				if( ImmutableTypeArgument.BaseClassDemandsImmutability( symbolType, argument )
-					|| ImmutableTypeArgument.InterfacesDemandImmutability( symbolType, argument )
-					|| ImmutableTypeArgument.ConstraintsDemandImmutabliity( symbolType, argument )
+				if( ImmutableGenericArgument.BaseClassDemandsImmutability( symbolType, argument )
+					|| ImmutableGenericArgument.InterfacesDemandImmutability( symbolType, argument )
+					|| ImmutableGenericArgument.ConstraintsDemandImmutabliity( symbolType, argument )
 				) { 
 					return MutabilityInspectionResult.MutableType(
 						argument,

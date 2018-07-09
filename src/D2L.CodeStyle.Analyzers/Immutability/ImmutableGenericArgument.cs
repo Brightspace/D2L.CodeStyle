@@ -3,7 +3,7 @@ using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
-	public static class ImmutableTypeArgument {
+	public static class ImmutableGenericArgument {
 		public static bool InterfacesDemandImmutability(
 			INamedTypeSymbol symbol,
 			ITypeSymbol argument
