@@ -1,5 +1,4 @@
-﻿
-// analyzer: D2L.CodeStyle.Analyzers.Immutability.ImmutabilityAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.Immutability.ImmutabilityAnalyzer
 
 using System;
 using D2L.CodeStyle.Annotations;
@@ -14,7 +13,7 @@ using D2L.LP.Extensibility.Activation.Domain;
 )]
 
 namespace D2L.LP.Extensibility.Activation.Domain {
-		public sealed class SingletonAttribute : Attribute { }
+	public sealed class SingletonAttribute : Attribute { }
 }
 
 namespace D2L.CodeStyle.Annotations {
@@ -345,7 +344,7 @@ namespace SpecTests {
 		}
 
 		[Objects.Immutable]
-		public class NotFirstArgument<S, [Objects.Immutable] T>: ImmutableBaseClass<S>, GenericInterface<T> {
+		public class NotFirstArgument<S, [Objects.Immutable] T> : ImmutableBaseClass<S>, GenericInterface<T> {
 			private readonly T m_field;
 		}
 
@@ -364,7 +363,6 @@ namespace SpecTests {
 			private readonly T m_field;
 		}
 	}
-
 
 	class ImmutableTypeArgumentTests {
 
@@ -404,6 +402,4 @@ namespace SpecTests {
 		class DescendantWithImmutable<[Objects.Immutable] T> where T : BaseClass<T> {
 		}
 	}
-}
-
 }
