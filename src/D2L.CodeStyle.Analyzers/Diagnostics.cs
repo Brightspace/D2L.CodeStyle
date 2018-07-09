@@ -311,5 +311,15 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "Classes visible to singletons that are not public but contain dependencies that have customer state must be marked with [CustomerState] to facilitate cross-assembly analysis."
 	   );
+
+		public static readonly DiagnosticDescriptor GenericArgumentImmutableMustBeApplied = new DiagnosticDescriptor(
+			id: "D2L0037",
+			title: "Missing immutability attribute.",
+			messageFormat: "Generic argument must be marked immutable.",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Either an interface, base class or constraint indicates the generic argument must be immutable. Add [Immutable] to the generic argument in the class definintion."
+	   );
 	}
 }

@@ -363,43 +363,4 @@ namespace SpecTests {
 			private readonly T m_field;
 		}
 	}
-
-	class ImmutableTypeArgumentTests {
-
-		[Objects.Immutable]
-		interface BaseInterface<[Objects.Immutable] T> {
-		}
-
-		[Objects.Immutable]
-		class /* ImmutableClassIsnt(its type ('T') is a type parameter that must be marked with `[Objects.Immutable]`) */ ImplementedWithoutImmutable<T> /**/: BaseInterface<T> {
-		}
-
-		[Objects.Immutable]
-		class ImplementedWithImmutable<[Objects.Immutable] T> : BaseInterface<T> {
-		}
-
-		[Objects.ImmutableBaseClass]
-		class BaseClass<[Objects.Immutable] T> {
-		}
-
-		[Objects.Immutable]
-		class /* ImmutableClassIsnt(its type ('T') is a type parameter that must be marked with `[Objects.Immutable]`) */ DescendantWithoutImmutable<T> /**/: BaseClass<T> {
-		}
-
-		[Objects.Immutable]
-		class DescendantWithImmutable<[Objects.Immutable] T> : BaseClass<T> {
-		}
-
-		[Objects.ImmutableBaseClass]
-		class BaseClass<[Objects.Immutable] T> {
-		}
-
-		[Objects.Immutable]
-		class /* ImmutableClassIsnt(its type ('T') is a type parameter that must be marked with `[Objects.Immutable]`) */ DescendantWithoutImmutable<T> /**/ where T : BaseClass<T> {
-		}
-
-		[Objects.Immutable]
-		class DescendantWithImmutable<[Objects.Immutable] T> where T : BaseClass<T> {
-		}
-	}
 }

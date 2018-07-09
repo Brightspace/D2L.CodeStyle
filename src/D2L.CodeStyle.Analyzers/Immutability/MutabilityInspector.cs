@@ -457,17 +457,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					+ "are referenced, including transitive dependencies." );
 			}
 
-			// Check the type arguments to see if they are supposed to be 
-			// marked immutable
-			if( type.IsGenericType() ) {
-				MutabilityInspectionResult argumentResult =
-					PerformGenericArgumentInspection( type );
-
-				if( argumentResult.IsMutable ) {
-					return argumentResult;
-				}
-			}
-
 			ImmutabilityScope scope = type.GetImmutabilityScope();
 			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute )
 				&& scope == ImmutabilityScope.SelfAndChildren
@@ -558,38 +547,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						$"TypeKind.{type.Kind} not handled by analysis"
 					);
 			}
-		}
-
-		private MutabilityInspectionResult PerformGenericArgumentInspection(
-			ITypeSymbol symbol
-		) {
-			var symbolType = symbol as INamedTypeSymbol;
-
-			if( symbolType == default ) {
-				// We got in here because this is a generic type so this should
-				// not be possible, but just in case, we'll return so we
-				// fail-safe instead of exploding.
-				return MutabilityInspectionResult.PotentiallyMutableMember( symbol );
-			}
-
-			foreach( ITypeSymbol argument in symbolType.TypeArguments ) {
-
-				ImmutabilityScope scope = argument.GetImmutabilityScope();
-				if( scope == ImmutabilityScope.SelfAndChildren ) {
-					continue;
-				}
-
-				if( ImmutableGenericArgument.BaseClassDemandsImmutability( symbolType, argument )
-					|| ImmutableGenericArgument.InterfacesDemandImmutability( symbolType, argument )
-					|| ImmutableGenericArgument.ConstraintsDemandImmutabliity( symbolType, argument )
-				) { 
-					return MutabilityInspectionResult.MutableType(
-						argument,
-						MutabilityCause.IsMutableTypeParameter );
-				}
-			}
-
-			return MutabilityInspectionResult.NotMutable();
 		}
 
 		private MutabilityInspectionResult InspectClassOrStruct(

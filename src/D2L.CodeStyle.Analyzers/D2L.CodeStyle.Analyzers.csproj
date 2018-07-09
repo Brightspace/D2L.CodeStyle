@@ -35,6 +35,7 @@
   <ItemGroup>
     <Compile Include="Immutability\ImmutableGenericArgument.cs" />
     <Compile Include="Immutability\ImmutableContainerMethods.cs" />
+    <Compile Include="Language\ImmutableGenericArgumentAnalyzer.cs" />
     <Compile Include="Language\UseNamedArgumentsCodeFix.cs" />
     <Compile Include="Language\RequireNamedArgumentsAnalyzer.cs" />
     <Compile Include="Visibility\CorsHeaderAppenderUsageAnalyzer.cs" />
