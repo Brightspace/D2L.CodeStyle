@@ -572,69 +572,20 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return MutabilityInspectionResult.PotentiallyMutableMember( symbol );
 			}
 
-			// For every type argument we need to see if the base class,
-			// any interface, or constraint demands that the argument be
-			// be marked immutable
 			foreach( ITypeSymbol argument in symbolType.TypeArguments ) {
 
 				ImmutabilityScope scope = argument.GetImmutabilityScope();
 				if( scope == ImmutabilityScope.SelfAndChildren ) {
-					// The argument is already marked immutable, nothing to do
-					// but move on to the next argument
 					continue;
 				}
 
-				// Check to see if the base type says that the type argument
-				// should be immutable
-				var baseType = symbol.BaseType as INamedTypeSymbol;
-				if( baseType != default ) {
-					// We only need to check the base type if it's also generic
-					// or indeed, even has a base type.
-
-					if (HasTypeParameter(argument, baseType) 
-						&& ParameterShouldBeImmutable(argument, baseType)) {
-						return MutabilityInspectionResult.MutableType(
-							argument,
-							MutabilityCause.IsMutableTypeParameter );
-					}
-				}
-
-				// Check all of the implemented interfaces to see if any of
-				// them expose the type argument with [Immutable]
-				foreach( ITypeSymbol intf in symbolType.Interfaces ) {
-					// Find the type argument on the interface
-					INamedTypeSymbol intfType = intf as INamedTypeSymbol;
-
-					if( HasTypeParameter( argument, intfType )
-						&& ParameterShouldBeImmutable( argument, intfType ) ) {
-						return MutabilityInspectionResult.MutableType(
-							argument,
-							MutabilityCause.IsMutableTypeParameter );
-					}
-				}
-
-				// Now we check the constraints, so we need to get the type
-				// parameter of the argument, since only the type parameter
-				// will contain the [Immutable] declaration.
-				int argumentOrdinal = symbolType.IndexOfArgument( argument.Name );
-				ITypeParameterSymbol argumentTypeParameter =
-					symbolType.TypeParameters[argumentOrdinal];
-
-				if (argumentTypeParameter == default) {
-					// This can't happen for generic types, but just to be sure
-					// we'll fail-safe rather than exploding
-					return MutabilityInspectionResult.PotentiallyMutableMember( symbol );
-				}
-
-				foreach( ITypeSymbol constraint in argumentTypeParameter.ConstraintTypes ) {
-					var constraintType = constraint as INamedTypeSymbol;
-
-					if( HasTypeParameter( argument, constraintType )
-						&& ParameterShouldBeImmutable( argument, constraintType ) ) {
-						return MutabilityInspectionResult.MutableType(
-							argument,
-							MutabilityCause.IsMutableTypeParameter );
-					}
+				if( ImmutableTypeArgument.BaseClassDemandsImmutability( symbolType, argument )
+					|| ImmutableTypeArgument.InterfacesDemandImmutability( symbolType, argument )
+					|| ImmutableTypeArgument.ConstraintsDemandImmutabliity( symbolType, argument )
+				) { 
+					return MutabilityInspectionResult.MutableType(
+						argument,
+						MutabilityCause.IsMutableTypeParameter );
 				}
 			}
 
@@ -685,75 +636,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			return MutabilityInspectionResult.NotMutable( seenUnauditedReasonsBuilder.ToImmutable() );
-		}
-
-		/// <summary>
-		/// Determines if the supplied <paramref name="symbol"/> actually
-		/// declares the supplied <paramref name="argument"/> type argument.
-		/// </summary>
-		/// <param name="argument">
-		/// The type argument we are checking for the presence of.
-		/// </param>
-		/// <param name="symbol">
-		/// The type we are investigating to see if it contains <paramref name="argument"/>.
-		/// </param>
-		/// <returns>
-		/// Returns <c>True</c> if <paramref name="symbol"/> contains
-		/// <paramref name="argument"/>, otherwise returns <c>False</c>.
-		/// </returns>
-		private static bool HasTypeParameter(
-			ITypeSymbol argument,
-			INamedTypeSymbol symbol 
-		) {
-			if ((argument == default) 
-			   || (symbol == default)) {
-				return false;
-			}
-
-			int ordinal = symbol.IndexOfArgument( argument.Name );
-			return ( ordinal >= 0 );
-		}
-
-		/// <summary>
-		/// Determines if the supplied <paramref name="symbol"/> indicates if
-		/// the specified <paramref name="argument"/> should have the 
-		/// [Immutable] tag or not.
-		/// </summary>
-		/// <param name="argument">
-		/// The candidate argument we are evaluating.
-		/// </param>
-		/// <param name="symbol">
-		/// The type that contains the <paramref name="argument"/> symbol.
-		/// </param>
-		/// <returns>
-		/// Return <c>True</c> if <paramref name="symbol"/> has declared
-		/// <paramref name="argument"/> with the [Immutable] tag, otherwise
-		/// returns <c>False</c>.
-		/// </returns>
-		private static bool ParameterShouldBeImmutable(
-			ITypeSymbol argument,
-			INamedTypeSymbol symbol
-		) {
-			if( ( argument == default )
-			   || ( symbol == default ) ) {
-				return false;
-			}
-
-			int ordinal = symbol.IndexOfArgument( argument.Name );
-			if (ordinal < 0) {
-				return false;
-			}
-
-			ImmutabilityScope argumentScope =
-				symbol.TypeParameters[ordinal].GetImmutabilityScope();
-
-			if( argumentScope == ImmutabilityScope.SelfAndChildren ) {
-				// There exists an interface that says the type
-				// argument should be immutable, so we need to bail
-				return true;
-			}
-
-			return false;
 		}
 	}
 }
