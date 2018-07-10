@@ -32,12 +32,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ITypeParameterSymbol argumentTypeParameter =
 				symbol.TypeParameters[argumentOrdinal];
 
-			if( argumentTypeParameter == default ) {
-				// This can't happen for generic types, but just to be sure
-				// we'll fail-safe rather than exploding
-				return true;
-			}
-
 			foreach( ITypeSymbol constraint in argumentTypeParameter.ConstraintTypes ) {
 				if( SymbolDemandsImmutability(
 					constraint,
