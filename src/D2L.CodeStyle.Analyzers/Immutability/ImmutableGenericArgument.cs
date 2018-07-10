@@ -10,7 +10,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			foreach( ITypeSymbol intf in symbol.Interfaces ) {
 				if( SymbolDemandsImmutability(
-					intf as INamedTypeSymbol,
+					intf,
 					argument
 				) ) {
 					return true;
@@ -25,6 +25,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ITypeSymbol argument
 		) {
 			int argumentOrdinal = symbol.IndexOfArgument( argument.Name );
+			if (argumentOrdinal < 0) {
+				return false;
+			}
+
 			ITypeParameterSymbol argumentTypeParameter =
 				symbol.TypeParameters[argumentOrdinal];
 
@@ -36,7 +40,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			foreach( ITypeSymbol constraint in argumentTypeParameter.ConstraintTypes ) {
 				if( SymbolDemandsImmutability(
-					constraint as INamedTypeSymbol,
+					constraint,
 					argument
 				) ) {
 					return true;
@@ -51,7 +55,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ITypeSymbol argument
 		) {
 			if( SymbolDemandsImmutability(
-				symbol.BaseType as INamedTypeSymbol,
+				symbol.BaseType,
 				argument
 			) ) {
 				return true;
@@ -61,20 +65,21 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		private static bool SymbolDemandsImmutability(
-			INamedTypeSymbol symbol,
+			ITypeSymbol symbol,
 			ITypeSymbol argument
 		) {
-			if( symbol == default ) {
+			var symbolType = symbol as INamedTypeSymbol;
+			if( symbolType == default ) {
 				return false;
 			}
 
-			int ordinal = symbol.IndexOfArgument( argument.Name );
+			int ordinal = symbolType.IndexOfArgument( argument.Name );
 			if( ordinal < 0 ) {
 				return false;
 			}
 
 			ImmutabilityScope argumentScope =
-				symbol.TypeParameters[ordinal].GetImmutabilityScope();
+				symbolType.TypeParameters[ordinal].GetImmutabilityScope();
 
 			if( argumentScope == ImmutabilityScope.SelfAndChildren ) {
 				return true;

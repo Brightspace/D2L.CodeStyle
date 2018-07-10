@@ -75,6 +75,56 @@ namespace SpecTests {
 		}
 	}
 
+	class MultipleArgumentTests {
+		interface ImmutableInterface< [Objects.Immutable] T> {
+		}
+
+		class ImmutableBase< [Objects.Immutable] T > {
+		}
+
+		interface MutableInterface<T> {
+		}
+
+		class MutableBase<T> {
+		}
+
+		class ImmutableInterfaceMutableBase< /* GenericArgumentImmutableMustBeApplied */ S /**/, T>: MutableBase<T>, ImmutableInterface<S> {
+		}
+
+		class ImmutableInterfaceMutableBaseWithImmutable< [Objects.Immutable] S, T> : MutableBase<T>, ImmutableInterface<S> {
+		}
+
+		class MutableInterfaceImmutableBase< S, /* GenericArgumentImmutableMustBeApplied */ T /**/> : ImmutableBase<T>, MutableInterface<S> {
+		}
+
+		class MutableInterfaceImmutableBaseWithImmutable< S, [Objects.Immutable] T > : ImmutableBase<T>, MutableInterface<S> {
+		}
+
+		class MutableInterfaceImmutableConstraint< /* GenericArgumentImmutableMustBeApplied */ S /**/, T>: MutableInterface<S> where S: ImmutableBase<S> {
+		}
+
+		class MutableInterfaceImmutableConstraintWithImmutable< [Objects.Immutable] S, T> : MutableInterface<T> where S : ImmutableBase<S> {
+		}
+
+		class ImmutableInterfaceMutableConstraint< /* GenericArgumentImmutableMustBeApplied */ S /**/, T>: ImmutableInterface<S> where T: MutableBase<T> {
+		}
+
+		class ImmutableInterfaceMutableConstraintWithImmutable< [Objects.Immutable] S, T> : ImmutableInterface<S> where T : MutableBase<T> {
+		}
+
+		struct StructBothInterfaces< T, /* GenericArgumentImmutableMustBeApplied */ S /**/>: ImmutableInterface<S>, MutableInterface<T> {
+		}
+
+		struct StructBothInterfacesWithImmutable<T, [Objects.Immutable] S> : ImmutableInterface<S>, MutableInterface<T> {
+		}
+
+		class SameArgumentBothInterfaces< /* GenericArgumentImmutableMustBeApplied */ S /**/> : MutableInterface<S>, ImmutableInterface<S> {
+		}
+
+		class SameArgumentBothInterfacesWithImmutable< [Objects.Immutable] S> : MutableInterface<S>, ImmutableInterface<S> {
+		}
+	}
+
 	class ConfirmationTests {
 		// Just to ensure that the rule isn't triggering when it's not supposed to
 
