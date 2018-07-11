@@ -130,6 +130,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
+			MutabilityInspectionResult argumentResult =
+				PerformGenericArgumentInspection( type, typeStack );
+			if( argumentResult.IsMutable ) {
+				return argumentResult;
+			}
+
 			ImmutabilityScope scope = type.GetImmutabilityScope();
 			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute )
 				&& scope != ImmutabilityScope.None
@@ -225,7 +231,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			var hostType = hostSymbol as INamedTypeSymbol;
 
-			if (hostType == default) {
+			if( hostType == default ) {
 				// As a generic type, this case should not be possible, but to
 				// ensure the analysis completes without explosion we will
 				// just mark the type as mutable for a fail-safe fallback.
@@ -233,7 +239,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			int ordinal = hostType.IndexOfArgument( typeParameter.Name );
-			if (ordinal < 0) {
+			if( ordinal < 0 ) {
 				// We're examing a T inside a Foo<T>, this shouldn't be possible
 				// but again, we'll return the type is potentially mutable to
 				// ensure the analysis won't allow something bad, but also
@@ -241,10 +247,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return MutabilityInspectionResult.MutableType( symbol, MutabilityCause.IsPotentiallyMutable );
 			}
 
-			ImmutabilityScope argumentScope = 
+			ImmutabilityScope argumentScope =
 				hostType.TypeArguments[ordinal].GetImmutabilityScope();
 
-			if (argumentScope == ImmutabilityScope.SelfAndChildren) {
+			if( argumentScope == ImmutabilityScope.SelfAndChildren ) {
 				// We can assume T is immutable since it's marked for
 				// immutability in the class declaration
 				return MutabilityInspectionResult.NotMutable();
@@ -547,6 +553,75 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						$"TypeKind.{type.Kind} not handled by analysis"
 					);
 			}
+		}
+
+		private MutabilityInspectionResult PerformGenericArgumentInspection(
+			ITypeSymbol type,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			MutabilityInspectionResult classArgumentResult =
+				InspectGenericArguments( type, typeStack );
+			if( classArgumentResult.IsMutable ) {
+				return classArgumentResult;
+			}
+
+			MutabilityInspectionResult interfaceArgumentResult =
+				InspectInterfaceArguments( type, typeStack );
+			if( interfaceArgumentResult.IsMutable ) {
+				return interfaceArgumentResult;
+			}
+
+			return MutabilityInspectionResult.NotMutable();
+		}
+
+		private MutabilityInspectionResult InspectInterfaceArguments(
+			ITypeSymbol type,
+			HashSet<ITypeSymbol> typeStack
+		) {
+
+			foreach( INamedTypeSymbol intf in type.Interfaces ) {
+				if( intf.IsGenericType() ) {
+					var result = InspectGenericArguments( intf, typeStack );
+					if( result.IsMutable ) {
+						return result;
+					}
+				}
+			}
+
+			return MutabilityInspectionResult.NotMutable();
+		}
+
+		private MutabilityInspectionResult InspectGenericArguments(
+			ITypeSymbol type,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			if( type.IsGenericType() ) {
+				var symbolType = type as INamedTypeSymbol;
+				if( symbolType == default ) {
+					return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsPotentiallyMutable );
+				}
+
+				int index = 0;
+				foreach( ITypeSymbol argument in symbolType.TypeArguments ) {
+					ImmutabilityScope argumentScope =
+						symbolType.TypeParameters[index].GetImmutabilityScope();
+
+					if( argumentScope == ImmutabilityScope.SelfAndChildren ) {
+						MutabilityInspectionResult result = DoInspectType(
+							argument,
+							MutabilityInspectionFlags.AllowUnsealed,
+							typeStack );
+
+						if( result.IsMutable ) {
+							return result;
+						}
+					}
+
+					index++;  // Advances the arguments with the parameters in lock-step
+				}
+			}
+
+			return MutabilityInspectionResult.NotMutable();
 		}
 
 		private MutabilityInspectionResult InspectClassOrStruct(

@@ -363,4 +363,79 @@ namespace SpecTests {
 			private readonly T m_field;
 		}
 	}
+
+	class ConcreteGenericTests {
+
+		[Objects.Immutable]
+		class GenericBase<[Objects.Immutable] T> {
+			private readonly T m_T;
+		}
+
+		class /* ImmutableClassIsnt('m_MutableClass' is not read-only) */ ConcreteMutableGeneric /**/: GenericBase<MutableClass> {
+		}
+
+		class ConcreteImutableGeneric : GenericBase<ImmutableClass> {
+		}
+
+		[Objects.Immutable]
+		class MultiGenericBase<S, [Objects.Immutable] T> {
+			private readonly T m_T;
+		}
+
+		class /* ImmutableClassIsnt('m_MutableClass' is not read-only) */ ConcreteMutableMultiGeneric /**/: MultiGenericBase<MutableClass, MutableClass> {
+		}
+
+		class /* ImmutableClassIsnt('m_MutableClass' is not read-only) */ ConcreteMixedMutableMultiGeneric /**/: MultiGenericBase<ImmutableClass, MutableClass> {
+		}
+
+		class ConcreteMixedImmutableMultiGeneric : MultiGenericBase<MutableClass, ImmutableClass> {
+		}
+
+		class ConcreteImmutableMultiGeneric : MultiGenericBase<ImmutableClass, ImmutableClass> {
+		}
+
+		[Objects.Immutable]
+		interface ImmutableInterface<[Objects.Immutable] T> {
+		}
+
+		class /* ImmutableClassIsnt('m_MutableClass' is not read-only) */ MutableImplementation /**/: ImmutableInterface<MutableClass> {
+		}
+
+		class ImmutableImplementation : ImmutableInterface<ImmutableClass> {
+		}
+
+		struct /* ImmutableClassIsnt('m_MutableClass' is not read-only) */ MutableStructImplementation /**/: ImmutableInterface<MutableClass> {
+		}
+
+		struct ImmutableStructImplementation : ImmutableInterface<ImmutableClass> {
+		}
+
+		[Objects.Immutable]
+		interface MultiInterface<S, [Objects.Immutable] T> {
+		}
+
+		class /* ImmutableClassIsnt('m_MutableClass' is not read-only) */ MutableMultiImplementation /**/: MultiInterface<MutableClass, MutableClass> {
+		}
+
+		class /* ImmutableClassIsnt('m_MutableClass' is not read-only) */ MixedMutableMultiImplementation /**/: MultiInterface<ImmutableClass, MutableClass> {
+		}
+
+		class ImmutableMultiImplementation : MultiInterface<ImmutableClass, ImmutableClass> {
+		}
+
+		class MixedImmutableMultiImplementation : MultiInterface<MutableClass, ImmutableClass> {
+		}
+
+		struct /* ImmutableClassIsnt('m_MutableClass' is not read-only) */ MutableStructMultiImplementation /**/: MultiInterface<MutableClass, MutableClass> {
+		}
+
+		struct /* ImmutableClassIsnt('m_MutableClass' is not read-only) */ MutableStructMultiImplementation /**/: MultiInterface<MutableClass, MutableClass> {
+		}
+
+		struct ImmutableStructMultiImplementation : MultiInterface<ImmutableClass, ImmutableClass> {
+		}
+
+		struct MixedImmutableStructMultiImplementation : MultiInterface<MutableClass, ImmutableClass> {
+		}
+	}
 }
