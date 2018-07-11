@@ -344,7 +344,7 @@ namespace SpecTests {
 		}
 
 		[Objects.Immutable]
-		public class NotFirstArgument<S, [Objects.Immutable] T>: ImmutableBaseClass<S>, GenericInterface<T> {
+		public class NotFirstArgument<S, [Objects.Immutable] T> : ImmutableBaseClass<S>, GenericInterface<T> {
 			private readonly T m_field;
 		}
 
