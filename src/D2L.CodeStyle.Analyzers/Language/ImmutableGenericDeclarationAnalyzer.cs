@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Extensions;
 using D2L.CodeStyle.Analyzers.Immutability;
 using Microsoft.CodeAnalysis;
@@ -8,8 +7,10 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers.Language {
+
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	internal sealed class ImmutableGenericDeclarationAnalyzer : DiagnosticAnalyzer {
+
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 			=> ImmutableArray.Create( Diagnostics.GenericArgumentTypeMustBeImmutable );
 
@@ -38,14 +39,14 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			TypeArgumentListSyntax typeArgumentNode = syntaxNode.TypeArgumentList;
 			for( int index = 0; index < typeArgumentNode.Arguments.Count; index++ ) {
-				ITypeParameterSymbol hostParameterSymbol = hostTypeSymbol.TypeParameters[index];
-				ImmutabilityScope declarationScope = hostParameterSymbol.GetImmutabilityScope();
+				ITypeParameterSymbol hostParameterSymbol = hostTypeSymbol.TypeParameters[ index ];
 
+				ImmutabilityScope declarationScope = hostParameterSymbol.GetImmutabilityScope();
 				if( declarationScope != ImmutabilityScope.SelfAndChildren ) {
 					continue;
 				}
 
-				SymbolInfo argumentSymbolInfo = context.SemanticModel.GetSymbolInfo( typeArgumentNode.Arguments[index] );
+				SymbolInfo argumentSymbolInfo = context.SemanticModel.GetSymbolInfo( typeArgumentNode.Arguments[ index ] );
 				var typeSymbol = argumentSymbolInfo.Symbol as ITypeSymbol;
 				if( typeSymbol == default ) {
 					continue;
@@ -53,6 +54,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 				ImmutabilityScope argumentScope = typeSymbol.GetImmutabilityScope();
 				if( argumentScope != ImmutabilityScope.SelfAndChildren ) {
+
 					context.ReportDiagnostic( Diagnostic.Create(
 						Diagnostics.GenericArgumentTypeMustBeImmutable,
 						context.Node.GetLocation(),
