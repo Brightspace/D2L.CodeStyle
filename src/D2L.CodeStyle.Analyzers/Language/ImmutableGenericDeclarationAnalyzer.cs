@@ -30,28 +30,29 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			SyntaxNodeAnalysisContext context
 		) {
 			var syntaxNode = context.Node as GenericNameSyntax;
-			var hostTypeSymbolInfo = context.SemanticModel.GetSymbolInfo( syntaxNode );
+			SymbolInfo hostTypeSymbolInfo = context.SemanticModel.GetSymbolInfo( syntaxNode );
 			var hostTypeSymbol = hostTypeSymbolInfo.Symbol as INamedTypeSymbol;
-			if (hostTypeSymbol == default) {
+			if( hostTypeSymbol == default ) {
 				return;
 			}
 
-			var typeArgumentNode = syntaxNode.TypeArgumentList;
+			TypeArgumentListSyntax typeArgumentNode = syntaxNode.TypeArgumentList;
 			for( int index = 0; index < typeArgumentNode.Arguments.Count; index++ ) {
-				var hostParameterSymbol = hostTypeSymbol.TypeParameters[index];
-				var declarationScope = hostParameterSymbol.GetImmutabilityScope();
+				ITypeParameterSymbol hostParameterSymbol = hostTypeSymbol.TypeParameters[index];
+				ImmutabilityScope declarationScope = hostParameterSymbol.GetImmutabilityScope();
 
-				var argumentSymbolInfo = context.SemanticModel.GetSymbolInfo( typeArgumentNode.Arguments[index] );
+				if( declarationScope != ImmutabilityScope.SelfAndChildren ) {
+					continue;
+				}
+
+				SymbolInfo argumentSymbolInfo = context.SemanticModel.GetSymbolInfo( typeArgumentNode.Arguments[index] );
 				var typeSymbol = argumentSymbolInfo.Symbol as ITypeSymbol;
 				if( typeSymbol == default ) {
 					continue;
 				}
 
 				ImmutabilityScope argumentScope = typeSymbol.GetImmutabilityScope();
-
-				if( declarationScope == ImmutabilityScope.SelfAndChildren
-					&& argumentScope != ImmutabilityScope.SelfAndChildren
-				) {
+				if( argumentScope != ImmutabilityScope.SelfAndChildren ) {
 					context.ReportDiagnostic( Diagnostic.Create(
 						Diagnostics.GenericArgumentTypeMustBeImmutable,
 						context.Node.GetLocation(),
