@@ -29,7 +29,7 @@ namespace SpecTests {
 			private readonly T m_T;
 		}
 
-		class ConcreteMutableGeneric/* GenericArgumentTypeMustBeImmutable(MutableClass) */ : GenericBase<MutableClass> /**/{
+		class ConcreteMutableGeneric :/* GenericArgumentTypeMustBeImmutable(MutableClass) */ GenericBase<MutableClass> /**/{
 		}
 
 		class ConcreteImutableGeneric : GenericBase<ImmutableClass> {
@@ -40,10 +40,10 @@ namespace SpecTests {
 			private readonly T m_T;
 		}
 
-		class ConcreteMutableMultiGeneric/* GenericArgumentTypeMustBeImmutable(MutableClass) */ : MultiGenericBase<MutableClass, MutableClass> /**/ {
+		class ConcreteMutableMultiGeneric :/* GenericArgumentTypeMustBeImmutable(MutableClass) */ MultiGenericBase<MutableClass, MutableClass> /**/ {
 		}
 
-		class ConcreteMixedMutableMultiGeneric/* GenericArgumentTypeMustBeImmutable(MutableClass) */ : MultiGenericBase<ImmutableClass, MutableClass> /**/ {
+		class ConcreteMixedMutableMultiGeneric :/* GenericArgumentTypeMustBeImmutable(MutableClass) */ MultiGenericBase<ImmutableClass, MutableClass> /**/ {
 		}
 
 		class ConcreteMixedImmutableMultiGeneric : MultiGenericBase<MutableClass, ImmutableClass> {
@@ -56,13 +56,13 @@ namespace SpecTests {
 		interface ImmutableInterface<[Objects.Immutable] T> {
 		}
 
-		class MutableImplementation/* GenericArgumentTypeMustBeImmutable(MutableClass) */ : ImmutableInterface<MutableClass> /**/ {
+		class MutableImplementation :/* GenericArgumentTypeMustBeImmutable(MutableClass) */ ImmutableInterface<MutableClass> /**/ {
 		}
 
 		class ImmutableImplementation : ImmutableInterface<ImmutableClass> {
 		}
 
-		struct MutableStructImplementation/* GenericArgumentTypeMustBeImmutable(MutableClass) */ : ImmutableInterface<MutableClass> /**/ {
+		struct MutableStructImplementation :/* GenericArgumentTypeMustBeImmutable(MutableClass) */ ImmutableInterface<MutableClass> /**/ {
 		}
 
 		struct ImmutableStructImplementation : ImmutableInterface<ImmutableClass> {
@@ -72,10 +72,10 @@ namespace SpecTests {
 		interface MultiInterface<S, [Objects.Immutable] T> {
 		}
 
-		class MutableMultiImplementation/* GenericArgumentTypeMustBeImmutable(MutableClass) */ : MultiInterface<MutableClass, MutableClass> /**/ {
+		class MutableMultiImplementation :/* GenericArgumentTypeMustBeImmutable(MutableClass) */ MultiInterface<MutableClass, MutableClass> /**/ {
 		}
 
-		class MixedMutableMultiImplementation/* GenericArgumentTypeMustBeImmutable(MutableClass) */ : MultiInterface<ImmutableClass, MutableClass> /**/ {
+		class MixedMutableMultiImplementation :/* GenericArgumentTypeMustBeImmutable(MutableClass) */ MultiInterface<ImmutableClass, MutableClass> /**/ {
 		}
 
 		class ImmutableMultiImplementation : MultiInterface<ImmutableClass, ImmutableClass> {
@@ -84,7 +84,7 @@ namespace SpecTests {
 		class MixedImmutableMultiImplementation : MultiInterface<MutableClass, ImmutableClass> {
 		}
 
-		struct MutableStructMultiImplementation/* GenericArgumentTypeMustBeImmutable(MutableClass) */ : MultiInterface<MutableClass, MutableClass> /**/ {
+		struct MutableStructMultiImplementation :/* GenericArgumentTypeMustBeImmutable(MutableClass) */ MultiInterface<MutableClass, MutableClass> /**/ {
 		}
 
 		struct ImmutableStructMultiImplementation : MultiInterface<ImmutableClass, ImmutableClass> {
@@ -94,7 +94,7 @@ namespace SpecTests {
 		}
 
 		class ClassMutableProperty {
-			/* GenericArgumentTypeMustBeImmutable(MutableClass) */ GenericBase<MutableClass> Prop { get; set; } /**/
+			/* GenericArgumentTypeMustBeImmutable(MutableClass) */ GenericBase<MutableClass> /**/ Prop { get; set; }
 		}
 
 		class ClassImmutableProperty {
@@ -102,7 +102,7 @@ namespace SpecTests {
 		}
 
 		class ClassMutableField {
-			GenericBase<MutableClass>/* GenericArgumentTypeMustBeImmutable(MutableClass) */ m_field /**/;
+			/* GenericArgumentTypeMustBeImmutable(MutableClass) */ GenericBase<MutableClass> /**/ m_field;
 		}
 
 		class ClassImmutableField {
@@ -110,7 +110,7 @@ namespace SpecTests {
 		}
 
 		class ClassMutableInterfaceProperty {
-			/* GenericArgumentTypeMustBeImmutable(MutableClass) */ ImmutableInterface<MutableClass> Prop { get; set; } /**/
+			/* GenericArgumentTypeMustBeImmutable(MutableClass) */ ImmutableInterface<MutableClass> /**/ Prop { get; set; }
 		}
 
 		class ClassImmutableInterfaceProperty {
@@ -118,7 +118,7 @@ namespace SpecTests {
 		}
 
 		struct StructMutableClassProperty {
-			/* GenericArgumentTypeMustBeImmutable(MutableClass) */ GenericBase<MutableClass> Prop { get; set; } /**/
+			/* GenericArgumentTypeMustBeImmutable(MutableClass) */ GenericBase<MutableClass> /**/ Prop { get; set; }
 		}
 
 		struct StructImmutableClassProperty {
@@ -126,7 +126,7 @@ namespace SpecTests {
 		}
 
 		struct StructMutableClassField {
-			GenericBase<MutableClass>/* GenericArgumentTypeMustBeImmutable(MutableClass) */ m_field /**/;
+			/* GenericArgumentTypeMustBeImmutable(MutableClass) */ GenericBase<MutableClass> /**/ m_field;
 		}
 
 		struct StructImmutableClassField {
@@ -134,7 +134,7 @@ namespace SpecTests {
 		}
 
 		struct StructMutableInterfaceProperty {
-			/* GenericArgumentTypeMustBeImmutable(MutableClass) */ ImmutableInterface<MutableClass> Prop { get; set; } /**/
+			/* GenericArgumentTypeMustBeImmutable(MutableClass) */ ImmutableInterface<MutableClass> /**/ Prop { get; set; }
 		}
 
 		struct StructImmutableInterfaceProperty {
@@ -142,7 +142,7 @@ namespace SpecTests {
 		}
 
 		struct StructMutableInterfaceField {
-			ImmutableInterface<MutableClass>/* GenericArgumentTypeMustBeImmutable(MutableClass) */ m_field /**/;
+			/* GenericArgumentTypeMustBeImmutable(MutableClass) */ ImmutableInterface<MutableClass> /**/ m_field;
 		}
 
 		struct StructImmutableInterfaceField {
@@ -150,7 +150,7 @@ namespace SpecTests {
 		}
 
 		interface InterfaceMutableClassProperty {
-			/* GenericArgumentTypeMustBeImmutable(MutableClass) */ GenericBase<MutableClass> Prop { get; set; } /**/
+			/* GenericArgumentTypeMustBeImmutable(MutableClass) */ GenericBase<MutableClass> /**/ Prop { get; set; }
 		}
 
 		interface InterfaceImmutableClassProperty {
