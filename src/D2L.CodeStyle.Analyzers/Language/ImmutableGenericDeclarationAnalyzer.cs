@@ -22,13 +22,16 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		private static void RegisterAnalyzer(
 			CompilationStartAnalysisContext context
 		) {
+			var knownImmutableTypes = new KnownImmutableTypes( context.Compilation.Assembly );
+
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeNode( ctx ),
+				ctx => AnalyzeNode( ctx, knownImmutableTypes ),
 				SyntaxKind.GenericName );
 		}
 
 		private static void AnalyzeNode(
-			SyntaxNodeAnalysisContext context
+			SyntaxNodeAnalysisContext context,
+			KnownImmutableTypes knownImmutableTypes
 		) {
 			var syntaxNode = context.Node as GenericNameSyntax;
 			SymbolInfo hostTypeSymbolInfo = context.SemanticModel.GetSymbolInfo( syntaxNode );
@@ -49,6 +52,10 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				SymbolInfo argumentSymbolInfo = context.SemanticModel.GetSymbolInfo( typeArgumentNode.Arguments[ index ] );
 				var typeSymbol = argumentSymbolInfo.Symbol as ITypeSymbol;
 				if( typeSymbol == default ) {
+					continue;
+				}
+
+				if (knownImmutableTypes.IsTypeKnownImmutable(typeSymbol)) {
 					continue;
 				}
 

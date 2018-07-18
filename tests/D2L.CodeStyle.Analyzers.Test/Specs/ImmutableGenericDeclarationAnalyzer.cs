@@ -32,7 +32,10 @@ namespace SpecTests {
 		class ConcreteMutableGeneric :/* GenericArgumentTypeMustBeImmutable(MutableClass) */ GenericBase<MutableClass> /**/{
 		}
 
-		class ConcreteImutableGeneric : GenericBase<ImmutableClass> {
+		class ConcreteImmutableGeneric : GenericBase<ImmutableClass> {
+		}
+
+		class ConcreteKnownImmutableGeneric: GenericBase<bool> {
 		}
 
 		[Objects.Immutable]
@@ -52,6 +55,9 @@ namespace SpecTests {
 		class ConcreteImmutableMultiGeneric : MultiGenericBase<ImmutableClass, ImmutableClass> {
 		}
 
+		class ConcreteKnownImmutableMultiGeneric: MultiGenericBase<bool, string> {
+		}
+
 		[Objects.Immutable]
 		interface ImmutableInterface<[Objects.Immutable] T> {
 		}
@@ -66,6 +72,9 @@ namespace SpecTests {
 		}
 
 		struct ImmutableStructImplementation : ImmutableInterface<ImmutableClass> {
+		}
+
+		struct KnownImmutableStructImplementation: ImmutableInterface<bool> {
 		}
 
 		[Objects.Immutable]
@@ -91,6 +100,9 @@ namespace SpecTests {
 		}
 
 		struct MixedImmutableStructMultiImplementation : MultiInterface<MutableClass, ImmutableClass> {
+		}
+
+		struct KnownMixedImmutableStructMultiImplementation: MultiInterface<bool, bool> {
 		}
 
 		class ClassMutableProperty {
@@ -156,5 +168,34 @@ namespace SpecTests {
 		interface InterfaceImmutableClassProperty {
 			GenericBase<ImmutableClass> Prop { get; set; }
 		}
+
+		class ClassKnownImmutableProperty {
+			GenericBase<bool> Prop { get; set; }
+		}
+
+		class ClassKnownImmutableInterfaceProperty {
+			ImmutableInterface<bool> Prop { get; set; }
+		}
+
+		class ClassKnownImmutableField {
+			GenericBase<bool> m_field;
+		}
+
+		struct StructKnownImmutableClassProperty {
+			GenericBase<bool> Prop { get; set; }
+		}
+
+		struct StructKnownImmutableInterfaceProperty {
+			ImmutableInterface<bool> Prop { get; set; }
+		}
+
+		struct StructKnownImmutableClassField {
+			GenericBase<bool> m_field;
+		}
+
+		struct StructKnownImmutableInterfaceField {
+			ImmutableInterface<bool> m_field;
+		}
+
 	}
 }
