@@ -55,7 +55,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					continue;
 				}
 
-				if (knownImmutableTypes.IsTypeKnownImmutable(typeSymbol)) {
+				if( knownImmutableTypes.IsTypeKnownImmutable( typeSymbol ) ) {
 					continue;
 				}
 
