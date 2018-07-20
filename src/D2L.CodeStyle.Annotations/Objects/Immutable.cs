@@ -19,6 +19,7 @@ namespace D2L.CodeStyle.Annotations {
 			validOn: AttributeTargets.Class
 			       | AttributeTargets.Interface
 			       | AttributeTargets.Struct
+			       | AttributeTargets.GenericParameter
 		)]
 		public sealed class Immutable : ImmutableAttributeBase { }
 

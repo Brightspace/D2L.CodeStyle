@@ -55,6 +55,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					return "not deterministically immutable";
 				case MutabilityCause.IsADelegate:
 					return "a delegate (which can hold onto mutable state)";
+				case MutabilityCause.IsMutableTypeParameter:
+					return "a type parameter that must be marked with `[Objects.Immutable]`";
 				default:
 					throw new NotImplementedException( $"unknown cause '{result.Cause}'" );
 			}

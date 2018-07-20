@@ -18,6 +18,44 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			"System.IO.Abstractions.IFileSystem"
 		);
 
+		/// <summary>
+		/// Get the declaration syntax for a symbol. This is intended to be
+		/// used for fields and properties which can't have multiple
+		/// declaration nodes.
+		/// </summary>
+		public static T GetDeclarationSyntax<T>( this ISymbol symbol )
+			where T : SyntaxNode {
+			ImmutableArray<SyntaxReference> decls = symbol.DeclaringSyntaxReferences;
+
+			if( decls.Length != 1 ) {
+				throw new NotImplementedException(
+					"Unexepected number of decls: "
+					+ decls.Length
+				);
+			}
+
+			SyntaxNode syntax = decls[0].GetSyntax();
+
+			var decl = syntax as T;
+			if( decl == null ) {
+
+				string msg = String.Format(
+						"Couldn't cast declaration syntax of type '{0}' as type '{1}': {2}",
+						syntax.GetType().FullName,
+						typeof( T ).FullName,
+						symbol.ToDisplayString()
+					);
+
+				throw new InvalidOperationException( msg );
+			}
+
+			return decl;
+		}
+
+		public static bool IsFromOtherAssembly( this ITypeSymbol type, Compilation compilation ) {
+			return type.ContainingAssembly != compilation.Assembly;
+		}
+
 		public static ImmutabilityScope GetImmutabilityScope( this ITypeSymbol type ) {
 			if( type.IsTypeMarkedImmutable() ) {
 				return ImmutabilityScope.SelfAndChildren;
@@ -87,7 +125,7 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			foreach( var typeArgument in type.TypeArguments ) {
 				// Can happen with generics, but I don't fully understand when
 				// it does, exactly.
-				if ( typeArgument.ContainingAssembly == null ) {
+				if( typeArgument.ContainingAssembly == null ) {
 					continue;
 				}
 
@@ -109,7 +147,7 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 					continue;
 				}
 
-				var arg = attr.ConstructorArguments[0];
+				var arg = attr.ConstructorArguments[ 0 ];
 				//Using ToString, otherwise it sometimes fails to match, and the test behaviour does not match the real behaviour
 				if( arg.Value.ToString().Equals( type.ToString() ) ) {
 					attribute = attr;
@@ -201,6 +239,36 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			}
 
 			return false;
+		}
+
+		public static bool IsGenericType( this ISymbol symbol ) {
+
+			if( symbol is INamedTypeSymbol namedType ) {
+				return ( namedType.TypeParameters.Length > 0 );
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Find the matching type argument in the base interface
+		/// that corresponds to this type parameter.  That is,
+		/// if we have Foo<S, T>: IFoo<S>, IBar<T>, this will
+		/// match up the Foo S, to the IFoo S, but will get -1
+		/// from IBar since it doesn't have S.
+		/// </summary>
+		public static int IndexOfArgument(
+			this INamedTypeSymbol intf,
+			string name
+		) {
+
+			for( int ordinal = 0; ordinal < intf.TypeArguments.Length; ordinal++ ) {
+				if( string.Equals( intf.TypeArguments[ ordinal ].Name, name, StringComparison.Ordinal ) ) {
+					return ordinal;
+				}
+			}
+
+			return -1;
 		}
 	}
 }

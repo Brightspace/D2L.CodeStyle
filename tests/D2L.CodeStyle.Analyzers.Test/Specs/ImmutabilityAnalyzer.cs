@@ -5,7 +5,7 @@ using D2L.CodeStyle.Annotations;
 using D2L.LP.Extensibility.Activation.Domain;
 
 [assembly: Objects.ImmutableGeneric(
-	type: typeof(SpecTests.GenericsTests.IFactory<Version>) 
+	type: typeof( SpecTests.GenericsTests.IFactory<Version> )
 )]
 
 [assembly: Objects.ImmutableGeneric(
@@ -18,9 +18,9 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 
 namespace D2L.CodeStyle.Annotations {
 	public static class Objects {
-		public abstract class ImmutableAttributeBase : Attribute { 
+		public abstract class ImmutableAttributeBase : Attribute {
 			public Except Except { get; set; }
-    }
+		}
 		public sealed class Immutable : ImmutableAttributeBase { }
 		public sealed class ImmutableBaseClassAttribute : ImmutableAttributeBase { }
 
@@ -43,7 +43,7 @@ namespace D2L.CodeStyle.Annotations {
 	public static class Mutability {
 		public sealed class AuditedAttribute : Attribute { }
 		public sealed class UnauditedAttribute : Attribute {
-			public UnauditedAttribute( Because why ) {}
+			public UnauditedAttribute( Because why ) { }
 		}
 	}
 	public enum Because {
@@ -57,6 +57,15 @@ namespace D2L.CodeStyle.Annotations {
 }
 
 namespace SpecTests {
+
+	// Items used in multiple test spaces are defined outside of the spaces
+	sealed class ImmutableClass {
+		private readonly string m_ImmutableClass;
+	}
+
+	sealed class MutableClass {
+		private string m_MutableClass;
+	}
 
 	class AnnotationsTests {
 		[Objects.Immutable]
@@ -160,7 +169,7 @@ namespace SpecTests {
 
 		[Objects.Immutable]
 		class IndexerPropertyClass {
-			object this[ int index ] {
+			object this[int index] {
 				get { return null; }
 			}
 		}
@@ -179,7 +188,7 @@ namespace SpecTests {
 
 		#region Type parameter new initializer
 		[Objects.Immutable]
-		public sealed class /* ImmutableClassIsnt('m_t''s type ('T') is a generic type) */ GenericWithFieldInitializer<T> /**/ {
+		public sealed class /* ImmutableClassIsnt('m_t''s type ('T') is not deterministically immutable) */ GenericWithFieldInitializer<T> /**/ {
 			private readonly T m_t = new T();
 		}
 
@@ -256,7 +265,7 @@ namespace SpecTests {
 		sealed class W { readonly X x1, x2, x3; }
 		sealed class X { readonly Y y1, y2, y3; }
 		sealed class Y { readonly Z z1, z2, z3; }
-		sealed class Z {}
+		sealed class Z { }
 
 		#endregion
 	}
@@ -314,5 +323,44 @@ namespace SpecTests {
 			private readonly IImmutableMember m_auditedBad;
 		}
 
+	}
+
+	class ImmutableGenericArgumentTests {
+		[Objects.Immutable]
+		public class /* ImmutableClassIsnt('m_field''s type ('T') is a generic type) */ MutableState<T> /**/ {
+			private readonly T m_field;
+		}
+
+		[Objects.Immutable]
+		public class ImmutableState<[Objects.Immutable] T> {
+			private readonly T m_field;
+		}
+
+		[Objects.ImmutableBaseClass]
+		public class ImmutableBaseClass<T> {
+		}
+
+		public interface GenericInterface<T> {
+		}
+
+		[Objects.Immutable]
+		public class NotFirstArgument<S, [Objects.Immutable] T> : ImmutableBaseClass<S>, GenericInterface<T> {
+			private readonly T m_field;
+		}
+
+		public class MutableGenericBase<T> {
+			private T m_field;
+		}
+
+		// Tests below are to ensure that the new attribute does not 
+		// interfere with any existing rules
+
+		[Objects.Immutable]
+		public class /* ImmutableClassIsnt('m_field' is not read-only) */ ConcreteMutableBase<[Objects.Immutable] T> /**/: MutableGenericBase<T> {
+		}
+
+		public class MutableClassImmutableState<[Objects.Immutable] T> {
+			private readonly T m_field;
+		}
 	}
 }

@@ -1,11 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System;
-using System.Collections.Concurrent;
-using D2L.CodeStyle.Analyzers.Extensions;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
 	[Flags]
@@ -25,34 +25,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 	}
 
 	internal sealed class MutabilityInspector {
-		/// <summary>
-		/// A list of immutable container types (i.e., types that hold other types)
-		/// </summary>
-		private static readonly ImmutableDictionary<string, string[]> ImmutableContainerTypes = new Dictionary<string, string[]> {
-			[ "D2L.LP.Utilities.DeferredInitializer" ] = new[] { "Value" },
-			[ "D2L.LP.Extensibility.Activation.Domain.IPlugins" ] = new[] { "[]" },
-			[ "System.Collections.Immutable.ImmutableArray" ] = new[] { "[]" },
-			[ "System.Collections.Immutable.ImmutableDictionary" ] = new[] { "[].Key", "[].Value" },
-			[ "System.Collections.Immutable.ImmutableHashSet" ] = new[] { "[]" },
-			[ "System.Collections.Immutable.ImmutableList" ] = new[] { "[]" },
-			[ "System.Collections.Immutable.ImmutableQueue" ] = new[] { "[]" },
-			[ "System.Collections.Immutable.ImmutableSortedDictionary" ] = new[] { "[].Key", "[].Value" },
-			[ "System.Collections.Immutable.ImmutableSortedSet" ] = new[] { "[]" },
-			[ "System.Collections.Immutable.ImmutableStack" ] = new[] { "[]" },
-			[ "System.Collections.Generic.IReadOnlyCollection" ] = new[] { "[]" },
-			[ "System.Collections.Generic.IReadOnlyList" ] = new[] { "[]" },
-			[ "System.Collections.Generic.IReadOnlyDictionary" ] = new[] { "[].Key", "[].Value" },
-			[ "System.Collections.Generic.IEnumerable" ] = new[] { "[]" },
-			[ "System.Lazy" ] = new[] { "Value" },
-			[ "System.Nullable" ] = new[] { "Value" },
-			[ "System.Tuple" ] = new[] { "Item1", "Item2", "Item3", "Item4", "Item5", "Item6" }
-		}.ToImmutableDictionary();
 
 		private readonly KnownImmutableTypes m_knownImmutableTypes;
 		private readonly Compilation m_compilation;
 
-		private readonly ConcurrentDictionary<Tuple<ITypeSymbol, MutabilityInspectionFlags>, MutabilityInspectionResult> m_cache
-			= new ConcurrentDictionary<Tuple<ITypeSymbol, MutabilityInspectionFlags>, MutabilityInspectionResult>();
+		private readonly ConcurrentDictionary<(ITypeSymbol Symbol, MutabilityInspectionFlags Flags), MutabilityInspectionResult> m_cache
+			= new ConcurrentDictionary<(ITypeSymbol Symbol, MutabilityInspectionFlags Flags), MutabilityInspectionResult>();
 
 		internal MutabilityInspector(
 			Compilation compilation,
@@ -73,25 +51,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
 
-			return InspectType(
+			return DoInspectType(
 				type,
 				flags,
 				typesInCurrentCycle
 			);
-		}
-
-		public MutabilityInspectionResult InspectField( IFieldSymbol field ) {
-			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
-
-			return InspectField( field, typesInCurrentCycle );
-		}
-
-		public MutabilityInspectionResult InspectProperty(
-			IPropertySymbol property
-		) {
-			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
-
-			return InspectProperty( property, typesInCurrentCycle );
 		}
 
 		public MutabilityInspectionResult InspectConcreteType(
@@ -100,33 +64,384 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
 
-			return InspectConcreteType( type, typesInCurrentCycle, flags );
+			return DoInspectConcreteType(
+				type,
+				typesInCurrentCycle,
+				flags );
 		}
 
-		public MutabilityInspectionResult InspectMember( ISymbol symbol ) {
-			var seen = new HashSet<ITypeSymbol>();
+		public MutabilityInspectionResult InspectMember(
+			ISymbol symbol
+		) {
+			var typesInCurrentCycle = new HashSet<ITypeSymbol>();
 
-			return InspectMemberRecursive( symbol, seen );
+			return PerformMemberInspection(
+				symbol,
+				typesInCurrentCycle );
 		}
 
-		private MutabilityInspectionResult InspectType(
+		private MutabilityInspectionResult DoInspectType(
 			ITypeSymbol type,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
-			var cacheKey = new Tuple<ITypeSymbol, MutabilityInspectionFlags>(
+			return DoInspectType(
 				type,
-				flags
-			);
+				default,
+				flags,
+				typeStack );
+		}
+
+		private MutabilityInspectionResult DoInspectType(
+			ITypeSymbol type,
+			ITypeSymbol hostSymbol,
+			MutabilityInspectionFlags flags,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			var cacheKey = (Symbol: type, Flags: flags);
 
 			return m_cache.GetOrAdd(
 				cacheKey,
-				query => InspectTypeImpl( query.Item1, query.Item2, typeStack )
+				query => PerformTypeInspection(
+					type: query.Symbol,
+					hostSymbol: hostSymbol,
+					flags: query.Flags,
+					typeStack: typeStack )
 			);
 		}
 
-		private MutabilityInspectionResult InspectTypeImpl(
+		private MutabilityInspectionResult DoInspectConcreteType(
 			ITypeSymbol type,
+			HashSet<ITypeSymbol> typeStack,
+			MutabilityInspectionFlags flags = MutabilityInspectionFlags.Default
+		) {
+			if( type is IErrorTypeSymbol ) {
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			// The concrete type System.Object is empty (and therefore safe.)
+			// For example, `private readonly object m_lock = new object();` is fine. 
+			if( type.SpecialType == SpecialType.System_Object ) {
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			// System.ValueType is the base class of all value types (obscure detail)
+			if( type.SpecialType == SpecialType.System_ValueType ) {
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			ImmutabilityScope scope = type.GetImmutabilityScope();
+			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute )
+				&& scope != ImmutabilityScope.None
+			) {
+				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
+				return MutabilityInspectionResult.NotMutable( immutableExceptions );
+			}
+
+			return DoInspectType(
+				type,
+				flags | MutabilityInspectionFlags.AllowUnsealed,
+				typeStack
+			);
+		}
+
+		private MutabilityInspectionResult InspectImmutableContainerType(
+			ITypeSymbol type,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			var namedType = type as INamedTypeSymbol;
+
+			// If we can't determine what the symbol is then we'll bail with
+			// a general mutability response, otherwise we're going to have a
+			// lot of NREs below.
+			if( namedType == default ) {
+				return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsPotentiallyMutable );
+			}
+
+			ImmutableHashSet<string>.Builder unauditedReasonsBuilder = ImmutableHashSet.CreateBuilder<string>();
+
+			for( int i = 0; i < namedType.TypeArguments.Length; i++ ) {
+				ITypeSymbol arg = namedType.TypeArguments[i];
+
+				MutabilityInspectionResult result = DoInspectType(
+					type: arg,
+					hostSymbol: type,
+					flags: MutabilityInspectionFlags.Default,
+					typeStack: typeStack
+				);
+
+				if( result.IsMutable ) {
+					if( result.Target == MutabilityTarget.Member ) {
+						// modify the result to prefix with container member.
+						string[] prefix = type.GetImmutableContainerTypePrefixes();
+						result = result.WithPrefixedMember( prefix[i] );
+					} else {
+						// modify the result to target the type argument if the
+						// target is not a member
+						result = result.WithTarget(
+							MutabilityTarget.TypeArgument
+						);
+					}
+					return result;
+				}
+
+				unauditedReasonsBuilder.UnionWith( result.SeenUnauditedReasons );
+			}
+
+			return MutabilityInspectionResult.NotMutable( unauditedReasonsBuilder.ToImmutable() );
+		}
+
+		private MutabilityInspectionResult DoInspectInterface(
+			ITypeSymbol symbol,
+			ITypeSymbol hostSymbol,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			var typeSymbol = symbol as INamedTypeSymbol;
+
+			// If we can't determine what the symbol is then we'll bail with
+			// a general mutability response, otherwise we're going to have a
+			// lot of NREs below.
+			if( typeSymbol == default ) {
+				return MutabilityInspectionResult.MutableType( symbol, MutabilityCause.IsPotentiallyMutable );
+			}
+
+			// Detects if the interface itself is marked with Immutable
+			ImmutabilityScope scope = typeSymbol.GetImmutabilityScope();
+			if( scope != ImmutabilityScope.None ) {
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			// If we've reached here, it's an interface with no type parameters
+			// that is not marked Immutable
+			return MutabilityInspectionResult.MutableType( symbol, MutabilityCause.IsAnInterface );
+		}
+
+		private MutabilityInspectionResult DoInspectTypeParameter(
+			ITypeSymbol symbol,
+			ITypeSymbol hostSymbol,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			var typeParameter = symbol as ITypeParameterSymbol;
+
+			var hostType = hostSymbol as INamedTypeSymbol;
+
+			if( hostType == default ) {
+				// As a generic type, this case should not be possible, but to
+				// ensure the analysis completes without explosion we will
+				// just mark the type as mutable for a fail-safe fallback.
+				return MutabilityInspectionResult.MutableType( symbol, MutabilityCause.IsPotentiallyMutable );
+			}
+
+			int ordinal = hostType.IndexOfArgument( typeParameter.Name );
+			if( ordinal < 0 ) {
+				// We're examing a T inside a Foo<T>, this shouldn't be possible
+				// but again, we'll return the type is potentially mutable to
+				// ensure the analysis won't allow something bad, but also
+				// doesn't explode.
+				return MutabilityInspectionResult.MutableType( symbol, MutabilityCause.IsPotentiallyMutable );
+			}
+
+			ImmutabilityScope argumentScope =
+				hostType.TypeArguments[ordinal].GetImmutabilityScope();
+
+			if( argumentScope == ImmutabilityScope.SelfAndChildren ) {
+				// We can assume T is immutable since it's marked for
+				// immutability in the class declaration
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			// If we can't determine what the symbol is then we'll bail with
+			// a general mutability response, otherwise we're going to have a
+			// lot of NREs below.
+			if( typeParameter == default ) {
+				return MutabilityInspectionResult.MutableType( symbol, MutabilityCause.IsAGenericType );
+			}
+
+			if( typeParameter.ConstraintTypes != null ) {
+
+				// there are constraints we can check. as type constraints are 
+				// unionized, we only need one type constraint to be immutable 
+				// to succeed
+				foreach( ITypeSymbol constraintType in typeParameter.ConstraintTypes ) {
+
+					MutabilityInspectionResult result = DoInspectType(
+						type: constraintType,
+						hostSymbol: hostSymbol,
+						flags: MutabilityInspectionFlags.Default,
+						typeStack: typeStack
+					);
+
+					if( !result.IsMutable ) {
+						return result;
+					}
+				}
+			}
+
+			return MutabilityInspectionResult.MutableType(
+				symbol,
+				MutabilityCause.IsAGenericType
+			);
+		}
+
+		private MutabilityInspectionResult DoInspectInitializer(
+			ExpressionSyntax expr,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			if( expr.Kind() == SyntaxKind.NullLiteralExpression ) {
+				// This is perhaps a bit suspicious, because fields and
+				// properties have to be readonly, but it is safe...
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			SemanticModel model = m_compilation.GetSemanticModel( expr.SyntaxTree );
+
+			TypeInfo typeInfo = model.GetTypeInfo( expr );
+
+			// Type can be null in the case of an implicit conversion where
+			// the expression alone doesn't have a type. For example:
+			//   int[] foo = { 1, 2, 3 };
+			ITypeSymbol exprType = typeInfo.Type ?? typeInfo.ConvertedType;
+
+			if( expr is ObjectCreationExpressionSyntax ) {
+				// If our initializer is "new Foo( ... )" we only need to
+				// consider Foo concretely; not subtypes of Foo.
+				return DoInspectConcreteType( exprType, typeStack );
+			}
+
+			// In general we can use the initializers type in place of the
+			// field/properties type because it may be narrower.
+			return DoInspectType(
+				exprType,
+				MutabilityInspectionFlags.Default,
+				typeStack
+			);
+		}
+
+		private MutabilityInspectionResult DoInspectProperty(
+			IPropertySymbol property,
+			ITypeSymbol hostSymbol,
+			HashSet<ITypeSymbol> typeStack
+		) {
+
+			if( property.IsIndexer ) {
+				// Indexer properties are just glorified method syntax and dont' hold state
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			PropertyDeclarationSyntax propertySyntax =
+				property.GetDeclarationSyntax<PropertyDeclarationSyntax>();
+
+			// TODO: can we do this without the syntax; with only the symbol?
+			if( !propertySyntax.IsAutoImplemented() ) {
+				// Properties that are auto-implemented have an implicit
+				// backing field that may be mutable. Otherwise, properties are
+				// just sugar for getter/setter methods and don't themselves
+				// contribute to mutability.
+				return MutabilityInspectionResult.NotMutable();
+			}
+
+			if( !property.IsReadOnly ) {
+				return MutabilityInspectionResult.MutableProperty(
+					property,
+					MutabilityCause.IsNotReadonly
+				);
+			}
+
+			if( propertySyntax.Initializer != null ) {
+				return DoInspectInitializer(
+					propertySyntax.Initializer.Value,
+					typeStack
+				).WithPrefixedMember( property.Name );
+			}
+
+			return DoInspectType(
+				type: property.Type,
+				hostSymbol: hostSymbol,
+				flags: MutabilityInspectionFlags.Default,
+				typeStack: typeStack
+			).WithPrefixedMember( property.Name );
+		}
+
+		private MutabilityInspectionResult DoInspectField(
+			IFieldSymbol field,
+			ITypeSymbol hostSymbol,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			if( !field.IsReadOnly ) {
+				return MutabilityInspectionResult.MutableField(
+					field,
+					MutabilityCause.IsNotReadonly
+				);
+			}
+
+			VariableDeclaratorSyntax declSyntax =
+				field.GetDeclarationSyntax<VariableDeclaratorSyntax>();
+
+			if( declSyntax.Initializer != null ) {
+				return DoInspectInitializer(
+					declSyntax.Initializer.Value,
+					typeStack
+				).WithPrefixedMember( field.Name );
+			}
+
+			return DoInspectType(
+				type: field.Type,
+				hostSymbol: hostSymbol,
+				flags: MutabilityInspectionFlags.Default,
+				typeStack: typeStack
+			).WithPrefixedMember( field.Name );
+		}
+
+		private MutabilityInspectionResult PerformMemberInspection(
+			ISymbol symbol,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			return PerformMemberInspection( symbol, default, typeStack );
+		}
+
+		private MutabilityInspectionResult PerformMemberInspection(
+			ISymbol symbol,
+			ITypeSymbol hostSymbol,
+			HashSet<ITypeSymbol> typeStack
+		) {
+			// if the member is audited or unaudited, ignore it
+			if( Attributes.Mutability.Audited.IsDefined( symbol ) ) {
+				return MutabilityInspectionResult.NotMutable();
+			}
+			if( Attributes.Mutability.Unaudited.IsDefined( symbol ) ) {
+				string unauditedReason = BecauseHelpers.GetUnauditedReason( symbol );
+				return MutabilityInspectionResult.NotMutable( ImmutableHashSet.Create( unauditedReason ) );
+			}
+
+			switch( symbol.Kind ) {
+				case SymbolKind.Property:
+					return DoInspectProperty(
+						property: symbol as IPropertySymbol,
+						hostSymbol: hostSymbol,
+						typeStack: typeStack
+					);
+
+				case SymbolKind.Field:
+					return DoInspectField(
+						field: symbol as IFieldSymbol,
+						hostSymbol: hostSymbol,
+						typeStack: typeStack
+					);
+
+				case SymbolKind.Method:
+				case SymbolKind.NamedType:
+					// ignore these symbols, because they do not contribute to immutability
+					return MutabilityInspectionResult.NotMutable();
+
+				default:
+					// we've got a member (event, etc.) that we can't currently be smart about, so fail
+					return MutabilityInspectionResult.PotentiallyMutableMember( symbol );
+			}
+		}
+
+		private MutabilityInspectionResult PerformTypeInspection(
+			ITypeSymbol type,
+			ITypeSymbol hostSymbol,
 			MutabilityInspectionFlags flags,
 			HashSet<ITypeSymbol> typeStack
 		) {
@@ -142,9 +457,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					+ "are referenced, including transitive dependencies." );
 			}
 
-			// If we're not verifying immutability, we might be able to bail out early
-			var scope = type.GetImmutabilityScope();
-			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && scope == ImmutabilityScope.SelfAndChildren ) {
+			ImmutabilityScope scope = type.GetImmutabilityScope();
+			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute )
+				&& scope == ImmutabilityScope.SelfAndChildren
+			) {
 				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
 				return MutabilityInspectionResult.NotMutable( immutableExceptions );
 			}
@@ -153,7 +469,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
-			if( IsAnImmutableContainerType( type ) ) {
+			if( type.IsAnImmutableContainerType() ) {
 				return InspectImmutableContainerType( type, typeStack );
 			}
 
@@ -192,13 +508,18 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					return MutabilityInspectionResult.NotMutable();
 
 				case TypeKind.TypeParameter:
-					return InspectTypeParameter(
+					return DoInspectTypeParameter(
 						type,
+						hostSymbol,
 						typeStack
 					);
 
 				case TypeKind.Interface:
-					return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnInterface );
+					return DoInspectInterface(
+						type,
+						hostSymbol,
+						typeStack
+					);
 
 				case TypeKind.Class:
 				case TypeKind.Struct: // equivalent to TypeKind.Structure
@@ -228,39 +549,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 		}
 
-		private MutabilityInspectionResult InspectConcreteType(
-			ITypeSymbol type,
-			HashSet<ITypeSymbol> typeStack,
-			MutabilityInspectionFlags flags = MutabilityInspectionFlags.Default
-		) {
-			if( type is IErrorTypeSymbol ) {
-				return MutabilityInspectionResult.NotMutable();
-			}
-
-			// The concrete type System.Object is empty (and therefore safe.)
-			// For example, `private readonly object m_lock = new object();` is fine. 
-			if( type.SpecialType == SpecialType.System_Object ) {
-				return MutabilityInspectionResult.NotMutable();
-			}
-
-			// System.ValueType is the base class of all value types (obscure detail)
-			if( type.SpecialType == SpecialType.System_ValueType ) {
-				return MutabilityInspectionResult.NotMutable();
-			}
-
-			var scope = type.GetImmutabilityScope();
-			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute ) && scope != ImmutabilityScope.None ) {
-				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
-				return MutabilityInspectionResult.NotMutable( immutableExceptions );
-			}
-
-			return InspectType(
-				type,
-				flags | MutabilityInspectionFlags.AllowUnsealed,
-				typeStack
-			);
-		}
-
 		private MutabilityInspectionResult InspectClassOrStruct(
 			ITypeSymbol type,
 			HashSet<ITypeSymbol> typeStack
@@ -275,7 +563,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			// We have a type that is not marked immutable, is not an interface, is not an immutable container, etc..
 			// If it is defined in a different assembly, we might not have the metadata to correctly analyze it; so we fail.
-			if( TypeIsFromOtherAssembly( type ) ) {
+			if( type.IsFromOtherAssembly( m_compilation ) ) {
 				return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnExternalUnmarkedType );
 			}
 
@@ -284,7 +572,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			typeStack.Add( type );
 			try {
 				foreach( ISymbol member in type.GetExplicitNonStaticMembers() ) {
-					var result = InspectMemberRecursive( member, typeStack );
+					MutabilityInspectionResult result = PerformMemberInspection( member, type, typeStack );
 					if( result.IsMutable ) {
 						return result;
 					}
@@ -292,8 +580,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				}
 
 				// We descend into the base class last
-				if ( type.BaseType != null ) {
-					var baseResult = InspectConcreteType( type.BaseType, typeStack );
+				if( type.BaseType != null ) {
+					MutabilityInspectionResult baseResult = DoInspectConcreteType( type.BaseType, typeStack );
 
 					if( baseResult.IsMutable ) {
 						return baseResult;
@@ -305,257 +593,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			return MutabilityInspectionResult.NotMutable( seenUnauditedReasonsBuilder.ToImmutable() );
-		}
-
-		private bool IsAnImmutableContainerType( ITypeSymbol type ) {
-			return ImmutableContainerTypes.ContainsKey( type.GetFullTypeName() );
-		}
-
-		private MutabilityInspectionResult InspectImmutableContainerType(
-			ITypeSymbol type,
-			HashSet<ITypeSymbol> typeStack
-		) {
-			var namedType = type as INamedTypeSymbol;
-
-			ImmutableHashSet<string>.Builder unauditedReasonsBuilder = ImmutableHashSet.CreateBuilder<string>();
-
-			for( int i = 0; i < namedType.TypeArguments.Length; i++ ) {
-				var arg = namedType.TypeArguments[ i ];
-
-				var result = InspectType(
-					arg,
-					MutabilityInspectionFlags.Default,
-					typeStack
-				);
-
-				if( result.IsMutable ) {
-					if( result.Target == MutabilityTarget.Member ) {
-						// modify the result to prefix with container member.
-						var prefix = ImmutableContainerTypes[type.GetFullTypeName()];
-						result = result.WithPrefixedMember( prefix[ i ] );
-					} else {
-						// modify the result to target the type argument if the
-						// target is not a member
-						result = result.WithTarget(
-							MutabilityTarget.TypeArgument
-						);
-					}
-					return result;
-				}
-
-				unauditedReasonsBuilder.UnionWith( result.SeenUnauditedReasons );
-			}
-
-			return MutabilityInspectionResult.NotMutable( unauditedReasonsBuilder.ToImmutable() );
-		}
-
-		private MutabilityInspectionResult InspectTypeParameter(
-			ITypeSymbol symbol,
-			HashSet<ITypeSymbol> typeStack
-		) {
-			var typeParameter = symbol as ITypeParameterSymbol;
-
-			if( typeParameter.ConstraintTypes != null || typeParameter.ConstraintTypes.Length > 0 ) {
-				// there are constraints we can check. as type constraints are unionized, we only need one 
-				// type constraint to be immutable to succeed
-				foreach( var constraintType in typeParameter.ConstraintTypes ) {
-
-					var result = InspectType(
-						constraintType,
-						MutabilityInspectionFlags.Default,
-						typeStack
-					);
-
-					if( !result.IsMutable ) {
-						return result;
-					}
-				}
-			}
-
-			return MutabilityInspectionResult.MutableType(
-				symbol,
-				MutabilityCause.IsAGenericType
-			);
-		}
-
-		private MutabilityInspectionResult InspectInitializer(
-			ExpressionSyntax expr,
-			HashSet<ITypeSymbol> typeStack
-		) {
-			if( expr.Kind() == SyntaxKind.NullLiteralExpression ) {
-				// This is perhaps a bit suspicious, because fields and
-				// properties have to be readonly, but it is safe...
-				return MutabilityInspectionResult.NotMutable();
-			}
-
-			var model = m_compilation.GetSemanticModel( expr.SyntaxTree );
-
-			var typeInfo = model.GetTypeInfo( expr );
-
-			// Type can be null in the case of an implicit conversion where
-			// the expression alone doesn't have a type. For example:
-			//   int[] foo = { 1, 2, 3 };
-			var exprType = typeInfo.Type ?? typeInfo.ConvertedType;
-
-			if( expr is ObjectCreationExpressionSyntax ) {
-				// If our initializer is "new Foo( ... )" we only need to
-				// consider Foo concretely; not subtypes of Foo.
-				return InspectConcreteType( exprType, typeStack );
-			}
-
-			// In general we can use the initializers type in place of the
-			// field/properties type because it may be narrower.
-			return InspectType(
-				exprType,
-				MutabilityInspectionFlags.Default,
-				typeStack
-			);
-		}
-
-		private MutabilityInspectionResult InspectProperty(
-			IPropertySymbol property,
-			HashSet<ITypeSymbol> typeStack
-		) {
-
-			if( property.IsIndexer ) {
-				// Indexer properties are just glorified method syntax and dont' hold state
-				return MutabilityInspectionResult.NotMutable();
-			}
-
-			var propertySyntax =
-				GetDeclarationSyntax<PropertyDeclarationSyntax>( property );
-
-			// TODO: can we do this without the syntax; with only the symbol?
-			if( !propertySyntax.IsAutoImplemented() ) {
-				// Properties that are auto-implemented have an implicit
-				// backing field that may be mutable. Otherwise, properties are
-				// just sugar for getter/setter methods and don't themselves
-				// contribute to mutability.
-				return MutabilityInspectionResult.NotMutable();
-			}
-
-			if( !property.IsReadOnly ) {
-				return MutabilityInspectionResult.MutableProperty(
-					property,
-					MutabilityCause.IsNotReadonly
-				);
-			}
-
-			if( propertySyntax.Initializer != null ) {
-				return InspectInitializer(
-					propertySyntax.Initializer.Value,
-					typeStack
-				).WithPrefixedMember( property.Name );
-			}
-
-			return InspectType(
-				property.Type,
-				MutabilityInspectionFlags.Default,
-				typeStack
-			).WithPrefixedMember( property.Name );
-		}
-
-		private MutabilityInspectionResult InspectField(
-			IFieldSymbol field,
-			HashSet<ITypeSymbol> typeStack
-		) {
-			if( !field.IsReadOnly ) {
-				return MutabilityInspectionResult.MutableField(
-					field,
-					MutabilityCause.IsNotReadonly
-				);
-			}
-
-			var declSyntax =
-				GetDeclarationSyntax<VariableDeclaratorSyntax>( field );
-
-			if( declSyntax.Initializer != null ) {
-				return InspectInitializer(
-					declSyntax.Initializer.Value,
-					typeStack
-				).WithPrefixedMember( field.Name );
-			}
-
-			return InspectType(
-				field.Type,
-				MutabilityInspectionFlags.Default,
-				typeStack
-			).WithPrefixedMember( field.Name );
-		}
-
-		/// <summary>
-		/// Get the declaration syntax for a symbol. This is intended to be
-		/// used for fields and properties which can't have multiple
-		/// declaration nodes.
-		/// </summary>
-		private static T GetDeclarationSyntax<T>( ISymbol symbol )
-			where T : SyntaxNode {
-			var decls = symbol.DeclaringSyntaxReferences;
-
-			if( decls.Length != 1 ) {
-				throw new NotImplementedException(
-					"Unexepected number of decls: "
-					+ decls.Length
-				);
-			}
-
-			SyntaxNode syntax = decls[ 0 ].GetSyntax();
-
-			var decl = syntax as T;
-			if( decl == null ) {
-
-				string msg = String.Format(
-						"Couldn't cast declaration syntax of type '{0}' as type '{1}': {2}",
-						syntax.GetType().FullName,
-						typeof( T ).FullName,
-						symbol.ToDisplayString()
-					);
-
-				throw new InvalidOperationException( msg );
-			}
-
-			return decl;
-		}
-
-		private MutabilityInspectionResult InspectMemberRecursive(
-			ISymbol symbol,
-			HashSet<ITypeSymbol> typeStack
-		) {
-			// if the member is audited or unaudited, ignore it
-			if( Attributes.Mutability.Audited.IsDefined( symbol ) ) {
-				return MutabilityInspectionResult.NotMutable();
-			}
-			if( Attributes.Mutability.Unaudited.IsDefined( symbol ) ) {
-				string unauditedReason = BecauseHelpers.GetUnauditedReason( symbol );
-				return MutabilityInspectionResult.NotMutable( ImmutableHashSet.Create( unauditedReason ) );
-			}
-
-			switch( symbol.Kind ) {
-				case SymbolKind.Property:
-					return InspectProperty(
-						symbol as IPropertySymbol,
-						typeStack
-					);
-
-				case SymbolKind.Field:
-					return InspectField(
-						symbol as IFieldSymbol,
-						typeStack
-					);
-
-				case SymbolKind.Method:
-				case SymbolKind.NamedType:
-					// ignore these symbols, because they do not contribute to immutability
-					return MutabilityInspectionResult.NotMutable();
-
-				default:
-					// we've got a member (event, etc.) that we can't currently be smart about, so fail
-					return MutabilityInspectionResult.PotentiallyMutableMember( symbol );
-			}
-		}
-
-		private bool TypeIsFromOtherAssembly( ITypeSymbol type ) {
-			return type.ContainingAssembly != m_compilation.Assembly;
 		}
 	}
 }
