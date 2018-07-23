@@ -26,8 +26,6 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 		public abstract string Name { get; }
 	}
 
-	[Singleton]
-	public interface IMarkedSingleton { }
 	public interface IExtensionPoint<T> { }
 	public interface IFactory<out TDependencyType> { }
 	public interface IFactory<out TDependencyType, T> { }
@@ -153,7 +151,7 @@ namespace SpecTests {
 			reg.ConfigureInstancePlugins<ImmutableThing>( ObjectScope.Singleton );
 			reg.ConfigureInstancePlugins<ImmutableThing, DefaultExtensionPoint<ImmutableThing>>( ObjectScope.Singleton );
 			reg.RegisterPluginExtensionPoint<DefaultExtensionPoint<ImmutableThing>, ImmutableThing>( ObjectScope.Singleton );
-			reg.RegisterPlugin<DefaultExtensionPoint<IMarkedSingleton>, IMarkedSingleton, ImmutableThing>( ObjectScope.Singleton );
+			reg.RegisterPlugin<DefaultExtensionPoint<ISingleton>, ISingleton, ImmutableThing>( ObjectScope.Singleton );
 			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaImmutableThing, string>( ObjectScope.Singleton );
 			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaImmutableThing, string, string>( ObjectScope.Singleton );
 			reg.RegisterSubInterface<ISingleton, IImmutableSubSingleton>( ObjectScope.Singleton );
@@ -241,7 +239,7 @@ namespace SpecTests {
 	public interface IImmutableSubSingleton : IImmutableSingleton { }
 
 	[Objects.Immutable]
-	public sealed class ImmutableThing : IMarkedSingleton, ISingleton, INotSingleton { }
+	public sealed class ImmutableThing : ISingleton, INotSingleton { }
 
 	public interface ICreatedByDynamicFactory { }
 
