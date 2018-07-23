@@ -1,9 +1,11 @@
 ﻿// analyzer: D2L.CodeStyle.Analyzers.Language.ImmutableGenericDeclarationAnalyzer
 
 namespace D2L.CodeStyle.Annotations {
+	using System;
+
 	public static class Objects {
 		public abstract class ImmutableAttributeBase : Attribute {
-			public Except Except { get; set; }
+			public string Except { get; set; }
 		}
 		public sealed class Immutable : ImmutableAttributeBase { }
 		public sealed class ImmutableBaseClassAttribute : ImmutableAttributeBase { }
