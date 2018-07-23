@@ -25,6 +25,9 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 	public abstract class ExtensionPointDescriptor {
 		public abstract string Name { get; }
 	}
+
+	[Singleton]
+	public interface IMarkedSingleton { }
 	public interface IExtensionPoint<T> { }
 	public interface IFactory<out TDependencyType> { }
 	public interface IFactory<out TDependencyType, T> { }
@@ -66,53 +69,69 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 		public static void RegisterDynamicObjectFactory<TOutput, TConcrete, TArg>(
 				this IDependencyRegistry registry,
 				ObjectScope scope
-			) where TConcrete : class, TOutput;
+			) where TConcrete : class, TOutput {
+		}
+
 		public static void RegisterDynamicObjectFactory<TOutput, TConcrete, TArg0, TArg1>(
 				this IDependencyRegistry registry,
 				ObjectScope scope
-			) where TConcrete : class, TOutput;
+			) where TConcrete : class, TOutput {
+		}
 
 		// from: http://search.dev.d2l/source/xref/Lms/core/lp/framework/core/D2L.LP.Foundation/LP/Extensibility/Activation/Domain/IDependencyRegistryConfigurePluginsExtensions.cs
 		public static void ConfigurePlugins<TPlugin>(
 				this IDependencyRegistry registry,
 				ObjectScope scope
-			);
+			) {
+		}
+
 		public static void ConfigureOrderedPlugins<TPlugin, TComparer>(
 				this IDependencyRegistry registry,
 				ObjectScope scope
-			) where TComparer : IComparer<TPlugin>, new();
+			) where TComparer : IComparer<TPlugin>, new() {
+		}
 
 		// from: http://search.dev.d2l/source/xref/Lms/core/lp/framework/core/D2L.LP.Foundation/LP/Extensibility/Activation/Domain/DependencyRegistryExtensionPointExtensions.cs
 		public static void RegisterPluginExtensionPoint<TExtensionPoint, T>(
 				this IDependencyRegistry @this,
 				ObjectScope scope
-			) where TExtensionPoint : IExtensionPoint<T>;
+			) where TExtensionPoint : IExtensionPoint<T> {
+		}
+
 		public static void RegisterPlugin<TExtensionPoint, TDependencyType, TConcreteType>(
 				this IDependencyRegistry @this,
 				ObjectScope scope
 			)
 			where TConcreteType : TDependencyType
-			where TExtensionPoint : IExtensionPoint<TDependencyType>;
+			where TExtensionPoint : IExtensionPoint<TDependencyType> {
+		}
+
 		public static void RegisterPluginFactory<TExtensionPoint, TDependencyType, TFactoryType>(
 				this IDependencyRegistry @this,
 				ObjectScope scope
 			)
 			where TFactoryType : IFactory<TDependencyType>
-			where TExtensionPoint : IExtensionPoint<TDependencyType>;
+			where TExtensionPoint : IExtensionPoint<TDependencyType> {
+		}
 
 		// from: http://search.dev.d2l/source/xref/Lms/core/lp/framework/core/D2L.LP/LP/Extensibility/Plugins/DI/LegacyPluginsDependencyLoaderExtensions.cs
 		public static void ConfigureInstancePlugins<TPlugin>(
 				this IDependencyRegistry registry,
 				ObjectScope scope
-			);
+			) {
+		}
+
 		public static void ConfigureInstancePlugins<TPlugin, TExtensionPoint>(
 				this IDependencyRegistry registry,
 				ObjectScope scope
-			) where TExtensionPoint : ExtensionPointDescriptor, new();
+			) where TExtensionPoint : ExtensionPointDescriptor, new() {
+		}
+
 		public static void RegisterSubInterface<TSubInterfaceType, TInjectableSuperInterfaceType>(
 				this IDependencyRegistry @this,
 				ObjectScope scope
-			) where TInjectableSuperInterfaceType : TSubInterfaceType;
+			) where TInjectableSuperInterfaceType : TSubInterfaceType {
+		}
 	}
 }
 
@@ -134,7 +153,7 @@ namespace SpecTests {
 			reg.ConfigureInstancePlugins<ImmutableThing>( ObjectScope.Singleton );
 			reg.ConfigureInstancePlugins<ImmutableThing, DefaultExtensionPoint<ImmutableThing>>( ObjectScope.Singleton );
 			reg.RegisterPluginExtensionPoint<DefaultExtensionPoint<ImmutableThing>, ImmutableThing>( ObjectScope.Singleton );
-			reg.RegisterPlugin<DefaultExtensionPoint<ImmutableThing>, IMarkedSingleton, ImmutableThing>( ObjectScope.Singleton );
+			reg.RegisterPlugin<DefaultExtensionPoint<IMarkedSingleton>, IMarkedSingleton, ImmutableThing>( ObjectScope.Singleton );
 			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaImmutableThing, string>( ObjectScope.Singleton );
 			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaImmutableThing, string, string>( ObjectScope.Singleton );
 			reg.RegisterSubInterface<ISingleton, IImmutableSubSingleton>( ObjectScope.Singleton );
@@ -151,7 +170,7 @@ namespace SpecTests {
 			/* UnsafeSingletonRegistration(SpecTests.ISingleton) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMutableThing, string, string>( ObjectScope.Singleton ) /**/;
 			/* UnsafeSingletonRegistration(SpecTests.ISingleton) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMutableThing, string>( ObjectScope.Singleton ) /**/;
 
-			// Dyanamic object factory registrations that error out inspect IFactory<TDependencyType>
+			// Dynamic object factory registrations that error out inspect IFactory<TDependencyType>
 			/* UnsafeSingletonRegistration(D2L.LP.Extensibility.Activation.Domain.IFactory<SpecTests.ICreatedByDynamicFactory>) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor, string>( ObjectScope.Singleton ) /**/;
 			/* UnsafeSingletonRegistration(D2L.LP.Extensibility.Activation.Domain.IFactory<SpecTests.ICreatedByDynamicFactory>) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor, string, string>( ObjectScope.Singleton ) /**/;
 
@@ -200,22 +219,15 @@ namespace SpecTests {
 			}
 		}
 
-		// Registrations in extension methods with enough information should be handled. 
-		public static class SomeExtensionMethods {
-			public static void ThisIsSafe<TDependencyType, TConcreteType>( this IDependencyRegistry reg ) 
-				where TDependencyType : IMarkedSingleton
-				where TConcreteType : TDependencyType {
-				reg.Register<TDependencyType, TConcreteType>();
-			}
-		}
-
 		public static class OnlyRegistrationMethodsOnIDependencyRegistryMatter {
 			public static void DoesntMatter( IDependencyRegistry reg ) {
 				Register<INotSingleton>( null );
 			}
+
 			public static void Register<TDependencyType>(
 				TDependencyType instance
-			);
+			) {
+			}
 		}
 	}
 
@@ -229,9 +241,15 @@ namespace SpecTests {
 	public interface IImmutableSubSingleton : IImmutableSingleton { }
 
 	[Objects.Immutable]
-	public sealed class ImmutableThing : ISingleton, INotSingleton { }
+	public sealed class ImmutableThing : IMarkedSingleton, ISingleton, INotSingleton { }
 
 	public interface ICreatedByDynamicFactory { }
+
+	public interface ISingletonCreatedByDynamicFactory : ISingleton, ICreatedByDynamicFactory {
+	}
+
+	public interface INotSingletonCreatedByDynamicFactory : INotSingleton, ICreatedByDynamicFactory {
+	}
 
 	public class ThingThatIsCreatedByDynamicObjectFactoryViaImmutableThing : ICreatedByDynamicFactory {
 		public ThingThatIsCreatedByDynamicObjectFactoryViaImmutableThing(
@@ -256,6 +274,7 @@ namespace SpecTests {
 	public sealed class DefaultExtensionPoint<T> : ExtensionPointDescriptor, IExtensionPoint<T> {
 		public override string Name { get; } = "Default";
 	}
+
 	public sealed class SomeComparer<T> : IComparer<T> {
 		int IComparer<T>.Compare( T x, T y ) {
 			throw new NotImplementedException();
