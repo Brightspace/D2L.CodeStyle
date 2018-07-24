@@ -2,18 +2,18 @@
 
 namespace D2L {
 	public static class Foo {
-		public void _arg0() { }
-		public void _arg1( int a1 ) { }
-		public void _arg2( int a1, int a2 ) { }
-		public void _arg3( int a1, int a2, int a3 ) { }
-		public void _arg4( int a1, int a2, int a3, int a4 ) { }
+		public static void _arg0() { }
+		public static void _arg1( int a1 ) { }
+		public static void _arg2( int a1, int a2 ) { }
+		public static void _arg3( int a1, int a2, int a3 ) { }
+		public static void _arg4( int a1, int a2, int a3, int a4 ) { }
 
 		// These will shrink as we shrink the max *blush*
-		public void _arg19( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17, int a18, int a19 );
-		public void _arg20( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17, int a18, int a19, int a20 );
-		public void _arg21( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17, int a18, int a19, int a20, int a21 );
+		public static void _arg19( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17, int a18, int a19 ) { }
+		public static void _arg20( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17, int a18, int a19, int a20 ) { }
+		public static void _arg21( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17, int a18, int a19, int a20, int a21 ) { }
 
-		public void funcWithParams( int a, int b, int c, params int[] ps ) { }
+		public static void funcWithParams( int a, int b, int c, params int[] ps ) { }
 
 		public delegate void delegate0Args();
 		public delegate void delegate1Args( int a1 );
@@ -23,7 +23,7 @@ namespace D2L {
 			public SomeClass() { }
 			public SomeClass( int a1 ) { }
 			public SomeClass( int a1, int a2 ) { }
-			public SomeClass( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17, int a18, int a19, int a20 );
+			public SomeClass( int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17, int a18, int a19, int a20 ) { }
 		}
 
 		public static void Test() {
