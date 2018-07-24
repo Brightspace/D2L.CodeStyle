@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using D2L.CodeStyle.Analyzers.Immutability;
 using Microsoft.CodeAnalysis;
@@ -34,6 +35,14 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			KnownImmutableTypes knownImmutableTypes
 		) {
 			var syntaxNode = context.Node as GenericNameSyntax;
+
+			// Attributes are not allowed on local function parameters so we
+			// have to ignore this node, otherwise we'll tell people to
+			// annotate a declaration that is forbidden.
+			if( syntaxNode.Ancestors().Any( a => a is LocalFunctionStatementSyntax )) {
+				return;
+			}
+
 			SymbolInfo hostTypeSymbolInfo = context.SemanticModel.GetSymbolInfo( syntaxNode );
 			var hostTypeSymbol = hostTypeSymbolInfo.Symbol as INamedTypeSymbol;
 			if( hostTypeSymbol == default ) {
