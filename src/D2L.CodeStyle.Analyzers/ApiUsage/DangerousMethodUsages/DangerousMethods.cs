@@ -17,17 +17,32 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMethodUsages {
 			.Add<Task>(
 				nameof( Task.Run )
 			)
-			.AddMapPathMethod( "System.Web.HttpServerUtility" )
-			.AddMapPathMethod( "System.Web.HttpServerUtilityBase" )
-			.AddMapPathMethod( "System.Web.HttpServerUtilityWrapper" )
-			.AddMapPathMethod( "System.Web.HttpRequest" )
-			.AddMapPathMethod( "System.Web.HttpRequestBase" )
-			.AddMapPathMethod( "System.Web.HttpRequestWrapper" )
-			.AddMapPathMethod( "System.Web.HttpWorkerRequest" )
-			.AddMapPathMethod( "System.Web.Hosting.HostingEnvironment" )
-			.AddMapPathMethod( "System.Web.UI.Page" )
-			.AddMapPathMethod( "System.Web.UI.UserControl" )
-			.AddMapPathMethod( "System.Web.Configuration.UserMapPath" );
+
+			.AddMethod(
+				"MapPath",
+				new[] {
+					"System.Web.HttpServerUtility",
+					"System.Web.HttpServerUtilityBase",
+					"System.Web.HttpServerUtilityWrapper",
+					"System.Web.HttpRequest",
+					"System.Web.HttpRequestBase",
+					"System.Web.HttpRequestWrapper",
+					"System.Web.HttpWorkerRequest",
+					"System.Web.Hosting.HostingEnvironment",
+					"System.Web.UI.Page",
+					"System.Web.UI.UserControl",
+					"System.Web.Configuration.UserMapPath"
+				}
+			)
+
+			.AddMethod( 
+				"Transfer",
+				new[] {
+					"System.Web.HttpServerUtility",
+					"System.Web.HttpServerUtilityBase",
+					"System.Web.HttpServerUtilityWrapper"
+				}
+			);
 
 		private static ImmutableDictionary<string, ImmutableArray<string>> Add<T>(
 				this ImmutableDictionary<string, ImmutableArray<string>> types,
@@ -40,16 +55,27 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMethodUsages {
 			);
 		}
 
-		/// <remarks>
-		/// Type parameter is a string on purpose, to avoid having to add a reference to System.Web.
-		/// Referencing it would prevent us from shipping a netstandard/.NET core build of the analyzers.
-		/// </remarks>
-		private static ImmutableDictionary<string, ImmutableArray<string>> AddMapPathMethod(
+		private static ImmutableDictionary<string, ImmutableArray<string>> AddMethod(
 			this ImmutableDictionary<string, ImmutableArray<string>> types,
-			string containingTypeFullName
+			string methodName,
+			string[] containingTypeFullNames
 		) {
 
-			return types.Add( containingTypeFullName, ImmutableArray.Create( "MapPath" ) );
+			HashSet<string> typeNames = new HashSet<string>( containingTypeFullNames );
+
+			foreach( string type in typeNames ) {
+
+				List<string> methods = new List<string>( new[] { methodName } );
+
+				if( types.ContainsKey( type ) ) {
+					methods.AddRange( types[ type ] );
+					types = types.Remove( type );
+				}
+
+				types = types.Add( type, methods.ToImmutableArray() );
+			}
+
+			return types;
 		}
 	}
 }
