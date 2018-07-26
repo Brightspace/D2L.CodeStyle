@@ -61,9 +61,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMethodUsages {
 			string[] containingTypeFullNames
 		) {
 
-			HashSet<string> typeNames = new HashSet<string>( containingTypeFullNames );
-
-			foreach( string type in typeNames ) {
+			foreach( string type in containingTypeFullNames ) {
 
 				List<string> methods = new List<string>( new[] { methodName } );
 
