@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.DangerousMethodUsages.DangerousMethodUsagesAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages.DangerousMethodUsagesAnalyzer
 
 using System;
 using System.Reflection;

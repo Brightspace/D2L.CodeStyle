@@ -33,6 +33,10 @@
     <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ApiUsage\DangerousMemberUsages\DangerousProperties.cs" />
+    <Compile Include="ApiUsage\DangerousMemberUsages\DangerousPropertyUsagesAnalyzer.cs" />
+    <Compile Include="ApiUsage\DangerousMemberUsages\DangerousMethodUsagesAnalyzer.cs" />
+    <Compile Include="ApiUsage\DangerousMemberUsages\DangerousMethods.cs" />
     <Compile Include="Immutability\ImmutableGenericArgument.cs" />
     <Compile Include="Immutability\ImmutableContainerMethods.cs" />
     <Compile Include="Language\ImmutableGenericArgumentAnalyzer.cs" />
@@ -70,8 +74,6 @@
     <Compile Include="Immutability\MutabilityInspectionResultFormatter.cs" />
     <Compile Include="Immutability\MutabilityInspector.cs" />
     <Compile Include="ApiUsage\NotNullAnalyzer.cs" />
-    <Compile Include="ApiUsage\DangerousMethodUsages\DangerousMethods.cs" />
-    <Compile Include="ApiUsage\DangerousMethodUsages\DangerousMethodUsagesAnalyzer.cs" />
     <Compile Include="ApiUsage\DependencyInjection\DependencyRegistrationsAnalyzer.cs" />
     <Compile Include="Extensions\Microsoft.CodeAnalysis.cs" />
     <Compile Include="Extensions\Microsoft.CodeAnalysis.CSharp.cs" />
