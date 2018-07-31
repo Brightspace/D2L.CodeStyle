@@ -69,7 +69,7 @@
     <EmbeddedResource Include="Specs\ImmutabilityAnalyzer.cs" />
     <EmbeddedResource Include="Specs\UnsafeSingletonsAnalyzer.cs" />
     <EmbeddedResource Include="Specs\OldAndBrokenSingletonLocatorAnalyzer.cs" />
-    <EmbeddedResource Include="Specs\DangerousMethodUsagesAnalyzer.cs" />
+    <EmbeddedResource Include="Specs\DangerousMemberUsagesAnalyzer.DangerousMethods.cs" />
     <EmbeddedResource Include="Specs\FeatureDefinitionAnalyzer.cs" />
     <Compile Include="Immutability\UnsafeStaticsAnalyzerTests.cs" />
     <Compile Include="Verifiers\DiagnosticResult.cs" />

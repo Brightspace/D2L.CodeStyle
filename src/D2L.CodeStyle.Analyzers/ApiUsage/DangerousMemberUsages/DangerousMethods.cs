@@ -3,8 +3,10 @@ using System.Collections.Immutable;
 using System.Reflection;
 using System.Threading.Tasks;
 
-namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMethodUsages {
+namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
+
 	internal static class DangerousMethods {
+
 		internal static readonly IReadOnlyDictionary<string, ImmutableArray<string>> Definitions =
 			ImmutableDictionary.Create<string, ImmutableArray<string>>()
 			.Add<FieldInfo>(
