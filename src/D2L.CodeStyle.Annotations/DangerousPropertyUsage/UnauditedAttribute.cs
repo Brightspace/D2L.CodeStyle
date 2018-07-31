@@ -2,10 +2,10 @@
 
 namespace D2L.CodeStyle.Annotations {
 
-	public static partial class DangerousMethodUsage {
+	public static partial class DangerousPropertyUsage {
 
 		/// <summary>
-		/// Indicates usages of a dangerous method are still unaudited
+		/// Indicates usages of a dangerous property are still unaudited
 		/// </summary>
 		[AttributeUsage(
 			validOn: AttributeTargets.Constructor | AttributeTargets.Method | AttributeTargets.Property,
@@ -15,21 +15,21 @@ namespace D2L.CodeStyle.Annotations {
 		public sealed class UnauditedAttribute : Attribute {
 
 			/// <summary>
-			/// Indicates usages of a dangerous method are still unaudited
+			/// Indicates usages of a dangerous property are still unaudited
 			/// </summary>
-			/// <param name="declaringType">The type that declares the dangerous method.</param>
-			/// <param name="methodName">The name of the dangerous method.</param>
+			/// <param name="declaringType">The type that declares the dangerous property.</param>
+			/// <param name="propertyName">The name of the dangerous property.</param>
 			public UnauditedAttribute(
 					Type declaringType,
-					string methodName
+					string propertyName
 				) {
 
 				DeclaringType = declaringType;
-				MethodName = methodName;
+				PropertyName = propertyName;
 			}
 
 			public Type DeclaringType { get; }
-			public string MethodName { get; }
+			public string PropertyName { get; }
 		}
 	}
 }
