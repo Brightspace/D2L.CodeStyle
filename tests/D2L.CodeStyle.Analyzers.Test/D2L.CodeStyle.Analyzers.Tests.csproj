@@ -53,6 +53,7 @@
     <EmbeddedResource Include="Specs\RequireNamedArgumentsAnalyzer.cs" />
     <EmbeddedResource Include="Specs\ImmutableGenericArgumentAnalyzer.cs" />
     <EmbeddedResource Include="Specs\ImmutableGenericDeclarationAnalyzer.cs" />
+    <EmbeddedResource Include="Specs\DangerousMemberUsagesAnalyzer.DangerousProperties.cs" />
     <Compile Include="TestBase.cs" />
     <Compile Include="Extensions\TypeSymbolExtensionsTests.cs" />
     <Compile Include="ApiUsage\NotNullAnalyzerTests.cs" />
@@ -69,7 +70,7 @@
     <EmbeddedResource Include="Specs\ImmutabilityAnalyzer.cs" />
     <EmbeddedResource Include="Specs\UnsafeSingletonsAnalyzer.cs" />
     <EmbeddedResource Include="Specs\OldAndBrokenSingletonLocatorAnalyzer.cs" />
-    <EmbeddedResource Include="Specs\DangerousMethodUsagesAnalyzer.cs" />
+    <EmbeddedResource Include="Specs\DangerousMemberUsagesAnalyzer.DangerousMethods.cs" />
     <EmbeddedResource Include="Specs\FeatureDefinitionAnalyzer.cs" />
     <Compile Include="Immutability\UnsafeStaticsAnalyzerTests.cs" />
     <Compile Include="Verifiers\DiagnosticResult.cs" />
