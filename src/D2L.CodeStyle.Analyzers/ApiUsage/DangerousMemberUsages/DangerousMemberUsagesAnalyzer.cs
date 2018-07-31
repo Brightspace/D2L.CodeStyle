@@ -12,8 +12,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	internal sealed class DangerousMemberUsagesAnalyzer : DiagnosticAnalyzer {
 
-		private const string AuditedAttributeFullName = "D2L.CodeStyle.Annotations.DangerousMethodUsage+AuditedAttribute";
-		private const string UnauditedAttributeFullName = "D2L.CodeStyle.Annotations.DangerousMethodUsage+UnauditedAttribute";
+		private const string DangerousMethodAuditedAttributeFullName = "D2L.CodeStyle.Annotations.DangerousMethodUsage+AuditedAttribute";
+		private const string DangerousMethodUnauditedAttributeFullName = "D2L.CodeStyle.Annotations.DangerousMethodUsage+UnauditedAttribute";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.DangerousMethodsShouldBeAvoided
@@ -28,8 +28,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 		private void RegisterAnalysis( CompilationStartAnalysisContext context ) {
 
 			Compilation compilation = context.Compilation;
-			INamedTypeSymbol auditedAttributeType = compilation.GetTypeByMetadataName( AuditedAttributeFullName );
-			INamedTypeSymbol unauditedAttributeType = compilation.GetTypeByMetadataName( UnauditedAttributeFullName );
+			INamedTypeSymbol auditedAttributeType = compilation.GetTypeByMetadataName( DangerousMethodAuditedAttributeFullName );
+			INamedTypeSymbol unauditedAttributeType = compilation.GetTypeByMetadataName( DangerousMethodUnauditedAttributeFullName );
 			IImmutableSet<ISymbol> dangerousMethods = GetDangerousMethods( compilation );
 
 			context.RegisterSyntaxNodeAction(
@@ -63,39 +63,54 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				.GetSymbolInfo( invocation.Expression )
 				.Symbol;
 
-			if( methodSymbol.IsNullOrErrorType() ) {
+			if( !AnalyzePotentiallyDangerousMember( context, methodSymbol, auditedAttributeType, unauditedAttributeType, dangerousMethods ) ) {
 				return;
 			}
 
-			if( !IsDangerousMethodSymbol( methodSymbol, dangerousMethods ) ) {
-				return;
+			ReportDiagnostic( context, methodSymbol, Diagnostics.DangerousMethodsShouldBeAvoided );
+		}
+
+		private bool AnalyzePotentiallyDangerousMember(
+				SyntaxNodeAnalysisContext context,
+				ISymbol memberSymbol,
+				INamedTypeSymbol auditedAttributeType,
+				INamedTypeSymbol unauditedAttributeType,
+				IImmutableSet<ISymbol> dangerousMembers
+			) {
+
+			if( memberSymbol.IsNullOrErrorType() ) {
+				return false;
+			}
+
+			if( !IsDangerousMemberSymbol( memberSymbol, dangerousMembers ) ) {
+				return false;
 			}
 
 			bool isAudited = context.ContainingSymbol
 				.GetAttributes()
-				.Any( attr => IsAuditedAttribute( auditedAttributeType, unauditedAttributeType, attr, methodSymbol ) );
+				.Any( attr => IsAuditedAttribute( auditedAttributeType, unauditedAttributeType, attr, memberSymbol ) );
 
 			if( isAudited ) {
-				return;
+				return false;
 			}
 
-			ReportDiagnostic( context, methodSymbol );
+			return true;
 		}
 
-		private static bool IsDangerousMethodSymbol(
-				ISymbol methodSymbol,
-				IImmutableSet<ISymbol> dangerousMethods
+		private static bool IsDangerousMemberSymbol(
+				ISymbol memberSymbol,
+				IImmutableSet<ISymbol> dangerousMembers
 			) {
 
-			ISymbol originalDefinition = methodSymbol.OriginalDefinition;
+			ISymbol originalDefinition = memberSymbol.OriginalDefinition;
 
-			if( dangerousMethods.Contains( originalDefinition ) ) {
+			if( dangerousMembers.Contains( originalDefinition ) ) {
 				return true;
 			}
 
-			if( !ReferenceEquals( methodSymbol, originalDefinition ) ) {
+			if( !ReferenceEquals( memberSymbol, originalDefinition ) ) {
 
-				if( dangerousMethods.Contains( methodSymbol ) ) {
+				if( dangerousMembers.Contains( memberSymbol ) ) {
 					return true;
 				}
 			}
@@ -107,7 +122,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				INamedTypeSymbol auditedAttributeType,
 				INamedTypeSymbol unauditedAttributeType,
 				AttributeData attr,
-				ISymbol methodSymbol
+				ISymbol memberSymbol
 			) {
 
 			bool isAudited = (
@@ -126,7 +141,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			if( typeArg.Value == null ) {
 				return false;
 			}
-			if( !methodSymbol.ContainingType.Equals( typeArg.Value ) ) {
+			if( !memberSymbol.ContainingType.Equals( typeArg.Value ) ) {
 				return false;
 			}
 
@@ -134,7 +149,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			if( nameArg.Value == null ) {
 				return false;
 			}
-			if( !methodSymbol.Name.Equals( nameArg.Value ) ) {
+			if( !memberSymbol.Name.Equals( nameArg.Value ) ) {
 				return false;
 			}
 
@@ -143,14 +158,15 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 
 		private void ReportDiagnostic(
 				SyntaxNodeAnalysisContext context,
-				ISymbol methodSymbol
+				ISymbol memberSymbol,
+				DiagnosticDescriptor diagnosticDescriptor
 			) {
 
 			Location location = context.ContainingSymbol.Locations[ 0 ];
-			string methodName = methodSymbol.ToDisplayString( MethodDisplayFormat );
+			string methodName = memberSymbol.ToDisplayString( MemberDisplayFormat );
 
 			var diagnostic = Diagnostic.Create(
-					Diagnostics.DangerousMethodsShouldBeAvoided,
+					diagnosticDescriptor,
 					location,
 					methodName
 				);
@@ -158,7 +174,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			context.ReportDiagnostic( diagnostic );
 		}
 
-		private static readonly SymbolDisplayFormat MethodDisplayFormat = new SymbolDisplayFormat(
+		private static readonly SymbolDisplayFormat MemberDisplayFormat = new SymbolDisplayFormat(
 				memberOptions: SymbolDisplayMemberOptions.IncludeContainingType,
 				localOptions: SymbolDisplayLocalOptions.IncludeType,
 				typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
