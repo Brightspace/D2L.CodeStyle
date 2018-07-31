@@ -8,7 +8,7 @@ namespace D2L.CodeStyle.Annotations {
 		/// Indicates usages of a dangerous property have been declared as safe
 		/// </summary>
 		[AttributeUsage(
-			validOn: AttributeTargets.Property,
+			validOn: AttributeTargets.Constructor | AttributeTargets.Method | AttributeTargets.Property,
 			AllowMultiple = true,
 			Inherited = false
 		)]

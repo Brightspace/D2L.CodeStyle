@@ -8,7 +8,7 @@ namespace D2L.CodeStyle.Annotations {
 		/// Indicates usages of a dangerous property are still unaudited
 		/// </summary>
 		[AttributeUsage(
-			validOn: AttributeTargets.Property,
+			validOn: AttributeTargets.Constructor | AttributeTargets.Method | AttributeTargets.Property,
 			AllowMultiple = true,
 			Inherited = false
 		)]
