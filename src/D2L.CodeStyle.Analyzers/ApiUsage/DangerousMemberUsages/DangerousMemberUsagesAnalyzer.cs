@@ -46,7 +46,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			context.RegisterSyntaxNodeAction(
 					ctxt => {
 						if( ctxt.Node is InvocationExpressionSyntax invocation ) {
-							AnalyzeInnovation( ctxt, invocation, auditedAttributeType, unauditedAttributeType, dangerousMethods );
+							AnalyzeInvocation( ctxt, invocation, auditedAttributeType, unauditedAttributeType, dangerousMethods );
 						}
 					},
 					SyntaxKind.InvocationExpression
@@ -71,7 +71,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				);
 		}
 
-		private void AnalyzeInnovation(
+		private void AnalyzeInvocation(
 				SyntaxNodeAnalysisContext context,
 				InvocationExpressionSyntax invocation,
 				INamedTypeSymbol auditedAttributeType,
