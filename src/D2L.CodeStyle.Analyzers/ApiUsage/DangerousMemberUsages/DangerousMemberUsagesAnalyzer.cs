@@ -15,8 +15,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 		private const string DangerousMethodAuditedAttributeFullName = "D2L.CodeStyle.Annotations.DangerousMethodUsage+AuditedAttribute";
 		private const string DangerousMethodUnauditedAttributeFullName = "D2L.CodeStyle.Annotations.DangerousMethodUsage+UnauditedAttribute";
 
+		private const string DangerousPropertyAuditedAttributeFullName = "D2L.CodeStyle.Annotations.DangerousPropertyUsage+AuditedAttribute";
+		private const string DangerousPropertyUnauditedAttributeFullName = "D2L.CodeStyle.Annotations.DangerousPropertyUsage+UnauditedAttribute";
+
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-			Diagnostics.DangerousMethodsShouldBeAvoided
+			Diagnostics.DangerousMethodsShouldBeAvoided,
+			Diagnostics.DangerousPropertiesShouldBeAvoided
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -27,28 +31,44 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 
 		private void RegisterAnalysis( CompilationStartAnalysisContext context ) {
 
+			RegisterDangerousMethodAnalysis( context );
+			RegisterDangerousPropertyAnalysis( context );
+		}
+
+		private void RegisterDangerousMethodAnalysis( CompilationStartAnalysisContext context ) {
+
 			Compilation compilation = context.Compilation;
-			INamedTypeSymbol auditedAttributeType = compilation.GetTypeByMetadataName( DangerousMethodAuditedAttributeFullName );
-			INamedTypeSymbol unauditedAttributeType = compilation.GetTypeByMetadataName( DangerousMethodUnauditedAttributeFullName );
+
+			INamedTypeSymbol dangerousMethodAuditedAttributeType = compilation.GetTypeByMetadataName( DangerousMethodAuditedAttributeFullName );
+			INamedTypeSymbol dangerousMethodUnauditedAttributeType = compilation.GetTypeByMetadataName( DangerousMethodUnauditedAttributeFullName );
 			IImmutableSet<ISymbol> dangerousMethods = GetDangerousMethods( compilation );
 
 			context.RegisterSyntaxNodeAction(
-					ctxt => AnalyzeMethod( ctxt, auditedAttributeType, unauditedAttributeType, dangerousMethods ),
+					ctxt => {
+						if( ctxt.Node is InvocationExpressionSyntax invocation ) {
+							AnalyzeInnovation( ctxt, invocation, dangerousMethodAuditedAttributeType, dangerousMethodUnauditedAttributeType, dangerousMethods );
+						}
+					},
 					SyntaxKind.InvocationExpression
 				);
 		}
 
-		private void AnalyzeMethod(
-				SyntaxNodeAnalysisContext context,
-				INamedTypeSymbol auditedAttributeType,
-				INamedTypeSymbol unauditedAttributeType,
-				IImmutableSet<ISymbol> dangerousMethods
-			) {
+		private void RegisterDangerousPropertyAnalysis( CompilationStartAnalysisContext context ) {
 
-			InvocationExpressionSyntax invocation = ( context.Node as InvocationExpressionSyntax );
-			if( invocation != null ) {
-				AnalyzeInnovation( context, invocation, auditedAttributeType, unauditedAttributeType, dangerousMethods );
-			}
+			Compilation compilation = context.Compilation;
+
+			INamedTypeSymbol dangerousPropertyAuditedAttributeType = compilation.GetTypeByMetadataName( DangerousPropertyAuditedAttributeFullName );
+			INamedTypeSymbol dangerousPropertyUnauditedAttributeType = compilation.GetTypeByMetadataName( DangerousPropertyUnauditedAttributeFullName );
+			IImmutableSet<ISymbol> dangerousProperties = GetDangerousProperties( compilation );
+
+			context.RegisterSyntaxNodeAction(
+					ctxt => {
+						if( ctxt.Node is MemberAccessExpressionSyntax propertyAccess ) {
+							AnalyzePropertyAccess( ctxt, propertyAccess, dangerousPropertyAuditedAttributeType, dangerousPropertyUnauditedAttributeType, dangerousProperties );
+						}
+					},
+					SyntaxKind.SimpleMemberAccessExpression
+				);
 		}
 
 		private void AnalyzeInnovation(
@@ -68,6 +88,25 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			}
 
 			ReportDiagnostic( context, methodSymbol, Diagnostics.DangerousMethodsShouldBeAvoided );
+		}
+
+		private void AnalyzePropertyAccess(
+				SyntaxNodeAnalysisContext context,
+				MemberAccessExpressionSyntax propertyAccess,
+				INamedTypeSymbol auditedAttributeType,
+				INamedTypeSymbol unauditedAttributeType,
+				IImmutableSet<ISymbol> dangerousProperties
+			) {
+
+			ISymbol propertySymbol = context.SemanticModel
+				.GetSymbolInfo( propertyAccess )
+				.Symbol;
+
+			if( !AnalyzePotentiallyDangerousMember( context, propertySymbol, auditedAttributeType, unauditedAttributeType, dangerousProperties ) ) {
+				return;
+			}
+
+			ReportDiagnostic( context, propertySymbol, Diagnostics.DangerousPropertiesShouldBeAvoided );
 		}
 
 		private bool AnalyzePotentiallyDangerousMember(
@@ -193,10 +232,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 
 						IEnumerable<ISymbol> methods = type
 							.GetMembers( name )
-							.Where( m => (
-								m.Kind == SymbolKind.Method
-								|| m.Kind == SymbolKind.Property
-							) );
+							.Where( m => m.Kind == SymbolKind.Method );
 
 						foreach( ISymbol method in methods ) {
 							builder.Add( method );
@@ -207,5 +243,31 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 
 			return builder.ToImmutableHashSet();
 		}
+
+		private static IImmutableSet<ISymbol> GetDangerousProperties( Compilation compilation ) {
+
+			ImmutableHashSet<ISymbol>.Builder builder = ImmutableHashSet.CreateBuilder<ISymbol>();
+
+			foreach( KeyValuePair<string, ImmutableArray<string>> pairs in DangerousProperties.Definitions ) {
+
+				INamedTypeSymbol type = compilation.GetTypeByMetadataName( pairs.Key );
+				if( type != null ) {
+
+					foreach( string name in pairs.Value ) {
+
+						IEnumerable<ISymbol> properties = type
+							.GetMembers( name )
+							.Where( m => ( m.Kind == SymbolKind.Property ) );
+
+						foreach( ISymbol property in properties ) {
+							builder.Add( property );
+						}
+					}
+				}
+			}
+
+			return builder.ToImmutableHashSet();
+		}
+
 	}
 }
