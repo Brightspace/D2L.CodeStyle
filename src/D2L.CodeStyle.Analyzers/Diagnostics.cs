@@ -331,5 +331,15 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "A generic argument is marked [Immutable] but the type supplied was not immutable."
 	   );
+
+		public static readonly DiagnosticDescriptor DangerousPropertiesShouldBeAvoided = new DiagnosticDescriptor(
+			id: "D2L0039",
+			title: "Avoid using dangerous properties",
+			messageFormat: "Should not use {0} because it's considered dangerous",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Avoid using of dangerous properties"
+		);
 	}
 }
