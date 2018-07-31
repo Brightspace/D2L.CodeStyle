@@ -7,9 +7,10 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMethodUsages {
+namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
+
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
-	internal sealed class DangerousMethodUsagesAnalyzer : DiagnosticAnalyzer {
+	internal sealed class DangerousMemberUsagesAnalyzer : DiagnosticAnalyzer {
 
 		private const string AuditedAttributeFullName = "D2L.CodeStyle.Annotations.DangerousMethodUsage+AuditedAttribute";
 		private const string UnauditedAttributeFullName = "D2L.CodeStyle.Annotations.DangerousMethodUsage+UnauditedAttribute";
