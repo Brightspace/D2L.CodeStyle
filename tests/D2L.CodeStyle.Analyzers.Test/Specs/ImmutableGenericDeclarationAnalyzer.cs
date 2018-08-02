@@ -1,10 +1,18 @@
 ﻿// analyzer: D2L.CodeStyle.Analyzers.Language.ImmutableGenericDeclarationAnalyzer
 
+using System;
+
 namespace D2L.CodeStyle.Annotations {
 	public static class Objects {
 		public abstract class ImmutableAttributeBase : Attribute {
-			public Except Except { get; set; }
+			public string Except { get; set; }
 		}
+		[AttributeUsage(
+			validOn: AttributeTargets.Class
+				   | AttributeTargets.Interface
+				   | AttributeTargets.Struct
+				   | AttributeTargets.GenericParameter
+		)]
 		public sealed class Immutable : ImmutableAttributeBase { }
 		public sealed class ImmutableBaseClassAttribute : ImmutableAttributeBase { }
 	}
@@ -35,7 +43,7 @@ namespace SpecTests {
 		class ConcreteImmutableGeneric : GenericBase<ImmutableClass> {
 		}
 
-		class ConcreteKnownImmutableGeneric: GenericBase<bool> {
+		class ConcreteKnownImmutableGeneric : GenericBase<bool> {
 		}
 
 		[Objects.Immutable]
@@ -55,7 +63,7 @@ namespace SpecTests {
 		class ConcreteImmutableMultiGeneric : MultiGenericBase<ImmutableClass, ImmutableClass> {
 		}
 
-		class ConcreteKnownImmutableMultiGeneric: MultiGenericBase<bool, string> {
+		class ConcreteKnownImmutableMultiGeneric : MultiGenericBase<bool, string> {
 		}
 
 		[Objects.Immutable]
@@ -74,7 +82,7 @@ namespace SpecTests {
 		struct ImmutableStructImplementation : ImmutableInterface<ImmutableClass> {
 		}
 
-		struct KnownImmutableStructImplementation: ImmutableInterface<bool> {
+		struct KnownImmutableStructImplementation : ImmutableInterface<bool> {
 		}
 
 		[Objects.Immutable]
@@ -102,7 +110,7 @@ namespace SpecTests {
 		struct MixedImmutableStructMultiImplementation : MultiInterface<MutableClass, ImmutableClass> {
 		}
 
-		struct KnownMixedImmutableStructMultiImplementation: MultiInterface<bool, bool> {
+		struct KnownMixedImmutableStructMultiImplementation : MultiInterface<bool, bool> {
 		}
 
 		class ClassMutableProperty {
@@ -197,5 +205,32 @@ namespace SpecTests {
 			ImmutableInterface<bool> m_field;
 		}
 
+		[Objects.Immutable]
+		abstract class AbstractGenericBase<[Objects.Immutable] T> {
+		}
+
+		class GenericMethodType : AbstractGenericBase<bool> {
+		}
+
+		[Objects.Immutable]
+		interface ConstrainedInterface<[Objects.Immutable] TDefinition, [Objects.Immutable] TValue>
+			where TDefinition : AbstractGenericBase<TValue>, new() {
+		}
+
+		[Objects.Immutable]
+		class GenericMethodClass {
+
+			private ConstrainedInterface<GenericMethodType, bool> m_flag;
+
+			public void ClassMethod() {
+
+				LocalMethod( m_flag );
+
+				void LocalMethod<TDefinition>(
+					ConstrainedInterface<TDefinition, bool> flag
+				) where TDefinition : AbstractGenericBase<bool>, new() {
+				}
+			}
+		}
 	}
 }

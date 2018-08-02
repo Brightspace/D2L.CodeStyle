@@ -1,8 +1,9 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.DangerousMethodUsages.DangerousMethodUsagesAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages.DangerousMemberUsagesAnalyzer
 
 using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Web;
 using System.Web.Hosting;
 using D2L.CodeStyle.Annotations;
 using D2L.LP.Extensibility.Activation.Domain;
@@ -31,6 +32,15 @@ namespace System.Web.Hosting {
 		public static string MapPath( string virtualPath ) => virtualPath + " mapped";
 
 	}
+}
+
+namespace System.Web {
+
+	public class HttpServerUtility {
+
+		public void Transfer( string path ) {}
+	}
+
 }
 
 namespace SpecTests {
@@ -76,6 +86,11 @@ namespace SpecTests {
 
 		public void/* DangerousMethodsShouldBeAvoided(System.Web.Hosting.HostingEnvironment.MapPath) */ MethodWithMapPath(/**/) {
 			System.Web.Hosting.HostingEnvironment.MapPath( "/d2l" );
+		}
+
+		public void/* DangerousMethodsShouldBeAvoided(System.Web.HttpServerUtility.Transfer) */ MethodWithTransfer(/**/) {
+			HttpServerUtility obj = new HttpServerUtility();
+			obj.Transfer( "/new/path" );
 		}
 	}
 
@@ -130,6 +145,12 @@ namespace SpecTests {
 		public void MethodWithMapPath() {
 			HostingEnvironment.MapPath( "/d2l" );
 		}
+
+		[DangerousMethodUsage.Audited( typeof( HttpServerUtility ), "Transfer" )]
+		public void MethodWithTransfer() {
+			HttpServerUtility obj = new HttpServerUtility();
+			obj.Transfer( "/new/path" );
+		}
 	}
 
 	internal sealed class UnauditedUsages {
@@ -183,6 +204,12 @@ namespace SpecTests {
 		public void MethodWithMapPath() {
 			HostingEnvironment.MapPath( "/d2l" );
 		}
+
+		[DangerousMethodUsage.Unaudited( typeof( HttpServerUtility ), "Transfer" )]
+		public void MethodWithTransfer() {
+			HttpServerUtility obj = new HttpServerUtility();
+			obj.Transfer( "/new/path" );
+		}
 	}
 
 	internal sealed class MismatchedAuditedUsages {
@@ -220,6 +247,12 @@ namespace SpecTests {
 		[DangerousMethodUsage.Unaudited( null, "MapPath" )]
 		public void/* DangerousMethodsShouldBeAvoided(System.Web.Hosting.HostingEnvironment.MapPath) */ MethodWithMapPath(/**/) {
 			HostingEnvironment.MapPath( "/d2l" );
+		}
+
+		[DangerousMethodUsage.Unaudited( null, "Transfer" )]
+		public void/* DangerousMethodsShouldBeAvoided(System.Web.HttpServerUtility.Transfer) */ MethodWithTransfer(/**/) {
+			System.Web.HttpServerUtility obj = new System.Web.HttpServerUtility();
+			obj.Transfer( "/new/path" );
 		}
 	}
 

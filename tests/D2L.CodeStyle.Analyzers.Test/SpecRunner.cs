@@ -14,7 +14,7 @@ using Microsoft.CodeAnalysis.Text;
 using NUnit.Framework;
 
 namespace D2L.CodeStyle.Analyzers {
-	[TestFixtureSource(nameof(m_specNames))]
+	[TestFixtureSource( nameof( m_specNames ) )]
 	internal sealed class Spec {
 		/// <summary>
 		/// Compares diagnostics based on their Id and location
@@ -24,8 +24,8 @@ namespace D2L.CodeStyle.Analyzers {
 
 			bool IEqualityComparer<Diagnostic>.Equals( Diagnostic x, Diagnostic y ) {
 				return x.Id == y.Id
-				    && x.Location == y.Location
-				    && x.GetMessage() == y.GetMessage();
+					&& x.Location == y.Location
+					&& x.GetMessage() == y.GetMessage();
 			}
 
 			int IEqualityComparer<Diagnostic>.GetHashCode( Diagnostic diag ) {
@@ -43,6 +43,13 @@ namespace D2L.CodeStyle.Analyzers {
 		private readonly ImmutableArray<Diagnostic> m_expectedDiagnostics;
 		private readonly ImmutableArray<Diagnostic> m_actualDiagnostics;
 		private readonly ImmutableHashSet<Diagnostic> m_matchedDiagnostics;
+
+		private static readonly MetadataReference CorlibReference = MetadataReference.CreateFromFile( typeof( object ).Assembly.Location );
+		private static readonly MetadataReference SystemReference = MetadataReference.CreateFromFile( typeof( System.Uri ).Assembly.Location );
+		private static readonly MetadataReference SystemCoreReference = MetadataReference.CreateFromFile( typeof( Enumerable ).Assembly.Location );
+		private static readonly MetadataReference CSharpSymbolsReference = MetadataReference.CreateFromFile( typeof( CSharpCompilation ).Assembly.Location );
+		private static readonly MetadataReference CodeAnalysisReference = MetadataReference.CreateFromFile( typeof( Compilation ).Assembly.Location );
+		private static readonly MetadataReference SystemRuntimeReference = MetadataReference.CreateFromFile( Assembly.Load( "System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" ).Location );
 
 		/// <summary>
 		/// Loads all the source code to all the spec files.
@@ -84,7 +91,7 @@ namespace D2L.CodeStyle.Analyzers {
 		/// The name of the spec to run (its source code is in m_specSource.)
 		/// </param>
 		public Spec( string specName ) {
-			var source = m_specSource[specName];
+			var source = m_specSource[ specName ];
 
 			var analyzer = GetAnalyzerNameFromSpec( source );
 
@@ -154,7 +161,7 @@ namespace D2L.CodeStyle.Analyzers {
 					source = specStream.ReadToEnd();
 				}
 
-				specNameToSourceCode[specName] = source;
+				specNameToSourceCode[ specName ] = source;
 			}
 		}
 
@@ -198,7 +205,7 @@ namespace D2L.CodeStyle.Analyzers {
 				while( it.MoveNext() ) {
 					var first = it.Current;
 
-					if ( !it.MoveNext() ) {
+					if( !it.MoveNext() ) {
 						Assert.Fail( $"Missing end delimiter for comment at {first.GetLocation()}" );
 					}
 
@@ -254,7 +261,7 @@ namespace D2L.CodeStyle.Analyzers {
 					);
 				}
 
-				Assert.AreEqual( ')', str[str.Length - 1] );
+				Assert.AreEqual( ')', str[ str.Length - 1 ] );
 
 				var name = str.Substring( 0, indexOfOpenParen );
 
@@ -294,9 +301,9 @@ namespace D2L.CodeStyle.Analyzers {
 				// Every assertion's start comment must map to a diagnostic
 				// defined in Common.Diagnostics
 				DiagnosticDescriptor descriptor;
-				if ( !m_possibleDiagnostics.TryGetValue( diagnosticExpectation.Name, out descriptor ) ) {
+				if( !m_possibleDiagnostics.TryGetValue( diagnosticExpectation.Name, out descriptor ) ) {
 					Assert.Fail( $"Comment at {start.GetLocation()} doesn't map to a diagnostic defined in Common.Diagnostic" );
-					
+
 				}
 				// Every assertion-comment pair starts with a comment
 				// containing the name of a diagnostic and then an empty
@@ -335,19 +342,30 @@ namespace D2L.CodeStyle.Analyzers {
 			var solution = new AdhocWorkspace().CurrentSolution
 				.AddProject( projectId, specName, specName, LanguageNames.CSharp )
 
-				// mscorlib
-				.AddMetadataReference(
-					projectId,
-					MetadataReference
-						.CreateFromFile( typeof( object ).Assembly.Location ) )
-
-				// system.core
-				.AddMetadataReference(
-					projectId,
-					MetadataReference
-						.CreateFromFile( typeof( Enumerable ).Assembly.Location ) )
+				.AddMetadataReference( projectId, CorlibReference )
+				.AddMetadataReference( projectId, SystemReference )
+				.AddMetadataReference( projectId, SystemCoreReference )
+				.AddMetadataReference( projectId, CSharpSymbolsReference )
+				.AddMetadataReference( projectId, CodeAnalysisReference )
+				.AddMetadataReference( projectId, SystemRuntimeReference )
 
 				.AddDocument( documentId, filename, SourceText.From( source ) );
+
+			var compilationOptions = solution
+				.GetProject( projectId )
+				.CompilationOptions
+				.WithOutputKind( OutputKind.DynamicallyLinkedLibrary );
+
+			CSharpParseOptions parseOptions = solution
+				.GetProject( projectId )
+				.ParseOptions as CSharpParseOptions;
+
+			parseOptions = parseOptions
+				.WithLanguageVersion( LanguageVersion.CSharp7_3 );
+
+			solution = solution
+				.WithProjectCompilationOptions( projectId, compilationOptions )
+				.WithProjectParseOptions( projectId, parseOptions );
 
 			return solution.Projects.First()
 				.GetCompilationAsync().Result;
