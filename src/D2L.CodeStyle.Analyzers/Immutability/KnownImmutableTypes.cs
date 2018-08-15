@@ -89,6 +89,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return true;
 			}
 
+			if (type.TypeKind == TypeKind.Enum) {
+				return true;
+			}
+
 			string typeName = type.GetFullTypeName();
 
 			if( DeclaredKnownImmutableTypes.Contains( typeName ) ) {

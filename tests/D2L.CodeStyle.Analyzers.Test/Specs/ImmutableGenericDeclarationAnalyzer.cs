@@ -23,6 +23,11 @@ namespace SpecTests {
 
 	class ConcreteGenericTests {
 
+		enum TheEnum {
+			Unknown,
+			Known
+		}
+
 		[Objects.Immutable]
 		class ImmutableClass {
 			private readonly string m_ImmutableClass;
@@ -231,6 +236,10 @@ namespace SpecTests {
 				) where TDefinition : AbstractGenericBase<bool>, new() {
 				}
 			}
+		}
+
+		public class ImmutableEnum {
+			public ImmutableInterface<TheEnum> Prop { get; set; }
 		}
 	}
 }
