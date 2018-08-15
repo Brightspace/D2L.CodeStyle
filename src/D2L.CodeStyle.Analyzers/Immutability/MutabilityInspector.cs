@@ -503,10 +503,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						MutabilityCause.IsDynamic
 					);
 
-				case TypeKind.Enum:
-					// Enums are just fancy ints.
-					return MutabilityInspectionResult.NotMutable();
-
 				case TypeKind.TypeParameter:
 					return DoInspectTypeParameter(
 						type,
