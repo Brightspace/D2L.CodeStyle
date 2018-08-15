@@ -53,7 +53,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// A list of known immutable special types.
 		/// </summary
 		private readonly static ImmutableArray<SpecialType> ImmutableSpecialTypes = ImmutableArray.Create(
-			SpecialType.System_Enum,
 			SpecialType.System_Boolean,
 			SpecialType.System_Char,
 			SpecialType.System_SByte,
@@ -86,6 +85,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		internal bool IsTypeKnownImmutable( ITypeSymbol type ) {
 			if( ImmutableSpecialTypes.Contains( type.SpecialType ) ) {
+				return true;
+			}
+
+			if (type.TypeKind == TypeKind.Enum) {
 				return true;
 			}
 
