@@ -53,6 +53,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// A list of known immutable special types.
 		/// </summary
 		private readonly static ImmutableArray<SpecialType> ImmutableSpecialTypes = ImmutableArray.Create(
+			SpecialType.System_Enum,
 			SpecialType.System_Boolean,
 			SpecialType.System_Char,
 			SpecialType.System_SByte,
@@ -70,7 +71,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			SpecialType.System_IntPtr,
 			SpecialType.System_UIntPtr
 		);
-		
+
 		/// <summary>
 		/// A list of known immutable types defined for the assembly.
 		/// </summary>
@@ -88,7 +89,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return true;
 			}
 
-			if (type.TypeKind == TypeKind.Enum) {
+			if( type.TypeKind == TypeKind.Enum ) {
 				return true;
 			}
 
@@ -109,7 +110,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			var typesAttributes = Attributes.Types.Audited.GetAll( a );
 
 			foreach( var attribute in typesAttributes ) {
-				var typeofArgument = attribute.ConstructorArguments[0];
+				var typeofArgument = attribute.ConstructorArguments[ 0 ];
 				var value = typeofArgument.Value as INamedTypeSymbol;
 				if( value == null ) {
 					// unable to extract the type, continue safely

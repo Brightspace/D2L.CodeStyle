@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using D2L.CodeStyle.Analyzers.Immutability;
@@ -26,7 +27,9 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			var knownImmutableTypes = new KnownImmutableTypes( context.Compilation.Assembly );
 
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeNode( ctx, knownImmutableTypes ),
+				ctx => AnalyzeNode( 
+					ctx, 
+					knownImmutableTypes ),
 				SyntaxKind.GenericName );
 		}
 
@@ -62,6 +65,15 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				var typeSymbol = argumentSymbolInfo.Symbol as ITypeSymbol;
 				if( typeSymbol == default ) {
 					continue;
+				}
+
+				var typeName = typeSymbol.GetFullTypeName();
+				if( typeName == "System.Nullable" ) {
+					var namedTypeSymbol = typeSymbol as INamedTypeSymbol;
+					if (namedTypeSymbol == default(INamedTypeSymbol)) {
+						continue;
+					}
+					typeSymbol = namedTypeSymbol.TypeArguments[ 0 ];
 				}
 
 				if( knownImmutableTypes.IsTypeKnownImmutable( typeSymbol ) ) {
