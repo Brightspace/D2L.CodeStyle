@@ -1,6 +1,7 @@
 ﻿// analyzer: D2L.CodeStyle.Analyzers.Language.ImmutableGenericDeclarationAnalyzer
 
 using System;
+using System.Collections.Generic;
 
 namespace D2L.CodeStyle.Annotations {
 	public static class Objects {
@@ -246,32 +247,20 @@ namespace SpecTests {
 			ImmutableInterface<bool> Prop { get; set; }
 		}
 
-		class ImmutableGenericByte {
-			ImmutableInterface<byte> Prop { get; set; }
-		}
-
-		class ImmutableGenericShort {
-			ImmutableInterface<short> Prop { get; set; }
-		}
-
-		class ImmutableGenericInt {
-			ImmutableInterface<int> Prop { get; set; }
-		}
-
-		class ImmutableGenericLong {
-			ImmutableInterface<long> Prop { get; set; }
-		}
-
-		class ImmutableGenericFloat {
-			ImmutableInterface<float> Prop { get; set; }
-		}
-
-		class ImmutableGenericDouble {
-			ImmutableInterface<double> Prop { get; set; }
-		}
-
 		class ImmutableNullableLong {
 			ImmutableInterface<long?> Prop { get; set; }
+		}
+
+		class ImmutableEnumerableNullableLong {
+			ImmutableInterface<IEnumerable<long?>> Prop { get; set; }
+		}
+
+		class ImmutableDictionaryStringNullableLong {
+			ImmutableInterface<IReadOnlyDictionary<string, long?>> Prop { get; set; }
+		}
+
+		class ImmutableDictionaryStringMutableClass {
+			/* GenericArgumentTypeMustBeImmutable(MutableClass) */ ImmutableInterface<IReadOnlyDictionary<string, MutableClass>> /**/ Prop { get; set; }
 		}
 	}
 }
