@@ -10,9 +10,9 @@ using System.Runtime.InteropServices;
 
 [assembly: ComVisible( false )]
 
-[assembly: AssemblyVersion( "0.75.0.0" )]
-[assembly: AssemblyFileVersion( "0.75.0.0" )]
-[assembly: AssemblyInformationalVersion( "0.75.0.0" )]
+[assembly: AssemblyVersion( "0.76.0.0" )]
+[assembly: AssemblyFileVersion( "0.76.0.0" )]
+[assembly: AssemblyInformationalVersion( "0.76.0.0" )]
 
 [assembly: InternalsVisibleTo( "D2L.CodeStyle.Analyzers.Tests" )]
 [assembly: InternalsVisibleTo( "DynamicProxyGenAssembly2" )]
