@@ -238,36 +238,40 @@ namespace SpecTests {
 			}
 		}
 
-		public class ImmutableGenericEnum {
-			public ImmutableInterface<TheEnum> Prop { get; set; }
+		class ImmutableGenericEnum {
+			ImmutableInterface<TheEnum> Prop { get; set; }
 		}
 
-		public class ImmutableGenericBool {
-			public ImmutableInterface<bool> Prop { get; set; }
+		class ImmutableGenericBool {
+			ImmutableInterface<bool> Prop { get; set; }
 		}
 
-		public class ImmutableGenericByte {
-			public ImmutableInterface<byte> Prop { get; set; }
+		class ImmutableGenericByte {
+			ImmutableInterface<byte> Prop { get; set; }
 		}
 
-		public class ImmutableGenericShort {
-			public ImmutableInterface<short> Prop { get; set; }
+		class ImmutableGenericShort {
+			ImmutableInterface<short> Prop { get; set; }
 		}
 
-		public class ImmutableGenericInt {
-			public ImmutableInterface<int> Prop { get; set; }
+		class ImmutableGenericInt {
+			ImmutableInterface<int> Prop { get; set; }
 		}
 
-		public class ImmutableGenericLong {
-			public ImmutableInterface<long> Prop { get; set; }
+		class ImmutableGenericLong {
+			ImmutableInterface<long> Prop { get; set; }
 		}
 
-		public class ImmutableGenericFloat {
-			public ImmutableInterface<float> Prop { get; set; }
+		class ImmutableGenericFloat {
+			ImmutableInterface<float> Prop { get; set; }
 		}
 
-		public class ImmutableGenericDouble {
-			public ImmutableInterface<double> Prop { get; set; }
+		class ImmutableGenericDouble {
+			ImmutableInterface<double> Prop { get; set; }
+		}
+
+		class ImmutableNullableLong {
+			ImmutableInterface<long?> Prop { get; set; }
 		}
 	}
 }
