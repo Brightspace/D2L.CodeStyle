@@ -27,8 +27,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			var knownImmutableTypes = new KnownImmutableTypes( context.Compilation.Assembly );
 
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeNode( 
-					ctx, 
+				ctx => AnalyzeNode(
+					ctx,
 					knownImmutableTypes ),
 				SyntaxKind.GenericName );
 		}
@@ -42,7 +42,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			// Attributes are not allowed on local function parameters so we
 			// have to ignore this node, otherwise we'll tell people to
 			// annotate a declaration that is forbidden.
-			if( syntaxNode.Ancestors().Any( a => a is LocalFunctionStatementSyntax )) {
+			if( syntaxNode.Ancestors().Any( a => a is LocalFunctionStatementSyntax ) ) {
 				return;
 			}
 
@@ -67,21 +67,35 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					continue;
 				}
 
-				var typeName = typeSymbol.GetFullTypeName();
-				if( typeName == "System.Nullable" ) {
-					var namedTypeSymbol = typeSymbol as INamedTypeSymbol;
-					if (namedTypeSymbol == default(INamedTypeSymbol)) {
-						continue;
-					}
-					typeSymbol = namedTypeSymbol.TypeArguments[ 0 ];
+				ValidateImmutability(
+					context,
+					typeSymbol,
+					knownImmutableTypes );
+			}
+		}
+
+		private static void ValidateImmutability(
+			SyntaxNodeAnalysisContext context,
+			ITypeSymbol typeSymbol,
+			KnownImmutableTypes knownImmutableTypes
+		) {
+			if( ImmutableContainerMethods.IsAnImmutableContainerType( typeSymbol ) ) {
+
+				var namedTypeSymbol = typeSymbol as INamedTypeSymbol;
+				if( namedTypeSymbol == default( INamedTypeSymbol ) ) {
+					context.ReportDiagnostic( Diagnostic.Create(
+						Diagnostics.GenericArgumentTypeMustBeImmutable,
+						context.Node.GetLocation(),
+						messageArgs: new object[] { namedTypeSymbol.Name } ) );
 				}
 
-				if( knownImmutableTypes.IsTypeKnownImmutable( typeSymbol ) ) {
-					continue;
-				}
+				foreach( var typeArgument in namedTypeSymbol.TypeArguments ) {
 
-				ImmutabilityScope argumentScope = typeSymbol.GetImmutabilityScope();
-				if( argumentScope != ImmutabilityScope.SelfAndChildren ) {
+					ValidateImmutability( context, typeArgument, knownImmutableTypes );
+				}
+			} else {
+				if( ( !knownImmutableTypes.IsTypeKnownImmutable( typeSymbol ) ) &&
+					( typeSymbol.GetImmutabilityScope() != ImmutabilityScope.SelfAndChildren ) ) {
 
 					context.ReportDiagnostic( Diagnostic.Create(
 						Diagnostics.GenericArgumentTypeMustBeImmutable,

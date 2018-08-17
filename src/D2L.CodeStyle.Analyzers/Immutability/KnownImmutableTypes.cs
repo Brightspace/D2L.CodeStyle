@@ -111,8 +111,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			foreach( var attribute in typesAttributes ) {
 				var typeofArgument = attribute.ConstructorArguments[ 0 ];
-				var value = typeofArgument.Value as INamedTypeSymbol;
-				if( value == null ) {
+				if( !( typeofArgument.Value is INamedTypeSymbol value ) ) {
 					// unable to extract the type, continue safely
 					continue;
 				}
