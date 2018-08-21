@@ -16,6 +16,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			"D2L.LP.OrgUnits.OrgId",
 			"D2L.LP.OrgUnits.OrgUnitId",
 
+			"Amazon.S3.IAmazonS3",
 			"count4net.IRateCounter",
 			"count4net.IStatCounter",
 			"count4net.IValueCounter",
