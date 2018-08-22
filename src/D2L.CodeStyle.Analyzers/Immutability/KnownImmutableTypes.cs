@@ -31,6 +31,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			"System.Drawing.Imaging.ImageFormat",
 			"System.Drawing.Size", // only safe because it's a struct with primitive fields
 			"System.Guid",
+			"System.Net.IPNetwork",
 			"System.Reflection.ConstructorInfo",
 			"System.Reflection.FieldInfo",
 			"System.Reflection.MemberInfo",
