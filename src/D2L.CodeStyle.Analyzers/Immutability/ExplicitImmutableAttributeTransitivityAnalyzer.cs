@@ -23,7 +23,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 
 		public override void Initialize( AnalysisContext context ) {
-			//context.EnableConcurrentExecution();
+			context.EnableConcurrentExecution();
 			context.RegisterCompilationStartAction( CompilationStart );
 		}
 

@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -106,8 +107,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return AddImmutableAttribute( cls );
 			} else if ( decl is StructDeclarationSyntax st ) {
 				return AddImmutableAttribute( st );
+			} else if ( decl is InterfaceDeclarationSyntax iface ) {
+				return AddImmutableAttribute( iface );
 			} else {
-				return AddImmutableAttribute( decl as InterfaceDeclarationSyntax );
+				throw new NotImplementedException();
 			}
 		}
 
