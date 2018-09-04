@@ -69,6 +69,7 @@
     <Compile Include="ApiUsage\DependencyInjection\Domain\RegisterPluginForExtensionPointExpression.cs" />
     <Compile Include="ApiUsage\DependencyInjection\Domain\RegisterSubInterfaceExpression.cs" />
     <Compile Include="Diagnostics.cs" />
+    <Compile Include="Immutability\AddImmutableExceptionsCodeFix.cs" />
     <Compile Include="Immutability\ImmutableHelpers.cs" />
     <Compile Include="Immutability\KnownImmutableTypes.cs" />
     <Compile Include="Immutability\MutabilityInspectionResult.cs" />

@@ -185,7 +185,7 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor ImmutableExceptionInheritanceIsInvalid = new DiagnosticDescriptor(
 			id: "D2L0024",
 			title: "Immutable exceptions are not valid for this type.",
-			messageFormat: "This type is marked immutable, but it has more permissive immutability than its base type '{0}'. {1}",
+			messageFormat: "This type is marked immutable, but it has more permissive immutability than its base type '{0}'.",
 			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
