@@ -73,6 +73,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			var expr = CombineReasons( syntaxForExcepts );
 
+			// Note: the argument on attr is ignored. We may add exceptions
+			// that are allowed by our super-types but weren't allowed
+			// previously. :(
 			var newAttr = attr.WithArgumentList(
 				SyntaxFactory.AttributeArgumentList(
 					SyntaxFactory.SingletonSeparatedList(
