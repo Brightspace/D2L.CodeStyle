@@ -68,7 +68,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			var allInheritedExceptions = declType.GetInheritedImmutableExceptions();
 
+			// We start maximalExceptions with the values from
+			// directExceptions. We only ever change it by intersecting it with
+			// other sets which means it will never be bigger than
+			// directExceptions. This is nice because we may suggest a fix which
+			// involves setting the exceptions to this set, i.e. we will never
+			// suggest to *add* new kinds of exceptions.
 			var maximalExceptions = new HashSet<string>( directExceptions );
+
 			ISymbol aSuperTypeWithFewerAllowedExceptions = null;
 
 			foreach( var inheritedExceptions in allInheritedExceptions ) {
