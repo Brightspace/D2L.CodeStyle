@@ -41,10 +41,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 				var maxExceptionsAllowed = diagnostic.Properties["excepts"];
 
-				if ( maxExceptionsAllowed == "" ) {
-					maxExceptionsAllowed = "None";
-				}
-
 				context.RegisterCodeFix(
 					CodeAction.Create(
 						title: "Restrict unaudited reasons allowed by [Immutable] annotation",
@@ -96,9 +92,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return SyntaxFactory.ParseName( "Except." + name );
 		}
 
+		private static readonly NameSyntax ExceptNone
+			= SyntaxFactory.ParseName( "Except.None" );
+
 		public static ExpressionSyntax CombineReasons( ImmutableArray<NameSyntax> values ) {
 			if ( values.IsEmpty ) {
-				throw new InvalidOperationException();
+				return ExceptNone;
 			}
 
 			ExpressionSyntax result = values[0];
