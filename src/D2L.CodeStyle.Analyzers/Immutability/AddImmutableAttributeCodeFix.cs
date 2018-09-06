@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,6 +10,18 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
+	// BUG: if there are two partial declarations, each declaring some
+	// implemented interfaces that have [Immutable] we may emit two, one for
+	// each decl which would make this code fix insert multiple [Immutable]
+	// attributes if the user does a "Fix All" in VS. This will break because
+	// [Immutable] has AllowMultiple = false.
+	//
+	// To fix it maybe we could make this fixer find all decl syntaxes
+	// and use some method to pick one (e.g. look at the BaseList syntax,
+	// ToString() it and pick the lowest lexicographically) and only suggest a
+	// fix on that decl. VS will take care of de-duping these fixes in a
+	// "Fix All".
+
 	[ExportCodeFixProvider(
 		LanguageNames.CSharp,
 		Name = nameof( AddImmutableAttributeCodeFix )

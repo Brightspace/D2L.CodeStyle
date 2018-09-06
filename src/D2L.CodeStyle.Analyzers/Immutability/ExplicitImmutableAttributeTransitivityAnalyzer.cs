@@ -73,38 +73,49 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
-			// So we don't have [Immutable]: check if we should for some reason
+			// The BaseList is the syntax for the ": A, B, C" part which may
+			// include a base class and any number of interfaces. We aren't
+			// looking at type.Interfaces and type.BaseType (from the semantic
+			// model) because we don't want to produce multiple diagnostics for
+			// partial classes. Instead, we attach any diagnostic to whatever
+			// partial declaration mentions a base class or interface that is
+			// [Immutable].
 
-			foreach( var iface in type.Interfaces ) {
-				if( hasTheImmutableAttribute( iface ) ) {
-					context.ReportDiagnostic(
-						CreateDiagnostic(
-							declaredThing: type,
-							declSyntax: decl,
-							otherThing: iface,
-							otherThingKind: "interface"
-						)
-					);
-					return;
-				}
-			}
-
-			// Only thing left to check is the base type
-
-			if( type.BaseType == null ) {
+			if ( decl.BaseList == null ) {
+				// No base class or interfaces on this decl so nothing to check.
 				return;
 			}
 
-			if ( hasTheImmutableAttribute( type.BaseType ) ) {
+			foreach( var baseType in decl.BaseList.Types ) {
+				var typeSymbol = context.SemanticModel
+					.GetSymbolInfo( baseType.Type ).Symbol
+					// Not aware of any reason this cast could fail:
+					as ITypeSymbol;
+
+				if ( !hasTheImmutableAttribute( typeSymbol ) ) {
+					continue;
+				}
+
+				// The docs say the only things that can have BaseType == null
+				// are interfaces, System.Object itself (won't come up in our
+				// analysis because (1) it !hasTheImmutableAttribute (2) you
+				// can't explicitly list it as a base class anyway) and
+				// pointer types (the base value type probably also doesn't
+				// have it.)
+				bool isInterface =
+					typeSymbol.BaseType == null
+					&& typeSymbol.SpecialType != SpecialType.System_Object
+					&& typeSymbol.SpecialType != SpecialType.System_ValueType
+					&& typeSymbol.Kind != SymbolKind.PointerType;
+
 				context.ReportDiagnostic(
 					CreateDiagnostic(
 						declaredThing: type,
 						declSyntax: decl,
-						otherThing: type.BaseType,
-						otherThingKind: "base class"
+						otherThing: typeSymbol,
+						otherThingKind: isInterface ? "interface" : "base class"
 					)
 				);
-				return;
 			}
 		}
 

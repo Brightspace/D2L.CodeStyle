@@ -66,4 +66,19 @@ namespace Tests {
 	// and it's unlikely to come up in practice if you make small changes
 	// between compiles.
 	public sealed class IndirectlySadClass : SadDeriver { }
+
+	public partial class
+	/* MissingTransitiveImmutableAttribute(Tests.PartialClass, interface, Tests.ISomethingImmutable) */ PartialClass /**/
+		: ISomethingImmutable { }
+
+	// This one doesn't get the diagnostic. We attach it to the one that specified
+	// the interface.
+	public partial class PartialClass { }
+
+	// We will emit another diagnostic here though... this makes sense but the
+	// code fix will try to apply multiple [Immutable] attributes which isn't
+	// allowed...
+	public partial class
+	/* MissingTransitiveImmutableAttribute(Tests.PartialClass, base class, Tests.HappyImplementor) */ PartialClass /**/
+		: HappyImplementor { }
 }
