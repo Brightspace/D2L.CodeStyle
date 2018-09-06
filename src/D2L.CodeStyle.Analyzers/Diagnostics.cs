@@ -341,5 +341,15 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "Avoid using of dangerous properties"
 		);
+
+		public static readonly DiagnosticDescriptor MissingTransitiveImmutableAttribute = new DiagnosticDescriptor(
+			id: "D2L0040",
+			title: "Missing an explicit transitive [Immutable] attribute",
+			messageFormat: "{0} should be [Immutable] because the {1} {2} is.",
+			category: "",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "The implications of [Immutable] apply transitively to derived classes and interface implementations. We require that [Immutable] is explicity applied transitively for clarity and simplicity."
+		);
 	}
 }

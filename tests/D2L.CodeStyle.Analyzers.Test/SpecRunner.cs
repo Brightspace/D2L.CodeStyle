@@ -272,7 +272,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 				return new DiagnosticExpectation(
 					name: name,
-					arguments: arguments.Split( ',' ).ToImmutableArray()
+					arguments: arguments.Split( ',' ).Select( arg => arg.Trim() ).ToImmutableArray()
 				);
 			}
 
