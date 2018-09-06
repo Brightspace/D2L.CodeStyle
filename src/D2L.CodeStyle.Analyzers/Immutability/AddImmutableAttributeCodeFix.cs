@@ -114,46 +114,32 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		public static TypeDeclarationSyntax AddImmutableAttribute(
 			TypeDeclarationSyntax decl
 		) {
+			var leadingTrivia = decl.GetLeadingTrivia();
+
+			// Need to strip the trivia first before adding attribute lists
+			// because if it doesn't have any attr lists now it won't be able
+			// to remove the trivia from whatever the first token is when we
+			// add an attribute list.
+			decl = decl.WithoutLeadingTrivia();
+
+			// TypeDeclarationSyntax (the base class of these 3 types) doesn't
+			// have AddAttributeLists... so we need to copy+paste some code.
+
 			if ( decl is ClassDeclarationSyntax cls ) {
-				return AddImmutableAttribute( cls );
+				decl = cls.AddAttributeLists( ImmutableAttributeSyntax );
+
 			} else if ( decl is StructDeclarationSyntax st ) {
-				return AddImmutableAttribute( st );
+				decl = st.AddAttributeLists( ImmutableAttributeSyntax );
+
 			} else if ( decl is InterfaceDeclarationSyntax iface ) {
-				return AddImmutableAttribute( iface );
+				decl = iface.AddAttributeLists( ImmutableAttributeSyntax );
+
 			} else {
 				throw new NotImplementedException();
 			}
+
+			// Re-add any leading trivia
+			return decl.WithLeadingTrivia( leadingTrivia );
 		}
-
-		#region AddImmutableAttribute overloads
-
-		// TypeDeclarationSyntax (the base class of these 3 types) doesn't
-		// have WithAttributeLists... so we need to copy+paste some code.
-
-		private static TypeDeclarationSyntax AddImmutableAttribute(
-			ClassDeclarationSyntax decl
-		) {
-			return decl.WithAttributeLists(
-				decl.AttributeLists.Add( ImmutableAttributeSyntax )
-			);
-		}
-
-		private static TypeDeclarationSyntax AddImmutableAttribute(
-			StructDeclarationSyntax decl
-		) {
-			return decl.WithAttributeLists(
-				decl.AttributeLists.Add( ImmutableAttributeSyntax )
-			);
-		}
-
-		private static TypeDeclarationSyntax AddImmutableAttribute(
-			InterfaceDeclarationSyntax decl
-		) {
-			return decl.WithAttributeLists(
-				decl.AttributeLists.Add( ImmutableAttributeSyntax )
-			);
-		}
-
-		#endregion
 	}
 }
