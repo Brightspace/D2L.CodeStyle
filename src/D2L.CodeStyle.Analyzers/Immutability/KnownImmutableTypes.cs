@@ -5,8 +5,6 @@ using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
 	internal sealed class KnownImmutableTypes {
-		internal static readonly KnownImmutableTypes Default = new KnownImmutableTypes( ImmutableHashSet<string>.Empty );
-
 		/// <summary>
 		/// A list of known immutable types.
 		/// </summary>
@@ -69,19 +67,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			SpecialType.System_UIntPtr
 		);
 
-		/// <summary>
-		/// A list of known immutable types defined for the assembly.
-		/// </summary>
-		private readonly ImmutableHashSet<string> DeclaredKnownImmutableTypes;
-
-		internal KnownImmutableTypes( ImmutableHashSet<string> declaredKnownImmutableTypes ) {
-			DeclaredKnownImmutableTypes = declaredKnownImmutableTypes;
-		}
-
-		internal KnownImmutableTypes( IAssemblySymbol a )
-			: this( LoadFromAssembly( a ).ToImmutableHashSet() ) { }
-
-		internal bool IsTypeKnownImmutable( ITypeSymbol type ) {
+		internal static bool IsTypeKnownImmutable( ITypeSymbol type ) {
 			if( ImmutableSpecialTypes.Contains( type.SpecialType ) ) {
 				return true;
 			}
@@ -92,29 +78,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			string typeName = type.GetFullTypeName();
 
-			if( DeclaredKnownImmutableTypes.Contains( typeName ) ) {
-				return true;
-			}
-
 			if( DefaultKnownImmutableTypes.Contains( typeName ) ) {
 				return true;
 			}
 
 			return false;
-		}
-
-		private static IEnumerable<string> LoadFromAssembly( IAssemblySymbol a ) {
-			var typesAttributes = Attributes.Types.Audited.GetAll( a );
-
-			foreach( var attribute in typesAttributes ) {
-				var typeofArgument = attribute.ConstructorArguments[ 0 ];
-				if( !( typeofArgument.Value is INamedTypeSymbol value ) ) {
-					// unable to extract the type, continue safely
-					continue;
-				}
-
-				yield return value.GetFullTypeName();
-			}
 		}
 	}
 }

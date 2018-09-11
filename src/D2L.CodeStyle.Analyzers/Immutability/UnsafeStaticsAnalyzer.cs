@@ -36,10 +36,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		private void RegisterAnalysis( CompilationStartAnalysisContext context ) {
-			var inspector = new MutabilityInspector(
-				context.Compilation,
-				new KnownImmutableTypes( context.Compilation.Assembly )
-			);
+			var inspector = new MutabilityInspector( context.Compilation );
 
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeField( ctx, inspector ),

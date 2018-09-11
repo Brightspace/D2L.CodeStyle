@@ -24,18 +24,13 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		private static void RegisterAnalyzer(
 			CompilationStartAnalysisContext context
 		) {
-			var knownImmutableTypes = new KnownImmutableTypes( context.Compilation.Assembly );
-
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeNode(
-					ctx,
-					knownImmutableTypes ),
+				AnalyzeNode,
 				SyntaxKind.GenericName );
 		}
 
 		private static void AnalyzeNode(
-			SyntaxNodeAnalysisContext context,
-			KnownImmutableTypes knownImmutableTypes
+			SyntaxNodeAnalysisContext context
 		) {
 			var syntaxNode = context.Node as GenericNameSyntax;
 
@@ -69,15 +64,14 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 				ValidateImmutability(
 					context,
-					typeSymbol,
-					knownImmutableTypes );
+					typeSymbol
+				);
 			}
 		}
 
 		private static void ValidateImmutability(
 			SyntaxNodeAnalysisContext context,
-			ITypeSymbol typeSymbol,
-			KnownImmutableTypes knownImmutableTypes
+			ITypeSymbol typeSymbol
 		) {
 			if( ImmutableContainerMethods.IsAnImmutableContainerType( typeSymbol ) ) {
 
@@ -91,10 +85,10 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 				foreach( var typeArgument in namedTypeSymbol.TypeArguments ) {
 
-					ValidateImmutability( context, typeArgument, knownImmutableTypes );
+					ValidateImmutability( context, typeArgument );
 				}
 			} else {
-				if( ( !knownImmutableTypes.IsTypeKnownImmutable( typeSymbol ) ) &&
+				if( ( !KnownImmutableTypes.IsTypeKnownImmutable( typeSymbol ) ) &&
 					( typeSymbol.GetImmutabilityScope() != ImmutabilityScope.SelfAndChildren ) ) {
 
 					context.ReportDiagnostic( Diagnostic.Create(

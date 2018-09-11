@@ -40,7 +40,6 @@
   <ItemGroup>
     <Compile Include="Immutability\BecauseHelpersTests.cs" />
     <Compile Include="Immutability\ImmutableHelpersTests.cs" />
-    <Compile Include="Immutability\KnownImmutableTypesTests.cs" />
     <Compile Include="Immutability\MutabilityInspectionResultFormatterTests.cs" />
     <Compile Include="Immutability\MutabilityInspectorTests.cs" />
     <Compile Include="Immutability\MutabilityInspector_IsTypeMarkedImmutableTests.cs" />
