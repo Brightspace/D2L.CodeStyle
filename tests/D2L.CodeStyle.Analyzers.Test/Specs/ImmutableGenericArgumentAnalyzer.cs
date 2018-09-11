@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.Language.ImmutableGenericArgumentAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.Immutability.ImmutableGenericArgumentAnalyzer
 
 namespace D2L.CodeStyle.Annotations {
 	public static class Objects {

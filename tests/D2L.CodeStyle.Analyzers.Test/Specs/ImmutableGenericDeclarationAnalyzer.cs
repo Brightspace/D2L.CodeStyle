@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.Language.ImmutableGenericDeclarationAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.Immutability.ImmutableGenericDeclarationAnalyzer
 
 using System;
 using System.Collections.Generic;

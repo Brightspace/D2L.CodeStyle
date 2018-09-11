@@ -5,7 +5,7 @@ using D2L.CodeStyle.Analyzers.Immutability;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace D2L.CodeStyle.Analyzers.Language {
+namespace D2L.CodeStyle.Analyzers.Immutability {
 	/// <summary>
 	/// Emit diagnostics for generic types that must be marked immutable but
 	/// aren't.
