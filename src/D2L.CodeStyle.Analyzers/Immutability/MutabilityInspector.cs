@@ -32,12 +32,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private readonly ConcurrentDictionary<(ITypeSymbol Symbol, MutabilityInspectionFlags Flags), MutabilityInspectionResult> m_cache
 			= new ConcurrentDictionary<(ITypeSymbol Symbol, MutabilityInspectionFlags Flags), MutabilityInspectionResult>();
 
-		internal MutabilityInspector(
-			Compilation compilation,
-			KnownImmutableTypes knownImmutableTypes
-		) {
+		internal MutabilityInspector( Compilation compilation ) {
 			m_compilation = compilation;
-			m_knownImmutableTypes = knownImmutableTypes;
 		}
 
 		/// <summary>
@@ -465,7 +461,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return MutabilityInspectionResult.NotMutable( immutableExceptions );
 			}
 
-			if( m_knownImmutableTypes.IsTypeKnownImmutable( type ) ) {
+			if( KnownImmutableTypes.IsTypeKnownImmutable( type ) ) {
 				return MutabilityInspectionResult.NotMutable();
 			}
 
