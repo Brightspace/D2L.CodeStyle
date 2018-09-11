@@ -47,8 +47,8 @@ namespace SpecTests {
 
 		sealed class ClassNotMarkedImmutableImplementingExceptedImmutable : IExceptedImmutableInterface { }
 
-		[Objects.Immutable]
-		sealed class /* ImmutableExceptionInheritanceIsInvalid(IExceptedImmutableInterface,Reduce the [Immutable] exceptions on this type to a subset of { ItHasntBeenLookedAt }.) */ ClassWithoutSpecifiedExceptionsImplementingExceptedImmutable /**/ : IExceptedImmutableInterface { }
+		[/* ImmutableExceptionInheritanceIsInvalid(IExceptedImmutableInterface) */ Objects.Immutable /**/]
+		sealed class ClassWithoutSpecifiedExceptionsImplementingExceptedImmutable : IExceptedImmutableInterface { }
 
 		[Objects.Immutable( Except = Objects.Except.ItHasntBeenLookedAt )]
 		sealed class ClassWithSpecifiedExceptionsImplementingExceptedImmutableSame : IExceptedImmutableInterface { }
@@ -56,11 +56,11 @@ namespace SpecTests {
 		[Objects.Immutable( Except = Objects.Except.ItHasntBeenLookedAt )]
 		sealed class ClassWithSpecifiedExceptionsImplementingExceptedImmutableSubset : IExceptedImmutableInterface { }
 
-		[Objects.Immutable( Except = Objects.Except.ItsOnDeathRow )]
-		sealed class /* ImmutableExceptionInheritanceIsInvalid(IExceptedImmutableInterface,Reduce the [Immutable] exceptions on this type to a subset of { ItHasntBeenLookedAt }.) */ ClassWithSpecifiedExceptionsImplementingExceptedImmutableNewException /**/ : IExceptedImmutableInterface { }
+		[/* ImmutableExceptionInheritanceIsInvalid(IExceptedImmutableInterface) */ Objects.Immutable( Except = Objects.Except.ItsOnDeathRow ) /**/]
+		sealed class  ClassWithSpecifiedExceptionsImplementingExceptedImmutableNewException : IExceptedImmutableInterface { }
 
-		[Objects.Immutable( Except = Objects.Except.ItHasntBeenLookedAt | Objects.Except.ItsOnDeathRow )]
-		interface /* ImmutableExceptionInheritanceIsInvalid(IExceptedImmutableInterface,Reduce the [Immutable] exceptions on this type to a subset of { ItHasntBeenLookedAt }.) */ InheritingSupersetOfExceptions /**/ : IExceptedImmutableInterface { }
+		[/* ImmutableExceptionInheritanceIsInvalid(IExceptedImmutableInterface) */ Objects.Immutable( Except = Objects.Except.ItHasntBeenLookedAt | Objects.Except.ItsOnDeathRow ) /**/]
+		interface  InheritingSupersetOfExceptions : IExceptedImmutableInterface { }
 
 		[Objects.Immutable( Except = Objects.Except.None )]
 		interface InheritingSubsetOfExceptions : IExceptedImmutableInterface { }
@@ -69,8 +69,8 @@ namespace SpecTests {
 		class A { }
 		class B : A { }
 
-		[Objects.Immutable( Except = Objects.Except.ItsUgly )]
-		class /* ImmutableExceptionInheritanceIsInvalid(A,Set the [Immutable] exceptions on this type to Except.None.) */ InheritingFromBaseOfBaseType /**/ : B { }
+		[/* ImmutableExceptionInheritanceIsInvalid(A) */ Objects.Immutable( Except = Objects.Except.ItsUgly ) /**/]
+		class  InheritingFromBaseOfBaseType : B { }
 
 	}
 
@@ -86,8 +86,8 @@ namespace SpecTests {
 		[Objects.Immutable( Except = Objects.Except.ItsUgly )]
 		class MultipleInheritanceSubsetOfBoth : IFoo, IBaz { }
 
-		[Objects.Immutable( Except = Objects.Except.ItHasntBeenLookedAt )]
-		class /* ImmutableExceptionInheritanceIsInvalid(IBaz,Reduce the [Immutable] exceptions on this type to a subset of { ItsUgly }.) */ MultipleInheritanceSubsetOfOne /**/ : IFoo, IBaz { }
+		[/* ImmutableExceptionInheritanceIsInvalid(IBaz) */ Objects.Immutable( Except = Objects.Except.ItHasntBeenLookedAt ) /**/]
+		class  MultipleInheritanceSubsetOfOne : IFoo, IBaz { }
 
 	}
 

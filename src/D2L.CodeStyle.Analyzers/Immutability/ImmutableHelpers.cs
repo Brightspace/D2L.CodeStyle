@@ -190,7 +190,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
-			throw new Exception( $"Unknown expression syntax type '{expr.GetType()}' when parsing flags: '{expr}'" );
+			// Ignore this because the user may be typing something.
+			return;
 		}
 
 	}
