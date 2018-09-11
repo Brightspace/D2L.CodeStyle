@@ -39,7 +39,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					diagnostic.Location.SourceSpan
 				) as AttributeSyntax;
 
-				var maxExceptionsAllowed = diagnostic.Properties["excepts"];
+				var maxExceptionsAllowed = diagnostic
+					.Properties[ImmutabilityExceptionInheritanceAnalyzer.CODE_FIX_DATA_KEY];
 
 				context.RegisterCodeFix(
 					CodeAction.Create(

@@ -10,6 +10,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace D2L.CodeStyle.Analyzers.Immutability {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class ImmutabilityExceptionInheritanceAnalyzer : DiagnosticAnalyzer {
+		public const string CODE_FIX_DATA_KEY = "excepts";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 				Diagnostics.ImmutableExceptionInheritanceIsInvalid
@@ -126,7 +127,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 
 			return ImmutableDictionary.Create<string, string>()
-				.Add( "excepts", serializedExceptions )
+				.Add( CODE_FIX_DATA_KEY, serializedExceptions )
 				.ToImmutableDictionary();
 		}
 
