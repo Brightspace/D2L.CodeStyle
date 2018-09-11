@@ -8,7 +8,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace D2L.CodeStyle.Analyzers.Language {
+namespace D2L.CodeStyle.Analyzers.Immutability {
 
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	internal sealed class ImmutableGenericDeclarationAnalyzer : DiagnosticAnalyzer {
