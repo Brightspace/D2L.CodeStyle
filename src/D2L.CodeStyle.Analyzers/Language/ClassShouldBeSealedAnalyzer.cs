@@ -17,6 +17,11 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
+
+			context.ConfigureGeneratedCodeAnalysis(
+				GeneratedCodeAnalysisFlags.None
+			);
+
 			context.RegisterCompilationStartAction( RegisterAnalyzer );
 		}
 
@@ -78,7 +83,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			// We can't make calls about public unsealed types and a public
 			// type can't have an internal or private base type so we can
 			// safely ignore them.
-			if ( symbol.DeclaredAccessibility.HasFlag( Accessibility.Public ) ) {
+			if ( IsPublicInAssembly( symbol ) ) {
 				return;
 			}
 
@@ -118,6 +123,22 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				// at this point we know its a class, its private or internal and its not sealed
 				privateOrInternalUnsealedClasses[symbol] = (firstDecl as ClassDeclarationSyntax).Identifier.GetLocation();
 			}
+		}
+
+		private static bool IsPublicInAssembly( ISymbol symbol ) {
+			while( symbol != null ) {
+				if ( symbol is INamespaceSymbol ) {
+					return true;
+				}
+
+				if ( !symbol.DeclaredAccessibility.HasFlag( Accessibility.Public ) ) {
+					return false;
+				}
+
+				symbol = symbol.ContainingSymbol;
+			}
+
+			return true;
 		}
 
 		private static void EmitDiagnostics(
