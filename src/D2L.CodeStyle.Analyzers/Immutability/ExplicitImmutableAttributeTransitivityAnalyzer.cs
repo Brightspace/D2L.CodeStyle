@@ -66,6 +66,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			var decl = (TypeDeclarationSyntax)context.Node;
 			var type = context.SemanticModel.GetDeclaredSymbol( decl );
 
+			if ( type == null ) {
+				// Semantic analysis failed for some reason... move along...
+				return;
+			}
+
 			var typeHasImmutableAttr = hasTheImmutableAttribute( type );
 
 			if( typeHasImmutableAttr ) {
@@ -91,6 +96,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					.GetSymbolInfo( baseType.Type ).Symbol
 					// Not aware of any reason this cast could fail:
 					as ITypeSymbol;
+
+				if ( typeSymbol == null ) {
+					// Semantic analysis failed for some reason... move along...
+					continue;
+				}
 
 				if ( !hasTheImmutableAttribute( typeSymbol ) ) {
 					continue;

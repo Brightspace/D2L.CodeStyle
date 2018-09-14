@@ -81,4 +81,7 @@ namespace Tests {
 	public partial class
 	/* MissingTransitiveImmutableAttribute(Tests.PartialClass, base class, Tests.HappyImplementor) */ PartialClass /**/
 		: HappyImplementor { }
+
+	// This shouldn't crash the analyzer
+	public sealed class Foo : IThingThatDoesntExist { }
 }
