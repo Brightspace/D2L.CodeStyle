@@ -47,28 +47,40 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				return;
 			}
 			var symbolinfo = context.SemanticModel.GetSymbolInfo( root );
+
 			var method = symbolinfo.Symbol as IMethodSymbol;
+
 			if( method == null ) {
-				if( symbolinfo.CandidateSymbols != null && symbolinfo.CandidateSymbols.Length == 1 ) {
-					//This happens on method groups, such as
-					//  Func<IFoo> fooFunc = OldAndBrokenServiceLocator.Get<IFoo>;
-					method = symbolinfo.CandidateSymbols.First() as IMethodSymbol;
-				} else {
+				if( symbolinfo.CandidateSymbols == null ) {
+					return;
+				}
+
+				if( symbolinfo.CandidateSymbols.Length != 1 ) {
+					return;
+				}
+
+				//This happens on method groups, such as
+				//  Func<IFoo> fooFunc = OldAndBrokenServiceLocator.Get<IFoo>;
+				method = symbolinfo.CandidateSymbols.First() as IMethodSymbol;
+
+				if( method == null ) {
 					return;
 				}
 			}
 
-			if( !singletonLocatorType.Equals(method.ContainingType) ) {
+			// At this point method is a non-null IMethodSymbol
+
+			if( !singletonLocatorType.Equals( method.ContainingType ) ) {
 				return;
 			}
 
 			if( !IsSingletonGet( method ) ) {
 				return;
 			}
-			
+
 			//It's ok as long as the attribute is present, error otherwise
 			ITypeSymbol typeArg = method.TypeArguments.First();
-			if ( Attributes.Singleton.IsDefined( typeArg ) ) {
+			if( Attributes.Singleton.IsDefined( typeArg ) ) {
 				return;
 			}
 
