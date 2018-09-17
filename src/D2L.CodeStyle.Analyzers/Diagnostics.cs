@@ -267,7 +267,7 @@ namespace D2L.CodeStyle.Analyzers {
 			title: "There are a lot of arguments here. Please use named arguments for readability.",
 			messageFormat: "There are a lot of arguments here. Please use named arguments for readability.",
 			category: "Readability",
-			defaultSeverity: DiagnosticSeverity.Info,
+			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
 			description: "There are a lot of arguments here. Please use named arguments for readability."
 		);
