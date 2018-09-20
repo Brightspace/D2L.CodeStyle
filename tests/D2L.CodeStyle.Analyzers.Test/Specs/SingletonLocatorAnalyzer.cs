@@ -1,12 +1,12 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator.OldAndBrokenSingletonLocatorAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator.SingletonLocatorAnalyzer
 
 using System;
 using D2L.CodeStyle.Analyzers.ServiceLocator;
 using D2L.LP.Extensibility.Activation.Domain;
-using static D2L.LP.Extensibility.Activation.Domain.OldAndBrokenSingletonLocator;
+using static D2L.LP.Extensibility.Activation.Domain.SingletonLocator;
 
 namespace D2L.LP.Extensibility.Activation.Domain {
-	public static class OldAndBrokenSingletonLocator {
+	public static class SingletonLocator {
 		public static T Get<T>() where T : class {
 			return default( T );
 		}
@@ -28,29 +28,29 @@ namespace SingletonSpecTests {
 		public BadClass() { }
 
 		public void UsesSingletonLocatorUnmarked_ViaFunc() {
-			Func<INotMarkedSingleton> problemFunc = /* SingletonLocatorMisuse(SingletonSpecTests.INotMarkedSingleton) */ OldAndBrokenSingletonLocator.Get<INotMarkedSingleton> /**/;
+			Func<INotMarkedSingleton> problemFunc = /* SingletonLocatorMisuse(SingletonSpecTests.INotMarkedSingleton) */ SingletonLocator.Get<INotMarkedSingleton> /**/;
 			INotMarkedSingleton loadedIndirectly = problemFunc();
 		}
 
 		public void UsesSingletonLocatorUnmarked_ViaLazy() {
-			Lazy<INotMarkedSingleton> problemLazy = () => /* SingletonLocatorMisuse(SingletonSpecTests.INotMarkedSingleton) */ OldAndBrokenSingletonLocator.Get<INotMarkedSingleton> /**/;
+			Lazy<INotMarkedSingleton> problemLazy = () => /* SingletonLocatorMisuse(SingletonSpecTests.INotMarkedSingleton) */ SingletonLocator.Get<INotMarkedSingleton> /**/;
 			INotMarkedSingleton loadedLazily = problemLazy.Value;
 		}
 
 		public void UsesSingletonLocatorUnmarked() {
-			INotMarkedSingleton problem = /* SingletonLocatorMisuse(SingletonSpecTests.INotMarkedSingleton) */ OldAndBrokenSingletonLocator.Get<INotMarkedSingleton>() /**/;
+			INotMarkedSingleton problem = /* SingletonLocatorMisuse(SingletonSpecTests.INotMarkedSingleton) */ SingletonLocator.Get<INotMarkedSingleton>() /**/;
 		}
 
 		public void UsesSingletonLocatorMarked() {
-			IMarkedSingleton ok = OldAndBrokenSingletonLocator.Get<IMarkedSingleton>();
+			IMarkedSingleton ok = SingletonLocator.Get<IMarkedSingleton>();
 		}
 
 		public void UsesOtherMethodOnLocator() {
-			string harmless = OldAndBrokenSingletonLocator.ToString();
+			string harmless = SingletonLocator.ToString();
 		}
 
 		public void UnmarkedLocatorInChain() {
-			/* SingletonLocatorMisuse(SingletonSpecTests.INotMarkedSingleton) */ OldAndBrokenSingletonLocator.Get<INotMarkedSingleton>() /**/.SomeOtherMethod();
+			/* SingletonLocatorMisuse(SingletonSpecTests.INotMarkedSingleton) */ SingletonLocator.Get<INotMarkedSingleton>() /**/.SomeOtherMethod();
 		}
 
 		public void UsingStatic() {
