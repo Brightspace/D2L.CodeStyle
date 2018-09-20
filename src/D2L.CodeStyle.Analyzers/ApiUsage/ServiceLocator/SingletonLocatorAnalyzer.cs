@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
@@ -8,7 +9,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
-	public sealed class OldAndBrokenSingletonLocatorAnalyzer : DiagnosticAnalyzer {
+	public sealed class SingletonLocatorAnalyzer : DiagnosticAnalyzer {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 			=> ImmutableArray.Create( Diagnostics.SingletonLocatorMisuse );
 
@@ -19,28 +20,41 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 
 		public void RegisterSingletonLocatorAnalyzer( CompilationStartAnalysisContext context ) {
 			// Cache some important type lookups
-			var locatorType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.OldAndBrokenSingletonLocator" );
+			var locatorType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.SingletonLocator" );
+			var locatorType2 = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.OldAndBrokenSingletonLocator" );
 
-			// If this type lookup failed then OldAndBrokenSingletonLocator
-			// cannot resolve and we don't need to register our analyzer.
-			if( locatorType.IsNullOrErrorType() ) {
+			// If this type lookup failed then SingletonLocator cannot resolve
+			// and we don't need to register our analyzer.
+			if( locatorType.IsNullOrErrorType() && locatorType2.IsNullOrErrorType() ) {
 				return;
 			}
 
 			context.RegisterSyntaxNodeAction(
 				ctx => EnforceSingletonsOnly(
 					ctx,
-					locatorType
+					IsSingletonLocator
 				),
 				SyntaxKind.SimpleMemberAccessExpression,
 				SyntaxKind.InvocationExpression
 			);
+
+			bool IsSingletonLocator( INamedTypeSymbol other ) {
+				if( !locatorType.IsNullOrErrorType() && other == locatorType ) {
+					return true;
+				}
+
+				if( !locatorType2.IsNullOrErrorType() && other == locatorType2 ) {
+					return true;
+				}
+
+				return false;
+			}
 		}
 
-		//Enforce that OldAndBrokenSingletonLocator can only load actual Singletons
+		// Enforce that SingletonLocator can only load actual [Singleton]s
 		private static void EnforceSingletonsOnly(
 			SyntaxNodeAnalysisContext context,
-			INamedTypeSymbol singletonLocatorType
+			Func<INamedTypeSymbol, bool> isSingletonLocator
 		) {
 			var root = GetRootNode( context );
 			if( root == null ) {
@@ -69,9 +83,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			}
 
 			// At this point method is a non-null IMethodSymbol
-
-			if( !singletonLocatorType.Equals( method.ContainingType ) ) {
+			if( !isSingletonLocator( method.ContainingType ) ) {
 				return;
+
 			}
 
 			if( !IsSingletonGet( method ) ) {
@@ -96,16 +110,16 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			//* an InvocationExpression wrapped around a SimpleMemberAccessExpression
 			//We want to count each of these as a single error (avoid double counting the last case)
 			ExpressionSyntax root = context.Node as InvocationExpressionSyntax;
-			if (root != null) {
+			if( root != null ) {
 				return root;
 			}
 
 			root = context.Node as MemberAccessExpressionSyntax;
-			if (root == null) {
+			if( root == null ) {
 				return null;
 			}
 
-			if( root.Parent.IsKind(SyntaxKind.InvocationExpression) ) {
+			if( root.Parent.IsKind( SyntaxKind.InvocationExpression ) ) {
 				return null;
 			}
 			return root;
