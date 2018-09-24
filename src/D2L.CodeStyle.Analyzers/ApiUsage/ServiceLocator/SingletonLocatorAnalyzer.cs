@@ -96,10 +96,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			ITypeSymbol typeArg = method.TypeArguments.First();
 
 			if( typeArg.GetFullTypeName() == "D2L.LP.Extensibility.Activation.Domain.IPlugins"
-				&& typeArg is INamedTypeSymbol typeArgSymbol
-				&& typeArgSymbol.Arity == 1
+				&& typeArg is INamedTypeSymbol namedTypeArg
+				&& namedTypeArg.Arity == 1
 			) {
-				typeArg = typeArgSymbol.TypeArguments.First();
+				typeArg = namedTypeArg.TypeArguments.First();
 			}
 
 			if( Attributes.Singleton.IsDefined( typeArg ) ) {
