@@ -94,6 +94,14 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 
 			//It's ok as long as the attribute is present, error otherwise
 			ITypeSymbol typeArg = method.TypeArguments.First();
+
+			if( typeArg.GetFullTypeName() == "D2L.LP.Extensibility.Activation.Domain.IPlugins"
+				&& typeArg is INamedTypeSymbol typeArgSymbol
+				&& typeArgSymbol.Arity == 1
+			) {
+				typeArg = typeArgSymbol.TypeArguments.First();
+			}
+
 			if( Attributes.Singleton.IsDefined( typeArg ) ) {
 				return;
 			}
