@@ -29,10 +29,18 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				return;
 			}
 
+			var pluginsInterfaceType = context.Compilation.GetTypeByMetadataName(
+					"D2L.LP.Extensibility.Activation.Domain.IPlugins`1"
+				);
+			var pluginsInterfaceWithExtensionPointType = context.Compilation.GetTypeByMetadataName(
+					"D2L.LP.Extensibility.Activation.Domain.IPlugins`2"
+				);
+
 			context.RegisterSyntaxNodeAction(
 				ctx => EnforceSingletonsOnly(
 					ctx,
-					IsSingletonLocator
+					IsSingletonLocator,
+					IsATypeOfPlugins
 				),
 				SyntaxKind.SimpleMemberAccessExpression,
 				SyntaxKind.InvocationExpression
@@ -49,12 +57,40 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 
 				return false;
 			}
+
+			bool IsATypeOfPlugins( ITypeSymbol type, out ITypeSymbol pluginType ) {
+
+				if( !( type is INamedTypeSymbol namedType ) ) {
+					pluginType = null;
+					return false;
+				}
+
+				if( !pluginsInterfaceType.IsNullOrErrorType()
+					&& namedType.OriginalDefinition == pluginsInterfaceType
+				) {
+					pluginType = namedType.TypeArguments[ 0 ];
+					return true;
+				}
+
+				if( !pluginsInterfaceWithExtensionPointType.IsNullOrErrorType()
+					&& namedType.OriginalDefinition == pluginsInterfaceWithExtensionPointType
+				) {
+					pluginType = namedType.TypeArguments[ 1 ];
+					return true;
+				}
+
+				pluginType = null;
+				return false;
+			}
 		}
+
+		private delegate bool IsATypeOfPluginsFunc( ITypeSymbol type, out ITypeSymbol pluginType );
 
 		// Enforce that SingletonLocator can only load actual [Singleton]s
 		private static void EnforceSingletonsOnly(
 			SyntaxNodeAnalysisContext context,
-			Func<INamedTypeSymbol, bool> isSingletonLocator
+			Func<INamedTypeSymbol, bool> isSingletonLocator,
+			IsATypeOfPluginsFunc isATypeOfPlugins
 		) {
 			var root = GetRootNode( context );
 			if( root == null ) {
@@ -94,6 +130,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 
 			//It's ok as long as the attribute is present, error otherwise
 			ITypeSymbol typeArg = method.TypeArguments.First();
+
+			if( isATypeOfPlugins( typeArg, out ITypeSymbol pluginType ) ) {
+				typeArg = pluginType;
+			}
+
 			if( Attributes.Singleton.IsDefined( typeArg ) ) {
 				return;
 			}
