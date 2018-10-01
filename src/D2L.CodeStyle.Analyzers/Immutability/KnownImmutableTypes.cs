@@ -46,7 +46,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		/// <summary>
 		/// A list of known immutable special types.
-		/// </summary
+		/// </summary>
 		private readonly static ImmutableArray<SpecialType> ImmutableSpecialTypes = ImmutableArray.Create(
 			SpecialType.System_Enum,
 			SpecialType.System_Boolean,
