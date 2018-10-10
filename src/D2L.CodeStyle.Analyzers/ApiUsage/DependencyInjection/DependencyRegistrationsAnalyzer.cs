@@ -120,11 +120,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 					// scope required for each type
 					var immutabilityScope = type.GetImmutabilityScope();
 					if( !type.IsNullOrErrorType() && immutabilityScope != ImmutabilityScope.SelfAndChildren ) {
-						var diagnostic = Diagnostic.Create(
-							Diagnostics.UnsafeSingletonRegistration,
-							ctx.Node.GetLocation(),
-							type.GetFullTypeNameWithGenericArguments()
+						var diagnostic = GetUnsafeSingletonDiagnostic(
+							ctx.Compilation.Assembly,
+							ctx.Node,
+							type
 						);
+
 						ctx.ReportDiagnostic( diagnostic );
 					}
 				}
@@ -141,6 +142,59 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 				ctx.ReportDiagnostic( diagnostic );
 			}
 
+		}
+
+		private static Diagnostic GetUnsafeSingletonDiagnostic(
+			IAssemblySymbol assembly,
+			SyntaxNode syntax,
+			ITypeSymbol type
+		) {
+			DiagnosticSeverity sev;
+
+			switch( assembly.Name ) {
+				// To make the cleanup not Sisyphean, the diagnostic is
+				// currently ignored in these assemblies:
+				case "D2L":
+				case "D2L.AW.UserInteractionConsumer":
+				case "D2L.Binder.ContentIntegration":
+				case "D2L.ContentService":
+				case "D2L.Custom.AdminConsoleWS":
+				case "D2L.Custom.SessionCourseCopy":
+				case "D2L.Custom.SpecialAccessAPIs":
+				case "D2L.Custom.UserSyncTool":
+				case "D2L.eP.Domain":
+				case "D2L.eP.Web":
+				case "D2L.IM.Platform.Logging":
+				case "D2L.Integration.EP_PT.Plugins":
+				case "D2L.LE.IntelligentAgents":
+				case "D2L.LE.LO":
+				case "D2L.Lms.Locker.Web":
+				case "D2L.LP":
+				case "D2L.LP.AppLoader":
+				case "D2L.LP.Diagnostics.Web":
+				case "D2L.LP.OrgUnits.WorkQueue":
+				case "D2L.LP.Services.Framework":
+				case "D2L.LP.Tools":
+				case "D2L.LP.Tools.DataPurgeArchive":
+				case "D2L.LP.Tools.Extensibility":
+				case "D2L.LP.Web":
+				case "D2L.Web":
+				case "D2L.Web.Common.Web":
+					sev = DiagnosticSeverity.Info;
+					break;
+				default:
+					sev = DiagnosticSeverity.Error;
+					break;
+			}
+
+			return Diagnostic.Create(
+				Diagnostics.UnsafeSingletonRegistration,
+				syntax.GetLocation(),
+				effectiveSeverity: sev,
+				additionalLocations: ImmutableArray<Location>.Empty,
+				properties: ImmutableDictionary<string, string>.Empty,
+				type.GetFullTypeNameWithGenericArguments()
+			);
 		}
 
 		private ImmutableArray<ITypeSymbol> GetTypesRequiredToBeImmutableForSingletonRegistration( DependencyRegistration registration ) {
