@@ -351,5 +351,16 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "The implications of [Immutable] apply transitively to derived classes and interface implementations. We require that [Immutable] is explicity applied transitively for clarity and simplicity."
 		);
+
+		public static readonly DiagnosticDescriptor GenericTypeArgumentsBlacklisted = new DiagnosticDescriptor(
+			id: "D2L0041",
+			title: "Generic type is blacklisted",
+			messageFormat: "The generic type {0} is blacklisted",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "This combination of generic type arguments has been blacklisted."
+		);
+
 	}
 }
