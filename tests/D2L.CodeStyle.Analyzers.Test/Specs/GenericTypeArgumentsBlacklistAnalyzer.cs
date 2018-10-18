@@ -36,4 +36,7 @@ namespace BlacklistedImplementations {
 	public sealed class UserInteractionEventHandler :/* GenericTypeArgumentsBlacklisted(D2L.LP.Distributed.Events.Handlers.IEventHandler<D2L.LP.Distributed.Events.ExternalPublish.UserInteraction.UserInteractionEvent>) */ IEventHandler<UserInteractionEvent> /**/{ }
 	public sealed class UserInteractionOrgEventHandler :/* GenericTypeArgumentsBlacklisted(D2L.LP.Distributed.Events.Handlers.IOrgEventHandler<D2L.LP.Distributed.Events.ExternalPublish.UserInteraction.UserInteractionEvent>) */ IOrgEventHandler<UserInteractionEvent> /**/{ }
 
+	public sealed class UserInteractionOrgEventHandler : IOrgEventHandler<string>,/* GenericTypeArgumentsBlacklisted(D2L.LP.Distributed.Events.Handlers.IOrgEventHandler<D2L.LP.Distributed.Events.ExternalPublish.UserInteraction.UserInteractionEvent>) */ IOrgEventHandler<UserInteractionEvent> /**/{ }
+	public sealed class UserInteractionOrgEventHandler :/* GenericTypeArgumentsBlacklisted(D2L.LP.Distributed.Events.Handlers.IOrgEventHandler<D2L.LP.Distributed.Events.ExternalPublish.UserInteraction.UserInteractionEvent>) */ IOrgEventHandler<UserInteractionEvent> /**/, IOrgEventHandler<string> { }
+
 }
