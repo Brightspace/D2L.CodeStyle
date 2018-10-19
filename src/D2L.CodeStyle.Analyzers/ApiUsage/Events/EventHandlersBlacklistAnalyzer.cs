@@ -7,13 +7,13 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace D2L.CodeStyle.Analyzers.ApiUsage.GenericTypeArguments {
+namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
-	internal sealed class GenericTypeArgumentsBlacklistAnalyzer : DiagnosticAnalyzer {
+	internal sealed class EventHandlersBlacklistAnalyzer : DiagnosticAnalyzer {
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-				Diagnostics.GenericTypeArgumentsBlacklisted
+				Diagnostics.EventHandlerBlacklisted
 			);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -55,7 +55,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.GenericTypeArguments {
 			}
 
 			Diagnostic diagnostic = Diagnostic.Create(
-					Diagnostics.GenericTypeArgumentsBlacklisted,
+					Diagnostics.EventHandlerBlacklisted,
 					baseTypeSyntax.GetLocation(),
 					baseSymbol.ToDisplayString()
 				);
@@ -65,7 +65,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.GenericTypeArguments {
 
 		private static IImmutableSet<INamedTypeSymbol> GetBlacklistedTypes( Compilation compilation ) {
 
-			IImmutableSet<INamedTypeSymbol> types = GenericTypeArgumentsBlacklist.BlacklistedTypes
+			IImmutableSet<INamedTypeSymbol> types = EventHandlersBlacklist.BlacklistedTypes
 				.SelectMany( genericType => GetGenericTypes( compilation, genericType.Key, genericType.Value ) )
 				.ToImmutableHashSet();
 

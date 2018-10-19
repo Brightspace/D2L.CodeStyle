@@ -352,14 +352,14 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "The implications of [Immutable] apply transitively to derived classes and interface implementations. We require that [Immutable] is explicity applied transitively for clarity and simplicity."
 		);
 
-		public static readonly DiagnosticDescriptor GenericTypeArgumentsBlacklisted = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor EventHandlerBlacklisted = new DiagnosticDescriptor(
 			id: "D2L0041",
-			title: "Generic type is blacklisted",
-			messageFormat: "The generic type {0} is blacklisted",
+			title: "Blacklisted Event Handler",
+			messageFormat: "Event handlers of type {0} have been blacklisted",
 			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
-			description: "This combination of generic type arguments has been blacklisted."
+			description: "This event type no longer supports event handlers."
 		);
 
 	}

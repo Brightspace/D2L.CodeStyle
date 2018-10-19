@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 
-namespace D2L.CodeStyle.Analyzers.ApiUsage.GenericTypeArguments {
+namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
-	internal static class GenericTypeArgumentsBlacklist {
+	internal static class EventHandlersBlacklist {
 
 		private static readonly ImmutableArray<ImmutableArray<string>> BlacklistedEventHandlerTypes = ImmutableArray.Create(
 
