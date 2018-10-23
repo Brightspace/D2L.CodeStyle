@@ -30,16 +30,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		public void CompilationStart(
 			CompilationStartAnalysisContext context
 		) {
+			// Never fails because we force people to reference D2L.CodeStyle.Annotations
 			var immutableAttribute = context.Compilation.GetTypeByMetadataName(
 				"D2L.CodeStyle.Annotations.Objects+Immutable"
 			);
-
-			// If we implement an interface with [Immutable] or derive a base
-			// class with it this symbol would have been found... if it wasn't
-			// we don't need to analyze anything.
-			if ( immutableAttribute == null ) {
-				return;
-			}
 
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeTypeDeclaration( ctx, hasTheImmutableAttribute ),

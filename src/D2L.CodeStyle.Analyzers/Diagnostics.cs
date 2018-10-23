@@ -362,5 +362,14 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "This event type no longer supports event handlers."
 		);
 
+		public static readonly DiagnosticDescriptor MustReferenceAnnotations = new DiagnosticDescriptor(
+			id: "D2L0042",
+			title: "To use D2L.CodeStyle.Analyzers you must also reference the assembly D2L.CodeStyle.Annotations",
+			messageFormat: "To use D2L.CodeStyle.Analyzers you must also reference the assembly D2L.CodeStyle.Annotations",
+			category: "Build",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "To use D2L.CodeStyle.Analyzers you must also reference the assembly D2L.CodeStyle.Annotations"
+		);
 	}
 }
