@@ -89,7 +89,6 @@
     <Compile Include="ApiUsage\RpcAnalyzer.cs" />
     <Compile Include="ApiUsage\ServiceLocator\OldAndBrokenServiceLocatorAnalyzer.cs" />
     <Compile Include="ApiUsage\ServiceLocator\SingletonLocatorAnalyzer.cs" />
-    <Compile Include="ApiUsage\DependencyInjection\UnsafeSingletonsAnalyzer.cs" />
     <Compile Include="Immutability\UnsafeStaticsAnalyzer.cs" />
   </ItemGroup>
   <ItemGroup>
