@@ -45,11 +45,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				.ToImmutableHashSet();
 
 			context.RegisterSyntaxNodeAction(
-					ctxt => {
-						if( ctxt.Node is InvocationExpressionSyntax invocation ) {
-							AnalyzeMethodInvocation( ctxt, invocation, eventAttributeType, genericPublishMethods );
-						}
-					},
+					ctxt => AnalyzeMethodInvocation(
+						ctxt,
+						(InvocationExpressionSyntax)ctxt.Node,
+						eventAttributeType,
+						genericPublishMethods
+					),
 					SyntaxKind.InvocationExpression
 				);
 		}
