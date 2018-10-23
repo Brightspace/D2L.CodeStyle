@@ -371,5 +371,15 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "To use D2L.CodeStyle.Analyzers you must also reference the assembly D2L.CodeStyle.Annotations"
 		);
+
+		public static readonly DiagnosticDescriptor EventTypeMissingEventAttribute = new DiagnosticDescriptor(
+			id: "D2L0043",
+			title: "Event Type Missing [Event] Attribute",
+			description: "All event types must be marked with [Event] attribute.",
+			messageFormat: "Event type {0} must be marked with [Event] attribute.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }
