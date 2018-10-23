@@ -352,8 +352,18 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "The implications of [Immutable] apply transitively to derived classes and interface implementations. We require that [Immutable] is explicity applied transitively for clarity and simplicity."
 		);
 
-		public static readonly DiagnosticDescriptor MustReferenceAnnotations = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor EventHandlerBlacklisted = new DiagnosticDescriptor(
 			id: "D2L0041",
+			title: "Blacklisted Event Handler",
+			messageFormat: "Event handlers of type {0} have been blacklisted",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "This event type no longer supports event handlers."
+		);
+
+		public static readonly DiagnosticDescriptor MustReferenceAnnotations = new DiagnosticDescriptor(
+			id: "D2L0042",
 			title: "To use D2L.CodeStyle.Analyzers you must also reference the assembly D2L.CodeStyle.Annotations",
 			messageFormat: "To use D2L.CodeStyle.Analyzers you must also reference the assembly D2L.CodeStyle.Annotations",
 			category: "Build",

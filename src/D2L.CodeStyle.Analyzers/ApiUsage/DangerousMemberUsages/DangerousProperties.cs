@@ -14,6 +14,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			.Add(
 				"System.Web.HttpContext",
 				ImmutableArray.Create(
+					"Current",
 					"CurrentHandler",
 					"Handler"
 				)
