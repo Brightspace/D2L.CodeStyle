@@ -69,7 +69,6 @@
     <EmbeddedResource Include="Specs\DependencyRegistrationsAnalyzer.cs" />
     <EmbeddedResource Include="Specs\ClassShouldBeSealedAnalyzer.cs" />
     <EmbeddedResource Include="Specs\ImmutabilityAnalyzer.cs" />
-    <EmbeddedResource Include="Specs\UnsafeSingletonsAnalyzer.cs" />
     <EmbeddedResource Include="Specs\SingletonLocatorAnalyzer.cs" />
     <EmbeddedResource Include="Specs\DangerousMemberUsagesAnalyzer.DangerousMethods.cs" />
     <EmbeddedResource Include="Specs\FeatureDefinitionAnalyzer.cs" />
