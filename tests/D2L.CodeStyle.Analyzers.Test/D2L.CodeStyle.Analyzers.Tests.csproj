@@ -56,6 +56,7 @@
     <EmbeddedResource Include="Specs\ExplicitImmutableAttributeTransitivityAnalyzer.cs" />
     <EmbeddedResource Include="Specs\EventHandlersBlacklistAnalyzer.cs" />
     <EmbeddedResource Include="Specs\EventPublisherEventTypesAnalyzer.cs" />
+    <EmbeddedResource Include="Specs\EventHandlerLoaderTypesAnalyzer.cs" />
     <Compile Include="TestBase.cs" />
     <Compile Include="Extensions\TypeSymbolExtensionsTests.cs" />
     <Compile Include="ApiUsage\NotNullAnalyzerTests.cs" />
