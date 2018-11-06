@@ -384,5 +384,15 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+		
+		public static readonly DiagnosticDescriptor EventTypeMissingImmutableAttribute = new DiagnosticDescriptor(
+			id: "D2L0045",
+			title: "Event Type Missing [Immutable] Attribute",
+			messageFormat: "{0} must be marked [Immutable] because all event types must be immutable.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "We require that [Immutable] be explicity applied to all event types."
+		);
 	}
 }
