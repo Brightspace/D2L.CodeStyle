@@ -119,10 +119,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				return;
 			}
 
-			if( eventTypeSymbol.TypeKind == TypeKind.TypeParameter ) {
-				return;
-			}
-
 			Diagnostic diagnostic = Diagnostic.Create(
 					Diagnostics.EventTypeMissingEventAttribute,
 					invocation.GetLocation(),
@@ -144,10 +140,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				.Any( attr => attr.AttributeClass.Equals( eventHandlerAttributeType ) );
 
 			if( hasAttr ) {
-				return;
-			}
-
-			if( eventHandlerSymbol.TypeKind == TypeKind.TypeParameter ) {
 				return;
 			}
 
