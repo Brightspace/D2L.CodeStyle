@@ -38,6 +38,7 @@
     <Compile Include="ApiUsage\DangerousMemberUsages\DangerousProperties.cs" />
     <Compile Include="ApiUsage\Events\EventHandlersBlacklistAnalyzer.cs" />
     <Compile Include="ApiUsage\Events\EventHandlersBlacklist.cs" />
+    <Compile Include="ApiUsage\Events\EventHandlerLoaderTypesAnalyzer.cs" />
     <Compile Include="ApiUsage\Events\EventPublisherEventTypesAnalyzer.cs" />
     <Compile Include="Build\MandatoryReferencesAnalyzer.cs" />
     <Compile Include="Immutability\AddImmutableAttributeCodeFix.cs" />

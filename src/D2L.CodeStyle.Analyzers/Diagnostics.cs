@@ -374,5 +374,15 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor EventHandlerTypeMissingEventAttribute = new DiagnosticDescriptor(
+			id: "D2L0044",
+			title: "Event Handler Type Missing [EventHandler] Attribute",
+			description: "All event handler types must be marked with [EventHandler] attribute.",
+			messageFormat: "Event handler type {0} must be marked with [EventHandler] attribute.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }
