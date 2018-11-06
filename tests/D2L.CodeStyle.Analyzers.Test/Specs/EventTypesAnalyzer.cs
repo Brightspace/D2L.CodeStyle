@@ -6,7 +6,7 @@ namespace D2L.CodeStyle.Annotations {
 	using System;
 
 	public static class Objects {
-		public sealed class ImmutableAttribute : Attribute {}
+		public sealed class Immutable : Attribute {}
 	}
 }
 

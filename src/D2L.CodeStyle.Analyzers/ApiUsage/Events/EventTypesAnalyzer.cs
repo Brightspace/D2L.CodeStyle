@@ -12,7 +12,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 	internal sealed class EventTypesAnalyzer : DiagnosticAnalyzer {
 
 		private const string EventAttributeFullName = "D2L.LP.Distributed.Events.Domain.EventAttribute";
-		private const string ImmutableAttributeFullName = "D2L.CodeStyle.Annotations.Objects+ImmutableAttribute";
+		private const string ImmutableAttributeFullName = "D2L.CodeStyle.Annotations.Objects+Immutable";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.EventTypeMissingImmutableAttribute
