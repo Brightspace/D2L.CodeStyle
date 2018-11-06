@@ -270,5 +270,15 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 
 			return -1;
 		}
+
+		public static bool TryGetTypeByMetadataName(
+				this Compilation compilation,
+				string fullyQualifiedMetadataName,
+				out INamedTypeSymbol type
+			) {
+
+			type = compilation.GetTypeByMetadataName( fullyQualifiedMetadataName );
+			return ( type != null );
+		}
 	}
 }
