@@ -42,7 +42,7 @@
     <Compile Include="ApiUsage\Events\EventHandlerLoaderTypesAnalyzer.cs" />
     <Compile Include="ApiUsage\Events\EventPublisherEventTypesAnalyzer.cs" />
     <Compile Include="Build\MandatoryReferencesAnalyzer.cs" />
-    <Compile Include="Immutability\AddImmutableAttributeCodeFix.cs" />
+    <Compile Include="CommonFixes\AddAttributeCodeFix.cs" />
     <Compile Include="Immutability\ExplicitImmutableAttributeTransitivityAnalyzer.cs" />
     <Compile Include="Immutability\ImmutableGenericArgument.cs" />
     <Compile Include="Immutability\ImmutableContainerMethods.cs" />
