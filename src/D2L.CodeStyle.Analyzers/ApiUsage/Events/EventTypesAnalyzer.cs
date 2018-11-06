@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -52,30 +53,29 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				INamedTypeSymbol immutableAttributeType
 			) {
 
-			bool hasEventAttribute = HasAttribute( context, declaration, eventAttributeType );
+			INamedTypeSymbol declarationType = context.SemanticModel.GetDeclaredSymbol( declaration );
+
+			bool hasEventAttribute = HasAttribute( declarationType, eventAttributeType );
 			if( !hasEventAttribute ) {
 				return;
 			}
 
-			bool hasImmutableAttirbute = HasAttribute( context, declaration, immutableAttributeType );
+			bool hasImmutableAttirbute = HasAttribute( declarationType, immutableAttributeType );
 			if( hasImmutableAttirbute ) {
 				return;
 			}
 
-			INamedTypeSymbol classSymbol = context.SemanticModel.GetDeclaredSymbol( declaration );
-
 			Diagnostic diagnostic = Diagnostic.Create(
 					Diagnostics.EventTypeMissingImmutableAttribute,
 					declaration.Identifier.GetLocation(),
-					classSymbol.ToDisplayString()
+					declarationType.ToDisplayString()
 				);
 
 			context.ReportDiagnostic( diagnostic );
 		}
 
 		private static bool HasAttribute(
-				SyntaxNodeAnalysisContext context,
-				ClassDeclarationSyntax declaration,
+				INamedTypeSymbol declarationType,
 				INamedTypeSymbol attributeType
 			) {
 
@@ -83,23 +83,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				return false;
 			}
 
-			foreach( AttributeListSyntax attrList in declaration.AttributeLists ) {
-				foreach( AttributeSyntax attr in attrList.Attributes ) {
+			bool hasAttribute = declarationType
+				.GetAttributes()
+				.Any( attr => attr.AttributeClass.Equals( attributeType ) );
 
-					TypeInfo typeInfo = context.SemanticModel.GetTypeInfo( attr );
-
-					ITypeSymbol type = typeInfo.Type;
-					if( type.IsNullOrErrorType() ) {
-						continue;
-					}
-
-					if( type.Equals( attributeType ) ) {
-						return true;
-					}
-				}
-			}
-
-			return false;
+			return hasAttribute;
 		}
 	}
 }
