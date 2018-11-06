@@ -78,8 +78,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				ImmutableArray<ImmutableArray<string>> genericTypeArgumentSets
 			) {
 
-			INamedTypeSymbol genericTypeDefinition = compilation.GetTypeByMetadataName( genericTypeName );
-			if( genericTypeDefinition.IsNullOrErrorType() ) {
+			if( !compilation.TryGetTypeByMetadataName( genericTypeName, out INamedTypeSymbol genericTypeDefinition ) ) {
 				yield break;
 			}
 
@@ -102,8 +101,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 			for( int i = 0; i < genericTypeArguments.Length; i++ ) {
 				string genericTypeArgumentName = genericTypeArguments[ i ];
 
-				INamedTypeSymbol genericTypeArgumentSymbol = compilation.GetTypeByMetadataName( genericTypeArgumentName );
-				if( genericTypeArgumentSymbol.IsNullOrErrorType() ) {
+				if( !compilation.TryGetTypeByMetadataName( genericTypeArgumentName, out INamedTypeSymbol genericTypeArgumentSymbol ) ) {
 
 					genericType = null;
 					return false;

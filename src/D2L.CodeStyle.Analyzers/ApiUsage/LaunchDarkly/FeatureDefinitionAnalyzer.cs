@@ -32,8 +32,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly {
 
 			Compilation compilation = context.Compilation;
 
-			INamedTypeSymbol featureDefinitionType = compilation.GetTypeByMetadataName( FeatureDefinitionFullName );
-			if( featureDefinitionType.IsNullOrErrorType() ) {
+			if( !compilation.TryGetTypeByMetadataName( FeatureDefinitionFullName, out INamedTypeSymbol featureDefinitionType ) ) {
 				return;
 			}
 

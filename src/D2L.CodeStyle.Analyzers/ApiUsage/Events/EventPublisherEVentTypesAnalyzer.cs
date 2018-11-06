@@ -32,8 +32,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 			Compilation compilation = context.Compilation;
 
-			INamedTypeSymbol eventAttributeType = compilation.GetTypeByMetadataName( EventAttributeFullName );
-			if( eventAttributeType.IsNullOrErrorType() ) {
+			if( !compilation.TryGetTypeByMetadataName( EventAttributeFullName, out INamedTypeSymbol eventAttributeType ) ) {
 				return;
 			}
 
@@ -113,8 +112,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				string publisherTypeName
 			) {
 
-			INamedTypeSymbol publisherType = compilation.GetTypeByMetadataName( publisherTypeName );
-			if( publisherType.IsNullOrErrorType() ) {
+			if( !compilation.TryGetTypeByMetadataName( publisherTypeName, out INamedTypeSymbol publisherType ) ) {
 				return Enumerable.Empty<ISymbol>();
 			}
 

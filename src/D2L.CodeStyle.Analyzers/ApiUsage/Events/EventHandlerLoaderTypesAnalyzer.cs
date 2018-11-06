@@ -37,13 +37,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 			Compilation compilation = context.Compilation;
 
-			INamedTypeSymbol eventAttributeType = compilation.GetTypeByMetadataName( EventAttributeFullName );
-			if( eventAttributeType.IsNullOrErrorType() ) {
+			if( !compilation.TryGetTypeByMetadataName( EventAttributeFullName, out INamedTypeSymbol eventAttributeType ) ) {
 				return;
 			}
 
-			INamedTypeSymbol eventHandlerAttributeType = compilation.GetTypeByMetadataName( EventHandlerAttributeFullName );
-			if( eventHandlerAttributeType.IsNullOrErrorType() ) {
+			if( !compilation.TryGetTypeByMetadataName( EventHandlerAttributeFullName, out INamedTypeSymbol eventHandlerAttributeType ) ) {
 				return;
 			}
 
@@ -154,8 +152,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 		private static IEnumerable<ISymbol> GetGenericRegisterMethods( Compilation compilation ) {
 
-			INamedTypeSymbol registryType = compilation.GetTypeByMetadataName( IEventHandlerRegistryFullName );
-			if( registryType.IsNullOrErrorType() ) {
+			if( !compilation.TryGetTypeByMetadataName( IEventHandlerRegistryFullName, out INamedTypeSymbol registryType ) ) {
 				return Enumerable.Empty<ISymbol>();
 			}
 
