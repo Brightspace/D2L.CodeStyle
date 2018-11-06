@@ -36,6 +36,7 @@
     <Compile Include="ApiUsage\DangerousMemberUsages\DangerousMemberUsagesAnalyzer.cs" />
     <Compile Include="ApiUsage\DangerousMemberUsages\DangerousMethods.cs" />
     <Compile Include="ApiUsage\DangerousMemberUsages\DangerousProperties.cs" />
+    <Compile Include="ApiUsage\Events\EventTypesAnalyzer.cs" />
     <Compile Include="ApiUsage\Events\EventHandlersBlacklistAnalyzer.cs" />
     <Compile Include="ApiUsage\Events\EventHandlersBlacklist.cs" />
     <Compile Include="ApiUsage\Events\EventHandlerLoaderTypesAnalyzer.cs" />
