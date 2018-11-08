@@ -22,6 +22,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 		public ITypeSymbol FactoryType { get; }
 		public ITypeSymbol DynamicObjectFactoryType { get; }
 
+		internal static DependencyRegistration Marker( ObjectScope scope, ITypeSymbol dependencyType )
+			=> new DependencyRegistration(
+				scope,
+				dependencyType: dependencyType
+			);
+
 		internal static DependencyRegistration NonFactory( ObjectScope scope, ITypeSymbol dependencyType, ITypeSymbol concreteType )
 			=> new DependencyRegistration(
 				scope,
