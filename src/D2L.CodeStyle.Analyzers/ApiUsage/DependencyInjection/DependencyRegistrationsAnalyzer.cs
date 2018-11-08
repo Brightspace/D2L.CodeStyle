@@ -208,13 +208,22 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 			return ImmutableArray.Create( registration.DependencyType );
 		}
 
-		private bool TryGetDependenciesFromConstructor( ITypeSymbol type, out ImmutableArray<ITypeSymbol> dependencies  ) {
-			var ctor = type.GetMembers()
+		private bool TryGetInjectableConstructor( ITypeSymbol type, out IMethodSymbol injectableConstructor ) {
+			injectableConstructor = type.GetMembers()
 				.Where( m => m.Kind == SymbolKind.Method )
 				.Cast<IMethodSymbol>()
 				.Where( m => m.MethodKind == MethodKind.Constructor && m.DeclaredAccessibility == Accessibility.Public )
 				.FirstOrDefault();
-			if( ctor == null ) {
+
+			if( injectableConstructor == null ) {
+				return false;
+			}
+
+			return true;
+		}
+
+		private bool TryGetDependenciesFromConstructor( ITypeSymbol type, out ImmutableArray<ITypeSymbol> dependencies  ) {
+			if( !TryGetInjectableConstructor( type, out IMethodSymbol ctor ) ) {
 				dependencies = ImmutableArray<ITypeSymbol>.Empty;
 				return false;
 			}
