@@ -7,13 +7,15 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 			ITypeSymbol dependencyType,
 			ITypeSymbol concreteType = null,
 			ITypeSymbol factoryType = null,
-			ITypeSymbol dynamicObjectType = null
+			ITypeSymbol dynamicObjectType = null,
+			bool isInstanceRegistration = false
 		) {
 			ObjectScope = scope;
 			DependencyType = dependencyType;
 			ConcreteType = concreteType;
 			FactoryType = factoryType;
 			DynamicObjectFactoryType = dynamicObjectType;
+			IsInstanceRegistration = isInstanceRegistration;
 		}
 
 		public ObjectScope ObjectScope { get; }
@@ -21,6 +23,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 		public ITypeSymbol ConcreteType { get; }
 		public ITypeSymbol FactoryType { get; }
 		public ITypeSymbol DynamicObjectFactoryType { get; }
+		public bool IsInstanceRegistration { get; }
+
+		internal static DependencyRegistration Marker( ObjectScope scope, ITypeSymbol dependencyType )
+			=> new DependencyRegistration(
+				scope,
+				dependencyType: dependencyType
+			);
 
 		internal static DependencyRegistration NonFactory( ObjectScope scope, ITypeSymbol dependencyType, ITypeSymbol concreteType )
 			=> new DependencyRegistration(
@@ -42,6 +51,14 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 				scope,
 				dependencyType: dependencyType,
 				dynamicObjectType: dynamicObjectType
+			);
+
+		internal static DependencyRegistration Instance( ObjectScope scope, ITypeSymbol dependencyType, ITypeSymbol concreteType )
+			=> new DependencyRegistration(
+				scope,
+				dependencyType: dependencyType,
+				concreteType: concreteType,
+				isInstanceRegistration: true
 			);
 	}
 

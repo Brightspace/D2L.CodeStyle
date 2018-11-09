@@ -33,10 +33,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 			if( !TryGetObjectScope( arguments[0], semanticModel, out scope ) ) {
 				return null;
 			}
-			return DependencyRegistration.NonFactory(
+			return DependencyRegistration.Marker(
 				scope: scope,
-				dependencyType: method.TypeArguments[0],
-				concreteType: method.TypeArguments[0]
+				dependencyType: method.TypeArguments[0]
 			);
 		}
 	}
