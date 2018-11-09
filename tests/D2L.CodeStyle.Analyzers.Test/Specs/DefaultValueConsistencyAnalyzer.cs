@@ -165,3 +165,28 @@ namespace MultipleInterfaces {
 		) { }
 	}
 }
+
+namespace NewModifier {
+	interface IBaseInterface {
+		void GetStuff( int count = 99 );
+	}
+
+	interface IMiddleInterface : IBaseInterface {
+		// not advocating this in any way, and should probably be its own error
+		new void GetStuff( int count = 55 );
+	}
+
+	class SomeClass : IMiddleInterface {
+		// Gets called via SomeClass and IBaseInterface
+		public void GetStuff( int count = 99 ) {}
+
+		void IMiddleInterface.GetStuff( int count ) {}
+	}
+
+	class SomeClass2 : IMiddleInterface {
+		public void GetStuff(
+			/* DefaultValuesInOverridesShouldBeConsistent(count, 123, 99, IBaseInterface) */ int count = 123 /**/
+		) { }
+		void IMiddleInterface.GetStuff( int count ) {}
+	}
+}
