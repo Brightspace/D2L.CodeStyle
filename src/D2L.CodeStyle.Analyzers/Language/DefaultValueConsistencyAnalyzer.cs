@@ -106,6 +106,14 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					continue;
 				}
 
+				if ( implMethod.ContainingType != implType ) {
+					// Our base class could implement the method. We don't want
+					// to duplicate the work on principle but also when we look
+					// at DeclaringSyntaxReferences in GetLocation it could
+					// fail because our base could be in a different assembly.
+					return;
+				}
+
 				// This is O(# of explicit implementations for this method), in
 				// a loop which includes at least that many things, so O(n^2)
 				// for some n. But n is probably small.
