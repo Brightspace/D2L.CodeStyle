@@ -76,6 +76,11 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		private static void AnalyzeBaseList( SyntaxNodeAnalysisContext ctx ) {
 			var baseList = (BaseListSyntax)ctx.Node;
 
+			// ignore enums, their BaseListSyntax isn't relevant
+			if ( baseList.Parent is EnumDeclarationSyntax ) {
+				return;
+			}
+
 			// Not likely, maybe as the user is typing stuff out.
 			if ( baseList.Types.Count == 0 ) {
 				return;

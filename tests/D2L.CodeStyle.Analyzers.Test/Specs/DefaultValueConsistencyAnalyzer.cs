@@ -1,8 +1,15 @@
 ﻿// analyzer: D2L.CodeStyle.Analyzers.Language.DefaultValueConsistencyAnalyzer
 
-namespace ClassInheritance {
+namespace Misc {
 	// This shouldn't crash the analyzer
 	public void FunctionOutOfPlace( int arg = 3 );
+
+	// This has a BaseListSyntax but should be ignored
+	enum Foo : int {
+		A, B, C
+	}
+}
+namespace ClassInheritance {
 
 	public class ClassWithNoInterestingOverrides {
 		public int Foo();
