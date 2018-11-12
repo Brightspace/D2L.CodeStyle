@@ -395,6 +395,16 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "We require that [Immutable] be explicity applied to all event types."
 		);
 
+    public static readonly DiagnosticDescriptor DependencyRegistraionMissingPublicConstructor = new DiagnosticDescriptor(
+			id: "D2L0046",
+			title: "Dependency Registration Missing Public Constructor",
+			messageFormat: "{0} must have a public constructor if it is to be registered for DI.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "All injectable types need a public constructor in order to be activated."
+    );
+
 		public static readonly DiagnosticDescriptor IncludeDefaultValueInOverrideForReadability = new DiagnosticDescriptor(
 			id: "D2L0047",
 			title: "The parameter {0} has a default value in {1}, but not here. This causes inconsistent behaviour and reduces readability. Please repeat the default value here explicitly.",

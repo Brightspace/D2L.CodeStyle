@@ -27,7 +27,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( 
 			Diagnostics.UnsafeSingletonRegistration,
 			Diagnostics.RegistrationKindUnknown,
-			Diagnostics.AttributeRegistrationMismatch
+			Diagnostics.AttributeRegistrationMismatch,
+			Diagnostics.DependencyRegistraionMissingPublicConstructor
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -142,6 +143,16 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 				ctx.ReportDiagnostic( diagnostic );
 			}
 
+			if( TryGetInstantiatedTypeForRegistration( registration, out ITypeSymbol instantiatedType ) ) {
+				if( !TryGetInjectableConstructor( instantiatedType, out IMethodSymbol injectableConstructor ) ) {
+					var diagnostic = Diagnostic.Create(
+						Diagnostics.DependencyRegistraionMissingPublicConstructor,
+						ctx.Node.GetLocation(),
+						instantiatedType.GetFullTypeNameWithGenericArguments()
+					);
+					ctx.ReportDiagnostic( diagnostic );
+				}
+			}
 		}
 
 		private static Diagnostic GetUnsafeSingletonDiagnostic(
@@ -206,6 +217,54 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 
 			// otherwise use the dependency type
 			return ImmutableArray.Create( registration.DependencyType );
+		}
+
+		/// <summary>
+		/// Gets the type that will be actually instantiated by DI for the registration.
+		/// This is the factory type for registrations like RegisterFactory, or the concrete type otherwise
+		/// </summary>
+		/// <param name="registration"></param>
+		/// <param name="instantiatedType"></param>
+		/// <returns></returns>
+		private bool TryGetInstantiatedTypeForRegistration( DependencyRegistration registration, out ITypeSymbol instantiatedType ) {
+			if( registration.IsInstanceRegistration ) {
+				instantiatedType = null;
+				return false;
+			}
+
+			ITypeSymbol type = registration.FactoryType ?? registration.ConcreteType;
+
+			if( type.IsNullOrErrorType() ) {
+				instantiatedType = null;
+				return false;
+			}
+
+			// hacks
+			// handle RegisterSubInterface<IFoo, IFooBar>():
+			// IFooBar is in the registration as "concrete type" and don't want to deal with that refactoring
+			if( type.TypeKind == TypeKind.Interface ) {
+				instantiatedType = null;
+				return false;
+			}
+
+			// ignore registry usage in registry extensions we don't know about
+			// public static void Foo<T, U>( this IDependencyRegistry @this, ObjectScope scope ) where U : T {
+			//   // Can't find constructor for U!
+			//   @this.Register<T, U>( scope );
+			// }
+			if( type.TypeKind == TypeKind.TypeParameter ) {
+				instantiatedType = null;
+				return false;
+			}
+
+			// Register( typof( IFoo<> ), typeof( Foo<> ), ObjectScope.Singleton )
+			// Turn Foo<> into Foo<T>
+			if( type is INamedTypeSymbol namedType ) {
+				type = namedType.ConstructedFrom;
+			}
+
+			instantiatedType = type;
+			return true;
 		}
 
 		private bool TryGetInjectableConstructor( ITypeSymbol type, out IMethodSymbol injectableConstructor ) {
