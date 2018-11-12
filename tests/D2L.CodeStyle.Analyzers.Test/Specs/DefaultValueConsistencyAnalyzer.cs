@@ -41,7 +41,7 @@ namespace ClassInheritance {
 
 		public override void Baz(
 			float x,
-			/* DefaultValuesInOverridesShouldBeConsistent(y, , hello, BaseClass) */ string y = null /**/
+			/* DefaultValuesInOverridesShouldBeConsistent(y, null, "hello", BaseClass) */ string y = null /**/
 		) { }
 	}
 
@@ -109,7 +109,7 @@ namespace Interfaces {
 
 		public void Baz(
 			float x,
-			/* DefaultValuesInOverridesShouldBeConsistent(y, bye, , IFoo) */ string y = "bye" /**/
+			/* DefaultValuesInOverridesShouldBeConsistent(y, "bye", null, IFoo) */ string y = "bye" /**/
 		) { }
 	}
 

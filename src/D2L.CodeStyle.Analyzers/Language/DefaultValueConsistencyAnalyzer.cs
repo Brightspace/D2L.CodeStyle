@@ -201,13 +201,25 @@ namespace D2L.CodeStyle.Analyzers.Language {
 							Diagnostics.DefaultValuesInOverridesShouldBeConsistent,
 							GetLocation( implParameter ),
 							implParameter.Name,
-							implDefault,
-							baseDefault,
+							FormatDefaultValue( implDefault ),
+							FormatDefaultValue( baseDefault ),
 							baseMethod.ContainingType.Name
 						)
 					);
 				}
 			}
+		}
+
+		private static string FormatDefaultValue( object val ) {
+			if ( val == null ) {
+				return "null";
+			}
+
+			if ( val is string s ) {
+				return $@"""{s}""";
+			}
+
+			return val.ToString();
 		}
 
 		private static Location GetLocation( IParameterSymbol param ) {
