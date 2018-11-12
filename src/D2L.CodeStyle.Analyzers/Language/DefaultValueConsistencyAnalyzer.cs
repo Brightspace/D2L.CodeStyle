@@ -181,7 +181,16 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				var implDefault = implParameter.ExplicitDefaultValue;
 				var baseDefault = baseParameter.ExplicitDefaultValue;
 
-				if( !implDefault.Equals( baseDefault ) ) {
+				if ( implDefault == null && baseDefault == null ) {
+					return;
+				} else if ( implDefault != null && implDefault.Equals( baseDefault ) ) {
+					return;
+				}
+
+				// Use the static object.Equals because implDefault could
+				// legtimately be null and implDefault.Equals( baseDefault )
+				// would throw a NRE.
+				if( !Equals( implDefault, baseDefault ) ) {
 					// Inconsistent default values are VERY confusing. It
 					// almost surely isn't intentional; it usually happens
 					// because someone wants to change the default but doesn't

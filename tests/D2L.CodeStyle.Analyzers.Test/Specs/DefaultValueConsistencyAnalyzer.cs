@@ -41,7 +41,7 @@ namespace ClassInheritance {
 
 		public override void Baz(
 			float x,
-			/* DefaultValuesInOverridesShouldBeConsistent(y, bye, hello, BaseClass) */ string y = "bye" /**/
+			/* DefaultValuesInOverridesShouldBeConsistent(y, , hello, BaseClass) */ string y = null /**/
 		) { }
 	}
 
@@ -85,13 +85,13 @@ namespace Interfaces {
 	public interface IFoo {
 		void Foo();
 		void Bar( int x = 3 );
-		void Baz( float x, string y = "hello" );
+		void Baz( float x, string y = null );
 	}
 
 	public struct GoodImplicitImpl : IFoo {
 		public void Foo() { }
 		public void Bar( int x = 3 ) { }
-		public void Baz( float x, string y = "hello" ) { }
+		public void Baz( float x, string y = null ) { }
 	}
 
 	public struct ExplicitImplIsAlwaysGood : IFoo {
@@ -109,7 +109,7 @@ namespace Interfaces {
 
 		public void Baz(
 			float x,
-			/* DefaultValuesInOverridesShouldBeConsistent(y, bye, hello, IFoo) */ string y = "bye" /**/
+			/* DefaultValuesInOverridesShouldBeConsistent(y, bye, , IFoo) */ string y = "bye" /**/
 		) { }
 	}
 
@@ -131,7 +131,7 @@ namespace Interfaces {
 		public void Bar( int x = 3 ) { }
 		public void Baz(
 			/* DontIntroduceNewDefaultValuesInOverrides(x, IFoo) */ float x = 3.14 /**/,
-			string y = "hello"
+			string y = null
 		) { }
 	}
 }
