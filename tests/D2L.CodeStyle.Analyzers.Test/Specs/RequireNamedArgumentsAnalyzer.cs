@@ -73,6 +73,7 @@ namespace D2L {
 
 			#region need to have enough named args, though
 			/* TooManyUnnamedArgs */ _arg21( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, a21: 21 ) /**/;
+			/* TooManyUnnamedArgs */ _arg21( 1, a2: 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21 ) /**/;
 			#endregion
 
 			#region params don't count against the unnamed args budget
