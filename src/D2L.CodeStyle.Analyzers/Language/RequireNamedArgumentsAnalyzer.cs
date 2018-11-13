@@ -83,6 +83,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 						properties: fixerContext
 					)
 				);
+
+				return;
 			}
 
 			// TODO: literal args should always be named
