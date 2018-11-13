@@ -83,6 +83,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 						properties: fixerContext
 					)
 				);
+
+				return;
 			}
 
 			// TODO: literal args should always be named
@@ -102,14 +104,9 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			for( var idx = 0; idx < args.Arguments.Count; idx++ ) {
 				var arg = args.Arguments[idx];
 
-				// Ignore args that are already named. This will mean that args
-				// can be partially named which is sometimes helpful (the named
-				// args have to be at the end of the list though.)
+				// Ignore args that already have names
 				if ( arg.NameColon != null ) {
-					// We can stop as soon as we see one; named arguments have
-					// to be at the end of the arguments so the rest will be
-					// named too.
-					yield break;
+					continue;
 				}
 
 				var param = arg.DetermineParameter(
