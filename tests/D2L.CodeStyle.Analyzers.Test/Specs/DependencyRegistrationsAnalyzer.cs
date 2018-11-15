@@ -19,7 +19,6 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 	public enum ObjectScope {
 		AlwaysCreateNewInstance = 0,
 		Singleton = 1,
-		Thread = 2,
 		WebRequest = 3
 	}
 	public abstract class ExtensionPointDescriptor {
@@ -176,7 +175,6 @@ namespace SpecTests {
 			reg.Register( typeof( INotSingleton ), typeof( DoesntMatter ), ObjectScope.WebRequest );
 			reg.Register<INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
 			reg.RegisterPlugin<INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
-			reg.RegisterFactory<INotSingleton, DoesntMatter>( ObjectScope.Thread );
 			reg.RegisterPluginFactory<INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
 			reg.RegisterParentAwareFactory<INotSingleton, DoesntMatter>();
 			reg.ConfigurePlugins<INotSingleton>( ObjectScope.WebRequest );
@@ -188,10 +186,7 @@ namespace SpecTests {
 
 			// Interfaces marked as singleton cannot have web request registrations.
 			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.Register<ISingleton, DoesntMatter>( ObjectScope.WebRequest ) /**/;
-			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.Register<ISingleton, DoesntMatter>( ObjectScope.Thread ) /**/;
 			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.Register( typeof( ISingleton ), typeof( DoesntMatter ), ObjectScope.WebRequest ) /**/;
-			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.RegisterFactory<ISingleton, DoesntMatter>( ObjectScope.Thread ) /**/;
-			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.RegisterPlugin<ISingleton, DoesntMatter>( ObjectScope.Thread ) /**/;
 			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.RegisterPluginFactory<ISingleton, DoesntMatter>( ObjectScope.WebRequest ) /**/;
 
 			// DynamicObjectFactory registrations at non-Singleton scope are safe,
