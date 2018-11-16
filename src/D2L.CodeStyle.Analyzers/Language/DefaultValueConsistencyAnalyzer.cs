@@ -64,13 +64,23 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
-			if( method.IsOverride ) {
-				AnalyzeMethod(
-					ctx.ReportDiagnostic,
-					baseMethod: method.OverriddenMethod,
-					implMethod: method
-				);
+			if( !method.IsOverride ) {
+				return;
 			}
+
+			// There might be other build errors (e.g. from missing partial
+			// classes from code-gen, or incomplete code when we're running
+			// in intellisense) preventing the semantic model from locating
+			// the original method. Ignore these.
+			if( method.OverriddenMethod == null ) {
+				return;
+			}
+
+			AnalyzeMethod(
+				ctx.ReportDiagnostic,
+				baseMethod: method.OverriddenMethod,
+				implMethod: method
+			);
 		}
 
 		private static void AnalyzeBaseList( SyntaxNodeAnalysisContext ctx ) {
