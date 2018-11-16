@@ -69,7 +69,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 	internal enum ObjectScope {
 		AlwaysCreateNewInstance = 0,
 		Singleton = 1,
-		Thread = 2,
 		WebRequest = 3
 	}
 
