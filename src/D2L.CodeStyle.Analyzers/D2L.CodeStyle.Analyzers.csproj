@@ -49,6 +49,7 @@
     <Compile Include="Immutability\ImmutableGenericArgumentAnalyzer.cs" />
     <Compile Include="Immutability\ImmutableGenericDeclarationAnalyzer.cs" />
     <Compile Include="Language\DefaultValueConsistencyAnalyzer.cs" />
+    <Compile Include="Language\EscapeNonAsciiCharsInLiteralsAnalyzer.cs" />
     <Compile Include="Language\UseNamedArgumentsCodeFix.cs" />
     <Compile Include="Language\RequireNamedArgumentsAnalyzer.cs" />
     <Compile Include="Visibility\CorsHeaderAppenderUsageAnalyzer.cs" />

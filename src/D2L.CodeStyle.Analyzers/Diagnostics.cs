@@ -434,5 +434,15 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "The parameter {0} has a default value of {1} here, but {2} in its original definition in {3}. This causes inconsistent behaviour. Please use the same defualt value everywhere."
 		);
+
+		public static readonly DiagnosticDescriptor EscapeNonAsciiCharsInLiteral = new DiagnosticDescriptor(
+			id: "D2L0050",
+			title: "This {0}-literal should be escaped to {1} to avoid a dependency on the encoding of the file it is contained in.",
+			messageFormat: "This {0}-literal should be escaped to {1} to avoid a dependency on the encoding of the file it is contained in.",
+			category: "Language",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "This {0}-literal should be escaped to {1} to avoid a dependency on the encoding of the file it is contained in."
+		);
 	}
 }
