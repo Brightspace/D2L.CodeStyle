@@ -175,6 +175,7 @@ namespace SpecTests {
 			reg.Register( typeof( INotSingleton ), typeof( DoesntMatter ), ObjectScope.WebRequest );
 			reg.Register<INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
 			reg.RegisterPlugin<INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
+			reg.RegisterFactory<INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
 			reg.RegisterPluginFactory<INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
 			reg.RegisterParentAwareFactory<INotSingleton, DoesntMatter>();
 			reg.ConfigurePlugins<INotSingleton>( ObjectScope.WebRequest );
@@ -186,7 +187,10 @@ namespace SpecTests {
 
 			// Interfaces marked as singleton cannot have web request registrations.
 			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.Register<ISingleton, DoesntMatter>( ObjectScope.WebRequest ) /**/;
+			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.Register<ISingleton, DoesntMatter>( ObjectScope.AlwaysCreateNewInstance ) /**/;
 			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.Register( typeof( ISingleton ), typeof( DoesntMatter ), ObjectScope.WebRequest ) /**/;
+			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.RegisterFactory<ISingleton, DoesntMatter>( ObjectScope.WebRequest ) /**/;
+			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.RegisterPlugin<ISingleton, DoesntMatter>( ObjectScope.WebRequest ) /**/;
 			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.RegisterPluginFactory<ISingleton, DoesntMatter>( ObjectScope.WebRequest ) /**/;
 
 			// DynamicObjectFactory registrations at non-Singleton scope are safe,
