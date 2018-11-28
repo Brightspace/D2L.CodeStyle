@@ -136,6 +136,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			"D2L.Lms.Discussions.Implementation",
 			"D2L.Lms.Domain",
 			"D2L.Lms.Domain.DataAccess",
+			"D2L.Lms.Dropbox",
 			"D2L.Lms.Dropbox.Integration",
 			"D2L.Lms.Dropbox.Web",
 			"D2L.Lms.Question",
