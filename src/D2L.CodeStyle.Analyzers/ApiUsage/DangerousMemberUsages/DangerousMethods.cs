@@ -11,7 +11,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			ImmutableDictionary.Create<string, ImmutableArray<string>>()
 			.Add<FieldInfo>(
 				nameof( FieldInfo.SetValue ),
-				nameof( FieldInfo.SetValueDirect )
+				"SetValueDirect"
 			)
 			.Add<PropertyInfo>(
 				nameof( PropertyInfo.SetValue )
