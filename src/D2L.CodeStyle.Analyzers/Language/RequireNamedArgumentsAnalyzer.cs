@@ -134,14 +134,16 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					continue;
 				}
 
-				if ( arg.Expression is IdentifierNameSyntax ident ) {
-					bool literalArgMatchesParamName = string.Equals(
-						ident.Identifier.ValueText,
+				string psuedoName = GetPsuedoName( arg );
+
+				if( psuedoName != null ) {
+					bool matchesParamName = string.Equals(
+						psuedoName,
 						param.Name,
 						StringComparison.OrdinalIgnoreCase
 					);
 
-					if( literalArgMatchesParamName ) {
+					if( matchesParamName ) {
 						continue;
 					}
 				}
@@ -152,6 +154,37 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					syntax: arg
 				);
 			}
+		}
+
+		private static string GetPsuedoName( ArgumentSyntax arg ) {
+			string ident = null;
+
+			switch( arg.Expression ) {
+				case IdentifierNameSyntax identArg:
+					ident = identArg.Identifier.ValueText;
+					break;
+				case MemberAccessExpressionSyntax access:
+					// Member access is left-associative, so we pick the
+					// right -most ident, i.e. "foo.bar.baz" is equivalent to
+					// (foo.bar).baz, and we will grab "baz".
+					ident = access.Name.Identifier.ValueText;
+					break;
+			}
+
+			if( ident == null ) {
+				return null;
+			}
+
+			// Strip uninteresting prefixes off the identifier
+			if ( ident.StartsWith( "m_" ) || ident.StartsWith( "s_" ) ) {
+				// e.g. m_foo -> foo
+				ident = ident.Substring( 2 );
+			} else if ( ident[0] == '_' && ident.Length > 1 && ident[1] != '_') {
+				// e.g. _foo -> foo
+				ident = ident.Substring( 1 );
+			}
+
+			return ident;
 		}
 
 		// Not an extension method because there may be more cases (e.g. in the

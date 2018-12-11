@@ -2,6 +2,13 @@
 
 namespace D2L {
 	public static class Foo {
+		private class Thing {
+			public int a16;
+			public int m_a16;
+			public int _a16;
+			public Thing nested;
+		}
+
 		public static void _arg0() { }
 		public static void _arg1( int a1 ) { }
 		public static void _arg2( int a1, int a2 ) { }
@@ -78,6 +85,14 @@ namespace D2L {
 			_arg20( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, a16, 17, 18, 19, 20 );
 			_arg20( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, a20 );
 			_arg21( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, a20, A21 );
+			#endregion
+
+			#region member accesses can also serve as psuedo-names
+			var thing = new Thing();
+			_arg20( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, thing.a16, 17, 18, 19, 20 );
+			_arg20( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, thing.nested.a16, 17, 18, 19, 20 );
+			_arg20( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, thing.m_a16, 17, 18, 19, 20 );
+			_arg20( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, thing.nested._a16, 17, 18, 19, 20 );
 			#endregion
 
 			#region need to have enough named args, though
