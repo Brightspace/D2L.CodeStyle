@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
@@ -131,6 +132,18 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				// which case it is "unnamed", so ignore it.
 				if ( param.Name == "" ) {
 					continue;
+				}
+
+				if ( arg.Expression is IdentifierNameSyntax ident ) {
+					bool literalArgMatchesParamName = string.Equals(
+						ident.Identifier.ValueText,
+						param.Name,
+						StringComparison.OrdinalIgnoreCase
+					);
+
+					if( literalArgMatchesParamName ) {
+						continue;
+					}
 				}
 
 				yield return new ArgParamBinding(
