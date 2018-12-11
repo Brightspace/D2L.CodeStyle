@@ -71,6 +71,15 @@ namespace D2L {
 			_arg21( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, a20: 20, a21: 21 );
 			#endregion
 
+			#region arguments that are literals with the correct name don't count against the budget
+			int a16 = 16;
+			int a20 = 20;
+			int A21 = 21; // case doesn't matter
+			_arg20( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, a16, 17, 18, 19, 20 );
+			_arg20( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, a20 );
+			_arg21( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, a20, A21 );
+			#endregion
+
 			#region need to have enough named args, though
 			/* TooManyUnnamedArgs */ _arg21( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, a21: 21 ) /**/;
 			/* TooManyUnnamedArgs */ _arg21( 1, a2: 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21 ) /**/;
