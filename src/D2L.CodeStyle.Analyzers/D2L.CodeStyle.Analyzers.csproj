@@ -1,13 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>netstandard1.3</TargetFramework>
     <LangVersion>7.3</LangVersion>
-
     <Title>D2L.CodeStyle.Analyzers</Title>
     <Product>D2L.CodeStyle</Product>
     <Description>D2L.CodeStyle analyzers</Description>
-    <Version>0.93.0</Version>
+    <Version>0.94.0</Version>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Brightspace/D2L.CodeStyle</PackageProjectUrl>
     <Authors>D2L</Authors>
@@ -15,15 +13,12 @@
     <Copyright>Copyright © D2L Corporation 2018</Copyright>
     <DevelopmentDependency>true</DevelopmentDependency>
   </PropertyGroup>
-
   <ItemGroup>
     <None Update="tools\*.ps1" CopyToOutputDirectory="Always" Pack="true" PackagePath="tools" />
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="2.8.2" />
     <PackageReference Include="System.Collections.Immutable" Version="1.3.1" />
   </ItemGroup>
-
 </Project>
