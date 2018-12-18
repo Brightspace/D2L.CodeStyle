@@ -1,6 +1,22 @@
 version: 0.1.0.{build}
+
+image: Visual Studio 2017
+
+configuration: Release
+
+before_build:
+  - nuget restore
+  - dotnet restore
+
+build:
+  parallel: true
+  verbosity: minimal
+
+artifacts:
+  - path: src\**\*.nupkg
+    name: NuGet
+
 skip_branch_with_pr: true
-image: Visual Studio 2017 Preview
 pull_requests:
   do_not_increment_build_number: true
 skip_tags: true
@@ -8,12 +24,3 @@ clone_depth: 5
 nuget:
   project_feed: true
   disable_publish_on_pr: true
-before_build:
-  - nuget restore
-build:
-  publish_nuget: true
-  publish_nuget_symbols: true
-  parallel: true
-  verbosity: minimal
-configuration:
-- Release

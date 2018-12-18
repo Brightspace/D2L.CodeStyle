@@ -12,6 +12,9 @@
     <Company>D2L Corporation</Company>
     <Copyright>Copyright © D2L Corporation 2018</Copyright>
     <DevelopmentDependency>true</DevelopmentDependency>
+
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <IncludeSymbols>True</IncludeSymbols>
   </PropertyGroup>
   <ItemGroup>
     <None Update="tools\*.ps1" CopyToOutputDirectory="Always" Pack="true" PackagePath="tools" />
