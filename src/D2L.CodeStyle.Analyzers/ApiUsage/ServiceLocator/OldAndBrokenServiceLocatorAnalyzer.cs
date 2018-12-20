@@ -90,7 +90,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 		/// </summary>
 		private static readonly ImmutableHashSet<string> WhitelistedAssemblies = new HashSet<string> {
 			"D2L",
-			"D2L.Awards",
 			"D2L.Core.JobManagement",
 			"D2L.Core.Metadata",
 			"D2L.Core.ReleaseConditions",
