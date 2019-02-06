@@ -444,5 +444,15 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "Use RunAsync for awaitable actions."
 		);
+
+		public static readonly DiagnosticDescriptor BannedConfig = new DiagnosticDescriptor(
+			id: "D2L0051",
+			title: "Fetching the config variable \"{0}\" has been deprecated. {1}",
+			messageFormat: "Fetching the config variable \"{0}\" has been deprecated. {1}",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Fetching the config variable \"{0}\" has been deprecated. {1}"
+		);
 	}
 }
