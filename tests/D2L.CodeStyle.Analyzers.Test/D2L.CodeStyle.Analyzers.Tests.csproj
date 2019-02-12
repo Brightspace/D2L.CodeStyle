@@ -59,6 +59,7 @@
     <EmbeddedResource Include="Specs\EventHandlerLoaderTypesAnalyzer.cs" />
     <EmbeddedResource Include="Specs\EventTypesAnalyzer.cs" />
     <EmbeddedResource Include="Specs\DefaultValueConsistencyAnalyzer.cs" />
+    <EmbeddedResource Include="Specs\LoggingExecutionContextScopeBuilderAnalyzer.cs" />
     <Compile Include="TestBase.cs" />
     <Compile Include="Extensions\TypeSymbolExtensionsTests.cs" />
     <Compile Include="ApiUsage\NotNullAnalyzerTests.cs" />

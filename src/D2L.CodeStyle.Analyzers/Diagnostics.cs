@@ -434,5 +434,15 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "The parameter {0} has a default value of {1} here, but {2} in its original definition in {3}. This causes inconsistent behaviour. Please use the same defualt value everywhere."
 		);
+
+		public static readonly DiagnosticDescriptor LoggingContextRunAwaitable = new DiagnosticDescriptor(
+			id: "D2L0050",
+			title: "Use RunAsync for awaitable actions.",
+			messageFormat: "Use RunAsync for awaitable actions.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Use RunAsync for awaitable actions."
+		);
 	}
 }
