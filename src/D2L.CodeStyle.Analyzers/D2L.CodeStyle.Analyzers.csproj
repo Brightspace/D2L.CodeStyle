@@ -5,12 +5,12 @@
     <Title>D2L.CodeStyle.Analyzers</Title>
     <Product>D2L.CodeStyle</Product>
     <Description>D2L.CodeStyle analyzers</Description>
-    <Version>0.94.0</Version>
+    <Version>0.95.0</Version>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Brightspace/D2L.CodeStyle</PackageProjectUrl>
     <Authors>D2L</Authors>
     <Company>D2L Corporation</Company>
-    <Copyright>Copyright © D2L Corporation 2018</Copyright>
+    <Copyright>Copyright © D2L Corporation 2019</Copyright>
     <DevelopmentDependency>true</DevelopmentDependency>
 
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
