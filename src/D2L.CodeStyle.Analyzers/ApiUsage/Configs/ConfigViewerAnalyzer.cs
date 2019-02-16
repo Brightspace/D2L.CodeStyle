@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
@@ -87,10 +88,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 				return;
 			}
 
+			string canonicalConfigName = messages.Keys.First( k => k.Equals( configName, StringComparison.OrdinalIgnoreCase ) );
+
 			ReportDiagnostic(
 				context: context,
 				configNameArg: configNameArg,
-				configName: configName,
+				configName: canonicalConfigName,
 				deprecationMessage: message
 			);
 		}

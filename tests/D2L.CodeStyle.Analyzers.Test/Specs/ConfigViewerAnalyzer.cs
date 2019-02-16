@@ -27,6 +27,16 @@ namespace D2L.CodeStyle.Analyzers.Specs {
 				/* BannedConfig(d2l.Settings.WebServerName, WebServerName is being moved to Hiera data. Use IUrlFormatter or IWebServerNameProvider instead.) */ "d2l.Settings.WebServerName" /**/
 			);
 
+			m_configViewer.GetOrg<string>(
+				123,
+				/* BannedConfig(d2l.Settings.WebServerName, WebServerName is being moved to Hiera data. Use IUrlFormatter or IWebServerNameProvider instead.) */ "d2l.settings.webservername" /**/
+			);
+
+			m_configViewer.GetOrg<string>(
+				123,
+				/* BannedConfig(d2l.Settings.WebServerName, WebServerName is being moved to Hiera data. Use IUrlFormatter or IWebServerNameProvider instead.) */ "d2l.seTTings.webserVERnamE" /**/
+			);
+
 			const string WebServerNameConfig = "d2l.Settings.WebServerName";
 			m_configViewer.GetOrg<string>(
 				123,
