@@ -11,6 +11,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 			// .Add( "GetInstance", ImmutableDictionary.Create<string, string>() )
 			.Add( "GetOrg", ImmutableDictionary.Create<string, string>( StringComparer.OrdinalIgnoreCase )
 				.Add( "d2l.Settings.WebServerName", "WebServerName is being moved to Hiera data. Use IUrlFormatter or IWebServerNameProvider instead." )
+				.Add( "d2l.System.Aws.Region", "Use IOrgAwsRegionProvider instead." )
 			)
 			// .Add( "GetOrgUnit", ImmutableDictionary.Create<string, string>( StringComparer.OrdinalIgnoreCase ) )
 			// .Add( "GetUser", ImmutableDictionary.Create<string, string>( StringComparer.OrdinalIgnoreCase ) )
