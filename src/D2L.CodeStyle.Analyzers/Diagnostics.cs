@@ -454,5 +454,16 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "Fetching the config variable \"{0}\" has been deprecated. {1}"
 		);
+
+		public static readonly DiagnosticDescriptor ContentFilePhysicalPathUsages = new DiagnosticDescriptor(
+			id: "D2L0052",
+			title: "Don't use the PhysicalPath property.",
+			messageFormat: "PhysicalPath property is being phased out. Use the ContentPath property instead.",
+			category: "Storageable",
+			defaultSeverity: DiagnosticSeverity.Info,
+			isEnabledByDefault: true,
+			description: "PhysicalPath property is being phased out. Use the ContentPath property instead."
+		);
+
 	}
 }

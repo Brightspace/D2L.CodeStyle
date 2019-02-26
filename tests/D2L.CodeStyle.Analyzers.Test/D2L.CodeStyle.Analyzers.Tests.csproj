@@ -61,6 +61,7 @@
     <EmbeddedResource Include="Specs\DefaultValueConsistencyAnalyzer.cs" />
     <EmbeddedResource Include="Specs\ConfigViewerAnalyzer.cs" />
     <EmbeddedResource Include="Specs\LoggingExecutionContextScopeBuilderAnalyzer.cs" />
+    <EmbeddedResource Include="Specs\ILpContentFilePhysicalPathAnalyzer.cs" />
     <Compile Include="TestBase.cs" />
     <Compile Include="Extensions\TypeSymbolExtensionsTests.cs" />
     <Compile Include="ApiUsage\NotNullAnalyzerTests.cs" />
