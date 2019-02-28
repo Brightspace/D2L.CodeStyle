@@ -3,7 +3,6 @@ using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.ContentPhysicalPaths {
@@ -42,27 +41,18 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ContentPhysicalPaths {
 			}
 
 			context.RegisterSyntaxNodeAction(
-				ctxt => {
-					if( ctxt.Node is MemberAccessExpressionSyntax propertyAccess ) {
-						AnalyzePropertyAccess(
-								ctxt,
-								propertyAccess,
-								dangerousProperties
-							);
-					}
-				},
+				ctxt => AnalyzePropertyAccess( ctxt, dangerousProperties ),
 				SyntaxKind.SimpleMemberAccessExpression
 			);
 		}
 
 		private void AnalyzePropertyAccess(
 				SyntaxNodeAnalysisContext context,
-				MemberAccessExpressionSyntax propertyAccess,
 				IImmutableSet<ISymbol> dangerousProperties
 			) {
 
 			ISymbol propertySymbol = context.SemanticModel
-				.GetSymbolInfo( propertyAccess )
+				.GetSymbolInfo( context.Node )
 				.Symbol;
 
 			if( propertySymbol.IsNullOrErrorType() ) {
