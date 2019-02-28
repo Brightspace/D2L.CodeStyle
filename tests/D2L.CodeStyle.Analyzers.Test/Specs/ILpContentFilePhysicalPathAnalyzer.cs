@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.ContentFilePhysicalPaths.ILpContentFilePhysicalPathAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.PhysicalPaths.ILpContentFilePhysicalPathAnalyzer
 
 namespace D2L.LP.Files.Domain {
 	public interface ILpContentFile {

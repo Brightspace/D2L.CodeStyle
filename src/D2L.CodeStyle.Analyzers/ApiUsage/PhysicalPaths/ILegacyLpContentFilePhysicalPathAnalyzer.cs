@@ -2,7 +2,7 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace D2L.CodeStyle.Analyzers.ApiUsage.ContentFilePhysicalPaths {
+namespace D2L.CodeStyle.Analyzers.ApiUsage.PhysicalPaths {
 
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	internal sealed class ILegacyLpContentFilePhysicalPathAnalyzer : DiagnosticAnalyzer {
