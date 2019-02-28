@@ -2,21 +2,23 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace D2L.CodeStyle.Analyzers.ApiUsage.PhysicalPaths {
+namespace D2L.CodeStyle.Analyzers.ApiUsage.ContentPhysicalPaths {
 
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	internal sealed class ILegacyLpContentFilePhysicalPathAnalyzer : DiagnosticAnalyzer {
 
 		private const string TypeName = "D2L.Files.ILegacyLpContentFile";
+		private const string PropertyName = "PhysicalPath";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-				ContentFilePhysicalPathPropertyAnalysis.DiagnosticDescriptor
+				PhysicalPathPropertyAnalysis.DiagnosticDescriptor
 			);
 
 		public override void Initialize( AnalysisContext context ) {
 
-			ContentFilePhysicalPathPropertyAnalysis analysis = new ContentFilePhysicalPathPropertyAnalysis(
+			PhysicalPathPropertyAnalysis analysis = new PhysicalPathPropertyAnalysis(
 					TypeName,
+					PropertyName,
 					WhitelistedTypes
 				);
 

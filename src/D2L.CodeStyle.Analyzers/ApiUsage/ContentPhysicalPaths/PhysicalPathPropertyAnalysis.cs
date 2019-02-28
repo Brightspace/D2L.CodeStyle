@@ -6,22 +6,24 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace D2L.CodeStyle.Analyzers.ApiUsage.PhysicalPaths {
+namespace D2L.CodeStyle.Analyzers.ApiUsage.ContentPhysicalPaths {
 
-	internal sealed class ContentFilePhysicalPathPropertyAnalysis {
+	internal sealed class PhysicalPathPropertyAnalysis {
 
-		internal static readonly DiagnosticDescriptor DiagnosticDescriptor = Diagnostics.ContentFilePhysicalPathUsages;
-		private const string DangerousPropertyName = "PhysicalPath";
+		internal static readonly DiagnosticDescriptor DiagnosticDescriptor = Diagnostics.ContentPhysicalPathUsages;
 
 		private readonly string m_dangerousTypeName;
+		private readonly string m_dangerousPropertyName;
 		private readonly IImmutableSet<string> m_whitelistedTypes;
 
-		public ContentFilePhysicalPathPropertyAnalysis( 
-				string dangerousTypeName, 
-				IImmutableSet<string> whitelistedTypes 
+		public PhysicalPathPropertyAnalysis(
+				string dangerousTypeName,
+				string dangerousPropertyName,
+				IImmutableSet<string> whitelistedTypes
 			) {
 
 			m_dangerousTypeName = dangerousTypeName;
+			m_dangerousPropertyName = dangerousPropertyName;
 			m_whitelistedTypes = whitelistedTypes;
 		}
 
@@ -152,7 +154,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.PhysicalPaths {
 			}
 
 			IImmutableSet<ISymbol> properties = type
-				.GetMembers( DangerousPropertyName )
+				.GetMembers( m_dangerousPropertyName )
 				.Where( m => m.Kind == SymbolKind.Property )
 				.ToImmutableHashSet();
 
