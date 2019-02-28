@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.PhysicalPaths.ILpContentFilePhysicalPathAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.ContentPhysicalPaths.ILpContentFilePhysicalPathAnalyzer
 
 namespace D2L.LP.Files.Domain {
 	public interface ILpContentFile {
@@ -58,37 +58,37 @@ namespace SpecTests {
 
 		public string ExplicitImplementorInterfaceUsage() {
 			ILpContentFile explicitImplementor = new ExplicitImplementor();
-			return /* ContentFilePhysicalPathUsages */ explicitImplementor.PhysicalPath /**/;
+			return /* ContentPhysicalPathUsages */ explicitImplementor.PhysicalPath /**/;
 		}
 
 		public string ExplicitImplementorNewInterfaceUsage() {
 			ILpContentFile explicitImplementor = new ExplicitImplementorNew();
-			return /* ContentFilePhysicalPathUsages */ explicitImplementor.PhysicalPath /**/;
+			return /* ContentPhysicalPathUsages */ explicitImplementor.PhysicalPath /**/;
 		}
 
 		public string ExplicitImplementorImplementationUsage() {
 			ExplicitImplementor explicitImplementor = new ExplicitImplementor();
-			return /* ContentFilePhysicalPathUsages */ explicitImplementor.PhysicalPath /**/;
+			return /* ContentPhysicalPathUsages */ explicitImplementor.PhysicalPath /**/;
 		}
 
 		public string ExplicitImplementorNewImplementationUsage() {
 			ExplicitImplementorNew explicitImplementor = new ExplicitImplementorNew();
-			return /* ContentFilePhysicalPathUsages */ explicitImplementor.PhysicalPath /**/;
+			return /* ContentPhysicalPathUsages */ explicitImplementor.PhysicalPath /**/;
 		}
 
 		public string ImplicitImplementorInterfaceUsage() {
 			ILpContentFile implicitImplementor = new ImplicitImplementor();
-			return /* ContentFilePhysicalPathUsages */ implicitImplementor.PhysicalPath /**/;
+			return /* ContentPhysicalPathUsages */ implicitImplementor.PhysicalPath /**/;
 		}
 
 		public string ImplicitImplementorNewInterfaceUsage() {
 			ILpContentFile implicitImplementor = new ImplicitImplementorNew();
-			return /* ContentFilePhysicalPathUsages */ implicitImplementor.PhysicalPath /**/;
+			return /* ContentPhysicalPathUsages */ implicitImplementor.PhysicalPath /**/;
 		}
 
 		public string UsageInMethodCall() {
 			ILpContentFile explicitImplementor = new ExplicitImplementor();
-			OtherFile.DoSomething( 1, /* ContentFilePhysicalPathUsages */ explicitImplementor.PhysicalPath /**/, true );
+			OtherFile.DoSomething( 1, /* ContentPhysicalPathUsages */ explicitImplementor.PhysicalPath /**/, true );
 		}
 
 		public string UnrelatedUsage() {
