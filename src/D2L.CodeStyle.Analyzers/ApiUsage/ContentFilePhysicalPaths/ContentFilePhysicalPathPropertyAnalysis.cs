@@ -59,8 +59,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ContentFilePhysicalPaths {
 				IImmutableSet<ISymbol> dangerousProperties
 			) {
 
-			ISymbol propertySymbol = ModelExtensions
-				.GetSymbolInfo( context.SemanticModel, propertyAccess )
+			ISymbol propertySymbol = context.SemanticModel
+				.GetSymbolInfo( propertyAccess )
 				.Symbol;
 
 			if( propertySymbol.IsNullOrErrorType() ) {
