@@ -460,7 +460,7 @@ namespace D2L.CodeStyle.Analyzers {
 			title: "Don't use the PhysicalPath property.",
 			messageFormat: "PhysicalPath property is being phased out. Use the ContentPath property instead.",
 			category: "Storageable",
-			defaultSeverity: DiagnosticSeverity.Info,
+			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
 			description: "PhysicalPath property is being phased out. Use the ContentPath property instead."
 		);
