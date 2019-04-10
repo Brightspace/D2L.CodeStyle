@@ -36,6 +36,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
+			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.None );
 
 			context.RegisterSyntaxNodeAction(
 				AnalyzeCallSyntax,
