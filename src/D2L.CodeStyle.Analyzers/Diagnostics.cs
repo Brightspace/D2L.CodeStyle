@@ -257,12 +257,12 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor TooManyUnnamedArgs = new DiagnosticDescriptor(
 			id: "D2L0032",
-			title: "There are a lot of arguments here. Please use named arguments for readability.",
-			messageFormat: "There are a lot of arguments here. Please use named arguments for readability.",
+			title: "Name arguments for readability.",
+			messageFormat: "There are more than {RequireNamedArgumentsAnalyzer.TOO_MANY_UNNAMED_ARGS} unnamed arguments. Use named arguments for readability.",
 			category: "Readability",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
-			description: "There are a lot of arguments here. Please use named arguments for readability."
+			description: "When a lot of arguments are used, they should be named for readability."
 		);
 
 		public static readonly DiagnosticDescriptor LiteralArgShouldBeNamed = new DiagnosticDescriptor(
@@ -384,7 +384,7 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
-		
+
 		public static readonly DiagnosticDescriptor EventTypeMissingImmutableAttribute = new DiagnosticDescriptor(
 			id: "D2L0045",
 			title: "Event Type Missing [Immutable] Attribute",

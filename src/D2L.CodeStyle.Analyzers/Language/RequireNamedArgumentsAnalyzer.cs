@@ -94,7 +94,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			// These will create a bit more cleanup. Fix should probably name
 			// all the args instead to avoid craziness with overloading.
 		}
-		
+
 		/// <summary>
 		/// Get the arguments which are unnamed and not "params"
 		/// </summary>
