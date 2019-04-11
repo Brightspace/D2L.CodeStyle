@@ -81,7 +81,6 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					Diagnostic.Create(
 						descriptor: Diagnostics.TooManyUnnamedArgs,
 						location: expr.GetLocation(),
-						messageArgs: new object[] { TOO_MANY_UNNAMED_ARGS },
 						properties: fixerContext
 					)
 				);
