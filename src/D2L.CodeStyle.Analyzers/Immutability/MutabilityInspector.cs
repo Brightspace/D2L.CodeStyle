@@ -283,24 +283,22 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ExpressionSyntax expr,
 			HashSet<ITypeSymbol> typeStack
 		) {
-			if( expr.Kind() == SyntaxKind.NullLiteralExpression ) {
+
+			switch( expr.Kind() ) {
 				// This is perhaps a bit suspicious, because fields and
 				// properties have to be readonly, but it is safe...
-				return MutabilityInspectionResult.NotMutable();
-			}
-
-			SemanticModel model = m_compilation.GetSemanticModel( expr.SyntaxTree );
-
-			if( expr.Kind() == SyntaxKind.SimpleLambdaExpression ||
-				expr.Kind() == SyntaxKind.ParenthesizedLambdaExpression
-			) {
+				case SyntaxKind.NullLiteralExpression:
 
 				// Lambda initializers for readonly members are safe
 				// because they can only close over other members, which
 				// will be checked independently, or static members of
 				// another class, which are also analyzed
-				return MutabilityInspectionResult.NotMutable();
+				case SyntaxKind.SimpleLambdaExpression:
+				case SyntaxKind.ParenthesizedLambdaExpression:
+					return MutabilityInspectionResult.NotMutable();
 			}
+
+			SemanticModel model = m_compilation.GetSemanticModel( expr.SyntaxTree );
 
 			TypeInfo typeInfo = model.GetTypeInfo( expr );
 
