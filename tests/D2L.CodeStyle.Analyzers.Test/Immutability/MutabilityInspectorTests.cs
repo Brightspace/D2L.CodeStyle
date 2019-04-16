@@ -581,7 +581,7 @@ sealed class Baz { }
 		}
 
 		[Test]
-		public void InspectType_ParameterizedLambda_NotMutable() {
+		public void InspectType_ParenthesizedLambda_NotMutable() {
 
 			var field = Field( "private readonly Func<int,int> m_addTwo = ( a ) => a + 2;" );
 
