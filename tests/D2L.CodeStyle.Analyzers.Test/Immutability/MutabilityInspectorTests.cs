@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using NUnit.Framework;
@@ -549,6 +550,67 @@ sealed class Baz { }
 			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
 
 			AssertUnauditedReasonsResult( ty, "ItsUgly", "ItHasntBeenLookedAt" );
+		}
+
+		[Test]
+		public void InspectType_SimpleLambdaMember_NotMutable() {
+
+			var field = Field( "private readonly Func<int> m_func = () => 1;" );
+
+			var inspector = new MutabilityInspector( field.Compilation );
+
+			var expected = MutabilityInspectionResult.NotMutable();
+
+			var actual = inspector.InspectType( field.Symbol.ContainingType );
+
+			AssertResultsAreEqual( expected, actual );
+		}
+
+		[Test]
+		public void InspectType_LambdaInitializedFromStaticMethod_NotMutable() {
+
+			var field = Field( "private readonly Func<int> m_func = () => int.Parse( \"1\" );" );
+
+			var inspector = new MutabilityInspector( field.Compilation );
+
+			var expected = MutabilityInspectionResult.NotMutable();
+
+			var actual = inspector.InspectType( field.Symbol.ContainingType );
+
+			AssertResultsAreEqual( expected, actual );
+		}
+
+		[Test]
+		public void InspectType_ParenthesizedLambda_NotMutable() {
+
+			var field = Field( "private readonly Func<int,int> m_addTwo = ( a ) => a + 2;" );
+
+			var inspector = new MutabilityInspector( field.Compilation );
+
+			var expected = MutabilityInspectionResult.NotMutable();
+
+			var actual = inspector.InspectType( field.Symbol.ContainingType );
+
+			AssertResultsAreEqual( expected, actual );
+		}
+
+		[Test]
+		public void InspectType_LambdaInitializerReferencingField_NotMutable() {
+			const string source = AnnotationsPreamble + @"
+sealed class Foo {
+
+	private readonly int m_int = 3;
+	private readonly Func<int> m_func = () => { return m_int; };
+}
+";
+
+			TestSymbol<ITypeSymbol> ty = CompileAndGetFooType( source );
+
+			var inspector = new MutabilityInspector( ty.Compilation );
+
+			var result = inspector.InspectType( ty.Symbol );
+
+			Assert.IsFalse( result.IsMutable );
 		}
 
 		private TestSymbol<ITypeSymbol> CompileAndGetFooType( string source ) {
