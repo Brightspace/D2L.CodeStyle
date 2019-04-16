@@ -291,6 +291,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			SemanticModel model = m_compilation.GetSemanticModel( expr.SyntaxTree );
 
+			if( expr.Kind() == SyntaxKind.SimpleLambdaExpression ||
+				expr.Kind() == SyntaxKind.ParenthesizedLambdaExpression
+			) {
+
+				// Lambda initializers for readonly members are safe
+				// because they can only close over other members, which
+				// will be checked independently, or static members of
+				// another class, which are also analyzed
+				return MutabilityInspectionResult.NotMutable();
+			}
+
 			TypeInfo typeInfo = model.GetTypeInfo( expr );
 
 			// Type can be null in the case of an implicit conversion where
