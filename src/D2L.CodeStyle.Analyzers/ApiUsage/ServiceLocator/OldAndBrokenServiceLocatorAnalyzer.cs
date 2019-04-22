@@ -127,6 +127,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			"D2L.LE.Discussions",
 			"D2L.LE.Grades",
 			"D2L.LE.Lti",
+			"D2L.LE.Quizzing",
 			"D2L.Lms.AuthorizationSchemes.CommonCartridge",
 			"D2L.Lms.Competencies.Web",
 			"D2L.Lms.Content.Implementation",
