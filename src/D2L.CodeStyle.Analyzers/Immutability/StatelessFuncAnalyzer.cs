@@ -25,9 +25,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			context.RegisterSyntaxNodeAction(
 				ctx => {
-					if( ctx.Node is ObjectCreationExpressionSyntax expr ) {
-						AnalyzeObjectCreationExpression( ctx, expr, statelessFuncs );
-					}
+						AnalyzeObjectCreationExpression(
+							ctx,
+							statelessFuncs
+						);
 				},
 				SyntaxKind.ObjectCreationExpression
 			);
@@ -35,9 +36,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private static void AnalyzeObjectCreationExpression(
 			SyntaxNodeAnalysisContext context,
-			ObjectCreationExpressionSyntax syntax,
 			ImmutableHashSet<ISymbol> statelessFuncs
 		) {
+
+			ObjectCreationExpressionSyntax syntax = context.Node as ObjectCreationExpressionSyntax;
 
 			ISymbol symbol = context
 				.SemanticModel
