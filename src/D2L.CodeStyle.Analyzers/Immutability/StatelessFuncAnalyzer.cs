@@ -71,7 +71,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// lambda has parens
 				// eg () => 1, (x, y) => x + y
 				case SyntaxKind.ParenthesizedLambdaExpression:
-					if( !CheckForClosures( context, argument ) ) {
+					if( !HasCaptures( context, argument ) ) {
 						return;
 					}
 					break;
@@ -80,7 +80,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// lambda does not have parens
 				// eg x => x + 1
 				case SyntaxKind.SimpleLambdaExpression:
-					if( !CheckForClosures( context, argument ) ) {
+					if( !HasCaptures( context, argument ) ) {
 						return;
 					}
 					break;
@@ -124,7 +124,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return symbol.IsStatic;
 		}
 
-		private static bool CheckForClosures(
+		private static bool HasCaptures(
 			SyntaxNodeAnalysisContext context,
 			ExpressionSyntax expression
 		) {
