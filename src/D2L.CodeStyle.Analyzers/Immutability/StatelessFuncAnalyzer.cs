@@ -37,16 +37,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ObjectCreationExpressionSyntax syntax
 		) {
 
-			TypeSyntax type = syntax.Type;
 			ISymbol symbol = context
 				.SemanticModel
-				.GetSymbolInfo( type ).Symbol;
+				.GetSymbolInfo( syntax ).Symbol;
 
 			if( symbol == null ) {
 				return;
 			}
 
-			if( !IsStatelessFunc( symbol ) ) {
+			if( !IsStatelessFunc( symbol, context ) ) {
 				return;
 			}
 
@@ -137,26 +136,55 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return captures.Length > 0;
 		}
 
-		private static bool IsStatelessFunc( ISymbol symbol ) {
-			ImmutableHashSet<string> statelessFuncs = GetStatelessFuncTypes();
+		private static bool IsStatelessFunc(
+			ISymbol symbol,
+			SyntaxNodeAnalysisContext context
+		) {
+			ImmutableHashSet<ISymbol> statelessFuncs = GetStatelessFuncTypes( context.Compilation );
 
-			string fullName = $"{ symbol.ContainingNamespace.Name }.{ symbol.MetadataName }";
+			if( statelessFuncs.Contains( symbol ) ) {
+				// we've found a definition that matches exactly with the symbol
+				return true;
+			}
 
-			return statelessFuncs.Contains( fullName );
+			// Generics work a bit different, in that the symbol we have to work
+			// with is not (eg StatelessFunc<int> ), but the list of symbols we're
+			// checking against are the definitions, which are (eg
+			// StatelessFunc<T> ) generic. So check the "parent" definition.
+			return statelessFuncs.Contains( symbol.OriginalDefinition );
 		}
 
-		private static ImmutableHashSet<string> GetStatelessFuncTypes() {
+		private static ImmutableHashSet<ISymbol> GetStatelessFuncTypes( Compilation compilation) {
 
-			var builder = ImmutableArray.CreateBuilder<string>();
-			builder.Add( "D2L.StatelessFunc`1" );
-			builder.Add( "D2L.StatelessFunc`2" );
-			builder.Add( "D2L.StatelessFunc`3" );
-			builder.Add( "D2L.StatelessFunc`4" );
-			builder.Add( "D2L.StatelessFunc`5" );
-			builder.Add( "D2L.StatelessFunc`6" );
-			ImmutableHashSet<string> typeNames = builder.ToImmutableHashSet();
+			var builder = ImmutableHashSet.CreateBuilder<ISymbol>();
 
-			return typeNames;
+			var types = new string[] {
+				"D2L.StatelessFunc`1",
+				"D2L.StatelessFunc`2",
+				"D2L.StatelessFunc`3",
+				"D2L.StatelessFunc`4",
+				"D2L.StatelessFunc`5",
+				"D2L.StatelessFunc`6",
+			};
+
+			foreach( string typeName in types ) {
+				INamedTypeSymbol typeSymbol = compilation.GetTypeByMetadataName( typeName );
+
+				if( typeSymbol == null ) {
+					// These types are usually defined in another assembly,
+					// ( usually ) and thus we have a bit of a circular
+					// dependency. Allowing this lookup to return null
+					// allow us to update the analyzer before the other
+					// assembly, which should be safer
+					continue;
+				}
+
+				foreach( IMethodSymbol ctor in typeSymbol.Constructors ) {
+					builder.Add( ctor );
+				}
+			}
+
+			return builder.ToImmutableHashSet();
 		}
 	}
 }
