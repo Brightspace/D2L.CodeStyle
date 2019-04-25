@@ -26,14 +26,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			context.RegisterSyntaxNodeAction(
 				ctx => {
 					if( ctx.Node is ObjectCreationExpressionSyntax expr ) {
-						AnalyzeInvocation( ctx, expr, statelessFuncs );
+						AnalyzeObjectCreationExpression( ctx, expr, statelessFuncs );
 					}
 				},
 				SyntaxKind.ObjectCreationExpression
 			);
 		}
 
-		private static void AnalyzeInvocation(
+		private static void AnalyzeObjectCreationExpression(
 			SyntaxNodeAnalysisContext context,
 			ObjectCreationExpressionSyntax syntax,
 			ImmutableHashSet<ISymbol> statelessFuncs
