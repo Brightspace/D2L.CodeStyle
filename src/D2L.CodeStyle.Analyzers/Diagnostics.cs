@@ -465,5 +465,15 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "Use the ContentPath property instead."
 		);
 
+		public static readonly DiagnosticDescriptor StatelessFuncIsnt = new DiagnosticDescriptor(
+			id: "D2L0053",
+			title: "StatelessFunc cannot hold state",
+			messageFormat: "StatelessFunc cannot hold state",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "StatelessFunc is to be used to hold Func private members, and need to be undiff safe."
+		);
+
 	}
 }
