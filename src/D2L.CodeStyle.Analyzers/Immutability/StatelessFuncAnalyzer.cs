@@ -18,7 +18,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			context.RegisterCompilationStartAction( RegisterAnalysis );
 		}
 
-		private void RegisterAnalysis( CompilationStartAnalysisContext context ) {
+		private static void RegisterAnalysis( CompilationStartAnalysisContext context ) {
 
 			Compilation compilation = context.Compilation;
 			ImmutableHashSet<ISymbol> statelessFuncs = GetStatelessFuncTypes( compilation );
@@ -33,7 +33,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 		}
 
-		private void AnalyzeInvocation(
+		private static void AnalyzeInvocation(
 			SyntaxNodeAnalysisContext context,
 			ObjectCreationExpressionSyntax syntax,
 			ImmutableHashSet<ISymbol> statelessFuncs
