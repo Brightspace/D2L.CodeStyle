@@ -70,5 +70,21 @@ namespace SpecTests {
 				} /**/
 			);
 		}
+
+		public void InvalidCtor() {
+			var func = new StatelessFunc();
+		}
+
+		public void EvilFactory() {
+			Func<int> evil() {
+				int x = 0;
+				return () => {
+					x += 1;
+					return x;
+				};
+			};
+
+			var func = new StatelessFunc<int>( /* StatelessFuncIsnt */ evil() /**/ );
+		}
 	}
 }

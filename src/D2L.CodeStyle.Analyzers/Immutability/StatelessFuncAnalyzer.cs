@@ -85,6 +85,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					}
 					break;
 
+				// this is the case where an expression is invoked,
+				// which returns a Func<T>
+				// eg ( () => { return () => 1 } )()
+				case SyntaxKind.InvocationExpression:
+					// we are rejecting this because it is tricky to
+					// analyze properly, but also a bit ugly and should
+					// never really be necessary
+					break;
+
 				default:
 					// should we do something else here because constructors
 					// of D2L.StatelessFunc<T> and friends should always take
