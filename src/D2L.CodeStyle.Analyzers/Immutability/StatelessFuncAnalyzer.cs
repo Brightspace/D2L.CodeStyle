@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 using System.Collections.Immutable;
+using System.Linq;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
@@ -53,6 +54,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
+			Diagnostic diag;
 			ExpressionSyntax argument = syntax.ArgumentList.Arguments[ 0 ].Expression;
 			SyntaxKind kind = argument.Kind();
 			switch( kind ) {
@@ -68,24 +70,36 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// be used / held.
 					// TODO: Look for [Immutable] on the member's type
 					// to determine if the non-static member is safe
+					diag = Diagnostic.Create(
+						Diagnostics.StatelessFuncIsnt,
+						argument.GetLocation(),
+						$"{ argument.ToString() } is not static"
+					);
 					break;
 
 				// this is the case when the left hand side of the
 				// lambda has parens
 				// eg () => 1, (x, y) => x + y
 				case SyntaxKind.ParenthesizedLambdaExpression:
-					if( !HasCaptures( context, argument ) ) {
-						return;
-					}
-					break;
-
 				// this is the case when the left hand side of the
 				// lambda does not have parens
 				// eg x => x + 1
 				case SyntaxKind.SimpleLambdaExpression:
-					if( !HasCaptures( context, argument ) ) {
+					bool hasCaptures = TryGetCaptures(
+						context,
+						argument,
+						out ImmutableArray<ISymbol> captures
+					);
+					if( !hasCaptures ) {
 						return;
 					}
+
+					string captured = string.Join( ", ", captures.Select( c => c.Name ) );
+					diag = Diagnostic.Create(
+						Diagnostics.StatelessFuncIsnt,
+						argument.GetLocation(),
+						$"Captured variable(s): { captured }"
+					);
 					break;
 
 				// this is the case where an expression is invoked,
@@ -95,18 +109,25 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// we are rejecting this because it is tricky to
 					// analyze properly, but also a bit ugly and should
 					// never really be necessary
+					diag = Diagnostic.Create(
+						Diagnostics.StatelessFuncIsnt,
+						argument.GetLocation(),
+						$"Invocations are not allowed: { argument.ToString() }"
+					);
+
 					break;
 
 				default:
 					// we need StatelessFunc<T> to be ultra safe, so we'll
 					// reject usages we do not understand yet
+					diag = Diagnostic.Create(
+						Diagnostics.StatelessFuncIsnt,
+						argument.GetLocation(),
+						$"Unable to determine safety of { argument.ToString() }. This is an unexpectes usage of StatelessFunc<T>"
+					);
+
 					break;
 			}
-
-			var diag = Diagnostic.Create(
-				Diagnostics.StatelessFuncIsnt,
-				argument.GetLocation()
-			);
 
 			context.ReportDiagnostic( diag );
 		}
@@ -126,16 +147,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return symbol.IsStatic;
 		}
 
-		private static bool HasCaptures(
+		private static bool TryGetCaptures(
 			SyntaxNodeAnalysisContext context,
-			ExpressionSyntax expression
+			ExpressionSyntax expression,
+			out ImmutableArray<ISymbol> captures
 		) {
 
 			DataFlowAnalysis dataFlow = context
 				.SemanticModel
 				.AnalyzeDataFlow( expression );
 
-			ImmutableArray<ISymbol> captures = dataFlow.Captured;
+			captures = dataFlow.Captured;
 			return captures.Length > 0;
 		}
 

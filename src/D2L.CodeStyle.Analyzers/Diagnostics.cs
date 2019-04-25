@@ -468,7 +468,7 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor StatelessFuncIsnt = new DiagnosticDescriptor(
 			id: "D2L0053",
 			title: "StatelessFunc cannot hold state",
-			messageFormat: "StatelessFunc cannot hold state",
+			messageFormat: "StatelessFunc cannot hold state: {0}",
 			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,

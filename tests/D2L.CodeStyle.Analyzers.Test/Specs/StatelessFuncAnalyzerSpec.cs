@@ -33,7 +33,7 @@ namespace SpecTests {
 
 		public void ParenWithClosures() {
 			int zero = 0;
-			var func = new StatelessFunc<int>( /* StatelessFuncIsnt */ () => zero /**/ );
+			var func = new StatelessFunc<int>( /* StatelessFuncIsnt( Captured variable(s): zero ) */ () => zero /**/ );
 		}
 
 		public void SimpleNoClosures() {
@@ -42,11 +42,11 @@ namespace SpecTests {
 
 		public void SimpleWithClosures() {
 			string trailing = "\n";
-			var func = new StatelessFunc<string, string>( /* StatelessFuncIsnt */ x => x + trailing /**/ );
+			var func = new StatelessFunc<string, string>( /* StatelessFuncIsnt( Captured variable(s): trailing ) */ x => x + trailing /**/ );
 		}
 
 		public void NonStaticMember() {
-			var func = new StatelessFunc<string>( /* StatelessFuncIsnt */ this.ToString /**/ );
+			var func = new StatelessFunc<string>( /* StatelessFuncIsnt( this.ToString is not static ) */ this.ToString /**/ );
 		}
 
 		public void StaticMember() {
@@ -64,7 +64,7 @@ namespace SpecTests {
 
 		public void MultiLineWithThisCapture() {
 			var func = new StatelessFunc<string>(
-				/* StatelessFuncIsnt */ () => {
+				/* StatelessFuncIsnt( Captured variable(s): this ) */ () => {
 					string trailing = "\n";
 					return this.ToString() + trailing;
 				} /**/
@@ -84,7 +84,7 @@ namespace SpecTests {
 				};
 			};
 
-			var func = new StatelessFunc<int>( /* StatelessFuncIsnt */ evil() /**/ );
+			var func = new StatelessFunc<int>( /* StatelessFuncIsnt( Invocations are not allowed: evil() ) */ evil() /**/ );
 		}
 	}
 }
