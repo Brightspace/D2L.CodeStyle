@@ -21,11 +21,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private void RegisterAnalysis( CompilationStartAnalysisContext context ) {
 
 			Compilation compilation = context.Compilation;
+			ImmutableHashSet<ISymbol> statelessFuncs = GetStatelessFuncTypes( compilation );
 
 			context.RegisterSyntaxNodeAction(
 				ctx => {
 					if( ctx.Node is ObjectCreationExpressionSyntax expr ) {
-						AnalyzeInvocation( ctx, expr );
+						AnalyzeInvocation( ctx, expr, statelessFuncs );
 					}
 				},
 				SyntaxKind.ObjectCreationExpression
@@ -34,7 +35,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private void AnalyzeInvocation(
 			SyntaxNodeAnalysisContext context,
-			ObjectCreationExpressionSyntax syntax
+			ObjectCreationExpressionSyntax syntax,
+			ImmutableHashSet<ISymbol> statelessFuncs
 		) {
 
 			ISymbol symbol = context
@@ -45,7 +47,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
-			if( !IsStatelessFunc( symbol, context ) ) {
+			if( !IsStatelessFunc( symbol, statelessFuncs ) ) {
 				return;
 			}
 
@@ -137,9 +139,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private static bool IsStatelessFunc(
 			ISymbol symbol,
-			SyntaxNodeAnalysisContext context
+			ImmutableHashSet<ISymbol> statelessFuncs
 		) {
-			ImmutableHashSet<ISymbol> statelessFuncs = GetStatelessFuncTypes( context.Compilation );
 
 			if( statelessFuncs.Contains( symbol ) ) {
 				// we've found a definition that matches exactly with the symbol
