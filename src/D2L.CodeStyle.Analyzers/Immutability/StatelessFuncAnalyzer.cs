@@ -94,10 +94,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					break;
 
 				default:
-					// should we do something else here because constructors
-					// of D2L.StatelessFunc<T> and friends should always take
-					// a func?
-					return;
+					// we need StatelessFunc<T> to be ultra safe, so we'll
+					// reject usages we do not understand yet
+					break;
 			}
 
 			var diag = Diagnostic.Create(
