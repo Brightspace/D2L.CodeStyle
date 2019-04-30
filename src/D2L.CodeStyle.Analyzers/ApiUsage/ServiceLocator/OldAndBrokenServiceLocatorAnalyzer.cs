@@ -148,7 +148,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			"D2L.LP.Tools.Extensibility",
 			"D2L.LP.Web",
 			"D2L.LP.Web.UI",
-			"D2L.LP.WebDAV.Security.Service",
 			"D2L.PlatformTools.DataPurgeArchive",
 			"D2L.PlatformTools.ErrorPages",
 			"D2L.Web"
