@@ -30,6 +30,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			"System.Reflection.FieldInfo",
 			"System.Reflection.MemberInfo",
 			"System.Reflection.MethodInfo",
+			"System.Reflection.ParameterInfo",
 			"System.Reflection.PropertyInfo",
 			"System.Security.Cryptography.RNGCryptoServiceProvider",
 			"System.Text.RegularExpressions.Regex",
