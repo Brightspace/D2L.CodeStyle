@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using D2L.CodeStyle.Analyzers.Extensions;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -33,6 +34,42 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				},
 				SyntaxKind.ObjectCreationExpression
 			);
+
+			context.RegisterSyntaxNodeAction(
+				ctx => {
+					AnalyzeArgument(
+						ctx,
+						statelessFuncs
+					);
+				},
+				SyntaxKind.Argument
+			);
+		}
+
+		private static void AnalyzeArgument(
+			SyntaxNodeAnalysisContext context,
+			ImmutableHashSet<ISymbol> statelessFuncs
+		) {
+			ArgumentSyntax syntax = context.Node as ArgumentSyntax;
+
+			SemanticModel model = context.SemanticModel;
+
+			IParameterSymbol param = syntax.DetermineParameter( model );
+
+			if( param == null ) {
+				return;
+			}
+
+			ImmutableArray<AttributeData> paramAttributes = param.GetAttributes();
+			if( !paramAttributes.Any( a =>
+					a.AttributeConstructor != null
+					&& IsStatelessFunc( a.AttributeConstructor, statelessFuncs )
+				)
+			) {
+				return;
+			}
+
+			AnalyzeFunc( context, syntax.Expression );
 		}
 
 		private static void AnalyzeObjectCreationExpression(
@@ -54,15 +91,22 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
-			Diagnostic diag;
 			ExpressionSyntax argument = syntax.ArgumentList.Arguments[ 0 ].Expression;
-			SyntaxKind kind = argument.Kind();
+			AnalyzeFunc( context, argument );
+		}
+
+		private static void AnalyzeFunc(
+			SyntaxNodeAnalysisContext context,
+			ExpressionSyntax func
+		) {
+			Diagnostic diag;
+			SyntaxKind kind = func.Kind();
 			switch( kind ) {
 
 				// this is the case when a method reference is used
 				// eg Func<string, int> func = int.Parse
 				case SyntaxKind.SimpleMemberAccessExpression:
-					if( IsStaticMemberAccess( context, argument ) ) {
+					if( IsStaticMemberAccess( context, func ) ) {
 						return;
 					}
 
@@ -72,8 +116,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// to determine if the non-static member is safe
 					diag = Diagnostic.Create(
 						Diagnostics.StatelessFuncIsnt,
-						argument.GetLocation(),
-						$"{ argument.ToString() } is not static"
+						func.GetLocation(),
+						$"{ func.ToString() } is not static"
 					);
 					break;
 
@@ -87,7 +131,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				case SyntaxKind.SimpleLambdaExpression:
 					bool hasCaptures = TryGetCaptures(
 						context,
-						argument,
+						func,
 						out ImmutableArray<ISymbol> captures
 					);
 					if( !hasCaptures ) {
@@ -97,7 +141,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					string captured = string.Join( ", ", captures.Select( c => c.Name ) );
 					diag = Diagnostic.Create(
 						Diagnostics.StatelessFuncIsnt,
-						argument.GetLocation(),
+						func.GetLocation(),
 						$"Captured variable(s): { captured }"
 					);
 					break;
@@ -111,8 +155,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// never really be necessary
 					diag = Diagnostic.Create(
 						Diagnostics.StatelessFuncIsnt,
-						argument.GetLocation(),
-						$"Invocations are not allowed: { argument.ToString() }"
+						func.GetLocation(),
+						$"Invocations are not allowed: { func.ToString() }"
 					);
 
 					break;
@@ -122,8 +166,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// reject usages we do not understand yet
 					diag = Diagnostic.Create(
 						Diagnostics.StatelessFuncIsnt,
-						argument.GetLocation(),
-						$"Unable to determine safety of { argument.ToString() }. This is an unexpectes usage of StatelessFunc<T>"
+						func.GetLocation(),
+						$"Unable to determine safety of { func.ToString() }. This is an unexpectes usage of StatelessFunc<T>"
 					);
 
 					break;
@@ -189,6 +233,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				"D2L.StatelessFunc`4",
 				"D2L.StatelessFunc`5",
 				"D2L.StatelessFunc`6",
+				"D2L.StatelessFuncAttribute"
 			};
 
 			foreach( string typeName in types ) {
