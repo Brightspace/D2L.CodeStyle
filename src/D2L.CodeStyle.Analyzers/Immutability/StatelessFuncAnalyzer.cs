@@ -131,7 +131,35 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 					break;
 
-				default:
+				case SyntaxKind.IdentifierName: {
+
+					ISymbol type = model.GetTypeInfo( func ).Type;
+					if( type != null && IsStatelessFunc( type, statelessFuncs ) ) {
+						return;
+					}
+
+					ISymbol symbol = model.GetSymbolInfo( func ).Symbol;
+					if( symbol != null ) {
+						SyntaxNode declaration = symbol.DeclaringSyntaxReferences[0].GetSyntax( context.CancellationToken );
+						ISymbol declarationSymbol = model.GetDeclaredSymbol( declaration, context.CancellationToken );
+						if( declarationSymbol is IParameterSymbol parameterSymbol ) {
+							var attrs = parameterSymbol.GetAttributes();
+							if( attrs.Any( a => a.AttributeClass.OriginalDefinition == statelessFuncAttribute ) ) {
+								return;
+							}
+						}
+					}
+
+					diag = Diagnostic.Create(
+						Diagnostics.StatelessFuncIsnt,
+						func.GetLocation(),
+						$"Unable to determine if variable reference { func.ToString() } is a stateless func."
+					);
+
+					break;
+				}
+
+				default: {
 
 					ISymbol type = model.GetTypeInfo( func ).Type;
 					if( type != null && IsStatelessFunc( type, statelessFuncs ) ) {
@@ -147,6 +175,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					);
 
 					break;
+				}
 			}
 
 			context.ReportDiagnostic( diag );
