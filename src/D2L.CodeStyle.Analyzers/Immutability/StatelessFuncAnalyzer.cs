@@ -58,13 +58,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
-			AnalyzeFunc( context, syntax.Expression );
+			AnalyzeFunc( context, syntax.Expression, statelessFuncAttribute, statelessFuncs );
 		}
 
 		private static void AnalyzeFunc(
 			SyntaxNodeAnalysisContext context,
-			ExpressionSyntax func
+			ExpressionSyntax func,
+			ISymbol statelessFuncAttribute,
+			ImmutableHashSet<ISymbol> statelessFuncs
 		) {
+			SemanticModel model = context.SemanticModel;
+
 			Diagnostic diag;
 			SyntaxKind kind = func.Kind();
 			switch( kind ) {
@@ -128,6 +132,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					break;
 
 				default:
+
+					ISymbol type = model.GetTypeInfo( func ).Type;
+					if( type != null && IsStatelessFunc( type, statelessFuncs ) ) {
+						return;
+					}
+
 					// we need StatelessFunc<T> to be ultra safe, so we'll
 					// reject usages we do not understand yet
 					diag = Diagnostic.Create(
@@ -175,12 +185,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ISymbol symbol,
 			ImmutableHashSet<ISymbol> statelessFuncs
 		) {
-
-			if( statelessFuncs.Contains( symbol ) ) {
-				// we've found a definition that matches exactly with the symbol
-				return true;
-			}
-
 			// Generics work a bit different, in that the symbol we have to work
 			// with is not (eg StatelessFunc<int> ), but the list of symbols we're
 			// checking against are the definitions, which are (eg
@@ -213,9 +217,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					continue;
 				}
 
-				foreach( IMethodSymbol ctor in typeSymbol.Constructors ) {
-					builder.Add( ctor );
-				}
+				builder.Add( typeSymbol.OriginalDefinition );
 			}
 
 			return builder.ToImmutableHashSet();
