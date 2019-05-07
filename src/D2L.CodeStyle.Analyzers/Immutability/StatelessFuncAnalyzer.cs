@@ -23,22 +23,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private static void RegisterAnalysis( CompilationStartAnalysisContext context ) {
 
 			Compilation compilation = context.Compilation;
+			ISymbol statelessFuncAttr = compilation.GetTypeByMetadataName( "D2L.StatelessFuncAttribute" );
 			ImmutableHashSet<ISymbol> statelessFuncs = GetStatelessFuncTypes( compilation );
-
-			context.RegisterSyntaxNodeAction(
-				ctx => {
-						AnalyzeObjectCreationExpression(
-							ctx,
-							statelessFuncs
-						);
-				},
-				SyntaxKind.ObjectCreationExpression
-			);
 
 			context.RegisterSyntaxNodeAction(
 				ctx => {
 					AnalyzeArgument(
 						ctx,
+						statelessFuncAttr,
 						statelessFuncs
 					);
 				},
@@ -48,6 +40,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private static void AnalyzeArgument(
 			SyntaxNodeAnalysisContext context,
+			ISymbol statelessFuncAttribute,
 			ImmutableHashSet<ISymbol> statelessFuncs
 		) {
 			ArgumentSyntax syntax = context.Node as ArgumentSyntax;
@@ -61,38 +54,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			ImmutableArray<AttributeData> paramAttributes = param.GetAttributes();
-			if( !paramAttributes.Any( a =>
-					a.AttributeConstructor != null
-					&& IsStatelessFunc( a.AttributeConstructor, statelessFuncs )
-				)
-			) {
+			if( !paramAttributes.Any( a => a.AttributeClass == statelessFuncAttribute ) ) {
 				return;
 			}
 
 			AnalyzeFunc( context, syntax.Expression );
-		}
-
-		private static void AnalyzeObjectCreationExpression(
-			SyntaxNodeAnalysisContext context,
-			ImmutableHashSet<ISymbol> statelessFuncs
-		) {
-
-			ObjectCreationExpressionSyntax syntax = context.Node as ObjectCreationExpressionSyntax;
-
-			ISymbol symbol = context
-				.SemanticModel
-				.GetSymbolInfo( syntax ).Symbol;
-
-			if( symbol == null ) {
-				return;
-			}
-
-			if( !IsStatelessFunc( symbol, statelessFuncs ) ) {
-				return;
-			}
-
-			ExpressionSyntax argument = syntax.ArgumentList.Arguments[ 0 ].Expression;
-			AnalyzeFunc( context, argument );
 		}
 
 		private static void AnalyzeFunc(
@@ -232,8 +198,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				"D2L.StatelessFunc`3",
 				"D2L.StatelessFunc`4",
 				"D2L.StatelessFunc`5",
-				"D2L.StatelessFunc`6",
-				"D2L.StatelessFuncAttribute"
+				"D2L.StatelessFunc`6"
 			};
 
 			foreach( string typeName in types ) {

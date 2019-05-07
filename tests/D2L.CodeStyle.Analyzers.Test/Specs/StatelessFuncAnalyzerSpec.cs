@@ -7,21 +7,11 @@ namespace D2L {
 	public class StatelessFuncAttribute : Attribute { }
 
 	public class StatelessFunc<TResult> {
-
-		private readonly Func<TResult> m_func;
-
-		public StatelessFunc( Func<TResult> func ) {
-			m_func = func;
-		}
+		public StatelessFunc( [StatelessFunc] Func<TResult> func ) { }
 	}
 
 	public class StatelessFunc<T, TResult> {
-
-		private readonly Func<T, TResult> m_func;
-
-		public StatelessFunc( Func<T, TResult> func ) {
-			m_func = func;
-		}
+		public StatelessFunc( [StatelessFunc] Func<T, TResult> func ) { }
 	}
 
 }
