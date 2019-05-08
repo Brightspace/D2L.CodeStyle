@@ -2,9 +2,19 @@
 
 using System;
 
+namespace D2L.CodeStyle.Annotations {
+	[AttributeUsage( AttributeTargets.Parameter, AllowMultiple = false )]
+	public class ReadOnlyAttribute : Attribute { }
+
+	namespace Contract {
+		[AttributeUsage( AttributeTargets.Parameter, AllowMultiple = false )]
+		public sealed class StatelessFuncAttribute : ReadOnlyAttribute { }
+	}
+}
+
 namespace D2L {
 
-	public class StatelessFuncAttribute : Attribute { }
+	using D2L.CodeStyle.Annotations.Contract;
 
 	public class StatelessFunc<TResult> {
 		public StatelessFunc( [StatelessFunc] Func<TResult> func ) { }
@@ -21,6 +31,7 @@ namespace D2L {
 namespace SpecTests {
 
 	using D2L;
+	using D2L.CodeStyle.Annotations.Contract;
 
 	internal static class AttributeFuncReceiver {
 

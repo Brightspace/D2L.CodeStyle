@@ -23,7 +23,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private static void RegisterAnalysis( CompilationStartAnalysisContext context ) {
 
 			Compilation compilation = context.Compilation;
-			ISymbol statelessFuncAttr = compilation.GetTypeByMetadataName( "D2L.StatelessFuncAttribute" );
+			ISymbol statelessFuncAttr = compilation.GetTypeByMetadataName( "D2L.CodeStyle.Annotations.Contract.StatelessFuncAttribute" );
 			ImmutableHashSet<ISymbol> statelessFuncs = GetStatelessFuncTypes( compilation );
 
 			context.RegisterSyntaxNodeAction(
