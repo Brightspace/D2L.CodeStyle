@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 using System.Collections.Immutable;
 using System.Linq;
+using System.Threading;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
@@ -155,16 +156,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					 * If it's a local parameter marked with [StatelessFunc] we're reasonably
 					 * certain it was analyzed on the caller side.
 					 */
-					ISymbol symbol = model.GetSymbolInfo( argument ).Symbol;
-					if( symbol != null ) {
-						SyntaxNode declaration = symbol.DeclaringSyntaxReferences[0].GetSyntax( context.CancellationToken );
-						ISymbol declarationSymbol = model.GetDeclaredSymbol( declaration, context.CancellationToken );
-						if( declarationSymbol is IParameterSymbol parameterSymbol ) {
-							var attrs = parameterSymbol.GetAttributes();
-							if( attrs.Any( a => a.AttributeClass.OriginalDefinition == statelessFuncAttribute ) ) {
-								return;
-							}
-						}
+					if( IsParameterMarkedStateless(
+						model,
+						statelessFuncAttribute,
+						argument as IdentifierNameSyntax,
+						context.CancellationToken
+					) ) {
+						return;
 					}
 
 					/**
@@ -173,7 +171,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					diag = Diagnostic.Create(
 						Diagnostics.StatelessFuncIsnt,
 						argument.GetLocation(),
-						$"Unable to determine if variable reference { argument.ToString() } is a stateless func."
+						$"Unable to determine if { argument.ToString() } is stateless."
 					);
 
 					break;
@@ -244,6 +242,38 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// checking against are the definitions, which are (eg
 			// StatelessFunc<T> ) generic. So check the "parent" definition.
 			return statelessFuncs.Contains( symbol.OriginalDefinition );
+		}
+
+		private static bool IsParameterMarkedStateless(
+			SemanticModel model,
+			ISymbol statelessFuncAttr,
+			IdentifierNameSyntax identifer,
+			CancellationToken ct
+		) {
+			ISymbol symbol = model.GetSymbolInfo( identifer ).Symbol;
+			if( symbol == null ) {
+				return false;
+			}
+
+			var declarations = symbol.DeclaringSyntaxReferences;
+			if( declarations.Length != 1 ) {
+				return false;
+			}
+
+			ParameterSyntax parameterSyntax = declarations[0].GetSyntax( ct ) as ParameterSyntax;
+			if( parameterSyntax == null ) {
+				return false;
+			}
+
+			IParameterSymbol parameter = model.GetDeclaredSymbol( parameterSyntax, ct );
+
+			foreach( AttributeData attr in parameter.GetAttributes() ) {
+				if( attr.AttributeClass == statelessFuncAttr ) {
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		private static ImmutableHashSet<ISymbol> GetStatelessFuncTypes( Compilation compilation) {

@@ -146,13 +146,13 @@ namespace SpecTests {
 		public void FuncFromVar() {
 			Func<int> f = () => 0;
 
-			var func = new StatelessFunc<int>( /* StatelessFuncIsnt( Unable to determine if variable reference f is a stateless func. ) */ f /**/ );
-			AttributeFuncReceiver.Accept( /* StatelessFuncIsnt( Unable to determine if variable reference f is a stateless func. ) */ f /**/ );
+			var func = new StatelessFunc<int>( /* StatelessFuncIsnt( Unable to determine if f is stateless. ) */ f /**/ );
+			AttributeFuncReceiver.Accept( /* StatelessFuncIsnt( Unable to determine if f is stateless. ) */ f /**/ );
 		}
 
 		public void FuncFromParam( Func<int> f ) {
-			var func = new StatelessFunc<int>( /* StatelessFuncIsnt( Unable to determine if variable reference f is a stateless func. ) */ f /**/ );
-			AttributeFuncReceiver.Accept( /* StatelessFuncIsnt( Unable to determine if variable reference f is a stateless func. ) */ f /**/ );
+			var func = new StatelessFunc<int>( /* StatelessFuncIsnt( Unable to determine if f is stateless. ) */ f /**/ );
+			AttributeFuncReceiver.Accept( /* StatelessFuncIsnt( Unable to determine if f is stateless. ) */ f /**/ );
 		}
 	}
 }
