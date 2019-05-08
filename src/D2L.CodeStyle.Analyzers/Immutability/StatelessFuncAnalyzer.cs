@@ -24,6 +24,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			Compilation compilation = context.Compilation;
 			ISymbol statelessFuncAttr = compilation.GetTypeByMetadataName( "D2L.CodeStyle.Annotations.Contract.StatelessFuncAttribute" );
+
+			if( statelessFuncAttr == null ) {
+				return;
+			}
+
 			ImmutableHashSet<ISymbol> statelessFuncs = GetStatelessFuncTypes( compilation );
 
 			context.RegisterSyntaxNodeAction(
