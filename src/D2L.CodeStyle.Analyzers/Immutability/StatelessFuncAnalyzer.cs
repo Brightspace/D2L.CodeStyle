@@ -64,8 +64,19 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
-			Diagnostic diag;
 			ExpressionSyntax argument = syntax.Expression;
+
+			/**
+			* Even though we haven't specifically accounted for its
+			* source if it's a StatelessFunc<T> we're reasonably
+			* certain its been analyzed.
+			*/
+			ISymbol type = model.GetTypeInfo( argument ).Type;
+			if( type != null && IsStatelessFunc( type, statelessFuncs ) ) {
+				return;
+			}
+
+			Diagnostic diag;
 			SyntaxKind kind = argument.Kind();
 			switch( kind ) {
 
@@ -141,16 +152,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				 *   void S() { Foo( m_f ); }
 				 * }
 				 */
-				case SyntaxKind.IdentifierName: {
-
-					/**
-					 * Doesn't matter where it came from, if it's a StatelessFunc<T> we're
-					 * reasonably certain its been analyzed.
-					 */
-					ISymbol type = model.GetTypeInfo( argument ).Type;
-					if( type != null && IsStatelessFunc( type, statelessFuncs ) ) {
-						return;
-					}
+				case SyntaxKind.IdentifierName:
 
 					/**
 					 * If it's a local parameter marked with [StatelessFunc] we're reasonably
@@ -175,19 +177,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					);
 
 					break;
-				}
 
-				default: {
-
-					/**
-					 * Even though we haven't specifically accounted for its
-					 * source if it's a StatelessFunc<T> we're reasonably
-					 * certain its been analyzed.
-					 */
-					ISymbol type = model.GetTypeInfo( argument ).Type;
-					if( type != null && IsStatelessFunc( type, statelessFuncs ) ) {
-						return;
-					}
+				default:
 
 					// we need StatelessFunc<T> to be ultra safe, so we'll
 					// reject usages we do not understand yet
@@ -198,7 +189,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					);
 
 					break;
-				}
 			}
 
 			context.ReportDiagnostic( diag );
