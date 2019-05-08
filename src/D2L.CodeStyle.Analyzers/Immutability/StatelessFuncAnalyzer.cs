@@ -125,14 +125,36 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					);
 
 					break;
-
+				
+				/**
+				 * This is the case where a variable is passed in
+				 * eg Foo( f )
+				 * Where f might be a local variable, a parameter, or field
+				 * 
+				 * class C<T> {
+				 *   StatelessFunc<T> m_f;
+				 *   
+				 *   void P( StatelessFunc<T></T> f ) { Foo( f ); }
+				 *   void Q( [StatelessFunc] Func<T> f ) { Foo( f ); }
+				 *   void R() { StatelessFunc<T> f; Foo( f ); }
+				 *   void S() { Foo( m_f ); }
+				 * }
+				 */
 				case SyntaxKind.IdentifierName: {
 
+					/**
+					 * Doesn't matter where it came from, if it's a StatelessFunc<T> we're
+					 * reasonably certain its been analyzed.
+					 */
 					ISymbol type = model.GetTypeInfo( argument ).Type;
 					if( type != null && IsStatelessFunc( type, statelessFuncs ) ) {
 						return;
 					}
 
+					/**
+					 * If it's a local parameter marked with [StatelessFunc] we're reasonably
+					 * certain it was analyzed on the caller side.
+					 */
 					ISymbol symbol = model.GetSymbolInfo( argument ).Symbol;
 					if( symbol != null ) {
 						SyntaxNode declaration = symbol.DeclaringSyntaxReferences[0].GetSyntax( context.CancellationToken );
@@ -145,6 +167,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						}
 					}
 
+					/**
+					 * If it's any other variable. We're not sure
+					 */
 					diag = Diagnostic.Create(
 						Diagnostics.StatelessFuncIsnt,
 						argument.GetLocation(),
@@ -156,6 +181,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 				default: {
 
+					/**
+					 * Even though we haven't specifically accounted for its
+					 * source if it's a StatelessFunc<T> we're reasonably
+					 * certain its been analyzed.
+					 */
 					ISymbol type = model.GetTypeInfo( argument ).Type;
 					if( type != null && IsStatelessFunc( type, statelessFuncs ) ) {
 						return;
