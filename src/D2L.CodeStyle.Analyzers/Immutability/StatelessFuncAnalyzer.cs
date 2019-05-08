@@ -63,9 +63,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
-			ExpressionSyntax argument = syntax.Expression;
-
 			Diagnostic diag;
+			ExpressionSyntax argument = syntax.Expression;
 			SyntaxKind kind = argument.Kind();
 			switch( kind ) {
 
