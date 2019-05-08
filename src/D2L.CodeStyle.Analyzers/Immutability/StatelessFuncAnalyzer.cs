@@ -63,25 +63,16 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
-			AnalyzeFunc( context, syntax.Expression, statelessFuncAttribute, statelessFuncs );
-		}
-
-		private static void AnalyzeFunc(
-			SyntaxNodeAnalysisContext context,
-			ExpressionSyntax func,
-			ISymbol statelessFuncAttribute,
-			ImmutableHashSet<ISymbol> statelessFuncs
-		) {
-			SemanticModel model = context.SemanticModel;
+			ExpressionSyntax argument = syntax.Expression;
 
 			Diagnostic diag;
-			SyntaxKind kind = func.Kind();
+			SyntaxKind kind = argument.Kind();
 			switch( kind ) {
 
 				// this is the case when a method reference is used
 				// eg Func<string, int> func = int.Parse
 				case SyntaxKind.SimpleMemberAccessExpression:
-					if( IsStaticMemberAccess( context, func ) ) {
+					if( IsStaticMemberAccess( context, argument ) ) {
 						return;
 					}
 
@@ -91,8 +82,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// to determine if the non-static member is safe
 					diag = Diagnostic.Create(
 						Diagnostics.StatelessFuncIsnt,
-						func.GetLocation(),
-						$"{ func.ToString() } is not static"
+						argument.GetLocation(),
+						$"{ argument.ToString() } is not static"
 					);
 					break;
 
@@ -106,7 +97,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				case SyntaxKind.SimpleLambdaExpression:
 					bool hasCaptures = TryGetCaptures(
 						context,
-						func,
+						argument,
 						out ImmutableArray<ISymbol> captures
 					);
 					if( !hasCaptures ) {
@@ -116,7 +107,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					string captured = string.Join( ", ", captures.Select( c => c.Name ) );
 					diag = Diagnostic.Create(
 						Diagnostics.StatelessFuncIsnt,
-						func.GetLocation(),
+						argument.GetLocation(),
 						$"Captured variable(s): { captured }"
 					);
 					break;
@@ -130,20 +121,20 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// never really be necessary
 					diag = Diagnostic.Create(
 						Diagnostics.StatelessFuncIsnt,
-						func.GetLocation(),
-						$"Invocations are not allowed: { func.ToString() }"
+						argument.GetLocation(),
+						$"Invocations are not allowed: { argument.ToString() }"
 					);
 
 					break;
 
 				case SyntaxKind.IdentifierName: {
 
-					ISymbol type = model.GetTypeInfo( func ).Type;
+					ISymbol type = model.GetTypeInfo( argument ).Type;
 					if( type != null && IsStatelessFunc( type, statelessFuncs ) ) {
 						return;
 					}
 
-					ISymbol symbol = model.GetSymbolInfo( func ).Symbol;
+					ISymbol symbol = model.GetSymbolInfo( argument ).Symbol;
 					if( symbol != null ) {
 						SyntaxNode declaration = symbol.DeclaringSyntaxReferences[0].GetSyntax( context.CancellationToken );
 						ISymbol declarationSymbol = model.GetDeclaredSymbol( declaration, context.CancellationToken );
@@ -157,8 +148,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 					diag = Diagnostic.Create(
 						Diagnostics.StatelessFuncIsnt,
-						func.GetLocation(),
-						$"Unable to determine if variable reference { func.ToString() } is a stateless func."
+						argument.GetLocation(),
+						$"Unable to determine if variable reference { argument.ToString() } is a stateless func."
 					);
 
 					break;
@@ -166,7 +157,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 				default: {
 
-					ISymbol type = model.GetTypeInfo( func ).Type;
+					ISymbol type = model.GetTypeInfo( argument ).Type;
 					if( type != null && IsStatelessFunc( type, statelessFuncs ) ) {
 						return;
 					}
@@ -175,8 +166,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// reject usages we do not understand yet
 					diag = Diagnostic.Create(
 						Diagnostics.StatelessFuncIsnt,
-						func.GetLocation(),
-						$"Unable to determine safety of { func.ToString() }. This is an unexpectes usage of StatelessFunc<T>"
+						argument.GetLocation(),
+						$"Unable to determine safety of { argument.ToString() }. This is an unexpectes usage of StatelessFunc<T>"
 					);
 
 					break;
