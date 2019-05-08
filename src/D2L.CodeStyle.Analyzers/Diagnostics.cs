@@ -475,5 +475,15 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "StatelessFunc is to be used to hold Func private members, and need to be undiff safe."
 		);
 
+		public static readonly DiagnosticDescriptor ReadOnlyParameterIsnt = new DiagnosticDescriptor(
+			id: "D2L0054",
+			title: "Parameter is not readonly",
+			messageFormat: "Parameter is not readonly: {0}",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "[ReadOnly] paramaters must not be assigned to or passed by non-readonly reference."
+		);
+
 	}
 }
