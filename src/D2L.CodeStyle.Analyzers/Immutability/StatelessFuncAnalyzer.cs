@@ -137,15 +137,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					);
 
 					break;
-				
+
 				/**
 				 * This is the case where a variable is passed in
 				 * eg Foo( f )
 				 * Where f might be a local variable, a parameter, or field
-				 * 
+				 *
 				 * class C<T> {
 				 *   StatelessFunc<T> m_f;
-				 *   
+				 *
 				 *   void P( StatelessFunc<T></T> f ) { Foo( f ); }
 				 *   void Q( [StatelessFunc] Func<T> f ) { Foo( f ); }
 				 *   void R() { StatelessFunc<T> f; Foo( f ); }
@@ -153,7 +153,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				 * }
 				 */
 				case SyntaxKind.IdentifierName:
-
 					/**
 					 * If it's a local parameter marked with [StatelessFunc] we're reasonably
 					 * certain it was analyzed on the caller side.
@@ -179,7 +178,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					break;
 
 				default:
-
 					// we need StatelessFunc<T> to be ultra safe, so we'll
 					// reject usages we do not understand yet
 					diag = Diagnostic.Create(
