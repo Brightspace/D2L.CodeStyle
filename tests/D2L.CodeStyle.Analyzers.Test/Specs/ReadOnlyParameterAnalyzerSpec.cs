@@ -51,6 +51,10 @@ namespace SpecTests {
 		void RefParameter( /* ReadOnlyParameterIsnt( is an in/ref/out parameter ) */ [ReadOnly] ref int foo /**/ ) { }
 		void InParameter( /* ReadOnlyParameterIsnt( is an in/ref/out parameter ) */ [ReadOnly] in int foo /**/ ) { }
 
+		internal class C {
+			C( [ReadOnly] int foo ) { }
+		}
+
 	}
 
 	internal sealed class SubclassAttributeUsages {
@@ -94,6 +98,10 @@ namespace SpecTests {
 
 		void RefParameter( /* ReadOnlyParameterIsnt( is an in/ref/out parameter ) */ [ReadOnlySubclass] ref int foo /**/ ) { }
 		void InParameter( /* ReadOnlyParameterIsnt( is an in/ref/out parameter ) */ [ReadOnlySubclass] in int foo /**/ ) { }
+
+		internal class C {
+			C( [ReadOnlySubclass] int foo ) { }
+		}
 
 	}
 
