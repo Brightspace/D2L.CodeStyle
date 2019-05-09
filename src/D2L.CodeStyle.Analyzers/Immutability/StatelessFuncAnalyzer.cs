@@ -1,10 +1,12 @@
-﻿using Microsoft.CodeAnalysis;
+using D2L.CodeStyle.Analyzers.Extensions;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 using System.Collections.Immutable;
 using System.Linq;
+using System.Threading;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
@@ -22,40 +24,59 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private static void RegisterAnalysis( CompilationStartAnalysisContext context ) {
 
 			Compilation compilation = context.Compilation;
+			ISymbol statelessFuncAttr = compilation.GetTypeByMetadataName( "D2L.CodeStyle.Annotations.Contract.StatelessFuncAttribute" );
+
+			if( statelessFuncAttr == null ) {
+				return;
+			}
+
 			ImmutableHashSet<ISymbol> statelessFuncs = GetStatelessFuncTypes( compilation );
 
 			context.RegisterSyntaxNodeAction(
 				ctx => {
-						AnalyzeObjectCreationExpression(
-							ctx,
-							statelessFuncs
-						);
+					AnalyzeArgument(
+						ctx,
+						statelessFuncAttr,
+						statelessFuncs
+					);
 				},
-				SyntaxKind.ObjectCreationExpression
+				SyntaxKind.Argument
 			);
 		}
 
-		private static void AnalyzeObjectCreationExpression(
+		private static void AnalyzeArgument(
 			SyntaxNodeAnalysisContext context,
+			ISymbol statelessFuncAttribute,
 			ImmutableHashSet<ISymbol> statelessFuncs
 		) {
+			ArgumentSyntax syntax = context.Node as ArgumentSyntax;
 
-			ObjectCreationExpressionSyntax syntax = context.Node as ObjectCreationExpressionSyntax;
+			SemanticModel model = context.SemanticModel;
 
-			ISymbol symbol = context
-				.SemanticModel
-				.GetSymbolInfo( syntax ).Symbol;
+			IParameterSymbol param = syntax.DetermineParameter( model );
 
-			if( symbol == null ) {
+			if( param == null ) {
 				return;
 			}
 
-			if( !IsStatelessFunc( symbol, statelessFuncs ) ) {
+			ImmutableArray<AttributeData> paramAttributes = param.GetAttributes();
+			if( !paramAttributes.Any( a => a.AttributeClass == statelessFuncAttribute ) ) {
+				return;
+			}
+
+			ExpressionSyntax argument = syntax.Expression;
+
+			/**
+			* Even though we haven't specifically accounted for its
+			* source if it's a StatelessFunc<T> we're reasonably
+			* certain its been analyzed.
+			*/
+			ISymbol type = model.GetTypeInfo( argument ).Type;
+			if( type != null && IsStatelessFunc( type, statelessFuncs ) ) {
 				return;
 			}
 
 			Diagnostic diag;
-			ExpressionSyntax argument = syntax.ArgumentList.Arguments[ 0 ].Expression;
 			SyntaxKind kind = argument.Kind();
 			switch( kind ) {
 
@@ -117,6 +138,45 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 					break;
 
+				/**
+				 * This is the case where a variable is passed in
+				 * eg Foo( f )
+				 * Where f might be a local variable, a parameter, or field
+				 *
+				 * class C<T> {
+				 *   StatelessFunc<T> m_f;
+				 *
+				 *   void P( StatelessFunc<T></T> f ) { Foo( f ); }
+				 *   void Q( [StatelessFunc] Func<T> f ) { Foo( f ); }
+				 *   void R() { StatelessFunc<T> f; Foo( f ); }
+				 *   void S() { Foo( m_f ); }
+				 * }
+				 */
+				case SyntaxKind.IdentifierName:
+					/**
+					 * If it's a local parameter marked with [StatelessFunc] we're reasonably
+					 * certain it was analyzed on the caller side.
+					 */
+					if( IsParameterMarkedStateless(
+						model,
+						statelessFuncAttribute,
+						argument as IdentifierNameSyntax,
+						context.CancellationToken
+					) ) {
+						return;
+					}
+
+					/**
+					 * If it's any other variable. We're not sure
+					 */
+					diag = Diagnostic.Create(
+						Diagnostics.StatelessFuncIsnt,
+						argument.GetLocation(),
+						$"Unable to determine if { argument.ToString() } is stateless."
+					);
+
+					break;
+
 				default:
 					// we need StatelessFunc<T> to be ultra safe, so we'll
 					// reject usages we do not understand yet
@@ -165,17 +225,43 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ISymbol symbol,
 			ImmutableHashSet<ISymbol> statelessFuncs
 		) {
-
-			if( statelessFuncs.Contains( symbol ) ) {
-				// we've found a definition that matches exactly with the symbol
-				return true;
-			}
-
 			// Generics work a bit different, in that the symbol we have to work
 			// with is not (eg StatelessFunc<int> ), but the list of symbols we're
 			// checking against are the definitions, which are (eg
 			// StatelessFunc<T> ) generic. So check the "parent" definition.
 			return statelessFuncs.Contains( symbol.OriginalDefinition );
+		}
+
+		private static bool IsParameterMarkedStateless(
+			SemanticModel model,
+			ISymbol statelessFuncAttr,
+			IdentifierNameSyntax identifer,
+			CancellationToken ct
+		) {
+			ISymbol symbol = model.GetSymbolInfo( identifer ).Symbol;
+			if( symbol == null ) {
+				return false;
+			}
+
+			var declarations = symbol.DeclaringSyntaxReferences;
+			if( declarations.Length != 1 ) {
+				return false;
+			}
+
+			ParameterSyntax parameterSyntax = declarations[0].GetSyntax( ct ) as ParameterSyntax;
+			if( parameterSyntax == null ) {
+				return false;
+			}
+
+			IParameterSymbol parameter = model.GetDeclaredSymbol( parameterSyntax, ct );
+
+			foreach( AttributeData attr in parameter.GetAttributes() ) {
+				if( attr.AttributeClass == statelessFuncAttr ) {
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		private static ImmutableHashSet<ISymbol> GetStatelessFuncTypes( Compilation compilation) {
@@ -203,9 +289,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					continue;
 				}
 
-				foreach( IMethodSymbol ctor in typeSymbol.Constructors ) {
-					builder.Add( ctor );
-				}
+				builder.Add( typeSymbol.OriginalDefinition );
 			}
 
 			return builder.ToImmutableHashSet();
