@@ -98,6 +98,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					);
 					break;
 
+				// this is the case when a "delegate" is used
+				// eg delegate( int x, int y ) { return x + y; }
+				case SyntaxKind.AnonymousMethodExpression:
 				// this is the case when the left hand side of the
 				// lambda has parens
 				// eg () => 1, (x, y) => x + y

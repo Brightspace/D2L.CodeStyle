@@ -64,6 +64,17 @@ namespace SpecTests {
 			AttributeFuncReceiver.Accept<string, string>( /* StatelessFuncIsnt( Captured variable(s): trailing ) */ x => x + trailing /**/ );
 		}
 
+		public void DelegateNoClosures() {
+			var func = new StatelessFunc<string, string>( delegate( string x ) { return x + "\n"; } );
+			AttributeFuncReceiver.Accept<string, string>( delegate ( string x ) { return x + "\n"; } );
+		}
+
+		public void DelegateWithClosures() {
+			string trailing = "\n";
+			var func = new StatelessFunc<string, string>(  /* StatelessFuncIsnt( Captured variable(s): trailing ) */ delegate ( string x ) { return x + trailing; } /**/ );
+			AttributeFuncReceiver.Accept<string, string>(  /* StatelessFuncIsnt( Captured variable(s): trailing ) */ delegate ( string x ) { return x + trailing; } /**/ );
+		}
+
 		public void NonStaticMember() {
 			var func = new StatelessFunc<string>( /* StatelessFuncIsnt( this.ToString is not static ) */ this.ToString /**/ );
 			AttributeFuncReceiver.Accept<string>( /* StatelessFuncIsnt( this.ToString is not static ) */ this.ToString /**/ );
