@@ -55,6 +55,10 @@ namespace SpecTests {
 			C( [ReadOnly] int foo ) { }
 		}
 
+		internal interface I {
+			void Foo( [ReadOnly] int foo );
+		}
+
 	}
 
 	internal sealed class SubclassAttributeUsages {
@@ -101,6 +105,10 @@ namespace SpecTests {
 
 		internal class C {
 			C( [ReadOnlySubclass] int foo ) { }
+		}
+
+		internal interface I {
+			void Foo( [ReadOnlySubclass] int foo );
 		}
 
 	}

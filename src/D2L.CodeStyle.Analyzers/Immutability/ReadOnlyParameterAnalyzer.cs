@@ -68,6 +68,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			IMethodSymbol method = parameter.ContainingSymbol as IMethodSymbol;
 			BlockSyntax methodBody = ( method.DeclaringSyntaxReferences[0].GetSyntax( ctx.CancellationToken ) as BaseMethodDeclarationSyntax ).Body;
 
+			if( methodBody == null ) {
+				/**
+				 * Method declaration on an interface.
+				 */
+				return;
+			}
+
 			DataFlowAnalysis dataflow = model.AnalyzeDataFlow( methodBody );
 			if( dataflow.WrittenInside.Contains( parameter ) ) {
 				/**
