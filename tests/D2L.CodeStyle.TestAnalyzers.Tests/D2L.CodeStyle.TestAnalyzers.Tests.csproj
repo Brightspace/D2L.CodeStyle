@@ -164,6 +164,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="NUnit\ConfigTestSetupStringsAnalyzerTests.cs" />
     <Compile Include="NUnit\ValueSourceStringsAnalyzerTests.cs" />
     <Compile Include="ParallelizableTests\ParallelizableTestsAnalyzerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
