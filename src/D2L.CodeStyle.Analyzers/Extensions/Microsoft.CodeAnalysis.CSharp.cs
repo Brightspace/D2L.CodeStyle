@@ -24,9 +24,18 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 				return null;
 			}
 
-			var invocableExpression = argumentList.Parent as ExpressionSyntax;
-			if( invocableExpression == null ) {
-				return null;
+			SyntaxNode invocableExpression;
+			switch( argumentList.Parent ) {
+				case ConstructorInitializerSyntax altConstructorCall:
+					// : this( func ) or : base( func )
+					invocableExpression = altConstructorCall;
+					break;
+				case ExpressionSyntax regularCall:
+					// Bar( func )
+					invocableExpression = regularCall;
+					break;
+				default:
+					return null;
 			}
 
 			var symbol = semanticModel.GetSymbolInfo( invocableExpression ).Symbol;
