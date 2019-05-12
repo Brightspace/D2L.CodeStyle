@@ -165,5 +165,27 @@ namespace SpecTests {
 			var func = new StatelessFunc<int>( /* StatelessFuncIsnt( Unable to determine if f is stateless. ) */ f /**/ );
 			AttributeFuncReceiver.Accept( /* StatelessFuncIsnt( Unable to determine if f is stateless. ) */ f /**/ );
 		}
+
+		internal sealed class AnotherConstructor {
+
+			public AnotherConstructor( int i )
+				: this( /* StatelessFuncIsnt( Captured variable(s): i ) */ () => ++i /**/ ) { }
+
+			public AnotherConstructor( [StatelessFunc] Func<int> func ) { }
+
+		}
+
+		internal class BaseClass {
+
+			public BaseClass( [StatelessFunc] Func<int> func ) { }
+
+
+			internal sealed class SubClass : BaseClass {
+
+				public SubClass( int i )
+					: base( /* StatelessFuncIsnt( Captured variable(s): i ) */ () => ++i /**/ ) { }
+
+			}
+		}
 	}
 }
