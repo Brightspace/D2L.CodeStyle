@@ -278,6 +278,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				"D2L.StatelessFunc`4",
 				"D2L.StatelessFunc`5",
 				"D2L.StatelessFunc`6",
+				"D2L.StatelessFunc`7",
+				"D2L.StatelessFunc`8",
+				"D2L.StatelessFunc`9",
+				"D2L.StatelessFunc`10",
+				"D2L.StatelessFunc`11",
 			};
 
 			foreach( string typeName in types ) {
