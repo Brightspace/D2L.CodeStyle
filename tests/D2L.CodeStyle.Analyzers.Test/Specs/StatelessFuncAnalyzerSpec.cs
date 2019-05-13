@@ -171,7 +171,12 @@ namespace SpecTests {
 			public AnotherConstructor( int i )
 				: this( /* StatelessFuncIsnt( Captured variable(s): i ) */ () => ++i /**/ ) { }
 
+			public AnotherConstructor()
+				: this( DoStuff ) { }
+
 			public AnotherConstructor( [StatelessFunc] Func<int> func ) { }
+
+			private static int DoStuff() { return 1; }
 
 		}
 

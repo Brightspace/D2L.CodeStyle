@@ -149,10 +149,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				 * class C<T> {
 				 *   StatelessFunc<T> m_f;
 				 *
-				 *   void P( StatelessFunc<T></T> f ) { Foo( f ); }
+				 *   void P( StatelessFunc<T> f ) { Foo( f ); }
 				 *   void Q( [StatelessFunc] Func<T> f ) { Foo( f ); }
 				 *   void R() { StatelessFunc<T> f; Foo( f ); }
 				 *   void S() { Foo( m_f ); }
+				 *   void T() : this( StaticMemberMethod ) {}
 				 * }
 				 */
 				case SyntaxKind.IdentifierName:
@@ -165,6 +166,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						statelessFuncAttribute,
 						argument as IdentifierNameSyntax,
 						context.CancellationToken
+					) ) {
+						return;
+					}
+
+					if( IsStaticMethodIdentifier(
+						model,
+						argument as IdentifierNameSyntax
 					) ) {
 						return;
 					}
@@ -265,6 +273,18 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			return false;
+		}
+
+		private static bool IsStaticMethodIdentifier(
+			SemanticModel model,
+			IdentifierNameSyntax identifier
+		) {
+			IMethodSymbol methodSymbol = model.GetSymbolInfo( identifier ).Symbol as IMethodSymbol;
+			if( methodSymbol == null ) {
+				return false;
+			}
+
+			return methodSymbol.IsStatic;
 		}
 
 		private static ImmutableHashSet<ISymbol> GetStatelessFuncTypes( Compilation compilation) {
