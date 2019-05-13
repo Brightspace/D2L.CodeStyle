@@ -170,8 +170,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						return;
 					}
 
-					if( IsStaticMethodIdentifier(
-						model,
+					if( IsStaticMemberAccess(
+						context,
 						argument as IdentifierNameSyntax
 					) ) {
 						return;
@@ -273,18 +273,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			return false;
-		}
-
-		private static bool IsStaticMethodIdentifier(
-			SemanticModel model,
-			IdentifierNameSyntax identifier
-		) {
-			IMethodSymbol methodSymbol = model.GetSymbolInfo( identifier ).Symbol as IMethodSymbol;
-			if( methodSymbol == null ) {
-				return false;
-			}
-
-			return methodSymbol.IsStatic;
 		}
 
 		private static ImmutableHashSet<ISymbol> GetStatelessFuncTypes( Compilation compilation) {

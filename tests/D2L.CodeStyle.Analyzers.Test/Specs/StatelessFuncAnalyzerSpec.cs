@@ -177,7 +177,6 @@ namespace SpecTests {
 			public AnotherConstructor( [StatelessFunc] Func<int> func ) { }
 
 			private static int DoStuff() { return 1; }
-
 		}
 
 		internal class BaseClass {
