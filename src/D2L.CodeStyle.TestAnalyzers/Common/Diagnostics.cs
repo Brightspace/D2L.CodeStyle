@@ -25,7 +25,7 @@ namespace D2L.CodeStyle.TestAnalyzers.Common {
 		public static readonly DiagnosticDescriptor ConfigTestSetupStrings = new DiagnosticDescriptor(
 			id: "D2LTESTS003",
 			title: "Use nameof in ConfigTestSetup attributes.",
-			messageFormat: "String arguments in ConfigTestSetup not allowed. Use nameof( {0} ) instead.",
+			messageFormat: "String arguments in ConfigTestSetup are not allowed. Use nameof({0}) instead.",
 			category: "Cleanliness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,

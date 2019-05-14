@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.TestAnalyzers.Common;
+using D2L.CodeStyle.TestAnalyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -11,7 +12,8 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class ConfigTestSetupStringsAnalyzer : DiagnosticAnalyzer {
 
-		private const string AttributeName = "ConfigTestSetupAttribute";
+		private const string AttributeTypeName =
+			"D2L.LP.Configuration.Config.ConfigTestSetupAttribute";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 			=> ImmutableArray.Create( Diagnostics.ConfigTestSetupStrings );
@@ -22,16 +24,26 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 			context.RegisterCompilationStartAction( Register );
 		}
 
-		private void Register( CompilationStartAnalysisContext compilation ) {
+		private static void Register( CompilationStartAnalysisContext context ) {
 
-			compilation.RegisterSyntaxNodeAction(
-					AnalyzeSyntaxNode,
+			INamedTypeSymbol attributeType =
+				context.Compilation.GetTypeByMetadataName( AttributeTypeName );
+
+			if( attributeType.IsNullOrErrorType() ) {
+				return;
+			}
+
+			context.RegisterSyntaxNodeAction(
+					ctx => AnalyzeSyntaxNode( ctx, attributeType ),
 					SyntaxKind.MethodDeclaration,
 					SyntaxKind.ClassDeclaration
 				);
 		}
 
-		private void AnalyzeSyntaxNode( SyntaxNodeAnalysisContext context ) {
+		private static void AnalyzeSyntaxNode(
+				SyntaxNodeAnalysisContext context,
+				INamedTypeSymbol attributeType
+			) {
 
 			SyntaxList<AttributeListSyntax> attributeList;
 
@@ -54,7 +66,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 				.ToArray();
 
 			// Method has no attributes
-			if( !attributes.Any() ) {
+			if( attributes.Length <= 0 ) {
 				return;
 			}
 
@@ -65,15 +77,12 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 					.GetSymbolInfo( attribute )
 					.Symbol;
 
-				if( symbol == null ) {
+				if( symbol.IsNullOrErrorType() ) {
 					continue;
 				}
 
 				// Not a [ConfigTestSetup()]
-				string displayString = symbol.ToDisplayString(
-						SymbolDisplayFormat.FullyQualifiedFormat
-					);
-				if( displayString != AttributeName ) {
+				if( !attributeType.Equals( symbol.ContainingType ) ) {
 					continue;
 				}
 
@@ -86,21 +95,51 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
 				ExpressionSyntax argExpression = arguments.First().Expression;
 
-				// Not [ConfigTestSetup( "foo" )]
-				if( !argExpression.IsKind( SyntaxKind.StringLiteralExpression ) ) {
+				// [ConfigTestSetup( nameof(Foo) )]
+				if( IsNameOfSyntax( argExpression ) ) {
 					continue;
 				}
 
-				LiteralExpressionSyntax stringLiteral =
-					(LiteralExpressionSyntax)argExpression;
+				// Try to provide the most relevant message that we can.
+				string messageArg =
+					argExpression is LiteralExpressionSyntax literal
+						? literal.ToString().Trim( '"' )
+						: "...";
 
 				Diagnostic diagnostic = Diagnostic.Create(
 						Diagnostics.ConfigTestSetupStrings,
 						argExpression.GetLocation(),
-						stringLiteral.ToString().Trim( '"' )
+						messageArg
 					);
 				context.ReportDiagnostic( diagnostic );
 			}
+		}
+
+		private static bool IsNameOfSyntax( ExpressionSyntax expression ) {
+
+			if( !expression.IsKind( SyntaxKind.InvocationExpression ) ) {
+				return false;
+			}
+
+			InvocationExpressionSyntax invocation =
+				(InvocationExpressionSyntax)expression;
+
+			if( !invocation.Expression.IsKind( SyntaxKind.IdentifierName ) ) {
+				return false;
+			}
+
+			IdentifierNameSyntax identifier =
+				(IdentifierNameSyntax)invocation.Expression;
+
+			if( !identifier.Identifier.IsKind( SyntaxKind.IdentifierToken ) ) {
+				return false;
+			}
+
+			if( identifier.Identifier.Text != "nameof" ) {
+				return false;
+			}
+
+			return true;
 		}
 
 	}

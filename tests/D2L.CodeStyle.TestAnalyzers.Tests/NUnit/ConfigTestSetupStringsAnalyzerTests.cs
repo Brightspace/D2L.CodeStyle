@@ -49,7 +49,7 @@ namespace Test {
 		}
 
 		[Test]
-		public void MethodAttribute_StringName_Diag() {
+		public void MethodAttribute_WithLiteral_Diag() {
 			const string test = PREAMBLE + @"
 namespace Test {
 	class Test {
@@ -61,6 +61,22 @@ namespace Test {
 	}
 }";
 			AssertSingleDiagnostic( Diagnostics.ConfigTestSetupStrings, test, 18, 21, "SourceName" );
+		}
+
+		[Test]
+		public void MethodAttribute_WithConstant_Diag() {
+			const string test = PREAMBLE + @"
+namespace Test {
+	class Test {
+		private const string Source = ""SourceName"";
+		private static readonly object SourceName = new object();
+
+		[Test]
+		[ConfigTestSetup( Source )]
+		public void Test() {}
+	}
+}";
+			AssertSingleDiagnostic( Diagnostics.ConfigTestSetupStrings, test, 19, 21, "..." );
 		}
 
 		[Test]
@@ -79,7 +95,7 @@ namespace Test {
 		}
 
 		[Test]
-		public void FixtureAttribute_StringName_Diag() {
+		public void FixtureAttribute_WithLiteral_Diag() {
 			const string test = PREAMBLE + @"
 namespace Test {
 	[ConfigTestSetup( ""SourceName"" )]
@@ -91,6 +107,22 @@ namespace Test {
 	}
 }";
 			AssertSingleDiagnostic( Diagnostics.ConfigTestSetupStrings, test, 14, 20, "SourceName" );
+		}
+
+		[Test]
+		public void FixtureAttribute_WithConstant_Diag() {
+			const string test = PREAMBLE + @"
+namespace Test {
+	[ConfigTestSetup( Source )]
+	class Test {
+		public const string Source = ""SourceName"";
+		private static readonly object SourceName = new object();
+
+		[Test]
+		public void Test() {}
+	}
+}";
+			AssertSingleDiagnostic( Diagnostics.ConfigTestSetupStrings, test, 14, 20, "..." );
 		}
 
 		private void AssertNoDiagnostic( string file ) {
