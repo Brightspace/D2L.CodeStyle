@@ -31,5 +31,15 @@ namespace D2L.CodeStyle.TestAnalyzers.Common {
 			isEnabledByDefault: true,
 			description: "Using strings in ConfigTestSetup attributes creates false positives during dead code analysis. nameof should be used instead."
 		);
+
+		public static readonly DiagnosticDescriptor NUnitCategory = new DiagnosticDescriptor(
+			id: "D2LTESTS004",
+			title: "Test is incorrectly categorized",
+			messageFormat: "Test is incorrectly categorized: {0}",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Tests need to be correctly categorized in order to be run."
+		);
 	}
 }
