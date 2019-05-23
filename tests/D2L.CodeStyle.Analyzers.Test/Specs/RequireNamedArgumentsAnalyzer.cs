@@ -27,7 +27,7 @@ namespace D2L {
         public static int _arg5_ret(int a1, int a2, int a3, int a4, int a5) { return 0; }
 
         public static void funcWithParams( int a, int b, int c, params int[] ps ) { }
-        
+
         public static void funcWithVerbatims( int @int, int @class, int @params, int @name, int @a5 ) { }
 
 		public delegate void delegate0Args();
@@ -60,17 +60,17 @@ namespace D2L {
             #endregion
 
             #region diagnostic for too many unnamed args
-            /* TooManyUnnamedArgs */ _arg5( 1, 2, 3, 4, 5 ) /**/;
-            /* TooManyUnnamedArgs */ _arg6( 1, 2, 3, 4, 5, 6 ) /**/;
+            /* TooManyUnnamedArgs(5) */ _arg5( 1, 2, 3, 4, 5 ) /**/;
+            /* TooManyUnnamedArgs(5) */ _arg6( 1, 2, 3, 4, 5, 6 ) /**/;
             _arg3( /* LiteralArgShouldBeNamed(a1) */ 1 /**/, /* LiteralArgShouldBeNamed(a2) */ 2 /**/, /* LiteralArgShouldBeNamed(a3) */ 3 /**/ );
             _arg3( a1: 1, /* LiteralArgShouldBeNamed(a2) */ 2 /**/, /* LiteralArgShouldBeNamed(a3) */ 3 /**/ );
             #endregion
 
             #region verbatim identifiers
             funcWithVerbatims( @int, @class, /* LiteralArgShouldBeNamed(@params) */ 3 /**/, p, p );
-            /* TooManyUnnamedArgs */ funcWithVerbatims( p, p, p, p, p ) /**/;
+            /* TooManyUnnamedArgs(5) */ funcWithVerbatims( p, p, p, p, p ) /**/;
 
-            // These should pass: 
+            // These should pass:
             funcWithVerbatims( @int, @class, @params, @name, @a5 );
             funcWithVerbatims( @int, p, p, p, p );
             #endregion
@@ -109,8 +109,8 @@ namespace D2L {
 			#endregion
 
 			#region need to have enough named args, though
-			/* TooManyUnnamedArgs */ _arg6( a1: 1, 2, 3, 4, 5, 6 ) /**/;
-			/* TooManyUnnamedArgs */ _arg6( 1, a2: 2, 3, 4, 5, 6 ) /**/;
+			/* TooManyUnnamedArgs(5) */ _arg6( a1: 1, 2, 3, 4, 5, 6 ) /**/;
+			/* TooManyUnnamedArgs(5) */ _arg6( 1, a2: 2, 3, 4, 5, 6 ) /**/;
 			#endregion
 
 			#region params don't count against the unnamed args budget
@@ -122,7 +122,7 @@ namespace D2L {
 			#region delegates
 			((delegate0Args)null)();
 			((delegate1Args)null)( 1 );
-			/* TooManyUnnamedArgs */ ((delegate5Args)null)( p, p, p, p, p ) /**/;
+			/* TooManyUnnamedArgs(5) */ ((delegate5Args)null)( p, p, p, p, p ) /**/;
 			((delegate5Args)null)( a1: 1, p, p, p, p );
 			#endregion
 
@@ -132,7 +132,7 @@ namespace D2L {
 			new SomeClass();
 			new SomeClass( 1 );
 			new SomeClass( p, p );
-			/* TooManyUnnamedArgs */ new SomeClass( p, p, p, p, p ) /**/;
+			/* TooManyUnnamedArgs(5) */ new SomeClass( p, p, p, p, p ) /**/;
 			new SomeClass( a1: 1, p, p, p, p );
             #endregion
 
