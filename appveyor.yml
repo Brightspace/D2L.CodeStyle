@@ -12,6 +12,9 @@ build:
   parallel: true
   verbosity: minimal
 
+test_script:
+  - dotnet test --no-build
+
 artifacts:
   - path: src\**\*.nupkg
     name: NuGet
