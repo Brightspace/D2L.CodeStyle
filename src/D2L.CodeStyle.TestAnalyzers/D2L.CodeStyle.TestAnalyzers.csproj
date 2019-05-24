@@ -16,10 +16,12 @@
     <DevelopmentDependency>true</DevelopmentDependency>
 
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <IncludeBuildOutput>False</IncludeBuildOutput>
     <IncludeSymbols>True</IncludeSymbols>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="tools\*.ps1" Pack="true" PackagePath="tools" />
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
 
