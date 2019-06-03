@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard1.3</TargetFramework>
     <LangVersion>7.3</LangVersion>
 
     <Title>D2L.CodeStyle.TestAnalyzers</Title>
