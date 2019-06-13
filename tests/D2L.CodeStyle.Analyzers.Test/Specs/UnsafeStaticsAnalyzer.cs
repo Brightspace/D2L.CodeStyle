@@ -123,6 +123,10 @@ namespace SpecTests {
 
 		// Tuple's are a blessed "container" type
 		private static readonly Tuple<int, string> m_aTuple;
+
+		// ValueTuples are a bless "container" type
+		private static readonly ValueTuple<int, string> m_vTupleExplicit;
+		private static readonly (int, string) m_vTupleSugar;
 	}
 
 	public class MutableBaseClass {
