@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.Operations;
 namespace D2L.CodeStyle.Analyzers.Language {
 
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
-	internal sealed class AwaitedTasksAnalyzer : DiagnosticAnalyzer {
+	internal sealed partial class AwaitedTasksAnalyzer : DiagnosticAnalyzer {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 			=> ImmutableArray.Create( Diagnostics.AwaitedTaskNotConfigured );
 
