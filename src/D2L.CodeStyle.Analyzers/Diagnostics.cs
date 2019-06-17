@@ -485,5 +485,15 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "[ReadOnly] paramaters must not be assigned to or passed by non-readonly reference."
 		);
 
+		public static readonly DiagnosticDescriptor AwaitedTaskNotConfigured = new DiagnosticDescriptor(
+			id: "D2L0055",
+			title: "Awaited task is not configured",
+			messageFormat: "Awaited task is not configured",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Awaited task should have 'continueOnCapturedContext' configured (preferably with 'false')."
+		);
+
 	}
 }
