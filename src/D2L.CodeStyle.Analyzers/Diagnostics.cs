@@ -495,5 +495,15 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "Awaited task should have 'continueOnCapturedContext' configured (preferably with 'false')."
 		);
 
+		public static readonly DiagnosticDescriptor StructShouldBeReadonly = new DiagnosticDescriptor(
+			id: "D2L0056",
+			title: "Struct should be readonly",
+			messageFormat: "Struct '{0}' should be marked as readonly",
+			description: "A struct without mutable fields or properties should be marked readonly. A non-readonly struct other weird mutability behaviours and performance pitfalls.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
 	}
 }
