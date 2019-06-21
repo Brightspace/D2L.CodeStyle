@@ -19,7 +19,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			.Add<Task>(
 				nameof( Task.Run )
 			)
-
+			.AddMethod(
+				nameof( TaskFactory.StartNew ),
+				new[] {
+					typeof( TaskFactory ).FullName,
+					typeof( TaskFactory<> ).FullName
+				}
+			)
 			.AddMethod(
 				"MapPath",
 				new[] {
