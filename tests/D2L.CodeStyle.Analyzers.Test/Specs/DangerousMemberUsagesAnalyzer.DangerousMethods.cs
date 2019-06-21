@@ -92,6 +92,14 @@ namespace SpecTests {
 			HttpServerUtility obj = new HttpServerUtility();
 			obj.Transfer( "/new/path" );
 		}
+
+		public void/* DangerousMethodsShouldBeAvoided(System.Threading.Tasks.TaskFactory.StartNew) */ MethodWithTaskFactoryStartNew(/**/) {
+			System.Threading.Tasks.Task.Factory.StartNew( () => { } );
+		}
+
+		public void/* DangerousMethodsShouldBeAvoided(System.Threading.Tasks.TaskFactory.StartNew) */ MethodWithGenericTaskFactoryStartNew(/**/) {
+			System.Threading.Tasks.Task<int>.Factory.StartNew( () => 1 );
+		}
 	}
 
 	internal sealed class AuditedUsages {
