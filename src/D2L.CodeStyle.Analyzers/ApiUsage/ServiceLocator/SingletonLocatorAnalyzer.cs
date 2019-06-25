@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
@@ -29,18 +30,21 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				return;
 			}
 
-			var pluginsInterfaceType = context.Compilation.GetTypeByMetadataName(
-					"D2L.LP.Extensibility.Activation.Domain.IPlugins`1"
-				);
-			var pluginsInterfaceWithExtensionPointType = context.Compilation.GetTypeByMetadataName(
-					"D2L.LP.Extensibility.Activation.Domain.IPlugins`2"
-				);
+			IDictionary<INamedTypeSymbol, int> containerTypes = new [] {
+					new { TypeName = "D2L.LP.Extensibility.Activation.Domain.IPlugins`1", ContainedTypeIdx = 0 },
+					new { TypeName = "D2L.LP.Extensibility.Activation.Domain.IPlugins`2", ContainedTypeIdx = 1 },
+					new { TypeName = "D2L.LP.Extensibility.Plugins.IInstancePlugins`1",   ContainedTypeIdx = 0 },
+					new { TypeName = "D2L.LP.Extensibility.Plugins.IInstancePlugins`2",   ContainedTypeIdx = 0 }
+				}
+				.Select( x => new { Type = context.Compilation.GetTypeByMetadataName( x.TypeName ), x.ContainedTypeIdx } )
+				.Where( x => !x.Type.IsNullOrErrorType() )
+				.ToDictionary( x => x.Type, x => x.ContainedTypeIdx );
 
 			context.RegisterSyntaxNodeAction(
 				ctx => EnforceSingletonsOnly(
 					ctx,
 					IsSingletonLocator,
-					IsATypeOfPlugins
+					IsContainerType
 				),
 				SyntaxKind.SimpleMemberAccessExpression,
 				SyntaxKind.InvocationExpression
@@ -58,39 +62,30 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				return false;
 			}
 
-			bool IsATypeOfPlugins( ITypeSymbol type, out ITypeSymbol pluginType ) {
+			bool IsContainerType( ITypeSymbol type, out ITypeSymbol containedType ) {
 
 				if( !( type is INamedTypeSymbol namedType ) ) {
-					pluginType = null;
+					containedType = null;
 					return false;
 				}
 
-				if( !pluginsInterfaceType.IsNullOrErrorType()
-					&& namedType.OriginalDefinition == pluginsInterfaceType
-				) {
-					pluginType = namedType.TypeArguments[ 0 ];
+				if( containerTypes.TryGetValue( namedType.OriginalDefinition, out int typeArgumentIndex ) ) {
+					containedType = namedType.TypeArguments[ typeArgumentIndex ];
 					return true;
 				}
 
-				if( !pluginsInterfaceWithExtensionPointType.IsNullOrErrorType()
-					&& namedType.OriginalDefinition == pluginsInterfaceWithExtensionPointType
-				) {
-					pluginType = namedType.TypeArguments[ 1 ];
-					return true;
-				}
-
-				pluginType = null;
+				containedType = null;
 				return false;
 			}
 		}
 
-		private delegate bool IsATypeOfPluginsFunc( ITypeSymbol type, out ITypeSymbol pluginType );
+		private delegate bool IsContainerType( ITypeSymbol type, out ITypeSymbol containedType );
 
 		// Enforce that SingletonLocator can only load actual [Singleton]s
 		private static void EnforceSingletonsOnly(
 			SyntaxNodeAnalysisContext context,
 			Func<INamedTypeSymbol, bool> isSingletonLocator,
-			IsATypeOfPluginsFunc isATypeOfPlugins
+			IsContainerType isContainerType
 		) {
 			var root = GetRootNode( context );
 			if( root == null ) {
@@ -131,8 +126,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			//It's ok as long as the attribute is present, error otherwise
 			ITypeSymbol typeArg = method.TypeArguments.First();
 
-			if( isATypeOfPlugins( typeArg, out ITypeSymbol pluginType ) ) {
-				typeArg = pluginType;
+			if( isContainerType( typeArg, out ITypeSymbol containedType ) ) {
+				typeArg = containedType;
 			}
 
 			if( Attributes.Singleton.IsDefined( typeArg ) ) {
