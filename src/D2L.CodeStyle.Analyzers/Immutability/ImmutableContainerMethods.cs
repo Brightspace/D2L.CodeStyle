@@ -11,6 +11,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private static readonly ImmutableDictionary<string, string[]> ImmutableContainerTypes = new Dictionary<string, string[]> {
 			["D2L.LP.Utilities.DeferredInitializer"] = new[] { "Value" },
 			["D2L.LP.Extensibility.Activation.Domain.IPlugins"] = new[] { "[]" },
+			["D2L.LP.Extensibility.Plugins.IInstancePlugins"] = new[] { "[]" },
 			["System.Collections.Immutable.IImmutableSet"] = new[] { "[]" },
 			["System.Collections.Immutable.ImmutableArray"] = new[] { "[]" },
 			["System.Collections.Immutable.ImmutableDictionary"] = new[] { "[].Key", "[].Value" },
