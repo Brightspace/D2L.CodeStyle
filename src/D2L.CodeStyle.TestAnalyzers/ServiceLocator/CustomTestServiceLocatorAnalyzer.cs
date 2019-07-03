@@ -76,7 +76,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 				}
 
 				// This happens on method groups, such as
-				// Func<IFoo> fooFunc = OldAndBrokenServiceLocator.Get<IFoo>;
+				// Func<IServiceLocator> fooFunc = TestServiceLocatorFactory.Create( ... );
 				method = symbolInfo.CandidateSymbols.First() as IMethodSymbol;
 
 				if( method == null ) {
