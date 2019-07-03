@@ -11,6 +11,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private static readonly ImmutableDictionary<string, string[]> ImmutableContainerTypes = new Dictionary<string, string[]> {
 			["D2L.LP.Utilities.DeferredInitializer"] = new[] { "Value" },
 			["D2L.LP.Extensibility.Activation.Domain.IPlugins"] = new[] { "[]" },
+			["D2L.LP.Extensibility.Plugins.IInstancePlugins"] = new[] { "[]" },
 			["System.Collections.Immutable.IImmutableSet"] = new[] { "[]" },
 			["System.Collections.Immutable.ImmutableArray"] = new[] { "[]" },
 			["System.Collections.Immutable.ImmutableDictionary"] = new[] { "[].Key", "[].Value" },
@@ -26,14 +27,24 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			["System.Collections.Generic.IEnumerable"] = new[] { "[]" },
 			["System.Lazy"] = new[] { "Value" },
 			["System.Nullable"] = new[] { "Value" },
-			["System.Tuple"] = new[] { "Item1", "Item2", "Item3", "Item4", "Item5", "Item6" }
+			["System.Tuple"] = TuplePrefixes
 		}.ToImmutableDictionary();
 
+		private static readonly string[] TuplePrefixes = new[] { "Item1", "Item2", "Item3", "Item4", "Item5", "Item6", "Item7" };
+
 		public static bool IsAnImmutableContainerType( this ITypeSymbol type ) {
+			if( type.IsTupleType ) {
+				return true;
+			}
+
 			return ImmutableContainerTypes.ContainsKey( type.GetFullTypeName() );
 		}
 
 		public static string[] GetImmutableContainerTypePrefixes( this ITypeSymbol type ) {
+			if( type.IsTupleType ) {
+				return TuplePrefixes;
+			}
+
 			if (ImmutableContainerTypes.TryGetValue( type.GetFullTypeName(), out string[] result )) {
 				return result;
 			}

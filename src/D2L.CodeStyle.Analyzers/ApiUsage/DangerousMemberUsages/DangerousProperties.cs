@@ -1,8 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
-using System.Net;
-using System.Reflection;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 
@@ -10,10 +7,28 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 
 		internal static readonly IReadOnlyDictionary<string, ImmutableArray<string>> Definitions =
 			ImmutableDictionary.Create<string, ImmutableArray<string>>()
-			.AddAllStaticProperties<ServicePointManager>()
+			.Add(
+				"System.Net.ServicePointManager",
+				ImmutableArray.Create(
+					"CertificatePolicy",
+					"CheckCertificateRevocationList",
+					"DefaultConnectionLimit",
+					"DnsRefreshTimeout",
+					"EnableDnsRoundRobin",
+					"EncryptionPolicy",
+					"Expect100Continue",
+					"MaxServicePointIdleTime",
+					"MaxServicePoints",
+					"ReusePort",
+					"SecurityProtocol",
+					"ServerCertificateValidationCallback",
+					"UseNagleAlgorithm"
+				)
+			)
 			.Add(
 				"System.Web.HttpContext",
 				ImmutableArray.Create(
+					"Current",
 					"CurrentHandler",
 					"Handler"
 				)
@@ -28,16 +43,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				typeof( T ).FullName,
 				ImmutableArray.Create( propertyNames )
 			);
-		}
-
-		private static ImmutableDictionary<string, ImmutableArray<string>> AddAllStaticProperties<T>(
-				this ImmutableDictionary<string, ImmutableArray<string>> types
-			) {
-
-			PropertyInfo[] properties = typeof( T ).GetProperties( BindingFlags.Public | BindingFlags.Static );
-			string[] propertyNames = properties.Select( p => p.Name ).ToArray();
-
-			return types.Add<T>( propertyNames );
 		}
 	}
 }

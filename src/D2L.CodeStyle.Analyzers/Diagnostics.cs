@@ -122,15 +122,8 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "Non-public class should be sealed because it doesn't have any subtypes."
 		);
 
-		public static readonly DiagnosticDescriptor SingletonIsntImmutable = new DiagnosticDescriptor(
-			id: "D2L0014",
-			title: "Classes marked as a singleton should be immutable.",
-			messageFormat: "This class is marked as a singleton, but it is not marked immutable.",
-			category: "Safety",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "Classes marked as singleton or that implement interfaces marked as a singleton should be marked immutable."
-		);
+		// Retired:
+		// D2L0014 (SingletonIsntImmutable): "Classes marked as a singleton should be immutable.",
 
 		public static readonly DiagnosticDescriptor SingletonLocatorMisuse = new DiagnosticDescriptor(
 			id: "D2L0017",
@@ -264,12 +257,12 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor TooManyUnnamedArgs = new DiagnosticDescriptor(
 			id: "D2L0032",
-			title: "There are a lot of arguments here. Please use named arguments for readability.",
-			messageFormat: "There are a lot of arguments here. Please use named arguments for readability.",
+			title: "Name arguments for readability.",
+			messageFormat: "There are more than {RequireNamedArgumentsAnalyzer.TOO_MANY_UNNAMED_ARGS} unnamed arguments. Use named arguments for readability.",
 			category: "Readability",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
-			description: "There are a lot of arguments here. Please use named arguments for readability."
+			description: "When a lot of arguments are used, they should be named for readability."
 		);
 
 		public static readonly DiagnosticDescriptor LiteralArgShouldBeNamed = new DiagnosticDescriptor(
@@ -351,5 +344,166 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "The implications of [Immutable] apply transitively to derived classes and interface implementations. We require that [Immutable] is explicity applied transitively for clarity and simplicity."
 		);
+
+		public static readonly DiagnosticDescriptor EventHandlerBlacklisted = new DiagnosticDescriptor(
+			id: "D2L0041",
+			title: "Blacklisted Event Handler",
+			messageFormat: "Event handlers of type {0} have been blacklisted",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "This event type no longer supports event handlers."
+		);
+
+		public static readonly DiagnosticDescriptor MustReferenceAnnotations = new DiagnosticDescriptor(
+			id: "D2L0042",
+			title: "To use D2L.CodeStyle.Analyzers you must also reference the assembly D2L.CodeStyle.Annotations",
+			messageFormat: "To use D2L.CodeStyle.Analyzers you must also reference the assembly D2L.CodeStyle.Annotations",
+			category: "Build",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "To use D2L.CodeStyle.Analyzers you must also reference the assembly D2L.CodeStyle.Annotations"
+		);
+
+		public static readonly DiagnosticDescriptor EventTypeMissingEventAttribute = new DiagnosticDescriptor(
+			id: "D2L0043",
+			title: "Event Type Missing [Event] Attribute",
+			description: "All event types must be marked with [Event] attribute.",
+			messageFormat: "Event type {0} must be marked with [Event] attribute.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor EventHandlerTypeMissingEventAttribute = new DiagnosticDescriptor(
+			id: "D2L0044",
+			title: "Event Handler Type Missing [EventHandler] Attribute",
+			description: "All event handler types must be marked with [EventHandler] attribute.",
+			messageFormat: "Event handler type {0} must be marked with [EventHandler] attribute.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor EventTypeMissingImmutableAttribute = new DiagnosticDescriptor(
+			id: "D2L0045",
+			title: "Event Type Missing [Immutable] Attribute",
+			messageFormat: "{0} must be marked [Immutable] because all event types must be immutable.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "We require that [Immutable] be explicity applied to all event types."
+		);
+
+    public static readonly DiagnosticDescriptor DependencyRegistraionMissingPublicConstructor = new DiagnosticDescriptor(
+			id: "D2L0046",
+			title: "Dependency Registration Missing Public Constructor",
+			messageFormat: "{0} must have a public constructor if it is to be registered for DI.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "All injectable types need a public constructor in order to be activated."
+    );
+
+		public static readonly DiagnosticDescriptor IncludeDefaultValueInOverrideForReadability = new DiagnosticDescriptor(
+			id: "D2L0047",
+			title: "The parameter {0} has a default value in {1}, but not here. This causes inconsistent behaviour and reduces readability. Please repeat the default value here explicitly.",
+			messageFormat: "The parameter {0} has a default value in {1}, but not here. This causes inconsistent behaviour and reduces readability. Please repeat the default value here explicitly.",
+			category: "Language",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "The parameter {0} has a default value in {1}, but not here. This causes inconsistent behaviour and reduces readability. Please repeat the default value here explicitly."
+		);
+
+		public static readonly DiagnosticDescriptor DontIntroduceNewDefaultValuesInOverrides = new DiagnosticDescriptor(
+			id: "D2L0048",
+			title: "The parameter {0} does not have a default value in the original version of this method in {1}, but does here. This causes inconsistent behaviour. Please remove the default (or add it everywhere.)",
+			messageFormat: "The parameter {0} does not have a default value in the original version of this method in {1}, but does here. This causes inconsistent behaviour. Please remove the default (or add it everywhere.)",
+			category: "Language",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "The parameter {0} does not have a default value in the original version of this method in {1}, but does here. This causes inconsistent behaviour. Please remove the default (or add it everywhere.)"
+		);
+
+		public static readonly DiagnosticDescriptor DefaultValuesInOverridesShouldBeConsistent = new DiagnosticDescriptor(
+			id: "D2L0049",
+			title: "The parameter {0} has a default value of {1} here, but {2} in its original definition in {3}. This causes inconsistent behaviour. Please use the same defualt value everywhere.",
+			messageFormat: "The parameter {0} has a default value of {1} here, but {2} in its original definition in {3}. This causes inconsistent behaviour. Please use the same defualt value everywhere.",
+			category: "Language",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "The parameter {0} has a default value of {1} here, but {2} in its original definition in {3}. This causes inconsistent behaviour. Please use the same defualt value everywhere."
+		);
+
+		public static readonly DiagnosticDescriptor LoggingContextRunAwaitable = new DiagnosticDescriptor(
+			id: "D2L0050",
+			title: "Use RunAsync for awaitable actions.",
+			messageFormat: "Use RunAsync for awaitable actions.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Use RunAsync for awaitable actions."
+		);
+
+		public static readonly DiagnosticDescriptor BannedConfig = new DiagnosticDescriptor(
+			id: "D2L0051",
+			title: "Fetching the config variable \"{0}\" has been deprecated. {1}",
+			messageFormat: "Fetching the config variable \"{0}\" has been deprecated. {1}",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Fetching the config variable \"{0}\" has been deprecated. {1}"
+		);
+
+		public static readonly DiagnosticDescriptor ContentPhysicalPathUsages = new DiagnosticDescriptor(
+			id: "D2L0052",
+			title: "Use the ContentPath property.",
+			messageFormat: "Use the ContentPath property instead.",
+			category: "Storageable",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Use the ContentPath property instead."
+		);
+
+		public static readonly DiagnosticDescriptor StatelessFuncIsnt = new DiagnosticDescriptor(
+			id: "D2L0053",
+			title: "StatelessFunc cannot hold state",
+			messageFormat: "StatelessFunc cannot hold state: {0}",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "StatelessFunc is to be used to hold Func private members, and need to be undiff safe."
+		);
+
+		public static readonly DiagnosticDescriptor ReadOnlyParameterIsnt = new DiagnosticDescriptor(
+			id: "D2L0054",
+			title: "Parameter is not readonly",
+			messageFormat: "Parameter is not readonly: {0}",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "[ReadOnly] paramaters must not be assigned to or passed by non-readonly reference."
+		);
+
+		public static readonly DiagnosticDescriptor AwaitedTaskNotConfigured = new DiagnosticDescriptor(
+			id: "D2L0055",
+			title: "Awaited task is not configured",
+			messageFormat: "Awaited task is not configured",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Awaited task should have 'continueOnCapturedContext' configured (preferably with 'false')."
+		);
+
+		public static readonly DiagnosticDescriptor StructShouldBeReadonly = new DiagnosticDescriptor(
+			id: "D2L0056",
+			title: "Struct should be readonly",
+			messageFormat: "Struct '{0}' should be marked as readonly",
+			description: "A struct without mutable fields or properties should be marked readonly. A non-readonly struct other weird mutability behaviours and performance pitfalls.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
 	}
 }

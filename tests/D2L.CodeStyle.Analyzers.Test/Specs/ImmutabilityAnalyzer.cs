@@ -363,4 +363,27 @@ namespace SpecTests {
 			private readonly T m_field;
 		}
 	}
+
+	class ImmutableFieldTests {
+
+		[Objects.Immutable]
+		public class FieldIsNullLiteral {
+			private readonly string m_str = null;
+		}
+
+		[Objects.Immutable]
+		public class FieldIsSimpleFunc {
+			private readonly Func<int> m_str = () => 1;
+		}
+
+		[Objects.Immutable]
+		public class FieldIsStaticAction {
+			private readonly Action m_str = () => Console.WriteLine( "Hello World" );
+		}
+
+		[Objects.Immutable]
+		public class FieldIsParenthesizedFunc {
+			private readonly Func<int, int> m_add = ( x ) => { return x + 1; };
+		}
+	}
 }

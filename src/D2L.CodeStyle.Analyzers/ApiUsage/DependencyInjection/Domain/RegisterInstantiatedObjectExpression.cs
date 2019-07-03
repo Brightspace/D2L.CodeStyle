@@ -29,7 +29,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 				//		Register<IFoo>( null );
 				concreteType = dependencyType;
 			}
-			return DependencyRegistration.NonFactory( ObjectScope.Singleton, dependencyType, concreteType );
+			return DependencyRegistration.Instance( ObjectScope.Singleton, dependencyType, concreteType );
 		}
 	}
 

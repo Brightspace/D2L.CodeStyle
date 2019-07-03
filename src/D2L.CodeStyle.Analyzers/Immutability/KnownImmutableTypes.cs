@@ -9,6 +9,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// A list of known immutable types.
 		/// </summary>
 		private static readonly ImmutableHashSet<string> DefaultKnownImmutableTypes = new HashSet<string> {
+			"Amazon.RegionEndpoint",
 			"Amazon.S3.IAmazonS3",
 			"count4net.IRateCounter",
 			"count4net.IStatCounter",
@@ -29,6 +30,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			"System.Reflection.FieldInfo",
 			"System.Reflection.MemberInfo",
 			"System.Reflection.MethodInfo",
+			"System.Reflection.ParameterInfo",
 			"System.Reflection.PropertyInfo",
 			"System.Security.Cryptography.RNGCryptoServiceProvider",
 			"System.Text.RegularExpressions.Regex",

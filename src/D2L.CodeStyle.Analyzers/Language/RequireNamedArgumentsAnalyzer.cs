@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
@@ -30,11 +31,11 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			Diagnostics.TooManyUnnamedArgs
 		);
 
-		// TODO: shrink this number over time. Maybe 5 would be good?
-		public const int TOO_MANY_UNNAMED_ARGS = 20;
+		public const int TOO_MANY_UNNAMED_ARGS = 5;
 
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
+			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.None );
 
 			context.RegisterSyntaxNodeAction(
 				AnalyzeCallSyntax,
@@ -83,6 +84,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 						properties: fixerContext
 					)
 				);
+
+				return;
 			}
 
 			// TODO: literal args should always be named
@@ -91,7 +94,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			// These will create a bit more cleanup. Fix should probably name
 			// all the args instead to avoid craziness with overloading.
 		}
-		
+
 		/// <summary>
 		/// Get the arguments which are unnamed and not "params"
 		/// </summary>
@@ -102,14 +105,9 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			for( var idx = 0; idx < args.Arguments.Count; idx++ ) {
 				var arg = args.Arguments[idx];
 
-				// Ignore args that are already named. This will mean that args
-				// can be partially named which is sometimes helpful (the named
-				// args have to be at the end of the list though.)
+				// Ignore args that already have names
 				if ( arg.NameColon != null ) {
-					// We can stop as soon as we see one; named arguments have
-					// to be at the end of the arguments so the rest will be
-					// named too.
-					yield break;
+					continue;
 				}
 
 				var param = arg.DetermineParameter(
@@ -136,12 +134,57 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					continue;
 				}
 
+				string psuedoName = GetPsuedoName( arg );
+
+				if( psuedoName != null ) {
+					bool matchesParamName = string.Equals(
+						psuedoName,
+						param.Name,
+						StringComparison.OrdinalIgnoreCase
+					);
+
+					if( matchesParamName ) {
+						continue;
+					}
+				}
+
 				yield return new ArgParamBinding(
 					position: idx,
 					paramName: param.Name,
 					syntax: arg
 				);
 			}
+		}
+
+		private static string GetPsuedoName( ArgumentSyntax arg ) {
+			string ident = null;
+
+			switch( arg.Expression ) {
+				case IdentifierNameSyntax identArg:
+					ident = identArg.Identifier.ValueText;
+					break;
+				case MemberAccessExpressionSyntax access:
+					// Member access is left-associative, so we pick the
+					// right -most ident, i.e. "foo.bar.baz" is equivalent to
+					// (foo.bar).baz, and we will grab "baz".
+					ident = access.Name.Identifier.ValueText;
+					break;
+			}
+
+			if( ident == null ) {
+				return null;
+			}
+
+			// Strip uninteresting prefixes off the identifier
+			if ( ident.StartsWith( "m_" ) || ident.StartsWith( "s_" ) ) {
+				// e.g. m_foo -> foo
+				ident = ident.Substring( 2 );
+			} else if ( ident[0] == '_' && ident.Length > 1 && ident[1] != '_') {
+				// e.g. _foo -> foo
+				ident = ident.Substring( 1 );
+			}
+
+			return ident;
 		}
 
 		// Not an extension method because there may be more cases (e.g. in the

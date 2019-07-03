@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using D2L.CodeStyle.Analyzers.CommonFixes;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -22,6 +24,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				Diagnostics.MissingTransitiveImmutableAttribute
 			);
 
+		private static readonly ImmutableDictionary<string, string> FixArgs = new Dictionary<string, string> {
+			{ AddAttributeCodeFix.USING_STATIC_ARG, "true" },
+			{ AddAttributeCodeFix.USING_NAMESPACE_ARG, "D2L.CodeStyle.Annotations.Objects" },
+			{ AddAttributeCodeFix.ATTRIBUTE_NAME_ARG, "Immutable" }
+		}.ToImmutableDictionary();
+
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
 			context.RegisterCompilationStartAction( CompilationStart );
@@ -30,16 +38,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		public void CompilationStart(
 			CompilationStartAnalysisContext context
 		) {
+			// Never fails because we force people to reference D2L.CodeStyle.Annotations
 			var immutableAttribute = context.Compilation.GetTypeByMetadataName(
 				"D2L.CodeStyle.Annotations.Objects+Immutable"
 			);
-
-			// If we implement an interface with [Immutable] or derive a base
-			// class with it this symbol would have been found... if it wasn't
-			// we don't need to analyze anything.
-			if ( immutableAttribute == null ) {
-				return;
-			}
 
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeTypeDeclaration( ctx, hasTheImmutableAttribute ),
@@ -66,7 +68,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			var decl = (TypeDeclarationSyntax)context.Node;
 			var type = context.SemanticModel.GetDeclaredSymbol( decl );
 
-			if ( type == null ) {
+			if( type == null ) {
 				// Semantic analysis failed for some reason... move along...
 				return;
 			}
@@ -86,7 +88,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// partial declaration mentions a base class or interface that is
 			// [Immutable].
 
-			if ( decl.BaseList == null ) {
+			if( decl.BaseList == null ) {
 				// No base class or interfaces on this decl so nothing to check.
 				return;
 			}
@@ -97,12 +99,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// Not aware of any reason this cast could fail:
 					as ITypeSymbol;
 
-				if ( typeSymbol == null ) {
+				if( typeSymbol == null ) {
 					// Semantic analysis failed for some reason... move along...
 					continue;
 				}
 
-				if ( !hasTheImmutableAttribute( typeSymbol ) ) {
+				if( !hasTheImmutableAttribute( typeSymbol ) ) {
 					continue;
 				}
 
@@ -138,10 +140,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return Diagnostic.Create(
 				Diagnostics.MissingTransitiveImmutableAttribute,
 				declSyntax.Identifier.GetLocation(),
+				properties: FixArgs,
 				declaredThing.GetFullTypeName(),
 				otherThingKind,
 				otherThing.GetFullTypeName()
 			);
 		}
+
 	}
 }
