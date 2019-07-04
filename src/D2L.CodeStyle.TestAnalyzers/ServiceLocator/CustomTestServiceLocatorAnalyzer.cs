@@ -1,11 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
 using D2L.CodeStyle.TestAnalyzers.Common;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Text;
 
 namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 
@@ -14,6 +16,8 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 
 		private const string TestServiceLocatorFactoryType
 			= "D2L.LP.Extensibility.Activation.Domain.TestServiceLocatorFactory";
+
+		private const string WhitelistFileName = "CustomServiceLocatorWhitelist.txt";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 			=> ImmutableArray.Create( Diagnostics.CustomServiceLocator );
@@ -43,10 +47,15 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 				return;
 			}
 
+			HashSet<string> whitelistedClasses = GetWhitelist(
+				context.Options.AdditionalFiles
+			);
+
 			context.RegisterSyntaxNodeAction(
 				ctx => PreventCustomLocatorUsage(
 					ctx,
-					factoryType
+					factoryType,
+					whitelistedClasses
 				),
 				SyntaxKind.InvocationExpression
 			);
@@ -55,7 +64,8 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 		// Prevent static usage of TestServiceLocator.Create() methods.
 		private void PreventCustomLocatorUsage(
 			SyntaxNodeAnalysisContext context,
-			INamedTypeSymbol disallowedType
+			INamedTypeSymbol disallowedType,
+			HashSet<string> whitelistedClasses
 		) {
 			ExpressionSyntax root = context.Node as InvocationExpressionSyntax;
 			if( root == null ) {
@@ -109,7 +119,11 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 				c => context.SemanticModel.GetDeclaredSymbol( c )
 			);
 
-			if( parentSymbols.Any( IsClassWhitelisted ) ) {
+			bool isWhitelisted = parentSymbols.Any(
+				s => IsClassWhitelisted( whitelistedClasses, s )
+			);
+
+			if( isWhitelisted ) {
 				return;
 			}
 
@@ -140,13 +154,37 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 				&& method.Parameters.Length > 0;
 		}
 
-		private bool IsClassWhitelisted( ISymbol classSymbol ) {
+		private bool IsClassWhitelisted(
+			HashSet<string> whitelistedClasses,
+			ISymbol classSymbol
+		) {
 			bool isWhiteListed = _excludeKnownProblems
-				&& CustomServiceLocatorAnalyzerWhitelist
-					.WhitelistedClasses
-					.Contains( classSymbol.ToString() );
+				&& whitelistedClasses.Contains( classSymbol.ToString() );
 
 			return isWhiteListed;
 		}
+
+		private HashSet<string> GetWhitelist(
+			ImmutableArray<AdditionalText> additionalFiles
+		) {
+			HashSet<string> whitelistedClasses = new HashSet<string>();
+
+			AdditionalText whitelistFile = additionalFiles.FirstOrDefault(
+				file => Path.GetFileName( file.Path ) == WhitelistFileName
+			);
+
+			if( whitelistFile == null ) {
+				return whitelistedClasses;
+			}
+
+			SourceText whitelistText = whitelistFile.GetText();
+
+			foreach( TextLine line in whitelistText.Lines ) {
+				whitelistedClasses.Add( line.ToString() );
+			}
+
+			return whitelistedClasses;
+		}
+
 	}
 }

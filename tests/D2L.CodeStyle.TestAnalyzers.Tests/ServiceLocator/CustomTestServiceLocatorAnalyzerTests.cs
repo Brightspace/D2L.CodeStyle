@@ -122,7 +122,10 @@ namespace test {
 			AssertNoDiagnostic( test );
 		}
 
-		[Test]
+		// Test framework can't support this test quite yet since this analyzer uses additional files.
+		// This should be uncommented if/when that functionality is in place.
+
+		/*[Test]
 		public void TestServiceLocatorFactory_Create_WhitelistedClass_NoDiag() {
 			const string test = PREAMBLE + @"
 namespace D2L.LE.ToolIntegration.Tests.Content.ContentDateSync.ContentTopic {
@@ -172,7 +175,7 @@ namespace D2L.LE.ToolIntegration.Tests.Content.ContentDateSync.ContentTopic {
 }";
 
 			AssertNoDiagnostic( test );
-		}
+		}*/
 
 		[Test]
 		public void TestServiceLocatorFactory_Create_WithCustomAction_Diag() {
