@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using D2L.CodeStyle.TestAnalyzers.Common;
@@ -17,7 +16,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 		private const string TestServiceLocatorFactoryType
 			= "D2L.LP.Extensibility.Activation.Domain.TestServiceLocatorFactory";
 
-		private const string WhitelistFileName = "CustomServiceLocatorWhitelist.txt";
+		private const string WhitelistFileName = "CustomTestServiceLocatorWhitelist.txt";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 			=> ImmutableArray.Create( Diagnostics.CustomServiceLocator );
@@ -47,7 +46,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 				return;
 			}
 
-			HashSet<string> whitelistedClasses = GetWhitelist(
+			ImmutableHashSet<string> whitelistedClasses = GetWhitelist(
 				context.Options.AdditionalFiles
 			);
 
@@ -65,7 +64,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 		private void PreventCustomLocatorUsage(
 			SyntaxNodeAnalysisContext context,
 			INamedTypeSymbol disallowedType,
-			HashSet<string> whitelistedClasses
+			ImmutableHashSet<string> whitelistedClasses
 		) {
 			ExpressionSyntax root = context.Node as InvocationExpressionSyntax;
 			if( root == null ) {
@@ -155,7 +154,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 		}
 
 		private bool IsClassWhitelisted(
-			HashSet<string> whitelistedClasses,
+			ImmutableHashSet<string> whitelistedClasses,
 			ISymbol classSymbol
 		) {
 			bool isWhiteListed = _excludeKnownProblems
@@ -164,26 +163,26 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 			return isWhiteListed;
 		}
 
-		private HashSet<string> GetWhitelist(
+		private ImmutableHashSet<string> GetWhitelist(
 			ImmutableArray<AdditionalText> additionalFiles
 		) {
-			HashSet<string> whitelistedClasses = new HashSet<string>();
+			ImmutableHashSet<string>.Builder whitelistedClasses = ImmutableHashSet.CreateBuilder<string>();
 
 			AdditionalText whitelistFile = additionalFiles.FirstOrDefault(
 				file => Path.GetFileName( file.Path ) == WhitelistFileName
 			);
 
 			if( whitelistFile == null ) {
-				return whitelistedClasses;
+				return whitelistedClasses.ToImmutableHashSet();
 			}
 
 			SourceText whitelistText = whitelistFile.GetText();
 
 			foreach( TextLine line in whitelistText.Lines ) {
-				whitelistedClasses.Add( line.ToString() );
+				whitelistedClasses.Add( line.ToString().Trim() );
 			}
 
-			return whitelistedClasses;
+			return whitelistedClasses.ToImmutableHashSet();
 		}
 
 	}
