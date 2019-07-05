@@ -41,5 +41,15 @@ namespace D2L.CodeStyle.TestAnalyzers.Common {
 			isEnabledByDefault: true,
 			description: "Tests need to be correctly categorized in order to be run."
 		);
+
+		public static readonly DiagnosticDescriptor CustomServiceLocator = new DiagnosticDescriptor(
+			id: "D2LTESTS005",
+			title: "Use the default test service locator.",
+			messageFormat: "Custom service locators should not be used. Use static TestServiceLocator.Get<T>() or TestServiceLocatorFactory.Default instead.",
+			category: "Cleanliness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Custom service locators are expensive to instantiate and slow down tests significantly. Use the default locator instead."
+		);
 	}
 }
