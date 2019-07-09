@@ -16,7 +16,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 		private const string IEventNotifierFullName = "D2L.LP.Distributed.Events.Domain.IEventNotifier";
 		private const string IEventPublisherFullName = "D2L.LP.Distributed.Events.Domain.IEventPublisher";
-		private static IEnumerable<string> PublishMethodNames = ImmutableArray.Create( "Publish", "PublishMany" );
+
+		private static IEnumerable<string> PublishMethodNames = ImmutableArray.Create(
+				"Publish",
+				"PublishMany",
+				"ObsoleteAndUnboundedPublishMany"
+			);
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.EventTypeMissingEventAttribute
