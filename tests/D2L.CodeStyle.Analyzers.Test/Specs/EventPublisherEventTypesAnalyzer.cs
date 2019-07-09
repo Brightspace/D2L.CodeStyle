@@ -15,6 +15,8 @@ namespace D2L.LP.Distributed.Events.Domain {
 		void Publish<T>( long orgId, T @event, DateTime publishDateTime );
 		void PublishMany<T>( long orgId, IEnumerable<T> events );
 		void PublishMany<T>( long orgId, IEnumerable<T> events, DateTime publishDateTime );
+		void ObsoleteAndUnboundedPublishMany<T>( long orgId, IEnumerable<T> events );
+		void ObsoleteAndUnboundedPublishMany<T>( long orgId, IEnumerable<T> events, DateTime publishDateTime );
 	}
 
 	public interface IEventNotifier {
@@ -53,6 +55,8 @@ namespace Tests {
 			GoodEvent[] events = new[] { @event };
 			publisher.PublishMany( 6606, events );
 			publisher.PublishMany( 6606, events, DateTime.Now );
+			publisher.ObsoleteAndUnboundedPublishMany( 6606, events );
+			publisher.ObsoleteAndUnboundedPublishMany( 6606, events, DateTime.Now );
 		}
 	}
 
@@ -76,6 +80,8 @@ namespace Tests {
 			BadEvent[] events = new[] { @event };
 			/* EventTypeMissingEventAttribute(Tests.BadEvent) */ publisher.PublishMany( 6606, events ) /**/;
 			/* EventTypeMissingEventAttribute(Tests.BadEvent) */ publisher.PublishMany( 6606, events, DateTime.Now ) /**/;
+			/* EventTypeMissingEventAttribute(Tests.BadEvent) */ publisher.ObsoleteAndUnboundedPublishMany( 6606, events ) /**/;
+			/* EventTypeMissingEventAttribute(Tests.BadEvent) */ publisher.ObsoleteAndUnboundedPublishMany( 6606, events, DateTime.Now ) /**/;
 		}
 	}
 
@@ -97,6 +103,8 @@ namespace Tests {
 			T[] events = new[] { @event };
 			publisher.PublishMany( 6606, events );
 			publisher.PublishMany( 6606, events, DateTime.Now );
+			publisher.ObsoleteAndUnboundedPublishMany( 6606, events );
+			publisher.ObsoleteAndUnboundedPublishMany( 6606, events, DateTime.Now );
 		}
 	}
 }
