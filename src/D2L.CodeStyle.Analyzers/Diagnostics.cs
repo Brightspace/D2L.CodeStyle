@@ -225,16 +225,6 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "ImmutableGeneric can only be applied to closed (fully bound) generic types."
 		);
 
-		public static readonly DiagnosticDescriptor DontUseImmutableArrayConstructor = new DiagnosticDescriptor(
-			id: "D2L0029",
-			title: "Don't use the default constructor for ImmutableArray<T>",
-			messageFormat: "The default constructor for ImmutableArray<T> doesn't correctly initialize the object and leads to runtime errors. Use ImmutableArray<T>.Empty for empty arrays, ImmutableArray.Create() for simple cases and ImmutableArray.Builder<T> for more complicated cases.",
-			category: "Correctness",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "The default constructor for ImmutableArray<T> doesn't correctly initialize the object and leads to runtime errors. Use ImmutableArray<T>.Empty for empty arrays, ImmutableArray.Create() for simple cases and ImmutableArray.Builder<T> for more complicated cases."
-		);
-
 		public static readonly DiagnosticDescriptor UnnecessaryMutabilityAnnotation = new DiagnosticDescriptor(
 			id: "D2L0030",
 			title: "Unnecessary mutability annotation should be removed to keep the code base clean",
@@ -500,6 +490,16 @@ namespace D2L.CodeStyle.Analyzers {
 			title: "Struct should be readonly",
 			messageFormat: "Struct '{0}' should be marked as readonly",
 			description: "A struct without mutable fields or properties should be marked readonly. A non-readonly struct other weird mutability behaviours and performance pitfalls.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor DontCallDefaultStructConstructor = new DiagnosticDescriptor(
+			id: "D2LXXXX",
+			title: "Don't call default struct constructor",
+			messageFormat: "Don't call default constructor of '{0}'",
+			description: "The default constructor of this type is likely to lead to unexpected results and another initializer should be called instead.",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
