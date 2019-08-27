@@ -29,7 +29,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 			);
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-			Diagnostics.NUnitCategory
+			Diagnostics.NUnitCategory, Diagnostics.TestAttributeMissed
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -77,16 +77,21 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 			MethodDeclarationSyntax syntax
 		) {
 			SemanticModel model = context.SemanticModel;
-
 			
 			IMethodSymbol method = model.GetDeclaredSymbol( syntax, context.CancellationToken );
 			if( method == null ) {
 				return;
 			}
 
-			if( !IsTestMethod( types, method ) ) {
-				return;
-			}
+            bool isTest = IsTestMethod(types, method);
+            if ( !isTest ) { // TODO: && TestFixture
+                context.ReportDiagnostic(Diagnostic.Create(
+                        Diagnostics.TestAttributeMissed, syntax.Identifier.GetLocation(), method.Name)
+                    );
+                return;
+			} else if (!isTest) { // If not in TestFixture just skip
+                return;
+            }
 
 			ImmutableSortedSet<string> categories = GatherTestMethodCategories( types, method );
 
