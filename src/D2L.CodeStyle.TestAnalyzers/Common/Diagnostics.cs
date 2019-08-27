@@ -51,5 +51,15 @@ namespace D2L.CodeStyle.TestAnalyzers.Common {
 			isEnabledByDefault: true,
 			description: "Custom service locators are expensive to instantiate and slow down tests significantly. Use the default locator instead."
 		);
-	}
+
+        public static readonly DiagnosticDescriptor TestCaseMissed = new DiagnosticDescriptor(
+            id: "D2LTESTS006",
+            title: "Method not labelled as [Test] or [TestCase]",
+            messageFormat: "Method {0} is public, but does not have [Test] or [TestCase] attribute, add atrtribute or change the method visibility.",
+            category: "Correctness",
+            defaultSeverity: DiagnosticSeverity.Error,
+            isEnabledByDefault: true,
+            description: "If a [Test] or [TestCase] attribute is missed the test will not be run, leading to false confidence in the code."
+        );
+    }
 }
