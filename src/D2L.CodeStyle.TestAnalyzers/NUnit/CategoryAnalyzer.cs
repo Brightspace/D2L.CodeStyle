@@ -83,13 +83,24 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 				return;
 			}
 
-            bool isTest = IsTestMethod(types, method);
-            if ( !isTest ) { // TODO: && TestFixture
+            INamedTypeSymbol declaringClass = method.ContainingType; // Get class that defined the method
+            bool isTest = IsTestMethod(types, method); // Check if method is defined as a [Test] or related NUnit attribute
+
+
+            // Check if method is part of a [TestFixture]
+            bool inTestFixture = false;
+            foreach(var attribute in declaringClass.GetAttributes()) {
+                INamedTypeSymbol attributeClass = attribute.AttributeClass;
+                if (attributeClass == types.TestFixtureAttribute) inTestFixture = true;
+            }
+
+            // If we are in a [TextFixture] attributed class and have NO Test attribute, 
+            if ( !isTest && inTestFixture ) {
                 context.ReportDiagnostic(Diagnostic.Create(
                         Diagnostics.TestAttributeMissed, syntax.Identifier.GetLocation(), method.Name)
                     );
                 return;
-			} else if (!isTest) { // If not in TestFixture just skip
+			} else if (!isTest) { // If the method is not a test skip it
                 return;
             }
 

@@ -192,7 +192,76 @@ namespace TestNamespace {
 			);
 		}
 
-		private static string BuildWrongCategoriesMessage(
+        [Test]
+        public void TestAttribute_InFixture_NoDiagnostic() {
+            const string test = PREAMBLE + @"
+namespace TestNamespace {
+	[NUnit.Framework.TextFixture]
+    [NUnit.Framework.Category( ""Integration"" )]
+	class TestClass {
+		[NUnit.Framework.Test]
+		[NUnit.Framework.Category( ""method category"" )]
+		public void TestMethod( int x ) {}
+	}
+}";
+            AssertNoDiagnostic(otherFile: @"
+[assembly: NUnit.Framework.Category( ""assembly category"" )]
+", file : test);
+        }
+
+        [Test]
+        public void TestAttribute_NoFixture_NoDiagnostic() {
+            const string test = PREAMBLE + @"
+namespace TestNamespace {
+    [NUnit.Framework.Category( ""Integration"" )]
+	class TestClass {
+		[NUnit.Framework.Test]
+		[NUnit.Framework.Category( ""method category"" )]
+		public void TestMethod( int x ) {}
+	}
+}";
+            AssertNoDiagnostic(otherFile: @"
+[assembly: NUnit.Framework.Category( ""assembly category"" )]
+", file: test);
+        }
+
+        [Test]
+        public void NoTestAttribute_NoFixture_NoDiagnostic() {
+            const string test = PREAMBLE + @"
+namespace TestNamespace {
+	class TestClass {
+		public void TestMethod( int x ) {}
+	}
+}";
+            AssertNoDiagnostic(otherFile: @"
+[assembly: NUnit.Framework.Category( ""assembly category"" )]
+", file: test);
+        }
+
+        [Test]
+        public void NoTestAttribute_InFixture_Diagnostic() {
+            const string test = PREAMBLE + @"
+namespace TestNamespace {
+	[NUnit.Framework.TestFixture]
+    [NUnit.Framework.Category( ""fixture category"" )]
+	class TestClass {
+		[NUnit.Framework.Category( ""method category"" )]
+		public void TestMethod( int x ) {}
+	}
+}";
+            AssertSingleDiagnostic(
+                diag: Diagnostics.TestAttributeMissed,
+                otherFile: @"
+[assembly: NUnit.Framework.Category( ""assembly category"" )]
+",
+                file: test,
+                line: 6 + PREAMBLE_LINES,
+                column: 15,
+                $"TestMethod"
+            );
+        }
+
+        private static string BuildWrongCategoriesMessage(
 			params string[] categories
 		) =>
 			$"Test must be categorized as one of [Integration, Load, System, UI, Unit], but saw [{string.Join( ", ", categories )}]. See http://docs.dev.d2l/index.php/Test_Categories.";
