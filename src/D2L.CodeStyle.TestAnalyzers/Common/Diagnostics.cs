@@ -54,12 +54,12 @@ namespace D2L.CodeStyle.TestAnalyzers.Common {
 
         public static readonly DiagnosticDescriptor TestAttributeMissed = new DiagnosticDescriptor(
             id: "D2LTESTS006",
-            title: "Method not labelled as [Test] or [TestCase]",
-            messageFormat: "Method {0} is public, but does not have [Test] or [TestCase] attribute, add attribute or change the method visibility.",
+            title: "Method not labelled as [Test], [TestCase], or [TestCaseSource]",
+            messageFormat: "Method {0} is public, but does not have [Test], [TestCase], or [TestCaseSource] attribute, add attribute or change the method visibility.",
             category: "Correctness",
             defaultSeverity: DiagnosticSeverity.Error,
             isEnabledByDefault: true,
-            description: "If a [Test] or [TestCase] attribute is missed the test will not be run, leading to false confidence in the code."
-        );
+            description: "If a [Test], [TestCase], or [TestCaseSource] attribute is missed the test will not be run, leading to false confidence in the code."
+		);
     }
 }
