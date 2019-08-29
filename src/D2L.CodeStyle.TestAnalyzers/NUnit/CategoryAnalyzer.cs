@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using D2L.CodeStyle.TestAnalyzers.Common;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -83,8 +84,8 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 				return;
 			}
 
-			// Don't go into non-public methods
-			if(method.DeclaredAccessibility != Accessibility.Public) {
+			// Any private/helper methods should be private/internal and can be ignored
+			if( method.DeclaredAccessibility != Accessibility.Public ) {
 				return;
 			}
 
@@ -95,24 +96,21 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 					syntax.Identifier.GetLocation(),
 					$"Test must be categorized as one of [{string.Join( ", ", RequiredCategories )}], but saw [{string.Join( ", ", categories )}]. See http://docs.dev.d2l/index.php/Test_Categories."
 				) );
-				return;
 			}
 
-			// Get class that defined the method
+			// We need the declaring class to be a [TestFixture] to continue
 			INamedTypeSymbol declaringClass = method.ContainingType;
-			// Iif class is not a [TestFixture], return early
-			var attributeList = declaringClass.GetAttributes().ToImmutableList();
-			if(attributeList.Find(attr => attr.AttributeClass == types.TestFixtureAttribute) == null ) {
+			if( !declaringClass.GetAttributes().Any( attr => attr.AttributeClass == types.TestFixtureAttribute ) ) {
 				return;
 			}
 
 			// If we don't have a Test type attribute on the method, report a diagnostic
 			bool isTest = IsTestMethod( types, method );
 			if( !isTest ) {
-                context.ReportDiagnostic(Diagnostic.Create(
-                        Diagnostics.TestAttributeMissed, syntax.Identifier.GetLocation(), method.Name)
-                    );
-                return;
+				context.ReportDiagnostic( Diagnostic.Create(
+						Diagnostics.TestAttributeMissed, syntax.Identifier.GetLocation(), method.Name )
+					);
+				return;
 			}
 		}
 
