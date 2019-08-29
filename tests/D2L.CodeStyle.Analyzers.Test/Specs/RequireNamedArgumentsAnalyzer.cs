@@ -9,6 +9,8 @@ namespace D2L {
 			public Thing nested;
 		}
 
+        private static int _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, p; // "placeholder" variables
+
 		public static void _arg0() { }
 		public static void _arg1( int a1 ) { }
 		public static void _arg2( int a1, int a2 ) { }
@@ -35,19 +37,30 @@ namespace D2L {
 		public static void Test() {
 			#region "low" number of args doesn't require naming
 			_arg0();
-			_arg1( 1 );
-			_arg2( 1, 2 );
-			_arg3( 1, 2, 3 );
-			_arg4( 1, 2, 3, 4 );
-			#endregion
+            _arg1( 1 );
+            _arg1( _a1 );
+			_arg2( _a1, _a2 );
+			_arg3( _a1, _a2, _a3 );
+			_arg4( _a1, _a2, _a3, _a4 );
 
-			#region diagnostic for too many unnamed args
-			/* TooManyUnnamedArgs */ _arg5( 1, 2, 3, 4, 5 ) /**/;
-			/* TooManyUnnamedArgs */ _arg6( 1, 2, 3, 4, 5, 6 ) /**/;
-			#endregion
+            // Named literals
+            _arg5(a1: 1, a2: 2, a3: 3, a4: 4, a5: 5);
+            _arg6(a1: 1, a2: 2, a3: 3, a4: 4, a5: 5, a6: 6);
 
-			#region all named args is usually preferred if there are lots of args
-			_arg6(
+            // Named literals + variables
+            _arg4(_a1, _a2, a3: 3, a4: 4);
+            _arg5(_a1, _a2, a3: 3, a4: 4, _a5);
+            #endregion
+
+            #region diagnostic for too many unnamed args
+            /* TooManyUnnamedArgs */ _arg5(1, 2, 3, 4, 5) /**/;
+            /* TooManyUnnamedArgs */ _arg6(1, 2, 3, 4, 5, 6) /**/;
+            _arg3( /* LiteralArgShouldBeNamed(a1) */ 1 /**/, /* LiteralArgShouldBeNamed(a2) */ 2 /**/, /* LiteralArgShouldBeNamed(a3) */ 3 /**/ );
+            _arg3( a1: 1, /* LiteralArgShouldBeNamed(a2) */ 2 /**/, /* LiteralArgShouldBeNamed(a3) */ 3 /**/ );
+            #endregion
+
+            #region all named args is usually preferred if there are lots of args
+            _arg6(
 				a1: 1,
 				a2: 2,
 				a3: 3,
@@ -58,25 +71,25 @@ namespace D2L {
 			#endregion
 
 			#region named args don't count against the unnamed args budget
-			_arg5( a1: 1, 2, 3, 4, 5 );
-			_arg6( a1: 1, a2: 2, 3, 4, 5, 6 );
+			_arg5( a1: 1, p, p, p, p );
+			_arg6( a1: 1, a2: 2, p, p, p, p );
 			#endregion
 
 			#region arguments that are literals with the correct name don't count against the budget
 			int a1 = 11;
 			int a3 = 13;
 			int A1 = 101; // upper case doesn't matter
-			_arg5( a1, 2, 3, 4, 5 );
-			_arg5( 1, 2, a3, 4, 5 );
-			_arg6( A1, 2, a3, 4, 5, 6 );
+			_arg5( a1, p, p, p, p );
+			_arg5( p, p, a3, p, p );
+			_arg6( A1, p, a3, p, p, p );
 			#endregion
 
 			#region member accesses can also serve as psuedo-names
 			var thing = new Thing();
-			_arg5( 1, 2, 3, thing.a4, 5 );
-			_arg5( 1, 2, 3, thing.nested.a4, 5 );
-			_arg5( 1, 2, 3, thing.m_a4, 5 );
-			_arg5( 1, 2, 3, thing.nested._a4, 5 );
+			_arg5( p, p, p, thing.a4, p );
+			_arg5( p, p, p, thing.nested.a4, p );
+			_arg5( p, p, p, thing.m_a4, p );
+			_arg5( p, p, p, thing.nested._a4, p );
 			#endregion
 
 			#region need to have enough named args, though
@@ -85,16 +98,16 @@ namespace D2L {
 			#endregion
 
 			#region params don't count against the unnamed args budget
-			funcWithParams( 1, 2, 3 );
-			funcWithParams( 1, 2, 3, 4 );
-			funcWithParams( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 );
+			funcWithParams( p, p, p );
+			funcWithParams( p, p, p, p );
+			funcWithParams( p, p, p, p, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 );
 			#endregion
 
 			#region delegates
 			((delegate0Args)null)();
 			((delegate1Args)null)( 1 );
-			/* TooManyUnnamedArgs */ ((delegate5Args)null)( 1, 2, 3, 4, 5 ) /**/;
-			((delegate5Args)null)( a1: 1, 2, 3, 4, 5 );
+			/* TooManyUnnamedArgs */ ((delegate5Args)null)( p, p, p, p, p ) /**/;
+			((delegate5Args)null)( a1: 1, p, p, p, p );
 			#endregion
 
 			#region class constructors should behave the same way
@@ -102,9 +115,9 @@ namespace D2L {
 			// behave just the same.
 			new SomeClass();
 			new SomeClass( 1 );
-			new SomeClass( 1, 2 );
-			/* TooManyUnnamedArgs */ new SomeClass( 1, 2, 3, 4, 5 ) /**/;
-			new SomeClass( a1: 1, 2, 3, 4, 5 );
+			new SomeClass( p, p );
+			/* TooManyUnnamedArgs */ new SomeClass( p, p, p, p, p ) /**/;
+			new SomeClass( a1: 1, p, p, p, p );
 			#endregion
 		}
 	}

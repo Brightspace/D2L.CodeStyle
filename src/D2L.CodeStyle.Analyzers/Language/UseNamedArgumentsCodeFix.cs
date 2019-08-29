@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -17,7 +18,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 	public sealed class UseNamedArgumentsCodeFix : CodeFixProvider {
 		public override ImmutableArray<string> FixableDiagnosticIds
 			=> ImmutableArray.Create(
-				Diagnostics.TooManyUnnamedArgs.Id
+				Diagnostics.TooManyUnnamedArgs.Id,
+				Diagnostics.LiteralArgShouldBeNamed.Id
 			);
 
 		public override FixAllProvider GetFixAllProvider() {
@@ -33,8 +35,6 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				.ConfigureAwait( false );
 
 			foreach( var diagnostic in ctx.Diagnostics ) {
-				var span = diagnostic.Location.SourceSpan;
-
 				var args = GetArgs( root, ctx.Span );
 
 				// The analyzer stored the names to add to arguments in the
@@ -56,7 +56,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 								paramNames,
 								ct
 							)
-					),
+                    ),
 					diagnostic
 				);
 			}

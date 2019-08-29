@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Extensions;
@@ -28,7 +29,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		}
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-			Diagnostics.TooManyUnnamedArgs
+			Diagnostics.TooManyUnnamedArgs, Diagnostics.LiteralArgShouldBeNamed
 		);
 
 		public const int TOO_MANY_UNNAMED_ARGS = 5;
@@ -54,13 +55,13 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			var expr = (ExpressionSyntax)ctx.Node;
 			var args = GetArgs( expr );
 
-			if ( args == null ) {
+			if( args == null ) {
 				return;
 			}
 
 			// Don't complain about single argument functions because they're
 			// very likely to be understandable
-			if ( args.Arguments.Count <= 1 ) {
+			if( args.Arguments.Count <= 1 ) {
 				return;
 			}
 
@@ -69,7 +70,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				args
 			).ToImmutableArray();
 
-			if ( unnamedArgs.Length >= TOO_MANY_UNNAMED_ARGS ) {
+			if( unnamedArgs.Length >= TOO_MANY_UNNAMED_ARGS ) {
 				// Pass the names and positions for each unnamed arg to the
 				// codefix.
 				var fixerContext = unnamedArgs.ToImmutableDictionary(
@@ -88,8 +89,23 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
-			// TODO: literal args should always be named
+			// Literal arguments should always be named
+			foreach( var arg in unnamedArgs ) {
+				// Check if the argument type is literal
+				if( arg.Syntax.Expression is LiteralExpressionSyntax) {
+					var fixerContext = new Dictionary<string, string>();
+					fixerContext.Add( arg.Position.ToString(), arg.ParamName ); // Add the position and parameter name to the code-fix
 
+					ctx.ReportDiagnostic( Diagnostic.Create(
+							descriptor: Diagnostics.LiteralArgShouldBeNamed,
+							location: arg.Syntax.Expression.GetLocation(),
+							properties: fixerContext.ToImmutableDictionary(),
+							messageArgs: arg.ParamName
+						)
+					);
+				}
+			}
+			
 			// TODO: if there are duplicate typed args then they should be named
 			// These will create a bit more cleanup. Fix should probably name
 			// all the args instead to avoid craziness with overloading.
@@ -106,7 +122,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				var arg = args.Arguments[idx];
 
 				// Ignore args that already have names
-				if ( arg.NameColon != null ) {
+				if( arg.NameColon != null ) {
 					continue;
 				}
 
@@ -124,13 +140,13 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 				// Not sure if this can happen but it'd be hard to name this
 				// param so ignore it.
-				if ( param == null ) {
+				if( param == null ) {
 					continue;
 				}
 
 				// IParameterSymbol.Name is documented to be possibly empty in
 				// which case it is "unnamed", so ignore it.
-				if ( param.Name == "" ) {
+				if( param.Name == "" ) {
 					continue;
 				}
 
@@ -176,10 +192,10 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			}
 
 			// Strip uninteresting prefixes off the identifier
-			if ( ident.StartsWith( "m_" ) || ident.StartsWith( "s_" ) ) {
+			if( ident.StartsWith( "m_" ) || ident.StartsWith( "s_" ) ) {
 				// e.g. m_foo -> foo
 				ident = ident.Substring( 2 );
-			} else if ( ident[0] == '_' && ident.Length > 1 && ident[1] != '_') {
+			} else if( ident[0] == '_' && ident.Length > 1 && ident[1] != '_' ) {
 				// e.g. _foo -> foo
 				ident = ident.Substring( 1 );
 			}
@@ -197,6 +213,9 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				case ObjectCreationExpressionSyntax objectCreation:
 					return objectCreation.ArgumentList;
 				default:
+					if( syntax.Parent is ArgumentSyntax ) {
+						return (ArgumentListSyntax)syntax.Parent.Parent;
+					}
 					return null;
 			}
 		}
