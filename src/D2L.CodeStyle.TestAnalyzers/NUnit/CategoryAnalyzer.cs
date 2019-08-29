@@ -77,44 +77,43 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 			MethodDeclarationSyntax syntax
 		) {
 			SemanticModel model = context.SemanticModel;
-			
+
 			IMethodSymbol method = model.GetDeclaredSymbol( syntax, context.CancellationToken );
 			if( method == null ) {
 				return;
 			}
 
-            INamedTypeSymbol declaringClass = method.ContainingType; // Get class that defined the method
-            bool isTest = IsTestMethod(types, method); // Check if method is defined as a [Test] or related NUnit attribute
+			// Don't go into non-public methods
+			if(method.DeclaredAccessibility != Accessibility.Public) {
+				return;
+			}
 
+			ImmutableSortedSet<string> categories = GatherTestMethodCategories( types, method );
+			if( !categories.Overlaps( RequiredCategories ) ) {
+				context.ReportDiagnostic( Diagnostic.Create(
+					Diagnostics.NUnitCategory,
+					syntax.Identifier.GetLocation(),
+					$"Test must be categorized as one of [{string.Join( ", ", RequiredCategories )}], but saw [{string.Join( ", ", categories )}]. See http://docs.dev.d2l/index.php/Test_Categories."
+				) );
+				return;
+			}
 
-            // Check if method is part of a [TestFixture]
-            bool inTestFixture = false;
-            foreach(var attribute in declaringClass.GetAttributes()) {
-                INamedTypeSymbol attributeClass = attribute.AttributeClass;
-                if (attributeClass == types.TestFixtureAttribute) inTestFixture = true;
-            }
+			// Get class that defined the method
+			INamedTypeSymbol declaringClass = method.ContainingType;
+			// Iif class is not a [TestFixture], return early
+			var attributeList = declaringClass.GetAttributes().ToImmutableList();
+			if(attributeList.Find(attr => attr.AttributeClass == types.TestFixtureAttribute) == null ) {
+				return;
+			}
 
-            // If we are in a [TextFixture] attributed class and have NO Test attribute, 
-            if ( !isTest && inTestFixture ) {
+			// If we don't have a Test type attribute on the method, report a diagnostic
+			bool isTest = IsTestMethod( types, method );
+			if( !isTest ) {
                 context.ReportDiagnostic(Diagnostic.Create(
                         Diagnostics.TestAttributeMissed, syntax.Identifier.GetLocation(), method.Name)
                     );
                 return;
-			} else if (!isTest) { // If the method is not a test skip it
-                return;
-            }
-
-			ImmutableSortedSet<string> categories = GatherTestMethodCategories( types, method );
-
-			if( categories.Overlaps( RequiredCategories ) ) {
-				return;
 			}
-
-			context.ReportDiagnostic( Diagnostic.Create(
-				Diagnostics.NUnitCategory,
-				syntax.Identifier.GetLocation(),
-				$"Test must be categorized as one of [{string.Join( ", ", RequiredCategories )}], but saw [{string.Join( ", ", categories )}]. See http://docs.dev.d2l/index.php/Test_Categories."
-			) );
 		}
 
 		private static bool IsTestMethod(

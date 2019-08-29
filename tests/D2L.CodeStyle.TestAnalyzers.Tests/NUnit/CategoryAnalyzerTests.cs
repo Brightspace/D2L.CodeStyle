@@ -227,35 +227,31 @@ namespace TestNamespace {
 
         [Test]
         public void NoTestAttribute_NoFixture_NoDiagnostic() {
-            const string test = PREAMBLE + @"
+            const string test = @"
 namespace TestNamespace {
+	[NUnit.Framework.Category( ""Integration"" )]
 	class TestClass {
 		public void TestMethod( int x ) {}
 	}
 }";
-            AssertNoDiagnostic(otherFile: @"
-[assembly: NUnit.Framework.Category( ""assembly category"" )]
-", file: test);
+            AssertNoDiagnostic(otherFile: PREAMBLE, file: test);
         }
 
         [Test]
         public void NoTestAttribute_InFixture_Diagnostic() {
-            const string test = PREAMBLE + @"
+            const string test = @"
 namespace TestNamespace {
 	[NUnit.Framework.TestFixture]
-    [NUnit.Framework.Category( ""fixture category"" )]
+	[NUnit.Framework.Category( ""Unit"" )]
 	class TestClass {
-		[NUnit.Framework.Category( ""method category"" )]
 		public void TestMethod( int x ) {}
 	}
 }";
             AssertSingleDiagnostic(
                 diag: Diagnostics.TestAttributeMissed,
-                otherFile: @"
-[assembly: NUnit.Framework.Category( ""assembly category"" )]
-",
+                otherFile: PREAMBLE,
                 file: test,
-                line: 6 + PREAMBLE_LINES,
+                line: 6,
                 column: 15,
                 $"TestMethod"
             );
