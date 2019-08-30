@@ -22,6 +22,7 @@ namespace D2L {
 		public static void _arg6( int a1, int a2, int a3, int a4, int a5, int a6 ) { }
 
 		public static void funcWithParams( int a, int b, int c, params int[] ps ) { }
+		public static void func4WithParams( int a, int b, int c, int d, params int[] ps ) { }
 
 		public delegate void delegate0Args();
 		public delegate void delegate1Args( int a1 );
@@ -35,13 +36,14 @@ namespace D2L {
 		}
 
 		public static void Test() {
-			#region "low" number of args doesn't require naming
-			_arg0();
+            #region "low" number of args doesn't require naming
+            func4WithParams(p, p, p, p, p, p, p, p);
+            _arg0();
             _arg1( 1 );
-            _arg1( _a1 );
-			_arg2( _a1, _a2 );
-			_arg3( _a1, _a2, _a3 );
-			_arg4( _a1, _a2, _a3, _a4 );
+            _arg1( p );
+			_arg2( p, p );
+			_arg3( p, p, p );
+			_arg4( p, p, p, p );
 
             // Named literals
             _arg5(a1: 1, a2: 2, a3: 3, a4: 4, a5: 5);
@@ -49,9 +51,13 @@ namespace D2L {
 
             // Named literals + variables
             _arg4(_a1, _a2, a3: 3, a4: 4);
-            _arg5(_a1, _a2, a3: 3, a4: 4, _a5);
+            _arg5(_a1, _a2, a3: 3, a4: 4, p);
 
+			// Test unnamed literals with pseudonamed args + literal params
             funcWithParams(_a1, _a2, _a3, 1, 2, 3);
+
+            // Test TooManyUnnamedArgs with 4 args + params
+            func4WithParams(p, p, p, p, p, p, p, p);
             #endregion
 
             #region diagnostic for too many unnamed args
