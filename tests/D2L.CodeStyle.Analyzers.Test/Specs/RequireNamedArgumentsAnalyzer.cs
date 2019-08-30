@@ -40,9 +40,9 @@ namespace D2L {
             _arg0();
             _arg1( 1 );
             _arg1( p );
-			      _arg2( p, p );
-			      _arg3( p, p, p );
-			      _arg4( p, p, p, p );
+			_arg2( p, p );
+			_arg3( p, p, p );
+			_arg4( p, p, p, p );
             // Named literals
             _arg5(a1: 1, a2: 2, a3: 3, a4: 4, a5: 5);
             _arg6(a1: 1, a2: 2, a3: 3, a4: 4, a5: 5, a6: 6);
@@ -51,7 +51,7 @@ namespace D2L {
             _arg4(_a1, _a2, a3: 3, a4: 4);
             _arg5(_a1, _a2, a3: 3, a4: 4, p);
 
-			      // Test unnamed literals with pseudonamed args + literal params
+			// Test unnamed literals with pseudonamed args + literal params
             funcWithParams(_a1, _a2, _a3, 1, 2, 3);
 
             // Test TooManyUnnamedArgs with 4 args + params
