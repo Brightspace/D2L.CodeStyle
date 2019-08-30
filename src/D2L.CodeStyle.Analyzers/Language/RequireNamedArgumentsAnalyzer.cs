@@ -148,7 +148,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				// arg.DetermineParameters() will return the first params
 				// argument, even with allowParams:false ; We should ignore
 				// any params arguments since named params is gross.
-				if(param.IsParams) {
+				if( param.IsParams ) {
 					continue;
 				}
 
