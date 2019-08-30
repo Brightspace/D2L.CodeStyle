@@ -50,6 +50,8 @@ namespace D2L {
             // Named literals + variables
             _arg4(_a1, _a2, a3: 3, a4: 4);
             _arg5(_a1, _a2, a3: 3, a4: 4, _a5);
+
+            funcWithParams(_a1, _a2, _a3, 1, 2, 3);
             #endregion
 
             #region diagnostic for too many unnamed args

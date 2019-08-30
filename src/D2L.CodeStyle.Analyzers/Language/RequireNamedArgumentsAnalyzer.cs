@@ -91,8 +91,12 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			// Literal arguments should always be named
 			foreach( var arg in unnamedArgs ) {
+				// Skip any parameters in a params array
+				if( arg.Syntax.DetermineParameter(ctx.SemanticModel).IsParams ) {
+					continue;
+				}
 				// Check if the argument type is literal
-				if( arg.Syntax.Expression is LiteralExpressionSyntax) {
+				if( arg.Syntax.Expression is LiteralExpressionSyntax/* && arg.Syntax.Expression.Kind() == SyntaxKind.NullLiteralExpression*/ ) {
 					var fixerContext = new Dictionary<string, string>();
 					fixerContext.Add( arg.Position.ToString(), arg.ParamName ); // Add the position and parameter name to the code-fix
 
