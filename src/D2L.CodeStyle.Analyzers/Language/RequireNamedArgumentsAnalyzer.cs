@@ -94,7 +94,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			// Literal arguments should always be named
 			foreach( var arg in unnamedArgs ) {
 				// Check if the argument type is literal
-				if( arg.Syntax.Expression is LiteralExpressionSyntax/* && arg.Syntax.Expression.Kind() == SyntaxKind.NullLiteralExpression*/ ) {
+
+				if( arg.Syntax.Expression is LiteralExpressionSyntax) {
 					var fixerContext = new Dictionary<string, string>();
 					fixerContext.Add( arg.Position.ToString(), arg.ParamName ); // Add the position and parameter name to the code-fix
 
@@ -150,6 +151,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				// argument, even with allowParams:false ; We should ignore
 				// any params arguments since named params is gross.
 				if( param.IsParams ) {
+
 					continue;
 				}
 
