@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -105,7 +107,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					);
 				}
 			}
-			
+
 			// TODO: if there are duplicate typed args then they should be named
 			// These will create a bit more cleanup. Fix should probably name
 			// all the args instead to avoid craziness with overloading.
@@ -150,6 +152,19 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					continue;
 				}
 
+				// C# allows us to create variables with the same names as reserved keywords,
+				// as long as we prefix with @ (e.g. @int is a valid identifier)
+				// So any parameters which are reserved must have the @ prefix
+				string paramName;
+				SyntaxKind paramNameKind = SyntaxFacts.GetKeywordKind( param.Name );
+				if( SyntaxFacts.GetReservedKeywordKinds().Any( reservedKind => reservedKind == paramNameKind ) ) {
+					paramName = "@" + param.Name;
+				} else {
+					paramName = param.Name;
+				}
+
+				string text = param.OriginalDefinition.Type.ToMinimalDisplayString( model, 0 );
+
 				string psuedoName = GetPsuedoName( arg );
 
 				if( psuedoName != null ) {
@@ -166,7 +181,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 				yield return new ArgParamBinding(
 					position: idx,
-					paramName: param.Name,
+					paramName: paramName, // Use the verbatim parameter name if applicable
 					syntax: arg
 				);
 			}
