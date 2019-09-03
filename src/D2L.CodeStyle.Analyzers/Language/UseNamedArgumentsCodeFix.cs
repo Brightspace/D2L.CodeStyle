@@ -109,7 +109,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				yield return arg
 					.WithNameColon(
 						SyntaxFactory.NameColon( paramNames[idx] )
-							.WithLeadingTrivia( leadingTrivia )
+							.WithLeadingTrivia( leadingTrivia ) // Re-apply leading trivia before nameColon
 					);
 			}
 		}

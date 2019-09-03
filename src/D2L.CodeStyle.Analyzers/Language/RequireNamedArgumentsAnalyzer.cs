@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -29,7 +31,9 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		}
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-			Diagnostics.TooManyUnnamedArgs, Diagnostics.LiteralArgShouldBeNamed
+			Diagnostics.TooManyUnnamedArgs,
+			Diagnostics.LiteralArgShouldBeNamed,
+			Diagnostics.ArgumentsWithInterchangableTypesShouldBeNamed
 		);
 
 		public const int TOO_MANY_UNNAMED_ARGS = 5;
@@ -92,6 +96,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			// Literal arguments should always be named
 			foreach( var arg in unnamedArgs ) {
 				// Check if the argument type is literal
+
 				if( arg.Syntax.Expression is LiteralExpressionSyntax) {
 					var fixerContext = new Dictionary<string, string>();
 					fixerContext.Add( arg.Position.ToString(), arg.ParamName ); // Add the position and parameter name to the code-fix
@@ -105,10 +110,60 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					);
 				}
 			}
-			
+
 			// TODO: if there are duplicate typed args then they should be named
 			// These will create a bit more cleanup. Fix should probably name
 			// all the args instead to avoid craziness with overloading.
+			CheckDuplicateTypes( ctx, unnamedArgs );
+		}
+
+		private static void CheckDuplicateTypes(
+			SyntaxNodeAnalysisContext ctx,
+			ImmutableArray<ArgParamBinding> unnamedArgs
+		) {
+			// Add all types
+			bool duplicateTypes = false;
+			HashSet<ITypeSymbol> argumentTypes = new HashSet<ITypeSymbol>();
+			foreach( var arg in unnamedArgs ) {
+				TypeInfo typeInfo = ctx.SemanticModel.GetTypeInfo( arg.Syntax );
+
+				if( !argumentTypes.Add( typeInfo.Type ) ) {
+					duplicateTypes = true;
+					break;
+				}
+			}
+
+			// If an implicit conversion exists between any two unnamed
+			// arguments, treat them as duplicate types.
+			// This does at most 9 checks (with TOO_MANY_UNNAMED_ARGS == 5)
+			if( !duplicateTypes ) {
+				var argTypes = argumentTypes.ToArray();
+				for( int i = 0; i < argTypes.Length && !duplicateTypes; i++ ) {
+					for( int j = i + 1; j < argTypes.Length && !duplicateTypes; j++ ) {
+						Conversion conversion = Microsoft.CodeAnalysis.CSharp.CSharpExtensions.
+							ClassifyConversion( ctx.Compilation, argTypes[i], argTypes[j] );
+						if( conversion.Exists && conversion.IsImplicit ) {
+							duplicateTypes = true;
+						}
+					}
+				}
+			}
+
+			// If two or more arguments have duplicate types, require named
+			// arguments.
+			if( duplicateTypes ) {
+				var fixerContext = unnamedArgs.ToImmutableDictionary(
+					keySelector: binding => binding.Position.ToString(),
+					elementSelector: binding => binding.ParamName
+				);
+				ctx.ReportDiagnostic(
+					Diagnostic.Create(
+						descriptor: Diagnostics.ArgumentsWithInterchangableTypesShouldBeNamed,
+						location: ctx.Node.GetLocation(),
+						properties: fixerContext
+					)
+				);
+			}
 		}
 
 		/// <summary>
@@ -144,11 +199,32 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					continue;
 				}
 
+				// arg.DetermineParameters() will return the first params
+				// argument, even with allowParams:false ; We should ignore
+				// any params arguments since named params is gross.
+				if( param.IsParams ) {
+
+					continue;
+				}
+
 				// IParameterSymbol.Name is documented to be possibly empty in
 				// which case it is "unnamed", so ignore it.
 				if( param.Name == "" ) {
 					continue;
 				}
+				
+				// C# allows us to create variables with the same names as reserved keywords,
+				// as long as we prefix with @ (e.g. @int is a valid identifier)
+				// So any parameters which are reserved must have the @ prefix
+				string paramName;
+				SyntaxKind paramNameKind = SyntaxFacts.GetKeywordKind( param.Name );
+				if( SyntaxFacts.GetReservedKeywordKinds().Any( reservedKind => reservedKind == paramNameKind ) ) {
+					paramName = "@" + param.Name;
+				} else {
+					paramName = param.Name;
+				}
+
+				string text = param.OriginalDefinition.Type.ToMinimalDisplayString( model, 0 );
 
 				string psuedoName = GetPsuedoName( arg );
 
@@ -166,7 +242,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 				yield return new ArgParamBinding(
 					position: idx,
-					paramName: param.Name,
+					paramName: paramName, // Use the verbatim parameter name if applicable
 					syntax: arg
 				);
 			}
