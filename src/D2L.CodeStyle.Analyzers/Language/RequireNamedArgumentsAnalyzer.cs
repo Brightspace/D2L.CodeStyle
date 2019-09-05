@@ -72,10 +72,10 @@ namespace D2L.CodeStyle.Analyzers.Language {
                 // Only lambda type expressions have arguments,
                 // so this only applies to LambdaExpression
                 var expressionType = ctx.SemanticModel.Compilation.GetTypeByMetadataName("System.Linq.Expressions.LambdaExpression");
+                var baseExprType = implicitType.BaseType;
 
-                if (expressionType != null) {
+                if (expressionType != null && baseExprType != null) {
                     var expressionDefinedType = expressionType.OriginalDefinition;
-                    var baseExprType = implicitType.BaseType;
                     if (baseExprType.Equals(expressionDefinedType)) {
                         return;
                     }
