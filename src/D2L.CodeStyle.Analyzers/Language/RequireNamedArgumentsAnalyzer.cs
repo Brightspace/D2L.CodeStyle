@@ -65,7 +65,24 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
-			var unnamedArgs = GetUnnamedArgs(
+            // Expression trees aren't compatible with named arguments,
+            // so skip any expressions
+            var implicitType = ctx.SemanticModel.GetTypeInfo(ctx.Node.Parent).ConvertedType;
+            if (implicitType != null) {
+                // Only lambda type expressions have arguments,
+                // so this only applies to LambdaExpression
+                var expressionType = ctx.SemanticModel.Compilation.GetTypeByMetadataName("System.Linq.Expressions.LambdaExpression");
+
+                if (expressionType != null) {
+                    var expressionDefinedType = expressionType.OriginalDefinition;
+                    var baseExprType = implicitType.BaseType;
+                    if (baseExprType.Equals(expressionDefinedType)) {
+                        return;
+                    }
+                }
+            }
+
+            var unnamedArgs = GetUnnamedArgs(
 				ctx.SemanticModel,
 				args
 			).ToImmutableArray();

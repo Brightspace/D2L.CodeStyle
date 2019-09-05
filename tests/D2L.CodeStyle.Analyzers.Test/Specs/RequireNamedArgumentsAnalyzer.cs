@@ -21,7 +21,11 @@ namespace D2L {
 		public static void _arg5( int a1, int a2, int a3, int a4, int a5 ) { }
 		public static void _arg6( int a1, int a2, int a3, int a4, int a5, int a6 ) { }
 
-		public static void funcWithParams( int a, int b, int c, params int[] ps ) { }
+        public static int _arg1_ret(int a1) { return 0; }
+        public static int _arg2_ret(int a1, int a2) { return 0; }
+        public static int _arg5_ret(int a1, int a2, int a3, int a4, int a5) { return 0; }
+
+        public static void funcWithParams( int a, int b, int c, params int[] ps ) { }
 
 		public delegate void delegate0Args();
 		public delegate void delegate1Args( int a1 );
@@ -118,7 +122,19 @@ namespace D2L {
 			new SomeClass( p, p );
 			/* TooManyUnnamedArgs */ new SomeClass( p, p, p, p, p ) /**/;
 			new SomeClass( a1: 1, p, p, p, p );
-			#endregion
-		}
-	}
+            #endregion
+
+            #region expressions should not trigger named argument diagnostics
+            // See: https://stackoverflow.com/a/10133102
+            System.Linq.Expressions.Expression<Func<int>> expression5args = () => _arg5_ret(p, p, p, p, p);
+            System.Linq.Expressions.Expression<Func<int>> expression2args = () => _arg2_ret(p, p);
+            System.Linq.Expressions.Expression<Func<int>> expression1args = () => _arg1_ret(p);
+
+            // Do it again with constants to test 'LiteralArgShouldBeNamed'
+            System.Linq.Expressions.Expression<Func<int>> expression5args = () => _arg5_ret(1, 2, 3, 4, 5);
+            System.Linq.Expressions.Expression<Func<int>> expression2args = () => _arg2_ret(1, 2);
+            System.Linq.Expressions.Expression<Func<int>> expression1args = () => _arg1_ret(1);
+            #endregion
+        }
+    }
 }
