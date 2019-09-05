@@ -66,6 +66,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
+			// Don't complain about expression trees, since they aren't allowed
+			// to have named arguments
 			if( IsExpressionTree( ctx.Node, ctx.SemanticModel ) ) {
 				return;
 			}
@@ -117,9 +119,6 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		}
 
 		private static bool IsExpressionTree( SyntaxNode node, SemanticModel model ) {
-			if( !Debugger.IsAttached ) {
-				Debugger.Launch();
-			}
 			// Expression trees aren't compatible with named arguments,
 			// so skip any expressions
 			// Only lambda type expressions have arguments,
