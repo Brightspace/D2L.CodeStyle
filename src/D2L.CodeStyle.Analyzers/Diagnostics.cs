@@ -270,7 +270,7 @@ namespace D2L.CodeStyle.Analyzers {
 			title: "Literal arguments should be named for readability.",
 			messageFormat: "The argument for the {0} parameter is a literal expression. It's often hard to tell what the parameter for the argument is at the call-site in this case. Please use a named argument for readability.",
 			category: "Readability",
-			defaultSeverity: DiagnosticSeverity.Error,
+			defaultSeverity: DiagnosticSeverity.Info, // TODO: Change to Error once fixed
 			isEnabledByDefault: true,
 			description: "Literal arguments should be named for readability."
 		);
