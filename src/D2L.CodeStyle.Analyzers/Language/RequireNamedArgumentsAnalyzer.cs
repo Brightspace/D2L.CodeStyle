@@ -66,7 +66,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
-			if( IsExpressionTree( ctx ) ) {
+			if( IsExpressionTree( ctx.Node, ctx.SemanticModel ) ) {
 				return;
 			}
 
