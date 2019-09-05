@@ -48,17 +48,17 @@ namespace D2L {
 			_arg4( _a1, _a2, _a3, _a4 );
 
             // Named literals
-            _arg5(a1: 1, a2: 2, a3: 3, a4: 4, a5: 5);
-            _arg6(a1: 1, a2: 2, a3: 3, a4: 4, a5: 5, a6: 6);
+            _arg5( a1: 1, a2: 2, a3: 3, a4: 4, a5: 5 );
+            _arg6( a1: 1, a2: 2, a3: 3, a4: 4, a5: 5, a6: 6 );
 
             // Named literals + variables
-            _arg4(_a1, _a2, a3: 3, a4: 4);
-            _arg5(_a1, _a2, a3: 3, a4: 4, _a5);
+            _arg4( _a1, _a2, a3: 3, a4: 4 );
+            _arg5( _a1, _a2, a3: 3, a4: 4, _a5 );
             #endregion
 
             #region diagnostic for too many unnamed args
-            /* TooManyUnnamedArgs */ _arg5(1, 2, 3, 4, 5) /**/;
-            /* TooManyUnnamedArgs */ _arg6(1, 2, 3, 4, 5, 6) /**/;
+            /* TooManyUnnamedArgs */ _arg5( 1, 2, 3, 4, 5 ) /**/;
+            /* TooManyUnnamedArgs */ _arg6( 1, 2, 3, 4, 5, 6 ) /**/;
             _arg3( /* LiteralArgShouldBeNamed(a1) */ 1 /**/, /* LiteralArgShouldBeNamed(a2) */ 2 /**/, /* LiteralArgShouldBeNamed(a3) */ 3 /**/ );
             _arg3( a1: 1, /* LiteralArgShouldBeNamed(a2) */ 2 /**/, /* LiteralArgShouldBeNamed(a3) */ 3 /**/ );
             #endregion
@@ -126,27 +126,27 @@ namespace D2L {
 
             #region expressions should not trigger named argument diagnostics
             // See: https://stackoverflow.com/a/10133102
-            System.Linq.Expressions.Expression<Func<int>> expression5args = () => _arg5_ret(p, p, p, p, p);
-            System.Linq.Expressions.Expression<Func<int>> expression2args = () => _arg2_ret(p, p);
-            System.Linq.Expressions.Expression<Func<int>> expression1args = () => _arg1_ret(p);
+            System.Linq.Expressions.Expression<Func<int>> expression5args = () => _arg5_ret( p, p, p, p, p );
+            System.Linq.Expressions.Expression<Func<int>> expression2args = () => _arg2_ret( p, p );
+            System.Linq.Expressions.Expression<Func<int>> expression1args = () => _arg1_ret( p );
 
             // Do it again with constants to test 'LiteralArgShouldBeNamed'
-            System.Linq.Expressions.Expression<Func<int>> expression5args = () => _arg5_ret(1, 2, 3, 4, 5);
-            System.Linq.Expressions.Expression<Func<int>> expression2args = () => _arg2_ret(1, 2);
-            System.Linq.Expressions.Expression<Func<int>> expression1args = () => _arg1_ret(1);
+            System.Linq.Expressions.Expression<Func<int>> expression5args = () => _arg5_ret( 1, 2, 3, 4, 5 );
+            System.Linq.Expressions.Expression<Func<int>> expression2args = () => _arg2_ret( 1, 2 );
+            System.Linq.Expressions.Expression<Func<int>> expression1args = () => _arg1_ret( 1 );
 
             // Try with various nested function calls
             System.Linq.Expressions.Expression<Func<int>> nest1 =
-                () => _arg2_ret(1, _arg2_ret(1, 2));
+                () => _arg2_ret( 1, _arg2_ret( 1, 2 ) );
             System.Linq.Expressions.Expression<Func<int, int>> nest2 =
-                (x) => _arg1_ret(_arg2_ret(x, 2));
+                (x) => _arg1_ret( _arg2_ret( x, 2 ) );
             System.Linq.Expressions.Expression<Func<int>> nest3 =
                 () => _arg2_ret( _arg2_ret( 1, 2 ), _arg1_ret( 1 ) );
             System.Linq.Expressions.Expression<Func<int>> nest4 =
                 () => _arg5_ret(
-						_arg2_ret( _arg2_ret(1, _arg2_ret(1, 2)) , _arg1_ret(1)),
-						_arg5_ret(1, 2, 3, 4, 5),
-						_arg2_ret( _arg2_ret( _arg2_ret( _arg5_ret(1, 2, 3, 4, 5), 2 ), 2 ), 2 ),
+						_arg2_ret( _arg2_ret( 1, _arg2_ret( 1, 2 ) ) , _arg1_ret( 1 ) ),
+						_arg5_ret( 1, 2, 3, 4, 5 ),
+						_arg2_ret( _arg2_ret( _arg2_ret( _arg5_ret( 1, 2, 3, 4, 5 ), 2 ), 2 ), 2 ),
 						4,
 						_arg2_ret( 1, 2 )
 				);

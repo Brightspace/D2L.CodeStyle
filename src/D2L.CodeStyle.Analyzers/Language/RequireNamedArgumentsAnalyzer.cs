@@ -66,36 +66,11 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
-            // Expression trees aren't compatible with named arguments,
-            // so skip any expressions
-            // Only lambda type expressions have arguments,
-            // so this only applies to LambdaExpression
-            var expressionType = ctx.SemanticModel.Compilation.
-                GetTypeByMetadataName("System.Linq.Expressions.LambdaExpression");
+			if( IsExpressionTree( ctx ) ) {
+				return;
+			}
 
-            // the current call could be nested inside an expression tree, so
-            // check every call we are nested inside
-            SyntaxNode node = ctx.Node;
-            if (expressionType != null) {
-                while (node != null && node is InvocationExpressionSyntax) {
-                    var implicitType = ctx.SemanticModel.GetTypeInfo(node.Parent).ConvertedType;
-                    if (implicitType != null) {
-                        var baseExprType = implicitType.BaseType;
-
-                        if (baseExprType != null) {
-                            if (baseExprType.Equals(expressionType.OriginalDefinition)) {
-                                return;
-                            }
-                        }
-                    }
-                    node = node.Parent;
-                    while ( node is ArgumentSyntax || node is ArgumentListSyntax ) {
-                        node = node.Parent;
-                    }
-                }
-            }
-
-            var unnamedArgs = GetUnnamedArgs(
+			var unnamedArgs = GetUnnamedArgs(
 				ctx.SemanticModel,
 				args
 			).ToImmutableArray();
@@ -122,7 +97,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			// Literal arguments should always be named
 			foreach( var arg in unnamedArgs ) {
 				// Check if the argument type is literal
-				if( arg.Syntax.Expression is LiteralExpressionSyntax) {
+				if( arg.Syntax.Expression is LiteralExpressionSyntax ) {
 					var fixerContext = new Dictionary<string, string>();
 					fixerContext.Add( arg.Position.ToString(), arg.ParamName ); // Add the position and parameter name to the code-fix
 
@@ -135,10 +110,43 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					);
 				}
 			}
-			
+
 			// TODO: if there are duplicate typed args then they should be named
 			// These will create a bit more cleanup. Fix should probably name
 			// all the args instead to avoid craziness with overloading.
+		}
+
+		private static bool IsExpressionTree( SyntaxNode node, SemanticModel model ) {
+			// Expression trees aren't compatible with named arguments,
+			// so skip any expressions
+			// Only lambda type expressions have arguments,
+			// so this only applies to LambdaExpression
+			var expressionType = model.Compilation.
+				GetTypeByMetadataName( "System.Linq.Expressions.LambdaExpression" );
+
+			if( expressionType == null || expressionType.Kind == SymbolKind.ErrorType ) {
+				return false;
+			}
+
+			// the current call could be nested inside an expression tree, so
+			// check every call we are nested inside
+			while( node != null && node is InvocationExpressionSyntax ) {
+				var implicitType = model.GetTypeInfo( node.Parent ).ConvertedType;
+				if( implicitType != null && implicitType.Kind != SymbolKind.ErrorType ) {
+					var baseExprType = implicitType.BaseType;
+
+					if( baseExprType != null ) {
+						if( baseExprType.Equals( expressionType.OriginalDefinition ) ) {
+							return true;
+						}
+					}
+				}
+				node = node.Parent;
+				while( node is ArgumentSyntax || node is ArgumentListSyntax ) {
+					node = node.Parent;
+				}
+			}
+			return false;
 		}
 
 		/// <summary>
