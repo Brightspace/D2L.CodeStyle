@@ -39,8 +39,8 @@ namespace D2L {
 		}
 
 		public static void Test() {
-			#region "low" number of args doesn't require naming
-			_arg0();
+            #region "low" number of args doesn't require naming
+            _arg0();
             _arg1( 1 );
             _arg1( _a1 );
 			_arg2( _a1, _a2 );
@@ -134,6 +134,23 @@ namespace D2L {
             System.Linq.Expressions.Expression<Func<int>> expression5args = () => _arg5_ret(1, 2, 3, 4, 5);
             System.Linq.Expressions.Expression<Func<int>> expression2args = () => _arg2_ret(1, 2);
             System.Linq.Expressions.Expression<Func<int>> expression1args = () => _arg1_ret(1);
+
+            // Try with various nested function calls
+            System.Linq.Expressions.Expression<Func<int>> nest1 =
+                () => _arg2_ret(1, _arg2_ret(1, 2));
+            System.Linq.Expressions.Expression<Func<int, int>> nest2 =
+                (x) => _arg1_ret(_arg2_ret(x, 2));
+            System.Linq.Expressions.Expression<Func<int>> nest3 =
+                () => _arg2_ret( _arg2_ret( 1, 2 ), _arg1_ret( 1 ) );
+            System.Linq.Expressions.Expression<Func<int>> nest4 =
+                () => _arg5_ret(
+						_arg2_ret( _arg2_ret(1, _arg2_ret(1, 2)) , _arg1_ret(1)),
+						_arg5_ret(1, 2, 3, 4, 5),
+						_arg2_ret( _arg2_ret( _arg2_ret( _arg5_ret(1, 2, 3, 4, 5), 2 ), 2 ), 2 ),
+						4,
+						_arg2_ret( 1, 2 )
+				);
+
             #endregion
         }
     }

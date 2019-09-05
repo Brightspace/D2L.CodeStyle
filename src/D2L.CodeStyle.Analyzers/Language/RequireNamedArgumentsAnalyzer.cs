@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -67,17 +68,29 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
             // Expression trees aren't compatible with named arguments,
             // so skip any expressions
-            var implicitType = ctx.SemanticModel.GetTypeInfo(ctx.Node.Parent).ConvertedType;
-            if (implicitType != null) {
-                // Only lambda type expressions have arguments,
-                // so this only applies to LambdaExpression
-                var expressionType = ctx.SemanticModel.Compilation.GetTypeByMetadataName("System.Linq.Expressions.LambdaExpression");
-                var baseExprType = implicitType.BaseType;
+            // Only lambda type expressions have arguments,
+            // so this only applies to LambdaExpression
+            var expressionType = ctx.SemanticModel.Compilation.
+                GetTypeByMetadataName("System.Linq.Expressions.LambdaExpression");
 
-                if (expressionType != null && baseExprType != null) {
-                    var expressionDefinedType = expressionType.OriginalDefinition;
-                    if (baseExprType.Equals(expressionDefinedType)) {
-                        return;
+            // the current call could be nested inside an expression tree, so
+            // check every call we are nested inside
+            SyntaxNode node = ctx.Node;
+            if (expressionType != null) {
+                while (node != null && node is InvocationExpressionSyntax) {
+                    var implicitType = ctx.SemanticModel.GetTypeInfo(node.Parent).ConvertedType;
+                    if (implicitType != null) {
+                        var baseExprType = implicitType.BaseType;
+
+                        if (baseExprType != null) {
+                            if (baseExprType.Equals(expressionType.OriginalDefinition)) {
+                                return;
+                            }
+                        }
+                    }
+                    node = node.Parent;
+                    while ( node is ArgumentSyntax || node is ArgumentListSyntax ) {
+                        node = node.Parent;
                     }
                 }
             }
