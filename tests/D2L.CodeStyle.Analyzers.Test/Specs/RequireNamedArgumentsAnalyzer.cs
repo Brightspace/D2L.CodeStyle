@@ -150,7 +150,6 @@ namespace D2L {
 						4,
 						_arg2_ret( 1, 2 )
 				);
-
             #endregion
         }
     }

@@ -117,6 +117,9 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		}
 
 		private static bool IsExpressionTree( SyntaxNode node, SemanticModel model ) {
+			if( !Debugger.IsAttached ) {
+				Debugger.Launch();
+			}
 			// Expression trees aren't compatible with named arguments,
 			// so skip any expressions
 			// Only lambda type expressions have arguments,
@@ -130,15 +133,13 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			// the current call could be nested inside an expression tree, so
 			// check every call we are nested inside
-			while( node != null && node is InvocationExpressionSyntax ) {
+			while( node != null && ( node is InvocationExpressionSyntax || node is ObjectCreationExpressionSyntax ) ) {
 				var implicitType = model.GetTypeInfo( node.Parent ).ConvertedType;
 				if( implicitType != null && implicitType.Kind != SymbolKind.ErrorType ) {
 					var baseExprType = implicitType.BaseType;
 
-					if( baseExprType != null ) {
-						if( baseExprType.Equals( expressionType.OriginalDefinition ) ) {
-							return true;
-						}
+					if( baseExprType == expressionType.OriginalDefinition ) {
+						return true;
 					}
 				}
 				node = node.Parent;
