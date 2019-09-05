@@ -235,7 +235,8 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 				.Create(
 					compilation.GetTypeByMetadataName( "NUnit.Framework.TestAttribute" ),
 					compilation.GetTypeByMetadataName( "NUnit.Framework.TestCaseAttribute" ),
-					compilation.GetTypeByMetadataName( "NUnit.Framework.TestCaseSourceAttribute" )
+					compilation.GetTypeByMetadataName( "NUnit.Framework.TestCaseSourceAttribute" ),
+                    compilation.GetTypeByMetadataName( "NUnit.Framework.TheoryAttribute" )
 				);
 
 			INamedTypeSymbol testFixtureAttribute = compilation.GetTypeByMetadataName( "NUnit.Framework.TestFixtureAttribute" );

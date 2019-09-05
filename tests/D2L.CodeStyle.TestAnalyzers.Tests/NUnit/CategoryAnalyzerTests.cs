@@ -194,45 +194,102 @@ namespace TestNamespace {
 
         [Test]
         public void TestAttribute_InFixture_NoDiagnostic() {
-            const string test = PREAMBLE + @"
+            const string test = @"
 namespace TestNamespace {
 	[NUnit.Framework.TextFixture]
-    [NUnit.Framework.Category( ""Integration"" )]
+    [NUnit.Framework.Category( ""Unit"" )]
 	class TestClass {
 		[NUnit.Framework.Test]
-		[NUnit.Framework.Category( ""method category"" )]
 		public void TestMethod( int x ) {}
 	}
 }";
-            AssertNoDiagnostic(otherFile: @"
-[assembly: NUnit.Framework.Category( ""assembly category"" )]
-", file : test);
+            AssertNoDiagnostic(otherFile:PREAMBLE, file : test);
         }
 
         [Test]
         public void TestAttribute_NoFixture_NoDiagnostic() {
-            const string test = PREAMBLE + @"
+            const string test = @"
 namespace TestNamespace {
-    [NUnit.Framework.Category( ""Integration"" )]
+    [NUnit.Framework.Category( ""Unit"" )]
 	class TestClass {
 		[NUnit.Framework.Test]
-		[NUnit.Framework.Category( ""method category"" )]
 		public void TestMethod( int x ) {}
 	}
 }";
-            AssertNoDiagnostic(otherFile: @"
-[assembly: NUnit.Framework.Category( ""assembly category"" )]
-", file: test);
+            AssertNoDiagnostic(otherFile: PREAMBLE, file: test);
         }
 
         [Test]
         public void NoTestAttribute_NoFixture_NoDiagnostic() {
             const string test = @"
 namespace TestNamespace {
-	[NUnit.Framework.Category( ""Integration"" )]
+	[NUnit.Framework.Category( ""Unit"" )]
 	class TestClass {
 		public void TestMethod( int x ) {}
 	}
+}";
+            AssertNoDiagnostic(otherFile: PREAMBLE, file: test);
+        }
+
+        [Test]
+        public void TheoryAttribute_InFixture_NoDiagnostic() {
+            const string test = @"
+namespace TestNamespace {
+	[NUnit.Framework.TextFixture]
+    [NUnit.Framework.Category( ""Unit"" )]
+	class TestClass {
+		[NUnit.Framework.Theory]
+		public void TestMethod( int x ) {}
+	}
+}";
+            AssertNoDiagnostic(otherFile: PREAMBLE, file: test);
+        }
+
+        [Test]
+        public void TestCaseAttribute_InFixture_NoDiagnostic() {
+            const string test = @"
+namespace TestNamespace {
+	[NUnit.Framework.TextFixture]
+    [NUnit.Framework.Category( ""Unit"" )]
+	class TestClass {
+		[NUnit.Framework.TestCase(1)]
+		public void TestMethod( int x ) {}
+	}
+}";
+            AssertNoDiagnostic(otherFile: PREAMBLE, file: test);
+        }
+
+        [Test]
+        public void Mulitple_TestCaseAttribute_InFixture_NoDiagnostic() {
+            const string test = @"
+namespace TestNamespace {
+	[NUnit.Framework.TextFixture]
+    [NUnit.Framework.Category( ""Unit"" )]
+	class TestClass {
+		[NUnit.Framework.TestCase(1)]
+		[NUnit.Framework.TestCase(2)]
+		[NUnit.Framework.TestCase(3)]
+		public void TestMethod( int x ) {}
+	}
+}";
+            AssertNoDiagnostic(otherFile: PREAMBLE, file: test);
+        }
+
+        [Test]
+        public void TestCaseSourceAttribute_InFixture_NoDiagnostic() {
+            const string test = @"
+namespace TestNamespace {
+	[NUnit.Framework.TextFixture]
+    [NUnit.Framework.Category( ""Unit"" )]
+	class TestClass {
+		[NUnit.Framework.TestCaseSource(""cases"")]
+		public void TestMethod( int x ) {}
+	}
+    static object[] cases = {
+        new object[] { 1 },
+        new object[] { 2 },
+        new object[] { 3 }
+    }; 
 }";
             AssertNoDiagnostic(otherFile: PREAMBLE, file: test);
         }
