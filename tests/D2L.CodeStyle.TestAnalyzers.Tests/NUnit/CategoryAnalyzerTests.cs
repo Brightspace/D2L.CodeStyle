@@ -295,6 +295,62 @@ namespace TestNamespace {
         }
 
         [Test]
+        public void SetUpAttribute_InFixture_NoDiagnostic() {
+            const string test = @"
+namespace TestNamespace {
+	[NUnit.Framework.TextFixture]
+    [NUnit.Framework.Category( ""Unit"" )]
+	class TestClass {
+		[NUnit.Framework.SetUp]
+		public void TestMethod(  ) {}
+	}
+}";
+            AssertNoDiagnostic( otherFile: PREAMBLE, file: test );
+        }
+
+        [Test]
+        public void OTSetUpAttribute_InFixture_NoDiagnostic() {
+            const string test = @"
+namespace TestNamespace {
+	[NUnit.Framework.TextFixture]
+    [NUnit.Framework.Category( ""Unit"" )]
+	class TestClass {
+		[NUnit.Framework.OneTimeSetUp]
+		public void TestMethod(  ) {}
+	}
+}";
+            AssertNoDiagnostic( otherFile: PREAMBLE, file: test );
+        }
+
+        [Test]
+        public void TearDownAttribute_InFixture_NoDiagnostic() {
+            const string test = @"
+namespace TestNamespace {
+	[NUnit.Framework.TextFixture]
+    [NUnit.Framework.Category( ""Unit"" )]
+	class TestClass {
+		[NUnit.Framework.TearDown]
+		public void TestMethod(  ) {}
+	}
+}";
+            AssertNoDiagnostic( otherFile: PREAMBLE, file: test );
+        }
+
+        [Test]
+        public void OTTearDownAttribute_InFixture_NoDiagnostic() {
+            const string test = @"
+namespace TestNamespace {
+	[NUnit.Framework.TextFixture]
+    [NUnit.Framework.Category( ""Unit"" )]
+	class TestClass {
+		[NUnit.Framework.OneTimeTearDown]
+		public void TestMethod(  ) {}
+	}
+}";
+            AssertNoDiagnostic( otherFile: PREAMBLE, file: test );
+        }
+
+        [Test]
         public void NoTestAttribute_InFixture_Diagnostic() {
             const string test = @"
 namespace TestNamespace {
@@ -309,6 +365,27 @@ namespace TestNamespace {
                 otherFile: PREAMBLE,
                 file: test,
                 line: 6,
+                column: 15,
+                $"TestMethod"
+            );
+        }
+
+        [Test]
+        public void NoTest_HasAttribute_InFixture_Diagnostic() {
+            const string test = @"
+namespace TestNamespace {
+	[NUnit.Framework.TestFixture]
+	[NUnit.Framework.Category( ""Unit"" )]
+	class TestClass {
+        [NUnit.Framework.Explicit]
+		public void TestMethod( int x ) {}
+	}
+}";
+            AssertSingleDiagnostic(
+                diag: Diagnostics.TestAttributeMissed,
+                otherFile: PREAMBLE,
+                file: test,
+                line: 7,
                 column: 15,
                 $"TestMethod"
             );

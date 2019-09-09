@@ -122,8 +122,10 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 				INamedTypeSymbol attributeType = attribute.AttributeClass;
 				if( types.TestAttributes.Contains( attributeType ) ) {
 					return true;
-				}
-			}
+				} else if ( types.SetupTeardownAttributes.Contains( attributeType ) ) {
+                    return true;
+                }
+            }
 
 			return false;
 		}
@@ -238,10 +240,17 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 					compilation.GetTypeByMetadataName( "NUnit.Framework.TestCaseSourceAttribute" ),
                     compilation.GetTypeByMetadataName( "NUnit.Framework.TheoryAttribute" )
 				);
+            ImmutableHashSet<INamedTypeSymbol> setupTeardownAttributes = ImmutableHashSet
+                .Create(
+                    compilation.GetTypeByMetadataName( "NUnit.Framework.SetUpAttribute" ),
+                    compilation.GetTypeByMetadataName( "NUnit.Framework.OneTimeSetUpAttribute" ),
+                    compilation.GetTypeByMetadataName( "NUnit.Framework.TearDownAttribute" ),
+                    compilation.GetTypeByMetadataName( "NUnit.Framework.OneTimeTearDownAttribute" )
+                );
 
-			INamedTypeSymbol testFixtureAttribute = compilation.GetTypeByMetadataName( "NUnit.Framework.TestFixtureAttribute" );
+            INamedTypeSymbol testFixtureAttribute = compilation.GetTypeByMetadataName( "NUnit.Framework.TestFixtureAttribute" );
 
-			types = new NUnitTypes( categoryAttribute, testAttributes, testFixtureAttribute );
+			types = new NUnitTypes( categoryAttribute, testAttributes, setupTeardownAttributes, testFixtureAttribute );
 			return true;
 		}
 
@@ -250,17 +259,19 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 			internal NUnitTypes(
 				INamedTypeSymbol categoryAttribute,
 				ImmutableHashSet<INamedTypeSymbol> testAttributes,
-				INamedTypeSymbol testFixtureAttribute
+                ImmutableHashSet<INamedTypeSymbol> setupTeardownAttributes,
+                INamedTypeSymbol testFixtureAttribute
 			) {
 				CategoryAttribute = categoryAttribute;
 				TestAttributes = testAttributes;
-				TestFixtureAttribute = testFixtureAttribute;
+                SetupTeardownAttributes = setupTeardownAttributes;
+                TestFixtureAttribute = testFixtureAttribute;
 			}
 
 			public INamedTypeSymbol CategoryAttribute { get; }
 			public ImmutableHashSet<INamedTypeSymbol> TestAttributes { get; }
 			public INamedTypeSymbol TestFixtureAttribute { get; }
-
-		}
+            public ImmutableHashSet<INamedTypeSymbol> SetupTeardownAttributes { get; }
+        }
 	}
 }
