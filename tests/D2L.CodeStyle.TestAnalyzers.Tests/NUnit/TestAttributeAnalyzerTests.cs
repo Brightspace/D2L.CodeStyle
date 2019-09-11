@@ -230,7 +230,7 @@ namespace TestNamespace {
             DiagnosticResult result = new DiagnosticResult {
                 Id = diag.Id,
                 Message = string.Format( diag.MessageFormat.ToString(), messageArgs ),
-                Severity = DiagnosticSeverity.Error,
+                Severity = DiagnosticSeverity.Warning,
                 Locations = new[] {
                     new DiagnosticResultLocation( "Test1.cs", line, column )
                 }

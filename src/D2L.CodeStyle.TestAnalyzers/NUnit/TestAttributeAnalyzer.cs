@@ -17,7 +17,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
             Diagnostics.TestAttributeMissed
         );
 
-        private static HashSet<string> blacklist;
+        private static HashSet<string> blacklist = new HashSet<string>();
 
         public override void Initialize( AnalysisContext context ) {
             context.EnableConcurrentExecution();
