@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -15,6 +16,8 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
             Diagnostics.TestAttributeMissed
         );
 
+        private static HashSet<string> blacklist;
+
         public override void Initialize( AnalysisContext context ) {
             context.EnableConcurrentExecution();
             context.RegisterCompilationStartAction( OnCompilationStart );
@@ -22,6 +25,9 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
         private static void OnCompilationStart( CompilationStartAnalysisContext context ) {
             if ( !TryLoadNUnitTypes( context.Compilation, out NUnitTypes types ) ) {
+                return;
+            }
+            if( !TryLoadBlacklist("TestAttributeAnalyzerBlacklist.txt") ) {
                 return;
             }
 
@@ -55,6 +61,11 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
             // We need the declaring class to be a [TestFixture] to continue
             INamedTypeSymbol declaringClass = method.ContainingType;
             if ( !declaringClass.GetAttributes().Any( attr => attr.AttributeClass == types.TestFixtureAttribute ) ) {
+                return;
+            }
+
+            // Ignore any classes which are blacklisted
+            if( blacklist.Contains(getFullyQualifiedName(method.ContainingType) ) ) {
                 return;
             }
 
@@ -104,6 +115,33 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
             types = new NUnitTypes( testAttributes, setupTeardownAttributes, testFixtureAttribute );
             return true;
+        }
+
+        private static bool TryLoadBlacklist( string blacklistPath) {
+            try {
+                using ( StreamReader reader = File.OpenText( blacklistPath ) ) {
+                    while ( !reader.EndOfStream ) {
+                        blacklist.Add( reader.ReadLine().Trim() );
+                    }
+                }
+            } catch(FileNotFoundException) {
+                return false;
+            }
+
+            // TODO: Is is better practice to let the analyzer fail and pass an
+            // exception to VS, or return false and fail silently?
+
+            return true;
+        }
+
+        private static string getFullyQualifiedName( INamedTypeSymbol type ) {
+            string qualifiedName = type.Name;
+            var @namespace = type.ContainingNamespace;
+            while ( !(@namespace is null) && !string.IsNullOrWhiteSpace( @namespace.Name ) ) {
+                qualifiedName = @namespace.Name + "." + qualifiedName;
+                @namespace = @namespace.ContainingNamespace;
+            }
+            return qualifiedName;
         }
 
         private sealed class NUnitTypes {
