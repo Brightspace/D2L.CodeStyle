@@ -14,7 +14,6 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 namespace NUnit.Framework {
 	public abstract class NUnitAttribute : System.Attribute {}
 
-	public class CategoryAttribute : NUnitAttribute { public CategoryAttribute( string name ) {} }
 	public class TestFixtureAttribute : NUnitAttribute {
 		public string Category { get; set; }
 	}
@@ -22,6 +21,11 @@ namespace NUnit.Framework {
 	public class TestAttribute : NUnitAttribute {}
 	public class TestCaseAttribute : NUnitAttribute {}
 	public class TestCaseSourceAttribute : NUnitAttribute {}
+	public class TheoryAttribute : NUnitAttribute {}
+	public class SetUpAttribute : NUnitAttribute {}
+	public class TearDownAttribute : NUnitAttribute {}
+	public class OneTimeSetUpAttribute : NUnitAttribute {}
+	public class OneTimeTearDownAttribute : NUnitAttribute {}
 }
 ";
 
@@ -30,7 +34,6 @@ namespace NUnit.Framework {
             const string test = @"
 namespace TestNamespace {
 	[NUnit.Framework.TextFixture]
-    [NUnit.Framework.Category( ""Unit"" )]
 	class TestClass {
 		[NUnit.Framework.Test]
 		public void TestMethod( int x ) {}
@@ -43,7 +46,6 @@ namespace TestNamespace {
         public void TestAttribute_NoFixture_NoDiagnostic() {
             const string test = @"
 namespace TestNamespace {
-    [NUnit.Framework.Category( ""Unit"" )]
 	class TestClass {
 		[NUnit.Framework.Test]
 		public void TestMethod( int x ) {}
@@ -56,7 +58,6 @@ namespace TestNamespace {
         public void NoTestAttribute_NoFixture_NoDiagnostic() {
             const string test = @"
 namespace TestNamespace {
-	[NUnit.Framework.Category( ""Unit"" )]
 	class TestClass {
 		public void TestMethod( int x ) {}
 	}
@@ -69,7 +70,6 @@ namespace TestNamespace {
             const string test = @"
 namespace TestNamespace {
 	[NUnit.Framework.TextFixture]
-    [NUnit.Framework.Category( ""Unit"" )]
 	class TestClass {
 		[NUnit.Framework.Theory]
 		public void TestMethod( int x ) {}
@@ -83,7 +83,6 @@ namespace TestNamespace {
             const string test = @"
 namespace TestNamespace {
 	[NUnit.Framework.TextFixture]
-    [NUnit.Framework.Category( ""Unit"" )]
 	class TestClass {
 		[NUnit.Framework.TestCase(1)]
 		public void TestMethod( int x ) {}
@@ -97,7 +96,6 @@ namespace TestNamespace {
             const string test = @"
 namespace TestNamespace {
 	[NUnit.Framework.TextFixture]
-    [NUnit.Framework.Category( ""Unit"" )]
 	class TestClass {
 		[NUnit.Framework.TestCase(1)]
 		[NUnit.Framework.TestCase(2)]
@@ -113,7 +111,6 @@ namespace TestNamespace {
             const string test = @"
 namespace TestNamespace {
 	[NUnit.Framework.TextFixture]
-    [NUnit.Framework.Category( ""Unit"" )]
 	class TestClass {
 		[NUnit.Framework.TestCaseSource(""cases"")]
 		public void TestMethod( int x ) {}
@@ -132,7 +129,6 @@ namespace TestNamespace {
             const string test = @"
 namespace TestNamespace {
 	[NUnit.Framework.TextFixture]
-    [NUnit.Framework.Category( ""Unit"" )]
 	class TestClass {
 		[NUnit.Framework.SetUp]
 		public void TestMethod(  ) {}
@@ -146,7 +142,6 @@ namespace TestNamespace {
             const string test = @"
 namespace TestNamespace {
 	[NUnit.Framework.TextFixture]
-    [NUnit.Framework.Category( ""Unit"" )]
 	class TestClass {
 		[NUnit.Framework.OneTimeSetUp]
 		public void TestMethod(  ) {}
@@ -160,7 +155,6 @@ namespace TestNamespace {
             const string test = @"
 namespace TestNamespace {
 	[NUnit.Framework.TextFixture]
-    [NUnit.Framework.Category( ""Unit"" )]
 	class TestClass {
 		[NUnit.Framework.TearDown]
 		public void TestMethod(  ) {}
@@ -174,7 +168,6 @@ namespace TestNamespace {
             const string test = @"
 namespace TestNamespace {
 	[NUnit.Framework.TextFixture]
-    [NUnit.Framework.Category( ""Unit"" )]
 	class TestClass {
 		[NUnit.Framework.OneTimeTearDown]
 		public void TestMethod(  ) {}
@@ -188,7 +181,6 @@ namespace TestNamespace {
             const string test = @"
 namespace TestNamespace {
 	[NUnit.Framework.TestFixture]
-	[NUnit.Framework.Category( ""Unit"" )]
 	class TestClass {
 		public void TestMethod( int x ) {}
 	}
@@ -197,7 +189,7 @@ namespace TestNamespace {
                 diag: Diagnostics.TestAttributeMissed,
                 otherFile: PREAMBLE,
                 file: test,
-                line: 6,
+                line: 5,
                 column: 15,
                 $"TestMethod"
             );
@@ -208,7 +200,6 @@ namespace TestNamespace {
             const string test = @"
 namespace TestNamespace {
 	[NUnit.Framework.TestFixture]
-	[NUnit.Framework.Category( ""Unit"" )]
 	class TestClass {
         [NUnit.Framework.Explicit]
 		public void TestMethod( int x ) {}
@@ -218,7 +209,7 @@ namespace TestNamespace {
                 diag: Diagnostics.TestAttributeMissed,
                 otherFile: PREAMBLE,
                 file: test,
-                line: 7,
+                line: 6,
                 column: 15,
                 $"TestMethod"
             );
