@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text;
 
 namespace D2L.CodeStyle.TestAnalyzers.NUnit {
+    [DiagnosticAnalyzer( LanguageNames.CSharp )]
     internal sealed class TestAttributeAnalyzer : DiagnosticAnalyzer {
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
             Diagnostics.TestAttributeMissed
