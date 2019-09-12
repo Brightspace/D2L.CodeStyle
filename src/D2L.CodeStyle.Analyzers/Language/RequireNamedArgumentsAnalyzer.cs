@@ -132,20 +132,20 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			// the current call could be nested inside an expression tree, so
 			// check every call we are nested inside
-			while( node != null && ( node is InvocationExpressionSyntax || node is ObjectCreationExpressionSyntax ) ) {
-				var implicitType = model.GetTypeInfo( node.Parent ).ConvertedType;
-				if( implicitType != null && implicitType.Kind != SymbolKind.ErrorType ) {
-					var baseExprType = implicitType.BaseType;
+			foreach( var node in node.Ancestors() ) {
+				if( node is InvocationExpressionSyntax || node is ObjectCreationExpressionSyntax ) {
+					var implicitType = model.GetTypeInfo( node.Parent ).ConvertedType;
+					if( implicitType != null && implicitType.Kind != SymbolKind.ErrorType ) {
+						var baseExprType = implicitType.BaseType;
 
-					if( baseExprType == expressionType.OriginalDefinition ) {
-						return true;
+						if( baseExprType == expressionType.OriginalDefinition ) {
+							return true;
+						}
 					}
 				}
 				node = node.Parent;
-				while( node is ArgumentSyntax || node is ArgumentListSyntax ) {
-					node = node.Parent;
-				}
 			}
+
 			return false;
 		}
 

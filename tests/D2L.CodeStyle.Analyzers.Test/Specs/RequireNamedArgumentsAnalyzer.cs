@@ -150,6 +150,10 @@ namespace D2L {
 						4,
 						_arg2_ret( 1, 2 )
 				);
+            System.Linq.Expressions.Expression<Func<int>> nest5 =
+                () => _arg2_ret( 1, 2 + _arg2_ret( 1, 2 ) );
+            System.Linq.Expressions.Expression<Func<int>> nest6 =
+                () => _arg2_ret( 1, _arg2_ret(1, 2) * _arg2_ret( 1, 2 ) );
             #endregion
         }
     }
