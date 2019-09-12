@@ -10,6 +10,7 @@ namespace D2L {
 		}
 
         private static int _a1, _a2, _a3, _a4, _a5, _a6, _a7, _a8, _a9, p; // "placeholder" variables
+        private static int @class, @params, @int, @name, @a5;
 
 		public static void _arg0() { }
 		public static void _arg1( int a1 ) { }
@@ -22,6 +23,8 @@ namespace D2L {
 		public static void _arg6( int a1, int a2, int a3, int a4, int a5, int a6 ) { }
 
 		public static void funcWithParams( int a, int b, int c, params int[] ps ) { }
+        
+        public static void funcWithVerbatims( int @int, int @class, int @params, int @name, int @a5 ) { }
 
 		public delegate void delegate0Args();
 		public delegate void delegate1Args( int a1 );
@@ -57,6 +60,15 @@ namespace D2L {
             /* TooManyUnnamedArgs */ _arg6(1, 2, 3, 4, 5, 6) /**/;
             _arg3( /* LiteralArgShouldBeNamed(a1) */ 1 /**/, /* LiteralArgShouldBeNamed(a2) */ 2 /**/, /* LiteralArgShouldBeNamed(a3) */ 3 /**/ );
             _arg3( a1: 1, /* LiteralArgShouldBeNamed(a2) */ 2 /**/, /* LiteralArgShouldBeNamed(a3) */ 3 /**/ );
+            #endregion
+
+            #region verbatim identifiers
+            funcWithVerbatims( @int, @class, /* LiteralArgShouldBeNamed(@params) */ 3 /**/, p, p );
+            /* TooManyUnnamedArgs */ funcWithVerbatims( p, p, p, p, p ) /**/;
+
+            // These should pass: 
+            funcWithVerbatims( @int, @class, @params, @name, @a5 );
+            funcWithVerbatims( @int, p, p, p, p );
             #endregion
 
             #region all named args is usually preferred if there are lots of args
