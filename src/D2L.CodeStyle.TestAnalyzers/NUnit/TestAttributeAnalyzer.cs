@@ -17,18 +17,20 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
             Diagnostics.TestAttributeMissed
         );
 
-        private static HashSet<string> blacklist = new HashSet<string>();
+        private ImmutableHashSet<string> blacklist = ImmutableHashSet<string>.Empty;
+        private const string blacklistFilename = "TestAttributeAnalyzerBlacklist.txt";
 
         public override void Initialize( AnalysisContext context ) {
+            TryLoadBlacklist( blacklistFilename );
             context.EnableConcurrentExecution();
-            context.RegisterCompilationStartAction( OnCompilationStart );
+            context.RegisterCompilationStartAction( ctx => OnCompilationStart(ctx, blacklist) );
         }
 
-        private static void OnCompilationStart( CompilationStartAnalysisContext context ) {
+        private static void OnCompilationStart(
+            CompilationStartAnalysisContext context, 
+            ImmutableHashSet<string> blacklist
+        ) {
             if ( !TryLoadNUnitTypes( context.Compilation, out NUnitTypes types ) ) {
-                return;
-            }
-            if( !TryLoadBlacklist("TestAttributeAnalyzerBlacklist.txt") ) {
                 return;
             }
 
@@ -36,7 +38,8 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
                 ctx => AnalyzeMethod(
                     context: ctx,
                     types: types,
-                    syntax: ctx.Node as MethodDeclarationSyntax
+                    syntax: ctx.Node as MethodDeclarationSyntax,
+                    blacklist
                 ),
                 SyntaxKind.MethodDeclaration
             );
@@ -45,7 +48,8 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
         private static void AnalyzeMethod(
             SyntaxNodeAnalysisContext context,
             NUnitTypes types,
-            MethodDeclarationSyntax syntax
+            MethodDeclarationSyntax syntax,
+            ImmutableHashSet<string> blacklist
         ) {
             SemanticModel model = context.SemanticModel;
 
@@ -66,7 +70,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
             }
 
             // Ignore any classes which are blacklisted
-            if( blacklist.Contains(getFullyQualifiedName(method.ContainingType) ) ) {
+            if( blacklist.Contains( method.ContainingType.ToDisplayString() ) ) {
                 return;
             }
 
@@ -118,31 +122,10 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
             return true;
         }
 
-        private static bool TryLoadBlacklist( string blacklistPath) {
+        private void TryLoadBlacklist( string blacklistPath) {
             try {
-                using ( StreamReader reader = File.OpenText( blacklistPath ) ) {
-                    while ( !reader.EndOfStream ) {
-                        blacklist.Add( reader.ReadLine().Trim() );
-                    }
-                }
-            } catch(FileNotFoundException) {
-                return false;
-            }
-
-            // TODO: Is is better practice to let the analyzer fail and pass an
-            // exception to VS, or return false and fail silently?
-
-            return true;
-        }
-
-        private static string getFullyQualifiedName( INamedTypeSymbol type ) {
-            string qualifiedName = type.Name;
-            var @namespace = type.ContainingNamespace;
-            while ( !(@namespace is null) && !string.IsNullOrWhiteSpace( @namespace.Name ) ) {
-                qualifiedName = @namespace.Name + "." + qualifiedName;
-                @namespace = @namespace.ContainingNamespace;
-            }
-            return qualifiedName;
+                blacklist = File.ReadAllLines( blacklistPath ).ToImmutableHashSet();
+            } catch(FileNotFoundException) {}
         }
 
         private sealed class NUnitTypes {
