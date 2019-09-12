@@ -107,9 +107,10 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					: arg.RefOrOutKeyword.LeadingTrivia;
 
 				yield return arg
+					.WithoutLeadingTrivia() // Remove leading trivia before argument
 					.WithNameColon(
 						SyntaxFactory.NameColon( paramNames[idx] )
-							.WithLeadingTrivia( leadingTrivia )
+							.WithLeadingTrivia( leadingTrivia ) // Re-apply leading trivia before NameColon
 					);
 			}
 		}
