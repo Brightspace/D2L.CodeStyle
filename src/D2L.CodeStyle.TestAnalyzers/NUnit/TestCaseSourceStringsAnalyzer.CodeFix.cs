@@ -33,7 +33,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 					context.RegisterCodeFix( CodeAction.Create(
 						title: TITLE,
 						createChangedDocument: cancellationToken => NameofIfyAsync( context.Document, stringArg, cancellationToken )
-					), diagnostic );
+					), diagnostic);
 				}
 			}
 
