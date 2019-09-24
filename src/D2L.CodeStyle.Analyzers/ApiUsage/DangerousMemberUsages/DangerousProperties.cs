@@ -26,6 +26,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				)
 			)
 			.Add(
+				"System.Reflection.AssemblyName",
+				ImmutableArray.Create(
+					"Version"
+				)
+			)
+			.Add(
 				"System.Web.HttpContext",
 				ImmutableArray.Create(
 					"Current",
