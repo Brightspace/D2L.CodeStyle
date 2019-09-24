@@ -25,6 +25,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 					"UseNagleAlgorithm"
 				)
 			)
+			//Bazel caching requires knowledge of inputs, and verification that they haven't changed. If inputs have changed, it does not use the cache.
+			//The usage of the assembly version number property prevents Bazel from caching because on each CI build, the version number is different
+			//resulting in Bazel never using the cache. 
 			.Add(
 				"System.Reflection.AssemblyName",
 				ImmutableArray.Create(
