@@ -248,7 +248,7 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor TooManyUnnamedArgs = new DiagnosticDescriptor(
 			id: "D2L0032",
 			title: "Name arguments for readability.",
-			messageFormat: "There are more than {RequireNamedArgumentsAnalyzer.TOO_MANY_UNNAMED_ARGS} unnamed arguments. Use named arguments for readability.",
+			messageFormat: "There are more than {0} unnamed arguments. Use named arguments for readability.",
 			category: "Readability",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
