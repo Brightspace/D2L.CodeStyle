@@ -22,11 +22,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 		public void RegisterSingletonLocatorAnalyzer( CompilationStartAnalysisContext context ) {
 			// Cache some important type lookups
 			var locatorType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.SingletonLocator" );
-			var locatorType2 = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.OldAndBrokenSingletonLocator" );
 
 			// If this type lookup failed then SingletonLocator cannot resolve
 			// and we don't need to register our analyzer.
-			if( locatorType.IsNullOrErrorType() && locatorType2.IsNullOrErrorType() ) {
+			if( locatorType.IsNullOrErrorType() ) {
 				return;
 			}
 
@@ -52,10 +51,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 
 			bool IsSingletonLocator( INamedTypeSymbol other ) {
 				if( !locatorType.IsNullOrErrorType() && other == locatorType ) {
-					return true;
-				}
-
-				if( !locatorType2.IsNullOrErrorType() && other == locatorType2 ) {
 					return true;
 				}
 
