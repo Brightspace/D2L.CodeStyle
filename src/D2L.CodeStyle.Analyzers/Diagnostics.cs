@@ -495,5 +495,15 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true
 		);
 
+		public static readonly DiagnosticDescriptor ParametersShouldBeRemoved = new DiagnosticDescriptor(
+			id: "D2L0057",
+			title: "Parameters should be removed",
+			messageFormat: "Function '{0}' with parameters should be removed",
+			description: "Remove unnecessary parameters from function",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
 	}
 }
