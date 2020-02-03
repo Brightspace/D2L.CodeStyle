@@ -227,20 +227,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		}
 
 		private static string GetPsuedoName( ArgumentSyntax arg ) {
-			string ident = null;
 
-			switch( arg.Expression ) {
-				case IdentifierNameSyntax identArg:
-					ident = identArg.Identifier.ValueText;
-					break;
-				case MemberAccessExpressionSyntax access:
-					// Member access is left-associative, so we pick the
-					// right -most ident, i.e. "foo.bar.baz" is equivalent to
-					// (foo.bar).baz, and we will grab "baz".
-					ident = access.Name.Identifier.ValueText;
-					break;
-			}
-
+			string ident = arg.Expression.TryGetInferredMemberName();
 			if( ident == null ) {
 				return null;
 			}
