@@ -152,7 +152,8 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 				context.ReportDiagnostic(
 					Diagnostic.Create(
 						Diagnostics.UnnecessaryWhitelistEntry,
-						diagnosticLocation
+						diagnosticLocation,
+						GetWhitelistName( namedType ), WhitelistFileName
 					)
 				);
 			}
