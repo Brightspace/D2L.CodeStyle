@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using D2L.CodeStyle.TestAnalyzers.Common;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -30,7 +29,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 			);
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-			Diagnostics.NUnitCategory, Diagnostics.TestAttributeMissed
+			Diagnostics.NUnitCategory
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -84,34 +83,20 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 				return;
 			}
 
-			// Any private/helper methods should be private/internal and can be ignored
-			if( method.DeclaredAccessibility != Accessibility.Public ) {
+			if( !IsTestMethod( types, method ) ) {
 				return;
 			}
 
 			ImmutableSortedSet<string> categories = GatherTestMethodCategories( types, method );
-			if( !categories.Overlaps( RequiredCategories ) ) {
-				context.ReportDiagnostic( Diagnostic.Create(
-					Diagnostics.NUnitCategory,
-					syntax.Identifier.GetLocation(),
-					$"Test must be categorized as one of [{string.Join( ", ", RequiredCategories )}], but saw [{string.Join( ", ", categories )}]. See http://docs.dev.d2l/index.php/Test_Categories."
-				) );
-			}
-
-			// We need the declaring class to be a [TestFixture] to continue
-			INamedTypeSymbol declaringClass = method.ContainingType;
-			if( !declaringClass.GetAttributes().Any( attr => attr.AttributeClass == types.TestFixtureAttribute ) ) {
+			if( categories.Overlaps( RequiredCategories ) ) {
 				return;
 			}
 
-			// If we don't have a Test type attribute on the method, report a diagnostic
-			bool isTest = IsTestMethod( types, method );
-			if( !isTest ) {
-				context.ReportDiagnostic( Diagnostic.Create(
-						Diagnostics.TestAttributeMissed, syntax.Identifier.GetLocation(), method.Name )
-					);
-				return;
-			}
+			context.ReportDiagnostic( Diagnostic.Create(
+				Diagnostics.NUnitCategory,
+				syntax.Identifier.GetLocation(),
+				$"Test must be categorized as one of [{string.Join( ", ", RequiredCategories )}], but saw [{string.Join( ", ", categories )}]. See http://docs.dev.d2l/index.php/Test_Categories."
+			) );
 		}
 
 		private static bool IsTestMethod(
@@ -122,10 +107,8 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 				INamedTypeSymbol attributeType = attribute.AttributeClass;
 				if( types.TestAttributes.Contains( attributeType ) ) {
 					return true;
-				} else if ( types.SetupTeardownAttributes.Contains( attributeType ) ) {
-                    return true;
-                }
-            }
+				}
+			}
 
 			return false;
 		}
@@ -238,19 +221,12 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 					compilation.GetTypeByMetadataName( "NUnit.Framework.TestAttribute" ),
 					compilation.GetTypeByMetadataName( "NUnit.Framework.TestCaseAttribute" ),
 					compilation.GetTypeByMetadataName( "NUnit.Framework.TestCaseSourceAttribute" ),
-                    compilation.GetTypeByMetadataName( "NUnit.Framework.TheoryAttribute" )
+					compilation.GetTypeByMetadataName( "NUnit.Framework.TheoryAttribute" )
 				);
-            ImmutableHashSet<INamedTypeSymbol> setupTeardownAttributes = ImmutableHashSet
-                .Create(
-                    compilation.GetTypeByMetadataName( "NUnit.Framework.SetUpAttribute" ),
-                    compilation.GetTypeByMetadataName( "NUnit.Framework.OneTimeSetUpAttribute" ),
-                    compilation.GetTypeByMetadataName( "NUnit.Framework.TearDownAttribute" ),
-                    compilation.GetTypeByMetadataName( "NUnit.Framework.OneTimeTearDownAttribute" )
-                );
 
-            INamedTypeSymbol testFixtureAttribute = compilation.GetTypeByMetadataName( "NUnit.Framework.TestFixtureAttribute" );
+			INamedTypeSymbol testFixtureAttribute = compilation.GetTypeByMetadataName( "NUnit.Framework.TestFixtureAttribute" );
 
-			types = new NUnitTypes( categoryAttribute, testAttributes, setupTeardownAttributes, testFixtureAttribute );
+			types = new NUnitTypes( categoryAttribute, testAttributes, testFixtureAttribute );
 			return true;
 		}
 
@@ -259,19 +235,16 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 			internal NUnitTypes(
 				INamedTypeSymbol categoryAttribute,
 				ImmutableHashSet<INamedTypeSymbol> testAttributes,
-                ImmutableHashSet<INamedTypeSymbol> setupTeardownAttributes,
-                INamedTypeSymbol testFixtureAttribute
+				INamedTypeSymbol testFixtureAttribute
 			) {
 				CategoryAttribute = categoryAttribute;
 				TestAttributes = testAttributes;
-                SetupTeardownAttributes = setupTeardownAttributes;
-                TestFixtureAttribute = testFixtureAttribute;
+				TestFixtureAttribute = testFixtureAttribute;
 			}
 
 			public INamedTypeSymbol CategoryAttribute { get; }
 			public ImmutableHashSet<INamedTypeSymbol> TestAttributes { get; }
 			public INamedTypeSymbol TestFixtureAttribute { get; }
-            public ImmutableHashSet<INamedTypeSymbol> SetupTeardownAttributes { get; }
-        }
+		}
 	}
 }
