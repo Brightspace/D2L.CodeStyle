@@ -3,8 +3,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using System;
-using System.Collections.Generic;
+using Microsoft.CodeAnalysis.Text;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
@@ -17,29 +16,30 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
             Diagnostics.TestAttributeMissed
         );
 
-        private ImmutableHashSet<string> blacklist = ImmutableHashSet<string>.Empty;
-        private const string blacklistFilename = "TestAttributeAnalyzerBlacklist.txt";
+        private const string WhitelistFileName = "TestAttributeAnalyzerBlacklist.txt";
 
         public override void Initialize( AnalysisContext context ) {
-            TryLoadBlacklist( blacklistFilename );
             context.EnableConcurrentExecution();
-            context.RegisterCompilationStartAction( ctx => OnCompilationStart(ctx, blacklist) );
+            context.RegisterCompilationStartAction( OnCompilationStart );
         }
 
         private static void OnCompilationStart(
-            CompilationStartAnalysisContext context, 
-            ImmutableHashSet<string> blacklist
+            CompilationStartAnalysisContext context
         ) {
             if ( !TryLoadNUnitTypes( context.Compilation, out NUnitTypes types ) ) {
                 return;
             }
+
+            ImmutableHashSet<string> whitelistedClasses = GetWhitelist(
+                context.Options.AdditionalFiles
+            );
 
             context.RegisterSyntaxNodeAction(
                 ctx => AnalyzeMethod(
                     context: ctx,
                     types: types,
                     syntax: ctx.Node as MethodDeclarationSyntax,
-                    blacklist
+                    blacklist: whitelistedClasses
                 ),
                 SyntaxKind.MethodDeclaration
             );
@@ -70,7 +70,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
             }
 
             // Ignore any classes which are blacklisted
-            if( blacklist.Contains( method.ContainingType.ToDisplayString() ) ) {
+            if( IsClassWhitelisted( blacklist, method.ContainingType ) ) {
                 return;
             }
 
@@ -122,10 +122,41 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
             return true;
         }
 
-        private void TryLoadBlacklist( string blacklistPath) {
-            try {
-                blacklist = File.ReadAllLines( blacklistPath ).ToImmutableHashSet();
-            } catch(FileNotFoundException) {}
+        private static bool IsClassWhitelisted(
+            ImmutableHashSet<string> whitelistedClasses,
+            ISymbol classSymbol
+        ) {
+            bool isWhiteListed = whitelistedClasses.Contains( GetWhitelistName( classSymbol ) );
+
+            return isWhiteListed;
+        }
+
+        private static string GetWhitelistName( ISymbol classSymbol ) =>
+            classSymbol.ToString()
+            + ", "
+            + classSymbol.ContainingAssembly.ToDisplayString( SymbolDisplayFormat.MinimallyQualifiedFormat )
+        ;
+
+        private static ImmutableHashSet<string> GetWhitelist(
+            ImmutableArray<AdditionalText> additionalFiles
+        ) {
+            ImmutableHashSet<string>.Builder whitelistedClasses = ImmutableHashSet.CreateBuilder<string>();
+
+            AdditionalText whitelistFile = additionalFiles.FirstOrDefault(
+                file => Path.GetFileName( file.Path ) == WhitelistFileName
+            );
+
+            if( whitelistFile == null ) {
+                return whitelistedClasses.ToImmutableHashSet();
+            }
+
+            SourceText whitelistText = whitelistFile.GetText();
+
+            foreach( TextLine line in whitelistText.Lines ) {
+                whitelistedClasses.Add( line.ToString().Trim() );
+            }
+
+            return whitelistedClasses.ToImmutableHashSet();
         }
 
         private sealed class NUnitTypes {
