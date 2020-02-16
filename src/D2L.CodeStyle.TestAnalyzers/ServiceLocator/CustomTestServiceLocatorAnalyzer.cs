@@ -227,10 +227,16 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 			ISymbol classSymbol
 		) {
 			bool isWhiteListed = _excludeKnownProblems
-				&& whitelistedClasses.Contains( classSymbol.ToString() );
+				&& whitelistedClasses.Contains( GetWhitelistName( classSymbol ) );
 
 			return isWhiteListed;
 		}
+
+		private static string GetWhitelistName( ISymbol classSymbol ) =>
+			classSymbol.ToString()
+			+ ", "
+			+ classSymbol.ContainingAssembly.ToDisplayString( SymbolDisplayFormat.MinimallyQualifiedFormat )
+		;
 
 		private ImmutableHashSet<string> GetWhitelist(
 			ImmutableArray<AdditionalText> additionalFiles
