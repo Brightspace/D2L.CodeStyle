@@ -495,5 +495,15 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true
 		);
 
+		public static readonly DiagnosticDescriptor ShouldRethrow = new DiagnosticDescriptor(
+			id: "D2LXXXX",
+			title: "Should rethrow expceptions",
+			messageFormat: "Should rethrow exceptions",
+			description: "Should rethrow exceptions.",
+			category: "Language",
+			defaultSeverity: DiagnosticSeverity.Info,
+			isEnabledByDefault: true
+		);
+
 	}
 }
