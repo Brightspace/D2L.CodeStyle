@@ -137,6 +137,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 			"D2L.LP.Enrollments.Sections.Api.SectionController",
 			"D2L.LP.Extensibility.AccountSettings.Api.AccountSettingsController",
 			"D2L.LP.Extensibility.OrgUnits.Courses.Api.CourseOfferingController",
+			"D2L.LP.Extensibility.OrgUnits.Courses.Api.Pre1_26.CourseOfferingController",
 			"D2L.LP.Extensibility.OrgUnits.Courses.Api.CourseTemplateController",
 			"D2L.LP.Extensibility.Users.Api.Management.UserManagementController",
 			"D2L.LP.Extensibility.Users.Api.Management.UserManagementController_1_16",
