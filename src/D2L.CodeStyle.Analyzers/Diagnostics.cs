@@ -495,5 +495,15 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true
 		);
 
+		public static readonly DiagnosticDescriptor UnnecessaryWhitelistEntry = new DiagnosticDescriptor(
+			id: "D2L0057",
+			title: "Unnecessarily listed in an analyzer whitelist",
+			messageFormat: "The entry for '{0}' in '{1}' is unnecessary.",
+			category: "Cleanliness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "Unnecessarily listed in an analyzer whitelist."
+		 );
+
 	}
 }
