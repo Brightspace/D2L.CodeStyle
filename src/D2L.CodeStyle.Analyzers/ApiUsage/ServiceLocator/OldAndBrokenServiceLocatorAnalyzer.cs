@@ -15,11 +15,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			Diagnostics.OldAndBrokenLocatorIsObsolete,
 			Diagnostics.UnnecessaryWhitelistEntry
 		);
-
-		private readonly WhitelistHelper<INamedTypeSymbol> m_whitelistHelper = WhitelistHelper.TypeLevel(
-			"OldAndBrokenServiceLocatorWhitelist.txt"
-		);
-
 		private readonly bool _excludeKnownProblems;
 
 		public OldAndBrokenServiceLocatorAnalyzer() : this( true ) { }
@@ -59,7 +54,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				customActivatorType
 			);
 
-			Func<INamedTypeSymbol, bool> classIsWhitelisted = m_whitelistHelper.LoadWhitelist( context.Options );
+			TypeWhitelist typeWhitelist = TypeWhitelist.CreateFromAnalyzerOptions(
+				whitelistFileName: "OldAndBrokenServiceLocatorWhitelist.txt",
+				analyzerOptions: context.Options
+			);
 
 			//Prevent static usage of OldAndBrokenServiceLocator
 			//For example, OldAndBrokenServiceLocator.Instance.Get<IFoo>()
@@ -67,7 +65,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				ctx => PreventOldAndBrokenUsage(
 					ctx,
 					disallowedTypes,
-					classIsWhitelisted
+					typeWhitelist
 				),
 				SyntaxKind.IdentifierName
 			);
@@ -76,7 +74,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				ctx => PreventUnnecessaryWhitelisting(
 					ctx,
 					disallowedTypes,
-					classIsWhitelisted
+					typeWhitelist
 				),
 				SymbolKind.NamedType
 			);
@@ -87,7 +85,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 		private void PreventOldAndBrokenUsage(
 			SyntaxNodeAnalysisContext context,
 			ImmutableArray<INamedTypeSymbol> disallowedTypes,
-			Func<INamedTypeSymbol, bool> classIsWhitelisted
+			TypeWhitelist typeWhitelist
 		) {
 			if( !( context.Node is IdentifierNameSyntax syntax ) ) {
 				return;
@@ -105,7 +103,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				return;
 			}
 
-			if( _excludeKnownProblems && parentSymbols.Any( classIsWhitelisted ) ) {
+			if( _excludeKnownProblems && parentSymbols.Any( typeWhitelist.Contains ) ) {
 				return;
 			}
 
@@ -117,13 +115,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 		private void PreventUnnecessaryWhitelisting(
 			SymbolAnalysisContext context,
 			ImmutableArray<INamedTypeSymbol> disallowedTypes,
-			Func<INamedTypeSymbol, bool> classIsWhitelisted
+			TypeWhitelist typeWhitelist
 		) {
 			if( !( context.Symbol is INamedTypeSymbol namedType ) ) {
 				return;
 			}
 
-			if( !classIsWhitelisted( namedType ) ) {
+			if( !typeWhitelist.Contains( namedType ) ) {
 				return;
 			}
 
@@ -146,7 +144,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			}
 
 			if( diagnosticLocation != null ) {
-				m_whitelistHelper.EntryIsUnnecessary(
+				typeWhitelist.ReportEntryAsUnnecesary(
 					entry: namedType,
 					location: diagnosticLocation,
 					report: context.ReportDiagnostic
