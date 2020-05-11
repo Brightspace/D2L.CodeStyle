@@ -505,5 +505,15 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "Unnecessarily listed in an analyzer whitelist."
 		 );
 
+		public static readonly DiagnosticDescriptor ExternalDataSetVisibilityProviderTypeParameterMatchesClass = new DiagnosticDescriptor(
+			id: "D2L0058",
+			title: "Type parameter of IExternalDataSetVisibilityProviderType must be the class using it.",
+			messageFormat: "The type parameter of '{0}' must be '{1}'.",
+			description: "Type parameter of IExternalDataSetVisibilityProviderType must be the class using it.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		 );
+
 	}
 }
