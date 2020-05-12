@@ -51,13 +51,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DataHub {
 
 			ClassDeclarationSyntax classDeclarationSyntax = (ClassDeclarationSyntax)context.Node;
 
-			SymbolInfo symbolInfo = context.SemanticModel.GetSymbolInfo( classDeclarationSyntax );
-
-			INamedTypeSymbol baseSymbol = ( symbolInfo.Symbol as INamedTypeSymbol );
-			if( baseSymbol.IsNullOrErrorType() ) {
-				return;
-			}
-
+			INamedTypeSymbol baseSymbol = context.SemanticModel.GetDeclaredSymbol( classDeclarationSyntax );
 			if( !baseSymbol.Interfaces.Contains( IEventDrivenDataSetPluginType ) ) {
 				return;
 			}
