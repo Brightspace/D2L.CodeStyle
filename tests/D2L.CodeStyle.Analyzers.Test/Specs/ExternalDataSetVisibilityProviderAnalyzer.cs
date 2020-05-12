@@ -8,8 +8,9 @@ namespace D2L.AW.DataExport.BrightspaceDataSets.Domain {
 	internal interface IExternalDataSetVisibilityProvider<T> where T : IEventDrivenDataSetPlugin { }
 }
 
-namespace D2L.CodeStyle.Analyzers.Tests.Specs
-{
+namespace D2L.CodeStyle.Analyzers.Tests.Specs {
+	using D2L.AW.DataExport.BrightspaceDataSets.Domain;
+
 	class ValidConstructorParameter : IEventDrivenDataSetPlugin {
 		ValidConstructorParameter(
 			IExternalDataSetVisibilityProvider<ValidConstructorParameter> e
