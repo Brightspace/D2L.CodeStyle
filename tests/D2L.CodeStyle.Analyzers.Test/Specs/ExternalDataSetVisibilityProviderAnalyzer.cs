@@ -19,7 +19,7 @@ namespace D2L.CodeStyle.Analyzers.Tests.Specs {
 
 	class InvalidConstructorParameter : IEventDrivenDataSetPlugin{
 		InvalidConstructorParameter(
-			/* ExternalDataSetVisibilityProviderTypeParameterMatchesClass */ IExternalDataSetVisibilityProvider<ValidConstructorParameter> /**/ e 
+			/* ExternalDataSetVisibilityProviderTypeParameterMatchesClass(IExternalDataSetVisibilityProvider, InvalidConstructorParameter) */ IExternalDataSetVisibilityProvider<ValidConstructorParameter> e /**/
 		) { }
 	}
 }
