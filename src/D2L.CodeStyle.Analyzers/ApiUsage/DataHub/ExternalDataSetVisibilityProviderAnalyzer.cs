@@ -77,7 +77,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DataHub {
 
 			ITypeSymbol expectedType = ExternalDataSetVisibilityProviderType.Construct( baseSymbol );
 
-			if( foundParameterSymbol.Type == expectedType ) {
+			if( foundParameterSymbol.Type.Equals( expectedType ) ) {
 				return;
 			}
 
