@@ -11,8 +11,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public class JsonParamBinderAnalyzer : DiagnosticAnalyzer {
 
-		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
-			=> ImmutableArray.Create( Diagnostics.ObsoleteJsonParamBinder );
+		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
+			Diagnostics.ObsoleteJsonParamBinder,
+			Diagnostics.UnnecessaryWhitelistEntry
+		);
 
 		public override void Initialize( AnalysisContext context ) {
 
