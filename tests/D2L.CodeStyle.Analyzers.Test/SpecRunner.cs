@@ -4,8 +4,11 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -192,10 +195,50 @@ namespace D2L.CodeStyle.Analyzers {
 		}
 
 		private static ImmutableArray<Diagnostic> GetActualDiagnostics( Compilation compilation, DiagnosticAnalyzer analyzer ) {
+			var additionalFiles = ImmutableArray.CreateBuilder<AdditionalText>();
+			Assembly testAssembly = Assembly.GetExecutingAssembly();
+			foreach( var resourcePath in testAssembly.GetManifestResourceNames() ) {
+				if( !resourcePath.EndsWith( "Whitelist.txt" ) ) {
+					continue;
+				}
+
+				string whitelistName = Regex.Replace(
+					resourcePath,
+					@"^.*\.(?<whitelistName>[^\.]*)\.txt$",
+					@"${whitelistName}.txt"
+				);
+
+				using( var reader = new StreamReader( testAssembly.GetManifestResourceStream( resourcePath ) ) ) {
+					additionalFiles.Add( new AdditionalFile(
+						path: whitelistName,
+						text: reader.ReadToEnd()
+					) );
+				}
+			}
+
 			return compilation
-				.WithAnalyzers( ImmutableArray.Create( analyzer ) )
+				.WithAnalyzers(
+					analyzers: ImmutableArray.Create( analyzer ),
+					options: new AnalyzerOptions( additionalFiles: additionalFiles.ToImmutable() )
+				)
 				.GetAnalyzerDiagnosticsAsync().Result
 				.ToImmutableArray();
+		}
+
+		internal sealed class AdditionalFile : AdditionalText {
+
+			private readonly string m_text;
+
+			public AdditionalFile(
+				string path,
+				string text
+			) {
+				Path = path;
+				m_text = text;
+			}
+
+			public override string Path { get; }
+			public override SourceText GetText( CancellationToken cancellationToken = default ) => SourceText.From( m_text, Encoding.UTF8 );
 		}
 
 		private static IEnumerable<Tuple<SyntaxTrivia, SyntaxTrivia>> GroupCommentsIntoAdjacentPairs(
