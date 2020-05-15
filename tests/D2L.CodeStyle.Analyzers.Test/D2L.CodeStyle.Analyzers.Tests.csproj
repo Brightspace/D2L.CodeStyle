@@ -23,4 +23,8 @@
     <EmbeddedResource Include="Specs\*" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="TestWhitelists\*" />
+  </ItemGroup>
+
 </Project>

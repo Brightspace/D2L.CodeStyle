@@ -13,19 +13,6 @@ namespace D2L.LP.Web.Rest.Attributes {
 
 }
 
-namespace D2L.Awards.WebService.API.V1_0 {
-	
-	public class AssociationController {
-
-		public void Test( [JsonParamBinder] int x ) { } // No diagnostic because allowed legacy class
-
-		public void Test( [JsonParamBinder, OtherAttribute] int x ) { } // No diagnostic because allowed legacy class
-
-
-	}
-
-}
-
 namespace SpecTests {
 
 	public class TestClass {
@@ -41,6 +28,14 @@ namespace SpecTests {
 		public void Test5( [OtherAttribute, /* ObsoleteJsonParamBinder */ JsonParamBinder /**/] int x ) { }
 
 		public void Test6( [OtherAttribute][/* ObsoleteJsonParamBinder */ JsonParamBinder /**/] int x ) { }
+
+	}
+
+	public class WhitelistedClass {
+
+		public void Test( [JsonParamBinder] int x ) { } // No diagnostic because allowed legacy class
+
+		public void Test( [JsonParamBinder, OtherAttribute] int x ) { } // No diagnostic because allowed legacy class
 
 	}
 
