@@ -30,13 +30,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 				return;
 			}
 
-			TypeAllowedList typeAllowedList = TypeAllowedList.CreateFromAnalyzerOptions(
+			AllowedTypeList allowedTypeList = AllowedTypeList.CreateFromAnalyzerOptions(
 				allowedListFileName: "LegacyJsonParamBinderAllowedList.txt",
 				analyzerOptions: context.Options
 			);
 
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeAttribute( ctx, attributeType, typeAllowedList ),
+				ctx => AnalyzeAttribute( ctx, attributeType, allowedTypeList ),
 				SyntaxKind.Attribute
 			);
 
@@ -44,7 +44,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 				ctx => PreventUnnecessaryAllowedListing(
 					ctx,
 					attributeType,
-					typeAllowedList
+					allowedTypeList
 				),
 				SymbolKind.NamedType
 			);
@@ -53,7 +53,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 		private void AnalyzeAttribute(
 			SyntaxNodeAnalysisContext context,
 			INamedTypeSymbol jsonParamBinderT,
-			TypeAllowedList allowedList
+			AllowedTypeList allowedList
 		) {
 			if( !( context.Node is AttributeSyntax attribute ) ) {
 				return;
@@ -88,13 +88,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 		private void PreventUnnecessaryAllowedListing(
 			SymbolAnalysisContext context,
 			INamedTypeSymbol jsonParamBinderT,
-			TypeAllowedList typeAllowedList
+			AllowedTypeList allowedTypeList
 		) {
 			if( !( context.Symbol is INamedTypeSymbol namedType ) ) {
 				return;
 			}
 
-			if( !typeAllowedList.Contains( namedType ) ) {
+			if( !allowedTypeList.Contains( namedType ) ) {
 				return;
 			}
 
@@ -117,7 +117,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 			}
 
 			if( diagnosticLocation != null ) {
-				typeAllowedList.ReportEntryAsUnnecesary(
+				allowedTypeList.ReportEntryAsUnnecesary(
 					entry: namedType,
 					location: diagnosticLocation,
 					report: context.ReportDiagnostic

@@ -8,13 +8,13 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace D2L.CodeStyle.Analyzers.Helpers {
 
-	internal sealed class TypeAllowedList {
+	internal sealed class AllowedTypeList {
 
-		public static TypeAllowedList CreateFromAnalyzerOptions(
+		public static AllowedTypeList CreateFromAnalyzerOptions(
 			string allowedListFileName,
 			AnalyzerOptions analyzerOptions
 		) {
-			return new TypeAllowedList(
+			return new AllowedTypeList(
 				allowedListFileName: allowedListFileName,
 				allowedList: LoadAllowedList( allowedListFileName, analyzerOptions.AdditionalFiles )
 			);
@@ -23,7 +23,7 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 		private readonly string m_allowedListFileName;
 		private readonly ImmutableHashSet<string> m_allowedList;
 
-		private TypeAllowedList(
+		private AllowedTypeList(
 			string allowedListFileName,
 			ImmutableHashSet<string> allowedList
 		) {

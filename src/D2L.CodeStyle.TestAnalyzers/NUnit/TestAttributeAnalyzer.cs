@@ -38,7 +38,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
                     context: ctx,
                     types: types,
                     syntax: ctx.Node as MethodDeclarationSyntax,
-					disallowedList: allowedClasses
+                    disallowedList: allowedClasses
                 ),
                 SyntaxKind.MethodDeclaration
             );
