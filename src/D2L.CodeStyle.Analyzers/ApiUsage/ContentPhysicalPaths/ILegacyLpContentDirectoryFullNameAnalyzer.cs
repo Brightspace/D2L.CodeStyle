@@ -19,7 +19,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ContentPhysicalPaths {
 			PhysicalPathPropertyAnalysis analysis = new PhysicalPathPropertyAnalysis(
 					TypeName,
 					PropertyName,
-					WhitelistedTypes
+					AllowedTypes
 				);
 
 			analysis.Initialize( context );
@@ -28,7 +28,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ContentPhysicalPaths {
 		/// <summary>
 		/// A list of types that already contain ILegacyLpContentDirectory.FullName references
 		/// </summary>
-		private static readonly IImmutableSet<string> WhitelistedTypes = ImmutableHashSet.Create<string>(
+		private static readonly IImmutableSet<string> AllowedTypes = ImmutableHashSet.Create<string>(
 				"D2L.Files.Content.ContentDirectory",
 				"D2L.Files.Compression.Archive",
 				"D2L.Files.Content.ContentFile",

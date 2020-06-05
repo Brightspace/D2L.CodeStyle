@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="TestWhitelists\*" />
+    <EmbeddedResource Include="TestAllowedLists\*" />
   </ItemGroup>
 
 </Project>

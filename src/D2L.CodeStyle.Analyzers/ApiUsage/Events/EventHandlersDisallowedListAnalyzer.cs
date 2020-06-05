@@ -10,10 +10,10 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
-	internal sealed class EventHandlersBlacklistAnalyzer : DiagnosticAnalyzer {
+	internal sealed class EventHandlersDisallowedListAnalyzer : DiagnosticAnalyzer {
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-				Diagnostics.EventHandlerBlacklisted
+				Diagnostics.EventHandlerDisallowed
 			);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -26,20 +26,20 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 			Compilation compilation = context.Compilation;
 
-			IImmutableSet<INamedTypeSymbol> blacklistedTypes = GetBlacklistedTypes( compilation );
-			if( blacklistedTypes.Count == 0 ) {
+			IImmutableSet<INamedTypeSymbol> disallowedTypes = GetDisallowedTypes( compilation );
+			if( disallowedTypes.Count == 0 ) {
 				return;
 			}
 
 			context.RegisterSyntaxNodeAction(
-					c => AnalyzeSimpleBaseType( c, blacklistedTypes ),
+					c => AnalyzeSimpleBaseType( c, disallowedTypes ),
 					SyntaxKind.SimpleBaseType
 				);
 		}
 
 		private void AnalyzeSimpleBaseType(
 				SyntaxNodeAnalysisContext context,
-				IImmutableSet<INamedTypeSymbol> blacklistedTypes
+				IImmutableSet<INamedTypeSymbol> disallowedTypes
 			) {
 
 			SimpleBaseTypeSyntax baseTypeSyntax = (SimpleBaseTypeSyntax)context.Node;
@@ -50,12 +50,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				return;
 			}
 
-			if( !blacklistedTypes.Contains( baseSymbol ) ) {
+			if( !disallowedTypes.Contains( baseSymbol ) ) {
 				return;
 			}
 
 			Diagnostic diagnostic = Diagnostic.Create(
-					Diagnostics.EventHandlerBlacklisted,
+					Diagnostics.EventHandlerDisallowed,
 					baseTypeSyntax.GetLocation(),
 					baseSymbol.ToDisplayString()
 				);
@@ -63,9 +63,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 			context.ReportDiagnostic( diagnostic );
 		}
 
-		private static IImmutableSet<INamedTypeSymbol> GetBlacklistedTypes( Compilation compilation ) {
+		private static IImmutableSet<INamedTypeSymbol> GetDisallowedTypes( Compilation compilation ) {
 
-			IImmutableSet<INamedTypeSymbol> types = EventHandlersBlacklist.BlacklistedTypes
+			IImmutableSet<INamedTypeSymbol> types = EventHandlersDisallowedList.DisallowedTypes
 				.SelectMany( genericType => GetGenericTypes( compilation, genericType.Key, genericType.Value ) )
 				.ToImmutableHashSet();
 

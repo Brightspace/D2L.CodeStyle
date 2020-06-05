@@ -13,7 +13,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.ObsoleteJsonParamBinder,
-			Diagnostics.UnnecessaryWhitelistEntry
+			Diagnostics.UnnecessaryAllowedListEntry
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -30,21 +30,21 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 				return;
 			}
 
-			TypeWhitelist typeWhitelist = TypeWhitelist.CreateFromAnalyzerOptions(
-				whitelistFileName: "LegacyJsonParamBinderWhitelist.txt",
+			TypeAllowedList typeAllowedList = TypeAllowedList.CreateFromAnalyzerOptions(
+				allowedListFileName: "LegacyJsonParamBinderAllowedList.txt",
 				analyzerOptions: context.Options
 			);
 
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeAttribute( ctx, attributeType, typeWhitelist ),
+				ctx => AnalyzeAttribute( ctx, attributeType, typeAllowedList ),
 				SyntaxKind.Attribute
 			);
 
 			context.RegisterSymbolAction(
-				ctx => PreventUnnecessaryWhitelisting(
+				ctx => PreventUnnecessaryAllowedListing(
 					ctx,
 					attributeType,
-					typeWhitelist
+					typeAllowedList
 				),
 				SymbolKind.NamedType
 			);
@@ -53,7 +53,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 		private void AnalyzeAttribute(
 			SyntaxNodeAnalysisContext context,
 			INamedTypeSymbol jsonParamBinderT,
-			TypeWhitelist whitelist
+			TypeAllowedList allowedList
 		) {
 			if( !( context.Node is AttributeSyntax attribute ) ) {
 				return;
@@ -72,7 +72,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 				return;
 			}
 
-			if( whitelist.Contains( classSymbol ) ) {
+			if( allowedList.Contains( classSymbol ) ) {
 				return;
 			}
 
@@ -85,16 +85,16 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 			context.ReportDiagnostic( diagnostic );
 		}
 
-		private void PreventUnnecessaryWhitelisting(
+		private void PreventUnnecessaryAllowedListing(
 			SymbolAnalysisContext context,
 			INamedTypeSymbol jsonParamBinderT,
-			TypeWhitelist typeWhitelist
+			TypeAllowedList typeAllowedList
 		) {
 			if( !( context.Symbol is INamedTypeSymbol namedType ) ) {
 				return;
 			}
 
-			if( !typeWhitelist.Contains( namedType ) ) {
+			if( !typeAllowedList.Contains( namedType ) ) {
 				return;
 			}
 
@@ -117,7 +117,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 			}
 
 			if( diagnosticLocation != null ) {
-				typeWhitelist.ReportEntryAsUnnecesary(
+				typeAllowedList.ReportEntryAsUnnecesary(
 					entry: namedType,
 					location: diagnosticLocation,
 					report: context.ReportDiagnostic

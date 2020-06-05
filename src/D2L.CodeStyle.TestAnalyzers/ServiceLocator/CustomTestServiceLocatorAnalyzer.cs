@@ -16,10 +16,10 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 		private const string TestServiceLocatorFactoryType
 			= "D2L.LP.Extensibility.Activation.Domain.TestServiceLocatorFactory";
 
-		private const string WhitelistFileName = "CustomTestServiceLocatorWhitelist.txt";
+		private const string AllowedListFileName = "CustomTestServiceLocatorAllowedList.txt";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
-			=> ImmutableArray.Create( Diagnostics.CustomServiceLocator, Diagnostics.UnnecessaryWhitelistEntry );
+			=> ImmutableArray.Create( Diagnostics.CustomServiceLocator, Diagnostics.UnnecessaryAllowedListEntry );
 
 		private readonly bool _excludeKnownProblems;
 
@@ -46,7 +46,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 				return;
 			}
 
-			ImmutableHashSet<string> whitelistedClasses = GetWhitelist(
+			ImmutableHashSet<string> allowedClasses = GetAllowedList(
 				context.Options.AdditionalFiles
 			);
 
@@ -54,16 +54,16 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 				ctx => PreventCustomLocatorUsage(
 					ctx,
 					factoryType,
-					whitelistedClasses
+					allowedClasses
 				),
 				SyntaxKind.InvocationExpression
 			);
 
 			context.RegisterSymbolAction(
-				ctx => PreventUnnecessaryWhitelisting(
+				ctx => PreventUnnecessaryAllowedListing(
 					ctx,
 					factoryType,
-					whitelistedClasses
+					allowedClasses
 				),
 				SymbolKind.NamedType
 			);
@@ -73,7 +73,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 		private void PreventCustomLocatorUsage(
 			SyntaxNodeAnalysisContext context,
 			INamedTypeSymbol disallowedType,
-			ImmutableHashSet<string> whitelistedClasses
+			ImmutableHashSet<string> allowedClasses
 		) {
 			if( !( context.Node is InvocationExpressionSyntax invocationExpression ) ) {
 				return;
@@ -87,7 +87,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 				return;
 			}
 
-			// Check whether any parent classes are on our whitelist. Checking
+			// Check whether any parent classes are on our allowed list. Checking
 			// all of the parents lets us handle partial classes more easily.
 			var parentClasses = context.Node.Ancestors().Where(
 				a => a.IsKind( SyntaxKind.ClassDeclaration )
@@ -97,11 +97,11 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 				c => context.SemanticModel.GetDeclaredSymbol( c )
 			);
 
-			bool isWhitelisted = parentSymbols.Any(
-				s => IsClassWhitelisted( whitelistedClasses, s )
+			bool isAllowed = parentSymbols.Any(
+				s => IsClassAllowed( allowedClasses, s )
 			);
 
-			if( isWhitelisted ) {
+			if( isAllowed ) {
 				return;
 			}
 
@@ -113,16 +113,16 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 			);
 		}
 
-		private void PreventUnnecessaryWhitelisting(
+		private void PreventUnnecessaryAllowedListing(
 			SymbolAnalysisContext context,
 			INamedTypeSymbol factoryType,
-			ImmutableHashSet<string> whitelistedClasses
+			ImmutableHashSet<string> allowedClasses
 		) {
 			if( !( context.Symbol is INamedTypeSymbol namedType ) ) {
 				return;
 			}
 
-			if( !IsClassWhitelisted( whitelistedClasses, namedType ) ) {
+			if( !IsClassAllowed( allowedClasses, namedType ) ) {
 				return;
 			}
 
@@ -151,9 +151,9 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 			if( diagnosticLocation != null ) {
 				context.ReportDiagnostic(
 					Diagnostic.Create(
-						Diagnostics.UnnecessaryWhitelistEntry,
+						Diagnostics.UnnecessaryAllowedListEntry,
 						diagnosticLocation,
-						GetWhitelistName( namedType ), WhitelistFileName
+						GetAllowedListName( namedType ), AllowedListFileName
 					)
 				);
 			}
@@ -223,42 +223,42 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 				&& method.Parameters.Length > 0;
 		}
 
-		private bool IsClassWhitelisted(
-			ImmutableHashSet<string> whitelistedClasses,
+		private bool IsClassAllowed(
+			ImmutableHashSet<string> allowedClasses,
 			ISymbol classSymbol
 		) {
-			bool isWhiteListed = _excludeKnownProblems
-				&& whitelistedClasses.Contains( GetWhitelistName( classSymbol ) );
+			bool isAllowed = _excludeKnownProblems
+				&& allowedClasses.Contains( GetAllowedListName( classSymbol ) );
 
-			return isWhiteListed;
+			return isAllowed;
 		}
 
-		private static string GetWhitelistName( ISymbol classSymbol ) =>
+		private static string GetAllowedListName( ISymbol classSymbol ) =>
 			classSymbol.ToString()
 			+ ", "
 			+ classSymbol.ContainingAssembly.ToDisplayString( SymbolDisplayFormat.MinimallyQualifiedFormat )
 		;
 
-		private ImmutableHashSet<string> GetWhitelist(
+		private static ImmutableHashSet<string> GetAllowedList(
 			ImmutableArray<AdditionalText> additionalFiles
 		) {
-			ImmutableHashSet<string>.Builder whitelistedClasses = ImmutableHashSet.CreateBuilder<string>();
+			ImmutableHashSet<string>.Builder allowedClasses = ImmutableHashSet.CreateBuilder<string>();
 
-			AdditionalText whitelistFile = additionalFiles.FirstOrDefault(
-				file => Path.GetFileName( file.Path ) == WhitelistFileName
+			AdditionalText allowedListFile = additionalFiles.FirstOrDefault(
+				file => Path.GetFileName( file.Path ) == AllowedListFileName
 			);
 
-			if( whitelistFile == null ) {
-				return whitelistedClasses.ToImmutableHashSet();
+			if( allowedListFile == null ) {
+				return allowedClasses.ToImmutableHashSet();
 			}
 
-			SourceText whitelistText = whitelistFile.GetText();
+			SourceText allowedListText = allowedListFile.GetText();
 
-			foreach( TextLine line in whitelistText.Lines ) {
-				whitelistedClasses.Add( line.ToString().Trim() );
+			foreach( TextLine line in allowedListText.Lines ) {
+				allowedClasses.Add( line.ToString().Trim() );
 			}
 
-			return whitelistedClasses.ToImmutableHashSet();
+			return allowedClasses.ToImmutableHashSet();
 		}
 
 	}

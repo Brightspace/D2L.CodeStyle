@@ -7,7 +7,6 @@ using Microsoft.CodeAnalysis.Text;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace D2L.CodeStyle.TestAnalyzers.NUnit {
     [DiagnosticAnalyzer( LanguageNames.CSharp )]
@@ -16,7 +15,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
             Diagnostics.TestAttributeMissed
         );
 
-        private const string WhitelistFileName = "TestAttributeAnalyzerBlacklist.txt";
+        private const string AllowedListFileName = "TestAttributeAnalyzerDisallowedList.txt";
 
         public override void Initialize( AnalysisContext context ) {
             context.EnableConcurrentExecution();
@@ -30,7 +29,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
                 return;
             }
 
-            ImmutableHashSet<string> whitelistedClasses = GetWhitelist(
+            ImmutableHashSet<string> allowedClasses = GetAllowedList(
                 context.Options.AdditionalFiles
             );
 
@@ -39,7 +38,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
                     context: ctx,
                     types: types,
                     syntax: ctx.Node as MethodDeclarationSyntax,
-                    blacklist: whitelistedClasses
+					disallowedList: allowedClasses
                 ),
                 SyntaxKind.MethodDeclaration
             );
@@ -49,7 +48,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
             SyntaxNodeAnalysisContext context,
             NUnitTypes types,
             MethodDeclarationSyntax syntax,
-            ImmutableHashSet<string> blacklist
+            ImmutableHashSet<string> disallowedList
         ) {
             SemanticModel model = context.SemanticModel;
 
@@ -69,8 +68,8 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
                 return;
             }
 
-            // Ignore any classes which are blacklisted
-            if( IsClassWhitelisted( blacklist, method.ContainingType ) ) {
+            // Ignore any classes which are disallowed
+            if( IsClassAllowed( disallowedList, method.ContainingType ) ) {
                 return;
             }
 
@@ -122,41 +121,41 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
             return true;
         }
 
-        private static bool IsClassWhitelisted(
-            ImmutableHashSet<string> whitelistedClasses,
+        private static bool IsClassAllowed(
+            ImmutableHashSet<string> allowedClasses,
             ISymbol classSymbol
         ) {
-            bool isWhiteListed = whitelistedClasses.Contains( GetWhitelistName( classSymbol ) );
+            bool isAllowed = allowedClasses.Contains( GetAllowedListName( classSymbol ) );
 
-            return isWhiteListed;
+            return isAllowed;
         }
 
-        private static string GetWhitelistName( ISymbol classSymbol ) =>
+        private static string GetAllowedListName( ISymbol classSymbol ) =>
             classSymbol.ToString()
             + ", "
             + classSymbol.ContainingAssembly.ToDisplayString( SymbolDisplayFormat.MinimallyQualifiedFormat )
         ;
 
-        private static ImmutableHashSet<string> GetWhitelist(
+        private static ImmutableHashSet<string> GetAllowedList(
             ImmutableArray<AdditionalText> additionalFiles
         ) {
-            ImmutableHashSet<string>.Builder whitelistedClasses = ImmutableHashSet.CreateBuilder<string>();
+            ImmutableHashSet<string>.Builder allowedClasses = ImmutableHashSet.CreateBuilder<string>();
 
-            AdditionalText whitelistFile = additionalFiles.FirstOrDefault(
-                file => Path.GetFileName( file.Path ) == WhitelistFileName
+            AdditionalText allowedListFile = additionalFiles.FirstOrDefault(
+                file => Path.GetFileName( file.Path ) == AllowedListFileName
             );
 
-            if( whitelistFile == null ) {
-                return whitelistedClasses.ToImmutableHashSet();
+            if( allowedListFile == null ) {
+                return allowedClasses.ToImmutableHashSet();
             }
 
-            SourceText whitelistText = whitelistFile.GetText();
+            SourceText allowedListText = allowedListFile.GetText();
 
-            foreach( TextLine line in whitelistText.Lines ) {
-                whitelistedClasses.Add( line.ToString().Trim() );
+            foreach( TextLine line in allowedListText.Lines ) {
+				allowedClasses.Add( line.ToString().Trim() );
             }
 
-            return whitelistedClasses.ToImmutableHashSet();
+            return allowedClasses.ToImmutableHashSet();
         }
 
         private sealed class NUnitTypes {

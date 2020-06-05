@@ -126,7 +126,7 @@ namespace test {
 		// This should be uncommented if/when that functionality is in place.
 
 		/*[Test]
-		public void TestServiceLocatorFactory_Create_WhitelistedClass_NoDiag() {
+		public void TestServiceLocatorFactory_Create_AllowedClass_NoDiag() {
 			const string test = PREAMBLE + @"
 namespace D2L.LE.ToolIntegration.Tests.Content.ContentDateSync.ContentTopic {
     class ContentTopicUpdatedSyncTests {

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Helpers;
 using Microsoft.CodeAnalysis;
@@ -13,7 +12,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.OldAndBrokenLocatorIsObsolete,
-			Diagnostics.UnnecessaryWhitelistEntry
+			Diagnostics.UnnecessaryAllowedListEntry
 		);
 		private readonly bool _excludeKnownProblems;
 
@@ -54,8 +53,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				customActivatorType
 			);
 
-			TypeWhitelist typeWhitelist = TypeWhitelist.CreateFromAnalyzerOptions(
-				whitelistFileName: "OldAndBrokenServiceLocatorWhitelist.txt",
+			TypeAllowedList typeAllowedList = TypeAllowedList.CreateFromAnalyzerOptions(
+				allowedListFileName: "OldAndBrokenServiceLocatorAllowedList.txt",
 				analyzerOptions: context.Options
 			);
 
@@ -65,16 +64,16 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				ctx => PreventOldAndBrokenUsage(
 					ctx,
 					disallowedTypes,
-					typeWhitelist
+					typeAllowedList
 				),
 				SyntaxKind.IdentifierName
 			);
 
 			context.RegisterSymbolAction(
-				ctx => PreventUnnecessaryWhitelisting(
+				ctx => PreventUnnecessaryAllowedListing(
 					ctx,
 					disallowedTypes,
-					typeWhitelist
+					typeAllowedList
 				),
 				SymbolKind.NamedType
 			);
@@ -84,14 +83,14 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 		//For example, OldAndBrokenServiceLocator.Instance.Get<IFoo>()
 		private void PreventOldAndBrokenUsage(
 			SyntaxNodeAnalysisContext context,
-			ImmutableArray<INamedTypeSymbol> disallowedTypes,
-			TypeWhitelist typeWhitelist
+			ImmutableArray<INamedTypeSymbol> disallowededTypes,
+			TypeAllowedList typeAllowedList
 		) {
 			if( !( context.Node is IdentifierNameSyntax syntax ) ) {
 				return;
 			}
 
-			if( !IdentifierIsOfDisallowedType( context.SemanticModel, disallowedTypes, syntax ) ) {
+			if( !IdentifierIsOfDisallowededType( context.SemanticModel, disallowededTypes, syntax ) ) {
 				return;
 			}
 
@@ -99,11 +98,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			var parentSymbols = parentClasses.Select( c => context.SemanticModel.GetDeclaredSymbol( c ) ).ToImmutableArray();
 
 			if( parentSymbols.Any( s => Attributes.DIFramework.IsDefined( s ) ) ) {
-				//Classes in the DI Framework are allowed to use locators and activators
+				//Classes in the DI Framework are alloweded to use locators and activators
 				return;
 			}
 
-			if( _excludeKnownProblems && parentSymbols.Any( typeWhitelist.Contains ) ) {
+			if( _excludeKnownProblems && parentSymbols.Any( typeAllowedList.Contains ) ) {
 				return;
 			}
 
@@ -112,16 +111,16 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			);
 		}
 
-		private void PreventUnnecessaryWhitelisting(
+		private void PreventUnnecessaryAllowedListing(
 			SymbolAnalysisContext context,
-			ImmutableArray<INamedTypeSymbol> disallowedTypes,
-			TypeWhitelist typeWhitelist
+			ImmutableArray<INamedTypeSymbol> disallowededTypes,
+			TypeAllowedList typeAllowedList
 		) {
 			if( !( context.Symbol is INamedTypeSymbol namedType ) ) {
 				return;
 			}
 
-			if( !typeWhitelist.Contains( namedType ) ) {
+			if( !typeAllowedList.Contains( namedType ) ) {
 				return;
 			}
 
@@ -133,18 +132,18 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 
 				SemanticModel model = context.Compilation.GetSemanticModel( typeSyntax.SyntaxTree );
 
-				bool usesDisallowedTypes = typeSyntax
+				bool usesDisallowededTypes = typeSyntax
 					.DescendantNodes()
 					.OfType<IdentifierNameSyntax>()
-					.Any( syntax => IdentifierIsOfDisallowedType( model, disallowedTypes, syntax ) );
+					.Any( syntax => IdentifierIsOfDisallowededType( model, disallowededTypes, syntax ) );
 
-				if( usesDisallowedTypes ) {
+				if( usesDisallowededTypes ) {
 					return;
 				}
 			}
 
 			if( diagnosticLocation != null ) {
-				typeWhitelist.ReportEntryAsUnnecesary(
+				typeAllowedList.ReportEntryAsUnnecesary(
 					entry: namedType,
 					location: diagnosticLocation,
 					report: context.ReportDiagnostic
@@ -152,7 +151,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			}
 		}
 
-		private static bool IdentifierIsOfDisallowedType(
+		private static bool IdentifierIsOfDisallowededType(
 			SemanticModel model,
 			ImmutableArray<INamedTypeSymbol> disallowedTypes,
 			IdentifierNameSyntax syntax
