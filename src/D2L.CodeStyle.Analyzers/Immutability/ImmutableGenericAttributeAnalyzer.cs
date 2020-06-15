@@ -67,13 +67,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			// check if the type is defined in the current assembly
-			if( typeBeingMarkedImmutable.ContainingAssembly == currentAssembly ) {
+			if( typeBeingMarkedImmutable.ContainingAssembly.Equals( currentAssembly ) ) {
 				return;
 			}
 
 			// otherwise, check if any of the type arguments are in the current assembly
 			foreach( var typeArgument in typeBeingMarkedImmutable.TypeArguments ) {
-				if( typeArgument.ContainingAssembly == currentAssembly ) {
+				if( typeArgument.ContainingAssembly.Equals( currentAssembly ) ) {
 					return;
 				}
 			}
