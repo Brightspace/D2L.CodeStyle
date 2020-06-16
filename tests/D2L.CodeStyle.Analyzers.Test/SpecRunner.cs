@@ -198,19 +198,19 @@ namespace D2L.CodeStyle.Analyzers {
 			var additionalFiles = ImmutableArray.CreateBuilder<AdditionalText>();
 			Assembly testAssembly = Assembly.GetExecutingAssembly();
 			foreach( var resourcePath in testAssembly.GetManifestResourceNames() ) {
-				if( !resourcePath.EndsWith( "Whitelist.txt" ) ) {
+				if( !resourcePath.EndsWith( "AllowedList.txt" ) ) {
 					continue;
 				}
 
-				string whitelistName = Regex.Replace(
+				string allowedListName = Regex.Replace(
 					resourcePath,
-					@"^.*\.(?<whitelistName>[^\.]*)\.txt$",
-					@"${whitelistName}.txt"
+					@"^.*\.(?<allowedListName>[^\.]*)\.txt$",
+					@"${allowedListName}.txt"
 				);
 
 				using( var reader = new StreamReader( testAssembly.GetManifestResourceStream( resourcePath ) ) ) {
 					additionalFiles.Add( new AdditionalFile(
-						path: whitelistName,
+						path: allowedListName,
 						text: reader.ReadToEnd()
 					) );
 				}

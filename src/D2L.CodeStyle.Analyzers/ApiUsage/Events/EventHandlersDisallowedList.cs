@@ -3,9 +3,9 @@ using System.Collections.Immutable;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
-	internal static class EventHandlersBlacklist {
+	internal static class EventHandlersDisallowedList {
 
-		private static readonly ImmutableArray<ImmutableArray<string>> BlacklistedEventHandlerTypes = ImmutableArray.Create(
+		private static readonly ImmutableArray<ImmutableArray<string>> DisallowedEventHandlerTypes = ImmutableArray.Create(
 
 				// External only
 				ImmutableArray.Create( "D2L.LP.Distributed.Events.ExternalPublish.UserInteraction.UserInteractionEvent" ),
@@ -21,15 +21,15 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				ImmutableArray.Create( "D2L.AP.S3.Analysis.Service.PredictiveModelingAbortEvent" )
 			);
 
-		public static readonly IReadOnlyDictionary<string, ImmutableArray<ImmutableArray<string>>> BlacklistedTypes = ImmutableDictionary
+		public static readonly IReadOnlyDictionary<string, ImmutableArray<ImmutableArray<string>>> DisallowedTypes = ImmutableDictionary
 			.Create<string, ImmutableArray<ImmutableArray<string>>>()
 			.Add(
 				"D2L.LP.Distributed.Events.Handlers.IEventHandler`1", 
-				BlacklistedEventHandlerTypes
+				DisallowedEventHandlerTypes
 			)
 			.Add(
 				"D2L.LP.Distributed.Events.Handlers.IOrgEventHandler`1", 
-				BlacklistedEventHandlerTypes
+				DisallowedEventHandlerTypes
 			);
 	}
 }

@@ -335,10 +335,10 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "The implications of [Immutable] apply transitively to derived classes and interface implementations. We require that [Immutable] is explicity applied transitively for clarity and simplicity."
 		);
 
-		public static readonly DiagnosticDescriptor EventHandlerBlacklisted = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor EventHandlerDisallowed = new DiagnosticDescriptor(
 			id: "D2L0041",
-			title: "Blacklisted Event Handler",
-			messageFormat: "Event handlers of type {0} have been blacklisted",
+			title: "Disallowed Event Handler",
+			messageFormat: "Event handlers of type {0} have been disallowed",
 			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
@@ -495,14 +495,14 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true
 		);
 
-		public static readonly DiagnosticDescriptor UnnecessaryWhitelistEntry = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor UnnecessaryAllowedListEntry = new DiagnosticDescriptor(
 			id: "D2L0057",
-			title: "Unnecessarily listed in an analyzer whitelist",
+			title: "Unnecessarily listed in an analyzer allowed list",
 			messageFormat: "The entry for '{0}' in '{1}' is unnecessary.",
 			category: "Cleanliness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
-			description: "Unnecessarily listed in an analyzer whitelist."
+			description: "Unnecessarily listed in an analyzer allowed list."
 		 );
 
 	}

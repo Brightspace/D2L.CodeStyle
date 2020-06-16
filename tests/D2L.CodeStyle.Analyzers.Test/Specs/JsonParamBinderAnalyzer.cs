@@ -31,7 +31,7 @@ namespace SpecTests {
 
 	}
 
-	public class WhitelistedClass {
+	public class AllowedClass {
 
 		public void Test( [JsonParamBinder] int x ) { } // No diagnostic because allowed legacy class
 

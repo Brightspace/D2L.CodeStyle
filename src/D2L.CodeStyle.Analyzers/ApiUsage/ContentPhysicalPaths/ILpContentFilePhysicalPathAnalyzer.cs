@@ -19,7 +19,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ContentPhysicalPaths {
 			PhysicalPathPropertyAnalysis analysis = new PhysicalPathPropertyAnalysis(
 					TypeName,
 					PropertyName,
-					WhitelistedTypes
+					AllowedTypes
 				);
 
 			analysis.Initialize( context );
@@ -28,7 +28,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ContentPhysicalPaths {
 		/// <summary>
 		/// A list of types that already contain ILpContentFile.PhysicalPath references
 		/// </summary>
-		private static readonly IImmutableSet<string> WhitelistedTypes = ImmutableHashSet.Create<string>(
+		private static readonly IImmutableSet<string> AllowedTypes = ImmutableHashSet.Create<string>(
 				"D2L.LP.Web.ContentHandling.Security.Default.ContentRequestChecker",
 				"D2L.LE.Content.Extensibility.Service.Content.Default.ContentTopic.TopicService",
 				"D2L.LE.ToolIntegration.Content.ResourceModifiers.Content.ContentFile",

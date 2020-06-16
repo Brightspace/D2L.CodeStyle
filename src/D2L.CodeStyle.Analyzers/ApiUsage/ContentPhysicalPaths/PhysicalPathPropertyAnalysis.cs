@@ -13,17 +13,17 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ContentPhysicalPaths {
 
 		private readonly string m_dangerousTypeName;
 		private readonly string m_dangerousPropertyName;
-		private readonly IImmutableSet<string> m_whitelistedTypes;
+		private readonly IImmutableSet<string> m_allowedTypes;
 
 		public PhysicalPathPropertyAnalysis(
 				string dangerousTypeName,
 				string dangerousPropertyName,
-				IImmutableSet<string> whitelistedTypes
+				IImmutableSet<string> allowedTypes
 			) {
 
 			m_dangerousTypeName = dangerousTypeName;
 			m_dangerousPropertyName = dangerousPropertyName;
-			m_whitelistedTypes = whitelistedTypes;
+			m_allowedTypes = allowedTypes;
 		}
 
 		public void Initialize( AnalysisContext context ) {
@@ -69,8 +69,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ContentPhysicalPaths {
 				return;
 			}
 
-			bool isWhitelistedType = m_whitelistedTypes.Contains( context.ContainingSymbol.ContainingType.ToString() );
-			if( isWhitelistedType ) {
+			bool isAllowedType = m_allowedTypes.Contains( context.ContainingSymbol.ContainingType.ToString() );
+			if( isAllowedType ) {
 				return;
 			}
 

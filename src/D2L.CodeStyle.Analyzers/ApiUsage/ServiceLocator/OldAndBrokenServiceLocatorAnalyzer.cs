@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Helpers;
 using Microsoft.CodeAnalysis;
@@ -13,7 +12,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.OldAndBrokenLocatorIsObsolete,
-			Diagnostics.UnnecessaryWhitelistEntry
+			Diagnostics.UnnecessaryAllowedListEntry
 		);
 		private readonly bool _excludeKnownProblems;
 
@@ -54,8 +53,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				customActivatorType
 			);
 
-			TypeWhitelist typeWhitelist = TypeWhitelist.CreateFromAnalyzerOptions(
-				whitelistFileName: "OldAndBrokenServiceLocatorWhitelist.txt",
+			AllowedTypeList allowedTypeList = AllowedTypeList.CreateFromAnalyzerOptions(
+				allowedListFileName: "OldAndBrokenServiceLocatorAllowedList.txt",
 				analyzerOptions: context.Options
 			);
 
@@ -65,16 +64,16 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				ctx => PreventOldAndBrokenUsage(
 					ctx,
 					disallowedTypes,
-					typeWhitelist
+					allowedTypeList
 				),
 				SyntaxKind.IdentifierName
 			);
 
 			context.RegisterSymbolAction(
-				ctx => PreventUnnecessaryWhitelisting(
+				ctx => PreventUnnecessaryAllowedListing(
 					ctx,
 					disallowedTypes,
-					typeWhitelist
+					allowedTypeList
 				),
 				SymbolKind.NamedType
 			);
@@ -85,7 +84,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 		private void PreventOldAndBrokenUsage(
 			SyntaxNodeAnalysisContext context,
 			ImmutableArray<INamedTypeSymbol> disallowedTypes,
-			TypeWhitelist typeWhitelist
+			AllowedTypeList allowedTypeList
 		) {
 			if( !( context.Node is IdentifierNameSyntax syntax ) ) {
 				return;
@@ -103,7 +102,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				return;
 			}
 
-			if( _excludeKnownProblems && parentSymbols.Any( typeWhitelist.Contains ) ) {
+			if( _excludeKnownProblems && parentSymbols.Any( allowedTypeList.Contains ) ) {
 				return;
 			}
 
@@ -112,16 +111,16 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			);
 		}
 
-		private void PreventUnnecessaryWhitelisting(
+		private void PreventUnnecessaryAllowedListing(
 			SymbolAnalysisContext context,
 			ImmutableArray<INamedTypeSymbol> disallowedTypes,
-			TypeWhitelist typeWhitelist
+			AllowedTypeList allowedTypeList
 		) {
 			if( !( context.Symbol is INamedTypeSymbol namedType ) ) {
 				return;
 			}
 
-			if( !typeWhitelist.Contains( namedType ) ) {
+			if( !allowedTypeList.Contains( namedType ) ) {
 				return;
 			}
 
@@ -144,7 +143,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			}
 
 			if( diagnosticLocation != null ) {
-				typeWhitelist.ReportEntryAsUnnecesary(
+				allowedTypeList.ReportEntryAsUnnecesary(
 					entry: namedType,
 					location: diagnosticLocation,
 					report: context.ReportDiagnostic

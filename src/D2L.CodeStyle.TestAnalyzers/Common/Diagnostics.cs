@@ -62,14 +62,14 @@ namespace D2L.CodeStyle.TestAnalyzers.Common {
             description: "If a [Test], [Theory], [TestCase], or [TestCaseSource] attribute is missed the test will not be run, leading to false confidence in the code."
         );
 
-        public static readonly DiagnosticDescriptor UnnecessaryWhitelistEntry = new DiagnosticDescriptor(
+        public static readonly DiagnosticDescriptor UnnecessaryAllowedListEntry = new DiagnosticDescriptor(
             id: "D2LTESTS007",
-            title: "Unnecessarily listed in an analyzer whitelist",
+            title: "Unnecessarily listed in an analyzer allowed list",
             messageFormat: "The entry for {0} in {1} is unnecessary.",
             category: "Cleanliness",
             defaultSeverity: DiagnosticSeverity.Error,
             isEnabledByDefault: true,
-            description: "Unnecessarily listed in an analyzer whitelist."
+            description: "Unnecessarily listed in an analyzer allowed list."
         );
     }
 }
