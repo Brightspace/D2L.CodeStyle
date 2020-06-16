@@ -64,7 +64,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
             // We need the declaring class to be a [TestFixture] to continue
             INamedTypeSymbol declaringClass = method.ContainingType;
-            if ( !declaringClass.GetAttributes().Any( attr => attr.AttributeClass == types.TestFixtureAttribute ) ) {
+            if ( !declaringClass.GetAttributes().Any( attr => attr.AttributeClass.Equals( types.TestFixtureAttribute ) ) ) {
                 return;
             }
 

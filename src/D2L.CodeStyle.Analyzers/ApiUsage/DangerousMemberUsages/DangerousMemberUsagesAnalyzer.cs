@@ -147,7 +147,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				return true;
 			}
 
-			if( memberSymbol != originalDefinition ) {
+			if( !memberSymbol.Equals( originalDefinition ) ) {
 
 				if( dangerousMembers.Contains( memberSymbol ) ) {
 					return true;

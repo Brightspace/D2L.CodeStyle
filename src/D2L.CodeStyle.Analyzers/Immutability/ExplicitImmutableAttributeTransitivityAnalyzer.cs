@@ -57,7 +57,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			bool isTheImmutableAttribute( AttributeData attr ) {
-				return attr.AttributeClass == immutableAttribute;
+				return attr.AttributeClass.Equals( immutableAttribute );
 			}
 		}
 

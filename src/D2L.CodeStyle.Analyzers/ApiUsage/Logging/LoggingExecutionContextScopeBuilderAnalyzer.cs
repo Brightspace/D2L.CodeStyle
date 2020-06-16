@@ -195,7 +195,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Logging {
 
 			IEnumerable<AttributeData> typeAttributes = type.GetAttributes();
 			bool typeIsCustomAwaitable = typeAttributes.Any(
-				a => a.AttributeClass.OriginalDefinition == AsyncMethodBuilderAttribute
+				a => a.AttributeClass.OriginalDefinition.Equals( AsyncMethodBuilderAttribute )
 			);
 
 			if( typeIsCustomAwaitable ) {
