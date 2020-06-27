@@ -168,5 +168,67 @@ namespace D2L {
                 () => _arg2_ret( 1, _arg2_ret(1, 2) * _arg2_ret( 1, 2 ) );
             #endregion
         }
+
+		public abstract class SomeBaseClass {
+
+			public SomeBaseClass() { }
+
+			public SomeBaseClass( int a1 )
+				: this() { }
+
+			public SomeBaseClass( int a1, int a2 )
+				: this( a1 ) { }
+
+			public SomeBaseClass( int a1, int a2, int a3, int a4 )
+				: this( a1, a2 ) { }
+
+			public SomeBaseClass( int a1, int a2, int a3, int a4, int a5 )
+				: this( a1, a2, a3, a4 ) { }
+
+			public SomeBaseClass( int a1, int a2, int a3, int a4, int a5, int a6 )
+				: this( a1, a2, a3, a4, a5 ) { }
+
+			public SomeBaseClass( int b1, int b2, string _ )
+				: this( b1 ) { }
+
+			public SomeBaseClass( int b1, int b2, int b3, int b4, string _ )
+				: this( b1, b2 ) { }
+
+			public SomeBaseClass( int b1, int b2, int b3, int b4, int b5, string _ )
+				: this( b1, b2, b3, b4 ) { }
+
+			public SomeBaseClass( int b1, int b2, int b3, int b4, int b5, int b6, string _ )
+				/* TooManyUnnamedArgs(5) */ : this( b1, b2, b3, b4, b5 ) /**/{ }
+		}
+
+		public sealed class SomeInheritedClass : SomeBaseClass {
+
+			public SomeInheritedClass()
+				: base() { }
+
+			public SomeInheritedClass( int a1, bool _ )
+				: base( a1 ) { }
+
+			public SomeInheritedClass( int a1, int a2, bool _ )
+				: base( a1, a2 ) { }
+
+			public SomeInheritedClass( int a1, int a2, int a3, int a4, bool _ )
+				: base( a1, a2, a3, a4 ) { }
+
+			public SomeInheritedClass( int a1, int a2, int a3, int a4, int a5, bool _ )
+				: base( a1, a2, a3, a4, a5 ) { }
+
+			public SomeInheritedClass( int b1, string _ )
+				: base( b1 ) { }
+
+			public SomeInheritedClass( int b1, int b2, string _ )
+				: base( b1, b2 ) { }
+
+			public SomeInheritedClass( int b1, int b2, int b3, int b4, string _ )
+				: base( b1, b2, b3, b4 ) { }
+
+			public SomeInheritedClass( int b1, int b2, int b3, int b4, int b5, string _ )
+				/* TooManyUnnamedArgs(5) */ : base( b1, b2, b3, b4, b5 ) /**/{ }
+		}
     }
 }
