@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
@@ -49,14 +47,23 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				AnalyzeCallSyntax,
 				SyntaxKind.ObjectCreationExpression
 			);
+
+			context.RegisterSyntaxNodeAction(
+				AnalyzeCallSyntax,
+				SyntaxKind.ThisConstructorInitializer
+			);
+
+			context.RegisterSyntaxNodeAction(
+				AnalyzeCallSyntax,
+				SyntaxKind.BaseConstructorInitializer
+			);
 		}
 
 		private static void AnalyzeCallSyntax(
 			SyntaxNodeAnalysisContext ctx
 		) {
-			var expr = (ExpressionSyntax)ctx.Node;
-			var args = GetArgs( expr );
 
+			var args = GetArgs( ctx.Node );
 			if( args == null ) {
 				return;
 			}
@@ -89,7 +96,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				ctx.ReportDiagnostic(
 					Diagnostic.Create(
 						descriptor: Diagnostics.TooManyUnnamedArgs,
-						location: expr.GetLocation(),
+						location: ctx.Node.GetLocation(),
 						properties: fixerContext,
 						messageArgs: TOO_MANY_UNNAMED_ARGS
 					)
@@ -254,6 +261,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					return invocation.ArgumentList;
 				case ObjectCreationExpressionSyntax objectCreation:
 					return objectCreation.ArgumentList;
+				case ConstructorInitializerSyntax constructorInitializer:
+					return constructorInitializer.ArgumentList;
 				default:
 					if( syntax.Parent is ArgumentSyntax ) {
 						return (ArgumentListSyntax)syntax.Parent.Parent;
