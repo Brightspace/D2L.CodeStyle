@@ -505,5 +505,14 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "Unnecessarily listed in an analyzer allowed list."
 		 );
 
+		public static readonly DiagnosticDescriptor NamedArgumentsRequired = new DiagnosticDescriptor(
+			id: "D2L0058",
+			title: "Named arguments are required for readability.",
+			messageFormat: "Named arguments are required for this call. Use named arguments for readability.",
+			category: "Readability",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "This call requires arguments be named for readability."
+		);
 	}
 }
