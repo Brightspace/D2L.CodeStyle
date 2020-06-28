@@ -9,8 +9,11 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers.Language {
+
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class RequireNamedArgumentsAnalyzer : DiagnosticAnalyzer {
+
+		private const string RequireNamedArgumentsAttribute = "D2L.CodeStyle.Annotations.Contract.RequireNamedArgumentsAttribute";
 
 		public sealed class ArgParamBinding {
 			public ArgParamBinding(
@@ -29,7 +32,9 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		}
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-			Diagnostics.TooManyUnnamedArgs, Diagnostics.LiteralArgShouldBeNamed
+			Diagnostics.TooManyUnnamedArgs,
+			Diagnostics.LiteralArgShouldBeNamed,
+			Diagnostics.NamedArgumentsRequired
 		);
 
 		public const int TOO_MANY_UNNAMED_ARGS = 5;
@@ -63,7 +68,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			SyntaxNodeAnalysisContext ctx
 		) {
 
-			var args = GetArgs( ctx.Node );
+			ArgumentListSyntax args = GetArgs( ctx.Node );
 			if( args == null ) {
 				return;
 			}
@@ -80,18 +85,33 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
-			var unnamedArgs = GetUnnamedArgs(
-				ctx.SemanticModel,
-				args
-			).ToImmutableArray();
+			ImmutableArray<ArgParamBinding> unnamedArgs =
+				GetUnnamedArgs( ctx.SemanticModel, args )
+				.ToImmutableArray();
+
+			if( unnamedArgs.IsEmpty ) {
+				return;
+			}
+
+			bool requireNamedArguments = HasRequireNamedArgumentsAttribute( ctx.SemanticModel, args );
+			if( requireNamedArguments ) {
+
+				var fixerContext = CreateFixerContext( unnamedArgs );
+
+				ctx.ReportDiagnostic(
+					Diagnostic.Create(
+						descriptor: Diagnostics.NamedArgumentsRequired,
+						location: ctx.Node.GetLocation(),
+						properties: fixerContext
+					)
+				);
+
+				return;
+			}
 
 			if( unnamedArgs.Length >= TOO_MANY_UNNAMED_ARGS ) {
-				// Pass the names and positions for each unnamed arg to the
-				// codefix.
-				var fixerContext = unnamedArgs.ToImmutableDictionary(
-					keySelector: binding => binding.Position.ToString(),
-					elementSelector: binding => binding.ParamName
-				);
+
+				var fixerContext = CreateFixerContext( unnamedArgs );
 
 				ctx.ReportDiagnostic(
 					Diagnostic.Create(
@@ -107,15 +127,16 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			// Literal arguments should always be named
 			foreach( var arg in unnamedArgs ) {
+
 				// Check if the argument type is literal
 				if( arg.Syntax.Expression is LiteralExpressionSyntax ) {
-					var fixerContext = new Dictionary<string, string>();
-					fixerContext.Add( arg.Position.ToString(), arg.ParamName ); // Add the position and parameter name to the code-fix
+
+					var fixerContext = CreateFixerContext( ImmutableArray.Create( arg ) );
 
 					ctx.ReportDiagnostic( Diagnostic.Create(
 							descriptor: Diagnostics.LiteralArgShouldBeNamed,
 							location: arg.Syntax.Expression.GetLocation(),
-							properties: fixerContext.ToImmutableDictionary(),
+							properties: fixerContext,
 							messageArgs: arg.ParamName
 						)
 					);
@@ -125,6 +146,18 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			// TODO: if there are duplicate typed args then they should be named
 			// These will create a bit more cleanup. Fix should probably name
 			// all the args instead to avoid craziness with overloading.
+		}
+
+		private static ImmutableDictionary<string, string> CreateFixerContext( ImmutableArray<ArgParamBinding> unnamedArgs ) {
+
+			// Pass the names and positions for each unnamed arg to the codefix.
+			ImmutableDictionary<string, string> context = unnamedArgs
+				.ToImmutableDictionary(
+					keySelector: binding => binding.Position.ToString(),
+					elementSelector: binding => binding.ParamName
+				);
+
+			return context;
 		}
 
 		private static bool IsExpressionTree( SyntaxNode node, SemanticModel model ) {
@@ -163,18 +196,19 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		/// Get the arguments which are unnamed and not "params"
 		/// </summary>
 		private static IEnumerable<ArgParamBinding> GetUnnamedArgs(
-			SemanticModel model,
-			ArgumentListSyntax args
-		) {
-			for( var idx = 0; idx < args.Arguments.Count; idx++ ) {
-				var arg = args.Arguments[idx];
+				SemanticModel model,
+				ArgumentListSyntax args
+			) {
+
+			for( int idx = 0; idx < args.Arguments.Count; idx++ ) {
+				ArgumentSyntax arg = args.Arguments[ idx ];
 
 				// Ignore args that already have names
 				if( arg.NameColon != null ) {
 					continue;
 				}
 
-				var param = arg.DetermineParameter(
+				IParameterSymbol param = arg.DetermineParameter(
 					model,
 
 					// Don't map params arguments. It's okay that they are
@@ -209,11 +243,9 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					paramName = param.Name;
 				}
 
-				string text = param.OriginalDefinition.Type.ToMinimalDisplayString( model, 0 );
-
 				string psuedoName = GetPsuedoName( arg );
-
 				if( psuedoName != null ) {
+
 					bool matchesParamName = string.Equals(
 						psuedoName,
 						param.Name,
@@ -244,7 +276,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			if( ident.StartsWith( "m_" ) || ident.StartsWith( "s_" ) ) {
 				// e.g. m_foo -> foo
 				ident = ident.Substring( 2 );
-			} else if( ident[0] == '_' && ident.Length > 1 && ident[1] != '_' ) {
+			} else if( ident[ 0 ] == '_' && ident.Length > 1 && ident[ 1 ] != '_' ) {
 				// e.g. _foo -> foo
 				ident = ident.Substring( 1 );
 			}
@@ -269,6 +301,23 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					}
 					return null;
 			}
+		}
+
+		private static bool HasRequireNamedArgumentsAttribute(
+				SemanticModel model,
+				ArgumentListSyntax args
+			) {
+
+			ISymbol symbol = model.GetSymbolInfo( args.Parent ).Symbol;
+			if( symbol == null ) {
+				return false;
+			}
+
+			bool hasAttribute = symbol
+				.GetAttributes()
+				.Any( x => x.AttributeClass.GetFullTypeName() == RequireNamedArgumentsAttribute );
+
+			return hasAttribute;
 		}
 	}
 }

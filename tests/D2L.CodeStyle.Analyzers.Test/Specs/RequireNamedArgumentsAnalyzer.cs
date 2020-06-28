@@ -1,6 +1,13 @@
 ﻿// analyzer: D2L.CodeStyle.Analyzers.Language.RequireNamedArgumentsAnalyzer
 
+using D2L.CodeStyle.Annotations.Contract;
+
+namespace D2L.CodeStyle.Annotations.Contract {
+	public sealed class RequireNamedArgumentsAttribute : System.Attribute {}
+}
+
 namespace D2L {
+
 	public static class Foo {
 		private class Thing {
 			public int a4;
@@ -30,6 +37,9 @@ namespace D2L {
 
         public static void funcWithVerbatims( int @int, int @class, int @params, int @name, int @a5 ) { }
 
+		[RequireNamedArguments]
+		public static void funcWithRequiredNamedArgs( int a1, int a2 ) { }
+
 		public delegate void delegate0Args();
 		public delegate void delegate1Args( int a1 );
 		public delegate void delegate5Args( int a1, int a2, int a3, int a4, int a5 );
@@ -39,6 +49,9 @@ namespace D2L {
 			public SomeClass( int a1 ) { }
 			public SomeClass( int a1, int a2 ) { }
 			public SomeClass( int a1, int a2, int a3, int a4, int a5 ) { }
+
+			[RequireNamedArguments]
+			public SomeClass( int a1, int a2, int a3 ) { }
 		}
 
 		public static void Test() {
@@ -64,10 +77,17 @@ namespace D2L {
             /* TooManyUnnamedArgs(5) */ _arg6( 1, 2, 3, 4, 5, 6 ) /**/;
             _arg3( /* LiteralArgShouldBeNamed(a1) */ 1 /**/, /* LiteralArgShouldBeNamed(a2) */ 2 /**/, /* LiteralArgShouldBeNamed(a3) */ 3 /**/ );
             _arg3( a1: 1, /* LiteralArgShouldBeNamed(a2) */ 2 /**/, /* LiteralArgShouldBeNamed(a3) */ 3 /**/ );
-            #endregion
+			#endregion
 
-            #region verbatim identifiers
-            funcWithVerbatims( @int, @class, /* LiteralArgShouldBeNamed(@params) */ 3 /**/, p, p );
+			#region diagnostic required named args
+			funcWithRequiredNamedArgs( a1: 1, a2: 2 );
+			/* NamedArgumentsRequired */ funcWithRequiredNamedArgs( a1: 1, 2 ) /**/;
+			/* NamedArgumentsRequired */ funcWithRequiredNamedArgs( 1, a2: 2 ) /**/;
+			/* NamedArgumentsRequired */ funcWithRequiredNamedArgs( 1, 2 ) /**/;
+			#endregion
+
+			#region verbatim identifiers
+			funcWithVerbatims( @int, @class, /* LiteralArgShouldBeNamed(@params) */ 3 /**/, p, p );
             /* TooManyUnnamedArgs(5) */ funcWithVerbatims( p, p, p, p, p ) /**/;
 
             // These should pass:
@@ -134,11 +154,13 @@ namespace D2L {
 			new SomeClass( p, p );
 			/* TooManyUnnamedArgs(5) */ new SomeClass( p, p, p, p, p ) /**/;
 			new SomeClass( a1: 1, p, p, p, p );
-            #endregion
+			new SomeClass( a1: 1, a2: 2, a3: 3 );
+			/* NamedArgumentsRequired */ new SomeClass( 1, 2, 3 ) /**/;
+			#endregion
 
-            #region expressions should not trigger named argument diagnostics
-            // See: https://stackoverflow.com/a/10133102
-            System.Linq.Expressions.Expression<Func<int>> expression5args = () => _arg5_ret( p, p, p, p, p );
+			#region expressions should not trigger named argument diagnostics
+			// See: https://stackoverflow.com/a/10133102
+			System.Linq.Expressions.Expression<Func<int>> expression5args = () => _arg5_ret( p, p, p, p, p );
             System.Linq.Expressions.Expression<Func<int>> expression2args = () => _arg2_ret( p, p );
             System.Linq.Expressions.Expression<Func<int>> expression1args = () => _arg1_ret( p );
 
@@ -179,8 +201,15 @@ namespace D2L {
 			public SomeBaseClass( int a1, int a2 )
 				: this( a1 ) { }
 
-			public SomeBaseClass( int a1, int a2, int a3, int a4 )
+			[RequireNamedArguments]
+			public SomeBaseClass( int a1, int a2, int a3 )
 				: this( a1, a2 ) { }
+
+			public SomeBaseClass( int a1, int a2, int a3, int a4 )
+				: this( a1: a1, a2: a2, a3: a3 ) { }
+
+			public SomeBaseClass( int a1, int a2, int a3, bool _ )
+				: this( a1, a2, a3 ) { }
 
 			public SomeBaseClass( int a1, int a2, int a3, int a4, int a5 )
 				: this( a1, a2, a3, a4 ) { }
@@ -194,8 +223,14 @@ namespace D2L {
 			public SomeBaseClass( int b1, int b2, int b3, int b4, string _ )
 				: this( b1, b2 ) { }
 
+			public SomeBaseClass( int b1, int b2, int b3, string _ )
+				/* NamedArgumentsRequired */ : this( b1, b2, b3 ) /**/{ }
+
 			public SomeBaseClass( int b1, int b2, int b3, int b4, int b5, string _ )
 				: this( b1, b2, b3, b4 ) { }
+
+			public SomeBaseClass( int b1, int b2, int b3, int b4, int b5, int b6, long _ )
+				: this( a1: b1, a2: b2, a3: b3, a4: b4, a5: b5 ) { }
 
 			public SomeBaseClass( int b1, int b2, int b3, int b4, int b5, int b6, string _ )
 				/* TooManyUnnamedArgs(5) */ : this( b1, b2, b3, b4, b5 ) /**/{ }
@@ -212,6 +247,12 @@ namespace D2L {
 			public SomeInheritedClass( int a1, int a2, bool _ )
 				: base( a1, a2 ) { }
 
+			public SomeInheritedClass( int a1, int a2, int a3, bool _ )
+				: base( a1: a1, a2: a2, a3: a3 ) { }
+
+			public SomeInheritedClass( int a1, int a2, int a3, byte _ )
+				: base( a1, a2, a3 ) { }
+
 			public SomeInheritedClass( int a1, int a2, int a3, int a4, bool _ )
 				: base( a1, a2, a3, a4 ) { }
 
@@ -224,8 +265,14 @@ namespace D2L {
 			public SomeInheritedClass( int b1, int b2, string _ )
 				: base( b1, b2 ) { }
 
+			public SomeInheritedClass( int b1, int b2, int b3, bool _ )
+				/* NamedArgumentsRequired */ : base( b1, b2, b3 ) /**/{ }
+
 			public SomeInheritedClass( int b1, int b2, int b3, int b4, string _ )
 				: base( b1, b2, b3, b4 ) { }
+
+			public SomeInheritedClass( int b1, int b2, int b3, int b4, int b5, string _ )
+				: base( a1: b1, a2: b2, a3: b3, a4: b4, a5: b5 ) { }
 
 			public SomeInheritedClass( int b1, int b2, int b3, int b4, int b5, string _ )
 				/* TooManyUnnamedArgs(5) */ : base( b1, b2, b3, b4, b5 ) /**/{ }

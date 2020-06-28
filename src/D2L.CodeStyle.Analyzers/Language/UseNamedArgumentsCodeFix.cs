@@ -19,7 +19,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		public override ImmutableArray<string> FixableDiagnosticIds
 			=> ImmutableArray.Create(
 				Diagnostics.TooManyUnnamedArgs.Id,
-				Diagnostics.LiteralArgShouldBeNamed.Id
+				Diagnostics.LiteralArgShouldBeNamed.Id,
+				Diagnostics.NamedArgumentsRequired.Id
 			);
 
 		public override FixAllProvider GetFixAllProvider() {
