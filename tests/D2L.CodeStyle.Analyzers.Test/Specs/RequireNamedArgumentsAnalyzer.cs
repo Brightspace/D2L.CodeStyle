@@ -209,7 +209,7 @@ namespace D2L {
 				: this( a1: a1, a2: a2, a3: a3 ) { }
 
 			public SomeBaseClass( int a1, int a2, int a3, bool _ )
-				/* NamedArgumentsRequired */ : this( a1, a2, a3 ) /**/{ }
+				: this( a1, a2, a3 ) { }
 
 			public SomeBaseClass( int a1, int a2, int a3, int a4, int a5 )
 				: this( a1, a2, a3, a4 ) { }
@@ -251,7 +251,7 @@ namespace D2L {
 				: base( a1: a1, a2: a2, a3: a3 ) { }
 
 			public SomeInheritedClass( int a1, int a2, int a3, byte _ )
-				/* NamedArgumentsRequired */ : base( a1, a2, a3 ) /**/{ }
+				: base( a1, a2, a3 ) { }
 
 			public SomeInheritedClass( int a1, int a2, int a3, int a4, bool _ )
 				: base( a1, a2, a3, a4 ) { }

@@ -85,19 +85,15 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
-			bool requireNamedArguments = HasRequireNamedArgumentsAttribute( ctx.SemanticModel, args );
-
-			var unnamedArgs = GetUnnamedArgs(
-					model: ctx.SemanticModel,
-					args: args,
-					requireNamedArguments: requireNamedArguments
-				)
+			ImmutableArray<ArgParamBinding> unnamedArgs =
+				GetUnnamedArgs( ctx.SemanticModel, args )
 				.ToImmutableArray();
 
 			if( unnamedArgs.IsEmpty ) {
 				return;
 			}
 
+			bool requireNamedArguments = HasRequireNamedArgumentsAttribute( ctx.SemanticModel, args );
 			if( requireNamedArguments ) {
 
 				var fixerContext = CreateFixerContext( unnamedArgs );
@@ -201,8 +197,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		/// </summary>
 		private static IEnumerable<ArgParamBinding> GetUnnamedArgs(
 				SemanticModel model,
-				ArgumentListSyntax args,
-				bool requireNamedArguments
+				ArgumentListSyntax args
 			) {
 
 			for( int idx = 0; idx < args.Arguments.Count; idx++ ) {
@@ -248,20 +243,17 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					paramName = param.Name;
 				}
 
-				if( !requireNamedArguments ) {
+				string psuedoName = GetPsuedoName( arg );
+				if( psuedoName != null ) {
 
-					string psuedoName = GetPsuedoName( arg );
-					if( psuedoName != null ) {
+					bool matchesParamName = string.Equals(
+						psuedoName,
+						param.Name,
+						StringComparison.OrdinalIgnoreCase
+					);
 
-						bool matchesParamName = string.Equals(
-							psuedoName,
-							param.Name,
-							StringComparison.OrdinalIgnoreCase
-						);
-
-						if( matchesParamName ) {
-							continue;
-						}
+					if( matchesParamName ) {
+						continue;
 					}
 				}
 
