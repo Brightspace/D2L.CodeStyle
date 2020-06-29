@@ -1,6 +1,15 @@
 version: 2
 updates:
   - package-ecosystem: "nuget"
-    directory: "/"
+    directory: "/src/"
+    schedule:
+      interval: "daily"
+    ignore:
+      # These dependencies should be kept in-sync with the lowest-supported version of Visual Studio
+      # More info available here: https://github.com/dotnet/roslyn/blob/master/docs/wiki/NuGet-packages.md#versioning
+      - dependency-name: "System.Collections.Immutable"
+      - dependency-name: "Microsoft.CodeAnalysis.CSharp.Workspaces"
+  - package-ecosystem: "nuget"
+    directory: "/test/"
     schedule:
       interval: "daily"
