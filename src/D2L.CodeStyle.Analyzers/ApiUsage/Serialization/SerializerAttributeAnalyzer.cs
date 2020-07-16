@@ -62,7 +62,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				return;
 			}
 
-
 			AttributeArgumentSyntax typeArgumentSyntax = attributeSyntax.ArgumentList.Arguments[ 0 ];
 			if( !( typeArgumentSyntax.Expression is TypeOfExpressionSyntax typeofSyntax ) ) {
 
