@@ -514,5 +514,15 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "This call requires arguments be named for readability."
 		);
+
+		public static readonly DiagnosticDescriptor InvalidSerializerType = new DiagnosticDescriptor(
+			id: "D2L0059",
+			title: "Serializers must implement D2L.LP.Serialization.ITrySerializer.",
+			messageFormat: "'{0}' does not implement D2L.LP.Serialization.ITrySerializer.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "This [Serializer] attribute requires the provided type to implement D2L.LP.Serialization.ITrySerializer."
+		);
 	}
 }
