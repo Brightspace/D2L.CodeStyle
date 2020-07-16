@@ -17,7 +17,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 		private const string IEventHandlerRegistryFullName = "D2L.LP.Distributed.Events.Handlers.IEventHandlerRegistry";
 
-		private static IEnumerable<string> RegisterMethodNames = ImmutableArray.Create(
+		private static readonly IEnumerable<string> RegisterMethodNames = ImmutableArray.Create(
 				"RegisterEventHandler",
 				"RegisterOrgEventHandler"
 			);
