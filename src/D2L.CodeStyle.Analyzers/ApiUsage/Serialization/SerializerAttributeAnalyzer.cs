@@ -62,7 +62,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				return;
 			}
 
-			SeparatedSyntaxList<AttributeArgumentSyntax> arguments = attributeSyntax.ArgumentList.Arguments;
+			AttributeArgumentListSyntax argumentList = attributeSyntax.ArgumentList;
+			if( argumentList == null ) {
+				return;
+			}
+
+			SeparatedSyntaxList<AttributeArgumentSyntax> arguments = argumentList.Arguments;
 			if( arguments.Count == 0 ) {
 				return;
 			}
