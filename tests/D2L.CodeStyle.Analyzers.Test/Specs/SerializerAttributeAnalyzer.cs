@@ -1,7 +1,6 @@
 ﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.Serialization.SerializerAttributeAnalyzer
 
 using System;
-using System.ComponentModel;
 using D2L.LP.Serialization;
 
 namespace D2L.LP.Serialization {
@@ -37,6 +36,12 @@ namespace SpecTests {
 	[Serializer()]
 	public sealed class IncompleteAttribute_WithParentheses { }
 
-	[Category( "Not related" )]
+	[System.ComponentModel.Category( "Not related" )]
 	public sealed class RandomAttribute { }
+
+	[Invalid]
+	public sealed class InvalidAttribute { }
+
+	[]
+	public sealed class JustSomeBrackets { }
 }

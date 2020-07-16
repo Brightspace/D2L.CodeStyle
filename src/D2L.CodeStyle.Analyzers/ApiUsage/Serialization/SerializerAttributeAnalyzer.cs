@@ -58,7 +58,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			) {
 
 			SemanticModel model = context.SemanticModel;
-			if( !IsAttributeOfType( model, attributeSyntax, serializerAttributeType ) ) {
+			if( !model.IsAttributeOfType( attributeSyntax, serializerAttributeType ) ) {
 				return;
 			}
 
@@ -87,30 +87,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			if( serializerType.AllInterfaces.Contains( trySerializerType ) ) {
 				return;
 			}
-			
+
 			ReportInvalidSerializerType(
 					context,
 					typeArgumentSyntax,
 					messageArg: serializerType.ToDisplayString( TypeDisplayFormat )
 				);
-		}
-
-		private static bool IsAttributeOfType(
-				SemanticModel model,
-				AttributeSyntax attributeSyntax,
-				INamedTypeSymbol attributeType
-			) {
-
-			TypeInfo typeInfo = model.GetTypeInfo( attributeSyntax );
-			if( !( typeInfo.Type is INamedTypeSymbol namedSymbol ) ) {
-				return false;
-			}
-
-			if( !namedSymbol.Equals( attributeType ) ) {
-				return false;
-			}
-
-			return true;
 		}
 
 		private void ReportInvalidSerializerType(

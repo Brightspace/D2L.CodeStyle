@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis.CSharp;
+﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.Extensions {
@@ -29,6 +30,26 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 						return false;
 					}
 				}
+			}
+
+			return true;
+		}
+
+		public static bool IsAttributeOfType(
+				this SemanticModel model,
+				AttributeSyntax attributeSyntax,
+				INamedTypeSymbol attributeType
+			) {
+
+			TypeInfo typeInfo = model.GetTypeInfo( attributeSyntax );
+
+			ITypeSymbol typeSymbol = typeInfo.Type;
+			if( typeSymbol == null ) {
+				return false;
+			}
+
+			if( !typeSymbol.Equals( attributeType ) ) {
+				return false;
 			}
 
 			return true;
