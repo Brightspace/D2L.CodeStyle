@@ -31,6 +31,9 @@ namespace SpecTests {
 	[Serializer( /* InvalidSerializerType(123) */ 123 /**/ )]
 	public sealed class InvalidSerializerTypeArgument { }
 
+	[Serializer( )]
+	public sealed class IncompleteAttribute { }
+
 	[Category( "Not related" )]
 	public sealed class RandomAttribute { }
 }

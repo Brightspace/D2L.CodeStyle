@@ -62,7 +62,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				return;
 			}
 
-			AttributeArgumentSyntax typeArgumentSyntax = attributeSyntax.ArgumentList.Arguments[ 0 ];
+			SeparatedSyntaxList<AttributeArgumentSyntax> arguments = attributeSyntax.ArgumentList.Arguments;
+			if( arguments.Count == 0 ) {
+				return;
+			}
+
+			AttributeArgumentSyntax typeArgumentSyntax = arguments[ 0 ];
 			if( !( typeArgumentSyntax.Expression is TypeOfExpressionSyntax typeofSyntax ) ) {
 
 				ReportInvalidSerializerType(
