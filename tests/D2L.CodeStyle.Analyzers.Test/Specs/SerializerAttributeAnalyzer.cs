@@ -28,6 +28,9 @@ namespace SpecTests {
 	[Serializer( /* InvalidSerializerType(null) */ null /**/ )]
 	public sealed class NullSerializerType { }
 
+	[Serializer( /* InvalidSerializerType(123) */ 123 /**/ )]
+	public sealed class InvalidSerializerTypeArgument { }
+
 	[Category( "Not related" )]
 	public sealed class RandomAttribute { }
 }
