@@ -158,13 +158,13 @@ namespace SpecTests {
 
 		namespace MultiplePublicConstructors {
 
-			/* ReflectionSerializer_NoSinglePublicConstructor */ [ReflectionSerializer]
+			/* ReflectionSerializer_MultiplePublicConstructors */ [ReflectionSerializer]
 			public sealed class EmptyAndNonEmpty {
 				public EmptyAndNonEmpty() { }
 				public EmptyAndNonEmpty( int arg0 ) { }
 			} /**/
 
-			/* ReflectionSerializer_NoSinglePublicConstructor */ [ReflectionSerializer]
+			/* ReflectionSerializer_MultiplePublicConstructors */ [ReflectionSerializer]
 			public sealed class ManyNonEmpty {
 				public ManyNonEmpty( int arg0 ) { }
 				public ManyNonEmpty( int arg0, long arg1 ) { }
@@ -173,22 +173,22 @@ namespace SpecTests {
 
 		namespace NoPublicConstructors {
 
-			/* ReflectionSerializer_NoSinglePublicConstructor */ [ReflectionSerializer]
+			/* ReflectionSerializer_NoPublicConstructors */ [ReflectionSerializer]
 			public sealed class Private {
 				private Private() { }
 			} /**/
 
-			/* ReflectionSerializer_NoSinglePublicConstructor */ [ReflectionSerializer]
+			/* ReflectionSerializer_NoPublicConstructors */ [ReflectionSerializer]
 			public sealed class Protected {
 				internal Protected() { }
 			} /**/
 			
-			/* ReflectionSerializer_NoSinglePublicConstructor */ [ReflectionSerializer]
+			/* ReflectionSerializer_NoPublicConstructors */ [ReflectionSerializer]
 			public sealed class ImplicittInternal {
 				internal ImplicittInternal() { }
 			} /**/
 
-			/* ReflectionSerializer_NoSinglePublicConstructor */ [ReflectionSerializer]
+			/* ReflectionSerializer_NoPublicConstructors */ [ReflectionSerializer]
 			public sealed class ExplicitInternal {
 				internal ExplicitInternal() { }
 			} /**/
@@ -204,7 +204,7 @@ namespace SpecTests {
 			public int Value { get; }
 		}
 
-		/* ReflectionSerializer_NoSinglePublicConstructor */ [ReflectionSerializer]
+		/* ReflectionSerializer_MultiplePublicConstructors */ [ReflectionSerializer]
 		public struct MultipleConstructors {
 			public MultipleConstructors( int value0 ) {
 				Value0 = value0;
