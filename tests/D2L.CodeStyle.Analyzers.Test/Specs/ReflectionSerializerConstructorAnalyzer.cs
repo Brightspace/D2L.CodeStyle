@@ -132,6 +132,24 @@ namespace SpecTests {
 				public ManyNonEmpty( int arg0, long arg1 ) { }
 			} /**/
 		}
+
+		namespace NoPublicConstructors {
+
+			/* ReflectionSerializer_NoSinglePublicConstructor */ [ReflectionSerializer]
+			public sealed class Private {
+				private Private() { }
+			} /**/
+			
+			/* ReflectionSerializer_NoSinglePublicConstructor */ [ReflectionSerializer]
+			public sealed class ImplicittInternal {
+				internal ImplicittInternal() { }
+			} /**/
+
+			/* ReflectionSerializer_NoSinglePublicConstructor */ [ReflectionSerializer]
+			public sealed class ExplicitInternal {
+				internal ExplicitInternal() { }
+			} /**/
+		}
 	}
 
 	namespace Structs {
