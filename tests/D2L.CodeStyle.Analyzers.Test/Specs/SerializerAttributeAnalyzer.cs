@@ -7,19 +7,20 @@ namespace D2L.LP.Serialization {
 	public sealed class SerializerAttribute : Attribute {
 		public SerializableAttribute( Type type ) { }
 	}
+	public interface ISerializer { }
 	public interface ITrySerializer { }
 }
 
 namespace SpecTests {
 
-	[Serializer( typeof( Nested.Serializer ) )]
+	[Serializer( typeof( Nested.TrySerializer ) )]
 	public sealed class Nested {
-		private sealed class Serializer : ITrySerializer { }
+		private sealed class TrySerializer : ITrySerializer { }
 	}
 
 	[Serializer( typeof( ExternalSerializer ) )]
 	public sealed class External { }
-	public sealed class ExternalSerializer : ITrySerializer { }
+	public sealed class ExternalSerializer : ISerializer { }
 
 	[Serializer( /* InvalidSerializerType(System.String) */ typeof( string ) /**/ )]
 	public sealed class InvalidSerializerType { }

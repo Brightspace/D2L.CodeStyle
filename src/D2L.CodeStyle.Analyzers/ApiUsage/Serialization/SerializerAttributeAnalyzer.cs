@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
@@ -18,6 +19,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			);
 
 		private const string SerializerAttributeFullName = "D2L.LP.Serialization.SerializerAttribute";
+		private const string ISerializerFullName = "D2L.LP.Serialization.ISerializer";
 		private const string ITrySerializerFullName = "D2L.LP.Serialization.ITrySerializer";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
@@ -35,8 +37,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			if( !comp.TryGetTypeByMetadataName( SerializerAttributeFullName, out INamedTypeSymbol serializerAttributeType ) ) {
 				return;
 			}
-			if( !comp.TryGetTypeByMetadataName( ITrySerializerFullName, out INamedTypeSymbol trySerializerType ) ) {
-				return;
+
+			var serializerInterfaceTypes = ImmutableArray.CreateBuilder<INamedTypeSymbol>();
+			if( comp.TryGetTypeByMetadataName( ISerializerFullName, out INamedTypeSymbol serializerType ) ) {
+				serializerInterfaceTypes.Add( serializerType );
+			}
+			if( comp.TryGetTypeByMetadataName( ITrySerializerFullName, out INamedTypeSymbol trySerializerType ) ) {
+				serializerInterfaceTypes.Add( trySerializerType );
 			}
 
 			context.RegisterSyntaxNodeAction(
@@ -44,7 +51,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 						c,
 						(AttributeSyntax)c.Node,
 						serializerAttributeType,
-						trySerializerType
+						serializerInterfaceTypes.ToImmutable()
 					),
 					SyntaxKind.Attribute
 				);
@@ -54,7 +61,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				SyntaxNodeAnalysisContext context,
 				AttributeSyntax attributeSyntax,
 				INamedTypeSymbol serializerAttributeType,
-				INamedTypeSymbol trySerializerType
+				ImmutableArray<INamedTypeSymbol> serializerInterfaceTypes
 			) {
 
 			SemanticModel model = context.SemanticModel;
@@ -84,7 +91,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			}
 
 			ITypeSymbol serializerType = model.GetTypeInfo( typeofSyntax.Type ).Type;
-			if( serializerType.AllInterfaces.Contains( trySerializerType ) ) {
+
+			bool isSerializerType = serializerType.AllInterfaces.Any( serializerInterfaceTypes.Contains );
+			if( isSerializerType ) {
 				return;
 			}
 
