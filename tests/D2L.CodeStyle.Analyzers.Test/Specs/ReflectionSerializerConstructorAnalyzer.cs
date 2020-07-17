@@ -47,6 +47,36 @@ namespace SpecTests {
 				}
 
 				[ReflectionSerializer]
+				public sealed class WithImplicittInternalConstructor {
+					public WithImplicittInternalConstructor( int value ) {
+						Value = value;
+					}
+					public int Value { get; }
+					// ↓↓↓
+					WithImplicittInternalConstructor() { }
+				}
+
+				[ReflectionSerializer]
+				public sealed class WithExplicitInternalConstructor {
+					public WithExplicitInternalConstructor( int value ) {
+						Value = value;
+					}
+					public int Value { get; }
+					// ↓↓↓
+					internal WithExplicitInternalConstructor() { }
+				}
+
+				[ReflectionSerializer]
+				public sealed class WithProtectedConstructor {
+					public WithProtectedConstructor( int value ) {
+						Value = value;
+					}
+					public int Value { get; }
+					// ↓↓↓
+					protected WithProtectedConstructor() { }
+				}
+
+				[ReflectionSerializer]
 				public sealed class WithPrivateConstructor {
 					public WithPrivateConstructor( int value ) {
 						Value = value;
@@ -109,6 +139,14 @@ namespace SpecTests {
 				}
 
 				[ReflectionSerializer]
+				public sealed class WithProtectedConstructor {
+					public WithProtectedConstructor() { }
+					public int Value { get; set; }
+					// ↓↓↓
+					protected WithProtectedConstructor( int value ) { }
+				}
+
+				[ReflectionSerializer]
 				public sealed class WithPrivateConstructor {
 					public WithPrivateConstructor() { }
 					public int Value { get; set; }
@@ -138,6 +176,11 @@ namespace SpecTests {
 			/* ReflectionSerializer_NoSinglePublicConstructor */ [ReflectionSerializer]
 			public sealed class Private {
 				private Private() { }
+			} /**/
+
+			/* ReflectionSerializer_NoSinglePublicConstructor */ [ReflectionSerializer]
+			public sealed class Protected {
+				internal Protected() { }
 			} /**/
 			
 			/* ReflectionSerializer_NoSinglePublicConstructor */ [ReflectionSerializer]
