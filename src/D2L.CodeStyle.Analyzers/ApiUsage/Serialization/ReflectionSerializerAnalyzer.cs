@@ -1,6 +1,5 @@
 ﻿using System.Collections.Immutable;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -10,7 +9,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
-	internal sealed class ReflectionSerializerConstructorAnalyzer : DiagnosticAnalyzer {
+	internal sealed class ReflectionSerializerAnalyzer : DiagnosticAnalyzer {
 
 		private const string ReflectionSerializerAttributeFullName = "D2L.LP.Serialization.ReflectionSerializerAttribute";
 

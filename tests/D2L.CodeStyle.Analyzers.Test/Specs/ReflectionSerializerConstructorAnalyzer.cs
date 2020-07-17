@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.Serialization.ReflectionSerializerConstructorAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.Serialization.ReflectionSerializerAnalyzer
 
 using System;
 using D2L.LP.Serialization;
