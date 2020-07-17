@@ -525,10 +525,20 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "This [Serializer] attribute requires the provided type to implement D2L.LP.Serialization.ITrySerializer."
 		);
 
-		public static readonly DiagnosticDescriptor ReflectionSerializer_NoSinglePublicConstructor = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor ReflectionSerializer_NoPublicConstructors = new DiagnosticDescriptor(
 			id: "D2L0060",
 			title: "[ReflectionSerializer] requires a single public constructor or a default constructor",
-			messageFormat: "The type does not define a single public constructor or a default constructor.",
+			messageFormat: "The type has no public constructors. [ReflectionSerializer] requires a public constructor.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "This [ReflectionSerializer] attribute requires a single public constructor a default constructor."
+		);
+
+		public static readonly DiagnosticDescriptor ReflectionSerializer_MultiplePublicConstructors = new DiagnosticDescriptor(
+			id: "D2L0061",
+			title: "[ReflectionSerializer] requires a single public constructor or a default constructor",
+			messageFormat: "The type has too many public constructors. [ReflectionSerializer] requires a single public constructor.",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,

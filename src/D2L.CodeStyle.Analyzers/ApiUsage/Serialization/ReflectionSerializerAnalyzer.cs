@@ -14,7 +14,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 		private const string ReflectionSerializerAttributeFullName = "D2L.LP.Serialization.ReflectionSerializerAttribute";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-			Diagnostics.ReflectionSerializer_NoSinglePublicConstructor
+			Diagnostics.ReflectionSerializer_NoPublicConstructors,
+			Diagnostics.ReflectionSerializer_MultiplePublicConstructors
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -70,14 +71,29 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				.Where( c => c.IsPublic() )
 				.ToImmutableArray();
 
-			if( publicConstructors.Length == 1 ) {
-				return;
-			}
+			switch ( publicConstructors.Length ) {
 
-			ReportNoSinglePublicConstructor(
-					context,
-					typeDeclarationSyntax
-				);
+				case 0:
+
+					ReportTargetTypeDiagnostic(
+							context,
+							Diagnostics.ReflectionSerializer_NoPublicConstructors,
+							typeDeclarationSyntax
+						);
+					return;
+
+				case 1:
+					return;
+
+				default:
+
+					ReportTargetTypeDiagnostic(
+							context,
+							Diagnostics.ReflectionSerializer_MultiplePublicConstructors,
+							typeDeclarationSyntax
+						);
+					return;
+			}
 		}
 
 		private static bool TryGetAttributeTarget(
@@ -106,13 +122,14 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			}
 		}
 
-		private void ReportNoSinglePublicConstructor(
+		private static void ReportTargetTypeDiagnostic(
 				SyntaxNodeAnalysisContext context,
+				DiagnosticDescriptor descriptor,
 				TypeDeclarationSyntax typeDeclarationSyntax
 			) {
 
 			Diagnostic diagnostic = Diagnostic.Create(
-					descriptor: Diagnostics.ReflectionSerializer_NoSinglePublicConstructor,
+					descriptor: descriptor,
 					location: typeDeclarationSyntax.GetLocation()
 				);
 
