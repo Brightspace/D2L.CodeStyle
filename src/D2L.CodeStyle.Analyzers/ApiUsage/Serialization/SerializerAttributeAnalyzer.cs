@@ -79,7 +79,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				return;
 			}
 
-			AttributeArgumentSyntax typeArgumentSyntax = arguments[0];
+			AttributeArgumentSyntax typeArgumentSyntax = arguments[ 0 ];
 			if( !( typeArgumentSyntax.Expression is TypeOfExpressionSyntax typeofSyntax ) ) {
 
 				ReportInvalidSerializerType(
