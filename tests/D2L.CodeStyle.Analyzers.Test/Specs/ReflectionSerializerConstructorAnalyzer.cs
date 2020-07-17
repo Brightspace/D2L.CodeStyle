@@ -118,7 +118,7 @@ namespace SpecTests {
 			}
 		}
 
-		namespace MultipleConstructors {
+		namespace MultiplePublicConstructors {
 
 			/* ReflectionSerializer_NoSinglePublicConstructor */ [ReflectionSerializer]
 			public sealed class EmptyAndNonEmpty {
