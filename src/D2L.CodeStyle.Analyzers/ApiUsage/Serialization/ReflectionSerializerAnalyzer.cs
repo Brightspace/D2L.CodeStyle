@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
@@ -12,10 +13,14 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 	internal sealed class ReflectionSerializerAnalyzer : DiagnosticAnalyzer {
 
 		private const string ReflectionSerializerAttributeFullName = "D2L.LP.Serialization.ReflectionSerializerAttribute";
+		private const string ConstructorAttributeFullName = "D2L.LP.Serialization.ReflectionSerializer+ConstructorAttribute";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.ReflectionSerializer_NoPublicConstructors,
-			Diagnostics.ReflectionSerializer_MultiplePublicConstructors
+			Diagnostics.ReflectionSerializer_MultiplePublicConstructors,
+			Diagnostics.ReflectionSerializer_ConstructorAttribute_OnlyPublic,
+			Diagnostics.ReflectionSerializer_ConstructorAttribute_OnlyFirstPublic,
+			Diagnostics.ReflectionSerializer_ConstructorAttribute_OnlyIfMultiplePublic
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -30,11 +35,16 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				return;
 			}
 
+			if( comp.TryGetTypeByMetadataName( ConstructorAttributeFullName, out INamedTypeSymbol constructorAttributeType ) ) {
+				constructorAttributeType = null;
+			}
+
 			context.RegisterSyntaxNodeAction(
 					c => AnalyzeAttributeSyntax(
 						c,
 						(AttributeSyntax)c.Node,
-						reflectionSerializerAttributeType
+						reflectionSerializerAttributeType,
+						constructorAttributeType
 					),
 					SyntaxKind.Attribute
 				);
@@ -43,7 +53,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 		private void AnalyzeAttributeSyntax(
 				SyntaxNodeAnalysisContext context,
 				AttributeSyntax attributeSyntax,
-				INamedTypeSymbol reflectionSerializerAttributeType
+				INamedTypeSymbol reflectionSerializerAttributeType,
+				INamedTypeSymbol constructorAttributeType
 			) {
 
 			SemanticModel model = context.SemanticModel;
@@ -52,6 +63,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			}
 
 			if( !TryGetAttributeTarget( attributeSyntax, out TypeDeclarationSyntax typeDeclarationSyntax ) ) {
+				return;
+			}
+
+			if( typeDeclarationSyntax.Modifiers.IndexOf( SyntaxKind.AbstractKeyword ) >= 0 ) {
 				return;
 			}
 
@@ -67,11 +82,64 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				return;
 			}
 
-			ImmutableArray<ConstructorDeclarationSyntax> publicConstructors = constructors
-				.Where( c => c.IsPublic() )
-				.ToImmutableArray();
+			// ---------------------------------------------------------------------------------------------
 
-			switch ( publicConstructors.Length ) {
+			List<ConstructorDeclarationSyntax> publicConstructors = new List<ConstructorDeclarationSyntax>();
+			ConstructorDeclarationSyntax attributedPublicConstructor = null;
+
+			foreach( ConstructorDeclarationSyntax constructor in constructors ) {
+
+				bool hasConstructorAttribute = HasConstructorAttribute( model, constructor, constructorAttributeType );
+
+				if( constructor.IsPublic() ) {
+
+					if( hasConstructorAttribute  ) {
+
+						if( publicConstructors.Count == 0 ) {
+							attributedPublicConstructor = constructor;
+
+						} else {
+
+							// only the first public constructor can be attributed with [ReflectionSerializer.Constructor]
+							ReportConstructorDiagnostic(
+									context,
+									Diagnostics.ReflectionSerializer_ConstructorAttribute_OnlyFirstPublic,
+									constructor
+								);
+						}
+					}
+
+					publicConstructors.Add( constructor );
+
+				} else if( hasConstructorAttribute ) {
+
+					// only the public constructors can be attributed with [ReflectionSerializer.Constructor]
+					ReportConstructorDiagnostic(
+							context,
+							Diagnostics.ReflectionSerializer_ConstructorAttribute_OnlyPublic,
+							constructor
+						);
+				}
+			}
+
+			if( attributedPublicConstructor  != null ) {
+
+				if( publicConstructors.Count == 1 ) {
+
+					// [ReflectionSerializer.Constructor] is only required if multiple public constructors exist
+					ReportConstructorDiagnostic(
+							context,
+							Diagnostics.ReflectionSerializer_ConstructorAttribute_OnlyIfMultiplePublic,
+							attributedPublicConstructor
+						);
+				}
+
+				return;
+			}
+
+			// ---------------------------------------------------------------------------------------------
+
+			switch( publicConstructors.Count ) {
 
 				case 0:
 
@@ -134,6 +202,47 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				);
 
 			context.ReportDiagnostic( diagnostic );
+		}
+
+		private static void ReportConstructorDiagnostic(
+				SyntaxNodeAnalysisContext context,
+				DiagnosticDescriptor descriptor,
+				ConstructorDeclarationSyntax constructorSyntax
+			) {
+
+			Diagnostic diagnostic = Diagnostic.Create(
+					descriptor: descriptor,
+					location: constructorSyntax.GetLocation()
+				);
+
+			context.ReportDiagnostic( diagnostic );
+		}
+
+		private static bool HasConstructorAttribute(
+				SemanticModel model,
+				ConstructorDeclarationSyntax constructor,
+				INamedTypeSymbol constructorAttributeType
+			) {
+
+			IEnumerable<AttributeListSyntax> attributeLists = constructor
+				.ChildNodes()
+				.OfType<AttributeListSyntax>();
+
+			foreach( AttributeListSyntax attributeList in attributeLists ) {
+
+				if( attributeList.Attributes == null ) {
+					continue;
+				}
+
+				foreach( AttributeSyntax attr in attributeList.Attributes ) {
+
+					if( model.IsAttributeOfType( attr, constructorAttributeType )  ) {
+						return true;
+					}
+				}
+			}
+
+			return false;
 		}
 	}
 }

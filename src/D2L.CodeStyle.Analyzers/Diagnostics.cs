@@ -544,5 +544,35 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "This [ReflectionSerializer] attribute requires a single public constructor a default constructor."
 		);
+
+		public static readonly DiagnosticDescriptor ReflectionSerializer_ConstructorAttribute_OnlyPublic = new DiagnosticDescriptor(
+			id: "D2L0062",
+			title: "[ReflectionSerializer.Constructor] attribute can only be applied to public constructors",
+			messageFormat: "The [ReflectionSerializer.Constructor] attribute can only be applied to public constructors.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "The [ReflectionSerializer.Constructor] attribute can only be applied to public constructors."
+		);
+
+		public static readonly DiagnosticDescriptor ReflectionSerializer_ConstructorAttribute_OnlyFirstPublic = new DiagnosticDescriptor(
+			id: "D2L0063",
+			title: "[ReflectionSerializer.Constructor] attribute can only be applied to the first public constructor",
+			messageFormat: "The [ReflectionSerializer.Constructor] attribute can only be applied to the first public constructor.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "The [ReflectionSerializer.Constructor] attribute can only be applied to the first public constructor."
+		);
+
+		public static readonly DiagnosticDescriptor ReflectionSerializer_ConstructorAttribute_OnlyIfMultiplePublic = new DiagnosticDescriptor(
+			id: "D2L0064",
+			title: "[ReflectionSerializer.Constructor] attribute can only be applied if there are multiple public constructors",
+			messageFormat: "The [ReflectionSerializer.Constructor] attribute can only be applied if there are multiple public constructors.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "The [ReflectionSerializer.Constructor] attribute can only be applied if there are multiple public constructors."
+		);
 	}
 }

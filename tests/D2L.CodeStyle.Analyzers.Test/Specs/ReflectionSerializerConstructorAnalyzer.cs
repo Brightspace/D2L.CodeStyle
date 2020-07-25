@@ -6,6 +6,10 @@ using D2L.LP.Serialization;
 namespace D2L.LP.Serialization {
 	[AttributeUsage( AttributeTargets.Class | AttributeTargets.Struct )]
 	public sealed class ReflectionSerializerAttribute : Attribute { }
+	public static class ReflectionSerializer {
+		[AttributeUsage( AttributeTargets.Constructor )]
+		public sealed class ConstructorAttribute : Attribute { }
+	}
 }
 
 namespace SpecTests {
@@ -158,13 +162,15 @@ namespace SpecTests {
 
 		namespace MultiplePublicConstructors {
 
-			/* ReflectionSerializer_MultiplePublicConstructors */ [ReflectionSerializer]
+			/* ReflectionSerializer_MultiplePublicConstructors */
+			[ReflectionSerializer]
 			public sealed class EmptyAndNonEmpty {
 				public EmptyAndNonEmpty() { }
 				public EmptyAndNonEmpty( int arg0 ) { }
 			} /**/
 
-			/* ReflectionSerializer_MultiplePublicConstructors */ [ReflectionSerializer]
+			/* ReflectionSerializer_MultiplePublicConstructors */
+			[ReflectionSerializer]
 			public sealed class ManyNonEmpty {
 				public ManyNonEmpty( int arg0 ) { }
 				public ManyNonEmpty( int arg0, long arg1 ) { }
@@ -173,22 +179,30 @@ namespace SpecTests {
 
 		namespace NoPublicConstructors {
 
-			/* ReflectionSerializer_NoPublicConstructors */ [ReflectionSerializer]
+			public abstract class AbstractClass {
+				protected AbstractClass() { }
+			}
+
+			/* ReflectionSerializer_NoPublicConstructors */
+			[ReflectionSerializer]
 			public sealed class Private {
 				private Private() { }
 			} /**/
 
-			/* ReflectionSerializer_NoPublicConstructors */ [ReflectionSerializer]
+			/* ReflectionSerializer_NoPublicConstructors */
+			[ReflectionSerializer]
 			public sealed class Protected {
 				internal Protected() { }
 			} /**/
-			
-			/* ReflectionSerializer_NoPublicConstructors */ [ReflectionSerializer]
+
+			/* ReflectionSerializer_NoPublicConstructors */
+			[ReflectionSerializer]
 			public sealed class ImplicittInternal {
 				internal ImplicittInternal() { }
 			} /**/
 
-			/* ReflectionSerializer_NoPublicConstructors */ [ReflectionSerializer]
+			/* ReflectionSerializer_NoPublicConstructors */
+			[ReflectionSerializer]
 			public sealed class ExplicitInternal {
 				internal ExplicitInternal() { }
 			} /**/
@@ -204,7 +218,8 @@ namespace SpecTests {
 			public int Value { get; }
 		}
 
-		/* ReflectionSerializer_MultiplePublicConstructors */ [ReflectionSerializer]
+		/* ReflectionSerializer_MultiplePublicConstructors */
+		[ReflectionSerializer]
 		public struct MultipleConstructors {
 			public MultipleConstructors( int value0 ) {
 				Value0 = value0;
