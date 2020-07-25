@@ -92,8 +92,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 			ITypeSymbol serializerType = model.GetTypeInfo( typeofSyntax.Type ).Type;
 
-			bool isSerializerType = serializerType.AllInterfaces.Any( serializerInterfaceTypes.Contains );
-			if( isSerializerType ) {
+			if( DoesImplementOneOfSerializerInterfaces(
+					serializerType,
+					serializerInterfaceTypes
+				) ) {
 				return;
 			}
 
@@ -117,6 +119,22 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				);
 
 			context.ReportDiagnostic( diagnostic );
+		}
+
+		private static bool DoesImplementOneOfSerializerInterfaces(
+				ITypeSymbol serializerType,
+				ImmutableArray<INamedTypeSymbol> serializerInterfaceTypes
+			) {
+
+			ImmutableArray<INamedTypeSymbol> interfaces;
+
+			if( serializerType.IsDefinition ) {
+				interfaces = serializerType.AllInterfaces;
+			} else {
+				interfaces = serializerType.OriginalDefinition.AllInterfaces;
+			}
+
+			return interfaces.Any( serializerInterfaceTypes.Contains );
 		}
 	}
 }

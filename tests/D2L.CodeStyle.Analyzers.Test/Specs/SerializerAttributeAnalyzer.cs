@@ -18,12 +18,22 @@ namespace SpecTests {
 		private sealed class TrySerializer : ITrySerializer { }
 	}
 
+	[Serializer( typeof( NestedGeneric<>.TrySerializer ) )]
+	public sealed class NestedGeneric<T> {
+		private sealed class TrySerializer : ITrySerializer { }
+	}
+
 	[Serializer( typeof( ExternalSerializer ) )]
 	public sealed class External { }
 	public sealed class ExternalSerializer : ISerializer { }
 
 	[Serializer( /* InvalidSerializerType(System.String) */ typeof( string ) /**/ )]
 	public sealed class InvalidSerializerType { }
+
+	[Serializer( /* InvalidSerializerType(SpecTests.InvalidGenericSerializerType.Comparer) */ typeof( InvalidGenericSerializerType<>.Comparer ) /**/ )]
+	public sealed class InvalidGenericSerializerType<T> {
+		private sealed class Comparer { }
+	}
 
 	[Serializer( /* InvalidSerializerType(null) */ null /**/ )]
 	public sealed class NullSerializerType { }
