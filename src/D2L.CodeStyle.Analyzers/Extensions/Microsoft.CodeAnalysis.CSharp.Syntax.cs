@@ -16,17 +16,17 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			// Conveniently enough expr is stored in the initializer field of
 			// the PropertyDeclarationSyntax, so the code for analyzing fields
 			// will narrow the inspected type to that of expr.
-			if ( syntax.AccessorList == null ) {
+			if( syntax.AccessorList == null ) {
 				return false;
 			}
 
 			// Auto-implemented properties have at least an implicit (no body)
 			// get and never have an explicit set.
 			foreach( var accessor in syntax.AccessorList.Accessors ) {
-				if (accessor.Kind() == SyntaxKind.GetAccessorDeclaration
+				if( accessor.Kind() == SyntaxKind.GetAccessorDeclaration
 			 	 || accessor.Kind() == SyntaxKind.SetAccessorDeclaration
 				) {
-					if ( accessor.Body != null ) {
+					if( accessor.Body != null ) {
 						return false;
 					}
 				}
@@ -53,6 +53,18 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			}
 
 			return true;
+		}
+
+		public static bool IsStatic( this BaseMethodDeclarationSyntax method ) {
+
+			bool isStatic = method.Modifiers.IndexOf( SyntaxKind.StaticKeyword ) >= 0;
+			return isStatic;
+		}
+
+		public static bool IsPublic( this BaseMethodDeclarationSyntax method ) {
+
+			bool isStatic = method.Modifiers.IndexOf( SyntaxKind.PublicKeyword ) >= 0;
+			return isStatic;
 		}
 	}
 }
