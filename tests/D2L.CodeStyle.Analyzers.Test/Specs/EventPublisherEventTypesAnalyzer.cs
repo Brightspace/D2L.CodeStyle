@@ -25,10 +25,20 @@ namespace D2L.LP.Distributed.Events.Domain {
 	}
 }
 
+namespace D2L.LP.Distributed.Events.Processing.Domain {
+
+	public sealed class RefiredEventEnvelope {
+		public static RefiredEventEnvelope Create<T>( long orgId, T @event ) {
+			return new RefiredEventEnvelope();
+		}
+	}
+}
+
 namespace Tests {
 
 	using System;
 	using D2L.LP.Distributed.Events.Domain;
+	using D2L.LP.Distributed.Events.Processing.Domain;
 
 	[Event]
 	public sealed class GoodEvent { }
@@ -58,6 +68,12 @@ namespace Tests {
 			publisher.ObsoleteAndUnboundedPublishMany( 6606, events );
 			publisher.ObsoleteAndUnboundedPublishMany( 6606, events, DateTime.Now );
 		}
+
+		public void RefiredEventEnvelopeTests() {
+
+			GoodEvent @event = new GoodEvent();
+			RefiredEventEnvelope.Create( 6606, @event );
+		}
 	}
 
 	public sealed class WithoutEventAttribute {
@@ -82,6 +98,12 @@ namespace Tests {
 			/* EventTypeMissingEventAttribute(Tests.BadEvent) */ publisher.PublishMany( 6606, events, DateTime.Now ) /**/;
 			/* EventTypeMissingEventAttribute(Tests.BadEvent) */ publisher.ObsoleteAndUnboundedPublishMany( 6606, events ) /**/;
 			/* EventTypeMissingEventAttribute(Tests.BadEvent) */ publisher.ObsoleteAndUnboundedPublishMany( 6606, events, DateTime.Now ) /**/;
+		}
+
+		public void RefiredEventEnvelopeTests() {
+
+			BadEvent @event = new BadEvent();
+			/* EventTypeMissingEventAttribute(Tests.BadEvent) */ RefiredEventEnvelope.Create( 6606, @event ) /**/;
 		}
 	}
 

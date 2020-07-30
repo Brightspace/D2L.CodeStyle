@@ -14,14 +14,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 		private const string EventAttributeFullName = "D2L.LP.Distributed.Events.Domain.EventAttribute";
 
-		private const string IEventNotifierFullName = "D2L.LP.Distributed.Events.Domain.IEventNotifier";
-		private const string IEventPublisherFullName = "D2L.LP.Distributed.Events.Domain.IEventPublisher";
-
-		private static readonly IEnumerable<string> PublishMethodNames = ImmutableArray.Create(
-				"Publish",
-				"PublishMany",
-				"ObsoleteAndUnboundedPublishMany"
-			);
+		private static readonly ImmutableArray<string> PublisherTypeNames = ImmutableArray.Create(
+			"D2L.LP.Distributed.Events.Domain.IEventNotifier",
+			"D2L.LP.Distributed.Events.Domain.IEventPublisher",
+			"D2L.LP.Distributed.Events.Processing.Domain.RefiredEventEnvelope"
+		);
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.EventTypeMissingEventAttribute
@@ -42,11 +39,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				return;
 			}
 
-			IImmutableSet<ISymbol> genericPublishMethods = Enumerable
-				.Concat(
-					GetGenericPublishMethods( compilation, IEventNotifierFullName ),
-					GetGenericPublishMethods( compilation, IEventPublisherFullName )
-				)
+			IImmutableSet<ISymbol> genericPublishMethods = PublisherTypeNames
+				.SelectMany( typeName =>  GetGenericPublishMethods( compilation, typeName ) )
 				.ToImmutableHashSet();
 
 			context.RegisterSyntaxNodeAction(
@@ -123,8 +117,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				return Enumerable.Empty<ISymbol>();
 			}
 
-			IEnumerable<IMethodSymbol> methods = PublishMethodNames
-				.SelectMany( methodName => publisherType.GetMembers( methodName ) )
+			IEnumerable<IMethodSymbol> methods = publisherType
+				.GetMembers()
 				.OfType<IMethodSymbol>()
 				.Where( m => (
 					m.IsGenericMethod
