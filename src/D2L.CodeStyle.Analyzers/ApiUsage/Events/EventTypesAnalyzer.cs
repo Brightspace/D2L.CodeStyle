@@ -15,7 +15,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 		private const string ImmutableAttributeFullName = "D2L.CodeStyle.Annotations.Objects+Immutable";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-			Diagnostics.EventTypeMissingImmutableAttribute
+			Diagnostics.EventTypeMissingImmutableAttribute,
+			Diagnostics.EventTypeNotSealed
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -36,7 +37,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 			INamedTypeSymbol immutableAttributeType = compilation.GetTypeByMetadataName( ImmutableAttributeFullName );
 
 			context.RegisterSyntaxNodeAction(
-					ctxt => AnalyzeMethodInvocation(
+					ctxt => AnalyzeClassDeclaration(
 						ctxt,
 						(ClassDeclarationSyntax)ctxt.Node,
 						eventAttributeType,
@@ -46,7 +47,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				);
 		}
 
-		private void AnalyzeMethodInvocation(
+		private void AnalyzeClassDeclaration(
 				SyntaxNodeAnalysisContext context,
 				ClassDeclarationSyntax declaration,
 				INamedTypeSymbol eventAttributeType,
@@ -61,17 +62,27 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 			}
 
 			bool hasImmutableAttirbute = HasAttribute( declarationType, immutableAttributeType );
-			if( hasImmutableAttirbute ) {
-				return;
-			}
+			if( !hasImmutableAttirbute ) {
 
-			Diagnostic diagnostic = Diagnostic.Create(
+				Diagnostic diagnostic = Diagnostic.Create(
 					Diagnostics.EventTypeMissingImmutableAttribute,
 					declaration.Identifier.GetLocation(),
 					declarationType.ToDisplayString()
 				);
 
-			context.ReportDiagnostic( diagnostic );
+				context.ReportDiagnostic( diagnostic );
+			}
+
+			if( declaration.Modifiers.IndexOf( SyntaxKind.SealedKeyword ) < 0 ) {
+
+				Diagnostic diagnostic = Diagnostic.Create(
+					Diagnostics.EventTypeNotSealed,
+					declaration.Identifier.GetLocation(),
+					declarationType.ToDisplayString()
+				);
+
+				context.ReportDiagnostic( diagnostic );
+			}
 		}
 
 		private static bool HasAttribute(

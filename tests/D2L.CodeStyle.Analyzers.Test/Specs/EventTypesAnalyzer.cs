@@ -29,6 +29,14 @@ namespace Tests {
 
 	[Event]
 	[Immutable]
+	public abstract class/* EventTypeNotSealed(Tests.AbstractEvent) */ AbstractEvent /**/{ }
+
+	[Event]
+	[Immutable]
+	public class/* EventTypeNotSealed(Tests.NonSealedEvent) */ NonSealedEvent /**/{ }
+
+	[Event]
+	[Immutable]
 	public sealed class ImmutableEvent { }
 
 	[System.Diagnostics.Tracing.Event]

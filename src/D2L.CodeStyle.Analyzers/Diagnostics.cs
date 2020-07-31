@@ -524,5 +524,15 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "This [Serializer] attribute requires the provided type to implement D2L.LP.Serialization.ITrySerializer."
 		);
+
+		public static readonly DiagnosticDescriptor EventTypeNotSealed = new DiagnosticDescriptor(
+			id: "D2L0060",
+			title: "Event Type Not Sealed",
+			messageFormat: "{0} must be sealed because you can register event handlers based on inheritance.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "We require that event types be sealed."
+		);
 	}
 }
