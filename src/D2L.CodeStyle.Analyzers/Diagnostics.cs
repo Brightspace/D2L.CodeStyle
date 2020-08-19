@@ -192,7 +192,7 @@ namespace D2L.CodeStyle.Analyzers {
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
-			description: "JsonParamBinder uses the custom D2L JSON framework, so use JsonConvertParameterBinder (which uses Newtonsoft.Json) instead."
+			description: "JsonParamBinder uses the custom D2L JSON framework, so use StrictJsonParamBinder (which uses Newtonsoft.Json) instead."
 		);
 
 		public static readonly DiagnosticDescriptor ImmutableGenericAttributeInWrongAssembly = new DiagnosticDescriptor(

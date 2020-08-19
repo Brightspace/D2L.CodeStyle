@@ -47,7 +47,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 				                  .ConfigureAwait( continueOnCapturedContext: false );
 
 			AttributeSyntax newAttribute = SyntaxFactory.Attribute(
-				SyntaxFactory.IdentifierName( "JsonConvertParameterBinder" ) );
+				SyntaxFactory.IdentifierName( "StrictJsonParamBinder" ) );
 
 			SyntaxNode newRoot = root.ReplaceNode(oldAttribute, newAttribute );
 
