@@ -40,7 +40,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			"System.Uri",
 			"System.String",
 			"System.Version",
-			"System.Web.PageHandlerFactory",
+			"System.Web.UI.PageHandlerFactory",
 			"System.Workflow.ComponentModel.DependencyProperty",
 			"System.Xml.Serialization.XmlSerializer",
 			"System.Xml.Linq.XName",
