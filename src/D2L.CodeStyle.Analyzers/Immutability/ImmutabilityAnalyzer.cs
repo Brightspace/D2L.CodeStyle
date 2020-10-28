@@ -10,8 +10,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class ImmutabilityAnalyzer : DiagnosticAnalyzer {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-				Diagnostics.ImmutableClassIsnt,
-				Diagnostics.InvalidUnauditedReasonInImmutable
+				Diagnostics.ImmutableClassIsnt
 			);
 
 		private readonly MutabilityInspectionResultFormatter m_resultFormatter = new MutabilityInspectionResultFormatter();
@@ -66,24 +65,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					reason
 				);
 				context.ReportDiagnostic( diagnostic );
-
-			} else if( mutabilityResult.SeenUnauditedReasons.Count > 0 ) {
-
-				ImmutableHashSet<string> immutableExceptions = symbol.GetAllImmutableExceptions();
-
-				if( !mutabilityResult.SeenUnauditedReasons.IsSubsetOf( immutableExceptions ) ) {
-
-					string missingExceptions = string.Join( ", ", mutabilityResult.SeenUnauditedReasons.Except( immutableExceptions ) );
-
-					var location = GetLocationOfClassIdentifierAndGenericParameters( root );
-					var diagnostic = Diagnostic.Create(
-						Diagnostics.InvalidUnauditedReasonInImmutable,
-						location,
-						missingExceptions
-					);
-
-					context.ReportDiagnostic( diagnostic );
-				}
 			}
 		}
 

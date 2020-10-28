@@ -24,7 +24,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 	public sealed class MutabilityInspectionResult {
 
-		private readonly static MutabilityInspectionResult s_notMutableResult = new MutabilityInspectionResult( false, null, null, null, null, ImmutableHashSet<string>.Empty );
+		private readonly static MutabilityInspectionResult s_notMutableResult = new MutabilityInspectionResult( false, null, null, null, null );
 
 		public bool IsMutable { get; }
 
@@ -36,37 +36,22 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		public MutabilityTarget? Target { get; }
 
-		public ImmutableHashSet<string> SeenUnauditedReasons { get; }
-
 		private MutabilityInspectionResult(
 			bool isMutable,
 			string memberPath,
 			string typeName,
 			MutabilityTarget? target,
-			MutabilityCause? cause,
-			ImmutableHashSet<string> seenUnauditedReasons
+			MutabilityCause? cause
 		) {
 			IsMutable = isMutable;
 			MemberPath = memberPath;
 			TypeName = typeName;
 			Target = target;
 			Cause = cause;
-			SeenUnauditedReasons = seenUnauditedReasons;
 		}
 
 		public static MutabilityInspectionResult NotMutable() {
 			return s_notMutableResult;
-		}
-
-		public static MutabilityInspectionResult NotMutable( ImmutableHashSet<string> seenUnauditedReasons ) {
-			return new MutabilityInspectionResult(
-					false,
-					null,
-					null,
-					null,
-					null,
-					seenUnauditedReasons
-				);
 		}
 
 		public static MutabilityInspectionResult Mutable(
@@ -80,8 +65,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				mutableMemberPath,
 				membersTypeName,
 				kind,
-				cause,
-				ImmutableHashSet<string>.Empty
+				cause
 			);
 		}
 
@@ -146,8 +130,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				newMember,
 				this.TypeName,
 				this.Target,
-				this.Cause,
-				this.SeenUnauditedReasons
+				this.Cause
 			);
 		}
 
@@ -157,8 +140,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				this.MemberPath,
 				this.TypeName,
 				newTarget,
-				this.Cause,
-				this.SeenUnauditedReasons
+				this.Cause
 			);
 		}
 

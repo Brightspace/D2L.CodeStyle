@@ -4,9 +4,7 @@
 namespace D2L.CodeStyle.Annotations {
 	public static class Objects {
 
-		public abstract class ImmutableAttributeBase : Attribute {
-			public Except Except { get; set; }
-		}
+		public abstract class ImmutableAttributeBase : Attribute {}
 
 		/// <summary>
 		/// If a class, struct or interface is marked with this annotation it
@@ -36,19 +34,6 @@ namespace D2L.CodeStyle.Annotations {
 		public sealed class ImmutableGenericAttribute : Attribute {
 
 			public ImmutableGenericAttribute( Type type ) { }
-		}
-
-		[Flags]
-		public enum Except {
-
-			None = 0,
-			ItHasntBeenLookedAt = 1,
-			ItsSketchy = 2,
-			ItsStickyDataOhNooo = 4,
-			WeNeedToMakeTheAnalyzerConsiderThisSafe = 8,
-			ItsUgly = 16,
-			ItsOnDeathRow = 32
-			
 		}
 	}
 }
