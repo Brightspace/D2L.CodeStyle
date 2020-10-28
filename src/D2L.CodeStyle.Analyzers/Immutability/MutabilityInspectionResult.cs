@@ -54,16 +54,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return s_notMutableResult;
 		}
 
-		public static MutabilityInspectionResult NotMutable( ImmutableHashSet<string> seenUnauditedReasons ) {
-			return new MutabilityInspectionResult(
-					false,
-					null,
-					null,
-					null,
-					null
-				);
-		}
-
 		public static MutabilityInspectionResult Mutable(
 			string mutableMemberPath,
 			string membersTypeName,

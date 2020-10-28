@@ -409,8 +409,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return MutabilityInspectionResult.NotMutable();
 			}
 			if( Attributes.Mutability.Unaudited.IsDefined( symbol ) ) {
-				string unauditedReason = BecauseHelpers.GetUnauditedReason( symbol );
-				return MutabilityInspectionResult.NotMutable( ImmutableHashSet.Create( unauditedReason ) );
+				return MutabilityInspectionResult.NotMutable();
 			}
 
 			switch( symbol.Kind ) {
