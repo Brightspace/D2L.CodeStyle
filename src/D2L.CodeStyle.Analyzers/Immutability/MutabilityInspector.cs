@@ -130,8 +130,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute )
 				&& scope != ImmutabilityScope.None
 			) {
-				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
-				return MutabilityInspectionResult.NotMutable( immutableExceptions );
+				return MutabilityInspectionResult.NotMutable();
 			}
 
 			return DoInspectType(
@@ -153,8 +152,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			if( namedType == default ) {
 				return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsPotentiallyMutable );
 			}
-
-			ImmutableHashSet<string>.Builder unauditedReasonsBuilder = ImmutableHashSet.CreateBuilder<string>();
 
 			for( int i = 0; i < namedType.TypeArguments.Length; i++ ) {
 				ITypeSymbol arg = namedType.TypeArguments[i];
@@ -180,11 +177,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					}
 					return result;
 				}
-
-				unauditedReasonsBuilder.UnionWith( result.SeenUnauditedReasons );
 			}
 
-			return MutabilityInspectionResult.NotMutable( unauditedReasonsBuilder.ToImmutable() );
+			return MutabilityInspectionResult.NotMutable();
 		}
 
 		private MutabilityInspectionResult DoInspectInterface(
@@ -466,8 +461,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			if( !flags.HasFlag( MutabilityInspectionFlags.IgnoreImmutabilityAttribute )
 				&& scope == ImmutabilityScope.SelfAndChildren
 			) {
-				ImmutableHashSet<string> immutableExceptions = type.GetAllImmutableExceptions();
-				return MutabilityInspectionResult.NotMutable( immutableExceptions );
+				return MutabilityInspectionResult.NotMutable();
 			}
 
 			if( KnownImmutableTypes.IsTypeKnownImmutable( type ) ) {
@@ -568,8 +562,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return MutabilityInspectionResult.MutableType( type, MutabilityCause.IsAnExternalUnmarkedType );
 			}
 
-			ImmutableHashSet<string>.Builder seenUnauditedReasonsBuilder = ImmutableHashSet.CreateBuilder<string>();
-
 			typeStack.Add( type );
 			try {
 				foreach( ISymbol member in type.GetExplicitNonStaticMembers() ) {
@@ -577,7 +569,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					if( result.IsMutable ) {
 						return result;
 					}
-					seenUnauditedReasonsBuilder.UnionWith( result.SeenUnauditedReasons );
 				}
 
 				// We descend into the base class last
@@ -587,13 +578,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					if( baseResult.IsMutable ) {
 						return baseResult;
 					}
-					seenUnauditedReasonsBuilder.UnionWith( baseResult.SeenUnauditedReasons );
 				}
 			} finally {
 				typeStack.Remove( type );
 			}
 
-			return MutabilityInspectionResult.NotMutable( seenUnauditedReasonsBuilder.ToImmutable() );
+			return MutabilityInspectionResult.NotMutable();
 		}
 	}
 }
