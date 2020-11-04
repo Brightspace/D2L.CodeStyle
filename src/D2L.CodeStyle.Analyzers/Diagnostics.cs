@@ -514,5 +514,79 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "We require that event types be sealed."
 		);
+
+		public static readonly DiagnosticDescriptor MutableBaseType = new DiagnosticDescriptor(
+			id: "D2L0061",
+			title: "Base class for immutable type must be [Immutable] (or [ImmutableBaseClass])",
+			messageFormat: "{0}'s base class is {1} which is missing [Immutable] (or, more weakly, [ImmutableBaseClass]).",
+			category: "Immutability",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor ArraysAreMutable = new DiagnosticDescriptor(
+			id: "D2L0062",
+			title: "Arrays are mutable and thus can't be held by an immutable type.",
+			messageFormat: "{0}[]'s are mutable even if {0}'s are immutable because array items can be substituted. Prefer an immutable container type such as ImmutableArray<{0}>.",
+			category: "Immutability",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor DynamicObjectsAreMutable = new DiagnosticDescriptor(
+			id: "D2L0063",
+			title: "Dynamic objects are mutable and thus can't be held by an immutable type.",
+			messageFormat: "Dynamic objects are mutable and thus can't be held by an immutable type.",
+			category: "Immutability",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor TypeParameterIsNotKnownToBeImmutable = new DiagnosticDescriptor(
+			id: "D2L0064",
+			title: "Type parameter is not known to be immutable.",
+			messageFormat: "The type parameter {0} is not known to be immutable. Add [Immutable] to it.",
+			category: "Immutability",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor UnexpectedTypeKind = new DiagnosticDescriptor(
+			id: "D2L0065",
+			title: "Unsupported type kind inside an immutable type declaration.",
+			messageFormat: "The type kind {0} is unexpected/unhandled by the immutability analyzer, and for safety we are emitting an error. This is a bug in the analyzer.",
+			category: "Immutability",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			helpLinkUri: "https://github.com/Brightspace/D2L.CodeStyle/issues/new?title=Unexpected%20type%20kind%20in%20immutability%20analysis&labels=bug"
+		);
+
+		public static readonly DiagnosticDescriptor NonImmutableTypeHeldByImmutable = new DiagnosticDescriptor(
+			id: "D2L0066",
+			title: "Type may be mutable.",
+			messageFormat: "The {0} {1} is missing the [Immutable]{2} attribute, so it isn't safe to be held by an immutable type",
+			category: "Immutability",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor MemberIsNotReadOnly = new DiagnosticDescriptor(
+			id: "D2L0067",
+			title: "Member must be readonly inside immutable type.",
+			messageFormat: "The {0} {1} must be readonly because {2} is immutable.",
+			category: "Immutability",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor UnexpectedMemberKind = new DiagnosticDescriptor(
+			id: "D2L0068",
+			title: "Unsupported member type in immutable type declaration.",
+			messageFormat: "The member {0} is of type {1} which is not supported by the immutability analyzer. This is a bug.",
+			category: "Immutability",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			helpLinkUri: "https://github.com/Brightspace/D2L.CodeStyle/issues/new?title=Unexpected%20member%20kind%20in%20immutability%20analysis&labels=bug"
+		);
 	}
 }
