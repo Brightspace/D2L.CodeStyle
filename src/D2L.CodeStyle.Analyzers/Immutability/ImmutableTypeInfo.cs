@@ -9,6 +9,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 	/// </summary>
 	internal readonly struct ImmutableTypeInfo : IEquatable<ImmutableTypeInfo> {
 
+		// a mapping of which type parameters considered necessarily immutable for the
+		// type to be immutable
+		private readonly ImmutableArray<bool> m_immutableTypeParameters;
+
 		private ImmutableTypeInfo(
 			ImmutableTypeKind kind,
 			INamedTypeSymbol type,
@@ -16,14 +20,39 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			Kind = kind;
 			Type = type;
-			ImmutableTypeParameters = immutableTypeParameters;
+			m_immutableTypeParameters = immutableTypeParameters;
 		}
 
 		public ImmutableTypeKind Kind { get; }
 
 		public INamedTypeSymbol Type { get; }
 
-		public ImmutableArray<bool> ImmutableTypeParameters { get; }
+		public bool IsImmutableDefinition(
+			ImmutabilityContext context,
+			INamedTypeSymbol definition,
+			Location location,
+			out Diagnostic diagnostic
+		) {
+			if( !Type.Equals( definition ) && !Type.Equals( definition?.OriginalDefinition ) ) {
+				throw new InvalidOperationException( $"{ nameof( IsImmutableDefinition ) } should only be called with an equivalent type definition" );
+			}
+
+			var argRelevance = definition
+				.TypeArguments
+				.Zip( m_immutableTypeParameters, ( a, relevant ) => (a, relevant) );
+			foreach( (ITypeSymbol argument, bool isRelevant) in argRelevance ) {
+				if( !isRelevant ) {
+					continue;
+				}
+
+				if( !context.IsImmutable( argument, ImmutableTypeKind.Total, location, out diagnostic ) ) {
+					return false;
+				}
+			}
+
+			diagnostic = null;
+			return true;
+		}
 
 		public static ImmutableTypeInfo Create(
 			ImmutableTypeKind kind,
@@ -64,13 +93,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			=> obj is ImmutableTypeInfo other
 				&& other.Kind == Kind
 				&& other.Type == Type
-				&& other.ImmutableTypeParameters.Equals( ImmutableTypeParameters );
+				&& other.m_immutableTypeParameters.Equals( m_immutableTypeParameters );
 
 		public override int GetHashCode() {
 			int hash = 17;
 			hash = (hash * 31) + Kind.GetHashCode();
 			hash = (hash * 31) + Type.GetHashCode();
-			hash = (hash * 31) + ImmutableTypeParameters.GetHashCode();
+			hash = (hash * 31) + m_immutableTypeParameters.GetHashCode();
 			return hash;
 		}
 	}

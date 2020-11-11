@@ -88,25 +88,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			if( type is INamedTypeSymbol namedType ) {
 				if( TryGetImmutableTypeInfo( namedType, out ImmutableTypeInfo info ) ) {
 					if( info.Kind.HasFlag( kind ) ) {
-						if( namedType.TypeArguments.Length != info.ImmutableTypeParameters.Length ) {
-							// could this happen?
-							throw new Exception();
-						}
-
-						IEnumerable<(ITypeSymbol, bool)> pairs = namedType
-							.TypeArguments
-							.Zip( info.ImmutableTypeParameters, ( a, relevant ) => (a, relevant) );
-						foreach( (ITypeSymbol argument, bool isRelevant) in pairs ) {
-							if( !isRelevant ) {
-								continue;
-							}
-
-							if( !IsImmutable( argument, ImmutableTypeKind.Total, location, out diagnostic ) ) {
-								return false;
-							}
-						}
-
-						return true;
+						return info.IsImmutableDefinition(
+							context: this,
+							definition: namedType,
+							location: location,
+							out diagnostic
+						);
 					}
 				}
 			}
