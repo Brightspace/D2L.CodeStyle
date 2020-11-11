@@ -597,5 +597,14 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor EventMemberMutable = new DiagnosticDescriptor(
+			id: "D2L0070",
+			title: "Event members are not allowed in immtuable types.",
+			messageFormat: "Event members hold registered event handlers. We consider this to be a source of mutability.",
+			category: "Immtubility",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }
