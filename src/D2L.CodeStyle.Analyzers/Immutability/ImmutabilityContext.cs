@@ -175,12 +175,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			// Check if we were otherwise told that this type is immutable
-			if( m_extraImmutableTypes.TryGetValue( type, out info ) ) {
-				return true;
-			}
-
-			info = default;
-			return false;
+			return m_extraImmutableTypes.TryGetValue( type, out info );
 		}
 
 		private static ImmutableTypeKind GetImmutabilityFromAttributes(
