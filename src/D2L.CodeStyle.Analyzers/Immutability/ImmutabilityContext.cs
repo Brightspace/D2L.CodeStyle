@@ -84,15 +84,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return true;
 			}
 
-			// Check for [Immutable] etc.
-			if ( GetImmutabilityFromAttributes( type ).HasFlag( kind ) ) {
-				return true;
-			}
-
-			// Check if we were otherwise told that this type is (sufficiently)
-			// immutable.
-			if ( m_extraImmutableTypes.TryGetValue( type, out var info ) && info.Kind.HasFlag( kind ) ) {
-				return true;
+			if( TryGetImmutableTypeInfo( type, out ImmutableTypeInfo info ) ) {
+				if( info.Kind.HasFlag( kind ) ) {
+					return true;
+				}
 			}
 
 			switch( type.TypeKind ) {
@@ -163,6 +158,24 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 					return false;
 			}
+		}
+
+		private bool TryGetImmutableTypeInfo(
+			ITypeSymbol type,
+			out ImmutableTypeInfo info
+		) {
+			// Check for [Immutable] etc.
+			ImmutableTypeKind fromAttributes = GetImmutabilityFromAttributes( type );
+			if( fromAttributes != ImmutableTypeKind.None ) {
+				info = new ImmutableTypeInfo(
+					kind: fromAttributes,
+					type: type
+				);
+				return true;
+			}
+
+			// Check if we were otherwise told that this type is immutable
+			return m_extraImmutableTypes.TryGetValue( type, out info );
 		}
 
 		private static ImmutableTypeKind GetImmutabilityFromAttributes(
