@@ -588,5 +588,14 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			helpLinkUri: "https://github.com/Brightspace/D2L.CodeStyle/issues/new?title=Unexpected%20member%20kind%20in%20immutability%20analysis&labels=bug"
 		);
+
+		public static readonly DiagnosticDescriptor DelegateTypesPossiblyMutable = new DiagnosticDescriptor(
+			id: "D2L0069",
+			title: "Delegates members are not allowed in immutable types.",
+			messageFormat: "Delegate fields and properties can close over mutable state. For safety, we don't allow these in immutable types.",
+			category: "Immutability",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }
