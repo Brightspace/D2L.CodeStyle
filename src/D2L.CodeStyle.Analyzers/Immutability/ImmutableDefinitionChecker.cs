@@ -6,13 +6,16 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
 	internal sealed class ImmutableDefinitionChecker {
+
+		internal delegate void DiagnosticSink( Diagnostic diagnostic );
+
 		private readonly SemanticModel m_model;
-		private readonly Action<Diagnostic> m_diagnosticSink;
+		private readonly DiagnosticSink m_diagnosticSink;
 		private readonly ImmutabilityContext m_context;
 
 		public ImmutableDefinitionChecker(
 			SemanticModel model,
-			Action<Diagnostic> diagnosticSink,
+			DiagnosticSink diagnosticSink,
 			ImmutabilityContext context
 		) {
 			m_model = model;
@@ -53,12 +56,20 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			foreach( var member in members ) {
-				// TODO: skip if it has Mutablity.Audited/Mutability.Unaudited.
+				if( IsAudited( member ) ) {
+					if( CheckMember( diagnosticSink: _ => { }, member ) ) {
+						m_diagnosticSink(
+							Diagnostic.Create(
+								Diagnostics.UnnecessartyMutabilityAudited,
+								member.GetDeclarationSyntax<MemberDeclarationSyntax>().GetLocation()
+							)
+						);
+					}
 
-				// TODO: if it does have one of the above but doesn't need it,
-				//       error out (so we are forced to remove the annotation).
+					continue;
+				}
 
-				if ( !CheckMember( member ) ) {
+				if ( !CheckMember( m_diagnosticSink, member ) ) {
 					result = false;
 				}
 			}
@@ -66,12 +77,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return result;
 		}
 
-		private bool CheckMember( ISymbol member ) {
+		private bool CheckMember( DiagnosticSink diagnosticSink, ISymbol member ) {
 			switch( member.Kind ) {
 				case SymbolKind.Field:
-					return CheckField( member as IFieldSymbol );
+					return CheckField( diagnosticSink, member as IFieldSymbol );
 				case SymbolKind.Property:
-					return CheckProperty( member as IPropertySymbol );
+					return CheckProperty( diagnosticSink, member as IPropertySymbol );
 
 				// These member types never contribute to mutability:
 				case SymbolKind.Method:
@@ -79,7 +90,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					return true;
 
 				case SymbolKind.Event:
-					m_diagnosticSink(
+					diagnosticSink(
 						Diagnostic.Create(
 							Diagnostics.EventMemberMutable,
 							member.GetDeclarationSyntax<MemberDeclarationSyntax>().GetLocation()
@@ -104,7 +115,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 		}
 
-		private bool CheckField( IFieldSymbol field ) {
+		private bool CheckField( DiagnosticSink diagnosticSink, IFieldSymbol field ) {
 			// These correspond to auto-properties. That case gets handled in
 			// CheckProperty instead.
 			if ( field.IsImplicitlyDeclared ) {
@@ -114,6 +125,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			var decl = field.GetDeclarationSyntax<VariableDeclaratorSyntax>();
 
 			return CheckFieldOrProperty(
+				diagnosticSink,
 				decl,
 				member: field,
 				type: field.Type,
@@ -123,7 +135,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 
-		private bool CheckProperty( IPropertySymbol prop ) {
+		private bool CheckProperty( DiagnosticSink diagnosticSink, IPropertySymbol prop ) {
 			if ( prop.IsIndexer ) {
 				// Indexer properties are just glorified method syntax and don't hold state.
 				// https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/indexers/
@@ -141,6 +153,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			return CheckFieldOrProperty(
+				diagnosticSink,
 				decl,
 				member: prop,
 				type: prop.Type,
@@ -150,6 +163,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		private bool CheckFieldOrProperty(
+			DiagnosticSink diagnosticSink,
 			SyntaxNode decl,
 			ISymbol member,
 			ITypeSymbol type,
@@ -159,7 +173,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			var immutable = true;
 
 			if ( !isReadOnly ) {
-				m_diagnosticSink(
+				diagnosticSink(
 					Diagnostic.Create(
 						Diagnostics.MemberIsNotReadOnly,
 						decl.GetLocation(),
@@ -177,11 +191,23 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			//       possibly ImmutableTypeKind.Instances if its a new T( ... ).
 
 			if( !m_context.IsImmutable( type, ImmutableTypeKind.Total, decl.GetLocation(), out var diagnostic ) ) {
-				m_diagnosticSink( diagnostic );
+				diagnosticSink( diagnostic );
 				immutable = false;
 			}
 
 			return immutable;
+		}
+
+		private static bool IsAudited( ISymbol symbol ) {
+			if( Attributes.Mutability.Audited.IsDefined( symbol ) ) {
+				return true;
+			}
+
+			if( Attributes.Mutability.Unaudited.IsDefined( symbol ) ) {
+				return true;
+			}
+
+			return false;
 		}
 	}
 }
