@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
@@ -15,7 +16,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 	/// as not known to be immutable that doesn't mean it is mutable.
 	/// </summary>
 	internal sealed class ImmutabilityContext {
-		private readonly ImmutableDictionary<ITypeSymbol, ImmutableTypeInfo> m_extraImmutableTypes = null;
+		private readonly ImmutableDictionary<INamedTypeSymbol, ImmutableTypeInfo> m_extraImmutableTypes = null;
 
 		// Hard code this to avoid looking up the ITypeSymbol to include it in m_extraImmutableTypes
 		private static readonly ImmutableHashSet<SpecialType> m_totallyImmutableSpecialTypes = ImmutableHashSet.Create(
@@ -84,9 +85,16 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return true;
 			}
 
-			if( TryGetImmutableTypeInfo( type, out ImmutableTypeInfo info ) ) {
-				if( info.Kind.HasFlag( kind ) ) {
-					return true;
+			if( type is INamedTypeSymbol namedType ) {
+				if( TryGetImmutableTypeInfo( namedType, out ImmutableTypeInfo info ) ) {
+					if( info.Kind.HasFlag( kind ) ) {
+						return info.IsImmutableDefinition(
+							context: this,
+							definition: namedType,
+							location: location,
+							out diagnostic
+						);
+					}
 				}
 			}
 
@@ -161,13 +169,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		private bool TryGetImmutableTypeInfo(
-			ITypeSymbol type,
+			INamedTypeSymbol type,
 			out ImmutableTypeInfo info
 		) {
 			// Check for [Immutable] etc.
 			ImmutableTypeKind fromAttributes = GetImmutabilityFromAttributes( type );
 			if( fromAttributes != ImmutableTypeKind.None ) {
-				info = new ImmutableTypeInfo(
+				info = ImmutableTypeInfo.Create(
 					kind: fromAttributes,
 					type: type
 				);
