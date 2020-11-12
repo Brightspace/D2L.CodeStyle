@@ -16,7 +16,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 	/// as not known to be immutable that doesn't mean it is mutable.
 	/// </summary>
 	internal sealed class ImmutabilityContext {
-		private readonly ImmutableDictionary<INamedTypeSymbol, ImmutableTypeInfo> m_extraImmutableTypes = null;
+		private readonly ImmutableDictionary<INamedTypeSymbol, ImmutableTypeInfo> m_extraImmutableTypes;
 
 		// Hard code this to avoid looking up the ITypeSymbol to include it in m_extraImmutableTypes
 		private static readonly ImmutableHashSet<SpecialType> m_totallyImmutableSpecialTypes = ImmutableHashSet.Create(

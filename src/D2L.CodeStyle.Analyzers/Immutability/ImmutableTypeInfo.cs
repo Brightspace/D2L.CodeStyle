@@ -7,7 +7,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 	/// <summary>
 	/// A representation of the immutability of some type.
 	/// </summary>
-	internal readonly struct ImmutableTypeInfo : IEquatable<ImmutableTypeInfo> {
+	internal readonly struct ImmutableTypeInfo {
 
 		// a mapping of which type parameters considered necessarily immutable for the
 		// type to be immutable
@@ -84,23 +84,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				type: type,
 				immutableTypeParameters: immutableTypeParameters
 			);
-		}
-
-
-		public bool Equals( ImmutableTypeInfo other ) => this.Equals( other );
-
-		public override bool Equals( object obj )
-			=> obj is ImmutableTypeInfo other
-				&& other.Kind == Kind
-				&& other.Type == Type
-				&& other.m_immutableTypeParameters.Equals( m_immutableTypeParameters );
-
-		public override int GetHashCode() {
-			int hash = 17;
-			hash = (hash * 31) + Kind.GetHashCode();
-			hash = (hash * 31) + Type.GetHashCode();
-			hash = (hash * 31) + m_immutableTypeParameters.GetHashCode();
-			return hash;
 		}
 	}
 }
