@@ -606,5 +606,14 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor UnnecessartyMutabilityAudited = new DiagnosticDescriptor(
+			id: "D2L0071",
+			title: "Unnecessary Mutability.(Un)Audited Attribute",
+			messageFormat: "There is a Mutability.Audited or Mutability.Unaudited attribute on an immutable member. Remove the unnecessary attribute.",
+			category: "Cleanliness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }
