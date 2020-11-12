@@ -185,7 +185,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			if( type.IsTupleType ) {
 				info = ImmutableTypeInfo.CreateWithAllImmutableTypeParameters(
 					kind: ImmutableTypeKind.Total,
-					type: type
+					type: type.OriginalDefinition
 				);
 				return true;
 			}
