@@ -123,13 +123,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			var decl = field.GetDeclarationSyntax<VariableDeclaratorSyntax>();
+			var type = decl.FirstAncestorOrSelf<VariableDeclarationSyntax>().Type;
 
 			return CheckFieldOrProperty(
 				diagnosticSink,
-				decl,
 				member: field,
 				type: field.Type,
 				isReadOnly: field.IsReadOnly,
+				typeSyntax: type,
+				nameSyntax: decl.Identifier,
 				initializer: decl.Initializer?.Value
 			);
 		}
@@ -154,20 +156,22 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			return CheckFieldOrProperty(
 				diagnosticSink,
-				decl,
 				member: prop,
 				type: prop.Type,
 				isReadOnly: prop.IsReadOnly,
+				typeSyntax: decl.Type,
+				nameSyntax: decl.Identifier,
 				initializer: decl.Initializer?.Value
 			);
 		}
 
 		private bool CheckFieldOrProperty(
 			DiagnosticSink diagnosticSink,
-			SyntaxNode decl,
 			ISymbol member,
 			ITypeSymbol type,
 			bool isReadOnly,
+			TypeSyntax typeSyntax,
+			SyntaxToken nameSyntax,
 			ExpressionSyntax initializer
 		) {
 			var immutable = true;
@@ -176,7 +180,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				diagnosticSink(
 					Diagnostic.Create(
 						Diagnostics.MemberIsNotReadOnly,
-						decl.GetLocation(),
+						nameSyntax.GetLocation(),
 						member.Kind,
 						member.Name,
 						member.ContainingType.Name
@@ -190,7 +194,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			//       possibly a narrower type (using initializers type) and
 			//       possibly ImmutableTypeKind.Instances if its a new T( ... ).
 
-			if( !m_context.IsImmutable( type, ImmutableTypeKind.Total, decl.GetLocation(), out var diagnostic ) ) {
+			if( !m_context.IsImmutable( type, ImmutableTypeKind.Total, typeSyntax.GetLocation(), out var diagnostic ) ) {
 				diagnosticSink( diagnostic );
 				immutable = false;
 			}
