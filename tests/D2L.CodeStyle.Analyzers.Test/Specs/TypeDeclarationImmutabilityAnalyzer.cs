@@ -110,9 +110,9 @@ namespace SpecTests {
 
 			static readonly object m_staticReadOnlyMutableFieldHeldAsMutableSuper = new RegularClass();
 
-			object /* MemberIsNotReadOnly(Field, m_writableMutableFieldHeldAsSuper, ClassMarkedImmutable) */ m_writableMutableFieldHeldAsMutableSuper /**/ = new RegularClass();
+			object /* MemberIsNotReadOnly(Field, m_writableMutableFieldHeldAsMutableSuper, ClassMarkedImmutable) */ m_writableMutableFieldHeldAsMutableSuper /**/ = new RegularClass();
 
-			readonly /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/ m_readonlyMutableFieldHeldAsMutableSuper /**/ = new RegularClass();
+			readonly /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/ m_readonlyMutableFieldHeldAsMutableSuper = new RegularClass();
 
 			/* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/ AutoImplementedMutablePropertyHeldAsMutableSuper { get; } = new RegularClass();
 
@@ -155,10 +155,10 @@ namespace SpecTests {
 			SomeImmutableBaseClass /* MemberIsNotReadOnly(Field, m_writeableImmutableBaseClassFieldWithMutableInitializer, ClassMarkedImmutable) */ m_writeableImmutableBaseClassFieldWithMutableInitializer /**/ = new MutableExtensionOfSomeImmutableBaseClass();
 
 			// This expectation doesn't work due to trimming of the " (or..."!
-			readonly SomeImmutableBaseClass m_readonlyImmutableBaseClassFieldWithMutableInitializer = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, (or [ImmutableBaseClass]) */ MutableExtensionOfSomeImmutableBaseClass /**/ ();
+			readonly SomeImmutableBaseClass m_readonlyImmutableBaseClassFieldWithMutableInitializer = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, (or [ImmutableBaseClass])) */ MutableExtensionOfSomeImmutableBaseClass /**/ ();
 
 			// This expectation doesn't work due to trimming of the " (or..."!
-			Interfaces.RegularInterface AutoImplementedImmutableBaseClassFieldWithMutableInitializer { get; } = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, (or [ImmutableBaseClass]) */ MutableExtensionOfSomeImmutableBaseClass() /**/ ;
+			Interfaces.RegularInterface AutoImplementedImmutableBaseClassFieldWithMutableInitializer { get; } = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, (or [ImmutableBaseClass])) */ MutableExtensionOfSomeImmutableBaseClass /**/ () ;
 
 
 		}
