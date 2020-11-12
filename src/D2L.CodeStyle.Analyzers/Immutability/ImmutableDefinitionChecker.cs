@@ -2,6 +2,7 @@
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
@@ -190,16 +191,82 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				immutable = false;
 			}
 
-			// TODO: narrow inspection with initializer
-			//       possibly a narrower type (using initializers type) and
-			//       possibly ImmutableTypeKind.Instances if its a new T( ... ).
+			var stuff = GetStuffToCheckForMember( type, typeSyntax, initializer );
 
-			if( !m_context.IsImmutable( type, ImmutableTypeKind.Total, typeSyntax.GetLocation(), out var diagnostic ) ) {
+			// null is a signal that there is nothing fruther that needs to be checked
+			if ( stuff == null ) {
+				return immutable;
+			}
+
+			var (typeToCheck, checkKind, diagnosticLocation) = stuff.Value;
+
+			if( !m_context.IsImmutable( typeToCheck, checkKind, diagnosticLocation, out var diagnostic ) ) {
 				diagnosticSink( diagnostic );
 				immutable = false;
 			}
 
 			return immutable;
+		}
+
+		/// <summary>
+		/// For a field/property, figure out:
+		/// * which type to check,
+		/// * what kind of check to do, and
+		/// * where to put any diagnostics.
+		/// </summary>
+		/// <param name="memberType">The type of the field/property</param>
+		/// <param name="memberTypeSyntax">The syntax for the type of the field/property</param>
+		/// <param name="initializer">The initializer syntax for the field/property (possibly null)</param>
+		/// <returns>null if no checks are needed, otherwise a bunch of stuff.</returns>
+		private (ITypeSymbol, ImmutableTypeKind, Location)? GetStuffToCheckForMember(
+			ITypeSymbol memberType,
+			TypeSyntax memberTypeSyntax,
+			ExpressionSyntax initializer
+		) {
+			if( initializer == null ) {
+				return (memberType, ImmutableTypeKind.Total, memberTypeSyntax.GetLocation());
+			}
+
+			// When we have an initializer we use it to narrow our check, e.g.
+			//
+			//   private readonly object m_lock = new object();
+			//
+			// is safe even though object in general is not.
+			//
+			// TODO: there is a bug: https://github.com/Brightspace/D2L.CodeStyle/issues/319
+			// The bug is that we need to check for other writes inside of our
+			// constructors before narrowing too much!
+
+			// Easy cases
+			switch( initializer.Kind() ) {
+				// This is perhaps a bit suspicious, because fields and
+				// properties have to be readonly, but it is safe...
+				case SyntaxKind.NullLiteralExpression:
+
+				// Lambda initializers for readonly members are safe
+				// because they can only close over other members, which
+				// will be checked independently, or static members of
+				// another class, which are also analyzed
+				case SyntaxKind.SimpleLambdaExpression:
+				case SyntaxKind.ParenthesizedLambdaExpression:
+					return null;
+			}
+
+			var typeInfo = m_model.GetTypeInfo( initializer );
+
+			// Type can be null in the case of an implicit conversion where the
+			// expression alone doesn't have a type. For example:
+			//   int[] foo = { 1, 2, 3 };
+			var typeToCheck = typeInfo.Type ?? typeInfo.ConvertedType;
+
+			if ( initializer is ObjectCreationExpressionSyntax objCreation ) {
+				// When we have a new T() we don't need to worry about the value
+				// being anything other than an instance of T.
+				return (typeToCheck, ImmutableTypeKind.Instance, objCreation.Type.GetLocation());
+			}
+
+			// In general we need to handle subtypes.
+			return (typeToCheck, ImmutableTypeKind.Total, initializer.GetLocation());
 		}
 
 		private static bool IsAudited( ISymbol symbol ) {
