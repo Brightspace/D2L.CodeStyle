@@ -60,7 +60,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					if( CheckMember( diagnosticSink: _ => { }, member ) ) {
 						m_diagnosticSink(
 							Diagnostic.Create(
-								Diagnostics.UnnecessartyMutabilityAudited,
+								Diagnostics.UnnecessaryMutabilityAnnotation,
 								member.GetDeclarationSyntax<MemberDeclarationSyntax>().GetLocation()
 							)
 						);

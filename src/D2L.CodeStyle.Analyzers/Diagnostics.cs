@@ -217,12 +217,11 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor UnnecessaryMutabilityAnnotation = new DiagnosticDescriptor(
 			id: "D2L0030",
-			title: "Unnecessary mutability annotation should be removed to keep the code base clean",
-			messageFormat: "The {0} annotation is not necessary because {1} is immutable. Please remove this attribute to keep our code base clean.",
+			title: "Unnecessary Mutability.(Un)Audited Attribute",
+			messageFormat: "There is a Mutability.Audited or Mutability.Unaudited attribute on an immutable member. Remove the unnecessary attribute.",
 			category: "Cleanliness",
-			defaultSeverity: DiagnosticSeverity.Info,
-			isEnabledByDefault: true,
-			description: "Unnecessary mutability annotations should be removed to keep the code base clean"
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
 		);
 
 		public static readonly DiagnosticDescriptor TooManyUnnamedArgs = new DiagnosticDescriptor(
@@ -603,15 +602,6 @@ namespace D2L.CodeStyle.Analyzers {
 			title: "Event members are not allowed in immtuable types.",
 			messageFormat: "Event members hold registered event handlers. We consider this to be a source of mutability.",
 			category: "Immutability",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true
-		);
-
-		public static readonly DiagnosticDescriptor UnnecessartyMutabilityAudited = new DiagnosticDescriptor(
-			id: "D2L0071",
-			title: "Unnecessary Mutability.(Un)Audited Attribute",
-			messageFormat: "There is a Mutability.Audited or Mutability.Unaudited attribute on an immutable member. Remove the unnecessary attribute.",
-			category: "Cleanliness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
