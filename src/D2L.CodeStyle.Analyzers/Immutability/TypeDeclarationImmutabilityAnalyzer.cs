@@ -30,7 +30,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		public static void CompilationStart(
 			CompilationStartAnalysisContext context
 		) {
-			ImmutabilityContext immutabilityContext = new ImmutabilityContext( Array.Empty<ImmutableTypeInfo>() );
+			ImmutabilityContext immutabilityContext = ImmutabilityContext.Create( context.Compilation );
 
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeTypeDeclaration(
