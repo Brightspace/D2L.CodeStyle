@@ -149,7 +149,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						location,
 						type.TypeKind,
 						type.Name,
-						kind == ImmutableTypeKind.Instance ? " (or [ImmutableBaseClass])" : ""
+						kind == ImmutableTypeKind.Instance && !type.IsSealed ? " (or [ImmutableBaseClass])" : ""
 					);
 
 					return false;
