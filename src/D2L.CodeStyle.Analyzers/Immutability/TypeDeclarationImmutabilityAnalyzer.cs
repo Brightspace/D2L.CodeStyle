@@ -19,7 +19,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			Diagnostics.TypeParameterIsNotKnownToBeImmutable,
 			Diagnostics.UnexpectedMemberKind,
 			Diagnostics.UnexpectedTypeKind,
-			Diagnostics.UnnecessartyMutabilityAudited
+			Diagnostics.UnnecessaryMutabilityAnnotation
 		);
 
 		public override void Initialize( AnalysisContext context ) {
