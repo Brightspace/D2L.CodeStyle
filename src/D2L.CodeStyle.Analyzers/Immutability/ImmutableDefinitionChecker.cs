@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -10,28 +9,22 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		internal delegate void DiagnosticSink( Diagnostic diagnostic );
 
-		private readonly SemanticModel m_model;
+		private readonly Compilation m_compilation;
 		private readonly DiagnosticSink m_diagnosticSink;
 		private readonly ImmutabilityContext m_context;
 
 		public ImmutableDefinitionChecker(
-			SemanticModel model,
+			Compilation compilation,
 			DiagnosticSink diagnosticSink,
 			ImmutabilityContext context
 		) {
-			m_model = model;
+			m_compilation = compilation;
 			m_diagnosticSink = diagnosticSink;
 			m_context = context;
 		}
 
-		public bool CheckStruct( StructDeclarationSyntax decl ) => CheckDeclaration( decl );
-		public bool CheckClass( ClassDeclarationSyntax decl ) => CheckDeclaration( decl );
-
-		// This method is private to ensure callers only pass structs & classes
-		private bool CheckDeclaration( TypeDeclarationSyntax decl ) {
+		public bool CheckDeclaration( ITypeSymbol type ) {
 			var result = true;
-
-			var type = m_model.GetDeclaredSymbol( decl ) as ITypeSymbol;
 
 			var members = type.GetMembers()
 				// Exclude static members.
@@ -42,18 +35,24 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// definition. Although we care about them otherwise, TODO explain
 				.Where( m => !m.IsStatic );
 
-			// Check that the base class is immutable
-			var baseClassOk = m_context.IsImmutable(
-				type.BaseType,
-				ImmutableTypeKind.Instance,
-				decl.BaseList?.Types.First()?.GetLocation(),
-				out var diag
-			);
+			// Check that the base class is immutable for classes
+			// (every user-defined class ultimately extends System.Object; stop there.)
+			if ( type.TypeKind == TypeKind.Class && type.BaseType?.SpecialType != SpecialType.System_Object ) {
+				// TODO: put this on the BaseTypeSyntax instead
+				var baseTypeSyntax = type.DeclaringSyntaxReferences.First().GetSyntax();
 
-			if( !baseClassOk ) {
-				m_diagnosticSink( diag );
-				result = false;
-				// We can keep looking for more errors after this.
+				var baseClassOk = m_context.IsImmutable(
+					type.BaseType,
+					ImmutableTypeKind.Instance,
+					baseTypeSyntax.GetLocation(),
+					out var diag
+				);
+
+				if( !baseClassOk ) {
+					m_diagnosticSink( diag );
+					result = false;
+					// We can keep looking for more errors after this.
+				}
 			}
 
 			foreach( var member in members ) {
@@ -252,7 +251,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					return null;
 			}
 
-			var typeInfo = m_model.GetTypeInfo( initializer );
+			var model = m_compilation.GetSemanticModel( initializer.SyntaxTree );
+			var typeInfo = model.GetTypeInfo( initializer );
 
 			// Type can be null in the case of an implicit conversion where the
 			// expression alone doesn't have a type. For example:
