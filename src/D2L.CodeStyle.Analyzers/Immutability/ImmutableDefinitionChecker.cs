@@ -23,7 +23,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			m_context = context;
 		}
 
-		public bool CheckDeclaration( ITypeSymbol type ) {
+		public bool CheckDeclaration( INamedTypeSymbol type ) {
 			var result = true;
 
 			var members = type.GetMembers()
