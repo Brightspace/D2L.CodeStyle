@@ -191,18 +191,34 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				immutable = false;
 			}
 
-			var stuff = GetStuffToCheckForMember( type, typeSyntax, initializer );
+			if( initializer == null ) {
+				if( !m_context.IsImmutable( type, ImmutableTypeKind.Total, typeSyntax.GetLocation(), out var diagnostic ) ) {
+					diagnosticSink( diagnostic );
+					immutable = false;
+				}
+			} else {
+				var stuff = GetInitializerStuffToCheckForMember( initializer );
 
-			// null is a signal that there is nothing fruther that needs to be checked
-			if ( stuff == null ) {
-				return immutable;
-			}
+				// null is a signal that there is nothing further that needs to be checked
+				if( stuff == null ) {
+					return immutable;
+				}
 
-			var (typeToCheck, checkKind, diagnosticLocation) = stuff.Value;
+				var (typeToCheck, checkKind, diagnosticLocation) = stuff.Value;
 
-			if( !m_context.IsImmutable( typeToCheck, checkKind, diagnosticLocation, out var diagnostic ) ) {
-				diagnosticSink( diagnostic );
-				immutable = false;
+				if( !m_context.IsImmutable( typeToCheck, checkKind, diagnosticLocation, out var diagnostic ) ) {
+					immutable = false;
+
+					// depending on the situation, it may be preferable to place a diagnostic on the held member type instead
+					if( !m_context.IsImmutable( type, ImmutableTypeKind.Instance, typeSyntax.GetLocation(), out _ ) ) {
+						// This returning false is implied by not being Instance immutable
+						// Running this is mostly just a hack to get a diagnostic without the " (or [ImmutableBaseClass])" though
+						m_context.IsImmutable( type, ImmutableTypeKind.Total, typeSyntax.GetLocation(), out var totalDiagnostic );
+						diagnostic = totalDiagnostic;
+					}
+
+					diagnosticSink( diagnostic );
+				}
 			}
 
 			return immutable;
@@ -214,19 +230,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// * what kind of check to do, and
 		/// * where to put any diagnostics.
 		/// </summary>
-		/// <param name="memberType">The type of the field/property</param>
-		/// <param name="memberTypeSyntax">The syntax for the type of the field/property</param>
 		/// <param name="initializer">The initializer syntax for the field/property (possibly null)</param>
 		/// <returns>null if no checks are needed, otherwise a bunch of stuff.</returns>
-		private (ITypeSymbol, ImmutableTypeKind, Location)? GetStuffToCheckForMember(
-			ITypeSymbol memberType,
-			TypeSyntax memberTypeSyntax,
+		private (ITypeSymbol, ImmutableTypeKind, Location)? GetInitializerStuffToCheckForMember(
 			ExpressionSyntax initializer
 		) {
-			if( initializer == null ) {
-				return (memberType, ImmutableTypeKind.Total, memberTypeSyntax.GetLocation());
-			}
-
 			// When we have an initializer we use it to narrow our check, e.g.
 			//
 			//   private readonly object m_lock = new object();
