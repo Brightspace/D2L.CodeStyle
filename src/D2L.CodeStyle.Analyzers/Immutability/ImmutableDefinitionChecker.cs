@@ -209,7 +209,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				if( !m_context.IsImmutable( typeToCheck, checkKind, diagnosticLocation, out var diagnostic ) ) {
 					immutable = false;
 
-					// depending on the situation, it may be preferable to place a diagnostic on the held member type instead
+					// if the initializer _and_ the member type aren't immutable, prefer the diagnostic on the member type
 					if( !m_context.IsImmutable( type, ImmutableTypeKind.Instance, typeSyntax.GetLocation(), out _ ) ) {
 						// This returning false is implied by not being Instance immutable
 						// Running this is mostly just a hack to get a diagnostic without the " (or [ImmutableBaseClass])" though
