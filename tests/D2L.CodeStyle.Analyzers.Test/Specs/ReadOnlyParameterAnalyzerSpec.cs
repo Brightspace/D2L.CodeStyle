@@ -32,24 +32,24 @@ namespace SpecTests {
 			return foo;
 		}
 
-		void WrittenToInBody( /* ReadOnlyParameterIsnt( is assigned to and/or passed by reference ) */ [ReadOnly] int foo /**/ ) {
+		void WrittenToInBody( /* ReadOnlyParameterIsnt(is assigned to and/or passed by reference) */ [ReadOnly] int foo /**/ ) {
 			foo = 1;
 		}
 
-		void WrittenToInInlineFunc( /* ReadOnlyParameterIsnt( is assigned to and/or passed by reference ) */ [ReadOnly] int foo /**/ ) {
+		void WrittenToInInlineFunc( /* ReadOnlyParameterIsnt(is assigned to and/or passed by reference) */ [ReadOnly] int foo /**/ ) {
 			void Helper() { foo = 1; }
 		}
 
-		void WrittenToInLambda( /* ReadOnlyParameterIsnt( is assigned to and/or passed by reference ) */ [ReadOnly] int foo /**/ ) {
+		void WrittenToInLambda( /* ReadOnlyParameterIsnt(is assigned to and/or passed by reference) */ [ReadOnly] int foo /**/ ) {
 			() => { foo = 1; };
 		}
 
-		void PassedToRef( /* ReadOnlyParameterIsnt( is assigned to and/or passed by reference ) */ [ReadOnly] int foo /**/ ) {
+		void PassedToRef( /* ReadOnlyParameterIsnt(is assigned to and/or passed by reference) */ [ReadOnly] int foo /**/ ) {
 			RefParameter( ref foo );
 		}
 
-		void RefParameter( /* ReadOnlyParameterIsnt( is an in/ref/out parameter ) */ [ReadOnly] ref int foo /**/ ) { }
-		void InParameter( /* ReadOnlyParameterIsnt( is an in/ref/out parameter ) */ [ReadOnly] in int foo /**/ ) { }
+		void RefParameter( /* ReadOnlyParameterIsnt(is an in/ref/out parameter) */ [ReadOnly] ref int foo /**/ ) { }
+		void InParameter( /* ReadOnlyParameterIsnt(is an in/ref/out parameter) */ [ReadOnly] in int foo /**/ ) { }
 
 		internal class C {
 			C( [ReadOnly] int foo ) { }
@@ -84,24 +84,24 @@ namespace SpecTests {
 			return foo;
 		}
 
-		void WrittenToInBody( /* ReadOnlyParameterIsnt( is assigned to and/or passed by reference ) */ [ReadOnlySubclass] int foo /**/ ) {
+		void WrittenToInBody( /* ReadOnlyParameterIsnt(is assigned to and/or passed by reference) */ [ReadOnlySubclass] int foo /**/ ) {
 			foo = 1;
 		}
 
-		void WrittenToInInlineFunc( /* ReadOnlyParameterIsnt( is assigned to and/or passed by reference ) */ [ReadOnlySubclass] int foo /**/ ) {
+		void WrittenToInInlineFunc( /* ReadOnlyParameterIsnt(is assigned to and/or passed by reference) */ [ReadOnlySubclass] int foo /**/ ) {
 			void Helper() { foo = 1; }
 		}
 
-		void WrittenToInLambda( /* ReadOnlyParameterIsnt( is assigned to and/or passed by reference ) */ [ReadOnlySubclass] int foo /**/ ) {
+		void WrittenToInLambda( /* ReadOnlyParameterIsnt(is assigned to and/or passed by reference) */ [ReadOnlySubclass] int foo /**/ ) {
 			() => { foo = 1; };
 		}
 
-		void PassedToRef( /* ReadOnlyParameterIsnt( is assigned to and/or passed by reference ) */ [ReadOnlySubclass] int foo /**/ ) {
+		void PassedToRef( /* ReadOnlyParameterIsnt(is assigned to and/or passed by reference) */ [ReadOnlySubclass] int foo /**/ ) {
 			RefParameter( ref foo );
 		}
 
-		void RefParameter( /* ReadOnlyParameterIsnt( is an in/ref/out parameter ) */ [ReadOnlySubclass] ref int foo /**/ ) { }
-		void InParameter( /* ReadOnlyParameterIsnt( is an in/ref/out parameter ) */ [ReadOnlySubclass] in int foo /**/ ) { }
+		void RefParameter( /* ReadOnlyParameterIsnt(is an in/ref/out parameter) */ [ReadOnlySubclass] ref int foo /**/ ) { }
+		void InParameter( /* ReadOnlyParameterIsnt(is an in/ref/out parameter) */ [ReadOnlySubclass] in int foo /**/ ) { }
 
 		internal class C {
 			C( [ReadOnlySubclass] int foo ) { }
