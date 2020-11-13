@@ -62,7 +62,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						m_diagnosticSink(
 							Diagnostic.Create(
 								Diagnostics.UnnecessaryMutabilityAnnotation,
-								member.GetDeclarationSyntax<MemberDeclarationSyntax>().GetLocation()
+								GetLocationOfMember( member )
 							)
 						);
 					}
@@ -94,7 +94,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					diagnosticSink(
 						Diagnostic.Create(
 							Diagnostics.EventMemberMutable,
-							member.GetDeclarationSyntax<MemberDeclarationSyntax>().GetLocation()
+							GetLocationOfMember( member )
 						)
 					);
 
@@ -106,7 +106,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					m_diagnosticSink(
 						Diagnostic.Create(
 							Diagnostics.UnexpectedMemberKind,
-							member.GetDeclarationSyntax<MemberDeclarationSyntax>().GetLocation(),
+							GetLocationOfMember( member ),
 							member.Name,
 							member.Kind
 						)
@@ -280,5 +280,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			return false;
 		}
+
+		private static Location GetLocationOfMember( ISymbol s ) =>s
+			.GetDeclarationSyntax<SyntaxNode>()
+			.FirstAncestorOrSelf<MemberDeclarationSyntax>()
+			.GetLocation();
 	}
 }
