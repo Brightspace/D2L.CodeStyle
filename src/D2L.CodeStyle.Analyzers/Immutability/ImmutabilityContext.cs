@@ -143,15 +143,25 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 					return false;
 
-				case TypeKind.Interface:
 				case TypeKind.Class:
-				case TypeKind.Struct:
 					diagnostic = Diagnostic.Create(
 						Diagnostics.NonImmutableTypeHeldByImmutable,
 						location,
 						type.TypeKind,
 						type.Name,
 						kind == ImmutableTypeKind.Instance ? " (or [ImmutableBaseClass])" : ""
+					);
+
+					return false;
+
+				case TypeKind.Interface:
+				case TypeKind.Struct:
+					diagnostic = Diagnostic.Create(
+						Diagnostics.NonImmutableTypeHeldByImmutable,
+						location,
+						type.TypeKind,
+						type.Name,
+						""
 					);
 
 					return false;
