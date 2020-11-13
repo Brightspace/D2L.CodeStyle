@@ -15,7 +15,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 	/// class it is mostly just looking for [Immutable]. If this judges a type
 	/// as not known to be immutable that doesn't mean it is mutable.
 	/// </summary>
-	internal sealed class ImmutabilityContext {
+	internal sealed partial class ImmutabilityContext {
 		private readonly ImmutableDictionary<INamedTypeSymbol, ImmutableTypeInfo> m_extraImmutableTypes;
 
 		// Hard code this to avoid looking up the ITypeSymbol to include it in m_extraImmutableTypes
@@ -40,7 +40,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			SpecialType.System_ValueType
 		);
 
-		public ImmutabilityContext( IEnumerable<ImmutableTypeInfo> extraImmutableTypes ) {
+		private ImmutabilityContext( IEnumerable<ImmutableTypeInfo> extraImmutableTypes ) {
 			m_extraImmutableTypes = extraImmutableTypes
 				.ToImmutableDictionary(
 					info => info.Type,
