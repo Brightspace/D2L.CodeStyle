@@ -49,8 +49,8 @@ namespace SpecTests {
 
 		public void ParenWithClosures() {
 			int zero = 0;
-			var func = new StatelessFunc<int>( /* StatelessFuncIsnt( Captured variable(s): zero ) */ () => zero /**/ );
-			AttributeFuncReceiver.Accept<int>( /* StatelessFuncIsnt( Captured variable(s): zero ) */ () => zero /**/ );
+			var func = new StatelessFunc<int>( /* StatelessFuncIsnt(Captured variable(s): zero) */ () => zero /**/ );
+			AttributeFuncReceiver.Accept<int>( /* StatelessFuncIsnt(Captured variable(s): zero) */ () => zero /**/ );
 		}
 
 		public void SimpleNoClosures() {
@@ -60,8 +60,8 @@ namespace SpecTests {
 
 		public void SimpleWithClosures() {
 			string trailing = "\n";
-			var func = new StatelessFunc<string, string>( /* StatelessFuncIsnt( Captured variable(s): trailing ) */ x => x + trailing /**/ );
-			AttributeFuncReceiver.Accept<string, string>( /* StatelessFuncIsnt( Captured variable(s): trailing ) */ x => x + trailing /**/ );
+			var func = new StatelessFunc<string, string>( /* StatelessFuncIsnt(Captured variable(s): trailing) */ x => x + trailing /**/ );
+			AttributeFuncReceiver.Accept<string, string>( /* StatelessFuncIsnt(Captured variable(s): trailing) */ x => x + trailing /**/ );
 		}
 
 		public void DelegateNoClosures() {
@@ -71,13 +71,13 @@ namespace SpecTests {
 
 		public void DelegateWithClosures() {
 			string trailing = "\n";
-			var func = new StatelessFunc<string, string>(  /* StatelessFuncIsnt( Captured variable(s): trailing ) */ delegate ( string x ) { return x + trailing; } /**/ );
-			AttributeFuncReceiver.Accept<string, string>(  /* StatelessFuncIsnt( Captured variable(s): trailing ) */ delegate ( string x ) { return x + trailing; } /**/ );
+			var func = new StatelessFunc<string, string>(  /* StatelessFuncIsnt(Captured variable(s): trailing) */ delegate ( string x ) { return x + trailing; } /**/ );
+			AttributeFuncReceiver.Accept<string, string>(  /* StatelessFuncIsnt(Captured variable(s): trailing) */ delegate ( string x ) { return x + trailing; } /**/ );
 		}
 
 		public void NonStaticMember() {
-			var func = new StatelessFunc<string>( /* StatelessFuncIsnt( this.ToString is not static ) */ this.ToString /**/ );
-			AttributeFuncReceiver.Accept<string>( /* StatelessFuncIsnt( this.ToString is not static ) */ this.ToString /**/ );
+			var func = new StatelessFunc<string>( /* StatelessFuncIsnt(this.ToString is not static) */ this.ToString /**/ );
+			AttributeFuncReceiver.Accept<string>( /* StatelessFuncIsnt(this.ToString is not static) */ this.ToString /**/ );
 		}
 
 		public void StaticMember() {
@@ -102,13 +102,13 @@ namespace SpecTests {
 
 		public void MultiLineWithThisCapture() {
 			var func = new StatelessFunc<string>(
-				/* StatelessFuncIsnt( Captured variable(s): this ) */ () => {
+				/* StatelessFuncIsnt(Captured variable(s): this) */ () => {
 					string trailing = "\n";
 					return this.ToString() + trailing;
 				} /**/
 			);
 			AttributeFuncReceiver.Accept<string>(
-				/* StatelessFuncIsnt( Captured variable(s): this ) */ () => {
+				/* StatelessFuncIsnt(Captured variable(s): this) */ () => {
 					string trailing = "\n";
 					return this.ToString() + trailing;
 				} /**/
@@ -128,8 +128,8 @@ namespace SpecTests {
 				};
 			};
 
-			var func = new StatelessFunc<int>( /* StatelessFuncIsnt( Invocations are not allowed: evil() ) */ evil() /**/ );
-			AttributeFuncReceiver.Accept<int>( /* StatelessFuncIsnt( Invocations are not allowed: evil() ) */ evil() /**/ );
+			var func = new StatelessFunc<int>( /* StatelessFuncIsnt(Invocations are not allowed: evil()) */ evil() /**/ );
+			AttributeFuncReceiver.Accept<int>( /* StatelessFuncIsnt(Invocations are not allowed: evil()) */ evil() /**/ );
 		}
 
 		public void StatelessFunc() {
@@ -157,19 +157,19 @@ namespace SpecTests {
 		public void FuncFromVar() {
 			Func<int> f = () => 0;
 
-			var func = new StatelessFunc<int>( /* StatelessFuncIsnt( Unable to determine if f is stateless. ) */ f /**/ );
-			AttributeFuncReceiver.Accept( /* StatelessFuncIsnt( Unable to determine if f is stateless. ) */ f /**/ );
+			var func = new StatelessFunc<int>( /* StatelessFuncIsnt(Unable to determine if f is stateless.) */ f /**/ );
+			AttributeFuncReceiver.Accept( /* StatelessFuncIsnt(Unable to determine if f is stateless.) */ f /**/ );
 		}
 
 		public void FuncFromParam( Func<int> f ) {
-			var func = new StatelessFunc<int>( /* StatelessFuncIsnt( Unable to determine if f is stateless. ) */ f /**/ );
-			AttributeFuncReceiver.Accept( /* StatelessFuncIsnt( Unable to determine if f is stateless. ) */ f /**/ );
+			var func = new StatelessFunc<int>( /* StatelessFuncIsnt(Unable to determine if f is stateless.) */ f /**/ );
+			AttributeFuncReceiver.Accept( /* StatelessFuncIsnt(Unable to determine if f is stateless.) */ f /**/ );
 		}
 
 		internal sealed class AnotherConstructor {
 
 			public AnotherConstructor( int i )
-				: this( /* StatelessFuncIsnt( Captured variable(s): i ) */ () => ++i /**/ ) { }
+				: this( /* StatelessFuncIsnt(Captured variable(s): i) */ () => ++i /**/ ) { }
 
 			public AnotherConstructor()
 				: this( DoStuff ) { }
@@ -187,7 +187,7 @@ namespace SpecTests {
 			internal sealed class SubClass : BaseClass {
 
 				public SubClass( int i )
-					: base( /* StatelessFuncIsnt( Captured variable(s): i ) */ () => ++i /**/ ) { }
+					: base( /* StatelessFuncIsnt(Captured variable(s): i) */ () => ++i /**/ ) { }
 
 			}
 		}

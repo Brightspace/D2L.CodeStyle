@@ -313,9 +313,21 @@ namespace D2L.CodeStyle.Analyzers {
 					str.Length - 2 - indexOfOpenParen
 				);
 
+				string RemoveSingleLeadingSpace( string s ) {
+					if (string.IsNullOrEmpty(s)) {
+						return s;
+					}
+
+					if (s[0] == ' ') {
+						return s.Substring( 1 );
+					}
+
+					return s;
+				}
+
 				return new DiagnosticExpectation(
 					name: name,
-					arguments: arguments.Split( ',' ).Select( arg => arg.Trim() ).ToImmutableArray()
+					arguments: arguments.Split( ',' ).Select( RemoveSingleLeadingSpace ).ToImmutableArray()
 				);
 			}
 
