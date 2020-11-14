@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
@@ -32,48 +29,41 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			ImmutabilityContext immutabilityContext = ImmutabilityContext.Create( context.Compilation );
 
-			context.RegisterSyntaxNodeAction(
+			context.RegisterSymbolAction(
 				ctx => AnalyzeTypeDeclaration(
 					ctx,
 					immutabilityContext,
-					(TypeDeclarationSyntax)ctx.Node
+					(INamedTypeSymbol)ctx.Symbol
 				),
-				SyntaxKind.ClassDeclaration,
-				SyntaxKind.StructDeclaration
+				SymbolKind.NamedType
 			);
 		}
 
 		private static void AnalyzeTypeDeclaration(
-			SyntaxNodeAnalysisContext ctx,
+			SymbolAnalysisContext ctx,
 			ImmutabilityContext immutabilityContext,
-			TypeDeclarationSyntax typeDeclaration
+			INamedTypeSymbol typeSymbol
 		) {
-			SemanticModel model = ctx.Compilation.GetSemanticModel( typeDeclaration.SyntaxTree );
-
-			INamedTypeSymbol typeSymbol = model.GetDeclaredSymbol( typeDeclaration, ctx.CancellationToken );
 			if( !ShouldAnalyze( typeSymbol ) ) {
 				return;
 			}
 
 			ImmutableDefinitionChecker checker = new ImmutableDefinitionChecker(
-				model: model,
+				compilation: ctx.Compilation,
 				diagnosticSink: ctx.ReportDiagnostic,
 				context: immutabilityContext
 			);
 
-			switch( typeDeclaration ) {
-				case ClassDeclarationSyntax classDeclaration:
-					checker.CheckClass( classDeclaration );
-					break;
-				case StructDeclarationSyntax structDeclaration:
-					checker.CheckStruct( structDeclaration );
-					break;
-			}
+			checker.CheckDeclaration( typeSymbol );
 		}
 
 		private static bool ShouldAnalyze(
 			INamedTypeSymbol analyzedType
 		) {
+			if( analyzedType.IsImplicitlyDeclared ) {
+				return false;
+			}
+
 			if( Attributes.Objects.Immutable.IsDefined( analyzedType ) ) {
 				return true;
 			}
