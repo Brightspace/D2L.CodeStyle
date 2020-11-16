@@ -36,8 +36,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				.Where( m => !m.IsStatic );
 
 			// Check that the base class is immutable for classes
-			// (every user-defined class ultimately extends System.Object; stop there.)
-			if( type.TypeKind == TypeKind.Class && type.BaseType?.SpecialType != SpecialType.System_Object ) {
+			if( type.TypeKind == TypeKind.Class ) {
 				var baseClassOk = m_context.IsImmutable(
 					type.BaseType,
 					ImmutableTypeKind.Instance,
