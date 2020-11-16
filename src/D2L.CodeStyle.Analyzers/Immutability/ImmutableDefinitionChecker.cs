@@ -37,14 +37,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			// Check that the base class is immutable for classes
 			// (every user-defined class ultimately extends System.Object; stop there.)
-			if ( type.TypeKind == TypeKind.Class && type.BaseType?.SpecialType != SpecialType.System_Object ) {
-				// TODO: put this on the BaseTypeSyntax instead
-				var baseTypeSyntax = type.DeclaringSyntaxReferences.First().GetSyntax();
-
+			if( type.TypeKind == TypeKind.Class && type.BaseType?.SpecialType != SpecialType.System_Object ) {
 				var baseClassOk = m_context.IsImmutable(
 					type.BaseType,
 					ImmutableTypeKind.Instance,
-					baseTypeSyntax.GetLocation(),
+					GetLocationOfBaseClass( type ),
 					out var diag
 				);
 
@@ -69,7 +66,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					continue;
 				}
 
-				if ( !CheckMember( m_diagnosticSink, member ) ) {
+				if( !CheckMember( m_diagnosticSink, member ) ) {
 					result = false;
 				}
 			}
@@ -285,5 +282,49 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			.GetDeclarationSyntax<SyntaxNode>()
 			.FirstAncestorOrSelf<MemberDeclarationSyntax>()
 			.GetLocation();
+
+		private Location GetLocationOfBaseClass( ITypeSymbol type ) {
+			// Consider the following valid code:
+			//
+			// class Base {}
+			// interface IA { }
+			// interface IB { }
+			//
+			// partial class Foo { }
+			// partial class Foo : Base { }
+			// partial class Foo : Base, IA { }
+			// partial class Foo : IB { }
+			//
+			// Our goal is to get one of the mentions of Base after "Foo :" to
+			// place the diagnostic. There may be multiple, but for valid code
+			// it will be the first type in the list for one of the decls.
+			// (interfaces always go after the base class, if it is listed.)
+
+			var candidates = type.DeclaringSyntaxReferences
+				.Select( r => r.GetSyntax() )
+				.Cast<ClassDeclarationSyntax>()
+				// Take _at most_ the first item from each BaseList.Types
+				.SelectMany( r => r.BaseList.Types.Take( 1 ) );
+
+			// Find the first candidate that is a class type.
+			foreach( var candidate in candidates ) {
+				var model = m_compilation.GetSemanticModel( candidate.SyntaxTree );
+				var candidateInfo = model.GetTypeInfo( candidate );
+
+				if ( candidateInfo.Type == null ) {
+					continue;
+				}
+
+				if ( candidateInfo.Type.TypeKind == TypeKind.Class ) {
+					return candidate.GetLocation();
+				}
+			}
+
+			// If we couldn't find a candidate just use the first class decl
+			// as the diagnostic target. I'm not sure this can happen.
+			return type.DeclaringSyntaxReferences.First()
+				.GetSyntax()
+				.GetLocation();
+		}
 	}
 }
