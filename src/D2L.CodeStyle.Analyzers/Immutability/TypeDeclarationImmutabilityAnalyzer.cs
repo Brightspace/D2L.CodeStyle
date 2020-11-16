@@ -64,6 +64,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return false;
 			}
 
+			if( analyzedType.TypeKind == TypeKind.Interface ) {
+				return false;
+			}
+
 			if( Attributes.Objects.Immutable.IsDefined( analyzedType ) ) {
 				return true;
 			}
