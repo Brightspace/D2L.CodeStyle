@@ -92,6 +92,14 @@ namespace SpecTests {
 	[Immutable]
 	public sealed class AnalyzedClassMarkedImmutable {
 
+
+
+		class SomeEventArgs { }
+		delegate void SomeEventHandler( object sender, SomeEventArgs e );
+		/* EventMemberMutable() */ event SomeEventHandler SomeEvent; /**/
+
+
+
 		static int m_field = 0;
 
 		static readonly int m_field = 0;
@@ -115,6 +123,33 @@ namespace SpecTests {
 		int Property { get; } = 0;
 
 		int Property { get { return 0; } }
+
+
+
+		static object m_field = null;
+		static readonly object m_field = null;
+		object /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = null;
+		readonly object m_field = null;
+		object Property { get; } = null;
+		object Property { get { return null; } }
+
+
+
+		static object m_field = new object();
+		static readonly object m_field = new object();
+		object /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = new object();
+		readonly object m_field = new object();
+		object Property { get; } = new object();
+		object Property { get { return new object(); } }
+
+
+
+		static Func<object> m_field = () => null;
+		static readonly Func<object> m_field = () => null;
+		Func<object> /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = () => null;
+		readonly Func<object> m_field = () => null;
+		Func<object> Property { get; } = () => null;
+		Func<object> Property { get { return () => null; } }
 
 
 
