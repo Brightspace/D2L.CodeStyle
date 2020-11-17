@@ -302,6 +302,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			var candidates = type.DeclaringSyntaxReferences
 				.Select( r => r.GetSyntax() )
 				.Cast<ClassDeclarationSyntax>()
+				.Where( r => r.BaseList != null )
 				// Take _at most_ the first item from each BaseList.Types
 				.SelectMany( r => r.BaseList.Types.Take( 1 ) );
 
