@@ -59,7 +59,8 @@ namespace SpecTests {
 
 		}
 
-		public sealed class RegularExtension : RegularClass { }
+		public class RegularExtension : RegularClass { }
+		public sealed class RegularSealedExtension : RegularClass { }
 
 		[Immutable]
 		public sealed class ClassMarkedImmutableImplementingRegularInterface : Interfaces.RegularInterface { }
@@ -109,13 +110,27 @@ namespace SpecTests {
 
 			static readonly RegularClass m_staticReadOnlyMutableFieldHeldAsMutableSuper = new RegularExtension();
 
-			RegularClass /* MemberIsNotReadOnly(Field, m_writableMutableFieldHeldAsMutableSuper, ClassMarkedImmutable) */ m_writableMutableFieldHeldAsMutableSuper /**/ = new /* NonImmutableTypeHeldByImmutable(Class, RegularExtension, ) */ RegularExtension /**/ ();
+			RegularClass /* MemberIsNotReadOnly(Field, m_writableMutableFieldHeldAsMutableSuper, ClassMarkedImmutable) */ m_writableMutableFieldHeldAsMutableSuper /**/ = new /* NonImmutableTypeHeldByImmutable(Class, RegularExtension,  (or [ImmutableBaseClass])) */ RegularExtension /**/ ();
 
-			readonly RegularClass m_readonlyMutableFieldHeldAsMutableSuper = new /* NonImmutableTypeHeldByImmutable(Class, RegularExtension, ) */ RegularExtension /**/ ();
+			readonly RegularClass m_readonlyMutableFieldHeldAsMutableSuper = new /* NonImmutableTypeHeldByImmutable(Class, RegularExtension,  (or [ImmutableBaseClass])) */ RegularExtension /**/ ();
 
-			RegularClass AutoImplementedMutablePropertyHeldAsMutableSuper { get; } = new /* NonImmutableTypeHeldByImmutable(Class, RegularExtension, ) */ RegularExtension /**/ ();
+			RegularClass AutoImplementedMutablePropertyHeldAsMutableSuper { get; } = new /* NonImmutableTypeHeldByImmutable(Class, RegularExtension,  (or [ImmutableBaseClass])) */ RegularExtension /**/ ();
 
 			RegularClass ImplementedMutablePropertyAsMutableSuper { get { return new RegularExtension(); } }
+
+
+
+			static RegularClass m_staticWritableSealedMutableFieldHeldAsMutableSuper = new RegularSealedExtension();
+
+			static readonly RegularClass m_staticReadOnlySealedMutableFieldHeldAsMutableSuper = new RegularSealedExtension();
+
+			RegularClass /* MemberIsNotReadOnly(Field, m_writableSealedMutableFieldHeldAsMutableSuper, ClassMarkedImmutable) */ m_writableSealedMutableFieldHeldAsMutableSuper /**/ = new /* NonImmutableTypeHeldByImmutable(Class, RegularSealedExtension, ) */ RegularSealedExtension /**/ ();
+
+			readonly RegularClass m_readonlySealedMutableFieldHeldAsMutableSuper = new /* NonImmutableTypeHeldByImmutable(Class, RegularSealedExtension, ) */ RegularSealedExtension /**/ ();
+
+			RegularClass AutoImplementedSealedMutablePropertyHeldAsMutableSuper { get; } = new /* NonImmutableTypeHeldByImmutable(Class, RegularSealedExtension, ) */ RegularSealedExtension /**/ ();
+
+			RegularClass ImplementedSealedMutablePropertyAsMutableSuper { get { return new RegularSealedExtension(); } }
 
 
 
