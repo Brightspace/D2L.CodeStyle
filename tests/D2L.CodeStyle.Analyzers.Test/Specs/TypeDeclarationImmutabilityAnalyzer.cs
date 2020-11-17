@@ -12,11 +12,6 @@ namespace D2L.CodeStyle.Annotations {
 		public abstract class ImmutableAttributeBase : Attribute {}
 		public sealed class Immutable : ImmutableAttributeBase { }
 		public sealed class ImmutableBaseClassAttribute : ImmutableAttributeBase { }
-
-		[AttributeUsage( validOn: AttributeTargets.Assembly )]
-		public sealed class ImmutableGenericAttribute : Attribute {
-			public ImmutableGenericAttribute( Type type ) { }
-		}
 	}
 	public static class Mutability {
 		public sealed class AuditedAttribute : Attribute { }
