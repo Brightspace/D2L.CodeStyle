@@ -308,7 +308,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// Find the first candidate that is a class type.
 			foreach( var candidate in candidates ) {
 				var model = m_compilation.GetSemanticModel( candidate.SyntaxTree );
-				var candidateInfo = model.GetTypeInfo( candidate );
+				var candidateInfo = model.GetTypeInfo( candidate.Type );
 
 				if ( candidateInfo.Type == null ) {
 					continue;
