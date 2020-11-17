@@ -47,7 +47,7 @@ namespace SpecTests {
 
 	public sealed class Classes {
 
-		public sealed class RegularClass {
+		public class RegularClass {
 
 			private static int m_staticWritableImmutableField = 0;
 
@@ -95,11 +95,11 @@ namespace SpecTests {
 
 			static readonly RegularClass m_staticReadOnlyMutableField = new RegularClass();
 
-			/* NonImmutableTypeHeldByImmutable(Class, RegularClass, ) */ RegularClass /**/ /* MemberIsNotReadOnly(Field, m_writableMutableField, ClassMarkedImmutable) */ m_writableMutableField /**/ = new RegularClass();
+			RegularClass /* MemberIsNotReadOnly(Field, m_writableMutableField, ClassMarkedImmutable) */ m_writableMutableField /**/ = new /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ RegularClass /**/ ();
 
-			readonly /* NonImmutableTypeHeldByImmutable(Class, RegularClass, ) */ RegularClass /**/ m_readonlyMutableField = new RegularClass();
+			readonly RegularClass m_readonlyMutableField = new /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ RegularClass /**/ ();
 
-			/* NonImmutableTypeHeldByImmutable(Class, RegularClass, ) */ RegularClass /**/ AutoImplementedMutableProperty { get; } = new RegularClass();
+			RegularClass AutoImplementedMutableProperty { get; } = new /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ RegularClass /**/ ();
 
 			RegularClass ImplementedMutableProperty { get { return new RegularClass(); } }
 
@@ -109,11 +109,11 @@ namespace SpecTests {
 
 			static readonly RegularClass m_staticReadOnlyMutableFieldHeldAsMutableSuper = new RegularExtension();
 
-			/* NonImmutableTypeHeldByImmutable(Class, RegularClass, ) */ RegularClass /**/ /* MemberIsNotReadOnly(Field, m_writableMutableFieldHeldAsMutableSuper, ClassMarkedImmutable) */ m_writableMutableFieldHeldAsMutableSuper /**/ = new RegularExtension();
+			RegularClass /* MemberIsNotReadOnly(Field, m_writableMutableFieldHeldAsMutableSuper, ClassMarkedImmutable) */ m_writableMutableFieldHeldAsMutableSuper /**/ = new /* NonImmutableTypeHeldByImmutable(Class, RegularExtension, ) */ RegularExtension /**/ ();
 
-			readonly /* NonImmutableTypeHeldByImmutable(Class, RegularClass, ) */ RegularClass /**/ m_readonlyMutableFieldHeldAsMutableSuper = new RegularExtension();
+			readonly RegularClass m_readonlyMutableFieldHeldAsMutableSuper = new /* NonImmutableTypeHeldByImmutable(Class, RegularExtension, ) */ RegularExtension /**/ ();
 
-			/* NonImmutableTypeHeldByImmutable(Class, RegularClass, ) */ RegularClass /**/ AutoImplementedMutablePropertyHeldAsMutableSuper { get; } = new RegularExtension();
+			RegularClass AutoImplementedMutablePropertyHeldAsMutableSuper { get; } = new /* NonImmutableTypeHeldByImmutable(Class, RegularExtension, ) */ RegularExtension /**/ ();
 
 			RegularClass ImplementedMutablePropertyAsMutableSuper { get { return new RegularExtension(); } }
 
@@ -151,11 +151,11 @@ namespace SpecTests {
 
 
 
-			SomeImmutableBaseClass /* MemberIsNotReadOnly(Field, m_writeableImmutableBaseClassFieldWithMutableInitializer, ClassMarkedImmutable) */ m_writeableImmutableBaseClassFieldWithMutableInitializer /**/ = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass,  (or [ImmutableBaseClass])) */ MutableExtensionOfSomeImmutableBaseClass /**/ ();
+			SomeImmutableBaseClass /* MemberIsNotReadOnly(Field, m_writeableImmutableBaseClassFieldWithMutableInitializer, ClassMarkedImmutable) */ m_writeableImmutableBaseClassFieldWithMutableInitializer /**/ = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, ) */ MutableExtensionOfSomeImmutableBaseClass /**/ ();
 
-			readonly SomeImmutableBaseClass m_readonlyImmutableBaseClassFieldWithMutableInitializer = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass,  (or [ImmutableBaseClass])) */ MutableExtensionOfSomeImmutableBaseClass /**/ ();
+			readonly SomeImmutableBaseClass m_readonlyImmutableBaseClassFieldWithMutableInitializer = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, ) */ MutableExtensionOfSomeImmutableBaseClass /**/ ();
 
-			SomeImmutableBaseClass AutoImplementedImmutableBaseClassFieldWithMutableInitializer { get; } = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass,  (or [ImmutableBaseClass])) */ MutableExtensionOfSomeImmutableBaseClass /**/ () ;
+			SomeImmutableBaseClass AutoImplementedImmutableBaseClassFieldWithMutableInitializer { get; } = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, ) */ MutableExtensionOfSomeImmutableBaseClass /**/ () ;
 
 
 
