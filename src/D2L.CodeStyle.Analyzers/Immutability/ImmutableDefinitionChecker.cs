@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -57,7 +58,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						m_diagnosticSink(
 							Diagnostic.Create(
 								Diagnostics.UnnecessaryMutabilityAnnotation,
-								GetLocationOfMember( member )
+								GetLocationOfAnnotation( member )
 							)
 						);
 					}
@@ -275,6 +276,20 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			return false;
+		}
+
+		private static Location GetLocationOfAnnotation( ISymbol s ) {
+			var audited = Attributes.Mutability.Audited.GetAll( s ).FirstOrDefault();
+			if( audited != null ) {
+				return audited.ApplicationSyntaxReference.GetSyntax().GetLocation();
+			}
+
+			var unaudited = Attributes.Mutability.Unaudited.GetAll( s ).FirstOrDefault();
+			if( unaudited != null ) {
+				return unaudited.ApplicationSyntaxReference.GetSyntax().GetLocation();
+			}
+
+			throw new InvalidOperationException( $"{nameof( GetLocationOfAnnotation )} should only be called on an annotated symbol" );
 		}
 
 		private static Location GetLocationOfMember( ISymbol s ) =>s
