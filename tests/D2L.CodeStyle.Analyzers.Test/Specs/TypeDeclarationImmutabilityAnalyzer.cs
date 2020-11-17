@@ -41,7 +41,7 @@ namespace SpecTests {
 		public interface RegularInterface { }
 
 		[Immutable]
-		public interface InterfaceMarkedImmutable { }
+		public interface SomeImmutableInterface { }
 
 
 		public class RegularClass {
@@ -64,12 +64,30 @@ namespace SpecTests {
 		public sealed class MutableExtensionOfSomeImmutableBaseClass : SomeImmutableBaseClass { }
 
 		[Immutable]
+		public class SomeImmutableClass { }
+
+		[Immutable]
 		public sealed class ClassMarkedImmutableImplementingRegularInterface : RegularInterface { }
 
 		[ImmutableBaseClass]
 		public class ClassMarkedImmutableBaseClassImplementingRegularInterface : RegularInterface { }
 
 	}
+
+	[Immutable]
+	public sealed class AnalyzedClassMarkedImmutableExtendingMutableClass : /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ Types.RegularClass /**/ { }
+
+	[ImmutableBaseClass]
+	public sealed class AnalyzedClassMarkedImmutableBaseClassExtendingMutableClass : /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ Types.RegularClass /**/ { }
+
+	[ImmutableBaseClass]
+	public sealed class AnalyzedClassMarkedImmutableBaseClassExtendingImmutableBaseClass : Types.SomeImmutableBaseClass { }
+
+	[Immutable]
+	public sealed class AnalyzedClassMarkedImmutableExtendingImmutableBaseClass : Types.SomeImmutableBaseClass { }
+
+	[Immutable]
+	public sealed class AnalyzedClassMarkedImmutableExtendingImmutableClass : Types.SomeImmutableClass { }
 
 	[Immutable]
 	public sealed class AnalyzedClassMarkedImmutable {
@@ -80,6 +98,18 @@ namespace SpecTests {
 
 		int /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = 0;
 
+		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
+		int m_field = 0;
+
+		[Mutability.Audited]
+		int m_field = 0;
+
+		readonly int m_field = 0;
+
+		[/* UnnecessaryMutabilityAnnotation() */ Mutability.Unaudited( Because.ItHasntBeenLookedAt ) /**/]
+		readonly int m_field = 0;
+
+		[/* UnnecessaryMutabilityAnnotation() */ Mutability.Audited /**/]
 		readonly int m_field = 0;
 
 		int Property { get; } = 0;
@@ -96,7 +126,19 @@ namespace SpecTests {
 
 		readonly Types.RegularClass m_field = new /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ Types.RegularClass /**/ ();
 
+		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
+		readonly Types.RegularClass m_field = new Types.RegularClass ();
+
+		[Mutability.Audited]
+		readonly Types.RegularClass m_field = new Types.RegularClass();
+
 		Types.RegularClass Property { get; } = new /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ Types.RegularClass /**/ ();
+
+		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
+		Types.RegularClass Property { get; } = new Types.RegularClass ();
+
+		[Mutability.Audited]
+		Types.RegularClass Property { get; } = new Types.RegularClass();
 
 		Types.RegularClass Property { get { return new Types.RegularClass(); } }
 
