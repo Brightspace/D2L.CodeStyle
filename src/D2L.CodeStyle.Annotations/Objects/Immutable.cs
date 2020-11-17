@@ -29,11 +29,5 @@ namespace D2L.CodeStyle.Annotations {
 		/// </summary>
 		[AttributeUsage( validOn: AttributeTargets.Class )]
 		public sealed class ImmutableBaseClassAttribute : ImmutableAttributeBase { }
-
-		[AttributeUsage( validOn: AttributeTargets.Assembly, AllowMultiple = true )]
-		public sealed class ImmutableGenericAttribute : Attribute {
-
-			public ImmutableGenericAttribute( Type type ) { }
-		}
 	}
 }
