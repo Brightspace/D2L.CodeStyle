@@ -46,13 +46,13 @@ namespace SpecTests {
 
 		public class RegularClass {
 
-			private static int m_staticWritableImmutableField = 0;
+			private static int m_field = 0;
 
-			private static readonly int m_staticReadOnlyImmutableField = 0;
+			private static readonly int m_field = 0;
 
-			private int m_writableImmutableField = 0;
+			private int m_field = 0;
 
-			private readonly int m_readonlyImmutableField = 0;
+			private readonly int m_field = 0;
 
 		}
 		public class RegularExtension : RegularClass { }
@@ -74,105 +74,105 @@ namespace SpecTests {
 	[Immutable]
 	public sealed class AnalyzedClassMarkedImmutable {
 
-		static int m_staticWritableImmutableField = 0;
+		static int m_field = 0;
 
-		static readonly int m_staticReadOnlyImmutableField = 0;
+		static readonly int m_field = 0;
 
-		int /* MemberIsNotReadOnly(Field, m_writableImmutableField, AnalyzedClassMarkedImmutable) */ m_writableImmutableField /**/ = 0;
+		int /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = 0;
 
-		readonly int m_readonlyImmutableField = 0;
+		readonly int m_field = 0;
 
-		int AutoImplementedImmutableProperty { get; } = 0;
+		int Property { get; } = 0;
 
-		int ImplementedImmutableProperty { get { return 0; } }
-
-
-
-		static Types.RegularClass m_staticWritableMutableField = new Types.RegularClass();
-
-		static readonly Types.RegularClass m_staticReadOnlyMutableField = new Types.RegularClass();
-
-		Types.RegularClass /* MemberIsNotReadOnly(Field, m_writableMutableField, AnalyzedClassMarkedImmutable) */ m_writableMutableField /**/ = new /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ Types.RegularClass /**/ ();
-
-		readonly Types.RegularClass m_readonlyMutableField = new /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ Types.RegularClass /**/ ();
-
-		Types.RegularClass AutoImplementedMutableProperty { get; } = new /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ Types.RegularClass /**/ ();
-
-		Types.RegularClass ImplementedMutableProperty { get { return new Types.RegularClass(); } }
+		int Property { get { return 0; } }
 
 
 
-		static Types.RegularClass m_staticWritableMutableFieldHeldAsMutableSuper = new Types.RegularExtension();
+		static Types.RegularClass m_field = new Types.RegularClass();
 
-		static readonly Types.RegularClass m_staticReadOnlyMutableFieldHeldAsMutableSuper = new Types.RegularExtension();
+		static readonly Types.RegularClass m_field = new Types.RegularClass();
 
-		Types.RegularClass /* MemberIsNotReadOnly(Field, m_writableMutableFieldHeldAsMutableSuper, AnalyzedClassMarkedImmutable) */ m_writableMutableFieldHeldAsMutableSuper /**/ = new /* NonImmutableTypeHeldByImmutable(Class, RegularExtension,  (or [ImmutableBaseClass])) */ Types.RegularExtension /**/ ();
+		Types.RegularClass /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = new /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ Types.RegularClass /**/ ();
 
-		readonly Types.RegularClass m_readonlyMutableFieldHeldAsMutableSuper = new /* NonImmutableTypeHeldByImmutable(Class, RegularExtension,  (or [ImmutableBaseClass])) */ Types.RegularExtension /**/ ();
+		readonly Types.RegularClass m_field = new /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ Types.RegularClass /**/ ();
 
-		Types.RegularClass AutoImplementedMutablePropertyHeldAsMutableSuper { get; } = new /* NonImmutableTypeHeldByImmutable(Class, RegularExtension,  (or [ImmutableBaseClass])) */ Types.RegularExtension /**/ ();
+		Types.RegularClass Property { get; } = new /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ Types.RegularClass /**/ ();
 
-		Types.RegularClass ImplementedMutablePropertyAsMutableSuper { get { return new Types.RegularExtension(); } }
-
-
-
-		static Types.RegularClass m_staticWritableSealedMutableFieldHeldAsMutableSuper = new Types.RegularSealedExtension();
-
-		static readonly Types.RegularClass m_staticReadOnlySealedMutableFieldHeldAsMutableSuper = new Types.RegularSealedExtension();
-
-		Types.RegularClass /* MemberIsNotReadOnly(Field, m_writableSealedMutableFieldHeldAsMutableSuper, AnalyzedClassMarkedImmutable) */ m_writableSealedMutableFieldHeldAsMutableSuper /**/ = new /* NonImmutableTypeHeldByImmutable(Class, RegularSealedExtension, ) */ Types.RegularSealedExtension /**/ ();
-
-		readonly Types.RegularClass m_readonlySealedMutableFieldHeldAsMutableSuper = new /* NonImmutableTypeHeldByImmutable(Class, RegularSealedExtension, ) */ Types.RegularSealedExtension /**/ ();
-
-		Types.RegularClass AutoImplementedSealedMutablePropertyHeldAsMutableSuper { get; } = new /* NonImmutableTypeHeldByImmutable(Class, RegularSealedExtension, ) */ Types.RegularSealedExtension /**/ ();
-
-		Types.RegularClass ImplementedSealedMutablePropertyAsMutableSuper { get { return new Types.RegularSealedExtension(); } }
+		Types.RegularClass Property { get { return new Types.RegularClass(); } }
 
 
 
-		Types.SomeImmutableBaseClass /* MemberIsNotReadOnly(Field, m_writeableImmutableBaseClassFieldWithImmutableBaseClassInitializer, AnalyzedClassMarkedImmutable) */ m_writeableImmutableBaseClassFieldWithImmutableBaseClassInitializer /**/ = new Types.SomeImmutableBaseClass();
+		static Types.RegularClass m_field = new Types.RegularExtension();
 
-		readonly Types.SomeImmutableBaseClass m_readonlyImmutableBaseClassFieldWithImmutableBaseClassInitializer = new Types.SomeImmutableBaseClass();
+		static readonly Types.RegularClass m_field = new Types.RegularExtension();
 
-		Types.SomeImmutableBaseClass AutoImplementedImmutableBaseClassFieldWithImmutableBaseClassInitializer { get; } = new Types.SomeImmutableBaseClass();
+		Types.RegularClass /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = new /* NonImmutableTypeHeldByImmutable(Class, RegularExtension,  (or [ImmutableBaseClass])) */ Types.RegularExtension /**/ ();
 
+		readonly Types.RegularClass m_field = new /* NonImmutableTypeHeldByImmutable(Class, RegularExtension,  (or [ImmutableBaseClass])) */ Types.RegularExtension /**/ ();
 
+		Types.RegularClass Property { get; } = new /* NonImmutableTypeHeldByImmutable(Class, RegularExtension,  (or [ImmutableBaseClass])) */ Types.RegularExtension /**/ ();
 
-		Types.SomeImmutableBaseClass /* MemberIsNotReadOnly(Field, m_writeableImmutableBaseClassFieldWithMutableInitializer, AnalyzedClassMarkedImmutable) */ m_writeableImmutableBaseClassFieldWithMutableInitializer /**/ = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, ) */ Types.MutableExtensionOfSomeImmutableBaseClass /**/ ();
-
-		readonly Types.SomeImmutableBaseClass m_readonlyImmutableBaseClassFieldWithMutableInitializer = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, ) */ Types.MutableExtensionOfSomeImmutableBaseClass /**/ ();
-
-		Types.SomeImmutableBaseClass AutoImplementedImmutableBaseClassFieldWithMutableInitializer { get; } = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, ) */ Types.MutableExtensionOfSomeImmutableBaseClass /**/ ();
+		Types.RegularClass Property { get { return new Types.RegularExtension(); } }
 
 
 
-		readonly Types.SomeImmutableBaseClass m_readonlyImmutableBaseClassFieldWithImmutableBaseClassFuncInitializer = /* NonImmutableTypeHeldByImmutable(Class, SomeImmutableBaseClass, ) */ Types.FuncReturningSomeImmutableBaseClass() /**/;
+		static Types.RegularClass m_field = new Types.RegularSealedExtension();
 
-		Types.SomeImmutableBaseClass AutoImplementedImmutableBaseClassFieldWithImmutableBaseClassFuncInitializer { get; } = /* NonImmutableTypeHeldByImmutable(Class, SomeImmutableBaseClass, ) */ Types.FuncReturningSomeImmutableBaseClass() /**/;
+		static readonly Types.RegularClass m_field = new Types.RegularSealedExtension();
 
+		Types.RegularClass /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = new /* NonImmutableTypeHeldByImmutable(Class, RegularSealedExtension, ) */ Types.RegularSealedExtension /**/ ();
 
+		readonly Types.RegularClass m_field = new /* NonImmutableTypeHeldByImmutable(Class, RegularSealedExtension, ) */ Types.RegularSealedExtension /**/ ();
 
-		static Types.RegularInterface m_staticWritableMutableFieldImmutableInitializer = new Types.ClassMarkedImmutableImplementingRegularInterface();
+		Types.RegularClass Property { get; } = new /* NonImmutableTypeHeldByImmutable(Class, RegularSealedExtension, ) */ Types.RegularSealedExtension /**/ ();
 
-		static readonly Types.RegularInterface m_staticReadOnlyMutableFieldImmutableInitializer = new Types.ClassMarkedImmutableImplementingRegularInterface();
-
-		Types.RegularInterface /* MemberIsNotReadOnly(Field, m_writableMutableFieldImmutableInitializer, AnalyzedClassMarkedImmutable) */ m_writableMutableFieldImmutableInitializer /**/ = new Types.ClassMarkedImmutableImplementingRegularInterface();
-
-		readonly Types.RegularInterface m_readonlyMutableFieldImmutableInitializer = new Types.ClassMarkedImmutableImplementingRegularInterface();
-
-		Types.RegularInterface AutoImplementedMutablePropertyImmutableInitializer { get; } = new Types.ClassMarkedImmutableImplementingRegularInterface();
+		Types.RegularClass Property { get { return new Types.RegularSealedExtension(); } }
 
 
 
-		static Types.RegularInterface m_staticWritableMutableFieldImmutableBaseClassInitializer = new Types.ClassMarkedImmutableBaseClassImplementingRegularInterface();
+		Types.SomeImmutableBaseClass /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = new Types.SomeImmutableBaseClass();
 
-		static readonly Types.RegularInterface m_staticReadOnlyMutableFieldImmutableBaseClassInitializer = new Types.ClassMarkedImmutableBaseClassImplementingRegularInterface();
+		readonly Types.SomeImmutableBaseClass m_field = new Types.SomeImmutableBaseClass();
 
-		Types.RegularInterface /* MemberIsNotReadOnly(Field, m_writableMutableFieldImmutableBaseClassInitializer, AnalyzedClassMarkedImmutable) */ m_writableMutableFieldImmutableBaseClassInitializer /**/ = new Types.ClassMarkedImmutableBaseClassImplementingRegularInterface();
+		Types.SomeImmutableBaseClass Property { get; } = new Types.SomeImmutableBaseClass();
 
-		readonly Types.RegularInterface m_readonlyMutableFieldImmutableBaseClassInitializer = new Types.ClassMarkedImmutableBaseClassImplementingRegularInterface();
 
-		Types.RegularInterface AutoImplementedMutablePropertyImmutableBaseClassInitializer { get; } = new Types.ClassMarkedImmutableBaseClassImplementingRegularInterface();
+
+		Types.SomeImmutableBaseClass /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, ) */ Types.MutableExtensionOfSomeImmutableBaseClass /**/ ();
+
+		readonly Types.SomeImmutableBaseClass m_field = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, ) */ Types.MutableExtensionOfSomeImmutableBaseClass /**/ ();
+
+		Types.SomeImmutableBaseClass Property { get; } = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, ) */ Types.MutableExtensionOfSomeImmutableBaseClass /**/ ();
+
+
+
+		readonly Types.SomeImmutableBaseClass m_field = /* NonImmutableTypeHeldByImmutable(Class, SomeImmutableBaseClass, ) */ Types.FuncReturningSomeImmutableBaseClass() /**/;
+
+		Types.SomeImmutableBaseClass Property { get; } = /* NonImmutableTypeHeldByImmutable(Class, SomeImmutableBaseClass, ) */ Types.FuncReturningSomeImmutableBaseClass() /**/;
+
+
+
+		static Types.RegularInterface m_field = new Types.ClassMarkedImmutableImplementingRegularInterface();
+
+		static readonly Types.RegularInterface m_field = new Types.ClassMarkedImmutableImplementingRegularInterface();
+
+		Types.RegularInterface /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = new Types.ClassMarkedImmutableImplementingRegularInterface();
+
+		readonly Types.RegularInterface m_field = new Types.ClassMarkedImmutableImplementingRegularInterface();
+
+		Types.RegularInterface Property { get; } = new Types.ClassMarkedImmutableImplementingRegularInterface();
+
+
+
+		static Types.RegularInterface m_field = new Types.ClassMarkedImmutableBaseClassImplementingRegularInterface();
+
+		static readonly Types.RegularInterface m_field = new Types.ClassMarkedImmutableBaseClassImplementingRegularInterface();
+
+		Types.RegularInterface /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = new Types.ClassMarkedImmutableBaseClassImplementingRegularInterface();
+
+		readonly Types.RegularInterface m_field = new Types.ClassMarkedImmutableBaseClassImplementingRegularInterface();
+
+		Types.RegularInterface Property { get; } = new Types.ClassMarkedImmutableBaseClassImplementingRegularInterface();
 	}
 
 }
