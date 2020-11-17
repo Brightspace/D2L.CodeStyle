@@ -58,22 +58,19 @@ namespace SpecTests {
 			private readonly int m_readonlyImmutableField = 0;
 
 		}
-
 		public class RegularExtension : RegularClass { }
 		public sealed class RegularSealedExtension : RegularClass { }
+
+		[ImmutableBaseClass]
+		public class SomeImmutableBaseClass { }
+		static SomeImmutableBaseClass FuncReturningSomeImmutableBaseClass() => null
+		public sealed class MutableExtensionOfSomeImmutableBaseClass : SomeImmutableBaseClass { }
 
 		[Immutable]
 		public sealed class ClassMarkedImmutableImplementingRegularInterface : Interfaces.RegularInterface { }
 
 		[ImmutableBaseClass]
 		public class ClassMarkedImmutableBaseClassImplementingRegularInterface : Interfaces.RegularInterface { }
-
-		[ImmutableBaseClass]
-		public class SomeImmutableBaseClass { }
-
-		static SomeImmutableBaseClass FuncReturningSomeImmutableBaseClass() => null
-
-		public sealed class MutableExtensionOfSomeImmutableBaseClass : SomeImmutableBaseClass { }
 
 		[Immutable]
 		public sealed class ClassMarkedImmutable {
@@ -134,6 +131,28 @@ namespace SpecTests {
 
 
 
+			SomeImmutableBaseClass /* MemberIsNotReadOnly(Field, m_writeableImmutableBaseClassFieldWithImmutableBaseClassInitializer, ClassMarkedImmutable) */ m_writeableImmutableBaseClassFieldWithImmutableBaseClassInitializer /**/ = new SomeImmutableBaseClass();
+
+			readonly SomeImmutableBaseClass m_readonlyImmutableBaseClassFieldWithImmutableBaseClassInitializer = new SomeImmutableBaseClass();
+
+			SomeImmutableBaseClass AutoImplementedImmutableBaseClassFieldWithImmutableBaseClassInitializer { get; } = new SomeImmutableBaseClass();
+
+
+
+			SomeImmutableBaseClass /* MemberIsNotReadOnly(Field, m_writeableImmutableBaseClassFieldWithMutableInitializer, ClassMarkedImmutable) */ m_writeableImmutableBaseClassFieldWithMutableInitializer /**/ = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, ) */ MutableExtensionOfSomeImmutableBaseClass /**/ ();
+
+			readonly SomeImmutableBaseClass m_readonlyImmutableBaseClassFieldWithMutableInitializer = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, ) */ MutableExtensionOfSomeImmutableBaseClass /**/ ();
+
+			SomeImmutableBaseClass AutoImplementedImmutableBaseClassFieldWithMutableInitializer { get; } = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, ) */ MutableExtensionOfSomeImmutableBaseClass /**/ ();
+
+
+
+			readonly SomeImmutableBaseClass m_readonlyImmutableBaseClassFieldWithImmutableBaseClassFuncInitializer = /* NonImmutableTypeHeldByImmutable(Class, SomeImmutableBaseClass, ) */ FuncReturningSomeImmutableBaseClass() /**/;
+
+			SomeImmutableBaseClass AutoImplementedImmutableBaseClassFieldWithImmutableBaseClassFuncInitializer { get; } = /* NonImmutableTypeHeldByImmutable(Class, SomeImmutableBaseClass, ) */ FuncReturningSomeImmutableBaseClass() /**/;
+
+
+
 			static Interfaces.RegularInterface m_staticWritableMutableFieldImmutableInitializer = new ClassMarkedImmutableImplementingRegularInterface();
 
 			static readonly Interfaces.RegularInterface m_staticReadOnlyMutableFieldImmutableInitializer = new ClassMarkedImmutableImplementingRegularInterface();
@@ -155,28 +174,6 @@ namespace SpecTests {
 			readonly Interfaces.RegularInterface m_readonlyMutableFieldImmutableBaseClassInitializer = new ClassMarkedImmutableBaseClassImplementingRegularInterface();
 
 			Interfaces.RegularInterface AutoImplementedMutablePropertyImmutableBaseClassInitializer { get; } = new ClassMarkedImmutableBaseClassImplementingRegularInterface();
-
-
-
-			SomeImmutableBaseClass /* MemberIsNotReadOnly(Field, m_writeableImmutableBaseClassFieldWithImmutableBaseClassInitializer, ClassMarkedImmutable) */ m_writeableImmutableBaseClassFieldWithImmutableBaseClassInitializer /**/ = new SomeImmutableBaseClass();
-
-			readonly SomeImmutableBaseClass m_readonlyImmutableBaseClassFieldWithImmutableBaseClassInitializer = new SomeImmutableBaseClass();
-
-			SomeImmutableBaseClass AutoImplementedImmutableBaseClassFieldWithImmutableBaseClassInitializer { get; } = new SomeImmutableBaseClass();
-
-
-
-			SomeImmutableBaseClass /* MemberIsNotReadOnly(Field, m_writeableImmutableBaseClassFieldWithMutableInitializer, ClassMarkedImmutable) */ m_writeableImmutableBaseClassFieldWithMutableInitializer /**/ = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, ) */ MutableExtensionOfSomeImmutableBaseClass /**/ ();
-
-			readonly SomeImmutableBaseClass m_readonlyImmutableBaseClassFieldWithMutableInitializer = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, ) */ MutableExtensionOfSomeImmutableBaseClass /**/ ();
-
-			SomeImmutableBaseClass AutoImplementedImmutableBaseClassFieldWithMutableInitializer { get; } = new /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, ) */ MutableExtensionOfSomeImmutableBaseClass /**/ () ;
-
-
-
-			readonly SomeImmutableBaseClass m_readonlyImmutableBaseClassFieldWithImmutableBaseClassFuncInitializer = /* NonImmutableTypeHeldByImmutable(Class, SomeImmutableBaseClass, ) */ FuncReturningSomeImmutableBaseClass() /**/;
-
-			SomeImmutableBaseClass AutoImplementedImmutableBaseClassFieldWithImmutableBaseClassFuncInitializer { get; } = /* NonImmutableTypeHeldByImmutable(Class, SomeImmutableBaseClass, ) */ FuncReturningSomeImmutableBaseClass() /**/;
 		}
 
 	}
