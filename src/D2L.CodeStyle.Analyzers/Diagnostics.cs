@@ -175,35 +175,14 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "JsonParamBinder uses the custom D2L JSON framework, so use JsonConvertParameterBinder (which uses Newtonsoft.Json) instead."
 		);
 
-		public static readonly DiagnosticDescriptor ImmutableGenericAttributeInWrongAssembly = new DiagnosticDescriptor(
-			id: "D2L0026",
-			title: "Cannot apply ImmutableGeneric for the given type.",
-			messageFormat: "Cannot apply ImmutableGeneric for the type '{0}'.",
-			category: "Correctness",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "ImmutableGeneric can only be applied in an assembly where the generic type definition or one of its type arguments is declared."
-		);
+		// Retired:
+		// D2L0026 (ImmutableGenericAttributeInWrongAssembly): "Cannot apply ImmutableGeneric for the given type.",
 
-		public static readonly DiagnosticDescriptor ImmutableGenericAttributeAppliedToNonGenericType = new DiagnosticDescriptor(
-			id: "D2L0027",
-			title: "Cannot apply ImmutableGeneric for a non-generic type.",
-			messageFormat: "Cannot apply ImmutableGeneric for the non-generic type '{0}'.",
-			category: "Correctness",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "ImmutableGeneric can only be applied to generic types."
-		);
+		// Retired:
+		// D2L0027 (ImmutableGenericAttributeAppliedToNonGenericType): "Cannot apply ImmutableGeneric for a non-generic type.",
 
-		public static readonly DiagnosticDescriptor ImmutableGenericAttributeAppliedToOpenGenericType = new DiagnosticDescriptor(
-			id: "D2L0028",
-			title: "Cannot apply ImmutableGeneric for an open generic type.",
-			messageFormat: "Cannot apply ImmutableGeneric for the open generic type '{0}'.",
-			category: "Correctness",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "ImmutableGeneric can only be applied to closed (fully bound) generic types."
-		);
+		// Retired:
+		// D2L0028 (ImmutableGenericAttributeAppliedToOpenGenericType): "Cannot apply ImmutableGeneric for an open generic type.",
 
 		public static readonly DiagnosticDescriptor DontUseImmutableArrayConstructor = new DiagnosticDescriptor(
 			id: "D2L0029",

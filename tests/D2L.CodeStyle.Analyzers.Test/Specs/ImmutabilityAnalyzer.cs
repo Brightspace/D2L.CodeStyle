@@ -4,14 +4,6 @@ using System;
 using D2L.CodeStyle.Annotations;
 using D2L.LP.Extensibility.Activation.Domain;
 
-[assembly: Objects.ImmutableGeneric(
-	type: typeof( SpecTests.GenericsTests.IFactory<Version> )
-)]
-
-[assembly: Objects.ImmutableGeneric(
-	type: typeof( IComparable<SpecTests.GenericsTests.ILocallyDefined> )
-)]
-
 namespace D2L.LP.Extensibility.Activation.Domain {
 	public sealed class SingletonAttribute : Attribute { }
 }
@@ -21,11 +13,6 @@ namespace D2L.CodeStyle.Annotations {
 		public abstract class ImmutableAttributeBase : Attribute {}
 		public sealed class Immutable : ImmutableAttributeBase { }
 		public sealed class ImmutableBaseClassAttribute : ImmutableAttributeBase { }
-
-		[AttributeUsage( validOn: AttributeTargets.Assembly )]
-		public sealed class ImmutableGenericAttribute : Attribute {
-			public ImmutableGenericAttribute( Type type ) { }
-		}
 	}
 	public static class Mutability {
 		public sealed class AuditedAttribute : Attribute { }
@@ -185,41 +172,6 @@ namespace SpecTests {
 		[Objects.Immutable]
 		struct /* ImmutableClassIsnt('x' is not read-only) */ Foo /**/ {
 			int x;
-		}
-		#endregion
-
-		#region Immutable generic types marked for certain `T`s
-		public interface IFactory<T> { }
-
-		[Objects.Immutable]
-		public sealed class UsesMarkedImmutableTypeArg {
-			private readonly IFactory<Version> m_safeFactory;
-		}
-		[Objects.Immutable]
-		public sealed class /* ImmutableClassIsnt('m_unsafeFactory''s type ('SpecTests.GenericsTests.IFactory') is an interface that is not marked with `[Objects.Immutable]`) */ UsesUnsafeTypeArg /**/ {
-			private readonly IFactory<string> m_unsafeFactory;
-		}
-
-		public sealed class GenericTypeHoldingGenericType<T> {
-			private readonly IFactory<T> m_unsafeFactory;
-		}
-
-		[Objects.Immutable]
-		public sealed class /* ImmutableClassIsnt('m_indirectThing.m_unsafeFactory''s type ('SpecTests.GenericsTests.IFactory') is an interface that is not marked with `[Objects.Immutable]`) */ OtherGenericClass<T> /**/ {
-			// The string[] is important: when we go to look for an ImmutableGeneric for
-			// that type parameter we bail out early because there is no containing
-			// assembly for string[]. Switching GenericTypeHoldingGenericType here to
-			// IFactory<string[]> doesn't exhibit the issue though, we need the
-			// indirection... not sure exactly what's up.
-			private readonly GenericTypeHoldingGenericType<string[]> m_indirectThing;
-		}
-
-		public sealed class /* ImmutableClassIsnt('bad' is not read-only) */ MutableButSubClassesImmutableGeneric /**/ : IFactory<Version> {
-			private int bad;
-		}
-
-		public sealed class ImplementsImmutableGeneric : IComparable<ILocallyDefined> {
-			private readonly IImmutable m_safeDependency;
 		}
 		#endregion
 
