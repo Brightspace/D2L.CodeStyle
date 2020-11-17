@@ -134,7 +134,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					return false;
 
 				case TypeKind.TypeParameter:
-					// We already checked m_extraImmutableTypes above.
+					if( GetImmutabilityFromAttributes( type ).HasFlag( ImmutableTypeKind.Total ) ) {
+						return true;
+					}
+
 					diagnostic = Diagnostic.Create(
 						Diagnostics.TypeParameterIsNotKnownToBeImmutable,
 						location,
