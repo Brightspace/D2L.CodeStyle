@@ -4,9 +4,7 @@ using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers {
 	internal static class Attributes {
-		internal static class Types {
-			internal static readonly RoslynAttribute Audited = new RoslynAttribute( "D2L.CodeStyle.Annotations.Types.Audited" );
-		}
+
 		internal static class Members {
 			internal static readonly RoslynAttribute Audited = new RoslynAttribute( "D2L.CodeStyle.Annotations.Members.Audited" );
 		}
