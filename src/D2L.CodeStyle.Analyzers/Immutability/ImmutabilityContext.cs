@@ -112,7 +112,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					diagnostic = Diagnostic.Create(
 						Diagnostics.ArraysAreMutable,
 						location,
-						type.Name
+						( type as IArrayTypeSymbol ).ElementType.Name
 					);
 
 					return false;
