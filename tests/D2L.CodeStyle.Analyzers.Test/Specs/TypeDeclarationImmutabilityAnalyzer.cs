@@ -244,6 +244,15 @@ namespace SpecTests {
 
 
 
+		static Func<object> m_field = () => { return null };
+		static readonly Func<object> m_field = () => { return null };
+		Func<object> /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = () => { return null };
+		readonly Func<object> m_field = () => { return null };
+		Func<object> Property { get; } = () => { return null };
+		Func<object> Property { get { return () => { return null }; } }
+
+
+
 		static (int, int) m_field;
 		static readonly (int, int) m_field;
 		(int, int) /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
