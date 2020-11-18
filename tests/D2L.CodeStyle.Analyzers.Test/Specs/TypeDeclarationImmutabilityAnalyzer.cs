@@ -464,12 +464,24 @@ namespace SpecTests {
 
 	[Immutable]
 	public sealed class AnalyzedImmutableGenericClassGivenT<[Immutable] T, U> {
+
+
+
 		static T m_field;
 		static readonly T m_field;
 		T /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
 		readonly T m_field;
 		T Property { get; }
 		T Property { get { return default; } }
+
+
+
+		static T m_field = new T();
+		static readonly T m_field = new T();
+		T /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/ = new T();
+		readonly T m_field = new T();
+		T Property { get; } = new T()
+		T Property { get { return new T(); } }
 
 
 
@@ -487,10 +499,30 @@ namespace SpecTests {
 		readonly U m_field;
 		/* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/ Property { get; }
 		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		U Property { get; };
+		U Property { get; }
 		[Mutability.Audited]
-		U Property { get; };
-		T Property { get { return default; } }
+		U Property { get; }
+		U Property { get { return default; } }
+
+
+
+		static U m_field = new U();
+		static readonly U m_field = new U();
+		U /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/ = new /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/();
+		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
+		U m_field = new U();
+		[Mutability.Audited]
+		U m_field = new U();
+		readonly U m_field = new /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/ ();
+		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
+		readonly U m_field = new U();
+		[Mutability.Audited]
+		readonly U m_field = new U();
+		U Property { get; } = new /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/ ();
+		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
+		U Property { get; } = new U();
+		[Mutability.Audited]
+		U Property { get; } = new U();
 
 
 
