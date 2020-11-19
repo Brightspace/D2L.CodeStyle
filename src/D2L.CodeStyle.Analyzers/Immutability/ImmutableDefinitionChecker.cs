@@ -41,7 +41,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				var baseClassOk = m_context.IsImmutable(
 					type.BaseType,
 					ImmutableTypeKind.Instance,
-					GetLocationOfBaseClass( type ),
+					() => GetLocationOfBaseClass( type ),
 					out var diag
 				);
 
@@ -194,9 +194,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return immutable;
 			}
 
-			var (typeToCheck, checkKind, diagnosticLocation) = stuff.Value;
+			var (typeToCheck, checkKind, diagnosticLocationGetter) = stuff.Value;
 
-			if( !m_context.IsImmutable( typeToCheck, checkKind, diagnosticLocation, out var diagnostic ) ) {
+			if( !m_context.IsImmutable( typeToCheck, checkKind, diagnosticLocationGetter, out var diagnostic ) ) {
 				diagnosticSink( diagnostic );
 				immutable = false;
 			}
@@ -214,13 +214,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// <param name="memberTypeSyntax">The syntax for the type of the field/property</param>
 		/// <param name="initializer">The initializer syntax for the field/property (possibly null)</param>
 		/// <returns>null if no checks are needed, otherwise a bunch of stuff.</returns>
-		private (ITypeSymbol, ImmutableTypeKind, Location)? GetStuffToCheckForMember(
+		private (ITypeSymbol, ImmutableTypeKind, Func<Location>)? GetStuffToCheckForMember(
 			ITypeSymbol memberType,
 			TypeSyntax memberTypeSyntax,
 			ExpressionSyntax initializer
 		) {
 			if( initializer == null ) {
-				return (memberType, ImmutableTypeKind.Total, memberTypeSyntax.GetLocation());
+				return (memberType, ImmutableTypeKind.Total, () => memberTypeSyntax.GetLocation());
 			}
 
 			// When we have an initializer we use it to narrow our check, e.g.
@@ -259,11 +259,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			if ( initializer is ObjectCreationExpressionSyntax objCreation ) {
 				// When we have a new T() we don't need to worry about the value
 				// being anything other than an instance of T.
-				return (typeToCheck, ImmutableTypeKind.Instance, objCreation.Type.GetLocation());
+				return (typeToCheck, ImmutableTypeKind.Instance, () => objCreation.Type.GetLocation());
 			}
 
 			// In general we need to handle subtypes.
-			return (typeToCheck, ImmutableTypeKind.Total, initializer.GetLocation());
+			return (typeToCheck, ImmutableTypeKind.Total, () => initializer.GetLocation());
 		}
 
 		private static bool IsAudited( ISymbol symbol ) {

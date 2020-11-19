@@ -58,7 +58,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		public bool IsImmutable(
 			ITypeSymbol type,
 			ImmutableTypeKind kind,
-			Location location,
+			Func<Location> locationGetter,
 			out Diagnostic diagnostic
 		) {
 			if ( kind == ImmutableTypeKind.None ) {
@@ -91,7 +91,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						return info.IsImmutableDefinition(
 							context: this,
 							definition: namedType,
-							location: location,
+							locationGetter: locationGetter,
 							out diagnostic
 						);
 					}
@@ -111,7 +111,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				case TypeKind.Array:
 					diagnostic = Diagnostic.Create(
 						Diagnostics.ArraysAreMutable,
-						location,
+						locationGetter(),
 						( type as IArrayTypeSymbol ).ElementType.Name
 					);
 
@@ -120,7 +120,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				case TypeKind.Delegate:
 					diagnostic = Diagnostic.Create(
 						Diagnostics.DelegateTypesPossiblyMutable,
-						location
+						locationGetter()
 					);
 
 					return false;
@@ -128,7 +128,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				case TypeKind.Dynamic:
 					diagnostic = Diagnostic.Create(
 						Diagnostics.DynamicObjectsAreMutable,
-						location
+						locationGetter()
 					);
 
 					return false;
@@ -140,7 +140,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 					diagnostic = Diagnostic.Create(
 						Diagnostics.TypeParameterIsNotKnownToBeImmutable,
-						location,
+						locationGetter(),
 						type.Name
 					);
 
@@ -149,7 +149,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				case TypeKind.Class:
 					diagnostic = Diagnostic.Create(
 						Diagnostics.NonImmutableTypeHeldByImmutable,
-						location,
+						locationGetter(),
 						type.TypeKind,
 						type.Name,
 						kind == ImmutableTypeKind.Instance && !type.IsSealed ? " (or [ImmutableBaseClass])" : ""
@@ -161,7 +161,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				case TypeKind.Struct:
 					diagnostic = Diagnostic.Create(
 						Diagnostics.NonImmutableTypeHeldByImmutable,
-						location,
+						locationGetter(),
 						type.TypeKind,
 						type.Name,
 						""
@@ -173,7 +173,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				default:
 					diagnostic = Diagnostic.Create(
 						Diagnostics.UnexpectedTypeKind,
-						location: location,
+						location: locationGetter(),
 						type.Kind
 					);
 
