@@ -53,25 +53,32 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			foreach( var member in members ) {
-				if( IsAudited( member ) ) {
-					if( CheckMember( diagnosticSink: _ => { }, member ) ) {
-						m_diagnosticSink(
-							Diagnostic.Create(
-								Diagnostics.UnnecessaryMutabilityAnnotation,
-								GetLocationOfAnnotation( member )
-							)
-						);
-					}
-
-					continue;
-				}
-
-				if( !CheckMember( m_diagnosticSink, member ) ) {
+				if( !CheckMember( member ) ) {
 					result = false;
 				}
 			}
 
 			return result;
+		}
+
+		public bool CheckMember( ISymbol member ) {
+			if ( MutabilityAuditor.IsAudited( member, out var location ) ) {
+				// If they have one of the auditing attributes, run the
+				// checks anyway and error if they are unnecessary
+				if( CheckMember( diagnosticSink: _ => { }, member ) ) {
+					m_diagnosticSink(
+						Diagnostic.Create(
+							Diagnostics.UnnecessaryMutabilityAnnotation,
+							location
+						)
+					);
+				}
+
+				// Audit annotations means this counts as immutable always
+				return true;
+			}
+
+			return CheckMember( m_diagnosticSink, member );
 		}
 
 		private bool CheckMember( DiagnosticSink diagnosticSink, ISymbol member ) {
@@ -264,32 +271,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			// In general we need to handle subtypes.
 			return (typeToCheck, ImmutableTypeKind.Total, () => initializer.GetLocation());
-		}
-
-		private static bool IsAudited( ISymbol symbol ) {
-			if( Attributes.Mutability.Audited.IsDefined( symbol ) ) {
-				return true;
-			}
-
-			if( Attributes.Mutability.Unaudited.IsDefined( symbol ) ) {
-				return true;
-			}
-
-			return false;
-		}
-
-		private static Location GetLocationOfAnnotation( ISymbol s ) {
-			var audited = Attributes.Mutability.Audited.GetAll( s ).FirstOrDefault();
-			if( audited != null ) {
-				return audited.ApplicationSyntaxReference.GetSyntax().GetLocation();
-			}
-
-			var unaudited = Attributes.Mutability.Unaudited.GetAll( s ).FirstOrDefault();
-			if( unaudited != null ) {
-				return unaudited.ApplicationSyntaxReference.GetSyntax().GetLocation();
-			}
-
-			throw new InvalidOperationException( $"{nameof( GetLocationOfAnnotation )} should only be called on an annotated symbol" );
 		}
 
 		private static Location GetLocationOfMember( ISymbol s ) =>s
