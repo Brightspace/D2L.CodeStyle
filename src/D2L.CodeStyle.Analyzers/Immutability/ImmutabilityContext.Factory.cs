@@ -118,18 +118,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private static ImmutableDictionary<string, IAssemblySymbol> GetCompilationAssemblies( Compilation compilation ) {
 			var builder = ImmutableDictionary.CreateBuilder<string, IAssemblySymbol>();
 
-			builder.Add( compilation.Assembly.Name, compilation.Assembly );
+			IAssemblySymbol compilationAssmebly = compilation.Assembly;
 
-			foreach( MetadataReference reference in compilation.References ) {
-				switch( compilation.GetAssemblyOrModuleSymbol( reference ) ) {
-					case IAssemblySymbol assembly:
-						builder.Add( assembly.Name, assembly );
-						break;
-					case IModuleSymbol module:
-						builder.Add( module.ContainingAssembly.Name, module.ContainingAssembly );
-						break;
-					case null:
-						break;
+			builder.Add( compilationAssmebly.Name, compilationAssmebly );
+
+			foreach( IModuleSymbol module in compilationAssmebly.Modules ) {
+				foreach( IAssemblySymbol assembly in module.ReferencedAssemblySymbols ) {
+					builder.Add( assembly.Name, assembly );
 				}
 			}
 
