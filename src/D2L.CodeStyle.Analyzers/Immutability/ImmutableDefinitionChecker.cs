@@ -194,9 +194,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return immutable;
 			}
 
-			var (typeToCheck, checkKind, diagnosticLocationGetter) = stuff.Value;
+			var (typeToCheck, checkKind, getLocation) = stuff.Value;
 
-			if( !m_context.IsImmutable( typeToCheck, checkKind, diagnosticLocationGetter, out var diagnostic ) ) {
+			if( !m_context.IsImmutable( typeToCheck, checkKind, getLocation, out var diagnostic ) ) {
 				diagnosticSink( diagnostic );
 				immutable = false;
 			}

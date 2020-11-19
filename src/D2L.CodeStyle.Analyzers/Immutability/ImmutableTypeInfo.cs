@@ -30,7 +30,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		public bool IsImmutableDefinition(
 			ImmutabilityContext context,
 			INamedTypeSymbol definition,
-			Func<Location> locationGetter,
+			Func<Location> getLocation,
 			out Diagnostic diagnostic
 		) {
 			if( !Type.Equals( definition ) && !Type.Equals( definition?.OriginalDefinition ) ) {
@@ -45,7 +45,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					continue;
 				}
 
-				if( !context.IsImmutable( argument, ImmutableTypeKind.Total, locationGetter, out diagnostic ) ) {
+				if( !context.IsImmutable( argument, ImmutableTypeKind.Total, getLocation, out diagnostic ) ) {
 					return false;
 				}
 			}
