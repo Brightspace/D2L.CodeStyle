@@ -98,7 +98,12 @@ namespace SpecTests {
 		[Immutable]
 		public interface SomeImmutableGenericInterfaceGivenTU<[Immutable] T, [Immutable] U> { }
 
-	}
+		public static void SomeGenericMethod<T, U>() { }
+		public static void SomeGenericMethodGivenT<[Immutable] T, U>() { }
+		public static void SomeGenericMethodGivenU<T, [Immutable] U>() { }
+		public static void SomeGenericMethodGivenTU<[Immutable] T, [Immutable] U>() { }
+
+}
 
 	[Immutable]
 	public sealed class AnalyzedClassMarkedImmutableExtendingMutableClass : /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ Types.RegularClass /**/ { }
@@ -594,6 +599,26 @@ namespace SpecTests {
 		readonly /* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenTU<U, T> /**/ m_field;
 		/* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenTU<U, T> /**/ Property { get; }
 		Types.SomeImmutableGenericInterfaceGivenTU<U, T> Property { get { return default; } }
+
+
+		void Method() {
+			Types.SomeGenericMethod<T, U>();
+			Types.SomeGenericMethod<U, T>();
+			Types.SomeGenericMethod<T, T>();
+			Types.SomeGenericMethod<U, U>();
+			Types.SomeGenericMethodGivenT<T, U>();
+			Types.SomeGenericMethodGivenT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T>();
+			Types.SomeGenericMethodGivenT<T, T>();
+			Types.SomeGenericMethodGivenT </* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, U>();
+			Types.SomeGenericMethodGivenU<T, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/>();
+			Types.SomeGenericMethodGivenU<U, T>();
+			Types.SomeGenericMethodGivenU<T, T>();
+			Types.SomeGenericMethodGivenU<U, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/>();
+			Types.SomeGenericMethodGivenTU<T, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/>();
+			Types.SomeGenericMethodGivenTU</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T>();
+			Types.SomeGenericMethodGivenTU<T, T>();
+			Types.SomeGenericMethodGivenTU</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/>();
+		}
 	}
 
 	public static class StaticAudits {

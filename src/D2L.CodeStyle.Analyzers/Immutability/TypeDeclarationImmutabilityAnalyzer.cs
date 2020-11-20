@@ -1,6 +1,9 @@
 ﻿using System.Collections.Immutable;
+using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
@@ -43,6 +46,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				ctx => AnalyzeMember( ctx, immutabilityContext ),
 				SymbolKind.Field,
 				SymbolKind.Property
+			);
+
+			context.RegisterSyntaxNodeAction(
+				ctx => AnalyzeGenericMethodTypeArguments(
+					ctx,
+					immutabilityContext,
+					(GenericNameSyntax)ctx.Node
+				),
+				SyntaxKind.GenericName
 			);
 		}
 
@@ -87,7 +99,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ImmutabilityContext immutabilityContext,
 			INamedTypeSymbol typeSymbol
 		) {
-			if( !ShouldAnalyze( typeSymbol ) ) {
+			if( typeSymbol.IsImplicitlyDeclared ) {
+				return;
+			}
+
+			if( typeSymbol.TypeKind == TypeKind.Interface ) {
+				return;
+			}
+
+			if( !Attributes.Objects.Immutable.IsDefined( typeSymbol )
+				&& !Attributes.Objects.ImmutableBaseClass.IsDefined( typeSymbol )
+			) {
 				return;
 			}
 
@@ -100,26 +122,33 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			checker.CheckDeclaration( typeSymbol );
 		}
 
-		private static bool ShouldAnalyze(
-			INamedTypeSymbol analyzedType
+		private static void AnalyzeGenericMethodTypeArguments(
+			SyntaxNodeAnalysisContext ctx,
+			ImmutabilityContext immutabilityContext,
+			GenericNameSyntax syntax
 		) {
-			if( analyzedType.IsImplicitlyDeclared ) {
-				return false;
+			SymbolInfo info = ctx.SemanticModel.GetSymbolInfo( syntax, ctx.CancellationToken );
+			if( !( info.Symbol is IMethodSymbol method ) ) {
+				return;
 			}
 
-			if( analyzedType.TypeKind == TypeKind.Interface ) {
-				return false;
-			}
+			int i = 0;
+			var paramArgPairs = method.TypeParameters.Zip( method.TypeArguments, ( p, a ) => (p, a, i++) );
+			foreach( var (parameter, argument, position) in paramArgPairs ) {
+				if( !Attributes.Objects.Immutable.IsDefined( parameter ) ) {
+					continue;
+				}
 
-			if( Attributes.Objects.Immutable.IsDefined( analyzedType ) ) {
-				return true;
+				if( !immutabilityContext.IsImmutable(
+					type: argument,
+					kind: ImmutableTypeKind.Total,
+					getLocation: () => syntax.TypeArgumentList.Arguments[position].GetLocation(),
+					out Diagnostic diagnostic
+				) ) {
+					// TODO: not necessarily a good diagnostic for this use-case
+					ctx.ReportDiagnostic( diagnostic );
+				}
 			}
-
-			if( Attributes.Objects.ImmutableBaseClass.IsDefined( analyzedType ) ) {
-				return true;
-			}
-
-			return false;
 		}
 	}
 }
