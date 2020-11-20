@@ -37,6 +37,38 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				),
 				SymbolKind.NamedType
 			);
+
+			context.RegisterSymbolAction(
+				ctx => AnalyzeMember( ctx, immutabilityContext ),
+				SymbolKind.Field,
+				SymbolKind.Property
+			);
+		}
+
+		private static void AnalyzeMember(
+			SymbolAnalysisContext ctx,
+			ImmutabilityContext immutabilityContext
+		) {
+			// We only care about checking static fields/properties. These
+			// are global variables, so we always want them to be immutable.
+			// The fields/properties of [Immutable] types get handled via
+			// AnalyzeTypeDeclaration.
+			if ( !ctx.Symbol.IsStatic ) {
+				return;
+			}
+
+			// Ignore const things, which include enum names.
+			if ( ctx.Symbol is IFieldSymbol f && f.IsConst ) {
+				return;
+			}
+
+			var checker = new ImmutableDefinitionChecker(
+				compilation: ctx.Compilation,
+				diagnosticSink: ctx.ReportDiagnostic,
+				context: immutabilityContext
+			);
+
+			checker.CheckMember( ctx.Symbol );
 		}
 
 		private static void AnalyzeTypeDeclaration(
