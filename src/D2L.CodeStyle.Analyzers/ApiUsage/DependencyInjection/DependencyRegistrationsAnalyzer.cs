@@ -42,14 +42,17 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 				return;
 			}
 
+			var immutabilityCtx = ImmutabilityContext.Create( context.Compilation );
+
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeInvocation( ctx, dependencyRegistry ),
+				ctx => AnalyzeInvocation( ctx, immutabilityCtx, dependencyRegistry ),
 				SyntaxKind.InvocationExpression
 			);
 		}
 
 		private void AnalyzeInvocation(
 			SyntaxNodeAnalysisContext context,
+			ImmutabilityContext immutabilityCtx,
 			DependencyRegistry registry
 		) {
 			var root = context.Node as InvocationExpressionSyntax;
@@ -106,21 +109,23 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 				return;
 			}
 
-			InspectRegistration( dependencyRegistration, context );
+			InspectRegistration( dependencyRegistration, immutabilityCtx, context );
 		}
 
-		private void InspectRegistration( DependencyRegistration registration, SyntaxNodeAnalysisContext ctx ) {
+		private void InspectRegistration(
+			DependencyRegistration registration,
+			ImmutabilityContext immutabilityCtx,
+			SyntaxNodeAnalysisContext ctx
+		) {
 			if( registration.ObjectScope == ObjectScope.Singleton ) {
 				var typesToInspect = GetTypesRequiredToBeImmutableForSingletonRegistration( registration );
 				foreach( var type in typesToInspect ) {
-
 					// We require full immutability here,
 					// because we don't know if it's a concrete type
 					//
 					// TODO: could make this better by exposing the minimum
 					// scope required for each type
-					var immutabilityScope = type.GetImmutabilityScope();
-					if( !type.IsNullOrErrorType() && immutabilityScope != ImmutabilityScope.SelfAndChildren ) {
+					if( !immutabilityCtx.IsImmutable( type, ImmutableTypeKind.Total, () => null, out var _ ) ) {
 						var diagnostic = GetUnsafeSingletonDiagnostic(
 							ctx.Compilation.Assembly,
 							ctx.Node,
