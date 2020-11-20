@@ -52,62 +52,6 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			return decl;
 		}
 
-		public static bool IsFromOtherAssembly( this ITypeSymbol type, Compilation compilation ) {
-			return type.ContainingAssembly != compilation.Assembly;
-		}
-
-		public static ImmutabilityScope GetImmutabilityScope( this ITypeSymbol type ) {
-			if( type.IsTypeMarkedImmutable() ) {
-				return ImmutabilityScope.SelfAndChildren;
-			}
-
-			if( type.IsTypeMarkedImmutableBaseClass() ) {
-				return ImmutabilityScope.Self;
-			}
-
-			return ImmutabilityScope.None;
-		}
-
-		private static bool IsTypeMarkedImmutable( this ITypeSymbol symbol ) {
-			if( symbol.IsExternallyOwnedMarkedImmutableType() ) {
-				return true;
-			}
-			if( Attributes.Objects.Immutable.IsDefined( symbol ) ) {
-				return true;
-			}
-			if( symbol.Interfaces.Any( IsTypeMarkedImmutable ) ) {
-				return true;
-			}
-			if( symbol.BaseType != null && IsTypeMarkedImmutable( symbol.BaseType ) ) {
-				return true;
-			}
-			return false;
-		}
-
-		private static bool IsTypeMarkedImmutableBaseClass( this ITypeSymbol symbol ) {
-			if( Attributes.Objects.ImmutableBaseClass.IsDefined( symbol ) ) {
-				return true;
-			}
-			return false;
-		}
-
-		public static bool IsExternallyOwnedMarkedImmutableType( this ITypeSymbol symbol ) {
-			return MarkedImmutableTypes.Contains( symbol.GetFullTypeName() );
-		}
-
-		internal static IEnumerable<AttributeData> GetAllImmutableAttributesApplied( this ITypeSymbol type ) {
-			var immutable = Attributes.Objects.Immutable.GetAll( type ).FirstOrDefault();
-			if( immutable != null ) {
-				yield return immutable;
-			}
-
-			var immutableBaseClass = Attributes.Objects.ImmutableBaseClass.GetAll( type ).FirstOrDefault();
-			if( immutableBaseClass != null ) {
-				yield return immutableBaseClass;
-			}
-		}
-
-
 		public static bool IsTypeMarkedSingleton( this ITypeSymbol symbol ) {
 			if( Attributes.Singleton.IsDefined( symbol ) ) {
 				return true;

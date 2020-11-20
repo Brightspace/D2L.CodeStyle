@@ -265,6 +265,7 @@ namespace SpecTests {
 	[Objects.Immutable]
 	public interface IImmutableSingleton : ISingleton { }
 
+	[Objects.Immutable]
 	public interface IImmutableSubSingleton : IImmutableSingleton { }
 
 	[Objects.Immutable]
@@ -312,19 +313,23 @@ namespace SpecTests {
 		IFactory<ImmutableThing>, 
 		IFactory<ImmutableThing, Type> { }
 
+	[Objects.Immutable]
 	internal sealed class ThingWithInternalConstructor : IImmutableSingleton {
 		internal ThingWithInternalConstructor() { }
 	}
 
+	[Objects.Immutable]
 	internal sealed class ThingWithPrivateConstructor : IImmutableSingleton {
 		private ThingWithPrivateConstructor() { }
 	}
 
+	[Objects.Immutable]
 	internal sealed class ThingWithInternalAndPublicConstructors : IImmutableSingleton {
 		internal ThingWithInternalAndPublicConstructors() { }
 		public ThingWithInternalAndPublicConstructors() { }
 	}
 
+	[Objects.Immutable]
 	internal sealed class ThingWithPrivateAndPublicConstructors : IImmutableSingleton {
 		private ThingWithPrivateAndPublicConstructors() { }
 		public ThingWithPrivateAndPublicConstructors() { }
