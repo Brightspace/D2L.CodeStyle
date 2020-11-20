@@ -120,6 +120,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 			if( registration.ObjectScope == ObjectScope.Singleton ) {
 				var typesToInspect = GetTypesRequiredToBeImmutableForSingletonRegistration( registration );
 				foreach( var type in typesToInspect ) {
+					if( type.IsNullOrErrorType() ) {
+						continue;
+					}
+
 					// We require full immutability here,
 					// because we don't know if it's a concrete type
 					//
