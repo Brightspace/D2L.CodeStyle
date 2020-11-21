@@ -224,7 +224,7 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 		}
 
 		private static bool IsGeneratedCodeFile( SyntaxNode root ) {
-			var path = root.SyntaxTree.FilePath;
+			var path = root.SyntaxTree.FilePath.ToLower();
 
 			if ( string.IsNullOrEmpty( path ) ) {
 				return false;
