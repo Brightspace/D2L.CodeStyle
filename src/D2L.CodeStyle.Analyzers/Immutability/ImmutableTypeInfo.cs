@@ -54,6 +54,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return true;
 		}
 
+		public bool IsImmutableTypeParameter(
+			ITypeParameterSymbol typeParameter
+		) {
+			int position = Type.TypeParameters.IndexOf( typeParameter );
+			if( position < 0 ) {
+				throw new InvalidOperationException();
+			}
+
+			return m_immutableTypeParameters[ position ];
+		}
+
 		public static ImmutableTypeInfo Create(
 			ImmutableTypeKind kind,
 			INamedTypeSymbol type

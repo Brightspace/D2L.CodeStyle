@@ -525,5 +525,14 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor ImmutableAnnotationMismatch = new DiagnosticDescriptor(
+			id: "D2L0071",
+			title: "something about [Immutable] and whatnot",
+			messageFormat: "something about [Immutable] and whatnot",
+			category: "Immutability",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }
