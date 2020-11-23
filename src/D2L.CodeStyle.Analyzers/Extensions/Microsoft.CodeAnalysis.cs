@@ -10,17 +10,6 @@ using Microsoft.CodeAnalysis.CSharp;
 namespace D2L.CodeStyle.Analyzers.Extensions {
 	internal static partial class RoslynExtensions {
 		/// <summary>
-		/// A list of marked immutable types owned externally.
-		/// </summary>
-		private static readonly ImmutableHashSet<string> MarkedImmutableTypes = ImmutableHashSet.Create(
-			"System.StringComparer",
-			"System.Text.ASCIIEncoding",
-			"System.Text.Encoding",
-			"System.Text.UTF8Encoding",
-			"System.IO.Abstractions.IFileSystem"
-		);
-
-		/// <summary>
 		/// Get the declaration syntax for a symbol. This is intended to be
 		/// used for fields and properties which can't have multiple
 		/// declaration nodes.
@@ -54,9 +43,17 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			return decl;
 		}
 
-		public static bool IsFromOtherAssembly( this ITypeSymbol type, Compilation compilation ) {
-			return type.ContainingAssembly != compilation.Assembly;
-		}
+		#region Stuff that can be deleted with  ImmutableGenericArgumentAnalyzer
+		/// <summary>
+		/// A list of marked immutable types owned externally.
+		/// </summary>
+		private static readonly ImmutableHashSet<string> MarkedImmutableTypes = ImmutableHashSet.Create(
+			"System.StringComparer",
+			"System.Text.ASCIIEncoding",
+			"System.Text.Encoding",
+			"System.Text.UTF8Encoding",
+			"System.IO.Abstractions.IFileSystem"
+		);
 
 		public static ImmutabilityScope GetImmutabilityScope( this ITypeSymbol type ) {
 			if( type.IsTypeMarkedImmutable() ) {
@@ -93,22 +90,11 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			return false;
 		}
 
-		public static bool IsExternallyOwnedMarkedImmutableType( this ITypeSymbol symbol ) {
+		private static bool IsExternallyOwnedMarkedImmutableType( this ITypeSymbol symbol ) {
 			return MarkedImmutableTypes.Contains( symbol.GetFullTypeName() );
 		}
 
-		internal static IEnumerable<AttributeData> GetAllImmutableAttributesApplied( this ITypeSymbol type ) {
-			var immutable = Attributes.Objects.Immutable.GetAll( type ).FirstOrDefault();
-			if( immutable != null ) {
-				yield return immutable;
-			}
-
-			var immutableBaseClass = Attributes.Objects.ImmutableBaseClass.GetAll( type ).FirstOrDefault();
-			if( immutableBaseClass != null ) {
-				yield return immutableBaseClass;
-			}
-		}
-
+		#endregion
 
 		public static bool IsTypeMarkedSingleton( this ITypeSymbol symbol ) {
 			if( Attributes.Singleton.IsDefined( symbol ) ) {
@@ -145,11 +131,6 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			return fullyQualifiedName;
 		}
 
-		public static IEnumerable<ISymbol> GetExplicitNonStaticMembers( this ITypeSymbol type ) {
-			return type.GetMembers()
-				.Where( t => !t.IsStatic && !t.IsImplicitlyDeclared );
-		}
-
 		public static bool IsNullOrErrorType( this ITypeSymbol symbol ) {
 			if( symbol == null ) {
 				return true;
@@ -170,15 +151,6 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			}
 			if( symbol.Kind == SymbolKind.ErrorType ) {
 				return true;
-			}
-
-			return false;
-		}
-
-		public static bool IsGenericType( this ISymbol symbol ) {
-
-			if( symbol is INamedTypeSymbol namedType ) {
-				return ( namedType.TypeParameters.Length > 0 );
 			}
 
 			return false;

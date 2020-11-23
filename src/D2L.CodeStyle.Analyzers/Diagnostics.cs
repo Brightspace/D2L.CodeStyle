@@ -2,25 +2,9 @@
 
 namespace D2L.CodeStyle.Analyzers {
 	public static class Diagnostics {
-		public static readonly DiagnosticDescriptor UnsafeStatic = new DiagnosticDescriptor(
-			id: "D2L0002",
-			title: "Ensure that static field is safe in undifferentiated servers.",
-			messageFormat: "The static field or property '{0}' is unsafe because {1}.",
-			category: "Safety",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "Static fields should not have client-specific or mutable data, otherwise they will not be safe in undifferentiated servers."
-		);
-
-		public static readonly DiagnosticDescriptor ImmutableClassIsnt = new DiagnosticDescriptor(
-			id: "D2L0003",
-			title: "Classes marked as immutable should be immutable.",
-			messageFormat: "This class is marked immutable, but it is not, because '{0}'. Check that all fields and properties are immutable.",
-			category: "Safety",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "Classes marked as immutable or that implement interfaces marked immutable should be immutable."
-		);
+		// Retired:
+		// D2L0002 (UnsafeStatic): "Ensure that static field is safe in undifferentiated servers."
+		// D2L0003 (ImmutableClassIsnt): "Classes marked as immutable should be immutable.",
 
 		public static readonly DiagnosticDescriptor RpcContextFirstArgument = new DiagnosticDescriptor(
 			id: "D2L0004",
@@ -52,25 +36,9 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "Singletons should be marked with the [Immutable] attribute."
 		);
 
-		public static readonly DiagnosticDescriptor UnnecessaryStaticAnnotation = new DiagnosticDescriptor(
-			id: "D2L0007",
-			title: "Unnecessary static annotations should be removed to keep the code base clean",
-			messageFormat: "The {0} annotation is not necessary because {1} is immutable. Please remove this attribute to keep our code base clean.",
-			category: "Cleanliness",
-			defaultSeverity: DiagnosticSeverity.Info,
-			isEnabledByDefault: true,
-			description: "Unnecessary static annotations should be removed to keep the code base clean"
-		);
-
-		public static readonly DiagnosticDescriptor ConflictingStaticAnnotation = new DiagnosticDescriptor(
-			id: "D2L0008",
-			title: "Statics.Audited and Statics.Unaudited are mutually exclusive",
-			messageFormat: "Statics.Audited and Statics.Unaudited are mutually exclusive. Remove at least one of them.",
-			category: "Correctness",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "Statics.Audited and Statics.Unaudited are mutually exclusive. Remove at least one of them."
-		);
+		// Retired:
+		// D2L0007 (UnnecessaryStaticAnnotation): "Unnecessary static annotations should be removed to keep the code base clean",
+		// D2L0008 (ConflictingStaticAnnotation): "Statics.Audited and Statics.Unaudited are mutually exclusive",
 
 		public static readonly DiagnosticDescriptor OldAndBrokenLocatorIsObsolete = new DiagnosticDescriptor(
 			id: "D2L0009",
@@ -177,11 +145,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		// Retired:
 		// D2L0026 (ImmutableGenericAttributeInWrongAssembly): "Cannot apply ImmutableGeneric for the given type.",
-
-		// Retired:
 		// D2L0027 (ImmutableGenericAttributeAppliedToNonGenericType): "Cannot apply ImmutableGeneric for a non-generic type.",
-
-		// Retired:
 		// D2L0028 (ImmutableGenericAttributeAppliedToOpenGenericType): "Cannot apply ImmutableGeneric for an open generic type.",
 
 		public static readonly DiagnosticDescriptor DontUseImmutableArrayConstructor = new DiagnosticDescriptor(
@@ -235,8 +199,6 @@ namespace D2L.CodeStyle.Analyzers {
 		
 		// Retired:
 		// D2L0035 (SingletonDependencyHasCustomerState): "Singleton holding a dependency containing customer state.",
-
-		// Retired:
 		// D2L0036 (PublicClassHasHiddenCustomerState): "Missing CustomerState attribute."",
 
 		public static readonly DiagnosticDescriptor GenericArgumentImmutableMustBeApplied = new DiagnosticDescriptor(
