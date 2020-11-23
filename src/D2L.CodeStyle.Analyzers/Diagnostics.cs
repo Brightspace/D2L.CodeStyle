@@ -526,10 +526,19 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true
 		);
 
-		public static readonly DiagnosticDescriptor ImmutableAnnotationMismatch = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor ImmutableTypeParameterAppliedToNonImmutableParameter = new DiagnosticDescriptor(
 			id: "D2L0071",
-			title: "something about [Immutable] and whatnot",
-			messageFormat: "something about [Immutable] and whatnot",
+			title: "A type parameter marked [Immutable] was applied to a non-[Immutable] parameter.",
+			messageFormat: "[Immutable] type parameter '{0}' from {1} {2} cannot be applied to a non-[Immutable] type parameter '{3}' of immutable inherited {4} {5}",
+			category: "Immutability",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor UnusedImmutableTypeParameter = new DiagnosticDescriptor(
+			id: "D2L0072",
+			title: "A type parameter marked [Immutable] is unused.",
+			messageFormat: "[Immutable] type parameter '{0}' from {1} {2} must be applied to inherited types",
 			category: "Immutability",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
