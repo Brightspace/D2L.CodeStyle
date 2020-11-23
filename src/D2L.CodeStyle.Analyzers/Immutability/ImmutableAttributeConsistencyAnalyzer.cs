@@ -109,6 +109,16 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					}
 				}
 
+				// Given
+				// [Immutable] interface IFoo<[Immutable] T, [Immutable] U> {}
+				// class Foo<T> : IFoo<T, T> {}
+				// class Bar : IFoo<int, int> {}
+				// class Baz : IFoo<int, object> {}
+				// class Quux<T> : IFoo<T, object> {}
+				// Foo should be marked [Immutable] because there are values of T that IFoo<T, T> would be considered immutable
+				// Bar should be marked [Immutable] because IFoo<int, int> is always considered immutable
+				// Baz needn't be marked [Immutable] because IFoo<int, object> is never considered immutable due to object
+				// Quux needn't be marked [Immutable] because IFoo<T, object> is never considered immutable due to object
 				if( consideredTypeImmutabilityVariesOnTypeParameters
 					|| consideredTypeInfo.IsImmutableDefinition(
 						immutabilityContext,
@@ -117,12 +127,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						out _
 					)
 				) {
-					ctx.ReportDiagnostic( Diagnostic.Create(
-						Diagnostics.MissingTransitiveImmutableAttribute,
-						( analyzedType.DeclaringSyntaxReferences.First().GetSyntax() as TypeDeclarationSyntax ).Identifier.GetLocation(),
-						analyzedType.MetadataName,
-						consideredType.TypeKind, consideredType.MetadataName
-					) );
+					if( !analyzedTypeInfo.Kind.HasFlag( ImmutableTypeKind.Total ) ) {
+						// analyzed type isn't marked [Immutable] when it should be
+						ctx.ReportDiagnostic( Diagnostic.Create(
+							Diagnostics.MissingTransitiveImmutableAttribute,
+							( analyzedType.DeclaringSyntaxReferences.First().GetSyntax() as TypeDeclarationSyntax ).Identifier.GetLocation(),
+							analyzedType.MetadataName,
+							consideredType.TypeKind, consideredType.MetadataName
+						) );
+					}
 				}
 			}
 		}
