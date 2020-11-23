@@ -249,15 +249,8 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "Either an interface, base class or constraint indicates the generic argument must be immutable. Add [Immutable] to the generic argument in the class definintion."
 	   );
 
-		public static readonly DiagnosticDescriptor GenericArgumentTypeMustBeImmutable = new DiagnosticDescriptor(
-			id: "D2L0038",
-			title: "Declared type is not immutable.",
-			messageFormat: "Generic argument type '{0}' must be marked with [Immutable].",
-			category: "Safety",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "A generic argument is marked [Immutable] but the type supplied was not immutable."
-	   );
+		// Retired:
+		// D2L0038 (GenericArgumentTypeMustBeImmutable): "Declared type is not immutable.",
 
 		public static readonly DiagnosticDescriptor DangerousPropertiesShouldBeAvoided = new DiagnosticDescriptor(
 			id: "D2L0039",
