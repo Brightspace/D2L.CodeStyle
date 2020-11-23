@@ -80,7 +80,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			("log4net.ILog", default),
 			("Newtonsoft.Json.JsonSerializer", "Newtonsoft.Json"),
 			("Newtonsoft.Json.JsonConverter", "Newtonsoft.Json"),
-			("System.IO.Abstractions.IFileSystem", default)
+			("System.IO.Abstractions.IFileSystem", default),
+			("System.IO.Abstractions.FileSystem", default)
 		);
 
 		internal static ImmutabilityContext Create( Compilation compilation ) {
