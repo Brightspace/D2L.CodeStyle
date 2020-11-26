@@ -241,22 +241,30 @@ namespace D2L.CodeStyle.Analyzers {
 			public override SourceText GetText( CancellationToken cancellationToken = default ) => SourceText.From( m_text, Encoding.UTF8 );
 		}
 
-		private static IEnumerable<Tuple<SyntaxTrivia, SyntaxTrivia>> GroupCommentsIntoAdjacentPairs(
+		private static IEnumerable<((SyntaxTrivia Trivia, string Content) Start, (SyntaxTrivia Trivia, string Content) End)> GroupCommentsIntoAdjacentPairs(
 			IEnumerable<SyntaxTrivia> trivia
 		) {
+			var stack = new Stack<(SyntaxTrivia Trivia, string Content)>();
+
 			using( var it = trivia.GetEnumerator() ) {
 				while( it.MoveNext() ) {
-					var first = it.Current;
+					var current = it.Current;
+					var content = GetMultiLineCommentContents( current );
+					var node = (current, content);
 
-					if( !it.MoveNext() ) {
-						Assert.Fail( $"Missing end delimiter for comment at {first.GetLocation()}" );
+					if( string.IsNullOrWhiteSpace( content ) ) {
+						var start = stack.Pop();
+
+						yield return (start, node);
+						continue;
 					}
 
-					yield return new Tuple<SyntaxTrivia, SyntaxTrivia>(
-						first,
-						it.Current
-					);
+					stack.Push( node );
 				}
+			}
+
+			if( stack.Count != 0 ) {
+				Assert.Fail( $"Unmatched end delimiters for comments at { string.Join( ",", stack.Select( n => n.Trivia.GetLocation() ) ) }." );
 			}
 		}
 
@@ -345,27 +353,17 @@ namespace D2L.CodeStyle.Analyzers {
 			);
 
 			foreach( var comments in commentPairs ) {
-				var start = comments.Item1;
-				var end = comments.Item2;
+				var start = comments.Start;
+				var end = comments.End;
 
-				var startContents = GetMultiLineCommentContents( start );
-				var endContents = GetMultiLineCommentContents( end );
-
-				var diagnosticExpectation = DiagnosticExpectation.Parse( startContents );
+				var diagnosticExpectation = DiagnosticExpectation.Parse( start.Content );
 
 				// Every assertion's start comment must map to a diagnostic
 				// defined in Common.Diagnostics
 				DiagnosticDescriptor descriptor;
 				if( !m_possibleDiagnostics.TryGetValue( diagnosticExpectation.Name, out descriptor ) ) {
-					Assert.Fail( $"Comment at {start.GetLocation()} doesn't map to a diagnostic defined in Common.Diagnostic" );
+					Assert.Fail( $"Comment at {start.Trivia.GetLocation()} doesn't map to a diagnostic defined in Common.Diagnostic" );
 
-				}
-				// Every assertion-comment pair starts with a comment
-				// containing the name of a diagnostic and then an empty
-				// (multiline) comment to mark the end of the diagnostic.
-				// Note that this means that assertions cannot overlap.
-				if( endContents != "" ) {
-					Assert.Fail( $"Expected empty comment at {end.GetLocation()} to end comment at {start.GetLocation()}, got {end}" );
 				}
 
 				// The diagnostic must be between the two delimiting comments,
@@ -376,8 +374,8 @@ namespace D2L.CodeStyle.Analyzers {
 				//
 				// TODO: it would be nice to do fuzzier matching (e.g. ignore
 				// leading and trailing whitespace inside delimiters.) 
-				var diagStart = start.GetLocation().SourceSpan.End + 1;
-				var diagEnd = end.GetLocation().SourceSpan.Start - 1;
+				var diagStart = start.Trivia.GetLocation().SourceSpan.End + 1;
+				var diagEnd = end.Trivia.GetLocation().SourceSpan.Start - 1;
 				Assert.Less( diagStart, diagEnd );
 				var diagSpan = TextSpan.FromBounds( diagStart, diagEnd );
 
