@@ -84,4 +84,20 @@ namespace Tests {
 
 	// This shouldn't crash the analyzer
 	public sealed class Foo : IThingThatDoesntExist { }
+
+	[Immutable]
+	public record UnsealedImmutableRecord { }
+
+	public sealed record
+		/* MissingTransitiveImmutableAttribute(Tests.DerivedRecordMissingAttribute, base class, Tests.UnsealedImmutableRecord) */ DerivedRecordMissingAttribute /**/
+		: UnsealedImmutableRecord { }
+
+	[Immutable]
+	public sealed record SealedDerivedWithAttribute : UnsealedImmutableRecord { }
+
+	[Immutable]
+	public record UnsealedDerivedWithAttribute : UnsealedImmutableRecord { }
+
+	public record RegularRecord { }
+	public sealed RegularDerivedRecord : RegularRecord { }
 }

@@ -47,7 +47,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				ctx => AnalyzeTypeDeclaration( ctx, hasTheImmutableAttribute ),
 				SyntaxKind.ClassDeclaration,
 				SyntaxKind.StructDeclaration,
-				SyntaxKind.InterfaceDeclaration
+				SyntaxKind.InterfaceDeclaration,
+				SyntaxKind.RecordDeclaration
 			);
 
 			// helper methods:
