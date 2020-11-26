@@ -136,125 +136,125 @@ namespace SpecTests {
 	public sealed class SomeTestCases {
 		public void DoesntMatter( IDependencyRegistry reg ) {
 
-			// Marked Singletons are not flagged.
-			reg.Register<ISingleton>( new ImmutableThing() );
-			reg.Register( new ImmutableThing() ); // inferred generic argument of above
-			reg.RegisterPlugin<ISingleton>( new ImmutableThing() );
-			reg.RegisterPlugin( new ImmutableThing() ); // inferred generic argument of above
-			reg.Register<ISingleton, ImmutableThing>( ObjectScope.Singleton );
-			reg.RegisterFactory<ISingleton, ImmutableThingFactory>( ObjectScope.Singleton );
-			reg.RegisterPluginFactory<ISingleton, ImmutableThingFactory>( ObjectScope.Singleton );
-			reg.Register( typeof( ISingleton ), typeof( ImmutableThing ), ObjectScope.Singleton );
-			reg.ConfigurePlugins<ImmutableThing>( ObjectScope.Singleton );
-			reg.ConfigureOrderedPlugins<ImmutableThing, SomeComparer<ImmutableThing>>( ObjectScope.Singleton );
-			reg.ConfigureInstancePlugins<ImmutableThing>( ObjectScope.Singleton );
-			reg.ConfigureInstancePlugins<ImmutableThing, DefaultExtensionPoint<ImmutableThing>>( ObjectScope.Singleton );
-			reg.RegisterPluginExtensionPoint<DefaultExtensionPoint<ImmutableThing>, ImmutableThing>( ObjectScope.Singleton );
-			reg.RegisterPlugin<DefaultExtensionPoint<ISingleton>, ISingleton, ImmutableThing>( ObjectScope.Singleton );
-			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaImmutableThing, string>( ObjectScope.Singleton );
-			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaImmutableThing, string, string>( ObjectScope.Singleton );
-			reg.RegisterSubInterface<ISingleton, IImmutableSubSingleton>( ObjectScope.Singleton );
+			//// Marked Singletons are not flagged.
+			//reg.Register<ISingleton>( new ImmutableThing() );
+			//reg.Register( new ImmutableThing() ); // inferred generic argument of above
+			//reg.RegisterPlugin<ISingleton>( new ImmutableThing() );
+			//reg.RegisterPlugin( new ImmutableThing() ); // inferred generic argument of above
+			//reg.Register<ISingleton, ImmutableThing>( ObjectScope.Singleton );
+			//reg.RegisterFactory<ISingleton, ImmutableThingFactory>( ObjectScope.Singleton );
+			//reg.RegisterPluginFactory<ISingleton, ImmutableThingFactory>( ObjectScope.Singleton );
+			//reg.Register( typeof( ISingleton ), typeof( ImmutableThing ), ObjectScope.Singleton );
+			//reg.ConfigurePlugins<ImmutableThing>( ObjectScope.Singleton );
+			//reg.ConfigureOrderedPlugins<ImmutableThing, SomeComparer<ImmutableThing>>( ObjectScope.Singleton );
+			//reg.ConfigureInstancePlugins<ImmutableThing>( ObjectScope.Singleton );
+			//reg.ConfigureInstancePlugins<ImmutableThing, DefaultExtensionPoint<ImmutableThing>>( ObjectScope.Singleton );
+			//reg.RegisterPluginExtensionPoint<DefaultExtensionPoint<ImmutableThing>, ImmutableThing>( ObjectScope.Singleton );
+			//reg.RegisterPlugin<DefaultExtensionPoint<ISingleton>, ISingleton, ImmutableThing>( ObjectScope.Singleton );
+			//reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaImmutableThing, string>( ObjectScope.Singleton );
+			//reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaImmutableThing, string, string>( ObjectScope.Singleton );
+			//reg.RegisterSubInterface<ISingleton, IImmutableSubSingleton>( ObjectScope.Singleton );
 
-			// And factory Singletons or singletons where concrete type is not resolved inspect the interface
-			reg.Register<IImmutableSingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton );
-			reg.RegisterPlugin<IImmutableSingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton );
-			reg.Register<IImmutableSingleton>( null );
-			reg.RegisterFactory<IImmutableSingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton );
-			reg.RegisterPluginFactory<IImmutableSingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton );
-			reg.RegisterPluginFactory<DefaultExtensionPoint<IImmutableSingleton>, IImmutableSingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton );
+			//// And factory Singletons or singletons where concrete type is not resolved inspect the interface
+			//reg.Register<IImmutableSingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton );
+			//reg.RegisterPlugin<IImmutableSingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton );
+			//reg.Register<IImmutableSingleton>( null );
+			//reg.RegisterFactory<IImmutableSingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton );
+			//reg.RegisterPluginFactory<IImmutableSingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton );
+			//reg.RegisterPluginFactory<DefaultExtensionPoint<IImmutableSingleton>, IImmutableSingleton, NonExistentTypeOrInTheMiddleOfTyping>( ObjectScope.Singleton );
 
 			// Dynamic object factory registrations inspect the concrete object's ctor parameters
 			/* UnsafeSingletonRegistration(SpecTests.ISingleton) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMutableThing, string, string>( ObjectScope.Singleton ) /**/;
-			/* UnsafeSingletonRegistration(SpecTests.ISingleton) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMutableThing, string>( ObjectScope.Singleton ) /**/;
+		//	/* UnsafeSingletonRegistration(SpecTests.ISingleton) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMutableThing, string>( ObjectScope.Singleton ) /**/;
 
-			// Dynamic object factory registrations that error out inspect IFactory<TDependencyType>
-			/* UnsafeSingletonRegistration(D2L.LP.Extensibility.Activation.Domain.IFactory<SpecTests.ICreatedByDynamicFactory>) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor, string>( ObjectScope.Singleton ) /**/;
-			/* UnsafeSingletonRegistration(D2L.LP.Extensibility.Activation.Domain.IFactory<SpecTests.ICreatedByDynamicFactory>) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor, string, string>( ObjectScope.Singleton ) /**/;
+		//	// Dynamic object factory registrations that error out inspect IFactory<TDependencyType>
+		//	/* UnsafeSingletonRegistration(D2L.LP.Extensibility.Activation.Domain.IFactory<SpecTests.ICreatedByDynamicFactory>) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor, string>( ObjectScope.Singleton ) /**/;
+		//	/* UnsafeSingletonRegistration(D2L.LP.Extensibility.Activation.Domain.IFactory<SpecTests.ICreatedByDynamicFactory>) */ reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsSupposedToBeCreatedByDynamicFactoryButDoesntHavePublicConstructor, string, string>( ObjectScope.Singleton ) /**/;
 
-			// Non-Singletons are not flagged.
-			reg.Register( typeof( INotSingleton ), typeof( DoesntMatter ), ObjectScope.WebRequest );
-			reg.Register<INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
-			reg.RegisterPlugin<INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
-			reg.RegisterFactory<INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
-			reg.RegisterPluginFactory<INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
-			reg.RegisterParentAwareFactory<INotSingleton, DoesntMatter>();
-			reg.ConfigurePlugins<INotSingleton>( ObjectScope.WebRequest );
-			reg.ConfigureOrderedPlugins<INotSingleton, SomeComparer<DoesntMatter>>( ObjectScope.WebRequest );
-			reg.ConfigureInstancePlugins<INotSingleton>( ObjectScope.WebRequest );
-			reg.ConfigureInstancePlugins<INotSingleton, DefaultExtensionPoint<INotSingleton>>( ObjectScope.WebRequest );
-			reg.RegisterPluginExtensionPoint<DefaultExtensionPoint<INotSingleton>, DoesntMatter>( ObjectScope.WebRequest );
-			reg.RegisterPlugin<DefaultExtensionPoint<INotSingleton>, INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
+		//	// Non-Singletons are not flagged.
+		//	reg.Register( typeof( INotSingleton ), typeof( DoesntMatter ), ObjectScope.WebRequest );
+		//	reg.Register<INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
+		//	reg.RegisterPlugin<INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
+		//	reg.RegisterFactory<INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
+		//	reg.RegisterPluginFactory<INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
+		//	reg.RegisterParentAwareFactory<INotSingleton, DoesntMatter>();
+		//	reg.ConfigurePlugins<INotSingleton>( ObjectScope.WebRequest );
+		//	reg.ConfigureOrderedPlugins<INotSingleton, SomeComparer<DoesntMatter>>( ObjectScope.WebRequest );
+		//	reg.ConfigureInstancePlugins<INotSingleton>( ObjectScope.WebRequest );
+		//	reg.ConfigureInstancePlugins<INotSingleton, DefaultExtensionPoint<INotSingleton>>( ObjectScope.WebRequest );
+		//	reg.RegisterPluginExtensionPoint<DefaultExtensionPoint<INotSingleton>, DoesntMatter>( ObjectScope.WebRequest );
+		//	reg.RegisterPlugin<DefaultExtensionPoint<INotSingleton>, INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
 
-			// Interfaces marked as singleton cannot have web request registrations.
-			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.Register<ISingleton, DoesntMatter>( ObjectScope.WebRequest ) /**/;
-			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.Register<ISingleton, DoesntMatter>( ObjectScope.AlwaysCreateNewInstance ) /**/;
-			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.Register( typeof( ISingleton ), typeof( DoesntMatter ), ObjectScope.WebRequest ) /**/;
-			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.RegisterFactory<ISingleton, DoesntMatter>( ObjectScope.WebRequest ) /**/;
-			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.RegisterPlugin<ISingleton, DoesntMatter>( ObjectScope.WebRequest ) /**/;
-			/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.RegisterPluginFactory<ISingleton, DoesntMatter>( ObjectScope.WebRequest ) /**/;
+		//	// Interfaces marked as singleton cannot have web request registrations.
+		//	/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.Register<ISingleton, DoesntMatter>( ObjectScope.WebRequest ) /**/;
+		//	/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.Register<ISingleton, DoesntMatter>( ObjectScope.AlwaysCreateNewInstance ) /**/;
+		//	/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.Register( typeof( ISingleton ), typeof( DoesntMatter ), ObjectScope.WebRequest ) /**/;
+		//	/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.RegisterFactory<ISingleton, DoesntMatter>( ObjectScope.WebRequest ) /**/;
+		//	/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.RegisterPlugin<ISingleton, DoesntMatter>( ObjectScope.WebRequest ) /**/;
+		//	/* AttributeRegistrationMismatch(SpecTests.ISingleton) */ reg.RegisterPluginFactory<ISingleton, DoesntMatter>( ObjectScope.WebRequest ) /**/;
 
-			// DynamicObjectFactory registrations at non-Singleton scope are safe,
-			// because the implementation is generated, so it will never be marked.
-			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaImmutableThing, string>( ObjectScope.WebRequest );
-			reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMutableThing, string>( ObjectScope.WebRequest );
+		//	// DynamicObjectFactory registrations at non-Singleton scope are safe,
+		//	// because the implementation is generated, so it will never be marked.
+		//	reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaImmutableThing, string>( ObjectScope.WebRequest );
+		//	reg.RegisterDynamicObjectFactory<ICreatedByDynamicFactory, ThingThatIsCreatedByDynamicObjectFactoryViaMutableThing, string>( ObjectScope.WebRequest );
 
-			// Unhandled registration methods should raise a diagnostic.
-			/* RegistrationKindUnknown */ reg.UnhandledRegisterMethod() /**/;
+		//	// Unhandled registration methods should raise a diagnostic.
+		//	/* RegistrationKindUnknown */ reg.UnhandledRegisterMethod() /**/;
 
-			// Concrete types should have a public constructor
-			/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingWithInternalConstructor) */ reg.Register<IImmutableSingleton, ThingWithInternalConstructor>( ObjectScope.Singleton ) /**/;
-			/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingWithPrivateConstructor) */ reg.Register<IImmutableSingleton, ThingWithPrivateConstructor>( ObjectScope.Singleton ) /**/;
-			reg.Register<IImmutableSingleton, ThingWithInternalAndPublicConstructors>( ObjectScope.Singleton );
-			reg.Register<IImmutableSingleton, ThingWithPrivateAndPublicConstructors>( ObjectScope.Singleton );
-			/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingFactoryWithInternalConstructor) */ reg.RegisterFactory<IImmutableSingleton, ThingFactoryWithInternalConstructor>( ObjectScope.Singleton ) /**/;
-			/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingFactoryWithPrivateConstructor) */ reg.RegisterFactory<IImmutableSingleton, ThingFactoryWithPrivateConstructor>( ObjectScope.Singleton ) /**/;
-			reg.RegisterFactory<IImmutableSingleton, ThingFactoryWithInternalAndPublicConstructors>( ObjectScope.Singleton );
-			reg.RegisterFactory<IImmutableSingleton, ThingFactoryWithPrivateAndPublicConstructors>( ObjectScope.Singleton );
-			/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingWithInternalConstructor) */ reg.RegisterPlugin<IImmutableSingleton, ThingWithInternalConstructor>( ObjectScope.Singleton ) /**/;
-			/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingWithPrivateConstructor) */ reg.RegisterPlugin<IImmutableSingleton, ThingWithPrivateConstructor>( ObjectScope.Singleton ) /**/;
-			/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingWithInternalConstructor) */ reg.RegisterPlugin<DefaultExtensionPoint<IImmutableSingleton>, IImmutableSingleton, ThingWithInternalConstructor>( ObjectScope.Singleton ) /**/;
-			/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingWithPrivateConstructor) */ reg.RegisterPlugin<DefaultExtensionPoint<IImmutableSingleton>, IImmutableSingleton, ThingWithPrivateConstructor>( ObjectScope.Singleton ) /**/;
-			reg.RegisterPlugin<IImmutableSingleton, ThingWithInternalAndPublicConstructors>( ObjectScope.Singleton );
-			reg.RegisterPlugin<IImmutableSingleton, ThingWithPrivateAndPublicConstructors>( ObjectScope.Singleton );
-			reg.RegisterPlugin<DefaultExtensionPoint<IImmutableSingleton>, IImmutableSingleton, ThingWithInternalAndPublicConstructors>( ObjectScope.Singleton );
-			reg.RegisterPlugin<DefaultExtensionPoint<IImmutableSingleton>, IImmutableSingleton, ThingWithPrivateAndPublicConstructors>( ObjectScope.Singleton );
+		//	// Concrete types should have a public constructor
+		//	/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingWithInternalConstructor) */ reg.Register<IImmutableSingleton, ThingWithInternalConstructor>( ObjectScope.Singleton ) /**/;
+		//	/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingWithPrivateConstructor) */ reg.Register<IImmutableSingleton, ThingWithPrivateConstructor>( ObjectScope.Singleton ) /**/;
+		//	reg.Register<IImmutableSingleton, ThingWithInternalAndPublicConstructors>( ObjectScope.Singleton );
+		//	reg.Register<IImmutableSingleton, ThingWithPrivateAndPublicConstructors>( ObjectScope.Singleton );
+		//	/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingFactoryWithInternalConstructor) */ reg.RegisterFactory<IImmutableSingleton, ThingFactoryWithInternalConstructor>( ObjectScope.Singleton ) /**/;
+		//	/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingFactoryWithPrivateConstructor) */ reg.RegisterFactory<IImmutableSingleton, ThingFactoryWithPrivateConstructor>( ObjectScope.Singleton ) /**/;
+		//	reg.RegisterFactory<IImmutableSingleton, ThingFactoryWithInternalAndPublicConstructors>( ObjectScope.Singleton );
+		//	reg.RegisterFactory<IImmutableSingleton, ThingFactoryWithPrivateAndPublicConstructors>( ObjectScope.Singleton );
+		//	/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingWithInternalConstructor) */ reg.RegisterPlugin<IImmutableSingleton, ThingWithInternalConstructor>( ObjectScope.Singleton ) /**/;
+		//	/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingWithPrivateConstructor) */ reg.RegisterPlugin<IImmutableSingleton, ThingWithPrivateConstructor>( ObjectScope.Singleton ) /**/;
+		//	/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingWithInternalConstructor) */ reg.RegisterPlugin<DefaultExtensionPoint<IImmutableSingleton>, IImmutableSingleton, ThingWithInternalConstructor>( ObjectScope.Singleton ) /**/;
+		//	/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingWithPrivateConstructor) */ reg.RegisterPlugin<DefaultExtensionPoint<IImmutableSingleton>, IImmutableSingleton, ThingWithPrivateConstructor>( ObjectScope.Singleton ) /**/;
+		//	reg.RegisterPlugin<IImmutableSingleton, ThingWithInternalAndPublicConstructors>( ObjectScope.Singleton );
+		//	reg.RegisterPlugin<IImmutableSingleton, ThingWithPrivateAndPublicConstructors>( ObjectScope.Singleton );
+		//	reg.RegisterPlugin<DefaultExtensionPoint<IImmutableSingleton>, IImmutableSingleton, ThingWithInternalAndPublicConstructors>( ObjectScope.Singleton );
+		//	reg.RegisterPlugin<DefaultExtensionPoint<IImmutableSingleton>, IImmutableSingleton, ThingWithPrivateAndPublicConstructors>( ObjectScope.Singleton );
 
-			/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingFactoryWithInternalConstructor) */ reg.RegisterPluginFactory<IImmutableSingleton, ThingFactoryWithInternalConstructor>( ObjectScope.Singleton ) /**/;
-			/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingFactoryWithPrivateConstructor) */ reg.RegisterPluginFactory<IImmutableSingleton, ThingFactoryWithPrivateConstructor>( ObjectScope.Singleton ) /**/;
-			/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingFactoryWithInternalConstructor) */ reg.RegisterPluginFactory<DefaultExtensionPoint<IImmutableSingleton>, IImmutableSingleton, ThingFactoryWithInternalConstructor>( ObjectScope.Singleton ) /**/;
-			/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingFactoryWithPrivateConstructor) */ reg.RegisterPluginFactory<DefaultExtensionPoint<IImmutableSingleton>, IImmutableSingleton, ThingFactoryWithPrivateConstructor>( ObjectScope.Singleton ) /**/;
-			reg.RegisterPluginFactory<IImmutableSingleton, ThingFactoryWithInternalAndPublicConstructors>( ObjectScope.Singleton );
-			reg.RegisterPluginFactory<IImmutableSingleton, ThingFactoryWithPrivateAndPublicConstructors>( ObjectScope.Singleton );
-			reg.RegisterPluginFactory<DefaultExtensionPoint<IImmutableSingleton>, IImmutableSingleton, ThingFactoryWithInternalAndPublicConstructors>( ObjectScope.Singleton );
-			reg.RegisterPluginFactory<DefaultExtensionPoint<IImmutableSingleton>, IImmutableSingleton, ThingFactoryWithPrivateAndPublicConstructors>( ObjectScope.Singleton );
+		//	/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingFactoryWithInternalConstructor) */ reg.RegisterPluginFactory<IImmutableSingleton, ThingFactoryWithInternalConstructor>( ObjectScope.Singleton ) /**/;
+		//	/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingFactoryWithPrivateConstructor) */ reg.RegisterPluginFactory<IImmutableSingleton, ThingFactoryWithPrivateConstructor>( ObjectScope.Singleton ) /**/;
+		//	/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingFactoryWithInternalConstructor) */ reg.RegisterPluginFactory<DefaultExtensionPoint<IImmutableSingleton>, IImmutableSingleton, ThingFactoryWithInternalConstructor>( ObjectScope.Singleton ) /**/;
+		//	/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingFactoryWithPrivateConstructor) */ reg.RegisterPluginFactory<DefaultExtensionPoint<IImmutableSingleton>, IImmutableSingleton, ThingFactoryWithPrivateConstructor>( ObjectScope.Singleton ) /**/;
+		//	reg.RegisterPluginFactory<IImmutableSingleton, ThingFactoryWithInternalAndPublicConstructors>( ObjectScope.Singleton );
+		//	reg.RegisterPluginFactory<IImmutableSingleton, ThingFactoryWithPrivateAndPublicConstructors>( ObjectScope.Singleton );
+		//	reg.RegisterPluginFactory<DefaultExtensionPoint<IImmutableSingleton>, IImmutableSingleton, ThingFactoryWithInternalAndPublicConstructors>( ObjectScope.Singleton );
+		//	reg.RegisterPluginFactory<DefaultExtensionPoint<IImmutableSingleton>, IImmutableSingleton, ThingFactoryWithPrivateAndPublicConstructors>( ObjectScope.Singleton );
 
-			/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingWithInternalConstructor) */ reg.Register( typeof( IImmutableSingleton ), typeof( ThingWithInternalConstructor ), ObjectScope.Singleton ) /**/;
-			reg.Register( typeof( IComparer<> ), typeof( SomeComparer<> ), ObjectScope.AlwaysCreateNewInstance );
-		}
+		//	/* DependencyRegistraionMissingPublicConstructor(SpecTests.ThingWithInternalConstructor) */ reg.Register( typeof( IImmutableSingleton ), typeof( ThingWithInternalConstructor ), ObjectScope.Singleton ) /**/;
+		//	reg.Register( typeof( IComparer<> ), typeof( SomeComparer<> ), ObjectScope.AlwaysCreateNewInstance );
+		//}
 
-		// Registrations in some classes/structs are ignored because they 
-		// are wrappers of other register methods and we don't have enough
-		// to analyze.
-		public static class RegistrationCallsInThisClassAreIgnored {
-			public static void DoesntMatter<T>( IDependencyRegistry reg ) where T : new() {
-				reg.Register<T>( new T() );
-			}
-		}
-		public struct RegistrationCallsInThisStructAreIgnored {
-			public static void DoesntMatter<T>( IDependencyRegistry reg ) where T : new() {
-				reg.Register<T>( new T() );
-			}
-		}
+		//// Registrations in some classes/structs are ignored because they 
+		//// are wrappers of other register methods and we don't have enough
+		//// to analyze.
+		//public static class RegistrationCallsInThisClassAreIgnored {
+		//	public static void DoesntMatter<T>( IDependencyRegistry reg ) where T : new() {
+		//		reg.Register<T>( new T() );
+		//	}
+		//}
+		//public struct RegistrationCallsInThisStructAreIgnored {
+		//	public static void DoesntMatter<T>( IDependencyRegistry reg ) where T : new() {
+		//		reg.Register<T>( new T() );
+		//	}
+		//}
 
-		public static class OnlyRegistrationMethodsOnIDependencyRegistryMatter {
-			public static void DoesntMatter( IDependencyRegistry reg ) {
-				Register<INotSingleton>( null );
-			}
+		//public static class OnlyRegistrationMethodsOnIDependencyRegistryMatter {
+		//	public static void DoesntMatter( IDependencyRegistry reg ) {
+		//		Register<INotSingleton>( null );
+		//	}
 
-			public static void Register<TDependencyType>(
-				TDependencyType instance
-			) {
-			}
+		//	public static void Register<TDependencyType>(
+		//		TDependencyType instance
+		//	) {
+		//	}
 		}
 	}
 

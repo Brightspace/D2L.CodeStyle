@@ -61,7 +61,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly {
 				return;
 			}
 
-			if( !originalSymbol.Equals( featureDefinitionType ) ) {
+			if( !originalSymbol.Equals( featureDefinitionType, SymbolEqualityComparer.Default ) ) {
 				return;
 			}
 

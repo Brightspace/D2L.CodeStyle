@@ -147,7 +147,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				return true;
 			}
 
-			if( !memberSymbol.Equals( originalDefinition ) ) {
+			if( !memberSymbol.Equals( originalDefinition, SymbolEqualityComparer.Default ) ) {
 
 				if( dangerousMembers.Contains( memberSymbol ) ) {
 					return true;
@@ -165,8 +165,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			) {
 
 			bool isAudited = (
-					attr.AttributeClass.Equals( auditedAttributeType )
-					|| attr.AttributeClass.Equals( unauditedAttributeType )
+					attr.AttributeClass.Equals( auditedAttributeType, SymbolEqualityComparer.Default )
+					|| attr.AttributeClass.Equals( unauditedAttributeType, SymbolEqualityComparer.Default )
 				);
 			if( !isAudited ) {
 				return false;

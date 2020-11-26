@@ -113,7 +113,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 			bool hasAttr = eventTypeSymbol
 				.GetAttributes()
-				.Any( attr => attr.AttributeClass.Equals( eventAttributeType ) );
+				.Any( attr => attr.AttributeClass.Equals( eventAttributeType, SymbolEqualityComparer.Default ) );
 
 			if( hasAttr ) {
 				return;
@@ -137,7 +137,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 			bool hasAttr = eventHandlerSymbol
 				.GetAttributes()
-				.Any( attr => attr.AttributeClass.Equals( eventHandlerAttributeType ) );
+				.Any( attr => attr.AttributeClass.Equals( eventHandlerAttributeType, SymbolEqualityComparer.Default ) );
 
 			if( hasAttr ) {
 				return;

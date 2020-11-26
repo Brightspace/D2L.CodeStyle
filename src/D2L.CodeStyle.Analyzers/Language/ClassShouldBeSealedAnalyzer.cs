@@ -76,7 +76,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			// be public so 1) not our deal 2) not subtypes of our internal
 			// or private types. This isn't strictly necessary because of
 			// the next check (ignore public types) but it is more explicit.
-			if ( symbol.ContainingAssembly != context.Compilation.Assembly ) {
+			if ( !symbol.ContainingAssembly.Equals( context.Compilation.Assembly, SymbolEqualityComparer.Default ) ) {
 				return;
 			}
 

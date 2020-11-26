@@ -132,9 +132,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			var firstParamType = context.SemanticModel.GetSymbolInfo( firstParam.Type ).Symbol;
 
 			var firstParamIsReasonableType =
-				rpcContextType.Equals( firstParamType ) ||
-				rpcPostContextType.Equals( firstParamType ) ||
-				rpcPostContextBaseType.Equals( firstParamType );
+				rpcContextType.Equals( firstParamType, SymbolEqualityComparer.Default ) ||
+				rpcPostContextType.Equals( firstParamType, SymbolEqualityComparer.Default ) ||
+				rpcPostContextBaseType.Equals( firstParamType, SymbolEqualityComparer.Default );
 
 			if( !firstParamIsReasonableType ) {
 				context.ReportDiagnostic(
@@ -172,7 +172,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 
 			// Note: symbol corresponds to the constructor for the attribute,
 			// so we need to look at symbol.ContainingType
-			return expectedType.Equals( attributeConstructorType?.ContainingType );
+			return expectedType.Equals( attributeConstructorType?.ContainingType, SymbolEqualityComparer.Default );
 		}
 	}
 }

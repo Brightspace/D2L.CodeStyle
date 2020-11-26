@@ -105,7 +105,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ContentPhysicalPaths {
 					continue;
 				}
 
-				if( implementation.Equals( memberSymbol ) ) {
+				if( implementation.Equals( memberSymbol, SymbolEqualityComparer.Default ) ) {
 					return true;
 				}
 			}

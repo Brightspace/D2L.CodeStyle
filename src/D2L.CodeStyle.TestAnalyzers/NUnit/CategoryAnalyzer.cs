@@ -147,12 +147,12 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 		) {
 			foreach( AttributeData attribute in symbol.GetAttributes() ) {
 				INamedTypeSymbol attributeType = attribute.AttributeClass;
-				if( types.CategoryAttribute == attributeType ) {
+				if( types.CategoryAttribute.Equals( attributeType, SymbolEqualityComparer.Default ) ) {
 					VisitCategoryAttribute( attribute, visitor );
 					continue;
 				}
 
-				if( types.TestFixtureAttribute == attributeType ) {
+				if( types.TestFixtureAttribute.Equals( attributeType, SymbolEqualityComparer.Default ) ) {
 					VisitTestFixtureAttribute( attribute, visitor );
 					continue;
 				}

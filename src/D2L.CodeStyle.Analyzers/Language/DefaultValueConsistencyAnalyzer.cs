@@ -116,7 +116,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					continue;
 				}
 
-				if ( implMethod.ContainingType != implType ) {
+				if ( !implMethod.ContainingType.Equals( implType, SymbolEqualityComparer.Default ) ) {
 					// Our base class could implement the method. We don't want
 					// to duplicate the work on principle but also when we look
 					// at DeclaringSyntaxReferences in GetLocation it could

@@ -66,7 +66,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 		}
 
 		public bool IsRegistationMethod( IMethodSymbol method ) {
-			if( !method.ContainingType.Equals( m_dependencyRegistryType ) && !method.ReceiverType.Equals( m_dependencyRegistryType ) ) {
+			if( !method.ContainingType.Equals( m_dependencyRegistryType, SymbolEqualityComparer.Default )
+				&& !method.ReceiverType.Equals( m_dependencyRegistryType, SymbolEqualityComparer.Default )
+			) {
 				return false;
 			}
 
@@ -79,7 +81,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 			}
 
 			// otherwise, if it's a method on IDependencyRegistry, then yes
-			return method.ContainingType.Equals( m_dependencyRegistryType );
+			return method.ContainingType.Equals( m_dependencyRegistryType, SymbolEqualityComparer.Default );
 		}
 	}
 }

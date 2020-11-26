@@ -72,12 +72,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 			var iFactoryType = compilation.GetTypeByMetadataName( IFactoryTypeMetadataName );
 
 			var factoryInterfacesImplemented = factoryType.AllInterfaces
-				.Where( i => i.ConstructedFrom.Equals( iFactoryType ) );
+				.Where( i => i.ConstructedFrom.Equals( iFactoryType, SymbolEqualityComparer.Default ) );
 
 			foreach( var iface in factoryInterfacesImplemented ) {
 				var t = iface.TypeArguments[0];
 
-				if( t.Equals( baseType ) ) {
+				if( t.Equals( baseType, SymbolEqualityComparer.Default ) ) {
 					return iface;
 				}
 

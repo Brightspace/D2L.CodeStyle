@@ -212,7 +212,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 				return false;
 			}
 
-			bool isLocatorFactory = actualType.Equals( disallowedType );
+			bool isLocatorFactory = actualType.Equals( disallowedType, SymbolEqualityComparer.Default );
 			return isLocatorFactory;
 		}
 

@@ -183,7 +183,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				if( implicitType != null && implicitType.Kind != SymbolKind.ErrorType ) {
 
 					var baseExprType = implicitType.BaseType;
-					if( baseExprType == expressionType.OriginalDefinition ) {
+					if( baseExprType.Equals( expressionType.OriginalDefinition, SymbolEqualityComparer.Default ) ) {
 						return true;
 					}
 				}
