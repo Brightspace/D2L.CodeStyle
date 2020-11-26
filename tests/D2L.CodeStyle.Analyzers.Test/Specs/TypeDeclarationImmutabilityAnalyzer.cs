@@ -641,4 +641,40 @@ namespace SpecTests {
 		static readonly object m_lock = new object();
     }
 
+	[Immutable]
+	public record SomeRecord {
+		SomeRecord V { get; }
+
+		int W { get; }
+		Types.SomeImmutableClass X { get; }
+
+		int /* MemberIsNotReadOnly(Property, Y, SomeRecord) */ Y /**/ { get; set; }
+
+		/* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/ Z { get; }
+
+		public SomeRecord( SomeRecord v, int w, Types.SomeImmutableClass x, int y, object z )
+			=> (V, W, X, Y, Z) = (v, w, x, y, z);
+    }
+
+	record NonImmutableBaseRecord(object x);
+
+	[Immutable]
+	record DerivedRecordWithQuestionableBase :
+		/* NonImmutableTypeHeldByImmutable(Class, NonImmutableBaseRecord,  (or [ImmutableBaseClass])) */ NonImmutableBaseRecord(new object()) /**/ ;
+
+	[ImmutableBaseClass]
+	record BaseRecordWithImmutableBaseClass { }
+
+	[Immutable]
+	record DerivedFromImmutableBaseClassRecord : BaseRecordWithImmutableBaseClass {
+		/* NonImmutableTypeHeldByImmutable(Class, BaseRecordWithImmutableBaseClass, ) */ BaseRecordWithImmutableBaseClass /**/ X { get; }
+    }
+
+	[Immutable]
+	record ConciseRecord(
+		int xxxx,
+		/* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/ x,
+		/* NonImmutableTypeHeldByImmutable(Class, BaseRecordWithImmutableBaseClass, ) */ BaseRecordWithImmutableBaseClass /**/ y,
+		ConciseRecord z
+	);
 }
