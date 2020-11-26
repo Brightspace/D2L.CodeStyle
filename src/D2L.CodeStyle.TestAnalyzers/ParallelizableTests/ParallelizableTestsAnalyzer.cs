@@ -47,6 +47,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ParallelizableTests {
 		}
 
 		public override void Initialize( AnalysisContext context ) {
+			context.EnableConcurrentExecution();
 			context.RegisterCompilationStartAction( RegisterIfTestAssembly );
 		}
 
