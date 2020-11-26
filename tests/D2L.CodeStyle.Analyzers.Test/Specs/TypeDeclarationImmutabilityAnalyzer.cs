@@ -381,18 +381,18 @@ namespace SpecTests {
 
 
 
-		static /* NonImmutableTypeHeldByImmutable(Struct, SomeStruct, ) */ Types.SomeStruct /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		static readonly /* NonImmutableTypeHeldByImmutable(Struct, SomeStruct, ) */ Types.SomeStruct /**/ m_field;
-		/* NonImmutableTypeHeldByImmutable(Struct, SomeStruct, ) */ Types.SomeStruct /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		Types.SomeStruct /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = new /* NonImmutableTypeHeldByImmutable(Struct, SomeStruct, ) */ Types.SomeStruct /**/ ();
-		readonly /* NonImmutableTypeHeldByImmutable(Struct, SomeStruct, ) */ Types.SomeStruct /**/ m_field;
-		readonly Types.SomeStruct  m_field = new /* NonImmutableTypeHeldByImmutable(Struct, SomeStruct, ) */ Types.SomeStruct /**/ ();
+		static /* NonImmutableTypeHeldByImmutable(Structure, SomeStruct, ) */ Types.SomeStruct /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		static readonly /* NonImmutableTypeHeldByImmutable(Structure, SomeStruct, ) */ Types.SomeStruct /**/ m_field;
+		/* NonImmutableTypeHeldByImmutable(Structure, SomeStruct, ) */ Types.SomeStruct /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		Types.SomeStruct /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = new /* NonImmutableTypeHeldByImmutable(Structure, SomeStruct, ) */ Types.SomeStruct /**/ ();
+		readonly /* NonImmutableTypeHeldByImmutable(Structure, SomeStruct, ) */ Types.SomeStruct /**/ m_field;
+		readonly Types.SomeStruct  m_field = new /* NonImmutableTypeHeldByImmutable(Structure, SomeStruct, ) */ Types.SomeStruct /**/ ();
 		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
 		readonly Types.SomeStruct m_field;
 		[Mutability.Audited]
 		readonly Types.SomeStruct m_field;
-		/* NonImmutableTypeHeldByImmutable(Struct, SomeStruct, ) */ Types.SomeStruct /**/ Property { get; }
-		Types.SomeStruct Property { get; } = new /* NonImmutableTypeHeldByImmutable(Struct, SomeStruct, ) */ Types.SomeStruct /**/ ();
+		/* NonImmutableTypeHeldByImmutable(Structure, SomeStruct, ) */ Types.SomeStruct /**/ Property { get; }
+		Types.SomeStruct Property { get; } = new /* NonImmutableTypeHeldByImmutable(Structure, SomeStruct, ) */ Types.SomeStruct /**/ ();
 		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
 		Types.SomeStruct Property { get; }
 		[Mutability.Audited]
