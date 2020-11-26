@@ -416,7 +416,7 @@ namespace D2L.CodeStyle.Analyzers {
 				.ParseOptions as CSharpParseOptions;
 
 			parseOptions = parseOptions
-				.WithLanguageVersion( LanguageVersion.CSharp7_3 );
+				.WithLanguageVersion( LanguageVersion.CSharp9 );
 
 			solution = solution
 				.WithProjectCompilationOptions( projectId, compilationOptions )
