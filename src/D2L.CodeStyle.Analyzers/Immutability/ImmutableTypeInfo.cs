@@ -33,7 +33,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			Func<Location> getLocation,
 			out Diagnostic diagnostic
 		) {
-			if( !Type.Equals( definition ) && !Type.Equals( definition?.OriginalDefinition ) ) {
+			if( !Type.Equals( definition, SymbolEqualityComparer.Default )
+				&& !Type.Equals( definition?.OriginalDefinition, SymbolEqualityComparer.Default )
+			) {
 				throw new InvalidOperationException( $"{ nameof( IsImmutableDefinition ) } should only be called with an equivalent type definition" );
 			}
 

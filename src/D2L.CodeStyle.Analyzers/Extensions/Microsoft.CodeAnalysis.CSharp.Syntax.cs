@@ -48,7 +48,7 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 				return false;
 			}
 
-			if( !typeSymbol.Equals( attributeType ) ) {
+			if( !typeSymbol.Equals( attributeType, SymbolEqualityComparer.Default ) ) {
 				return false;
 			}
 

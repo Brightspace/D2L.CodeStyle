@@ -134,7 +134,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 				return false;
 			}
 
-			if( !actualType.Equals( jsonParamBinderT ) ) {
+			if( !actualType.Equals( jsonParamBinderT, SymbolEqualityComparer.Default ) ) {
 				return false;
 			}
 

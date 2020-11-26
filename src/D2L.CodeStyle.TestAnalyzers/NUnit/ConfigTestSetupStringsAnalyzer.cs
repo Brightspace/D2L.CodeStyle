@@ -82,7 +82,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 				}
 
 				// Not a [ConfigTestSetup()]
-				if( !attributeType.Equals( symbol.ContainingType ) ) {
+				if( !attributeType.Equals( symbol.ContainingType, SymbolEqualityComparer.Default ) ) {
 					continue;
 				}
 

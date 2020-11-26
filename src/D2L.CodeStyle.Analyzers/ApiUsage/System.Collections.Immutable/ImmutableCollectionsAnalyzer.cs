@@ -54,7 +54,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.SystemCollectionsImmutable {
 			}
 
 			// We only care about ImmutableArray`1
-			if( specificType.OriginalDefinition != immutableArrayType ) {
+			if( !specificType.OriginalDefinition.Equals( immutableArrayType, SymbolEqualityComparer.Default ) ) {
 				return;
 			}
 

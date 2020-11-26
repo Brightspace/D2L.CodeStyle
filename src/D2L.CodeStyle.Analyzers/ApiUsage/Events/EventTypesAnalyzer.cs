@@ -96,7 +96,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 			bool hasAttribute = declarationType
 				.GetAttributes()
-				.Any( attr => attr.AttributeClass.Equals( attributeType ) );
+				.Any( attr => attr.AttributeClass.Equals( attributeType, SymbolEqualityComparer.Default ) );
 
 			return hasAttribute;
 		}

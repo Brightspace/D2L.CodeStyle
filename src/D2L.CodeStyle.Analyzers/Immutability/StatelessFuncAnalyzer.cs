@@ -60,7 +60,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			ImmutableArray<AttributeData> paramAttributes = param.GetAttributes();
-			if( !paramAttributes.Any( a => a.AttributeClass == statelessFuncAttribute ) ) {
+			if( !paramAttributes.Any( a => a.AttributeClass.Equals( statelessFuncAttribute, SymbolEqualityComparer.Default ) ) ) {
 				return;
 			}
 
@@ -267,7 +267,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			IParameterSymbol parameter = model.GetDeclaredSymbol( parameterSyntax, ct );
 
 			foreach( AttributeData attr in parameter.GetAttributes() ) {
-				if( attr.AttributeClass == statelessFuncAttr ) {
+				if( attr.AttributeClass.Equals( statelessFuncAttr, SymbolEqualityComparer.Default ) ) {
 					return true;
 				}
 			}

@@ -50,7 +50,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			);
 
 			bool IsSingletonLocator( INamedTypeSymbol other ) {
-				if( !locatorType.IsNullOrErrorType() && other == locatorType ) {
+				if( !locatorType.IsNullOrErrorType() && other.Equals( locatorType, SymbolEqualityComparer.Default ) ) {
 					return true;
 				}
 

@@ -114,7 +114,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return false;
 			}
 
-			if( type == readOnlyAttribute ) {
+			if( type.Equals( readOnlyAttribute, SymbolEqualityComparer.Default ) ) {
 				return true;
 			}
 
