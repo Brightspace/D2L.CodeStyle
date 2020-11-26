@@ -12,6 +12,7 @@ namespace D2L.CodeStyle.Analyzers.Build {
 
 		public override void Initialize( AnalysisContext ctx ) {
 			ctx.EnableConcurrentExecution();
+			ctx.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics );
 			ctx.RegisterCompilationAction( AnalyzeCompilation );
 		}
 

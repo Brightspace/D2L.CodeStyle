@@ -13,6 +13,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
+			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics );
 			context.RegisterCompilationStartAction( RegisterRpcAnalyzer );
 		}
 

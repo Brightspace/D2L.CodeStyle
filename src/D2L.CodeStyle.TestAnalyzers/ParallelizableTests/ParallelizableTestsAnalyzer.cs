@@ -48,6 +48,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ParallelizableTests {
 
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
+			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics );
 			context.RegisterCompilationStartAction( RegisterIfTestAssembly );
 		}
 

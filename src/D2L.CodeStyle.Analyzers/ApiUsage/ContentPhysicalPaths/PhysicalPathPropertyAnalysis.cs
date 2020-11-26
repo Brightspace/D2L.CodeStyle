@@ -29,6 +29,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ContentPhysicalPaths {
 		public void Initialize( AnalysisContext context ) {
 
 			context.EnableConcurrentExecution();
+			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics );
 			context.RegisterCompilationStartAction( Register );
 		}
 
