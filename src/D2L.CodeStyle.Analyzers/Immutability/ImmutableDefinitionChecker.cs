@@ -310,10 +310,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			var candidates = type.DeclaringSyntaxReferences
 				.Select( r => r.GetSyntax() )
-				.Select( GetBaseList )
-				.Where( list => list != null )
+				.Cast<TypeDeclarationSyntax>()
+				.Where( r => r.BaseList != null )
 				// Take _at most_ the first item from each BaseList.Types
-				.SelectMany( list => list.Types.Take( 1 ) );
+				.SelectMany( r => r.BaseList.Types.Take( 1 ) );
 
 			// Find the first candidate that is a class type.
 			foreach( var candidate in candidates ) {
@@ -364,12 +364,5 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				),
 				_ => throw new NotImplementedException()
 			};
-
-		private static BaseListSyntax GetBaseList( SyntaxNode syntax )
-			=> syntax switch {
-				   ClassDeclarationSyntax @class => @class.BaseList,
-				   RecordDeclarationSyntax record => record.BaseList,
-				   _ => null
-			   };
 	}
 }
