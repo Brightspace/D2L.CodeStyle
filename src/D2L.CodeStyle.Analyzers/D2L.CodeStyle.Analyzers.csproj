@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard1.3</TargetFramework>
-    <LangVersion>7.3</LangVersion>
+    <TargetFramework>net5.0</TargetFramework>
 
     <Title>D2L.CodeStyle.Analyzers</Title>
     <Product>D2L.CodeStyle</Product>
