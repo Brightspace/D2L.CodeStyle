@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard1.3</TargetFramework>
-    <LangVersion>7.3</LangVersion>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
 
     <Title>D2L.CodeStyle.TestAnalyzers</Title>
     <Product>D2L.CodeStyle</Product>
@@ -26,8 +26,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="2.8.2" PrivateAssets="All" />
-    <PackageReference Include="System.Collections.Immutable" Version="1.3.1" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="3.8.0" PrivateAssets="All" />
+    <PackageReference Include="System.Collections.Immutable" Version="5.0.0" PrivateAssets="All" />
   </ItemGroup>
 
 </Project>
