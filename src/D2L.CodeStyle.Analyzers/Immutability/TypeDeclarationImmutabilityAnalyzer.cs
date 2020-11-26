@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
@@ -129,21 +130,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			GenericNameSyntax syntax
 		) {
 			SymbolInfo info = ctx.SemanticModel.GetSymbolInfo( syntax, ctx.CancellationToken );
-
-			ImmutableArray<ITypeParameterSymbol> typeParameters;
-			ImmutableArray<ITypeSymbol> typeArguments;
-			switch( info.Symbol ) {
-				case IMethodSymbol method:
-					typeParameters = method.TypeParameters;
-					typeArguments = method.TypeArguments;
-					break;
-				case INamedTypeSymbol namedType:
-					typeParameters = namedType.TypeParameters;
-					typeArguments = namedType.TypeArguments;
-					break;
-				default:
-					return;
-			}
+			var (typeParameters, typeArguments) = GetTypeParamsAndArgs( info.Symbol );
 
 			int i = 0;
 			var paramArgPairs = typeParameters.Zip( typeArguments, ( p, a ) => (p, a, i++) );
@@ -167,5 +154,16 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				}
 			}
 		}
+
+		private static (
+		  ImmutableArray<ITypeParameterSymbol> TypeParameters,
+		  ImmutableArray<ITypeSymbol> TypeArguments
+		) GetTypeParamsAndArgs( ISymbol type )
+			=> type switch {
+				IMethodSymbol method => (method.TypeParameters, method.TypeArguments),
+				INamedTypeSymbol namedType => (namedType.TypeParameters, namedType.TypeArguments),
+
+				_ => throw new NotImplementedException(),
+			};
 	}
 }
