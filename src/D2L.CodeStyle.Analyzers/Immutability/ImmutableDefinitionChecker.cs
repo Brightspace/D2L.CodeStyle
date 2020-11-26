@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
@@ -126,7 +127,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return true;
 			}
 
-			var decl = field.GetDeclarationSyntax<VariableDeclaratorSyntax>();
+			var decl = field.DeclaringSyntaxReferences.Single()
+				.GetSyntax() as VariableDeclaratorSyntax;
+
 			var type = decl.FirstAncestorOrSelf<VariableDeclarationSyntax>().Type;
 
 			return CheckFieldOrProperty(
@@ -148,9 +151,18 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return true;
 			}
 
-			var decl = prop.GetDeclarationSyntax<PropertyDeclarationSyntax>();
+			if ( prop.IsImplicitlyDeclared ) {
+				// records have implicitly declared properties like EqualityContract which
+				// are OK and don't have a PropertyDeclarationSyntax anyway.
+				return true;
+			}
 
-			if ( !decl.IsAutoImplemented() ) {
+			var propInfo = GetPropertySyntax(
+				prop,
+				prop.DeclaringSyntaxReferences.Single().GetSyntax()
+			);
+
+			if ( !propInfo.IsAutoImplemented ) {
 				// Properties that are auto-implemented have an implicit
 				// backing field that may be mutable. Otherwise, properties are
 				// just sugar for getter/setter methods and don't themselves
@@ -162,10 +174,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				diagnosticSink,
 				member: prop,
 				type: prop.Type,
-				isReadOnly: prop.IsReadOnly,
-				typeSyntax: decl.Type,
-				nameSyntax: decl.Identifier,
-				initializer: decl.Initializer?.Value
+				isReadOnly: propInfo.IsReadOnly,
+				typeSyntax: propInfo.TypeSyntax,
+				nameSyntax: propInfo.Identifier,
+				initializer: propInfo.Initializer
 			);
 		}
 
@@ -274,7 +286,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		private static Location GetLocationOfMember( ISymbol s ) =>s
-			.GetDeclarationSyntax<SyntaxNode>()
+			.DeclaringSyntaxReferences.Single()
+			.GetSyntax()
 			.FirstAncestorOrSelf<MemberDeclarationSyntax>()
 			.GetLocation();
 
@@ -297,10 +310,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			var candidates = type.DeclaringSyntaxReferences
 				.Select( r => r.GetSyntax() )
-				.Cast<ClassDeclarationSyntax>()
-				.Where( r => r.BaseList != null )
+				.Select( GetBaseList )
+				.Where( list => list != null )
 				// Take _at most_ the first item from each BaseList.Types
-				.SelectMany( r => r.BaseList.Types.Take( 1 ) );
+				.SelectMany( list => list.Types.Take( 1 ) );
 
 			// Find the first candidate that is a class type.
 			foreach( var candidate in candidates ) {
@@ -322,5 +335,41 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				.GetSyntax()
 				.GetLocation();
 		}
+
+		private (
+			TypeSyntax TypeSyntax,
+			SyntaxToken Identifier,
+			ExpressionSyntax Initializer,
+			bool IsAutoImplemented,
+			bool IsReadOnly
+		) GetPropertySyntax( IPropertySymbol symbol, SyntaxNode syntax )
+			=> syntax switch {
+				PropertyDeclarationSyntax prop => (
+					prop.Type,
+					prop.Identifier,
+					prop.Initializer?.Value,
+					prop.IsAutoImplemented(),
+					symbol.IsReadOnly
+				),
+				ParameterSyntax param => (
+					param.Type,
+					param.Identifier,
+					Initializer: null,
+					IsAutoImplemented: true,
+
+					// The property X in "record Foo(int X);" is not IsReadOnly,
+					// but its SetMethod has IsInitOnly. We could probably just
+					// return true here but this seems safer.
+					IsReadOnly: symbol.SetMethod != null && symbol.SetMethod.IsInitOnly
+				),
+				_ => throw new NotImplementedException()
+			};
+
+		private static BaseListSyntax GetBaseList( SyntaxNode syntax )
+			=> syntax switch {
+				   ClassDeclarationSyntax @class => @class.BaseList,
+				   RecordDeclarationSyntax record => record.BaseList,
+				   _ => null
+			   };
 	}
 }
