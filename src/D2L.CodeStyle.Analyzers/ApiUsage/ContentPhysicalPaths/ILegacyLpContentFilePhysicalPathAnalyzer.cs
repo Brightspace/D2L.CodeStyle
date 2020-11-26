@@ -15,6 +15,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ContentPhysicalPaths {
 			);
 
 		public override void Initialize( AnalysisContext context ) {
+			context.EnableConcurrentExecution();
 
 			PhysicalPathPropertyAnalysis analysis = new PhysicalPathPropertyAnalysis(
 					TypeName,
