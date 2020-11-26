@@ -19,7 +19,8 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
         public override void Initialize( AnalysisContext context ) {
             context.EnableConcurrentExecution();
-            context.RegisterCompilationStartAction( OnCompilationStart );
+			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics );
+			context.RegisterCompilationStartAction( OnCompilationStart );
         }
 
         private static void OnCompilationStart(

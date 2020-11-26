@@ -18,6 +18,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
+			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics );
 
 			// Check for methods with the "override" modifier
 			context.RegisterSyntaxNodeAction(
