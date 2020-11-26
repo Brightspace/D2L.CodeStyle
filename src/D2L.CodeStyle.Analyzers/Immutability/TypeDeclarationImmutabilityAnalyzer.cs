@@ -129,13 +129,29 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			GenericNameSyntax syntax
 		) {
 			SymbolInfo info = ctx.SemanticModel.GetSymbolInfo( syntax, ctx.CancellationToken );
-			if( !( info.Symbol is IMethodSymbol method ) ) {
-				return;
+
+			ImmutableArray<ITypeParameterSymbol> typeParameters;
+			ImmutableArray<ITypeSymbol> typeArguments;
+			switch( info.Symbol ) {
+				case IMethodSymbol method:
+					typeParameters = method.TypeParameters;
+					typeArguments = method.TypeArguments;
+					break;
+				case INamedTypeSymbol namedType:
+					typeParameters = namedType.TypeParameters;
+					typeArguments = namedType.TypeArguments;
+					break;
+				default:
+					return;
 			}
 
 			int i = 0;
-			var paramArgPairs = method.TypeParameters.Zip( method.TypeArguments, ( p, a ) => (p, a, i++) );
+			var paramArgPairs = typeParameters.Zip( typeArguments, ( p, a ) => (p, a, i++) );
 			foreach( var (parameter, argument, position) in paramArgPairs ) {
+				// TODO: this should eventually use information from ImmutableTypeInfo
+				// however the current information about immutable type parameters
+				// includes [Immutable] filling for what will instead be the upcoming
+				// [OnlyIf] (e.g. it would be broken for IEnumerable<>)
 				if( !Attributes.Objects.Immutable.IsDefined( parameter ) ) {
 					continue;
 				}
