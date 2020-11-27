@@ -25,20 +25,22 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			m_context = context;
 		}
 
+		/// <remarks>
+		/// Check that a type declaration (class, struct, record) always produces immutable values.
+		/// </remarks>
 		public bool CheckDeclaration( INamedTypeSymbol type ) {
 			var result = true;
 
 			var members = type.GetMembers()
 				// Exclude static members.
-				// Immutability is, for us, a property held by values. A type
-				// can be immutable in one of two ways and these are statements
-				// about values of that type.
-				// Static members are not tied to values/instances by
-				// definition. Although we care about them otherwise, TODO explain
+				// Immutability is a property of values, [Immutable] (etc.) are judgements
+				// about the immutability of values of some type.
+				// Static fields/properties are global variables scoped to particular types,
+				// but are not a factor in the immutability of the values of that type themselves.
 				.Where( m => !m.IsStatic );
 
-			// Check that the base class is immutable for classes
 			if( type.TypeKind == TypeKind.Class ) {
+				// Check that the base class is immutable for classes
 				var baseClassOk = m_context.IsImmutable(
 					type.BaseType,
 					ImmutableTypeKind.Instance,
@@ -62,6 +64,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return result;
 		}
 
+		/// <remarks>
+		/// Check that a member (e.g. field or property) always produces immutable values.
+		/// </remarks>
 		public bool CheckMember( ISymbol member ) {
 			if ( MutabilityAuditor.IsAudited( member, out var location ) ) {
 				// If they have one of the auditing attributes, run the
@@ -121,9 +126,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		private bool CheckField( DiagnosticSink diagnosticSink, IFieldSymbol field ) {
-			// These correspond to auto-properties. That case gets handled in
-			// CheckProperty instead.
 			if ( field.IsImplicitlyDeclared ) {
+				// These correspond to auto-properties. That case gets handled in
+				// CheckProperty instead.
 				return true;
 			}
 
@@ -208,8 +213,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			var stuff = GetStuffToCheckForMember( type, typeSyntax, initializer );
 
-			// null is a signal that there is nothing fruther that needs to be checked
 			if ( stuff == null ) {
+				// null is a signal that there is nothing further that needs to be checked
 				return immutable;
 			}
 
