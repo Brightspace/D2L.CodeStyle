@@ -5,13 +5,25 @@ using static D2L.CodeStyle.Annotations.Objects;
 
 namespace D2L.CodeStyle.Annotations {
 	public static class Objects {
-		// stub for tests
+		public abstract class ImmutableAttributeBase : Attribute { }
+		[AttributeUsage(
+			validOn: AttributeTargets.Class
+				   | AttributeTargets.Interface
+				   | AttributeTargets.Struct
+				   | AttributeTargets.GenericParameter
+		)]
+		public sealed class Immutable : ImmutableAttributeBase { }
+
 		[AttributeUsage(
 			validOn: AttributeTargets.Class
 				   | AttributeTargets.Interface
 				   | AttributeTargets.Struct
 		)]
-		public sealed class Immutable : Attribute { }
+		public sealed class ConditionallyImmutable : ImmutableAttributeBase {
+			[AttributeUsage( validOn: AttributeTargets.GenericParameter )]
+			public sealed class OnlyIf : ImmutableAttributeBase { }
+
+		}
 	}
 }
 
@@ -36,27 +48,27 @@ namespace Tests {
 	public struct HappyStructImplementor : ISomethingImmutable { }
 
 	public sealed class
-		/* MissingTransitiveImmutableAttribute(Tests.SadImplementor, interface, Tests.ISomethingImmutable) */ SadImplementor /**/
+		/* MissingTransitiveImmutableAttribute(Tests.SadImplementor, , interface, Tests.ISomethingImmutable) */ SadImplementor /**/
 		: ISomethingImmutable { }
 
 	public struct
-		/* MissingTransitiveImmutableAttribute(Tests.SadStructImplementor, interface, Tests.ISomethingImmutable) */ SadStructImplementor /**/
+		/* MissingTransitiveImmutableAttribute(Tests.SadStructImplementor, , interface, Tests.ISomethingImmutable) */ SadStructImplementor /**/
 		: ISomethingImmutable { }
 
 	public sealed class
-		/* MissingTransitiveImmutableAttribute(Tests.SadDeriver, base class, Tests.HappyImplementor) */ SadDeriver /**/
+		/* MissingTransitiveImmutableAttribute(Tests.SadDeriver, , base class, Tests.HappyImplementor) */ SadDeriver /**/
 		: HappyImplementor { }
 
 	public sealed class
-		/* MissingTransitiveImmutableAttribute(Tests.SadImplementor2, interface, Tests.ISomethingImmutable) */ SadImplementor2 /**/
+		/* MissingTransitiveImmutableAttribute(Tests.SadImplementor2, , interface, Tests.ISomethingImmutable) */ SadImplementor2 /**/
 		: VanillaBase, IVanilla, IVanilla2, ISomethingImmutable { }
 
 	public sealed class
-		/* MissingTransitiveImmutableAttribute(Tests.SadImplementor3, base class, Tests.HappyImplementor) */ SadImplementor3 /**/
+		/* MissingTransitiveImmutableAttribute(Tests.SadImplementor3, , base class, Tests.HappyImplementor) */ SadImplementor3 /**/
 		: HappyImplementor, IVanilla, IVanilla2 { }
 
 	public interface
-		/* MissingTransitiveImmutableAttribute(Tests.SadExtender, interface, Tests.ISomethingImmutable) */ SadExtender /**/
+		/* MissingTransitiveImmutableAttribute(Tests.SadExtender, , interface, Tests.ISomethingImmutable) */ SadExtender /**/
 		: ISomethingImmutable { }
 
 	// This won't emit an error because SadDeriver hasn't added [Immutable].
@@ -68,7 +80,7 @@ namespace Tests {
 	public sealed class IndirectlySadClass : SadDeriver { }
 
 	public partial class
-	/* MissingTransitiveImmutableAttribute(Tests.PartialClass, interface, Tests.ISomethingImmutable) */ PartialClass /**/
+	/* MissingTransitiveImmutableAttribute(Tests.PartialClass, , interface, Tests.ISomethingImmutable) */ PartialClass /**/
 		: ISomethingImmutable { }
 
 	// This one doesn't get the diagnostic. We attach it to the one that specified
@@ -79,7 +91,7 @@ namespace Tests {
 	// code fix will try to apply multiple [Immutable] attributes which isn't
 	// allowed...
 	public partial class
-	/* MissingTransitiveImmutableAttribute(Tests.PartialClass, base class, Tests.HappyImplementor) */ PartialClass /**/
+	/* MissingTransitiveImmutableAttribute(Tests.PartialClass, , base class, Tests.HappyImplementor) */ PartialClass /**/
 		: HappyImplementor { }
 
 	// This shouldn't crash the analyzer
@@ -89,7 +101,7 @@ namespace Tests {
 	public record UnsealedImmutableRecord { }
 
 	public sealed record
-		/* MissingTransitiveImmutableAttribute(Tests.DerivedRecordMissingAttribute, base class, Tests.UnsealedImmutableRecord) */ DerivedRecordMissingAttribute /**/
+		/* MissingTransitiveImmutableAttribute(Tests.DerivedRecordMissingAttribute, , base class, Tests.UnsealedImmutableRecord) */ DerivedRecordMissingAttribute /**/
 		: UnsealedImmutableRecord { }
 
 	[Immutable]
@@ -110,10 +122,21 @@ namespace Tests {
 	public record ImmutableDerivedWithArgs(int y) : BaseRecordWithArgs(y);
 
 	public sealed record
-		/* MissingTransitiveImmutableAttribute(DerivedRecordNoAttrConstArg, base class, BaseRecordWithArgs) */ DerivedRecordNoAttrConstArg /**/
+		/* MissingTransitiveImmutableAttribute(DerivedRecordNoAttrConstArg, , base class, BaseRecordWithArgs) */ DerivedRecordNoAttrConstArg /**/
 		: BaseRecordWithArgs(0);
 
 	public sealed record
-		/* MissingTransitiveImmutableAttribute(DerivedRecordNoAttrWithArg, base class, BaseRecordWithArgs) */ DerivedRecordNoAttrWithArg /**/
+		/* MissingTransitiveImmutableAttribute(DerivedRecordNoAttrWithArg, , base class, BaseRecordWithArgs) */ DerivedRecordNoAttrWithArg /**/
 		(int z) : BaseRecordWithArgs(z);
+
+	[ConditionallyImmutable]
+	public interface ISomethingConditionallyImmutable<[ConditionallyImmutable.OnlyIf] T> { }
+
+	[Immutable]
+	public sealed class ImmutableClassImplementingConditionallyImmutable<[Immutable] T> : ISomethingConditionallyImmutable<T> { }
+
+	[ConditionallyImmutable]
+	public sealed class ConditionallyImmutableClassImplementingConditionallyImmutable<[ConditionallyImmutable.OnlyIf] T> : ISomethingConditionallyImmutable<T> { }
+
+	public sealed class /* MissingTransitiveImmutableAttribute(SadImplementerOfConditionallyImmutable,  (or [ConditionallyImmutable]), interface, ISomethingConditionallyImmutable) */ SadImplementerOfConditionallyImmutable /**/<T> : ISomethingConditionallyImmutable<T> { }
 }

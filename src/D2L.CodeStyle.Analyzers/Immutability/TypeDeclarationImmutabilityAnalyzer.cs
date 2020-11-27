@@ -110,6 +110,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			if( !Attributes.Objects.Immutable.IsDefined( typeSymbol )
+				&& !Attributes.Objects.ConditionallyImmutable.IsDefined( typeSymbol )
 				&& !Attributes.Objects.ImmutableBaseClass.IsDefined( typeSymbol )
 			) {
 				return;
