@@ -114,6 +114,10 @@ namespace SpecTests {
 		public static void SomeGenericMethodRestrictingU<T, [Immutable] U>() { }
 		public static void SomeGenericMethodRestrictingTU<[Immutable] T, [Immutable] U>() { }
 
+
+		/// <summary><see cref="SomeGenericMethodCref{T}()"/></summary>
+		public static void SomeGenericMethodCref<[Immutable] T>( int x ) { }
+
 }
 
 	[Immutable]

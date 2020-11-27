@@ -54,5 +54,9 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 
 			return true;
 		}
+
+		public static bool IsFromDocComment(
+			this SyntaxNode node
+		) => node.FirstAncestorOrSelf<DocumentationCommentTriviaSyntax>() != null;
 	}
 }

@@ -130,6 +130,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ImmutabilityContext immutabilityContext,
 			GenericNameSyntax syntax
 		) {
+			if( syntax.IsFromDocComment() ) {
+				// ignore things in doccomments such as crefs
+				return;
+			}
+
 			SymbolInfo info = ctx.SemanticModel.GetSymbolInfo( syntax, ctx.CancellationToken );
 			var (typeParameters, typeArguments) = GetTypeParamsAndArgs( info.Symbol );
 
