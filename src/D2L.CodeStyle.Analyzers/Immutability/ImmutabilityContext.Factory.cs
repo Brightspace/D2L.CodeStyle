@@ -37,7 +37,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			("System.Drawing.Imaging.ImageFormat", default),
 			("System.Drawing.Size", default), // only safe because it's a struct with primitive fields
 			("System.Guid", default),
+			("System.Index", default),
 			("System.Net.IPNetwork", default),
+			("System.Range", default),
 			("System.Reflection.ConstructorInfo", default),
 			("System.Reflection.FieldInfo", default),
 			("System.Reflection.MemberInfo", default),
