@@ -135,7 +135,11 @@ namespace SpecTests {
 			set { return; }
 		}
 
+		public int X { get; init; }
 
+		// This isn't safe because init-only properties can be overwritten by
+		// any caller (which we may not be able to analyze).
+		public /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/ Y { get; init; } = new object();
 
 		static int /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = 0;
 		static readonly int m_field = 0;
