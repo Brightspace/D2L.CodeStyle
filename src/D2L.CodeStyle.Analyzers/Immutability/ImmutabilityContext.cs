@@ -196,7 +196,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			if( type.IsTupleType ) {
-				info = ImmutableTypeInfo.CreateWithAllImmutableTypeParameters(
+				info = ImmutableTypeInfo.CreateWithAllConditionalTypeParameters(
 					kind: ImmutableTypeKind.Total,
 					type: type.OriginalDefinition
 				);
@@ -211,6 +211,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ITypeSymbol type
 		) {
 			if ( Attributes.Objects.Immutable.IsDefined( type ) ) {
+				return ImmutableTypeKind.Total;
+			}
+
+			if( Attributes.Objects.ConditionallyImmutable.IsDefined( type ) ) {
 				return ImmutableTypeKind.Total;
 			}
 

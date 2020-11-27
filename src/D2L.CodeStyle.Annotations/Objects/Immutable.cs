@@ -26,8 +26,25 @@ namespace D2L.CodeStyle.Annotations {
 		/// but other mutable classes may sub-class it.
 		/// It is always safe to add this annotation because an analyzer will check
 		/// that it is valid.
-		/// </summary>
 		[AttributeUsage( validOn: AttributeTargets.Class )]
 		public sealed class ImmutableBaseClassAttribute : ImmutableAttributeBase { }
+
+		/// <summary>
+		/// If a class, struct or interface is marked with this annotation it
+		/// means that it's type is immutable if all type arguments marked with [OnlyIf]
+		/// are themselves immutable.
+		/// </summary>
+		[AttributeUsage(
+			validOn: AttributeTargets.Class
+			       | AttributeTargets.Interface
+			       | AttributeTargets.Struct
+		)]
+		public sealed class ConditionallyImmutable : ImmutableAttributeBase {
+
+			[AttributeUsage( validOn: AttributeTargets.GenericParameter )]
+			public sealed class OnlyIf : ImmutableAttributeBase { }
+
+		}
+
 	}
 }

@@ -95,6 +95,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
+			var typeIsMarkedConditionallyImmutable = Attributes.Objects.ConditionallyImmutable.IsDefined( type );
+
 			foreach( var baseType in decl.BaseList.Types ) {
 				var typeSymbol = context.SemanticModel
 					.GetSymbolInfo( baseType.Type ).Symbol
@@ -106,9 +108,20 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					continue;
 				}
 
-				if( !hasTheImmutableAttribute( typeSymbol ) ) {
+				bool baseTypeIsMarkedImmutable = hasTheImmutableAttribute( typeSymbol );
+				bool baseTypeIsMarkedConditionallyImmutable = Attributes.Objects.ConditionallyImmutable.IsDefined( typeSymbol );
+
+				if( !baseTypeIsMarkedImmutable
+					&& !baseTypeIsMarkedConditionallyImmutable
+				) {
 					continue;
 				}
+
+				if( baseTypeIsMarkedConditionallyImmutable
+					&& typeIsMarkedConditionallyImmutable
+				) {
+					continue;
+				} 
 
 				// The docs say the only things that can have BaseType == null
 				// are interfaces, System.Object itself (won't come up in our
@@ -126,6 +139,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					CreateDiagnostic(
 						declaredThing: type,
 						declSyntax: decl,
+						orConditional: baseTypeIsMarkedConditionallyImmutable,
 						otherThing: typeSymbol,
 						otherThingKind: isInterface ? "interface" : "base class"
 					)
@@ -136,6 +150,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		public Diagnostic CreateDiagnostic(
 			ITypeSymbol declaredThing,
 			TypeDeclarationSyntax declSyntax,
+			bool orConditional,
 			ITypeSymbol otherThing,
 			string otherThingKind
 		) {
@@ -144,6 +159,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				declSyntax.Identifier.GetLocation(),
 				properties: FixArgs,
 				declaredThing.GetFullTypeName(),
+				orConditional ? " (or [ConditionallyImmutable])" : "",
 				otherThingKind,
 				otherThing.GetFullTypeName()
 			);

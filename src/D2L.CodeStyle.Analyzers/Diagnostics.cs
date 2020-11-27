@@ -227,7 +227,7 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor MissingTransitiveImmutableAttribute = new DiagnosticDescriptor(
 			id: "D2L0040",
 			title: "Missing an explicit transitive [Immutable] attribute",
-			messageFormat: "{0} should be [Immutable] because the {1} {2} is.",
+			messageFormat: "{0} should be [Immutable]{1} because the {2} {3} is.",
 			category: "",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,

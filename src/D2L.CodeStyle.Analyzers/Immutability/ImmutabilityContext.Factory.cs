@@ -107,7 +107,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					continue;
 				}
 
-				ImmutableTypeInfo info = ImmutableTypeInfo.CreateWithAllImmutableTypeParameters(
+				ImmutableTypeInfo info = ImmutableTypeInfo.CreateWithAllConditionalTypeParameters(
 					ImmutableTypeKind.Total,
 					type
 				);

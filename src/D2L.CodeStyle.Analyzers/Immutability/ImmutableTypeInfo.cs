@@ -10,17 +10,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 	internal readonly struct ImmutableTypeInfo {
 
 		// a mapping of which type parameters considered necessarily immutable for the
-		// type to be immutable
-		private readonly ImmutableArray<bool> m_immutableTypeParameters;
+		// conditionally immutable type to be immutable
+		private readonly ImmutableArray<bool> m_conditionalTypeParameters;
 
 		private ImmutableTypeInfo(
 			ImmutableTypeKind kind,
 			INamedTypeSymbol type,
-			ImmutableArray<bool> immutableTypeParameters
+			ImmutableArray<bool> conditionalTypeParameters
 		) {
 			Kind = kind;
 			Type = type;
-			m_immutableTypeParameters = immutableTypeParameters;
+			m_conditionalTypeParameters = conditionalTypeParameters;
 		}
 
 		public ImmutableTypeKind Kind { get; }
@@ -41,7 +41,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			var argRelevance = definition
 				.TypeArguments
-				.Zip( m_immutableTypeParameters, ( a, relevant ) => (a, relevant) );
+				.Zip( m_conditionalTypeParameters, ( a, relevant ) => (a, relevant) );
 			foreach( (ITypeSymbol argument, bool isRelevant) in argRelevance ) {
 				if( !isRelevant ) {
 					continue;
@@ -62,17 +62,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			ImmutableArray<bool> immutableTypeParameters = type
 				.TypeParameters
-				.Select( p => Attributes.Objects.Immutable.IsDefined( p ) )
+				.Select( p => Attributes.Objects.OnlyIf.IsDefined( p ) )
 				.ToImmutableArray();
 
 			return new ImmutableTypeInfo(
 				kind: kind,
 				type: type,
-				immutableTypeParameters: immutableTypeParameters
+				conditionalTypeParameters: immutableTypeParameters
 			);
 		}
 
-		public static ImmutableTypeInfo CreateWithAllImmutableTypeParameters(
+		public static ImmutableTypeInfo CreateWithAllConditionalTypeParameters(
 			ImmutableTypeKind kind,
 			INamedTypeSymbol type
 		) {
@@ -84,7 +84,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return new ImmutableTypeInfo(
 				kind: kind,
 				type: type,
-				immutableTypeParameters: immutableTypeParameters
+				conditionalTypeParameters: immutableTypeParameters
 			);
 		}
 	}
