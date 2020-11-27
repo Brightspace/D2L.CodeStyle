@@ -162,7 +162,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return true;
 			}
 
-			var propInfo = GetPropertySyntax(
+			var propInfo = GetPropertyStuff(
 				prop,
 				prop.DeclaringSyntaxReferences.Single().GetSyntax()
 			);
@@ -341,13 +341,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				.GetLocation();
 		}
 
+		/// <summary>
+		/// Return info about a property, wether its the classic kind or one
+		/// from a concise record declaration.
+		/// </summary>
 		private (
 			TypeSyntax TypeSyntax,
 			SyntaxToken Identifier,
 			ExpressionSyntax Initializer,
 			bool IsAutoImplemented,
 			bool IsReadOnly
-		) GetPropertySyntax( IPropertySymbol symbol, SyntaxNode syntax )
+		) GetPropertyStuff( IPropertySymbol symbol, SyntaxNode syntax )
 			=> syntax switch {
 				PropertyDeclarationSyntax prop => (
 					prop.Type,
