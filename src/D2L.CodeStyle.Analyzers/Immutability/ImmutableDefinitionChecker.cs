@@ -25,6 +25,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			m_context = context;
 		}
 
+		/// <remarks>
+		/// Check that a type declaration (class, struct, record) always produces immutable values.
+		/// </remarks>
 		public bool CheckDeclaration( INamedTypeSymbol type ) {
 			var result = true;
 
@@ -61,6 +64,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return result;
 		}
 
+		/// <remarks>
+		/// Check that a member (e.g. field or property) always produces immutable values.
+		/// </remarks>
 		public bool CheckMember( ISymbol member ) {
 			if ( MutabilityAuditor.IsAudited( member, out var location ) ) {
 				// If they have one of the auditing attributes, run the
