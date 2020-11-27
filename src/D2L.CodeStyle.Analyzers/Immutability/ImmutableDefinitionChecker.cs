@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
@@ -26,17 +25,19 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		/// <remarks>
-		/// Check that a type declaration (class, struct, record) always produces immutable values.
+		/// Check that a type declaration (class, struct, record) always
+		/// produces immutable values.
 		/// </remarks>
 		public bool CheckDeclaration( INamedTypeSymbol type ) {
 			var result = true;
 
 			var members = type.GetMembers()
 				// Exclude static members.
-				// Immutability is a property of values, [Immutable] (etc.) are judgements
-				// about the immutability of values of some type.
-				// Static fields/properties are global variables scoped to particular types,
-				// but are not a factor in the immutability of the values of that type themselves.
+				// Immutability is a property of values, [Immutable] (etc.) are
+				// judgements about the immutability of values of some type.
+				// Static fields/properties are global variables scoped to
+				// particular types, but are not a factor in the immutability
+				// of the values (instances) of that type.
 				.Where( m => !m.IsStatic );
 
 			if( type.TypeKind == TypeKind.Class ) {
@@ -65,7 +66,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		/// <remarks>
-		/// Check that a member (e.g. field or property) always produces immutable values.
+		/// Check that a member (e.g. field or property) always produces immutable
+		/// values.
 		/// </remarks>
 		public bool CheckMember( ISymbol member ) {
 			if ( MutabilityAuditor.IsAudited( member, out var location ) ) {
@@ -127,8 +129,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private bool CheckField( DiagnosticSink diagnosticSink, IFieldSymbol field ) {
 			if ( field.IsImplicitlyDeclared ) {
-				// These correspond to auto-properties. That case gets handled in
-				// CheckProperty instead.
+				// These correspond to auto-properties. That case gets handled
+				// in CheckProperty instead.
 				return true;
 			}
 
@@ -151,14 +153,16 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private bool CheckProperty( DiagnosticSink diagnosticSink, IPropertySymbol prop ) {
 			if ( prop.IsIndexer ) {
-				// Indexer properties are just glorified method syntax and don't hold state.
+				// Indexer properties are just glorified method syntax and
+				// don't hold state.
 				// https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/indexers/
 				return true;
 			}
 
 			if ( prop.IsImplicitlyDeclared ) {
-				// records have implicitly declared properties like EqualityContract which
-				// are OK and don't have a PropertyDeclarationSyntax anyway.
+				// records have implicitly declared properties like
+				// EqualityContract which are OK but don't have a
+				// PropertyDeclarationSyntax etc.
 				return true;
 			}
 
@@ -211,10 +215,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				immutable = false;
 			}
 
-			var stuff = GetStuffToCheckForMember( type, typeSyntax, initializer );
+			var stuff = GetStuffToCheckForMember(
+				type,
+				typeSyntax,
+				initializer
+			);
 
 			if ( stuff == null ) {
-				// null is a signal that there is nothing further that needs to be checked
+				// null is a signal that there is nothing further that needs to
+				// be checked
 				return immutable;
 			}
 
@@ -244,7 +253,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ExpressionSyntax initializer
 		) {
 			if( initializer == null ) {
-				return (memberType, ImmutableTypeKind.Total, () => memberTypeSyntax.GetLocation());
+				return (
+					memberType,
+					ImmutableTypeKind.Total,
+					() => memberTypeSyntax.GetLocation()
+				);
 			}
 
 			// When we have an initializer we use it to narrow our check, e.g.
@@ -283,11 +296,19 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			if ( initializer is ObjectCreationExpressionSyntax objCreation ) {
 				// When we have a new T() we don't need to worry about the value
 				// being anything other than an instance of T.
-				return (typeToCheck, ImmutableTypeKind.Instance, () => objCreation.Type.GetLocation());
+				return (
+					typeToCheck,
+					ImmutableTypeKind.Instance,
+					() => objCreation.Type.GetLocation()
+				);
 			}
 
 			// In general we need to handle subtypes.
-			return (typeToCheck, ImmutableTypeKind.Total, () => initializer.GetLocation());
+			return (
+				typeToCheck,
+				ImmutableTypeKind.Total,
+				() => initializer.GetLocation()
+			);
 		}
 
 		private static Location GetLocationOfMember( ISymbol s ) =>s
@@ -322,7 +343,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			// Find the first candidate that is a class type.
 			foreach( var candidate in candidates ) {
-				var model = m_compilation.GetSemanticModel( candidate.SyntaxTree );
+				var model = m_compilation.GetSemanticModel(
+					candidate.SyntaxTree
+				);
+
 				var candidateInfo = model.GetTypeInfo( candidate.Type );
 
 				if ( candidateInfo.Type == null ) {
