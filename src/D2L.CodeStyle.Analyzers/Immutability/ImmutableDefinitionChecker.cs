@@ -375,27 +375,40 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ExpressionSyntax Initializer,
 			bool IsAutoImplemented,
 			bool IsReadOnly
-		) GetPropertyStuff( IPropertySymbol symbol, SyntaxNode syntax )
-			=> syntax switch {
+		) GetPropertyStuff( IPropertySymbol symbol, SyntaxNode syntax ) {
+			bool isInitOnly = symbol.SetMethod != null && symbol.SetMethod.IsInitOnly;
+
+			// init-only is as good as readonly for the rest of the analyzer.
+			bool isReadOnly = isInitOnly || symbol.IsReadOnly;
+
+			return syntax switch {
 				PropertyDeclarationSyntax prop => (
 					prop.Type,
 					prop.Identifier,
-					prop.Initializer?.Value,
+
+					// Only return the initializer syntax for readonly
+					// properties. init-only properties can be overwritten by
+					// callers (rather than just constructors) which are well
+					// outside the scope of our analysis.
+					isInitOnly ? null : prop.Initializer?.Value,
+
 					prop.IsAutoImplemented(),
-					symbol.IsReadOnly
+					isReadOnly
 				),
 				ParameterSyntax param => (
 					param.Type,
 					param.Identifier,
-					Initializer: null,
-					IsAutoImplemented: true,
 
-					// The property X in "record Foo(int X);" is not IsReadOnly,
-					// but its SetMethod has IsInitOnly. We could probably just
-					// return true here but this seems safer.
-					IsReadOnly: symbol.SetMethod != null && symbol.SetMethod.IsInitOnly
+					// We never care about initializers for these types of
+					// properties because they are always init-only and can
+					// be overwritten by any caller.
+					Initializer: null,
+
+					IsAutoImplemented: true,
+					isReadOnly
 				),
 				_ => throw new NotImplementedException()
 			};
+		}
 	}
 }
