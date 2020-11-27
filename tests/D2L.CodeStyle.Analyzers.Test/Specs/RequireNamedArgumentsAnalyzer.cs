@@ -277,5 +277,15 @@ namespace D2L {
 			public SomeInheritedClass( int b1, int b2, int b3, int b4, int b5, string _ )
 				/* TooManyUnnamedArgs(5) */ : base( b1, b2, b3, b4, b5 ) /**/{ }
 		}
-    }
+	}
+
+	public static class PR659 {
+		public interface IFoo { }
+		public class Foo : IFoo {
+			public Foo( long a, long b ) { }
+			static void SomeMethod( long a, long b, out IFoo c ) {
+				c = new Foo( a, b );
+			}
+		}
+	}
 }
