@@ -293,13 +293,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			//   int[] foo = { 1, 2, 3 };
 			var typeToCheck = typeInfo.Type ?? typeInfo.ConvertedType;
 
-			if ( initializer is ObjectCreationExpressionSyntax objCreation ) {
+			if ( initializer is BaseObjectCreationExpressionSyntax _ ) {
 				// When we have a new T() we don't need to worry about the value
 				// being anything other than an instance of T.
 				return (
 					typeToCheck,
 					ImmutableTypeKind.Instance,
-					() => objCreation.Type.GetLocation()
+					() => initializer.GetLocation()
 				);
 			}
 
