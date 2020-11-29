@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.Immutability.TypeDeclarationImmutabilityAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.Immutability.ImmutabilityAnalyzer
 
 using System;
 using D2L.CodeStyle.Annotations;
