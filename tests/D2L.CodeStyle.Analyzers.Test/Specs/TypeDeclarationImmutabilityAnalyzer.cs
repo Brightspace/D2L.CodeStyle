@@ -764,6 +764,211 @@ namespace SpecTests {
 		}
 	}
 
+	[ConditionallyImmutable]
+	public sealed class AnalyzedImmutableGenericClassGivenT<[ConditionallyImmutable.OnlyIf] T, U> {
+
+
+
+		static T /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		static readonly T m_field;
+		T /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		readonly T m_field;
+		T Property { get; }
+		T Property { get { return default; } }
+
+
+
+		static T /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/ = new T();
+		static readonly T m_field = new T();
+		T /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/ = new T();
+		readonly T m_field = new T();
+		T Property { get; } = new T()
+		T Property { get { return new T(); } }
+
+
+
+		static /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		static readonly /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/ m_field;
+		/* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
+		U m_field;
+		[Mutability.Audited]
+		U m_field;
+		readonly /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/ m_field;
+		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
+		readonly U m_field;
+		[Mutability.Audited]
+		readonly U m_field;
+		/* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/ Property { get; }
+		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
+		U Property { get; }
+		[Mutability.Audited]
+		U Property { get; }
+		U Property { get { return default; } }
+
+
+
+		static U /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/ = /* TypeParameterIsNotKnownToBeImmutable(U) */ new U() /**/;
+		static readonly U m_field = /* TypeParameterIsNotKnownToBeImmutable(U) */ new U() /**/;
+		U /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/ = /* TypeParameterIsNotKnownToBeImmutable(U) */ new U() /**/;
+		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
+		U m_field = new U();
+		[Mutability.Audited]
+		U m_field = new U();
+		readonly U m_field = /* TypeParameterIsNotKnownToBeImmutable(U) */ new U() /**/;
+		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
+		readonly U m_field = new U();
+		[Mutability.Audited]
+		readonly U m_field = new U();
+		U Property { get; } = /* TypeParameterIsNotKnownToBeImmutable(U) */ new U() /**/;
+		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
+		U Property { get; } = new U();
+		[Mutability.Audited]
+		U Property { get; } = new U();
+
+
+
+		static Types.SomeImmutableGenericInterfaceGivenT<T, U> /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		static readonly Types.SomeImmutableGenericInterfaceGivenT<T, U> m_field;
+		Types.SomeImmutableGenericInterfaceGivenT<T, U> /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		readonly Types.SomeImmutableGenericInterfaceGivenT<T, U> m_field;
+		Types.SomeImmutableGenericInterfaceGivenT<T, U> Property { get; }
+		Types.SomeImmutableGenericInterfaceGivenT<T, U> Property { get { return default; } }
+
+
+
+		static /* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenT<U, T> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		static readonly /* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenT<U, T> /**/ m_field;
+		/* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenT<U, T> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		readonly /* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenT<U, T> /**/ m_field;
+		/* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenT<U, T> /**/ Property { get; }
+		Types.SomeImmutableGenericInterfaceGivenT<U, T> Property { get { return default; } }
+
+
+		static Types.SomeImmutableGenericInterfaceGivenU<U, T> /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		static readonly Types.SomeImmutableGenericInterfaceGivenU<U, T> m_field;
+		Types.SomeImmutableGenericInterfaceGivenU<U, T> /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		readonly Types.SomeImmutableGenericInterfaceGivenU<U, T> m_field;
+		Types.SomeImmutableGenericInterfaceGivenU<U, T> Property { get; }
+		Types.SomeImmutableGenericInterfaceGivenU<U, T> Property { get { return default; } }
+
+
+
+		static /* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenU<T, U> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		static readonly /* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenU<T, U> /**/ m_field;
+		/* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenU<T, U> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		readonly /* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenU<T, U> /**/ m_field;
+		/* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenU<T, U> /**/ Property { get; }
+		Types.SomeImmutableGenericInterfaceGivenU<T, U> Property { get { return default; } }
+
+
+
+		static Types.SomeImmutableGenericInterfaceGivenTU<T, T> /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		static readonly Types.SomeImmutableGenericInterfaceGivenTU<T, T> m_field;
+		Types.SomeImmutableGenericInterfaceGivenTU<T, T> /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		readonly Types.SomeImmutableGenericInterfaceGivenTU<T, T> m_field;
+		Types.SomeImmutableGenericInterfaceGivenTU<T, T> Property { get; }
+		Types.SomeImmutableGenericInterfaceGivenTU<T, T> Property { get { return default; } }
+
+
+
+		static /* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenTU<T, U> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		static readonly /* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenTU<T, U> /**/ m_field;
+		/* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenTU<T, U> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		readonly /* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenTU<T, U> /**/ m_field;
+		/* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenTU<T, U> /**/ Property { get; }
+		Types.SomeImmutableGenericInterfaceGivenTU<T, U> Property { get { return default; } }
+
+
+		static /* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenTU<U, T> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		static readonly /* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenTU<U, T> /**/ m_field;
+		/* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenTU<U, T> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		readonly /* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenTU<U, T> /**/ m_field;
+		/* TypeParameterIsNotKnownToBeImmutable(U) */ Types.SomeImmutableGenericInterfaceGivenTU<U, T> /**/ Property { get; }
+		Types.SomeImmutableGenericInterfaceGivenTU<U, T> Property { get { return default; } }
+
+
+
+		static Types.SomeImmutableGenericInterfaceRestrictingT<T, U> /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		static readonly Types.SomeImmutableGenericInterfaceRestrictingT<T, U> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingT<T, U> /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		readonly Types.SomeImmutableGenericInterfaceRestrictingT<T, U> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingT<T, U> Property { get; }
+		Types.SomeImmutableGenericInterfaceRestrictingT<T, U> Property { get { return default; } }
+
+
+
+		static Types.SomeImmutableGenericInterfaceRestrictingT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T> /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		static readonly Types.SomeImmutableGenericInterfaceRestrictingT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T>/* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		readonly Types.SomeImmutableGenericInterfaceRestrictingT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T> Property { get; }
+		Types.SomeImmutableGenericInterfaceRestrictingT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T> Property { get { return default; } }
+
+
+		static Types.SomeImmutableGenericInterfaceRestrictingU<U, T> /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		static readonly Types.SomeImmutableGenericInterfaceRestrictingU<U, T> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingU<U, T> /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		readonly Types.SomeImmutableGenericInterfaceRestrictingU<U, T> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingU<U, T> Property { get; }
+		Types.SomeImmutableGenericInterfaceRestrictingU<U, T> Property { get { return default; } }
+
+
+
+		static Types.SomeImmutableGenericInterfaceRestrictingU<T, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		static readonly Types.SomeImmutableGenericInterfaceRestrictingU<T, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingU<T, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		readonly Types.SomeImmutableGenericInterfaceRestrictingU<T, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingU<T, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> Property { get; }
+		Types.SomeImmutableGenericInterfaceRestrictingU<T, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> Property { get { return default; } }
+
+
+
+		static Types.SomeImmutableGenericInterfaceRestrictingTU<T, T> /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		static readonly Types.SomeImmutableGenericInterfaceRestrictingTU<T, T> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingTU<T, T> /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		readonly Types.SomeImmutableGenericInterfaceRestrictingTU<T, T> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingTU<T, T> Property { get; }
+		Types.SomeImmutableGenericInterfaceRestrictingTU<T, T> Property { get { return default; } }
+
+
+
+		static Types.SomeImmutableGenericInterfaceRestrictingTU<T, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		static readonly Types.SomeImmutableGenericInterfaceRestrictingTU<T, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingTU<T, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		readonly Types.SomeImmutableGenericInterfaceRestrictingTU<T, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingTU<T, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> Property { get; }
+		Types.SomeImmutableGenericInterfaceRestrictingTU<T, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> Property { get { return default; } }
+
+
+		static Types.SomeImmutableGenericInterfaceRestrictingTU</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T> /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		static readonly Types.SomeImmutableGenericInterfaceRestrictingTU</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingTU</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T> /* MemberIsNotReadOnly(Field, m_field, AnalyzedImmutableGenericClassGivenT) */ m_field /**/;
+		readonly Types.SomeImmutableGenericInterfaceRestrictingTU</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingTU</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T> Property { get; }
+		Types.SomeImmutableGenericInterfaceRestrictingTU</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T> Property { get { return default; } }
+
+
+		void Method() {
+			Types.SomeGenericMethod<T, U>();
+			Types.SomeGenericMethod<U, T>();
+			Types.SomeGenericMethod<T, T>();
+			Types.SomeGenericMethod<U, U>();
+			Types.SomeGenericMethodRestrictingT<T, U>();
+			Types.SomeGenericMethodRestrictingT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T>();
+			Types.SomeGenericMethodRestrictingT<T, T>();
+			Types.SomeGenericMethodRestrictingT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, U>();
+			Types.SomeGenericMethodRestrictingU<T, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/>();
+			Types.SomeGenericMethodRestrictingU<U, T>();
+			Types.SomeGenericMethodRestrictingU<T, T>();
+			Types.SomeGenericMethodRestrictingU<U, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/>();
+			Types.SomeGenericMethodRestrictingTU<T, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/>();
+			Types.SomeGenericMethodRestrictingTU</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T>();
+			Types.SomeGenericMethodRestrictingTU<T, T>();
+			Types.SomeGenericMethodRestrictingTU</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/>();
+		}
+	}
+
 	public static class StaticAudits {
 		[Statics.Audited]
 		static int staticint1;

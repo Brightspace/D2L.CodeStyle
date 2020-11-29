@@ -218,6 +218,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return ImmutableTypeKind.Total;
 			}
 
+			if( Attributes.Objects.OnlyIf.IsDefined( type ) ) {
+				return ImmutableTypeKind.Total;
+			}
+
 			if ( Attributes.Objects.ImmutableBaseClass.IsDefined( type ) ) {
 				return ImmutableTypeKind.Instance;
 			}
