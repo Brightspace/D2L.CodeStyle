@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
-	public sealed class TypeDeclarationImmutabilityAnalyzer : DiagnosticAnalyzer {
+	public sealed class ImmutabilityAnalyzer : DiagnosticAnalyzer {
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.ArraysAreMutable,
