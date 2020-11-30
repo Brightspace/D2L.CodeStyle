@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
@@ -40,12 +38,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			SpecialType.System_ValueType
 		);
 
-		private ImmutabilityContext( IEnumerable<ImmutableTypeInfo> extraImmutableTypes ) {
-			m_extraImmutableTypes = extraImmutableTypes
-				.ToImmutableDictionary(
-					info => info.Type,
-					info => info
-				);
+		private ImmutabilityContext(
+			ImmutableDictionary<INamedTypeSymbol, ImmutableTypeInfo> extraImmutableTypes
+		) {
+			m_extraImmutableTypes = extraImmutableTypes;
 		}
 
 		/// <summary>

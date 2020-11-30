@@ -89,7 +89,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		internal static ImmutabilityContext Create( Compilation compilation ) {
 			ImmutableDictionary<string, IAssemblySymbol> compilationAssmeblies = GetCompilationAssemblies( compilation );
 
-			var builder = ImmutableArray.CreateBuilder<ImmutableTypeInfo>( DefaultExtraTypes.Length );
+			var builder = ImmutableDictionary.CreateBuilder<INamedTypeSymbol, ImmutableTypeInfo>();
 
 			foreach( ( string typeName, string qualifiedAssembly ) in DefaultExtraTypes ) {
 				INamedTypeSymbol type;
@@ -112,7 +112,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					type
 				);
 
-				builder.Add( info );
+				builder.Add( type, info );
 			}
 
 			return new ImmutabilityContext( builder.ToImmutable() );
