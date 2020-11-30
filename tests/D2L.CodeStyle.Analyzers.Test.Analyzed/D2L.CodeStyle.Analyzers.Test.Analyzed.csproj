@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Analyzer Include="../../src/D2L.CodeStyle.Analyzers/bin/Debug/netstandard2.0/D2L.Codestyle.Analyzers.dll" />
+    <Compile Include="../D2L.CodeStyle.Analyzers.Test/Specs/*" />
+  </ItemGroup>
+
+</Project>
