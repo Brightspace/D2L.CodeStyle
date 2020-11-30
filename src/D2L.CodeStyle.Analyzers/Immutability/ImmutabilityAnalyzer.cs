@@ -116,6 +116,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
+			if( Attributes.Objects.ConditionallyImmutable.IsDefined( typeSymbol ) ) {
+				immutabilityContext = immutabilityContext.WithConditionalTypeParametersAsImmutable( typeSymbol );
+			}
+
 			ImmutableDefinitionChecker checker = new ImmutableDefinitionChecker(
 				compilation: ctx.Compilation,
 				diagnosticSink: ctx.ReportDiagnostic,

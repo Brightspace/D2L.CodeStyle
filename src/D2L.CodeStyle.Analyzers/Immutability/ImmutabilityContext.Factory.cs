@@ -115,7 +115,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				builder.Add( type, info );
 			}
 
-			return new ImmutabilityContext( builder.ToImmutable() );
+			return new ImmutabilityContext(
+				extraImmutableTypes: builder.ToImmutable(),
+				conditionalTypeParamemters: ImmutableHashSet<ITypeParameterSymbol>.Empty
+			);
 		}
 
 		private static ImmutableDictionary<string, IAssemblySymbol> GetCompilationAssemblies( Compilation compilation ) {
