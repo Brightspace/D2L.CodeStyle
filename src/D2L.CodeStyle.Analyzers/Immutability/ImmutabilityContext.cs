@@ -17,6 +17,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 	/// </summary>
 	internal sealed partial class ImmutabilityContext {
 		private readonly ImmutableDictionary<INamedTypeSymbol, ImmutableTypeInfo> m_extraImmutableTypes;
+		private readonly ImmutableHashSet<ITypeParameterSymbol> m_conditionalTypeParameters;
 
 		// Hard code this to avoid looking up the ITypeSymbol to include it in m_extraImmutableTypes
 		private static readonly ImmutableHashSet<SpecialType> m_totallyImmutableSpecialTypes = ImmutableHashSet.Create(
@@ -40,12 +41,34 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			SpecialType.System_ValueType
 		);
 
-		private ImmutabilityContext( IEnumerable<ImmutableTypeInfo> extraImmutableTypes ) {
-			m_extraImmutableTypes = extraImmutableTypes
-				.ToImmutableDictionary(
-					info => info.Type,
-					info => info
-				);
+		private ImmutabilityContext(
+			ImmutableDictionary<INamedTypeSymbol, ImmutableTypeInfo> extraImmutableTypes,
+			ImmutableHashSet<ITypeParameterSymbol> conditionalTypeParamemters
+		) {
+			m_extraImmutableTypes = extraImmutableTypes;
+			m_conditionalTypeParameters = conditionalTypeParamemters;
+		}
+
+		/// <summary>
+		/// This function is intended to provide a new immutability context that considers the conditional type parameters
+		/// of the ConditionallyImmutable type being checked as immutable. It is important this is only used in those cases,
+		/// and not for instance while validating type arguments to an [Immutable] type parameter.
+		/// </summary>
+		/// <param name="type">The ConditionallyImmutable type definition being checked</param>
+		/// <returns></returns>
+		public ImmutabilityContext WithConditionalTypeParametersAsImmutable(
+			INamedTypeSymbol type
+		) {
+			if( !Attributes.Objects.ConditionallyImmutable.IsDefined( type ) ) {
+				throw new InvalidOperationException( $"{nameof( WithConditionalTypeParametersAsImmutable )} should only be called on ConditionallyImmutable types" );
+			}
+
+			var conditionalTypeParameters = type.TypeParameters.Where( p => Attributes.Objects.OnlyIf.IsDefined( p ) );
+
+			return new ImmutabilityContext(
+				extraImmutableTypes: m_extraImmutableTypes,
+				conditionalTypeParamemters: m_conditionalTypeParameters.Union( conditionalTypeParameters )
+			);
 		}
 
 		/// <summary>
@@ -138,6 +161,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						return true;
 					}
 
+					if( type is ITypeParameterSymbol tp && m_conditionalTypeParameters.Contains( tp ) ) {
+						return true;
+					}
+
 					diagnostic = Diagnostic.Create(
 						Diagnostics.TypeParameterIsNotKnownToBeImmutable,
 						getLocation(),
@@ -215,10 +242,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			if( Attributes.Objects.ConditionallyImmutable.IsDefined( type ) ) {
-				return ImmutableTypeKind.Total;
-			}
-
-			if( Attributes.Objects.OnlyIf.IsDefined( type ) ) {
 				return ImmutableTypeKind.Total;
 			}
 
