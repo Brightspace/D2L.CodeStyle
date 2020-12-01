@@ -161,7 +161,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						return true;
 					}
 
-					if( m_conditionalTypeParameters.Contains( type as ITypeParameterSymbol ) ) {
+					if( type is ITypeParameterSymbol tp && m_conditionalTypeParameters.Contains( tp ) ) {
 						return true;
 					}
 
