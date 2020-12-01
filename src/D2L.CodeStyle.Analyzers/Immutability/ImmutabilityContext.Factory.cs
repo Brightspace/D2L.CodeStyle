@@ -71,8 +71,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			("count4net.IDurationCounter", default),
 			("count4net.Writers.DurationCounter", default),
 			("D2L.LP.Utilities.DeferredInitializer`1", default),
-			("D2L.LP.Extensibility.Activation.Domain.IPlugins`1", default),
-			("D2L.LP.Extensibility.Activation.Domain.IPlugins`2", default),
 			("D2L.LP.Extensibility.Plugins.IInstancePlugins`1", default),
 			("D2L.LP.Extensibility.Plugins.IInstancePlugins`2", default),
 
