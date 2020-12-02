@@ -70,8 +70,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			("count4net.IValueCounter", default),
 			("count4net.IDurationCounter", default),
 			("count4net.Writers.DurationCounter", default),
-			("D2L.LP.Extensibility.Plugins.IInstancePlugins`1", default),
-			("D2L.LP.Extensibility.Plugins.IInstancePlugins`2", default),
 
 			// 3rd-Party Types
 			("Amazon.RegionEndpoint", default),
