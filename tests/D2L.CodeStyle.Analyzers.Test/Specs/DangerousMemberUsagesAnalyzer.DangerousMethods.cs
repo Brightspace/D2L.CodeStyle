@@ -100,6 +100,14 @@ namespace SpecTests {
 		public void/* DangerousMethodsShouldBeAvoided(System.Threading.Tasks.TaskFactory.StartNew) */ MethodWithGenericTaskFactoryStartNew(/**/) {
 			System.Threading.Tasks.Task<int>.Factory.StartNew( () => 1 );
 		}
+
+		public void/* DangerousMethodsShouldBeAvoided(System.Threading.Thread.Sleep) */ MethodWithThreadSleepInt(/**/) {
+			System.Threading.Thread.Sleep( 1 );
+		}
+
+		public void/* DangerousMethodsShouldBeAvoided(System.Threading.Thread.Sleep) */ MethodWithThreadSleepTimeSpan(/**/) {
+			System.Threading.Thread.Sleep( TimeSpan.FromMilliseconds( 1 ) );
+		}
 	}
 
 	internal sealed class AuditedUsages {

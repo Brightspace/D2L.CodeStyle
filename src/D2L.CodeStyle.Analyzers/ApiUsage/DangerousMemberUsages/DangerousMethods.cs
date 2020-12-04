@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
@@ -27,6 +28,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 					typeof( TaskFactory ).FullName,
 					typeof( TaskFactory<> ).FullName
 				}
+			)
+			.Add<Thread>(
+				nameof( Thread.Sleep )
 			)
 			.AddMethod(
 				"MapPath",
