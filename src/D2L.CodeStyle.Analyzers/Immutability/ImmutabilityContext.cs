@@ -177,7 +177,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					diagnostic = Diagnostic.Create(
 						Diagnostics.NonImmutableTypeHeldByImmutable,
 						getLocation(),
-						type.TypeKind,
+						type.TypeKind.ToString().ToLower(),
 						type.Name,
 						kind == ImmutableTypeKind.Instance && !type.IsSealed ? " (or [ImmutableBaseClass])" : ""
 					);
@@ -189,7 +189,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					diagnostic = Diagnostic.Create(
 						Diagnostics.NonImmutableTypeHeldByImmutable,
 						getLocation(),
-						type.TypeKind,
+						type.TypeKind.ToString().ToLower(),
 						type.Name,
 						""
 					);
