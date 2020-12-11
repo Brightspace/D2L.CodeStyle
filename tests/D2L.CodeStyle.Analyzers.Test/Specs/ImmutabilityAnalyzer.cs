@@ -121,10 +121,10 @@ namespace SpecTests {
 }
 
 	[Immutable]
-	public sealed class AnalyzedClassMarkedImmutableExtendingMutableClass : /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ Types.RegularClass /**/ { }
+	public sealed class AnalyzedClassMarkedImmutableExtendingMutableClass : /* NonImmutableTypeHeldByImmutable(class, RegularClass,  (or [ImmutableBaseClass])) */ Types.RegularClass /**/ { }
 
 	[ImmutableBaseClass]
-	public sealed class AnalyzedClassMarkedImmutableBaseClassExtendingMutableClass : /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ Types.RegularClass /**/ { }
+	public sealed class AnalyzedClassMarkedImmutableBaseClassExtendingMutableClass : /* NonImmutableTypeHeldByImmutable(class, RegularClass,  (or [ImmutableBaseClass])) */ Types.RegularClass /**/ { }
 
 	[ImmutableBaseClass]
 	public sealed class AnalyzedClassMarkedImmutableBaseClassExtendingImmutableBaseClass : Types.SomeImmutableBaseClass { }
@@ -154,7 +154,7 @@ namespace SpecTests {
 
 		// This isn't safe because init-only properties can be overwritten by
 		// any caller (which we may not be able to analyze).
-		public /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/ Y { get; init; } = new object();
+		public /* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/ Y { get; init; } = new object();
 
 		static int /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = 0;
 		static readonly int m_field = 0;
@@ -222,10 +222,10 @@ namespace SpecTests {
 
 
 
-		static readonly /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/ m_field;
-		/* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		readonly /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/ m_field;
-		/* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/ Property { get; }
+		static readonly /* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/ m_field;
+		/* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		readonly /* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/ m_field;
+		/* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/ Property { get; }
 
 
 		static object /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = null;
@@ -289,33 +289,33 @@ namespace SpecTests {
 
 
 
-		static /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ (object, int) /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		static readonly /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ (object, int) /**/ m_field;
-		/* NonImmutableTypeHeldByImmutable(Class, Object, ) */ (object, int) /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		readonly /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ (object, int) /**/ m_field;
-		/* NonImmutableTypeHeldByImmutable(Class, Object, ) */ (object, int) /**/ Property { get; }
+		static /* NonImmutableTypeHeldByImmutable(class, Object, ) */ (object, int) /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		static readonly /* NonImmutableTypeHeldByImmutable(class, Object, ) */ (object, int) /**/ m_field;
+		/* NonImmutableTypeHeldByImmutable(class, Object, ) */ (object, int) /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		readonly /* NonImmutableTypeHeldByImmutable(class, Object, ) */ (object, int) /**/ m_field;
+		/* NonImmutableTypeHeldByImmutable(class, Object, ) */ (object, int) /**/ Property { get; }
 		(object, int) Property { get { return default; } }
 
 
 
-		static /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ (int, object) /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		static readonly /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ (int, object) /**/ m_field;
-		/* NonImmutableTypeHeldByImmutable(Class, Object, ) */ (int, object) /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		readonly  /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ (int, object) /**/ m_field;
-		/* NonImmutableTypeHeldByImmutable(Class, Object, ) */ (int, object) /**/ Property { get; }
+		static /* NonImmutableTypeHeldByImmutable(class, Object, ) */ (int, object) /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		static readonly /* NonImmutableTypeHeldByImmutable(class, Object, ) */ (int, object) /**/ m_field;
+		/* NonImmutableTypeHeldByImmutable(class, Object, ) */ (int, object) /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		readonly  /* NonImmutableTypeHeldByImmutable(class, Object, ) */ (int, object) /**/ m_field;
+		/* NonImmutableTypeHeldByImmutable(class, Object, ) */ (int, object) /**/ Property { get; }
 		(int, object) Property { get { return default; } }
 
 
 
-		static Types.RegularClass /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ new Types.RegularClass() /**/;
-		static readonly Types.RegularClass m_field = /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ new Types.RegularClass() /**/;
-		Types.RegularClass /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ new Types.RegularClass() /**/;
-		readonly Types.RegularClass m_field = /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ new Types.RegularClass() /**/;
+		static Types.RegularClass /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = /* NonImmutableTypeHeldByImmutable(class, RegularClass,  (or [ImmutableBaseClass])) */ new Types.RegularClass() /**/;
+		static readonly Types.RegularClass m_field = /* NonImmutableTypeHeldByImmutable(class, RegularClass,  (or [ImmutableBaseClass])) */ new Types.RegularClass() /**/;
+		Types.RegularClass /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = /* NonImmutableTypeHeldByImmutable(class, RegularClass,  (or [ImmutableBaseClass])) */ new Types.RegularClass() /**/;
+		readonly Types.RegularClass m_field = /* NonImmutableTypeHeldByImmutable(class, RegularClass,  (or [ImmutableBaseClass])) */ new Types.RegularClass() /**/;
 		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
 		readonly Types.RegularClass m_field = new Types.RegularClass ();
 		[Mutability.Audited]
 		readonly Types.RegularClass m_field = new Types.RegularClass();
-		Types.RegularClass Property { get; } = /* NonImmutableTypeHeldByImmutable(Class, RegularClass,  (or [ImmutableBaseClass])) */ new Types.RegularClass() /**/;
+		Types.RegularClass Property { get; } = /* NonImmutableTypeHeldByImmutable(class, RegularClass,  (or [ImmutableBaseClass])) */ new Types.RegularClass() /**/;
 		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
 		Types.RegularClass Property { get; } = new Types.RegularClass ();
 		[Mutability.Audited]
@@ -324,20 +324,20 @@ namespace SpecTests {
 
 
 
-		static Types.RegularClass /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = /* NonImmutableTypeHeldByImmutable(Class, RegularExtension,  (or [ImmutableBaseClass])) */ new Types.RegularExtension() /**/;
-		static readonly Types.RegularClass m_field = /* NonImmutableTypeHeldByImmutable(Class, RegularExtension,  (or [ImmutableBaseClass])) */ new Types.RegularExtension() /**/;
-		Types.RegularClass /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = /* NonImmutableTypeHeldByImmutable(Class, RegularExtension,  (or [ImmutableBaseClass])) */ new Types.RegularExtension() /**/;
-		readonly Types.RegularClass m_field = /* NonImmutableTypeHeldByImmutable(Class, RegularExtension,  (or [ImmutableBaseClass])) */ new Types.RegularExtension() /**/;
-		Types.RegularClass Property { get; } = /* NonImmutableTypeHeldByImmutable(Class, RegularExtension,  (or [ImmutableBaseClass])) */ new Types.RegularExtension() /**/;
+		static Types.RegularClass /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = /* NonImmutableTypeHeldByImmutable(class, RegularExtension,  (or [ImmutableBaseClass])) */ new Types.RegularExtension() /**/;
+		static readonly Types.RegularClass m_field = /* NonImmutableTypeHeldByImmutable(class, RegularExtension,  (or [ImmutableBaseClass])) */ new Types.RegularExtension() /**/;
+		Types.RegularClass /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = /* NonImmutableTypeHeldByImmutable(class, RegularExtension,  (or [ImmutableBaseClass])) */ new Types.RegularExtension() /**/;
+		readonly Types.RegularClass m_field = /* NonImmutableTypeHeldByImmutable(class, RegularExtension,  (or [ImmutableBaseClass])) */ new Types.RegularExtension() /**/;
+		Types.RegularClass Property { get; } = /* NonImmutableTypeHeldByImmutable(class, RegularExtension,  (or [ImmutableBaseClass])) */ new Types.RegularExtension() /**/;
 		Types.RegularClass Property { get { return new Types.RegularExtension(); } }
 
 
 
-		static Types.RegularClass /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = /* NonImmutableTypeHeldByImmutable(Class, RegularSealedExtension, ) */ new Types.RegularSealedExtension() /**/;
-		static readonly Types.RegularClass m_field = /* NonImmutableTypeHeldByImmutable(Class, RegularSealedExtension, ) */ new Types.RegularSealedExtension() /**/;
-		Types.RegularClass /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = /* NonImmutableTypeHeldByImmutable(Class, RegularSealedExtension, ) */ new Types.RegularSealedExtension() /**/;
-		readonly Types.RegularClass m_field = /* NonImmutableTypeHeldByImmutable(Class, RegularSealedExtension, ) */ new Types.RegularSealedExtension() /**/;
-		Types.RegularClass Property { get; } = /* NonImmutableTypeHeldByImmutable(Class, RegularSealedExtension, ) */ new Types.RegularSealedExtension() /**/;
+		static Types.RegularClass /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = /* NonImmutableTypeHeldByImmutable(class, RegularSealedExtension, ) */ new Types.RegularSealedExtension() /**/;
+		static readonly Types.RegularClass m_field = /* NonImmutableTypeHeldByImmutable(class, RegularSealedExtension, ) */ new Types.RegularSealedExtension() /**/;
+		Types.RegularClass /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = /* NonImmutableTypeHeldByImmutable(class, RegularSealedExtension, ) */ new Types.RegularSealedExtension() /**/;
+		readonly Types.RegularClass m_field = /* NonImmutableTypeHeldByImmutable(class, RegularSealedExtension, ) */ new Types.RegularSealedExtension() /**/;
+		Types.RegularClass Property { get; } = /* NonImmutableTypeHeldByImmutable(class, RegularSealedExtension, ) */ new Types.RegularSealedExtension() /**/;
 		Types.RegularClass Property { get { return new Types.RegularSealedExtension(); } }
 
 
@@ -348,14 +348,14 @@ namespace SpecTests {
 
 
 
-		readonly Types.SomeImmutableBaseClass m_field = /* NonImmutableTypeHeldByImmutable(Class, SomeImmutableBaseClass, ) */ Types.FuncReturningSomeImmutableBaseClass() /**/;
-		Types.SomeImmutableBaseClass Property { get; } = /* NonImmutableTypeHeldByImmutable(Class, SomeImmutableBaseClass, ) */ Types.FuncReturningSomeImmutableBaseClass() /**/;
+		readonly Types.SomeImmutableBaseClass m_field = /* NonImmutableTypeHeldByImmutable(class, SomeImmutableBaseClass, ) */ Types.FuncReturningSomeImmutableBaseClass() /**/;
+		Types.SomeImmutableBaseClass Property { get; } = /* NonImmutableTypeHeldByImmutable(class, SomeImmutableBaseClass, ) */ Types.FuncReturningSomeImmutableBaseClass() /**/;
 
 
 
-		Types.SomeImmutableBaseClass /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, ) */ new Types.MutableExtensionOfSomeImmutableBaseClass() /**/;
-		readonly Types.SomeImmutableBaseClass m_field = /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, ) */ new Types.MutableExtensionOfSomeImmutableBaseClass() /**/;
-		Types.SomeImmutableBaseClass Property { get; } = /* NonImmutableTypeHeldByImmutable(Class, MutableExtensionOfSomeImmutableBaseClass, ) */ new Types.MutableExtensionOfSomeImmutableBaseClass() /**/;
+		Types.SomeImmutableBaseClass /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = /* NonImmutableTypeHeldByImmutable(class, MutableExtensionOfSomeImmutableBaseClass, ) */ new Types.MutableExtensionOfSomeImmutableBaseClass() /**/;
+		readonly Types.SomeImmutableBaseClass m_field = /* NonImmutableTypeHeldByImmutable(class, MutableExtensionOfSomeImmutableBaseClass, ) */ new Types.MutableExtensionOfSomeImmutableBaseClass() /**/;
+		Types.SomeImmutableBaseClass Property { get; } = /* NonImmutableTypeHeldByImmutable(class, MutableExtensionOfSomeImmutableBaseClass, ) */ new Types.MutableExtensionOfSomeImmutableBaseClass() /**/;
 
 
 
@@ -370,15 +370,15 @@ namespace SpecTests {
 
 
 
-		static /* NonImmutableTypeHeldByImmutable(Interface, RegularInterface, ) */ Types.RegularInterface /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		static readonly /* NonImmutableTypeHeldByImmutable(Interface, RegularInterface, ) */ Types.RegularInterface /**/ m_field;
-		/* NonImmutableTypeHeldByImmutable(Interface, RegularInterface, ) */ Types.RegularInterface /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		readonly /* NonImmutableTypeHeldByImmutable(Interface, RegularInterface, ) */ Types.RegularInterface /**/ m_field;
+		static /* NonImmutableTypeHeldByImmutable(interface, RegularInterface, ) */ Types.RegularInterface /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		static readonly /* NonImmutableTypeHeldByImmutable(interface, RegularInterface, ) */ Types.RegularInterface /**/ m_field;
+		/* NonImmutableTypeHeldByImmutable(interface, RegularInterface, ) */ Types.RegularInterface /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		readonly /* NonImmutableTypeHeldByImmutable(interface, RegularInterface, ) */ Types.RegularInterface /**/ m_field;
 		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
 		readonly Types.RegularInterface m_field;
 		[Mutability.Audited]
 		readonly Types.RegularInterface m_field;
-		/* NonImmutableTypeHeldByImmutable(Interface, RegularInterface, ) */ Types.RegularInterface /**/ Property { get; }
+		/* NonImmutableTypeHeldByImmutable(interface, RegularInterface, ) */ Types.RegularInterface /**/ Property { get; }
 		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
 		Types.RegularInterface Property { get; }
 		[Mutability.Audited]
@@ -402,18 +402,18 @@ namespace SpecTests {
 
 
 
-		static /* NonImmutableTypeHeldByImmutable(Structure, SomeStruct, ) */ Types.SomeStruct /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		static readonly /* NonImmutableTypeHeldByImmutable(Structure, SomeStruct, ) */ Types.SomeStruct /**/ m_field;
-		/* NonImmutableTypeHeldByImmutable(Structure, SomeStruct, ) */ Types.SomeStruct /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		Types.SomeStruct /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = /* NonImmutableTypeHeldByImmutable(Structure, SomeStruct, ) */ new Types.SomeStruct() /**/;
-		readonly /* NonImmutableTypeHeldByImmutable(Structure, SomeStruct, ) */ Types.SomeStruct /**/ m_field;
-		readonly Types.SomeStruct  m_field = /* NonImmutableTypeHeldByImmutable(Structure, SomeStruct, ) */ new Types.SomeStruct() /**/;
+		static /* NonImmutableTypeHeldByImmutable(structure, SomeStruct, ) */ Types.SomeStruct /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		static readonly /* NonImmutableTypeHeldByImmutable(structure, SomeStruct, ) */ Types.SomeStruct /**/ m_field;
+		/* NonImmutableTypeHeldByImmutable(structure, SomeStruct, ) */ Types.SomeStruct /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		Types.SomeStruct /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/ = /* NonImmutableTypeHeldByImmutable(structure, SomeStruct, ) */ new Types.SomeStruct() /**/;
+		readonly /* NonImmutableTypeHeldByImmutable(structure, SomeStruct, ) */ Types.SomeStruct /**/ m_field;
+		readonly Types.SomeStruct  m_field = /* NonImmutableTypeHeldByImmutable(structure, SomeStruct, ) */ new Types.SomeStruct() /**/;
 		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
 		readonly Types.SomeStruct m_field;
 		[Mutability.Audited]
 		readonly Types.SomeStruct m_field;
-		/* NonImmutableTypeHeldByImmutable(Structure, SomeStruct, ) */ Types.SomeStruct /**/ Property { get; }
-		Types.SomeStruct Property { get; } = /* NonImmutableTypeHeldByImmutable(Structure, SomeStruct, ) */ new Types.SomeStruct() /**/;
+		/* NonImmutableTypeHeldByImmutable(structure, SomeStruct, ) */ Types.SomeStruct /**/ Property { get; }
+		Types.SomeStruct Property { get; } = /* NonImmutableTypeHeldByImmutable(structure, SomeStruct, ) */ new Types.SomeStruct() /**/;
 		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
 		Types.SomeStruct Property { get; }
 		[Mutability.Audited]
@@ -429,11 +429,11 @@ namespace SpecTests {
 
 
 
-		static /* NonImmutableTypeHeldByImmutable(Interface, SomeGenericInterface, ) */ Types.SomeGenericInterface<int, int> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		static readonly /* NonImmutableTypeHeldByImmutable(Interface, SomeGenericInterface, ) */ Types.SomeGenericInterface<int, int> /**/ m_field;
-		/* NonImmutableTypeHeldByImmutable(Interface, SomeGenericInterface, ) */ Types.SomeGenericInterface<int, int> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		readonly /* NonImmutableTypeHeldByImmutable(Interface, SomeGenericInterface, ) */ Types.SomeGenericInterface<int, int> /**/ m_field;
-		/* NonImmutableTypeHeldByImmutable(Interface, SomeGenericInterface, ) */ Types.SomeGenericInterface<int, int> /**/ Property { get; }
+		static /* NonImmutableTypeHeldByImmutable(interface, SomeGenericInterface, ) */ Types.SomeGenericInterface<int, int> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		static readonly /* NonImmutableTypeHeldByImmutable(interface, SomeGenericInterface, ) */ Types.SomeGenericInterface<int, int> /**/ m_field;
+		/* NonImmutableTypeHeldByImmutable(interface, SomeGenericInterface, ) */ Types.SomeGenericInterface<int, int> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		readonly /* NonImmutableTypeHeldByImmutable(interface, SomeGenericInterface, ) */ Types.SomeGenericInterface<int, int> /**/ m_field;
+		/* NonImmutableTypeHeldByImmutable(interface, SomeGenericInterface, ) */ Types.SomeGenericInterface<int, int> /**/ Property { get; }
 		Types.SomeGenericInterface<int, int> Property { get { return default; } }
 
 
@@ -447,11 +447,11 @@ namespace SpecTests {
 
 
 
-		static /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenT<object, int> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		static readonly /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenT<object, int> /**/ m_field;
-		/* NonImmutableTypeHeldByImmutable(Class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenT<object, int> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		readonly /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenT<object, int> /**/ m_field;
-		/* NonImmutableTypeHeldByImmutable(Class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenT<object, int> /**/ Property { get; }
+		static /* NonImmutableTypeHeldByImmutable(class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenT<object, int> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		static readonly /* NonImmutableTypeHeldByImmutable(class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenT<object, int> /**/ m_field;
+		/* NonImmutableTypeHeldByImmutable(class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenT<object, int> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		readonly /* NonImmutableTypeHeldByImmutable(class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenT<object, int> /**/ m_field;
+		/* NonImmutableTypeHeldByImmutable(class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenT<object, int> /**/ Property { get; }
 		Types.SomeImmutableGenericInterfaceGivenT<object, int> Property { get { return default; } }
 
 
@@ -464,11 +464,11 @@ namespace SpecTests {
 
 
 
-		static /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenU<int, object> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		static readonly /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenU<int, object> /**/ m_field;
-		/* NonImmutableTypeHeldByImmutable(Class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenU<int, object> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		readonly /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenU<int, object> /**/ m_field;
-		/* NonImmutableTypeHeldByImmutable(Class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenU<int, object> /**/ Property { get; }
+		static /* NonImmutableTypeHeldByImmutable(class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenU<int, object> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		static readonly /* NonImmutableTypeHeldByImmutable(class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenU<int, object> /**/ m_field;
+		/* NonImmutableTypeHeldByImmutable(class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenU<int, object> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		readonly /* NonImmutableTypeHeldByImmutable(class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenU<int, object> /**/ m_field;
+		/* NonImmutableTypeHeldByImmutable(class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenU<int, object> /**/ Property { get; }
 		Types.SomeImmutableGenericInterfaceGivenU<int, object> Property { get { return default; } }
 
 
@@ -482,19 +482,19 @@ namespace SpecTests {
 
 
 
-		static /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenTU<int, object> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		static readonly /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenTU<int, object> /**/ m_field;
-		/* NonImmutableTypeHeldByImmutable(Class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenTU<int, object> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		readonly /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenTU<int, object> /**/ m_field;
-		/* NonImmutableTypeHeldByImmutable(Class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenTU<int, object> /**/ Property { get; }
+		static /* NonImmutableTypeHeldByImmutable(class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenTU<int, object> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		static readonly /* NonImmutableTypeHeldByImmutable(class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenTU<int, object> /**/ m_field;
+		/* NonImmutableTypeHeldByImmutable(class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenTU<int, object> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		readonly /* NonImmutableTypeHeldByImmutable(class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenTU<int, object> /**/ m_field;
+		/* NonImmutableTypeHeldByImmutable(class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenTU<int, object> /**/ Property { get; }
 		Types.SomeImmutableGenericInterfaceGivenTU<int, object> Property { get { return default; } }
 
 
-		static /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenTU<object, int> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		static readonly /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenTU<object, int> /**/ m_field;
-		/* NonImmutableTypeHeldByImmutable(Class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenTU<object, int> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		readonly /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenTU<object, int> /**/ m_field;
-		/* NonImmutableTypeHeldByImmutable(Class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenTU<object, int> /**/ Property { get; }
+		static /* NonImmutableTypeHeldByImmutable(class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenTU<object, int> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		static readonly /* NonImmutableTypeHeldByImmutable(class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenTU<object, int> /**/ m_field;
+		/* NonImmutableTypeHeldByImmutable(class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenTU<object, int> /**/ /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		readonly /* NonImmutableTypeHeldByImmutable(class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenTU<object, int> /**/ m_field;
+		/* NonImmutableTypeHeldByImmutable(class, Object, ) */ Types.SomeImmutableGenericInterfaceGivenTU<object, int> /**/ Property { get; }
 		Types.SomeImmutableGenericInterfaceGivenTU<object, int> Property { get { return default; } }
 
 
@@ -508,12 +508,12 @@ namespace SpecTests {
 
 
 
-		static Types.SomeImmutableGenericInterfaceRestrictingT</* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/, int> /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		static readonly Types.SomeImmutableGenericInterfaceRestrictingT</* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/, int> m_field;
-		Types.SomeImmutableGenericInterfaceRestrictingT</* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/, int> /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		readonly Types.SomeImmutableGenericInterfaceRestrictingT</* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/, int> m_field;
-		Types.SomeImmutableGenericInterfaceRestrictingT</* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/, int> Property { get; }
-		Types.SomeImmutableGenericInterfaceRestrictingT</* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/, int> Property { get { return default; } }
+		static Types.SomeImmutableGenericInterfaceRestrictingT</* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/, int> /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		static readonly Types.SomeImmutableGenericInterfaceRestrictingT</* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/, int> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingT</* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/, int> /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		readonly Types.SomeImmutableGenericInterfaceRestrictingT</* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/, int> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingT</* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/, int> Property { get; }
+		Types.SomeImmutableGenericInterfaceRestrictingT</* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/, int> Property { get { return default; } }
 
 
 		static Types.SomeImmutableGenericInterfaceRestrictingU<object, int> /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
@@ -525,12 +525,12 @@ namespace SpecTests {
 
 
 
-		static Types.SomeImmutableGenericInterfaceRestrictingU<int, /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/> /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		static readonly Types.SomeImmutableGenericInterfaceRestrictingU<int, /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/> m_field;
-		Types.SomeImmutableGenericInterfaceRestrictingU<int, /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/> /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		readonly Types.SomeImmutableGenericInterfaceRestrictingU<int, /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/> m_field;
-		Types.SomeImmutableGenericInterfaceRestrictingU<int, /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/> Property { get; }
-		Types.SomeImmutableGenericInterfaceRestrictingU<int, /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/> Property { get { return default; } }
+		static Types.SomeImmutableGenericInterfaceRestrictingU<int, /* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/> /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		static readonly Types.SomeImmutableGenericInterfaceRestrictingU<int, /* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingU<int, /* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/> /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		readonly Types.SomeImmutableGenericInterfaceRestrictingU<int, /* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingU<int, /* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/> Property { get; }
+		Types.SomeImmutableGenericInterfaceRestrictingU<int, /* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/> Property { get { return default; } }
 
 
 
@@ -543,20 +543,20 @@ namespace SpecTests {
 
 
 
-		static Types.SomeImmutableGenericInterfaceRestrictingTU<int, /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/> /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		static readonly Types.SomeImmutableGenericInterfaceRestrictingTU<int, /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/> m_field;
-		Types.SomeImmutableGenericInterfaceRestrictingTU<int, /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/> /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		readonly Types.SomeImmutableGenericInterfaceRestrictingTU<int, /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/> m_field;
-		Types.SomeImmutableGenericInterfaceRestrictingTU<int, /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/> Property { get; }
-		Types.SomeImmutableGenericInterfaceRestrictingTU<int, /* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/> Property { get { return default; } }
+		static Types.SomeImmutableGenericInterfaceRestrictingTU<int, /* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/> /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		static readonly Types.SomeImmutableGenericInterfaceRestrictingTU<int, /* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingTU<int, /* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/> /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		readonly Types.SomeImmutableGenericInterfaceRestrictingTU<int, /* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingTU<int, /* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/> Property { get; }
+		Types.SomeImmutableGenericInterfaceRestrictingTU<int, /* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/> Property { get { return default; } }
 
 
-		static Types.SomeImmutableGenericInterfaceRestrictingTU</* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/, int> /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		static readonly Types.SomeImmutableGenericInterfaceRestrictingTU</* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/, int> m_field;
-		Types.SomeImmutableGenericInterfaceRestrictingTU</* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/, int>/* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
-		readonly Types.SomeImmutableGenericInterfaceRestrictingTU</* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/, int>m_field;
-		Types.SomeImmutableGenericInterfaceRestrictingTU</* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/, int> Property { get; }
-		Types.SomeImmutableGenericInterfaceRestrictingTU</* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/, int> Property { get { return default; } }
+		static Types.SomeImmutableGenericInterfaceRestrictingTU</* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/, int> /* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		static readonly Types.SomeImmutableGenericInterfaceRestrictingTU</* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/, int> m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingTU</* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/, int>/* MemberIsNotReadOnly(Field, m_field, AnalyzedClassMarkedImmutable) */ m_field /**/;
+		readonly Types.SomeImmutableGenericInterfaceRestrictingTU</* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/, int>m_field;
+		Types.SomeImmutableGenericInterfaceRestrictingTU</* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/, int> Property { get; }
+		Types.SomeImmutableGenericInterfaceRestrictingTU</* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/, int> Property { get { return default; } }
 	}
 
 	[Immutable]
@@ -998,7 +998,7 @@ namespace SpecTests {
 
 		int /* MemberIsNotReadOnly(Property, Y, SomeRecord) */ Y /**/ { get; set; }
 
-		/* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/ Z { get; }
+		/* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/ Z { get; }
 
 		public SomeRecord( SomeRecord v, int w, Types.SomeImmutableClass x, int y, object z )
 			=> (V, W, X, Y, Z) = (v, w, x, y, z);
@@ -1008,21 +1008,21 @@ namespace SpecTests {
 
 	[Immutable]
 	record DerivedRecordWithQuestionableBase :
-		/* NonImmutableTypeHeldByImmutable(Class, NonImmutableBaseRecord,  (or [ImmutableBaseClass])) */ NonImmutableBaseRecord(new object()) /**/ ;
+		/* NonImmutableTypeHeldByImmutable(class, NonImmutableBaseRecord,  (or [ImmutableBaseClass])) */ NonImmutableBaseRecord(new object()) /**/ ;
 
 	[ImmutableBaseClass]
 	record BaseRecordWithImmutableBaseClass { }
 
 	[Immutable]
 	record DerivedFromImmutableBaseClassRecord : BaseRecordWithImmutableBaseClass {
-		/* NonImmutableTypeHeldByImmutable(Class, BaseRecordWithImmutableBaseClass, ) */ BaseRecordWithImmutableBaseClass /**/ X { get; }
+		/* NonImmutableTypeHeldByImmutable(class, BaseRecordWithImmutableBaseClass, ) */ BaseRecordWithImmutableBaseClass /**/ X { get; }
     }
 
 	[Immutable]
 	record ConciseRecord(
 		int xxxx,
-		/* NonImmutableTypeHeldByImmutable(Class, Object, ) */ object /**/ x,
-		/* NonImmutableTypeHeldByImmutable(Class, BaseRecordWithImmutableBaseClass, ) */ BaseRecordWithImmutableBaseClass /**/ y,
+		/* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/ x,
+		/* NonImmutableTypeHeldByImmutable(class, BaseRecordWithImmutableBaseClass, ) */ BaseRecordWithImmutableBaseClass /**/ y,
 		ConciseRecord z
 	);
 }
