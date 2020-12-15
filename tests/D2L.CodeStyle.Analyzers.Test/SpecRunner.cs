@@ -290,7 +290,7 @@ namespace D2L.CodeStyle.Analyzers {
 			StringAssert.EndsWith( "*/", contents ); // should never fail
 			contents = contents.Substring( 0, contents.Length - 2 );
 
-			return contents.Trim();
+			return contents;
 		}
 
 		private class DiagnosticExpectation {
@@ -302,41 +302,45 @@ namespace D2L.CodeStyle.Analyzers {
 				Arguments = arguments;
 			}
 
-			public static DiagnosticExpectation Parse( string str ) {
-				var indexOfOpenParen = str.IndexOf( '(' );
+			public static IEnumerable<DiagnosticExpectation> Parse( string commentContent ) {
+				IEnumerable<string> expectations = commentContent.Split( '|' ).Select( s => s.Trim() );
+				foreach( var str in expectations ) {
+					var indexOfOpenParen = str.IndexOf( '(' );
 
-				if( indexOfOpenParen == -1 ) {
-					return new DiagnosticExpectation(
-						name: str,
-						arguments: ImmutableArray<string>.Empty
+					if( indexOfOpenParen == -1 ) {
+						yield return new DiagnosticExpectation(
+							name: str,
+							arguments: ImmutableArray<string>.Empty
+						);
+						continue;
+					}
+
+					Assert.AreEqual( ')', str[ str.Length - 1 ] );
+
+					var name = str.Substring( 0, indexOfOpenParen );
+
+					var arguments = str.Substring(
+						indexOfOpenParen + 1,
+						str.Length - 2 - indexOfOpenParen
 					);
-				}
 
-				Assert.AreEqual( ')', str[ str.Length - 1 ] );
+					string RemoveSingleLeadingSpace( string s ) {
+						if( string.IsNullOrEmpty( s ) ) {
+							return s;
+						}
 
-				var name = str.Substring( 0, indexOfOpenParen );
+						if( s[ 0 ] == ' ' ) {
+							return s.Substring( 1 );
+						}
 
-				var arguments = str.Substring(
-					indexOfOpenParen + 1,
-					str.Length - 2 - indexOfOpenParen
-				);
-
-				string RemoveSingleLeadingSpace( string s ) {
-					if (string.IsNullOrEmpty(s)) {
 						return s;
 					}
 
-					if (s[0] == ' ') {
-						return s.Substring( 1 );
-					}
-
-					return s;
+					yield return new DiagnosticExpectation(
+						name: name,
+						arguments: arguments.Split( ',' ).Select( RemoveSingleLeadingSpace ).ToImmutableArray()
+					);
 				}
-
-				return new DiagnosticExpectation(
-					name: name,
-					arguments: arguments.Split( ',' ).Select( RemoveSingleLeadingSpace ).ToImmutableArray()
-				);
 			}
 
 			public string Name { get; }
@@ -356,34 +360,36 @@ namespace D2L.CodeStyle.Analyzers {
 				var start = comments.Start;
 				var end = comments.End;
 
-				var diagnosticExpectation = DiagnosticExpectation.Parse( start.Content );
+				var diagnosticExpectations = DiagnosticExpectation.Parse( start.Content );
 
-				// Every assertion's start comment must map to a diagnostic
-				// defined in Common.Diagnostics
-				DiagnosticDescriptor descriptor;
-				if( !m_possibleDiagnostics.TryGetValue( diagnosticExpectation.Name, out descriptor ) ) {
-					Assert.Fail( $"Comment at {start.Trivia.GetLocation()} doesn't map to a diagnostic defined in Common.Diagnostic" );
+				foreach( var diagnosticExpectation in diagnosticExpectations ) {
+					// Every assertion's start comment must map to a diagnostic
+					// defined in Common.Diagnostics
+					DiagnosticDescriptor descriptor;
+					if( !m_possibleDiagnostics.TryGetValue( diagnosticExpectation.Name, out descriptor ) ) {
+						Assert.Fail( $"Comment at {start.Trivia.GetLocation()} doesn't map to a diagnostic defined in Common.Diagnostic" );
 
+					}
+
+					// The diagnostic must be between the two delimiting comments,
+					// with one leading and trailing space inside the delimiters.
+					// i.e.    /* Foo */ abcdef hijklmno pqr /**/
+					//                   -------------------
+					//                      ^ expected Foo diagnostic
+					//
+					// TODO: it would be nice to do fuzzier matching (e.g. ignore
+					// leading and trailing whitespace inside delimiters.) 
+					var diagStart = start.Trivia.GetLocation().SourceSpan.End + 1;
+					var diagEnd = end.Trivia.GetLocation().SourceSpan.Start - 1;
+					Assert.Less( diagStart, diagEnd );
+					var diagSpan = TextSpan.FromBounds( diagStart, diagEnd );
+
+					yield return Diagnostic.Create(
+						descriptor: descriptor,
+						location: Location.Create( root.SyntaxTree, diagSpan ),
+						messageArgs: diagnosticExpectation.Arguments.ToArray()
+					);
 				}
-
-				// The diagnostic must be between the two delimiting comments,
-				// with one leading and trailing space inside the delimiters.
-				// i.e.    /* Foo */ abcdef hijklmno pqr /**/
-				//                   -------------------
-				//                      ^ expected Foo diagnostic
-				//
-				// TODO: it would be nice to do fuzzier matching (e.g. ignore
-				// leading and trailing whitespace inside delimiters.) 
-				var diagStart = start.Trivia.GetLocation().SourceSpan.End + 1;
-				var diagEnd = end.Trivia.GetLocation().SourceSpan.Start - 1;
-				Assert.Less( diagStart, diagEnd );
-				var diagSpan = TextSpan.FromBounds( diagStart, diagEnd );
-
-				yield return Diagnostic.Create(
-					descriptor: descriptor,
-					location: Location.Create( root.SyntaxTree, diagSpan ),
-					messageArgs: diagnosticExpectation.Arguments.ToArray()
-				);
 			}
 		}
 
