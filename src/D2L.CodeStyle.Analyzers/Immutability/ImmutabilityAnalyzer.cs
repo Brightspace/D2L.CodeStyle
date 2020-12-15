@@ -143,11 +143,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			SymbolInfo info = ctx.SemanticModel.GetSymbolInfo( syntax, ctx.CancellationToken );
 
 			// Ignore anything that cannot have type arguments/parameters
-			if( info.Symbol is not INamedTypeSymbol && info.Symbol is not IMethodSymbol ) {
+			if( !GetTypeParamsAndArgs( info.Symbol, out var typeParameters, out var typeArguments ) ) {
 				return;
 			}
-
-			var (typeParameters, typeArguments) = GetTypeParamsAndArgs( info.Symbol );
 
 			int i = 0;
 			var paramArgPairs = typeParameters.Zip( typeArguments, ( p, a ) => (p, a, i++) );
@@ -160,11 +158,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					continue;
 				}
 
-				// If the syntax is a GenericName (has explicit type arguments) then the error should be on the argument
-				// Otherwise, it should be on the identifier itself
 				if( !immutabilityContext.IsImmutable(
 					type: argument,
 					kind: ImmutableTypeKind.Total,
+					// If the syntax is a GenericName (has explicit type arguments) then the error should be on the argument
+					// Otherwise, it should be on the identifier itself
 					getLocation: () => syntax is GenericNameSyntax genericSyntax
 						? genericSyntax.TypeArgumentList.Arguments[position].GetLocation()
 						: syntax.Identifier.GetLocation(),
@@ -173,20 +171,23 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// TODO: not necessarily a good diagnostic for this use-case
 					ctx.ReportDiagnostic( diagnostic );
 				}
-
-
 			}
 		}
 
-		private static (
-		  ImmutableArray<ITypeParameterSymbol> TypeParameters,
-		  ImmutableArray<ITypeSymbol> TypeArguments
-		) GetTypeParamsAndArgs( ISymbol type )
-			=> type switch {
-				IMethodSymbol method => (method.TypeParameters, method.TypeArguments),
-				INamedTypeSymbol namedType => (namedType.TypeParameters, namedType.TypeArguments),
-
-				_ => throw new NotImplementedException(),
-			};
+		private static bool GetTypeParamsAndArgs( ISymbol type, out ImmutableArray<ITypeParameterSymbol> typeParameters, out ImmutableArray<ITypeSymbol> typeArguments ) {
+			switch (type)
+			{
+				case IMethodSymbol method:
+					typeParameters = method.TypeParameters;
+					typeArguments = method.TypeArguments;
+					return true;
+				case INamedTypeSymbol namedType:
+					typeParameters = namedType.TypeParameters;
+					typeArguments = namedType.TypeArguments;
+					return true;
+				default:
+					return false;
+			}
+		}
 	}
 }
