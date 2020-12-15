@@ -113,6 +113,7 @@ namespace SpecTests {
 		public static void SomeGenericMethodRestrictingT<[Immutable] T, U>() { }
 		public static void SomeGenericMethodRestrictingU<T, [Immutable] U>() { }
 		public static void SomeGenericMethodRestrictingTU<[Immutable] T, [Immutable] U>() { }
+		public static void SomeGenericMethodRestrictingT<[Immutable] T>( T value ) { }
 
 
 		/// <summary><see cref="SomeGenericMethodCref{T}()"/></summary>
@@ -761,6 +762,12 @@ namespace SpecTests {
 			Types.SomeGenericMethodRestrictingTU</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T>();
 			Types.SomeGenericMethodRestrictingTU<T, T>();
 			Types.SomeGenericMethodRestrictingTU</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/>();
+			object foo = new object();
+			int bar = 529;
+			Types.SomeGenericMethodRestrictingT</* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/>(foo);
+			Types./* NonImmutableTypeHeldByImmutable(class, Object, ) */ SomeGenericMethodRestrictingT /**/(foo);
+			Types.SomeGenericMethodRestrictingT<int>(bar);
+			Types.SomeGenericMethodRestrictingT(bar);
 		}
 	}
 
@@ -966,6 +973,12 @@ namespace SpecTests {
 			Types.SomeGenericMethodRestrictingTU</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, /* TypeParameterIsNotKnownToBeImmutable(T) */ T /**/>();
 			Types.SomeGenericMethodRestrictingTU</* TypeParameterIsNotKnownToBeImmutable(T) */ T /**/, /* TypeParameterIsNotKnownToBeImmutable(T) */ T /**/>();
 			Types.SomeGenericMethodRestrictingTU</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/>();
+			object foo = new object();
+			int bar = 529;
+			Types.SomeGenericMethodRestrictingT</* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/>(foo);
+			Types./* NonImmutableTypeHeldByImmutable(class, Object, ) */ SomeGenericMethodRestrictingT /**/(foo);
+			Types.SomeGenericMethodRestrictingT<int>(bar);
+			Types.SomeGenericMethodRestrictingT(bar);
 		}
 	}
 

@@ -51,11 +51,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeGenericMethodTypeArguments(
+				ctx => AnalyzeTypeArguments(
 					ctx,
 					immutabilityContext,
-					(GenericNameSyntax)ctx.Node
+					(SimpleNameSyntax)ctx.Node
 				),
+				SyntaxKind.IdentifierName,
 				SyntaxKind.GenericName
 			);
 		}
@@ -129,10 +130,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			checker.CheckDeclaration( typeSymbol );
 		}
 
-		private static void AnalyzeGenericMethodTypeArguments(
+		private static void AnalyzeTypeArguments(
 			SyntaxNodeAnalysisContext ctx,
 			ImmutabilityContext immutabilityContext,
-			GenericNameSyntax syntax
+			SimpleNameSyntax syntax
 		) {
 			if( syntax.IsFromDocComment() ) {
 				// ignore things in doccomments such as crefs
@@ -140,7 +141,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			SymbolInfo info = ctx.SemanticModel.GetSymbolInfo( syntax, ctx.CancellationToken );
-			var (typeParameters, typeArguments) = GetTypeParamsAndArgs( info.Symbol );
+
+			// Ignore anything that cannot have type arguments/parameters
+			if( !GetTypeParamsAndArgs( info.Symbol, out var typeParameters, out var typeArguments ) ) {
+				return;
+			}
 
 			int i = 0;
 			var paramArgPairs = typeParameters.Zip( typeArguments, ( p, a ) => (p, a, i++) );
@@ -156,7 +161,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				if( !immutabilityContext.IsImmutable(
 					type: argument,
 					kind: ImmutableTypeKind.Total,
-					getLocation: () => syntax.TypeArgumentList.Arguments[position].GetLocation(),
+					// If the syntax is a GenericName (has explicit type arguments) then the error should be on the argument
+					// Otherwise, it should be on the identifier itself
+					getLocation: () => syntax is GenericNameSyntax genericSyntax
+						? genericSyntax.TypeArgumentList.Arguments[position].GetLocation()
+						: syntax.Identifier.GetLocation(),
 					out Diagnostic diagnostic
 				) ) {
 					// TODO: not necessarily a good diagnostic for this use-case
@@ -165,15 +174,20 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 		}
 
-		private static (
-		  ImmutableArray<ITypeParameterSymbol> TypeParameters,
-		  ImmutableArray<ITypeSymbol> TypeArguments
-		) GetTypeParamsAndArgs( ISymbol type )
-			=> type switch {
-				IMethodSymbol method => (method.TypeParameters, method.TypeArguments),
-				INamedTypeSymbol namedType => (namedType.TypeParameters, namedType.TypeArguments),
-
-				_ => throw new NotImplementedException(),
-			};
+		private static bool GetTypeParamsAndArgs( ISymbol type, out ImmutableArray<ITypeParameterSymbol> typeParameters, out ImmutableArray<ITypeSymbol> typeArguments ) {
+			switch (type)
+			{
+				case IMethodSymbol method:
+					typeParameters = method.TypeParameters;
+					typeArguments = method.TypeArguments;
+					return true;
+				case INamedTypeSymbol namedType:
+					typeParameters = namedType.TypeParameters;
+					typeArguments = namedType.TypeArguments;
+					return true;
+				default:
+					return false;
+			}
+		}
 	}
 }
