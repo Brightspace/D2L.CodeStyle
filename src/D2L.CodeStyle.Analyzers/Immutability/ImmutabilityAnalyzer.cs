@@ -51,11 +51,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeGenericMethodTypeArguments(
+				ctx => AnalyzeTypeArguments(
 					ctx,
 					immutabilityContext,
-					(GenericNameSyntax)ctx.Node
+					(SimpleNameSyntax)ctx.Node
 				),
+				SyntaxKind.IdentifierName,
 				SyntaxKind.GenericName
 			);
 		}
@@ -129,10 +130,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			checker.CheckDeclaration( typeSymbol );
 		}
 
-		private static void AnalyzeGenericMethodTypeArguments(
+		private static void AnalyzeTypeArguments(
 			SyntaxNodeAnalysisContext ctx,
 			ImmutabilityContext immutabilityContext,
-			GenericNameSyntax syntax
+			SimpleNameSyntax syntax
 		) {
 			if( syntax.IsFromDocComment() ) {
 				// ignore things in doccomments such as crefs
@@ -140,6 +141,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			SymbolInfo info = ctx.SemanticModel.GetSymbolInfo( syntax, ctx.CancellationToken );
+
+			// Ignore anything that cannot have type arguments/parameters
+			if( info.Symbol is not INamedTypeSymbol && info.Symbol is not IMethodSymbol ) {
+				return;
+			}
+
 			var (typeParameters, typeArguments) = GetTypeParamsAndArgs( info.Symbol );
 
 			int i = 0;
@@ -153,15 +160,21 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					continue;
 				}
 
+				// If the syntax is a GenericName (has explicit type arguments) then the error should be on the argument
+				// Otherwise, it should be on the identifier itself
 				if( !immutabilityContext.IsImmutable(
 					type: argument,
 					kind: ImmutableTypeKind.Total,
-					getLocation: () => syntax.TypeArgumentList.Arguments[position].GetLocation(),
+					getLocation: () => syntax is GenericNameSyntax genericSyntax
+						? genericSyntax.TypeArgumentList.Arguments[position].GetLocation()
+						: syntax.Identifier.GetLocation(),
 					out Diagnostic diagnostic
 				) ) {
 					// TODO: not necessarily a good diagnostic for this use-case
 					ctx.ReportDiagnostic( diagnostic );
 				}
+
+
 			}
 		}
 
