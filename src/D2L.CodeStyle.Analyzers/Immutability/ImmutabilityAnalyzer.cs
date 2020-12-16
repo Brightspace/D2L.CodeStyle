@@ -181,8 +181,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		private static void AnalyzeConditionalImmutability( SyntaxNodeAnalysisContext ctx ) {
-			var syntax = ctx.Node;
-
 			// Get the symbol for the method
 			if( ctx.SemanticModel.GetDeclaredSymbol( ctx.Node ) is not IMethodSymbol symbol ) {
 				return;
