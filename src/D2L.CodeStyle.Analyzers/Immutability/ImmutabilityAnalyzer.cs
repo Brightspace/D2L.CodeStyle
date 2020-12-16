@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
@@ -69,12 +68,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// are global variables, so we always want them to be immutable.
 			// The fields/properties of [Immutable] types get handled via
 			// AnalyzeTypeDeclaration.
-			if ( !ctx.Symbol.IsStatic ) {
+			if( !ctx.Symbol.IsStatic ) {
 				return;
 			}
 
 			// Ignore const things, which include enum names.
-			if ( ctx.Symbol is IFieldSymbol f && f.IsConst ) {
+			if( ctx.Symbol is IFieldSymbol f && f.IsConst ) {
 				return;
 			}
 
@@ -84,7 +83,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			//     safe in practice but don't analyze well.
 			// (2) the hard one: resx code-gen generates some stuff that's
 			//     safe in practice but doesn't analyze well.
-			if ( ctx.Symbol.IsFromGeneratedCode() ) {
+			if( ctx.Symbol.IsFromGeneratedCode() ) {
 				return;
 			}
 
@@ -175,8 +174,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		private static bool GetTypeParamsAndArgs( ISymbol type, out ImmutableArray<ITypeParameterSymbol> typeParameters, out ImmutableArray<ITypeSymbol> typeArguments ) {
-			switch (type)
-			{
+			switch( type ) {
 				case IMethodSymbol method:
 					typeParameters = method.TypeParameters;
 					typeArguments = method.TypeArguments;
