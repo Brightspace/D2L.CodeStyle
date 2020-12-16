@@ -528,7 +528,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor UnexpectedConditionalImmutability = new DiagnosticDescriptor(
 			id: "D2L0071",
-			title: "The [ConditionallyImmutable.OnlyIf] attribute cannot be applied to this member.",
+			title: "The [ConditionallyImmutable.OnlyIf] attribute cannot be used with methods.",
 			messageFormat: "The [ConditionallyImmutable.OnlyIf] attribute is only valid on parameters of named types.",
 			category: "Immutability",
 			defaultSeverity: DiagnosticSeverity.Error,
