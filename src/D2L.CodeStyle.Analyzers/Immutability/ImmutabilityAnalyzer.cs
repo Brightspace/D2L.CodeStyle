@@ -52,13 +52,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				SymbolKind.Property
 			);
 
-			context.RegisterSymbolAction(
-				AnalyzeConflictingAuditingOnProperties,
-				SymbolKind.Field,
-				SymbolKind.Property,
-				SymbolKind.Event
-			);
-
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeTypeArguments(
 					ctx,
@@ -228,23 +221,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// Create the diagnostic on the parameter (excluding the attribute)
 			var diagnostic = Diagnostic.Create(
 				Diagnostics.ConflictingImmutability,
-				symbol.DeclaringSyntaxReferences[0].GetSyntax().GetLastToken().GetLocation() );
-			ctx.ReportDiagnostic( diagnostic );
-		}
-
-		private static void AnalyzeConflictingAuditingOnProperties( SymbolAnalysisContext ctx ) {
-			// Get the symbol for the parameter
-			var symbol = ctx.Symbol;
-
-			// Check if the parameter has both the [Audited] and the [Unaudited] attributes of either type
-			if( !( Attributes.Mutability.Audited.IsDefined( symbol ) && Attributes.Mutability.Unaudited.IsDefined( symbol ) )
-				&& !( Attributes.Statics.Audited.IsDefined( symbol ) && Attributes.Statics.Unaudited.IsDefined( symbol ) ) ) {
-				return;
-			}
-
-			// Create the diagnostic on the property
-			var diagnostic = Diagnostic.Create(
-				Diagnostics.ConflictingAuditing,
 				symbol.DeclaringSyntaxReferences[0].GetSyntax().GetLastToken().GetLocation() );
 			ctx.ReportDiagnostic( diagnostic );
 		}

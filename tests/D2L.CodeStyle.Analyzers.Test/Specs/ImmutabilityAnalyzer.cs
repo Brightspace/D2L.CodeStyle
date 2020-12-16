@@ -756,13 +756,13 @@ namespace SpecTests {
 
 		[Statics.Audited("Timothy J Cowen", "2020-12-16", "This shouldn't work either...")]
 		[Statics.Unaudited(Because.ItsSketchy)]
-		readonly int /* ConflictingAuditing */ someStaticAuditedAndUnauditedInt /**/;
+		static object /* ConflictingAuditing */ someStaticAuditedAndUnauditedObject /**/;
 
 		[Statics.Audited("Timothy J Cowen", "2020-12-16", "But this should.")]
-		readonly int someStaticAuditedInt;
+		static object someStaticAuditedObject;
 
 		[Statics.Unaudited(Because.ItsSketchy)]
-		readonly int someStaticUnauditedInt;
+		static object someStaticUnauditedObject;
 
 		void Method() {
 			Types.SomeGenericMethod<T, U>();
