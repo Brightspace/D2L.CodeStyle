@@ -534,5 +534,14 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor ConflictingImmutability = new DiagnosticDescriptor(
+			id: "D2L0072",
+			title: "The [Immutable] and [ConditionallyImmutable.OnlyIf] attributes are mutually exclusive.",
+			messageFormat: "The [Immutable] and [ConditionallyImmutable.OnlyIf] attributes cannot be used on the same argument.",
+			category: "Immutability",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }

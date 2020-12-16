@@ -961,6 +961,10 @@ namespace SpecTests {
 		void SomeGenericMethodConditionallyRestrictingU<T, /* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] U /**/>() { }
 		void SomeGenericMethodConditionallyRestrictingTU</* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] T /**/, /* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] U /**/>() { }
 
+		void sealed class SomeGenericClassDoublyRestrictingT<[Immutable] [ConditionallyImmutable.OnlyIf] /* ConflictingImmutability */ T /**/> { }
+		void sealed class SomeGenericClassRestrictingT<[Immutable] T> { }
+		void sealed class SomeGenericClassConditionallyRestrictingT<[ConditionallyImmutable.OnlyIf] T> { }
+
 		void Method()
 		{
 			// These are LocalFunctionStatementSyntax
