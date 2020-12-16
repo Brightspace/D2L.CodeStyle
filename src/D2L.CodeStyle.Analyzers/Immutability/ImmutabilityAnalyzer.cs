@@ -20,7 +20,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			Diagnostics.TypeParameterIsNotKnownToBeImmutable,
 			Diagnostics.UnexpectedMemberKind,
 			Diagnostics.UnexpectedTypeKind,
-			Diagnostics.UnnecessaryMutabilityAnnotation
+			Diagnostics.UnnecessaryMutabilityAnnotation,
+			Diagnostics.UnexpectedConditionalImmutability
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -57,6 +58,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				),
 				SyntaxKind.IdentifierName,
 				SyntaxKind.GenericName
+			);
+
+			context.RegisterSyntaxNodeAction(
+				ctx => AnalyzeConditionalImmutability(
+					ctx,
+					ctx.Node
+				),
+				SyntaxKind.MethodDeclaration,
+				SyntaxKind.LocalFunctionStatement
 			);
 		}
 
@@ -169,6 +179,54 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				) ) {
 					// TODO: not necessarily a good diagnostic for this use-case
 					ctx.ReportDiagnostic( diagnostic );
+				}
+			}
+		}
+
+		private static void AnalyzeConditionalImmutability(
+			SyntaxNodeAnalysisContext ctx,
+			SyntaxNode syntax
+		) {
+			// Ignore references in DocComments such as crefs
+			if( syntax.IsFromDocComment() ) {
+				return;
+			}
+
+			// Methods can be either of the following depending on where they are declared
+			MethodDeclarationSyntax methodSyntax = null;
+			LocalFunctionStatementSyntax functionSyntax = null;
+
+			switch( syntax ) {
+				case MethodDeclarationSyntax:
+					methodSyntax = (MethodDeclarationSyntax)syntax;
+					break;
+				case LocalFunctionStatementSyntax:
+					functionSyntax = (LocalFunctionStatementSyntax)syntax;
+					break;
+				default:
+					return;
+			}
+
+			// Get the parameter list syntax and make sure it is not null
+			TypeParameterListSyntax paramListSyntax = methodSyntax?.TypeParameterList ?? functionSyntax?.TypeParameterList;
+			if( paramListSyntax == null ) {
+				return;
+			}
+
+			// Iterate through the individual parameters of the method
+			foreach( TypeParameterSyntax parameter in paramListSyntax.Parameters ) {
+
+				// Iterate through the attributes on the current parameter
+				foreach( AttributeListSyntax attribute in parameter.AttributeLists ) {
+
+					// Check if the current attribute is the conditional immutability attribute
+					if( attribute.Attributes.ToString() == "ConditionallyImmutable.OnlyIf" ) {
+						var diagnostic = Diagnostic.Create(
+							Diagnostics.UnexpectedConditionalImmutability,
+							attribute.GetLocation() );
+						ctx.ReportDiagnostic( diagnostic );
+						break;
+					}
 				}
 			}
 		}
