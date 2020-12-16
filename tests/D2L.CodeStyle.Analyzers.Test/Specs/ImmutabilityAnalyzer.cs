@@ -956,18 +956,18 @@ namespace SpecTests {
 		Types.SomeImmutableGenericInterfaceRestrictingTU</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, /* TypeParameterIsNotKnownToBeImmutable(T) */ T /**/> Property { get { return default; } }
 
 		// These are MethodDeclarationSyntax
-		void SomeGenericMethodConditionallyRestrictingT</* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] /**/ T>() { }
-		void SomeGenericMethodConditionallyRestrictingT</* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] /**/ T, U>() { }
-		void SomeGenericMethodConditionallyRestrictingU<T, /* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] /**/ U>() { }
-		void SomeGenericMethodConditionallyRestrictingTU</* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] /**/ T, /* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] /**/ U>() { }
+		void SomeGenericMethodConditionallyRestrictingT</* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] T /**/>() { }
+		void SomeGenericMethodConditionallyRestrictingT</* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] T /**/, U>() { }
+		void SomeGenericMethodConditionallyRestrictingU<T, /* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] U /**/>() { }
+		void SomeGenericMethodConditionallyRestrictingTU</* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] T /**/, /* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] U /**/>() { }
 
 		void Method()
 		{
 			// These are LocalFunctionStatementSyntax
-			void SomeGenericMethodConditionallyRestrictingT</* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] /**/ T>() { }
-			void SomeGenericMethodConditionallyRestrictingT</* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] /**/ T, U>() { }
-			void SomeGenericMethodConditionallyRestrictingU<T, /* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] /**/ U>() { }
-			void SomeGenericMethodConditionallyRestrictingTU</* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] /**/ T, /* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] /**/ U>() { }
+			void SomeGenericMethodConditionallyRestrictingT</* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] T /**/>() { }
+			void SomeGenericMethodConditionallyRestrictingT</* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] T /**/, U>() { }
+			void SomeGenericMethodConditionallyRestrictingU<T, /* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] U /**/>() { }
+			void SomeGenericMethodConditionallyRestrictingTU</* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] T /**/, /* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] U /**/>() { }
 			Types.SomeGenericMethod<T, U>();
 			Types.SomeGenericMethod<U, T>();
 			Types.SomeGenericMethod<T, T>();

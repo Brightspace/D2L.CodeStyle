@@ -183,6 +183,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private static void AnalyzeConditionalImmutability( SyntaxNodeAnalysisContext ctx ) {
 			var syntax = ctx.Node;
 
+			// Get the symbol for the method
+			if( ctx.SemanticModel.GetDeclaredSymbol( ctx.Node ) is not IMethodSymbol symbol ) {
+				return;
+			}
+
+			// Exit if this somehow is not possible
+			// We don't care about arguments so throw them out
+			if( !GetTypeParamsAndArgs( symbol, out var typeParameters, out _ ) ) {
+				return;
+			}
+
 			// Retrieve the relevant parameter list
 			TypeParameterListSyntax paramListSyntax;
 			switch( syntax ) {
@@ -196,25 +207,20 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					return;
 			}
 
-			if( paramListSyntax == null ) {
-				return;
-			}
+			// Iterate through the parameter symbols
+			for( int i = 0; i < typeParameters.Length; i++ ) {
+				var parameter = typeParameters[i];
 
-			// Iterate through the individual parameters of the method
-			foreach( TypeParameterSyntax parameter in paramListSyntax.Parameters ) {
-
-				// Iterate through the attributes on the current parameter
-				foreach( AttributeListSyntax attribute in parameter.AttributeLists ) {
-
-					// Check if the current attribute is the conditional immutability attribute
-					if( attribute.Attributes.ToString() == "ConditionallyImmutable.OnlyIf" ) {
-						var diagnostic = Diagnostic.Create(
-							Diagnostics.UnexpectedConditionalImmutability,
-							attribute.GetLocation() );
-						ctx.ReportDiagnostic( diagnostic );
-						break;
-					}
+				// Check if the parameter has the [OnlyIf] attribute
+				if( !Attributes.Objects.OnlyIf.IsDefined( parameter ) ) {
+					continue;
 				}
+
+				// Create the diagnostic on the parameter (including the attribute)
+				var diagnostic = Diagnostic.Create(
+					Diagnostics.UnexpectedConditionalImmutability,
+					paramListSyntax.Parameters[i].GetLocation() );
+				ctx.ReportDiagnostic( diagnostic );
 			}
 		}
 
