@@ -188,10 +188,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
-			// We don't care about arguments so throw them out
-			GetTypeParamsAndArgs( symbol, out var typeParameters, out _ );
-
-			foreach( var parameter in typeParameters ) {
+			foreach( var parameter in symbol.TypeParameters ) {
 				// Check if the parameter has the [OnlyIf] attribute
 				if( !Attributes.Objects.OnlyIf.IsDefined( parameter ) ) {
 					continue;
