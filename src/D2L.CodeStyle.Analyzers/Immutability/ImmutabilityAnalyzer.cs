@@ -61,7 +61,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 
 			context.RegisterSyntaxNodeAction(
-				AnalyzeConditionalImmutability,
+				AnalyzeConditionalImmutabilityOnMethodDeclarations,
 				SyntaxKind.MethodDeclaration,
 				SyntaxKind.LocalFunctionStatement
 			);
@@ -180,7 +180,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 		}
 
-		private static void AnalyzeConditionalImmutability( SyntaxNodeAnalysisContext ctx ) {
+		private static void AnalyzeConditionalImmutabilityOnMethodDeclarations( SyntaxNodeAnalysisContext ctx ) {
 			// Get the symbol for the method
 			if( ctx.SemanticModel.GetDeclaredSymbol( ctx.Node ) is not IMethodSymbol symbol ) {
 				return;
