@@ -20,7 +20,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			Diagnostics.TypeParameterIsNotKnownToBeImmutable,
 			Diagnostics.UnexpectedMemberKind,
 			Diagnostics.UnexpectedTypeKind,
-			Diagnostics.UnnecessaryMutabilityAnnotation
+			Diagnostics.UnnecessaryMutabilityAnnotation,
+			Diagnostics.UnexpectedConditionalImmutability
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -57,6 +58,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				),
 				SyntaxKind.IdentifierName,
 				SyntaxKind.GenericName
+			);
+
+			context.RegisterSyntaxNodeAction(
+				AnalyzeConditionalImmutabilityOnMethodDeclarations,
+				SyntaxKind.MethodDeclaration,
+				SyntaxKind.LocalFunctionStatement
 			);
 		}
 
@@ -170,6 +177,26 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// TODO: not necessarily a good diagnostic for this use-case
 					ctx.ReportDiagnostic( diagnostic );
 				}
+			}
+		}
+
+		private static void AnalyzeConditionalImmutabilityOnMethodDeclarations( SyntaxNodeAnalysisContext ctx ) {
+			// Get the symbol for the method
+			if( ctx.SemanticModel.GetDeclaredSymbol( ctx.Node ) is not IMethodSymbol symbol ) {
+				return;
+			}
+
+			foreach( var parameter in symbol.TypeParameters ) {
+				// Check if the parameter has the [OnlyIf] attribute
+				if( !Attributes.Objects.OnlyIf.IsDefined( parameter ) ) {
+					continue;
+				}
+
+				// Create the diagnostic on the parameter (including the attribute)
+				var diagnostic = Diagnostic.Create(
+					Diagnostics.UnexpectedConditionalImmutability,
+					parameter.DeclaringSyntaxReferences[0].GetSyntax().GetLocation() );
+				ctx.ReportDiagnostic( diagnostic );
 			}
 		}
 
