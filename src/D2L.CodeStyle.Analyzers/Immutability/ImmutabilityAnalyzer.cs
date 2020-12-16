@@ -21,7 +21,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			Diagnostics.UnexpectedMemberKind,
 			Diagnostics.UnexpectedTypeKind,
 			Diagnostics.UnnecessaryMutabilityAnnotation,
-			Diagnostics.UnexpectedConditionalImmutability
+			Diagnostics.UnexpectedConditionalImmutability,
+			Diagnostics.ConflictingImmutability
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -64,6 +65,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				AnalyzeConditionalImmutabilityOnMethodDeclarations,
 				SyntaxKind.MethodDeclaration,
 				SyntaxKind.LocalFunctionStatement
+			);
+
+			context.RegisterSyntaxNodeAction(
+				AnalyzeConflictingImmutabilityOnTypeParameters,
+				SyntaxKind.TypeParameter
 			);
 		}
 
@@ -198,6 +204,24 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					parameter.DeclaringSyntaxReferences[0].GetSyntax().GetLocation() );
 				ctx.ReportDiagnostic( diagnostic );
 			}
+		}
+
+		private static void AnalyzeConflictingImmutabilityOnTypeParameters( SyntaxNodeAnalysisContext ctx ) {
+			// Get the symbol for the parameter
+			if( ctx.SemanticModel.GetDeclaredSymbol( ctx.Node ) is not ITypeParameterSymbol symbol ) {
+				return;
+			}
+
+			// Check if the parameter has both the [Immutable] and the [OnlyIf] attributes
+			if( !Attributes.Objects.Immutable.IsDefined( symbol ) || !Attributes.Objects.OnlyIf.IsDefined( symbol ) ) {
+				return;
+			}
+
+			// Create the diagnostic on the parameter (excluding the attribute)
+			var diagnostic = Diagnostic.Create(
+				Diagnostics.ConflictingImmutability,
+				symbol.DeclaringSyntaxReferences[0].GetSyntax().GetLastToken().GetLocation() );
+			ctx.ReportDiagnostic( diagnostic );
 		}
 
 		private static bool GetTypeParamsAndArgs( ISymbol type, out ImmutableArray<ITypeParameterSymbol> typeParameters, out ImmutableArray<ITypeSymbol> typeArguments ) {
