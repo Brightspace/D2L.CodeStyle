@@ -744,6 +744,25 @@ namespace SpecTests {
 		Types.SomeImmutableGenericInterfaceRestrictingTU</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T> Property { get; }
 		Types.SomeImmutableGenericInterfaceRestrictingTU</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T> Property { get { return default; } }
 
+		[Mutability.Audited("Timothy J Cowen", "2020-12-16", "Actually this shouldn't work...")]
+		[Mutability.Unaudited(Because.ItsSketchy)]
+		object /* ConflictingAuditing */ someMutabilityAuditedAndUnauditedObject /**/;
+
+		[Mutability.Audited("Timothy J Cowen", "2020-12-16", "But this should!")]
+		object someMutabilityAuditedObject;
+
+		[Mutability.Unaudited(Because.ItsSketchy)]
+		object someMutabilityUnauditedObject;
+
+		[Statics.Audited("Timothy J Cowen", "2020-12-16", "This shouldn't work either...")]
+		[Statics.Unaudited(Because.ItsSketchy)]
+		readonly int /* ConflictingAuditing */ someStaticAuditedAndUnauditedInt /**/;
+
+		[Statics.Audited("Timothy J Cowen", "2020-12-16", "But this should.")]
+		readonly int someStaticAuditedInt;
+
+		[Statics.Unaudited(Because.ItsSketchy)]
+		readonly int someStaticUnauditedInt;
 
 		void Method() {
 			Types.SomeGenericMethod<T, U>();

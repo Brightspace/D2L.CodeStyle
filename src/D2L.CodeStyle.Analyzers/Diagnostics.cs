@@ -543,5 +543,14 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor ConflictingAuditing = new DiagnosticDescriptor(
+			id: "D2L0073",
+			title: "The [Audited] and [Unaudited] attributes are mutually exclusive.",
+			messageFormat: "The [Audited] and [Unaudited] attributes cannot be used on the same property.",
+			category: "Immutability",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }
