@@ -68,7 +68,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 
 			context.RegisterSyntaxNodeAction(
-				AnalyzeConflictingImmutability,
+				AnalyzeConflictingImmutabilityOnTypeParameters,
 				SyntaxKind.TypeParameter
 			);
 		}
@@ -206,7 +206,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 		}
 
-		private static void AnalyzeConflictingImmutability( SyntaxNodeAnalysisContext ctx ) {
+		private static void AnalyzeConflictingImmutabilityOnTypeParameters( SyntaxNodeAnalysisContext ctx ) {
 			// Get the symbol for the parameter
 			if( ctx.SemanticModel.GetDeclaredSymbol( ctx.Node ) is not ITypeParameterSymbol symbol ) {
 				return;

@@ -538,7 +538,7 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor ConflictingImmutability = new DiagnosticDescriptor(
 			id: "D2L0072",
 			title: "The [Immutable] and [ConditionallyImmutable.OnlyIf] attributes are mutually exclusive.",
-			messageFormat: "The [Immutable] and [ConditionallyImmutable.OnlyIf] attributes cannot be used on the same argument.",
+			messageFormat: "The [Immutable] and [ConditionallyImmutable.OnlyIf] attributes cannot be used on the same parameter.",
 			category: "Immutability",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
