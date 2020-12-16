@@ -61,10 +61,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeConditionalImmutability(
-					ctx,
-					ctx.Node
-				),
+				AnalyzeConditionalImmutability,
 				SyntaxKind.MethodDeclaration,
 				SyntaxKind.LocalFunctionStatement
 			);
@@ -183,32 +180,22 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 		}
 
-		private static void AnalyzeConditionalImmutability(
-			SyntaxNodeAnalysisContext ctx,
-			SyntaxNode syntax
-		) {
-			// Ignore references in DocComments such as crefs
-			if( syntax.IsFromDocComment() ) {
-				return;
-			}
+		private static void AnalyzeConditionalImmutability( SyntaxNodeAnalysisContext ctx ) {
+			var syntax = ctx.Node;
 
-			// Methods can be either of the following depending on where they are declared
-			MethodDeclarationSyntax methodSyntax = null;
-			LocalFunctionStatementSyntax functionSyntax = null;
-
+			// Retrieve the relevant parameter list
+			TypeParameterListSyntax paramListSyntax;
 			switch( syntax ) {
 				case MethodDeclarationSyntax:
-					methodSyntax = (MethodDeclarationSyntax)syntax;
+					paramListSyntax = ( (MethodDeclarationSyntax)syntax ).TypeParameterList;
 					break;
 				case LocalFunctionStatementSyntax:
-					functionSyntax = (LocalFunctionStatementSyntax)syntax;
+					paramListSyntax = ( (LocalFunctionStatementSyntax)syntax ).TypeParameterList;
 					break;
 				default:
 					return;
 			}
 
-			// Get the parameter list syntax and make sure it is not null
-			TypeParameterListSyntax paramListSyntax = methodSyntax?.TypeParameterList ?? functionSyntax?.TypeParameterList;
 			if( paramListSyntax == null ) {
 				return;
 			}
