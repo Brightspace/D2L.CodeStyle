@@ -188,29 +188,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
-			// Exit if this somehow is not possible
 			// We don't care about arguments so throw them out
-			if( !GetTypeParamsAndArgs( symbol, out var typeParameters, out _ ) ) {
-				return;
-			}
+			GetTypeParamsAndArgs( symbol, out var typeParameters, out _ );
 
-			// Retrieve the relevant parameter list
-			TypeParameterListSyntax paramListSyntax;
-			switch( syntax ) {
-				case MethodDeclarationSyntax:
-					paramListSyntax = ( (MethodDeclarationSyntax)syntax ).TypeParameterList;
-					break;
-				case LocalFunctionStatementSyntax:
-					paramListSyntax = ( (LocalFunctionStatementSyntax)syntax ).TypeParameterList;
-					break;
-				default:
-					return;
-			}
-
-			// Iterate through the parameter symbols
-			for( int i = 0; i < typeParameters.Length; i++ ) {
-				var parameter = typeParameters[i];
-
+			foreach( var parameter in typeParameters ) {
 				// Check if the parameter has the [OnlyIf] attribute
 				if( !Attributes.Objects.OnlyIf.IsDefined( parameter ) ) {
 					continue;
@@ -219,7 +200,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// Create the diagnostic on the parameter (including the attribute)
 				var diagnostic = Diagnostic.Create(
 					Diagnostics.UnexpectedConditionalImmutability,
-					paramListSyntax.Parameters[i].GetLocation() );
+					parameter.DeclaringSyntaxReferences[0].GetSyntax().GetLocation() );
 				ctx.ReportDiagnostic( diagnostic );
 			}
 		}
