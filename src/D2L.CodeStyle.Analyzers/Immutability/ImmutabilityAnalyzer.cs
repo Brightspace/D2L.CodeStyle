@@ -23,7 +23,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			Diagnostics.UnnecessaryMutabilityAnnotation,
 			Diagnostics.UnexpectedConditionalImmutability,
 			Diagnostics.ConflictingImmutability,
-			Diagnostics.ConflictingAuditing
+			Diagnostics.InvalidAuditType
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -221,7 +221,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// Create the diagnostic on the parameter (excluding the attribute)
 			var diagnostic = Diagnostic.Create(
 				Diagnostics.ConflictingImmutability,
-				symbol.DeclaringSyntaxReferences[0].GetSyntax().GetLastToken().GetLocation() );
+				symbol.DeclaringSyntaxReferences[0].GetSyntax().GetLastToken().GetLocation(),
+				"Immutable",
+				"ConditionallyImmutable.OnlyIf",
+				symbol.Kind.ToString().ToLower() );
 			ctx.ReportDiagnostic( diagnostic );
 		}
 

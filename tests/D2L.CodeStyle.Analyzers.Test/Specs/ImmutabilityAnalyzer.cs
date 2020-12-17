@@ -744,25 +744,28 @@ namespace SpecTests {
 		Types.SomeImmutableGenericInterfaceRestrictingTU</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T> Property { get; }
 		Types.SomeImmutableGenericInterfaceRestrictingTU</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T> Property { get { return default; } }
 
-		[Mutability.Audited("Timothy J Cowen", "2020-12-16", "Actually this shouldn't work...")]
+		[Mutability.Audited("Timothy J Cowen", "2020-12-16", "Actually this shouldn't work.")]
 		[Mutability.Unaudited(Because.ItsSketchy)]
-		object /* ConflictingAuditing */ someMutabilityAuditedAndUnauditedObject /**/;
-
-		[Mutability.Audited("Timothy J Cowen", "2020-12-16", "But this should!")]
-		object someMutabilityAuditedObject;
-
-		[Mutability.Unaudited(Because.ItsSketchy)]
-		object someMutabilityUnauditedObject;
+		object /* ConflictingImmutability(Mutability.Audited, Mutability.Unaudited, field) */ someMutabilityAuditedAndUnauditedObject /**/;
 
 		[Statics.Audited("Timothy J Cowen", "2020-12-16", "This shouldn't work either...")]
 		[Statics.Unaudited(Because.ItsSketchy)]
-		static object /* ConflictingAuditing */ someStaticAuditedAndUnauditedObject /**/;
+		static object /* ConflictingImmutability(Statics.Audited, Statics.Unaudited, field) */ someStaticsAuditedAndUnauditedObject /**/;
 
-		[Statics.Audited("Timothy J Cowen", "2020-12-16", "But this should.")]
-		static object someStaticAuditedObject;
+		[Mutability.Audited("Timothy J Cowen", "2020-12-16", "This also shouldn't either......")]
+		static object /* InvalidAuditType(static, field, Statics.*) */ someStaticsMutabilityAuditedObject /**/;
+
+		[Statics.Audited("Timothy J Cowen", "2020-12-16", "Nothing works.........")]
+		object /* InvalidAuditType(non-static, field, Mutability.*) */ someNonstaticStaticsAuditedObject /**/;
 
 		[Statics.Unaudited(Because.ItsSketchy)]
-		static object someStaticUnauditedObject;
+		[Mutability.Audited("Timothy J Cowen", "2020-12-16", "Seriously............?")]
+		[Mutability.Unaudited(Because.ItsSketchy)]
+		object /* InvalidAuditType(non-static, field, Mutability.*) | ConflictingImmutability(Mutability.Audited, Mutability.Unaudited, field) */ someNonstaticDoublyAuditedObject /**/;
+
+		[Mutability.Audited("Timothy J Cowen", "2020-12-16", "I give up.")]
+		[Statics.Unaudited(Because.ItsSketchy)]
+		static object /* InvalidAuditType(static, field, Statics.*) */ someStaticSortOfDoublyAuditedObject /**/;
 
 		void Method() {
 			Types.SomeGenericMethod<T, U>();
@@ -980,7 +983,7 @@ namespace SpecTests {
 		void SomeGenericMethodConditionallyRestrictingU<T, /* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] U /**/>() { }
 		void SomeGenericMethodConditionallyRestrictingTU</* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] T /**/, /* UnexpectedConditionalImmutability */ [ConditionallyImmutable.OnlyIf] U /**/>() { }
 
-		void sealed class SomeGenericClassDoublyRestrictingT<[Immutable] [ConditionallyImmutable.OnlyIf] /* ConflictingImmutability */ T /**/> { }
+		void sealed class SomeGenericClassDoublyRestrictingT<[Immutable] [ConditionallyImmutable.OnlyIf] /* ConflictingImmutability(Immutable, ConditionallyImmutable.OnlyIf, typeparameter) */ T /**/> { }
 		void sealed class SomeGenericClassRestrictingT<[Immutable] T> { }
 		void sealed class SomeGenericClassConditionallyRestrictingT<[ConditionallyImmutable.OnlyIf] T> { }
 
