@@ -57,7 +57,7 @@ namespace D2L.CodeStyle.TestAnalyzers.Common {
             title: "Method not labelled as [Test], [Theory], [TestCase], or [TestCaseSource]",
             messageFormat: "Method {0} is public, but does not have [Test], [Theory], [TestCase], or [TestCaseSource] attribute, add attribute or change the method visibility.",
             category: "Correctness",
-            defaultSeverity: DiagnosticSeverity.Warning,
+            defaultSeverity: DiagnosticSeverity.Error,
             isEnabledByDefault: true,
             description: "If a [Test], [Theory], [TestCase], or [TestCaseSource] attribute is missed the test will not be run, leading to false confidence in the code."
         );
