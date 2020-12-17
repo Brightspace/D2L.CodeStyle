@@ -34,7 +34,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.TooManyUnnamedArgs,
 			Diagnostics.LiteralArgShouldBeNamed,
-			Diagnostics.NamedArgumentsRequired
+			Diagnostics.NamedArgumentsRequired,
+			Diagnostics.ImplicitUnnamedArgs
 		);
 
 		public const int TOO_MANY_UNNAMED_ARGS = 5;
@@ -125,21 +126,36 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
-			// Literal arguments should always be named
+			// Generate a Dictionary of data type usages
+			Dictionary<string, int> dataTypeCount = new Dictionary<string, int>();
+			var parameters = ( (IMethodSymbol)ctx.SemanticModel.GetSymbolInfo( ctx.Node ).Symbol ).Parameters;
+			foreach( var param in parameters ) {
+				var dataType = param.Type.GetFullTypeName();
+				if( dataTypeCount.ContainsKey( dataType ) ) {
+					dataTypeCount[dataType]++;
+				} else {
+					dataTypeCount.Add( dataType, 1 );
+				}
+			}
+
 			foreach( var arg in unnamedArgs ) {
+				var argType = parameters[arg.Position].Type.GetFullTypeName();
 
-				// Check if the argument type is literal
 				if( arg.Syntax.Expression is LiteralExpressionSyntax ) {
-
+					// Literal arguments should always be named
 					var fixerContext = CreateFixerContext( ImmutableArray.Create( arg ) );
-
 					ctx.ReportDiagnostic( Diagnostic.Create(
 							descriptor: Diagnostics.LiteralArgShouldBeNamed,
 							location: arg.Syntax.Expression.GetLocation(),
 							properties: fixerContext,
-							messageArgs: arg.ParamName
-						)
-					);
+							messageArgs: arg.ParamName ) );
+				} else if( dataTypeCount.TryGetValue( argType, out var count ) && count > 1 ) {
+					// Multiple arguments with the same data type
+					// should be named to prevent mistakes
+					ctx.ReportDiagnostic( Diagnostic.Create(
+							descriptor: Diagnostics.ImplicitUnnamedArgs,
+							location: arg.Syntax.GetLocation(),
+							argType ) );
 				}
 			}
 
@@ -201,7 +217,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			) {
 
 			for( int idx = 0; idx < args.Arguments.Count; idx++ ) {
-				ArgumentSyntax arg = args.Arguments[ idx ];
+				ArgumentSyntax arg = args.Arguments[idx];
 
 				// Ignore args that already have names
 				if( arg.NameColon != null ) {
@@ -276,7 +292,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			if( ident.StartsWith( "m_" ) || ident.StartsWith( "s_" ) ) {
 				// e.g. m_foo -> foo
 				ident = ident.Substring( 2 );
-			} else if( ident[ 0 ] == '_' && ident.Length > 1 && ident[ 1 ] != '_' ) {
+			} else if( ident[0] == '_' && ident.Length > 1 && ident[1] != '_' ) {
 				// e.g. _foo -> foo
 				ident = ident.Substring( 1 );
 			}

@@ -54,6 +54,10 @@ namespace D2L {
 			public SomeClass( int a1, int a2, int a3 ) { }
 		}
 
+		public sealed class SomeCssClass {
+			public SomeCssClass(int top, int right, int bottom, int left) { }
+		}
+
 		public static void Test() {
             #region "low" number of args doesn't require naming
             _arg0();
@@ -87,12 +91,12 @@ namespace D2L {
 			#endregion
 
 			#region verbatim identifiers
-			funcWithVerbatims( @int, @class, /* LiteralArgShouldBeNamed(@params) */ 3 /**/, p, p );
+			funcWithVerbatims( @int, @class, /* LiteralArgShouldBeNamed(@params) */ 3 /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
             /* TooManyUnnamedArgs(5) */ funcWithVerbatims( p, p, p, p, p ) /**/;
 
             // These should pass:
             funcWithVerbatims( @int, @class, @params, @name, @a5 );
-            funcWithVerbatims( @int, p, p, p, p );
+            funcWithVerbatims( @int, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
             #endregion
 
             #region all named args is usually preferred if there are lots of args
@@ -107,25 +111,25 @@ namespace D2L {
 			#endregion
 
 			#region named args don't count against the unnamed args budget
-			_arg5( a1: 1, p, p, p, p );
-			_arg6( a1: 1, a2: 2, p, p, p, p );
+			_arg5( a1: 1, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
+			_arg6( a1: 1, a2: 2, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
 			#endregion
 
 			#region arguments that are literals with the correct name don't count against the budget
 			int a1 = 11;
 			int a3 = 13;
 			int A1 = 101; // upper case doesn't matter
-			_arg5( a1, p, p, p, p );
-			_arg5( p, p, a3, p, p );
-			_arg6( A1, p, a3, p, p, p );
+			_arg5( a1, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/);
+			_arg5(/* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, a3, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
+			_arg6( A1, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, a3, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
 			#endregion
 
 			#region member accesses can also serve as psuedo-names
 			var thing = new Thing();
-			_arg5( p, p, p, thing.a4, p );
-			_arg5( p, p, p, thing.nested.a4, p );
-			_arg5( p, p, p, thing.m_a4, p );
-			_arg5( p, p, p, thing.nested._a4, p );
+			_arg5( /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, thing.a4, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
+			_arg5(/* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, thing.nested.a4, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
+			_arg5(/* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, thing.m_a4, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
+			_arg5(/* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, thing.nested._a4, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
 			#endregion
 
 			#region need to have enough named args, though
@@ -134,16 +138,16 @@ namespace D2L {
 			#endregion
 
 			#region params don't count against the unnamed args budget
-			funcWithParams( p, p, p );
-			funcWithParams( p, p, p, p );
-			funcWithParams( p, p, p, p, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 );
+			funcWithParams( /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
+			funcWithParams(/* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, p );
+			funcWithParams(/* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, p, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 );
 			#endregion
 
 			#region delegates
 			((delegate0Args)null)();
 			((delegate1Args)null)( 1 );
 			/* TooManyUnnamedArgs(5) */ ((delegate5Args)null)( p, p, p, p, p ) /**/;
-			((delegate5Args)null)( a1: 1, p, p, p, p );
+			((delegate5Args)null)( a1: 1, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
 			#endregion
 
 			#region class constructors should behave the same way
@@ -151,9 +155,9 @@ namespace D2L {
 			// behave just the same.
 			new SomeClass();
 			new SomeClass( 1 );
-			new SomeClass( p, p );
+			new SomeClass( /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/);
 			/* TooManyUnnamedArgs(5) */ new SomeClass( p, p, p, p, p ) /**/;
-			new SomeClass( a1: 1, p, p, p, p );
+			new SomeClass( a1: 1, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
 			new SomeClass( a1: 1, a2: 2, a3: 3 );
 			/* NamedArgumentsRequired */ new SomeClass( 1, 2, 3 ) /**/;
 			#endregion
@@ -188,8 +192,36 @@ namespace D2L {
                 () => _arg2_ret( 1, 2 + _arg2_ret( 1, 2 ) );
             System.Linq.Expressions.Expression<Func<int>> nest6 =
                 () => _arg2_ret( 1, _arg2_ret(1, 2) * _arg2_ret( 1, 2 ) );
-            #endregion
-        }
+			#endregion
+
+			#region same-named arguments should be fine
+			int top = 1;
+			int right = 2;
+			int bottom = 3;
+			int left = 4;
+
+			// Works because names are same as parameters
+			new SomeCssClass(
+				top,
+				right,
+				bottom,
+				left);
+
+			// Does not work because bottom & right are switched
+			new SomeCssClass(
+				top,
+				/* ImplicitUnnamedArgs(System.Int32) */ bottom /**/,
+				/* ImplicitUnnamedArgs(System.Int32) */ right /**/,
+				left);
+
+			// Works because the switched arguments were explicitly named
+			new SomeCssClass(
+				top,
+				right: bottom,
+				bottom: right,
+				left);
+			#endregion
+		}
 
 		public abstract class SomeBaseClass {
 
@@ -221,13 +253,13 @@ namespace D2L {
 				: this( b1 ) { }
 
 			public SomeBaseClass( int b1, int b2, int b3, int b4, string _ )
-				: this( b1, b2 ) { }
+				: this( /* ImplicitUnnamedArgs(System.Int32) */ b1 /**/, /* ImplicitUnnamedArgs(System.Int32) */ b2 /**/) { }
 
 			public SomeBaseClass( int b1, int b2, int b3, string _ )
 				/* NamedArgumentsRequired */ : this( b1, b2, b3 ) /**/{ }
 
 			public SomeBaseClass( int b1, int b2, int b3, int b4, int b5, string _ )
-				: this( b1, b2, b3, b4 ) { }
+				: this( /* ImplicitUnnamedArgs(System.Int32) */ b1 /**/, /* ImplicitUnnamedArgs(System.Int32) */ b2 /**/, /* ImplicitUnnamedArgs(System.Int32) */ b3 /**/, /* ImplicitUnnamedArgs(System.Int32) */ b4 /**/) { }
 
 			public SomeBaseClass( int b1, int b2, int b3, int b4, int b5, int b6, long _ )
 				: this( a1: b1, a2: b2, a3: b3, a4: b4, a5: b5 ) { }
@@ -263,13 +295,13 @@ namespace D2L {
 				: base( b1 ) { }
 
 			public SomeInheritedClass( int b1, int b2, string _ )
-				: base( b1, b2 ) { }
+				: base( /* ImplicitUnnamedArgs(System.Int32) */ b1 /**/, /* ImplicitUnnamedArgs(System.Int32) */ b2 /**/) { }
 
 			public SomeInheritedClass( int b1, int b2, int b3, bool _ )
 				/* NamedArgumentsRequired */ : base( b1, b2, b3 ) /**/{ }
 
 			public SomeInheritedClass( int b1, int b2, int b3, int b4, string _ )
-				: base( b1, b2, b3, b4 ) { }
+				: base( /* ImplicitUnnamedArgs(System.Int32) */ b1 /**/, /* ImplicitUnnamedArgs(System.Int32) */ b2 /**/, /* ImplicitUnnamedArgs(System.Int32) */ b3 /**/, /* ImplicitUnnamedArgs(System.Int32) */ b4 /**/ ) { }
 
 			public SomeInheritedClass( int b1, int b2, int b3, int b4, int b5, string _ )
 				: base( a1: b1, a2: b2, a3: b3, a4: b4, a5: b5 ) { }
