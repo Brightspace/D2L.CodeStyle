@@ -553,10 +553,10 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true
 		);
 
-		public static readonly DiagnosticDescriptor ConflictingAuditing = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor InvalidAuditType = new DiagnosticDescriptor(
 			id: "D2L0073",
-			title: "The [Audited] and [Unaudited] attributes are mutually exclusive.",
-			messageFormat: "The [Audited] and [Unaudited] attributes cannot be used on the same property.",
+			title: "Wrong type of auditing was used.",
+			messageFormat: "A {0} {1} should audit using the [{2}] attributes.",
 			category: "Immutability",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
