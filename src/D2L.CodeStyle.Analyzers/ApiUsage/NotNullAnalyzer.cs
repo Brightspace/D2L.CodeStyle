@@ -105,7 +105,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				// If the parameter isn't marked [NotNull] we can skip this
 				// argument. It might be interesting to complain for null
 				// passed to a params argument in the future.
-				if ( !SymbolHasAttribute( parameter, NotNullAttribute ) ) {
+				if ( !parameter.HasAttribute( NotNullAttribute ) ) {
 					continue;
 				}
 
@@ -130,18 +130,6 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 			}
 
 			return litExpr.Token.Kind() == SyntaxKind.NullKeyword;
-		}
-
-		private static bool SymbolHasAttribute(
-			ISymbol symbol,
-			string attributeClassName
-		) {
-			// TODO: don't compare type names as strings
-			bool hasExpectedAttribute = symbol.GetAttributes().Any(
-				x => x.AttributeClass.GetFullTypeName() == attributeClassName
-			);
-
-			return hasExpectedAttribute;
 		}
 	}
 }

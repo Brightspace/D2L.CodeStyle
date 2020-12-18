@@ -552,5 +552,15 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor NonConstantPassedToConstantParameter = new DiagnosticDescriptor(
+			id: "D2L0074",
+			title: "Constant parameter cannot be passed a non-constant value.",
+			messageFormat: "Parameter \"{0}\" is marked with the [Constant] attribute, and so cannot be passed a non-constant value.",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "The method being called has declared that this parameter must receive a constant, but a non-constant value is being passed."
+		);
 	}
 }
