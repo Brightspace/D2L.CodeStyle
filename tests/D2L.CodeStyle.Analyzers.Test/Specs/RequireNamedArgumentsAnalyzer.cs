@@ -58,6 +58,21 @@ namespace D2L {
 			public SomeCssClass(int top, int right, int bottom, int left) { }
 		}
 
+		public static sealed class ArgumentSwappingClass
+		{
+			public interface IA { }
+			public interface IB : IA { }
+			public interface IC : IA { }
+			public interface ID : IB, IC { }
+
+			public sealed class A : IA { public A() { } }
+			public sealed class B : IB { public B() { } }
+			public sealed class C : IC { public C() { } }
+			public sealed class D : ID { public D() { } }
+
+			public static void SomeMethodToTest(IA a, IB b) { }
+		}
+
 		public static void Test() {
             #region "low" number of args doesn't require naming
             _arg0();
@@ -194,32 +209,20 @@ namespace D2L {
                 () => _arg2_ret( 1, _arg2_ret(1, 2) * _arg2_ret( 1, 2 ) );
 			#endregion
 
-			#region same-named arguments should be fine
+			#region arguments may have been swapped
 			int top = 1;
 			int right = 2;
 			int bottom = 3;
 			int left = 4;
 
-			// Works because names are same as parameters
-			new SomeCssClass(
-				top,
-				right,
-				bottom,
-				left);
+			new SomeCssClass(top, right, bottom, left);
+			/* NamedArgumentsRequired */ new SomeCssClass(top, bottom, right, left) /**/;
+			new SomeCssClass(top, right: bottom, bottom: right, left);
 
-			// Does not work because bottom & right are switched
-			new SomeCssClass(
-				top,
-				/* ImplicitUnnamedArgs(System.Int32) */ bottom /**/,
-				/* ImplicitUnnamedArgs(System.Int32) */ right /**/,
-				left);
-
-			// Works because the switched arguments were explicitly named
-			new SomeCssClass(
-				top,
-				right: bottom,
-				bottom: right,
-				left);
+			ArgumentSwappingClass.SomeMethodToTest( new ArgumentSwappingClass.A(), new ArgumentSwappingClass.B() );
+			/* NamedArgumentsRequired */ ArgumentSwappingClass.SomeMethodToTest( new ArgumentSwappingClass.B(), new ArgumentSwappingClass.B() ) /**/;
+			ArgumentSwappingClass.SomeMethodToTest( new ArgumentSwappingClass.C(), new ArgumentSwappingClass.B() );
+			/* NamedArgumentsRequired */ ArgumentSwappingClass.SomeMethodToTest( new ArgumentSwappingClass.D(), new ArgumentSwappingClass.B() ) /**/;
 			#endregion
 		}
 
