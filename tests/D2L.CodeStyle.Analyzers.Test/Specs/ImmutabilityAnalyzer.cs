@@ -753,10 +753,10 @@ namespace SpecTests {
 		static object /* ConflictingImmutability(Statics.Audited, Statics.Unaudited, field) */ someStaticsAuditedAndUnauditedObject /**/;
 
 		[Mutability.Audited("Timothy J Cowen", "2020-12-16", "This also shouldn't either......")]
-		static object /* InvalidAuditType(static, field, Statics.*) */ someStaticsMutabilityAuditedObject /**/;
+		static /* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/ /* InvalidAuditType(static, field, Statics.*) | MemberIsNotReadOnly(Field, someStaticsMutabilityAuditedObject, AnalyzedImmutableGenericClassRestrictingT) */ someStaticsMutabilityAuditedObject /**/;
 
 		[Statics.Audited("Timothy J Cowen", "2020-12-16", "Nothing works.........")]
-		object /* InvalidAuditType(non-static, field, Mutability.*) */ someNonstaticStaticsAuditedObject /**/;
+		/* NonImmutableTypeHeldByImmutable(class, Object, ) */ object /**/ /* InvalidAuditType(non-static, field, Mutability.*) | MemberIsNotReadOnly(Field, someNonstaticStaticsAuditedObject, AnalyzedImmutableGenericClassRestrictingT) */ someNonstaticStaticsAuditedObject /**/;
 
 		[Statics.Unaudited(Because.ItsSketchy)]
 		[Mutability.Audited("Timothy J Cowen", "2020-12-16", "Seriously............?")]

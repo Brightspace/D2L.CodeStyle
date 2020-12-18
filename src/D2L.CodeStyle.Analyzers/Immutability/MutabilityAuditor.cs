@@ -53,6 +53,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				diagnosticSink( diagnostic );
 			}
 
+			AttributeData attr = null;
+
 			if( symbol.IsStatic ) {
 				// Check if a static member is using mutability audits
 				if( hasEitherMutabilityAttributes ) {
@@ -64,6 +66,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						"Statics.*" );
 					diagnosticSink( diagnostic );
 				}
+
+				attr = Attributes.Statics.Audited.GetAll( symbol ).FirstOrDefault()
+					?? Attributes.Statics.Unaudited.GetAll( symbol ).FirstOrDefault();
 			} else {
 				// Check if a non-static member is using static audits
 				if( hasEitherStaticsAttributes ) {
@@ -75,15 +80,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						"Mutability.*" );
 					diagnosticSink( diagnostic );
 				}
-			}
 
-			// Everything looks good, so collect information to determine if
-			// auditing is necessary
-			AttributeData attr
-				= Attributes.Statics.Audited.GetAll( symbol ).FirstOrDefault()
-				?? Attributes.Statics.Unaudited.GetAll( symbol ).FirstOrDefault()
-				?? Attributes.Mutability.Audited.GetAll( symbol ).FirstOrDefault()
-				?? Attributes.Mutability.Unaudited.GetAll( symbol ).FirstOrDefault();
+				attr = Attributes.Mutability.Audited.GetAll( symbol ).FirstOrDefault()
+					?? Attributes.Mutability.Unaudited.GetAll( symbol ).FirstOrDefault();
+			}
 
 			if( attr != null ) {
 				location = GetLocation( attr );
