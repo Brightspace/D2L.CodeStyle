@@ -170,9 +170,12 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			// If more than one argument can apply to multiple parameters,
 			// then require the arguments to be named
 			if( numOfSwappableArgs > 1 ) {
+				var fixerContext = CreateFixerContext( unnamedArgs );
+
 				ctx.ReportDiagnostic( Diagnostic.Create(
 						descriptor: Diagnostics.NamedArgumentsRequired,
-						location: ctx.Node.GetLocation() ) );
+						location: ctx.Node.GetLocation(),
+						properties: fixerContext ) );
 			}
 
 			// TODO: if there are duplicate typed args then they should be named
