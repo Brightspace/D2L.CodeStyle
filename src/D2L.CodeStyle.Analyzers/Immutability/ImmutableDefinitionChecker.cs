@@ -70,7 +70,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// values.
 		/// </remarks>
 		public bool CheckMember( ISymbol member ) {
-			if ( MutabilityAuditor.IsAudited( member, out var location ) ) {
+			if( MutabilityAuditor.CheckAudited(
+				member,
+				m_diagnosticSink,
+				out var location ) ) {
+
 				// If they have one of the auditing attributes, run the
 				// checks anyway and error if they are unnecessary
 				if( CheckMember( diagnosticSink: _ => { }, member ) ) {
