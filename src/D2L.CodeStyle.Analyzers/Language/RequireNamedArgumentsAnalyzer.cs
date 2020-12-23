@@ -35,7 +35,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			Diagnostics.TooManyUnnamedArgs,
 			Diagnostics.LiteralArgShouldBeNamed,
 			Diagnostics.NamedArgumentsRequired,
-			Diagnostics.ImplicitUnnamedArgs
+			Diagnostics.SwappableArgsShouldBeNamed
 		);
 
 		public const int TOO_MANY_UNNAMED_ARGS = 5;
@@ -126,7 +126,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
-			int numOfSwappableArgs = 0;
+			HashSet<ArgParamBinding> swappableArgs = new HashSet<ArgParamBinding>();
 			foreach( var arg in unnamedArgs ) {
 
 				// Literal expressions have their own issue
@@ -137,62 +137,89 @@ namespace D2L.CodeStyle.Analyzers.Language {
 							descriptor: Diagnostics.LiteralArgShouldBeNamed,
 							location: arg.Syntax.Expression.GetLocation(),
 							properties: fixerContext,
-							messageArgs: arg.ParamName ) );
+							messageArgs: arg.ParamName
+						)
+					);
 					continue;
 				}
 
-				// Take note of the type of argument
-				ITypeSymbol argType = GetArgumentType( ctx, arg.Syntax );
+				// Take note of the type of the argument
+				ITypeSymbol argType = ctx.SemanticModel.GetTypeInfo( arg.Syntax.Expression ).Type;
+
+				// Take note of the associated parameter
+				IParameterSymbol param = arg.Syntax.DetermineParameter(
+					ctx.SemanticModel,
+					allowParams: false
+				);
 
 				// Iterate through the other arguments in the list
 				foreach( var compareArg in unnamedArgs ) {
+
+					// Don't care about the same argument
 					if( compareArg.Position == arg.Position ) {
 						continue;
 					}
 
-					// Get the associated parameter of the argument to compare
-					IParameterSymbol param = compareArg.Syntax.DetermineParameter(
-						ctx.SemanticModel,
-						allowParams: false );
+					// Don't care about literals
+					if( compareArg.Syntax.Expression is LiteralExpressionSyntax ) {
+						continue;
+					}
 
-					// Check if the argument could apply to the other parameter
-					if( ctx.SemanticModel.Compilation.ClassifyConversion(
+					// Don't care if the argument has already been flagged
+					if( swappableArgs.Contains( compareArg ) ) {
+						continue;
+					}
+
+					// Take note of the type of the comparison argument
+					ITypeSymbol compareArgType = ctx.SemanticModel.GetTypeInfo( compareArg.Syntax.Expression ).Type;
+
+					// Take note of the associated parameter
+					IParameterSymbol compareParam = compareArg.Syntax.DetermineParameter(
+						ctx.SemanticModel,
+						allowParams: false
+					);
+
+					// Get the conversion information for both directions
+					var conversion = ctx.SemanticModel.Compilation.ClassifyConversion(
 						argType,
-						param.Type ).Exists ) {
-						// The argument can apply to multiple parameters,
-						// so take note of it
-						numOfSwappableArgs++;
-						break;
+						compareParam.Type
+					);
+					var reverseConversion = ctx.SemanticModel.Compilation.ClassifyConversion(
+						compareArgType,
+						param.Type
+					);
+
+					// Check if the arguments could swap
+					if( conversion.Exists && reverseConversion.Exists ) {
+
+						// Flag the first argument if it has not already been flagged
+						if( swappableArgs.Add( arg ) ) {
+							var fixerContext = CreateFixerContext( ImmutableArray.Create( arg ) );
+							ctx.ReportDiagnostic( Diagnostic.Create(
+									descriptor: Diagnostics.SwappableArgsShouldBeNamed,
+									location: arg.Syntax.Expression.GetLocation(),
+									properties: fixerContext,
+									messageArgs: new object[] { arg.ParamName, compareArg.ParamName }
+								)
+							);
+						}
+
+						// Flag the second argument if it has not already been flagged
+						if( swappableArgs.Add( compareArg ) ) {
+							var fixerContext = CreateFixerContext( ImmutableArray.Create( compareArg ) );
+							ctx.ReportDiagnostic( Diagnostic.Create(
+									descriptor: Diagnostics.SwappableArgsShouldBeNamed,
+									location: compareArg.Syntax.Expression.GetLocation(),
+									properties: fixerContext,
+									messageArgs: new object[] { compareArg.ParamName, arg.ParamName }
+								)
+							);
+						}
+
+						continue;
 					}
 				}
 			}
-
-			// If more than one argument can apply to multiple parameters,
-			// then require the arguments to be named
-			if( numOfSwappableArgs > 1 ) {
-				var fixerContext = CreateFixerContext( unnamedArgs );
-
-				ctx.ReportDiagnostic( Diagnostic.Create(
-						descriptor: Diagnostics.NamedArgumentsRequired,
-						location: ctx.Node.GetLocation(),
-						properties: fixerContext ) );
-			}
-
-			// TODO: if there are duplicate typed args then they should be named
-			// These will create a bit more cleanup. Fix should probably name
-			// all the args instead to avoid craziness with overloading.
-		}
-
-		private static ITypeSymbol GetArgumentType(
-			SyntaxNodeAnalysisContext ctx,
-			ArgumentSyntax argSyntax ) {
-			var baseSymbol = ctx.SemanticModel.GetSymbolInfo( argSyntax.Expression ).Symbol;
-			return baseSymbol switch {
-				IParameterSymbol symbol => symbol.Type,
-				IFieldSymbol symbol => symbol.Type,
-				ILocalSymbol symbol => symbol.Type,
-				_ => baseSymbol.ContainingType,
-			};
 		}
 
 		private static ImmutableDictionary<string, string> CreateFixerContext( ImmutableArray<ArgParamBinding> unnamedArgs ) {

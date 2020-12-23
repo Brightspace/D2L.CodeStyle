@@ -71,6 +71,7 @@ namespace D2L {
 			public sealed class D : ID { public D() { } }
 
 			public static void SomeMethodToTest(IA a, IB b) { }
+			public static void SomeOtherMethodToTest(IA a, IB b, IC c) { }
 		}
 
 		public static void Test() {
@@ -106,12 +107,12 @@ namespace D2L {
 			#endregion
 
 			#region verbatim identifiers
-			funcWithVerbatims( @int, @class, /* LiteralArgShouldBeNamed(@params) */ 3 /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
+			funcWithVerbatims( @int, @class, /* LiteralArgShouldBeNamed(@params) */ 3 /**/, /* SwappableArgsShouldBeNamed(name, a5) */ p /**/, /* SwappableArgsShouldBeNamed(a5, name) */ p /**/);
             /* TooManyUnnamedArgs(5) */ funcWithVerbatims( p, p, p, p, p ) /**/;
+			funcWithVerbatims( @int, /* SwappableArgsShouldBeNamed(@class, @params) */ p /**/, /* SwappableArgsShouldBeNamed(@params, @class) */ p /**/, /* SwappableArgsShouldBeNamed(name, @class) */ p /**/, /* SwappableArgsShouldBeNamed(a5, @class) */ p /**/);
 
             // These should pass:
             funcWithVerbatims( @int, @class, @params, @name, @a5 );
-            funcWithVerbatims( @int, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
             #endregion
 
             #region all named args is usually preferred if there are lots of args
@@ -126,25 +127,25 @@ namespace D2L {
 			#endregion
 
 			#region named args don't count against the unnamed args budget
-			_arg5( a1: 1, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
-			_arg6( a1: 1, a2: 2, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
+			_arg5( a1: 1, /* SwappableArgsShouldBeNamed(a2, a3) */ p /**/, /* SwappableArgsShouldBeNamed(a3, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a4, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a5, a2) */ p /**/);
+			_arg6( a1: 1, a2: 2, /* SwappableArgsShouldBeNamed(a3, a4) */ p /**/, /* SwappableArgsShouldBeNamed(a4, a3) */ p /**/, /* SwappableArgsShouldBeNamed(a5, a3) */ p /**/, /* SwappableArgsShouldBeNamed(a6, a3) */ p /**/ );
 			#endregion
 
 			#region arguments that are literals with the correct name don't count against the budget
 			int a1 = 11;
 			int a3 = 13;
 			int A1 = 101; // upper case doesn't matter
-			_arg5( a1, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/);
-			_arg5(/* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, a3, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
-			_arg6( A1, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, a3, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
+			_arg5( a1, /* SwappableArgsShouldBeNamed(a2, a3) */ p /**/, /* SwappableArgsShouldBeNamed(a3, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a4, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a5, a2) */ p /**/);
+			_arg5(/* SwappableArgsShouldBeNamed(a1, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a2, a1) */ p /**/, a3, /* SwappableArgsShouldBeNamed(a4, a1) */ p /**/, /* SwappableArgsShouldBeNamed(a5, a1) */ p /**/ );
+			_arg6( A1, /* SwappableArgsShouldBeNamed(a2, a4) */ p /**/, a3, /* SwappableArgsShouldBeNamed(a4, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a5, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a6, a2) */ p /**/ );
 			#endregion
 
 			#region member accesses can also serve as psuedo-names
 			var thing = new Thing();
-			_arg5( /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, thing.a4, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
-			_arg5(/* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, thing.nested.a4, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
-			_arg5(/* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, thing.m_a4, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
-			_arg5(/* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, thing.nested._a4, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
+			_arg5( /* SwappableArgsShouldBeNamed(a1, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a2, a1) */ p /**/, /* SwappableArgsShouldBeNamed(a3, a1) */ p /**/, thing.a4, /* SwappableArgsShouldBeNamed(a5, a1) */ p /**/ );
+			_arg5( /* SwappableArgsShouldBeNamed(a1, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a2, a1) */ p /**/, /* SwappableArgsShouldBeNamed(a3, a1) */ p /**/, thing.nested.a4, /* SwappableArgsShouldBeNamed(a5, a1) */ p /**/ );
+			_arg5( /* SwappableArgsShouldBeNamed(a1, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a2, a1) */ p /**/, /* SwappableArgsShouldBeNamed(a3, a1) */ p /**/, thing.m_a4, /* SwappableArgsShouldBeNamed(a5, a1) */ p /**/ );
+			_arg5( /* SwappableArgsShouldBeNamed(a1, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a2, a1) */ p /**/, /* SwappableArgsShouldBeNamed(a3, a1) */ p /**/, thing.nested._a4, /* SwappableArgsShouldBeNamed(a5, a1) */ p /**/ );
 			#endregion
 
 			#region need to have enough named args, though
@@ -153,16 +154,16 @@ namespace D2L {
 			#endregion
 
 			#region params don't count against the unnamed args budget
-			funcWithParams( /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
-			funcWithParams(/* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, p );
-			funcWithParams(/* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, p, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 );
+			funcWithParams( /* SwappableArgsShouldBeNamed(a, b) */ p /**/, /* SwappableArgsShouldBeNamed(b, a) */ p /**/, /* SwappableArgsShouldBeNamed(c, a) */ p /**/ );
+			funcWithParams( /* SwappableArgsShouldBeNamed(a, b) */ p /**/, /* SwappableArgsShouldBeNamed(b, a) */ p /**/, /* SwappableArgsShouldBeNamed(c, a) */ p /**/, p );
+			funcWithParams( /* SwappableArgsShouldBeNamed(a, b) */ p /**/, /* SwappableArgsShouldBeNamed(b, a) */ p /**/, /* SwappableArgsShouldBeNamed(c, a) */ p /**/, p, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 );
 			#endregion
 
 			#region delegates
 			((delegate0Args)null)();
 			((delegate1Args)null)( 1 );
 			/* TooManyUnnamedArgs(5) */ ((delegate5Args)null)( p, p, p, p, p ) /**/;
-			((delegate5Args)null)( a1: 1, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
+			((delegate5Args)null)( a1: 1, /* SwappableArgsShouldBeNamed(a2, a3) */ p /**/, /* SwappableArgsShouldBeNamed(a3, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a4, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a5, a2) */ p /**/ );
 			#endregion
 
 			#region class constructors should behave the same way
@@ -170,9 +171,9 @@ namespace D2L {
 			// behave just the same.
 			new SomeClass();
 			new SomeClass( 1 );
-			new SomeClass( /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/);
+			new SomeClass( /* SwappableArgsShouldBeNamed(a1, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a2, a1) */ p /**/);
 			/* TooManyUnnamedArgs(5) */ new SomeClass( p, p, p, p, p ) /**/;
-			new SomeClass( a1: 1, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/, /* ImplicitUnnamedArgs(System.Int32) */ p /**/ );
+			new SomeClass( a1: 1, /* SwappableArgsShouldBeNamed(a2, a3) */ p /**/, /* SwappableArgsShouldBeNamed(a3, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a4, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a5, a2) */ p /**/ );
 			new SomeClass( a1: 1, a2: 2, a3: 3 );
 			/* NamedArgumentsRequired */ new SomeClass( 1, 2, 3 ) /**/;
 			#endregion
@@ -210,19 +211,25 @@ namespace D2L {
 			#endregion
 
 			#region arguments may have been swapped
+
 			int top = 1;
 			int right = 2;
 			int bottom = 3;
 			int left = 4;
 
 			new SomeCssClass(top, right, bottom, left);
-			/* NamedArgumentsRequired */ new SomeCssClass(top, bottom, right, left) /**/;
+			new SomeCssClass(top, /* SwappableArgsShouldBeNamed(right, bottom) */ bottom /**/, /* SwappableArgsShouldBeNamed(bottom, right) */ right /**/, left);
 			new SomeCssClass(top, right: bottom, bottom: right, left);
+			new SomeCssClass(/* LiteralArgShouldBeNamed(top) */ 1 /**/, /* LiteralArgShouldBeNamed(right) */ 2 /**/, /* LiteralArgShouldBeNamed(bottom) */ 3 /**/, /* LiteralArgShouldBeNamed(left) */ 4 /**/);
 
-			ArgumentSwappingClass.SomeMethodToTest( new ArgumentSwappingClass.A(), new ArgumentSwappingClass.B() );
-			/* NamedArgumentsRequired */ ArgumentSwappingClass.SomeMethodToTest( new ArgumentSwappingClass.B(), new ArgumentSwappingClass.B() ) /**/;
-			ArgumentSwappingClass.SomeMethodToTest( new ArgumentSwappingClass.C(), new ArgumentSwappingClass.B() );
-			/* NamedArgumentsRequired */ ArgumentSwappingClass.SomeMethodToTest( new ArgumentSwappingClass.D(), new ArgumentSwappingClass.B() ) /**/;
+			ArgumentSwappingClass.SomeMethodToTest(new ArgumentSwappingClass.A(), new ArgumentSwappingClass.B());
+			ArgumentSwappingClass.SomeMethodToTest(/* SwappableArgsShouldBeNamed(a, b) */ new ArgumentSwappingClass.B() /**/, /* SwappableArgsShouldBeNamed(b, a) */ new ArgumentSwappingClass.B() /**/);
+			ArgumentSwappingClass.SomeMethodToTest(new ArgumentSwappingClass.C(), new ArgumentSwappingClass.B());
+			ArgumentSwappingClass.SomeMethodToTest(/* SwappableArgsShouldBeNamed(a, b) */ new ArgumentSwappingClass.D() /**/, /* SwappableArgsShouldBeNamed(b, a) */ new ArgumentSwappingClass.B() /**/);
+
+			ArgumentSwappingClass.SomeOtherMethodToTest(new ArgumentSwappingClass.A(), new ArgumentSwappingClass.B(), new ArgumentSwappingClass.C());
+			ArgumentSwappingClass.SomeOtherMethodToTest(/* SwappableArgsShouldBeNamed(a, c) */ new ArgumentSwappingClass.C() /**/, new ArgumentSwappingClass.B(), /* SwappableArgsShouldBeNamed(c, a) */ new ArgumentSwappingClass.C() /**/);
+
 			#endregion
 		}
 
@@ -256,13 +263,13 @@ namespace D2L {
 				: this( b1 ) { }
 
 			public SomeBaseClass( int b1, int b2, int b3, int b4, string _ )
-				: this( /* ImplicitUnnamedArgs(System.Int32) */ b1 /**/, /* ImplicitUnnamedArgs(System.Int32) */ b2 /**/) { }
+				: this( /* SwappableArgsShouldBeNamed(a1, a2) */ b1 /**/, /* SwappableArgsShouldBeNamed(a2, a1) */ b2 /**/) { }
 
 			public SomeBaseClass( int b1, int b2, int b3, string _ )
-				/* NamedArgumentsRequired */ : this( b1, b2, b3 ) /**/{ }
+				/* NamedArgumentsRequired */ : this( b1, b2, b3 ) /**/ { }
 
 			public SomeBaseClass( int b1, int b2, int b3, int b4, int b5, string _ )
-				: this( /* ImplicitUnnamedArgs(System.Int32) */ b1 /**/, /* ImplicitUnnamedArgs(System.Int32) */ b2 /**/, /* ImplicitUnnamedArgs(System.Int32) */ b3 /**/, /* ImplicitUnnamedArgs(System.Int32) */ b4 /**/) { }
+				: this( /* SwappableArgsShouldBeNamed(a1, a2) */ b1 /**/, /* SwappableArgsShouldBeNamed(a2, a1) */ b2 /**/, /* SwappableArgsShouldBeNamed(a3, a1) */ b3 /**/, /* SwappableArgsShouldBeNamed(a4, a1) */ b4 /**/) { }
 
 			public SomeBaseClass( int b1, int b2, int b3, int b4, int b5, int b6, long _ )
 				: this( a1: b1, a2: b2, a3: b3, a4: b4, a5: b5 ) { }
@@ -298,13 +305,13 @@ namespace D2L {
 				: base( b1 ) { }
 
 			public SomeInheritedClass( int b1, int b2, string _ )
-				: base( /* ImplicitUnnamedArgs(System.Int32) */ b1 /**/, /* ImplicitUnnamedArgs(System.Int32) */ b2 /**/) { }
+				: base( /* SwappableArgsShouldBeNamed(a1, a2) */ b1 /**/, /* SwappableArgsShouldBeNamed(a2, a1) */ b2 /**/) { }
 
 			public SomeInheritedClass( int b1, int b2, int b3, bool _ )
-				/* NamedArgumentsRequired */ : base( b1, b2, b3 ) /**/{ }
+				/* NamedArgumentsRequired */ : base( b1, b2, b3 ) /**/ { }
 
 			public SomeInheritedClass( int b1, int b2, int b3, int b4, string _ )
-				: base( /* ImplicitUnnamedArgs(System.Int32) */ b1 /**/, /* ImplicitUnnamedArgs(System.Int32) */ b2 /**/, /* ImplicitUnnamedArgs(System.Int32) */ b3 /**/, /* ImplicitUnnamedArgs(System.Int32) */ b4 /**/ ) { }
+				: base( /* SwappableArgsShouldBeNamed(a1, a2) */ b1 /**/, /* SwappableArgsShouldBeNamed(a2, a1) */ b2 /**/, /* SwappableArgsShouldBeNamed(a3, a1) */ b3 /**/, /* SwappableArgsShouldBeNamed(a4, a1) */ b4 /**/) { }
 
 			public SomeInheritedClass( int b1, int b2, int b3, int b4, int b5, string _ )
 				: base( a1: b1, a2: b2, a3: b3, a4: b4, a5: b5 ) { }

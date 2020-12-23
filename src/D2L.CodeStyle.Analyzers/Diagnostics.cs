@@ -553,14 +553,14 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true
 		);
 
-		public static readonly DiagnosticDescriptor ImplicitUnnamedArgs = new DiagnosticDescriptor(
-			id: "D2L0074",
-			title: "Name arguments to prevent implicit swapping.",
-			messageFormat: "Multiple arguments share the {0} data type. Use named arguments to prevent mistakes.",
+		public static readonly DiagnosticDescriptor SwappableArgsShouldBeNamed = new DiagnosticDescriptor(
+			id: "D2L0075",
+			title: "Swappable arguments should be named for readability.",
+			messageFormat: "The arguments for the {0} and {1} parameters may be accidentally swapped. Use named arguments for readability.",
 			category: "Readability",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
-			description: "When multiple arguments share a data type, they should be named so that they don't get switched accidentally."
+			description: "Swappable arguments should be named for readability."
 		);
 	}
 }
