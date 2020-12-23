@@ -552,14 +552,5 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
-
-		public static readonly DiagnosticDescriptor InvalidAuditType = new DiagnosticDescriptor(
-			id: "D2L0073",
-			title: "Wrong type of auditing was used.",
-			messageFormat: "A {0} {1} should audit using the [{2}] attributes.",
-			category: "Immutability",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true
-		);
 	}
 }
