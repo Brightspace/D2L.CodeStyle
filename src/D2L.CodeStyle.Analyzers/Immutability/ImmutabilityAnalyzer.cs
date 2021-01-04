@@ -72,6 +72,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				AnalyzeConflictingImmutabilityOnTypeParameters,
 				SyntaxKind.TypeParameter
 			);
+
+			context.RegisterSyntaxNodeAction(
+				AnalyzeConflictingImmutabilityOnMember,
+				SyntaxKind.ClassDeclaration,
+				SyntaxKind.InterfaceDeclaration,
+				SyntaxKind.StructDeclaration
+			);
 		}
 
 		private static void AnalyzeMember(
@@ -226,6 +233,56 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				"ConditionallyImmutable.OnlyIf",
 				symbol.Kind.ToString().ToLower() );
 			ctx.ReportDiagnostic( diagnostic );
+		}
+
+		private static void AnalyzeConflictingImmutabilityOnMember(
+			SyntaxNodeAnalysisContext ctx ) {
+
+			// Ensure syntax is expected and get the symbol
+			if( ctx.Node is not TypeDeclarationSyntax syntax ) {
+				return;
+			}
+			var symbol = ctx.SemanticModel.GetDeclaredSymbol( syntax );
+
+			// Get information about immutability
+			bool hasImmutable = Attributes.Objects.Immutable.IsDefined( symbol );
+			bool hasConditionallyImmutable = Attributes.Objects.ConditionallyImmutable.IsDefined( symbol );
+			bool hasImmutableBase = Attributes.Objects.ImmutableBaseClass.IsDefined( symbol );
+
+			// Check if there are conflicting immutability attributes
+			if( hasImmutable && hasConditionallyImmutable ) {
+				// [Immutable] and [ConditionallyImmutable] both exist,
+				// so create a diagnostic
+				var diagnostic = Diagnostic.Create(
+					Diagnostics.ConflictingImmutability,
+					syntax.Identifier.GetLocation(),
+					"Immutable",
+					"ConditionallyImmutable",
+					syntax.Keyword );
+				ctx.ReportDiagnostic( diagnostic );
+			}
+			if( hasImmutable && hasImmutableBase ) {
+				// [Immutable] and [ImmutableBaseClassAttribute] both exist,
+				// so create a diagnostic
+				var diagnostic = Diagnostic.Create(
+					Diagnostics.ConflictingImmutability,
+					syntax.Identifier.GetLocation(),
+					"Immutable",
+					"ImmutableBaseClassAttribute",
+					syntax.Keyword );
+				ctx.ReportDiagnostic( diagnostic );
+			}
+			if( hasConditionallyImmutable && hasImmutableBase ) {
+				// [ConditionallyImmutable] and [ImmutableBaseClassAttribute] both exist,
+				// so create a diagnostic
+				var diagnostic = Diagnostic.Create(
+					Diagnostics.ConflictingImmutability,
+					syntax.Identifier.GetLocation(),
+					"ConditionallyImmutable",
+					"ImmutableBaseClassAttribute",
+					syntax.Keyword );
+				ctx.ReportDiagnostic( diagnostic );
+			}
 		}
 
 		private static bool GetTypeParamsAndArgs( ISymbol type, out ImmutableArray<ITypeParameterSymbol> typeParameters, out ImmutableArray<ITypeSymbol> typeArguments ) {

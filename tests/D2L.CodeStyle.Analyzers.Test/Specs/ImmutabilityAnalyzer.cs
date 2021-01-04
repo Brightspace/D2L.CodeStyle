@@ -137,6 +137,63 @@ namespace SpecTests {
 	public sealed class AnalyzedClassMarkedImmutableExtendingImmutableClass : Types.SomeImmutableClass { }
 
 	[Immutable]
+	[ConditionallyImmutable]
+	public sealed class /* ConflictingImmutability(Immutable, ConditionallyImmutable, class) */ AnalyzedClassMarkedWithMultipleImmutabilities1 /**/ { }
+
+	[Immutable]
+	[ImmutableBaseClassAttribute]
+	public sealed class /* ConflictingImmutability(Immutable, ImmutableBaseClassAttribute, class) */ AnalyzedClassMarkedWithMultipleImmutabilities2 /**/ { }
+
+	[ConditionallyImmutable]
+	[ImmutableBaseClassAttribute]
+	public sealed class /* ConflictingImmutability(ConditionallyImmutable, ImmutableBaseClassAttribute, class) */ AnalyzedClassMarkedWithMultipleImmutabilities3 /**/ { }
+
+	[Immutable]
+	[ConditionallyImmutable]
+	[ImmutableBaseClassAttribute]
+	public sealed class /* ConflictingImmutability(Immutable, ConditionallyImmutable, class)
+	                     | ConflictingImmutability(Immutable, ImmutableBaseClassAttribute, class)
+	                     | ConflictingImmutability(ConditionallyImmutable, ImmutableBaseClassAttribute, class) */ AnalyzedClassMarkedWithMultipleImmutabilities4 /**/ { }
+
+	[Immutable]
+	[ConditionallyImmutable]
+	public sealed interface /* ConflictingImmutability(Immutable, ConditionallyImmutable, interface) */ AnalyzedInterfaceMarkedWithMultipleImmutabilities1 /**/ { }
+
+	[Immutable]
+	[ImmutableBaseClassAttribute]
+	public sealed interface /* ConflictingImmutability(Immutable, ImmutableBaseClassAttribute, interface) */ AnalyzedInterfaceMarkedWithMultipleImmutabilities2 /**/ { }
+
+	[ConditionallyImmutable]
+	[ImmutableBaseClassAttribute]
+	public sealed interface /* ConflictingImmutability(ConditionallyImmutable, ImmutableBaseClassAttribute, interface) */ AnalyzedInterfaceMarkedWithMultipleImmutabilities3 /**/ { }
+
+	[Immutable]
+	[ConditionallyImmutable]
+	[ImmutableBaseClassAttribute]
+	public sealed interface /* ConflictingImmutability(Immutable, ConditionallyImmutable, interface)
+					         | ConflictingImmutability(Immutable, ImmutableBaseClassAttribute, interface)
+	                         | ConflictingImmutability(ConditionallyImmutable, ImmutableBaseClassAttribute, interface) */ AnalyzedInterfaceMarkedWithMultipleImmutabilities4 /**/ { }
+
+	[Immutable]
+	[ConditionallyImmutable]
+	public sealed struct /* ConflictingImmutability(Immutable, ConditionallyImmutable, struct) */ AnalyzedStructMarkedWithMultipleImmutabilities1 /**/ { }
+
+	[Immutable]
+	[ImmutableBaseClassAttribute]
+	public sealed struct /* ConflictingImmutability(Immutable, ImmutableBaseClassAttribute, struct) */ AnalyzedStructMarkedWithMultipleImmutabilities2 /**/ { }
+
+	[ConditionallyImmutable]
+	[ImmutableBaseClassAttribute]
+	public sealed struct /* ConflictingImmutability(ConditionallyImmutable, ImmutableBaseClassAttribute, struct) */ AnalyzedStructMarkedWithMultipleImmutabilities3 /**/ { }
+
+	[Immutable]
+	[ConditionallyImmutable]
+	[ImmutableBaseClassAttribute]
+	public sealed struct /* ConflictingImmutability(Immutable, ConditionallyImmutable, struct)
+	                      | ConflictingImmutability(Immutable, ImmutableBaseClassAttribute, struct)
+	                      | ConflictingImmutability(ConditionallyImmutable, ImmutableBaseClassAttribute, struct) */ AnalyzedStructMarkedWithMultipleImmutabilities4 /**/	{ }
+
+	[Immutable]
 	public sealed class AnalyzedClassMarkedImmutable {
 
 
