@@ -338,7 +338,10 @@ namespace D2L.CodeStyle.Analyzers {
 
 					yield return new DiagnosticExpectation(
 						name: name,
-						arguments: arguments.Split( ',' ).Select( RemoveSingleLeadingSpace ).ToImmutableArray()
+						arguments: Regex.Split( arguments, @"(?<!\\\\)," )
+						.Select( arg => arg.Replace( "\\\\", string.Empty ) )
+						.Select( RemoveSingleLeadingSpace )
+						.ToImmutableArray()
 					);
 				}
 			}
