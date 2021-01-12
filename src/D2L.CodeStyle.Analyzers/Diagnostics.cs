@@ -483,7 +483,7 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor NonImmutableTypeHeldByImmutable = new DiagnosticDescriptor(
 			id: "D2L0066",
 			title: "Type may be mutable.",
-			messageFormat: "The {0} {1} is missing the [Immutable]{2} attribute, so it isn't safe to be held by an immutable type",
+			messageFormat: "The {0} \"{1}\" is missing the [Immutable]{2} attribute, so it isn't safe to be held by an immutable type",
 			category: "Immutability",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true

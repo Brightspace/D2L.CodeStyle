@@ -168,7 +168,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					diagnostic = Diagnostic.Create(
 						Diagnostics.TypeParameterIsNotKnownToBeImmutable,
 						getLocation(),
-						type.Name
+						type.ToDisplayString()
 					);
 
 					return false;
@@ -178,7 +178,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						Diagnostics.NonImmutableTypeHeldByImmutable,
 						getLocation(),
 						type.TypeKind.ToString().ToLower(),
-						type.Name,
+						type.ToDisplayString(),
 						kind == ImmutableTypeKind.Instance && !type.IsSealed ? " (or [ImmutableBaseClass])" : ""
 					);
 
@@ -190,7 +190,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						Diagnostics.NonImmutableTypeHeldByImmutable,
 						getLocation(),
 						type.TypeKind.ToString().ToLower(),
-						type.Name,
+						type.ToDisplayString(),
 						""
 					);
 
