@@ -556,7 +556,7 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor SwappableArgsShouldBeNamed = new DiagnosticDescriptor(
 			id: "D2L0075",
 			title: "Swappable arguments should be named for readability.",
-			messageFormat: "The arguments for the {0} and {1} parameters may be accidentally swapped. Use named arguments for readability.",
+			messageFormat: "The arguments for the \"{0}\" and \"{1}\" parameters may be accidentally swapped. Use named arguments for readability.",
 			category: "Readability",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
