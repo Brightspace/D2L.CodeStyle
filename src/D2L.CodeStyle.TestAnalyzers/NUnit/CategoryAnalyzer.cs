@@ -269,7 +269,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 			);
 
 			AdditionalText bannedListFile = options.AdditionalFiles.FirstOrDefault(
-				file => Path.GetFileName( file.Path ) == "BannedTestCategoriesList"
+				file => Path.GetFileName( file.Path ) == "BannedTestCategoriesList.txt"
 			);
 
 			if( bannedListFile == null ) {
