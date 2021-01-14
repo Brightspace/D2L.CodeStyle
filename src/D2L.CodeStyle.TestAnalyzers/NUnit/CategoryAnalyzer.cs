@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
+using System.Linq;
 using D2L.CodeStyle.TestAnalyzers.Common;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Text;
 
 namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
@@ -44,9 +47,12 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 				return;
 			}
 
+			ImmutableHashSet<string> bannedCategories = LoadBannedCategoriesList( context.Options );
+
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeMethod(
 					context: ctx,
+					bannedCategories: bannedCategories,
 					types: types,
 					syntax: ctx.Node as MethodDeclarationSyntax
 				),
@@ -74,6 +80,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
 		private static void AnalyzeMethod(
 			SyntaxNodeAnalysisContext context,
+			ImmutableHashSet<string> bannedCategories,
 			NUnitTypes types,
 			MethodDeclarationSyntax syntax
 		) {
@@ -89,15 +96,21 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 			}
 
 			ImmutableSortedSet<string> categories = GatherTestMethodCategories( types, method );
-			if( categories.Overlaps( RequiredCategories ) ) {
-				return;
+			if( !categories.Overlaps( RequiredCategories ) ) {
+				context.ReportDiagnostic( Diagnostic.Create(
+					Diagnostics.NUnitCategory,
+					syntax.Identifier.GetLocation(),
+					$"Test must be categorized as one of [{string.Join( ", ", RequiredCategories )}], but saw [{string.Join( ", ", categories )}]. See http://docs.dev.d2l/index.php/Test_Categories."
+				) );
 			}
 
-			context.ReportDiagnostic( Diagnostic.Create(
-				Diagnostics.NUnitCategory,
-				syntax.Identifier.GetLocation(),
-				$"Test must be categorized as one of [{string.Join( ", ", RequiredCategories )}], but saw [{string.Join( ", ", categories )}]. See http://docs.dev.d2l/index.php/Test_Categories."
-			) );
+			if( categories.Overlaps( bannedCategories ) ) {
+				context.ReportDiagnostic( Diagnostic.Create(
+					Diagnostics.NUnitCategory,
+					syntax.Identifier.GetLocation(),
+					$"Test is categorized as [{string.Join( ", ", categories )}]; however, the following categories are banned in this assembly: [{string.Join( ", ", bannedCategories )}]."
+				) );
+			}
 		}
 
 		private static bool IsTestMethod(
@@ -246,6 +259,30 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 			public INamedTypeSymbol CategoryAttribute { get; }
 			public ImmutableHashSet<INamedTypeSymbol> TestAttributes { get; }
 			public INamedTypeSymbol TestFixtureAttribute { get; }
+		}
+
+		private static ImmutableHashSet<string> LoadBannedCategoriesList(
+			AnalyzerOptions options
+		) {
+			ImmutableHashSet<string>.Builder bannedList = ImmutableHashSet.CreateBuilder(
+				StringComparer.Ordinal
+			);
+
+			AdditionalText bannedListFile = options.AdditionalFiles.FirstOrDefault(
+				file => Path.GetFileName( file.Path ) == "BannedTestCategoriesList.txt"
+			);
+
+			if( bannedListFile == null ) {
+				return bannedList.ToImmutableHashSet();
+			}
+
+			SourceText allowedListText = bannedListFile.GetText();
+
+			foreach( TextLine line in allowedListText.Lines ) {
+				bannedList.Add( line.ToString().Trim() );
+			}
+
+			return bannedList.ToImmutableHashSet();
 		}
 	}
 }
