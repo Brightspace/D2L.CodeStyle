@@ -1,6 +1,8 @@
 ﻿// analyzer: D2L.CodeStyle.Analyzers.Language.RequireNamedArgumentsAnalyzer
 
+using System.Collections.Immutable;
 using D2L.CodeStyle.Annotations.Contract;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace D2L.CodeStyle.Annotations.Contract {
 	public sealed class RequireNamedArgumentsAttribute : System.Attribute {}
@@ -70,8 +72,11 @@ namespace D2L {
 			public sealed class C : IC { public C() { } }
 			public sealed class D : ID { public D() { } }
 
-			public static void SomeMethodToTest(IA a, IB b) { }
-			public static void SomeOtherMethodToTest(IA a, IB b, IC c) { }
+			public static void SomeMethodToTest(IA one, IB two) { }
+			public static void SomeOtherMethodToTest(IA one, IB two, IC three) { }
+
+			public static void SomeMethodWithIgnoredNames(IA item1, IB item2) { }
+			public static void SomeOtherMethodWithIgnoredNames(IA item1test, IB item2test, IC item3test) { }
 		}
 
 		public static void Test() {
@@ -127,25 +132,25 @@ namespace D2L {
 			#endregion
 
 			#region named args don't count against the unnamed args budget
-			_arg5( a1: 1, /* SwappableArgsShouldBeNamed(a2, a3) */ p /**/, /* SwappableArgsShouldBeNamed(a3, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a4, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a5, a2) */ p /**/);
-			_arg6( a1: 1, a2: 2, /* SwappableArgsShouldBeNamed(a3, a4) */ p /**/, /* SwappableArgsShouldBeNamed(a4, a3) */ p /**/, /* SwappableArgsShouldBeNamed(a5, a3) */ p /**/, /* SwappableArgsShouldBeNamed(a6, a3) */ p /**/ );
+			_arg5( a1: 1, p, p, p, p);
+			_arg6( a1: 1, a2: 2, p, p, p, p );
 			#endregion
 
 			#region arguments that are literals with the correct name don't count against the budget
 			int a1 = 11;
 			int a3 = 13;
 			int A1 = 101; // upper case doesn't matter
-			_arg5( a1, /* SwappableArgsShouldBeNamed(a2, a3) */ p /**/, /* SwappableArgsShouldBeNamed(a3, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a4, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a5, a2) */ p /**/);
-			_arg5(/* SwappableArgsShouldBeNamed(a1, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a2, a1) */ p /**/, a3, /* SwappableArgsShouldBeNamed(a4, a1) */ p /**/, /* SwappableArgsShouldBeNamed(a5, a1) */ p /**/ );
-			_arg6( A1, /* SwappableArgsShouldBeNamed(a2, a4) */ p /**/, a3, /* SwappableArgsShouldBeNamed(a4, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a5, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a6, a2) */ p /**/ );
+			_arg5( a1, p, p, p, p );
+			_arg5( p, p, a3, p, p );
+			_arg6( A1, p, a3, p, p, p );
 			#endregion
 
 			#region member accesses can also serve as psuedo-names
 			var thing = new Thing();
-			_arg5( /* SwappableArgsShouldBeNamed(a1, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a2, a1) */ p /**/, /* SwappableArgsShouldBeNamed(a3, a1) */ p /**/, thing.a4, /* SwappableArgsShouldBeNamed(a5, a1) */ p /**/ );
-			_arg5( /* SwappableArgsShouldBeNamed(a1, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a2, a1) */ p /**/, /* SwappableArgsShouldBeNamed(a3, a1) */ p /**/, thing.nested.a4, /* SwappableArgsShouldBeNamed(a5, a1) */ p /**/ );
-			_arg5( /* SwappableArgsShouldBeNamed(a1, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a2, a1) */ p /**/, /* SwappableArgsShouldBeNamed(a3, a1) */ p /**/, thing.m_a4, /* SwappableArgsShouldBeNamed(a5, a1) */ p /**/ );
-			_arg5( /* SwappableArgsShouldBeNamed(a1, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a2, a1) */ p /**/, /* SwappableArgsShouldBeNamed(a3, a1) */ p /**/, thing.nested._a4, /* SwappableArgsShouldBeNamed(a5, a1) */ p /**/ );
+			_arg5( p, p, p, thing.a4, p );
+			_arg5( p, p, p, thing.nested.a4, p );
+			_arg5( p, p, p, thing.m_a4, p );
+			_arg5( p, p, p, thing.nested._a4, p );
 			#endregion
 
 			#region need to have enough named args, though
@@ -154,16 +159,16 @@ namespace D2L {
 			#endregion
 
 			#region params don't count against the unnamed args budget
-			funcWithParams( /* SwappableArgsShouldBeNamed(a, b) */ p /**/, /* SwappableArgsShouldBeNamed(b, a) */ p /**/, /* SwappableArgsShouldBeNamed(c, a) */ p /**/ );
-			funcWithParams( /* SwappableArgsShouldBeNamed(a, b) */ p /**/, /* SwappableArgsShouldBeNamed(b, a) */ p /**/, /* SwappableArgsShouldBeNamed(c, a) */ p /**/, p );
-			funcWithParams( /* SwappableArgsShouldBeNamed(a, b) */ p /**/, /* SwappableArgsShouldBeNamed(b, a) */ p /**/, /* SwappableArgsShouldBeNamed(c, a) */ p /**/, p, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 );
+			funcWithParams( p, p, p );
+			funcWithParams( p, p, p, p );
+			funcWithParams( p, p, p, p, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 );
 			#endregion
 
 			#region delegates
 			((delegate0Args)null)();
 			((delegate1Args)null)( 1 );
 			/* TooManyUnnamedArgs(5) */ ((delegate5Args)null)( p, p, p, p, p ) /**/;
-			((delegate5Args)null)( a1: 1, /* SwappableArgsShouldBeNamed(a2, a3) */ p /**/, /* SwappableArgsShouldBeNamed(a3, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a4, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a5, a2) */ p /**/ );
+			((delegate5Args)null)( a1: 1, p, p, p, p );
 			#endregion
 
 			#region class constructors should behave the same way
@@ -171,9 +176,9 @@ namespace D2L {
 			// behave just the same.
 			new SomeClass();
 			new SomeClass( 1 );
-			new SomeClass( /* SwappableArgsShouldBeNamed(a1, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a2, a1) */ p /**/);
+			new SomeClass( p, p );
 			/* TooManyUnnamedArgs(5) */ new SomeClass( p, p, p, p, p ) /**/;
-			new SomeClass( a1: 1, /* SwappableArgsShouldBeNamed(a2, a3) */ p /**/, /* SwappableArgsShouldBeNamed(a3, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a4, a2) */ p /**/, /* SwappableArgsShouldBeNamed(a5, a2) */ p /**/ );
+			new SomeClass( a1: 1, p, p, p, p );
 			new SomeClass( a1: 1, a2: 2, a3: 3 );
 			/* NamedArgumentsRequired */ new SomeClass( 1, 2, 3 ) /**/;
 			#endregion
@@ -222,13 +227,26 @@ namespace D2L {
 			new SomeCssClass(top, right: bottom, bottom: right, left);
 			new SomeCssClass(/* LiteralArgShouldBeNamed(top) */ 1 /**/, /* LiteralArgShouldBeNamed(right) */ 2 /**/, /* LiteralArgShouldBeNamed(bottom) */ 3 /**/, /* LiteralArgShouldBeNamed(left) */ 4 /**/);
 
-			ArgumentSwappingClass.SomeMethodToTest(new ArgumentSwappingClass.A(), new ArgumentSwappingClass.B());
-			ArgumentSwappingClass.SomeMethodToTest(/* SwappableArgsShouldBeNamed(a, b) */ new ArgumentSwappingClass.B() /**/, /* SwappableArgsShouldBeNamed(b, a) */ new ArgumentSwappingClass.B() /**/);
-			ArgumentSwappingClass.SomeMethodToTest(new ArgumentSwappingClass.C(), new ArgumentSwappingClass.B());
-			ArgumentSwappingClass.SomeMethodToTest(/* SwappableArgsShouldBeNamed(a, b) */ new ArgumentSwappingClass.D() /**/, /* SwappableArgsShouldBeNamed(b, a) */ new ArgumentSwappingClass.B() /**/);
+			ArgumentSwappingClass.A a = new ArgumentSwappingClass.A()
+			ArgumentSwappingClass.B b = new ArgumentSwappingClass.B()
+			ArgumentSwappingClass.C c = new ArgumentSwappingClass.C()
+			ArgumentSwappingClass.D d = new ArgumentSwappingClass.D()
+			
+			ArgumentSwappingClass.SomeMethodToTest(a, b);
+			ArgumentSwappingClass.SomeMethodToTest(/* SwappableArgsShouldBeNamed(one, two) */ b /**/, /* SwappableArgsShouldBeNamed(two, one) */ b /**/);
+			ArgumentSwappingClass.SomeMethodToTest(c, b);
+			ArgumentSwappingClass.SomeMethodToTest(/* SwappableArgsShouldBeNamed(one, two) */ d /**/, /* SwappableArgsShouldBeNamed(two, one) */ b /**/);
 
-			ArgumentSwappingClass.SomeOtherMethodToTest(new ArgumentSwappingClass.A(), new ArgumentSwappingClass.B(), new ArgumentSwappingClass.C());
-			ArgumentSwappingClass.SomeOtherMethodToTest(/* SwappableArgsShouldBeNamed(a, c) */ new ArgumentSwappingClass.C() /**/, new ArgumentSwappingClass.B(), /* SwappableArgsShouldBeNamed(c, a) */ new ArgumentSwappingClass.C() /**/);
+			ArgumentSwappingClass.SomeOtherMethodToTest(a, b, c);
+			ArgumentSwappingClass.SomeOtherMethodToTest(/* SwappableArgsShouldBeNamed(one, three) */ c /**/, b, /* SwappableArgsShouldBeNamed(three, one) */ c /**/);
+
+			ArgumentSwappingClass.SomeMethodWithIgnoredNames( a, b );
+			ArgumentSwappingClass.SomeMethodWithIgnoredNames( b, b );
+			ArgumentSwappingClass.SomeMethodWithIgnoredNames( c, b );
+			ArgumentSwappingClass.SomeMethodWithIgnoredNames( d, b );
+
+			ArgumentSwappingClass.SomeOtherMethodWithIgnoredNames( a, b, c );
+			ArgumentSwappingClass.SomeOtherMethodWithIgnoredNames( c, b, c );
 
 			#endregion
 		}
@@ -263,13 +281,13 @@ namespace D2L {
 				: this( b1 ) { }
 
 			public SomeBaseClass( int b1, int b2, int b3, int b4, string _ )
-				: this( /* SwappableArgsShouldBeNamed(a1, a2) */ b1 /**/, /* SwappableArgsShouldBeNamed(a2, a1) */ b2 /**/) { }
+				: this( b1, b2 ) { }
 
 			public SomeBaseClass( int b1, int b2, int b3, string _ )
 				/* NamedArgumentsRequired */ : this( b1, b2, b3 ) /**/ { }
 
 			public SomeBaseClass( int b1, int b2, int b3, int b4, int b5, string _ )
-				: this( /* SwappableArgsShouldBeNamed(a1, a2) */ b1 /**/, /* SwappableArgsShouldBeNamed(a2, a1) */ b2 /**/, /* SwappableArgsShouldBeNamed(a3, a1) */ b3 /**/, /* SwappableArgsShouldBeNamed(a4, a1) */ b4 /**/) { }
+				: this( b1, b2, b3, b4 ) { }
 
 			public SomeBaseClass( int b1, int b2, int b3, int b4, int b5, int b6, long _ )
 				: this( a1: b1, a2: b2, a3: b3, a4: b4, a5: b5 ) { }
@@ -305,13 +323,13 @@ namespace D2L {
 				: base( b1 ) { }
 
 			public SomeInheritedClass( int b1, int b2, string _ )
-				: base( /* SwappableArgsShouldBeNamed(a1, a2) */ b1 /**/, /* SwappableArgsShouldBeNamed(a2, a1) */ b2 /**/) { }
+				: base( b1, b2 ) { }
 
 			public SomeInheritedClass( int b1, int b2, int b3, bool _ )
 				/* NamedArgumentsRequired */ : base( b1, b2, b3 ) /**/ { }
 
 			public SomeInheritedClass( int b1, int b2, int b3, int b4, string _ )
-				: base( /* SwappableArgsShouldBeNamed(a1, a2) */ b1 /**/, /* SwappableArgsShouldBeNamed(a2, a1) */ b2 /**/, /* SwappableArgsShouldBeNamed(a3, a1) */ b3 /**/, /* SwappableArgsShouldBeNamed(a4, a1) */ b4 /**/) { }
+				: base( b1, b2, b3, b4 ) { }
 
 			public SomeInheritedClass( int b1, int b2, int b3, int b4, int b5, string _ )
 				: base( a1: b1, a2: b2, a3: b3, a4: b4, a5: b5 ) { }

@@ -31,12 +31,13 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			public ArgumentSyntax Syntax { get; }
 		}
 
-		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-			Diagnostics.TooManyUnnamedArgs,
-			Diagnostics.LiteralArgShouldBeNamed,
-			Diagnostics.NamedArgumentsRequired,
-			Diagnostics.SwappableArgsShouldBeNamed
-		);
+		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
+			ImmutableArray.Create(
+				Diagnostics.TooManyUnnamedArgs,
+				Diagnostics.LiteralArgShouldBeNamed,
+				Diagnostics.NamedArgumentsRequired,
+				Diagnostics.SwappableArgsShouldBeNamed
+			);
 
 		public const int TOO_MANY_UNNAMED_ARGS = 5;
 
@@ -68,7 +69,6 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		private static void AnalyzeCallSyntax(
 			SyntaxNodeAnalysisContext ctx
 		) {
-
 			ArgumentListSyntax args = GetArgs( ctx.Node );
 			if( args == null ) {
 				return;
@@ -88,7 +88,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			ImmutableArray<ArgParamBinding> unnamedArgs =
 				GetUnnamedArgs( ctx.SemanticModel, args )
-				.ToImmutableArray();
+				   .ToImmutableArray();
 
 			if( unnamedArgs.IsEmpty ) {
 				return;
@@ -96,7 +96,6 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			bool requireNamedArguments = HasRequireNamedArgumentsAttribute( ctx.SemanticModel, args );
 			if( requireNamedArguments ) {
-
 				var fixerContext = CreateFixerContext( unnamedArgs );
 
 				ctx.ReportDiagnostic(
@@ -111,7 +110,6 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			}
 
 			if( unnamedArgs.Length >= TOO_MANY_UNNAMED_ARGS ) {
-
 				var fixerContext = CreateFixerContext( unnamedArgs );
 
 				ctx.ReportDiagnostic(
@@ -126,20 +124,29 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
-			HashSet<ArgParamBinding> swappableArgs = new HashSet<ArgParamBinding>();
-			foreach( var arg in unnamedArgs ) {
+			// Retrieve a list of arguments that don't need to be named if
+			// they are swappable
+			ImmutableArray<ArgParamBinding> ignoredArgs = GetIgnoredArgs( ctx.SemanticModel, args ).ToImmutableArray();
 
-				// Literal expressions have their own issue
+			// Iterate through the unnamed arguments in the method
+			HashSet<ArgParamBinding> flaggedArguments = new();
+			foreach( var arg in unnamedArgs ) {
+				// Literal arguments should always be named
 				if( arg.Syntax.Expression is LiteralExpressionSyntax ) {
-					// Literal arguments should always be named
 					var fixerContext = CreateFixerContext( ImmutableArray.Create( arg ) );
-					ctx.ReportDiagnostic( Diagnostic.Create(
+					ctx.ReportDiagnostic(
+						Diagnostic.Create(
 							descriptor: Diagnostics.LiteralArgShouldBeNamed,
 							location: arg.Syntax.Expression.GetLocation(),
 							properties: fixerContext,
 							messageArgs: arg.ParamName
 						)
 					);
+					continue;
+				}
+
+				// If the argument is ignored, we don't care anymore
+				if( ignoredArgs.Count( ignoredArg => ignoredArg.ParamName == arg.ParamName ) > 0 ) {
 					continue;
 				}
 
@@ -152,21 +159,31 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					allowParams: false
 				);
 
-				// Iterate through the other arguments in the list
-				foreach( var compareArg in unnamedArgs ) {
+				// If the type of the argument is somehow null, ignore it
+				if( argType == null ) {
+					continue;
+				}
 
-					// Don't care about the same argument
-					if( compareArg.Position == arg.Position ) {
+				// Iterate through the unnamed arguments in the method for comparison
+				foreach( var compareArg in unnamedArgs ) {
+					// If the arguments are the same, we don't care
+					if( arg.ParamName.Equals( compareArg.ParamName ) ) {
 						continue;
 					}
 
-					// Don't care about literals
+					// If the comparison argument is a literal, we don't care
 					if( compareArg.Syntax.Expression is LiteralExpressionSyntax ) {
 						continue;
 					}
 
-					// Don't care if the argument has already been flagged
-					if( swappableArgs.Contains( compareArg ) ) {
+					// If the comparison argument has already been flagged as
+					// swappable, we don't care
+					if( flaggedArguments.Contains( compareArg ) ) {
+						continue;
+					}
+
+					// If the comparison argument is ignored, we don't care
+					if( ignoredArgs.Count( ignoredArg => ignoredArg.ParamName == compareArg.ParamName ) > 0 ) {
 						continue;
 					}
 
@@ -179,6 +196,11 @@ namespace D2L.CodeStyle.Analyzers.Language {
 						allowParams: false
 					);
 
+					// If the type of the comparison argument is somehow null, ignore it
+					if( compareArgType == null ) {
+						continue;
+					}
+
 					// Get the conversion information for both directions
 					var conversion = ctx.SemanticModel.Compilation.ClassifyConversion(
 						argType,
@@ -189,36 +211,200 @@ namespace D2L.CodeStyle.Analyzers.Language {
 						param.Type
 					);
 
-					// Check if the arguments could swap
-					if( conversion.Exists && reverseConversion.Exists ) {
+					// If swapping cannot go both ways, we don't care
+					if( !conversion.Exists || !reverseConversion.Exists ) {
+						continue;
+					}
 
-						// Flag the first argument if it has not already been flagged
-						if( swappableArgs.Add( arg ) ) {
-							var fixerContext = CreateFixerContext( ImmutableArray.Create( arg ) );
-							ctx.ReportDiagnostic( Diagnostic.Create(
-									descriptor: Diagnostics.SwappableArgsShouldBeNamed,
-									location: arg.Syntax.Expression.GetLocation(),
-									properties: fixerContext,
-									messageArgs: new object[] { arg.ParamName, compareArg.ParamName }
-								)
-							);
+					// Report the first argument if it was not already
+					if( flaggedArguments.Add( arg ) ) {
+						var fixerContext = CreateFixerContext( ImmutableArray.Create( arg ) );
+						ctx.ReportDiagnostic(
+							Diagnostic.Create(
+								descriptor: Diagnostics.SwappableArgsShouldBeNamed,
+								location: arg.Syntax.Expression.GetLocation(),
+								properties: fixerContext,
+								messageArgs: new object[] {arg.ParamName, compareArg.ParamName}
+							)
+						);
+					}
+
+					// Report the second argument if it was not already
+					if( flaggedArguments.Add( compareArg ) ) {
+						var fixerContext = CreateFixerContext( ImmutableArray.Create( compareArg ) );
+						ctx.ReportDiagnostic(
+							Diagnostic.Create(
+								descriptor: Diagnostics.SwappableArgsShouldBeNamed,
+								location: compareArg.Syntax.Expression.GetLocation(),
+								properties: fixerContext,
+								messageArgs: new object[] {compareArg.ParamName, arg.ParamName}
+							)
+						);
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Retrieves the parameters of each argument and binds them together.
+		/// </summary>
+		/// <param name="model">The SemanticModel needed to retrieve the parameters</param>
+		/// <param name="args">The arguments to retrieve parameters for</param>
+		/// <returns>An enumeration of the ArgParamBinding objects</returns>
+		private static IEnumerable<ArgParamBinding> GetArgParamBindings(
+			SemanticModel model,
+			BaseArgumentListSyntax args
+		) {
+			// Iterate through the arguments of the method
+			for( int i = 0 ; i < args.Arguments.Count ; i++ ) {
+				ArgumentSyntax arg = args.Arguments[i];
+
+				IParameterSymbol param = arg.DetermineParameter(
+					model,
+					allowParams: false
+				);
+
+				// Not sure if this can happen but it'd be hard to do anything
+				// with this param so ignore it.
+				if( param == null ) {
+					continue;
+				}
+
+				// IParameterSymbol.Name is documented to be possibly empty in
+				// which case it is "unnamed", so ignore it.
+				if( param.Name == "" ) {
+					continue;
+				}
+
+				// C# allows us to create variables with the same names as reserved keywords,
+				// as long as we prefix with @ (e.g. @int is a valid identifier)
+				// So any parameters which are reserved must have the @ prefix
+				string paramName;
+				SyntaxKind paramNameKind = SyntaxFacts.GetKeywordKind( param.Name );
+				if( SyntaxFacts.GetReservedKeywordKinds()
+				               .Any( reservedKind => reservedKind == paramNameKind )
+				) {
+					paramName = "@" + param.Name;
+				} else {
+					paramName = param.Name;
+				}
+
+				yield return new ArgParamBinding(
+					position: i,
+					paramName: paramName,
+					syntax: arg
+				);
+			}
+		}
+
+		/// <summary>
+		/// Retrieves a list of arguments which do not need to be named.
+		/// </summary>
+		/// <param name="model">The SemanticModel needed to retrieve the parameters</param>
+		/// <param name="args">The arguments to retrieve parameters for</param>
+		/// <returns>An enumeration of the ArgParamBinding objects</returns>
+		private static IEnumerable<ArgParamBinding> GetIgnoredArgs(
+			SemanticModel model,
+			BaseArgumentListSyntax args
+		) {
+			// Get all argument-parameter bindings for method
+			ImmutableArray<ArgParamBinding> bindings
+				= GetArgParamBindings( model, args ).ToImmutableArray();
+
+			HashSet<ArgParamBinding> ignoredArgParams = new();
+
+			// Iterate through the arguments
+			foreach( ArgParamBinding argParam in bindings ) {
+				string name = argParam.ParamName;
+
+				// Iterate through the arguments to compare against
+				foreach( ArgParamBinding compareArgParam in bindings ) {
+					string compareName = compareArgParam.ParamName;
+
+					// If the arguments are the same, we don't care
+					if( name.Equals( compareName ) ) {
+						continue;
+					}
+
+					// If the parameter names are different lengths, we don't care
+					if( name.Length != compareName.Length ) {
+						continue;
+					}
+
+					// Iterate through the characters in the parameter names
+					bool areCloseEnough = true;
+					int numOfDiffs = 0;
+					for( int i = 0 ; i < name.Length ; i++ ) {
+						char char1 = name.ElementAt( i );
+						char char2 = compareName.ElementAt( i );
+
+						// If the characters are the same, we don't care
+						if( char1.Equals( char2 ) ) {
+							continue;
 						}
 
-						// Flag the second argument if it has not already been flagged
-						if( swappableArgs.Add( compareArg ) ) {
-							var fixerContext = CreateFixerContext( ImmutableArray.Create( compareArg ) );
-							ctx.ReportDiagnostic( Diagnostic.Create(
-									descriptor: Diagnostics.SwappableArgsShouldBeNamed,
-									location: compareArg.Syntax.Expression.GetLocation(),
-									properties: fixerContext,
-									messageArgs: new object[] { compareArg.ParamName, arg.ParamName }
-								)
-							);
+						// If the characters are more than 1 apart, abort
+						if( Math.Abs( char1 - char2 ) > 1 ) {
+							areCloseEnough = false;
+							break;
 						}
 
+						// If there are more than 1 difference, abort
+						numOfDiffs++;
+						if( numOfDiffs > 1 ) {
+							areCloseEnough = false;
+							break;
+						}
+					}
+
+					// If the parameter names have only one character difference,
+					// and that character is different by only a single (ASCII)
+					// value, then add them to the ignore list
+					if( areCloseEnough ) {
+						ignoredArgParams.Add( argParam );
+						ignoredArgParams.Add( compareArgParam );
+					}
+				}
+			}
+
+			return ignoredArgParams.ToImmutableArray();
+		}
+
+		/// <summary>
+		/// Retrieves a list of arguments which are unnamed.
+		/// </summary>
+		/// <param name="model">The SemanticModel needed to retrieve the parameters</param>
+		/// <param name="args">The arguments to retrieve parameters for</param>
+		/// <returns>An enumeration of the ArgParamBinding objects</returns>
+		private static IEnumerable<ArgParamBinding> GetUnnamedArgs(
+			SemanticModel model,
+			BaseArgumentListSyntax args
+		) {
+			// Get all argument-parameter bindings for method
+			foreach( ArgParamBinding argParam in GetArgParamBindings( model, args ) ) {
+				// Ignore already named arguments
+				if( argParam.Syntax.NameColon != null ) {
+					continue;
+				}
+
+				// Retrieve the name of the argument without certain prefixes
+				string pseudoName = GetPseudoName( argParam.Syntax );
+
+				// Make sure the name still contains something
+				if( pseudoName != null ) {
+					// If the parameter name matches the argument name,
+					// consider the argument to be named
+					if( string.Equals(
+						pseudoName,
+						argParam.ParamName.Replace( "@", "" ),
+						StringComparison.OrdinalIgnoreCase
+					) ) {
 						continue;
 					}
 				}
+
+				// If the argument is unnamed, return it
+				yield return argParam;
 			}
 		}
 
@@ -266,80 +452,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			return false;
 		}
 
-		/// <summary>
-		/// Get the arguments which are unnamed and not "params"
-		/// </summary>
-		private static IEnumerable<ArgParamBinding> GetUnnamedArgs(
-				SemanticModel model,
-				ArgumentListSyntax args
-			) {
-
-			for( int idx = 0; idx < args.Arguments.Count; idx++ ) {
-				ArgumentSyntax arg = args.Arguments[idx];
-
-				// Ignore args that already have names
-				if( arg.NameColon != null ) {
-					continue;
-				}
-
-				IParameterSymbol param = arg.DetermineParameter(
-					model,
-
-					// Don't map params arguments. It's okay that they are
-					// unnamed. Some things like ImmutableArray.Create() could
-					// take a large number of args and we don't want anything to
-					// be named. Named params really suck so we may still
-					// encourage it but APIs that take params and many other
-					// args would suck anyway.
-					allowParams: false
-				);
-
-				// Not sure if this can happen but it'd be hard to name this
-				// param so ignore it.
-				if( param == null ) {
-					continue;
-				}
-
-				// IParameterSymbol.Name is documented to be possibly empty in
-				// which case it is "unnamed", so ignore it.
-				if( param.Name == "" ) {
-					continue;
-				}
-
-				// C# allows us to create variables with the same names as reserved keywords,
-				// as long as we prefix with @ (e.g. @int is a valid identifier)
-				// So any parameters which are reserved must have the @ prefix
-				string paramName;
-				SyntaxKind paramNameKind = SyntaxFacts.GetKeywordKind( param.Name );
-				if( SyntaxFacts.GetReservedKeywordKinds().Any( reservedKind => reservedKind == paramNameKind ) ) {
-					paramName = "@" + param.Name;
-				} else {
-					paramName = param.Name;
-				}
-
-				string psuedoName = GetPsuedoName( arg );
-				if( psuedoName != null ) {
-
-					bool matchesParamName = string.Equals(
-						psuedoName,
-						param.Name,
-						StringComparison.OrdinalIgnoreCase
-					);
-
-					if( matchesParamName ) {
-						continue;
-					}
-				}
-
-				yield return new ArgParamBinding(
-					position: idx,
-					paramName: paramName, // Use the verbatim parameter name if applicable
-					syntax: arg
-				);
-			}
-		}
-
-		private static string GetPsuedoName( ArgumentSyntax arg ) {
+		private static string GetPseudoName( ArgumentSyntax arg ) {
 
 			string ident = arg.Expression.TryGetInferredMemberName();
 			if( ident == null ) {
