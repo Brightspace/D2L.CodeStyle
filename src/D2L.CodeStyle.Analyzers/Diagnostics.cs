@@ -562,5 +562,14 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "The method being called has declared that this parameter must receive a constant, but a non-constant value is being passed."
 		);
+
+		public static readonly DiagnosticDescriptor InvalidConstantType = new DiagnosticDescriptor(
+			id: "D2L0075",
+			title: "Invalid data type marked as [Constant].",
+			messageFormat: "The [Constant] attribute cannot be used on \"{0}\" types.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }

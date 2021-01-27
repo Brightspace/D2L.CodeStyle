@@ -28,12 +28,23 @@ namespace SpecTests
 		public static void SomeMethodWithOneConstantParameter<T>( [Constant] T param1, T param2 ) { }
 		public static void SomeMethodWithOneOtherConstantParameter<T>( T param1, [Constant] T param2 ) { }
 		public static void SomeMethodWithTwoConstantParameters<T>( [Constant] T param1, [Constant] T param2 ) { }
+
+		public interface IInterface { }
+		public class SomeClassImplementingInterface : IInterface { }
+		public static void SomeMethodWithInterfaceParameter( /* InvalidConstantType(Interface) */ [Constant] IInterface @interface /**/ ) { }
+		public static void SomeMethodWithOneInterfaceParameter<T>(IInterface param1, [Constant] T param2) { }
 	}
 
 	public sealed class Tests
 	{
 		void Method()
 		{
+			#region Invalid type tests
+			const Types.SomeClassImplementingInterface interfaceClass = new Types.SomeClassImplementingInterface { };
+			Types.SomeMethodWithConstantParameter<Types.SomeClassImplementingInterface>( /* InvalidConstantType(Class) */ interfaceClass /**/ );
+			Types.SomeMethodWithOneInterfaceParameter<Types.SomeClassImplementingInterface>(interfaceClass, /* InvalidConstantType(Class) */ interfaceClass /**/ );
+			#endregion
+
 			#region Logger tests
 			const string CONSTANT_MESSAGE = "Organization {0} is not constant.";
 			int orgId = 0;
