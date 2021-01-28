@@ -62,29 +62,40 @@ namespace SpecTests {
 		public class Bad : RegularInterface { }
 
 		[Immutable]
-		public sealed class SomeClassWithConstructor {
+		public sealed class SomeClassWithConstructor1 {
 			public readonly RegularInterface m_interface = new Good();
 
-			public SomeClassWithConstructor() {
+			public SomeClassWithConstructor1() {
 				m_interface = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad,  (or [ImmutableBaseClass])) */ new Bad() /**/;
 			}
 		}
 
 		[Immutable]
-		public sealed class SomeOtherClassWithConstructor {
+		public sealed class SomeClassWithConstructor2 {
 			public readonly RegularInterface m_interface = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad,  (or [ImmutableBaseClass])) */ new Bad() /**/;
 
-			public SomeClassWithConstructor() {
+			public SomeClassWithConstructor2() {
 				m_interface = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad,  (or [ImmutableBaseClass])) */ new Bad() /**/;
 			}
 		}
 
 		[Immutable]
-		public sealed class SomeOtherOtherClassWithConstructor {
+		public sealed class SomeClassWithConstructor3 {
 			public readonly RegularInterface m_interface = new Good();
 
-			public SomeClassWithConstructor() {
+			public SomeClassWithConstructor3() {
 				m_interface = new Good();
+			}
+		}
+
+		[Immutable]
+		public sealed class SomeClassWithConstructor4 {
+			public readonly RegularInterface m_interface = new Good();
+
+			public SomeClassWithConstructor4() {
+				if( true == false ) {
+					m_interface = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad,  (or [ImmutableBaseClass])) */ new Bad() /**/;
+				}
 			}
 		}
 		#endregion
