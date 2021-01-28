@@ -133,15 +133,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		private bool CheckField( DiagnosticSink diagnosticSink, IFieldSymbol field ) {
-			if( field.IsImplicitlyDeclared ) {
+			if ( field.IsImplicitlyDeclared ) {
 				// These correspond to auto-properties. That case gets handled
 				// in CheckProperty instead.
 				return true;
 			}
 
-			var decl = field.DeclaringSyntaxReferences
-			   .Single()
-			   .GetSyntax() as VariableDeclaratorSyntax;
+			var decl = field.DeclaringSyntaxReferences.Single()
+				.GetSyntax() as VariableDeclaratorSyntax;
 
 			var type = decl.FirstAncestorOrSelf<VariableDeclarationSyntax>().Type;
 
@@ -161,14 +160,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 
 		private bool CheckProperty( DiagnosticSink diagnosticSink, IPropertySymbol prop ) {
-			if( prop.IsIndexer ) {
+			if ( prop.IsIndexer ) {
 				// Indexer properties are just glorified method syntax and
 				// don't hold state.
 				// https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/indexers/
 				return true;
 			}
 
-			if( prop.IsImplicitlyDeclared ) {
+			if ( prop.IsImplicitlyDeclared ) {
 				// records have implicitly declared properties like
 				// EqualityContract which are OK but don't have a
 				// PropertyDeclarationSyntax etc.
@@ -180,7 +179,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				prop.DeclaringSyntaxReferences.Single().GetSyntax()
 			);
 
-			if( !propInfo.IsAutoImplemented ) {
+			if ( !propInfo.IsAutoImplemented ) {
 				// Properties that are auto-implemented have an implicit
 				// backing field that may be mutable. Otherwise, properties are
 				// just sugar for getter/setter methods and don't themselves
@@ -213,7 +212,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			var immutable = true;
 
-			if( !isReadOnly ) {
+			if ( !isReadOnly ) {
 				diagnosticSink(
 					Diagnostic.Create(
 						Diagnostics.MemberIsNotReadOnly,
@@ -274,21 +273,21 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// Retrieve a list of assignment expressions from any constructors
 			// within the class
 			var assignmentExpressions = ( memberSymbol.ContainingSymbol as INamedTypeSymbol )!
-			   .Constructors
-			   .Where( constructorSymbol => !constructorSymbol.IsImplicitlyDeclared )
-			   .Select( constructorSymbol => constructorSymbol.DeclaringSyntaxReferences
-				           .Single()
-				           .GetSyntax() )
-			   .SelectMany( constructorSyntax => constructorSyntax.DescendantNodes() )
-			   .OfType<AssignmentExpressionSyntax>();
+				.Constructors
+				.Where( constructorSymbol => !constructorSymbol.IsImplicitlyDeclared )
+				.Select( constructorSymbol => constructorSymbol.DeclaringSyntaxReferences
+					.Single()
+					.GetSyntax() )
+				.SelectMany( constructorSyntax => constructorSyntax.DescendantNodes() )
+				.OfType<AssignmentExpressionSyntax>();
 
 			// Add any assignments which act on the specific field/property
 			// to the list
 			return assignmentExpressions
-			   .Where( assignmentSyntax => IsAnAssignmentTo( assignmentSyntax, memberSymbol ) )
-			   .Select( assignmentSyntax => assignmentSyntax.Right )
-			   .Append( initializer )
-			   .ToImmutableArray();
+				.Where( assignmentSyntax => IsAnAssignmentTo( assignmentSyntax, memberSymbol ) )
+				.Select( assignmentSyntax => assignmentSyntax.Right )
+				.Append( initializer )
+				.ToImmutableArray();
 		}
 
 		private bool IsAnAssignmentTo(
@@ -300,7 +299,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 
 			var leftSideSymbol = semanticModel.GetSymbolInfo( assignmentSyntax.Left )
-			   .Symbol;
+				.Symbol;
 
 			return SymbolEqualityComparer.Default.Equals(
 				memberSymbol,
