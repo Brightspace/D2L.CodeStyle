@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
@@ -141,8 +140,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			var decl = field.DeclaringSyntaxReferences
-			                .Single()
-			                .GetSyntax() as VariableDeclaratorSyntax;
+			   .Single()
+			   .GetSyntax() as VariableDeclaratorSyntax;
 
 			var type = decl.FirstAncestorOrSelf<VariableDeclarationSyntax>().Type;
 
@@ -265,60 +264,48 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// A readonly field or property may be re-assigned in constructors.
 		/// This method finds all assignments of the field/property.
 		/// </summary>
-		/// <param name="symbol">The field/property to search for</param>
+		/// <param name="memberSymbol">The field/property to search for</param>
 		/// <param name="initializer">The initialization with the declaration</param>
 		/// <returns>An immutable list of assignments</returns>
 		private ImmutableArray<ExpressionSyntax> GetAssignments(
-			ISymbol symbol,
+			ISymbol memberSymbol,
 			ExpressionSyntax initializer
 		) {
-			List<ExpressionSyntax> assignments = new() {initializer};
-
-			// If the containing symbol isn't a named type,
-			// then there is no .Constructors member
-			if( symbol.ContainingSymbol is not INamedTypeSymbol namedTypeSymbol ) {
-				return assignments.ToImmutableArray();
-			}
-
-			// If the symbol somehow has no syntax, ignore it
-			if( symbol.DeclaringSyntaxReferences.IsEmpty ) {
-				return assignments.ToImmutableArray();
-			}
-
-			// Retrieve the semantic model so that we can get a symbol
-			// from some syntax later
-			var semanticModel = m_compilation.GetSemanticModel(
-				symbol.DeclaringSyntaxReferences.Single().GetSyntax().SyntaxTree
-			);
-
 			// Retrieve a list of assignment expressions from any constructors
 			// within the class
-			var assignmentExpressions = namedTypeSymbol
-			                           .Constructors
-			                           .Where( sym => !sym.IsImplicitlyDeclared )
-			                           .Select( sym => sym.DeclaringSyntaxReferences
-			                                              .Single()
-			                                              .GetSyntax() )
-			                           .SelectMany( syn => syn.DescendantNodes() )
-			                           .OfType<AssignmentExpressionSyntax>();
+			var assignmentExpressions = ( memberSymbol.ContainingSymbol as INamedTypeSymbol )!
+			   .Constructors
+			   .Where( constructorSymbol => !constructorSymbol.IsImplicitlyDeclared )
+			   .Select( constructorSymbol => constructorSymbol.DeclaringSyntaxReferences
+				           .Single()
+				           .GetSyntax() )
+			   .SelectMany( constructorSyntax => constructorSyntax.DescendantNodes() )
+			   .OfType<AssignmentExpressionSyntax>();
 
 			// Add any assignments which act on the specific field/property
 			// to the list
-			assignments.AddRange(
-				assignmentExpressions
-				   .Select( expression => new {
-						expression,
-						symbol = semanticModel.GetSymbolInfo( expression.Left )
-						                      .Symbol
-					} )
-				   .Where( assignment => SymbolEqualityComparer.Default.Equals(
-					           symbol,
-					           assignment.symbol
-				           ) )
-				   .Select( assignment => assignment.expression.Right )
+			return assignmentExpressions
+			   .Where( assignmentSyntax => IsAnAssignmentTo( assignmentSyntax, memberSymbol ) )
+			   .Select( assignmentSyntax => assignmentSyntax.Right )
+			   .Append( initializer )
+			   .ToImmutableArray();
+		}
+
+		private bool IsAnAssignmentTo(
+			AssignmentExpressionSyntax assignmentSyntax,
+			ISymbol memberSymbol
+		) {
+			var semanticModel = m_compilation.GetSemanticModel(
+				memberSymbol.DeclaringSyntaxReferences.Single().GetSyntax().SyntaxTree
 			);
 
-			return assignments.ToImmutableArray();
+			var leftSideSymbol = semanticModel.GetSymbolInfo( assignmentSyntax.Left )
+			   .Symbol;
+
+			return SymbolEqualityComparer.Default.Equals(
+				memberSymbol,
+				leftSideSymbol
+			);
 		}
 
 		/// <summary>
@@ -373,7 +360,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			//   int[] foo = { 1, 2, 3 };
 			var typeToCheck = typeInfo.Type ?? typeInfo.ConvertedType;
 
-			if ( assignment is BaseObjectCreationExpressionSyntax _ ) {
+			if( assignment is BaseObjectCreationExpressionSyntax _ ) {
 				// When we have a new T() we don't need to worry about the value
 				// being anything other than an instance of T.
 				return (
