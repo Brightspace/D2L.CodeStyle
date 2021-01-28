@@ -28,123 +28,108 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeParameters(
 					ctx,
-					(ParameterListSyntax)ctx.Node
+					(ParameterSyntax)ctx.Node
 				),
-				SyntaxKind.ParameterList
+				SyntaxKind.Parameter
 			);
 
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeArguments(
 					ctx,
-					( (InvocationExpressionSyntax)ctx.Node ).ArgumentList
+					(ArgumentSyntax)ctx.Node
 				),
-				SyntaxKind.InvocationExpression
-			);
-
-			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeArguments(
-					ctx,
-					( (ObjectCreationExpressionSyntax)ctx.Node ).ArgumentList
-				),
-				SyntaxKind.ObjectCreationExpression
+				SyntaxKind.Argument
 			);
 		}
 
 		private static void AnalyzeParameters(
 			SyntaxNodeAnalysisContext context,
-			ParameterListSyntax parameterList
+			ParameterSyntax parameterSyntax
 		) {
-			SeparatedSyntaxList<ParameterSyntax> parameters = parameterList.Parameters;
-			foreach( ParameterSyntax parameterSyntax in parameters ) {
-				// We need the symbol
-				IParameterSymbol parameter = context.SemanticModel.GetDeclaredSymbol( parameterSyntax );
+			var parameter = context.SemanticModel.GetDeclaredSymbol( parameterSyntax );
 
-				// Parameter is somehow null, so do nothing
-				if( parameter == null ) {
-					continue;
-				}
-
-				// Parameter is not [Constant], so do nothing
-				if( !parameter.HasAttribute( AttributeName ) ) {
-					continue;
-				}
-
-				// Get the base type of the parameter
-				ITypeSymbol type = parameter.Type;
-
-				// Check that the parameter type is not a valid type,
-				// and that it is not a type parameter
-				if( type.SpecialType != SpecialType.None
-				 || type.Kind != SymbolKind.NamedType ) {
-					continue;
-				}
-
-				// This is marked as [Constant] and so you need to use a different type
-				context.ReportDiagnostic(
-					Diagnostic.Create(
-						descriptor: Diagnostics.InvalidConstantType,
-						location: parameterSyntax.GetLocation(),
-						messageArgs: type.TypeKind
-					)
-				);
+			// Parameter is somehow null, so do nothing
+			if( parameter == null ) {
+				return;
 			}
+
+			// Parameter is not [Constant], so do nothing
+			if( !parameter.HasAttribute( context.Compilation, AttributeName ) ) {
+				return;
+			}
+
+			var type = parameter.Type;
+
+			// If the parameter is a valid type, there are no issues
+			if( type.SpecialType != SpecialType.None
+			) {
+				return;
+			}
+
+			// If the parameter is a generic type, there aren't issues yet...
+			// There may be issues when the method is being called, but
+			// those are handled in the argument analyzer
+			if( type.Kind != SymbolKind.NamedType
+			) {
+				return;
+			}
+
+			// The current parameter type cannot be marked as [Constant]
+			context.ReportDiagnostic(
+				Diagnostic.Create(
+					descriptor: Diagnostics.InvalidConstantType,
+					location: parameterSyntax.GetLocation(),
+					messageArgs: type.TypeKind
+				)
+			);
 		}
 
 		private static void AnalyzeArguments(
 			SyntaxNodeAnalysisContext context,
-			ArgumentListSyntax argumentList ) {
-			// If there are no arguments, nothing needs to be done
-			if( argumentList == null ) {
+			ArgumentSyntax argument ) {
+			// Get the associated parameter
+			var parameter = argument.DetermineParameter(
+				context.SemanticModel,
+				allowParams: true
+			);
+
+			// Parameter is somehow null, so do nothing
+			if( parameter == null ) {
 				return;
 			}
 
-			// Get arguments from the list and iterate through them
-			SeparatedSyntaxList<ArgumentSyntax> arguments = argumentList.Arguments;
-			foreach( var argument in arguments ) {
-				// Get the associated parameter
-				var parameter = argument.DetermineParameter(
-					context.SemanticModel,
-					allowParams: true
+			// Parameter is not [Constant], so do nothing
+			if( !parameter.HasAttribute( context.Compilation, AttributeName ) ) {
+				return;
+			}
+
+			var type = context.SemanticModel.GetTypeInfo( argument.Expression ).Type;
+
+			// Check that the argument type is not a valid type
+			// Necessary to catch arguments which were generic in the declaration
+			if( type?.SpecialType == SpecialType.None ) {
+				// The current parameter type cannot be marked as [Constant]
+				context.ReportDiagnostic(
+					Diagnostic.Create(
+						descriptor: Diagnostics.InvalidConstantType,
+						location: argument.GetLocation(),
+						messageArgs: type.TypeKind
+					)
 				);
 
-				// Parameter is somehow null, so do nothing
-				if( parameter == null ) {
-					continue;
-				}
+				return;
+			}
 
-				// Parameter is not [Constant], so do nothing
-				if( !parameter.HasAttribute( AttributeName ) ) {
-					continue;
-				}
-
-				// Get the base type of the argument
-				var type = context.SemanticModel.GetTypeInfo( argument.Expression ).Type;
-
-				// Check that the argument type is not a valid type
-				if( type?.SpecialType == SpecialType.None ) {
-					// This is marked as [Constant] and so you need to use a different type
-					context.ReportDiagnostic(
-						Diagnostic.Create(
-							descriptor: Diagnostics.InvalidConstantType,
-							location: argument.GetLocation(),
-							messageArgs: type.TypeKind
-						)
-					);
-
-					continue;
-				}
-
-				// Check if the argument is a constant value
-				if( !context.SemanticModel.GetConstantValue( argument.Expression ).HasValue ) {
-					// Argument is not constant, so report it
-					context.ReportDiagnostic(
-						Diagnostic.Create(
-							descriptor: Diagnostics.NonConstantPassedToConstantParameter,
-							location: argument.GetLocation(),
-							messageArgs: parameter.Name
-						)
-					);
-				}
+			// Check if the argument is a constant value
+			if( !context.SemanticModel.GetConstantValue( argument.Expression ).HasValue ) {
+				// Argument is not constant, so report it
+				context.ReportDiagnostic(
+					Diagnostic.Create(
+						descriptor: Diagnostics.NonConstantPassedToConstantParameter,
+						location: argument.GetLocation(),
+						messageArgs: parameter.Name
+					)
+				);
 			}
 		}
 	}

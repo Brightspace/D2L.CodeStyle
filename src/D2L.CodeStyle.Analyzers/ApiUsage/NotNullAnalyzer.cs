@@ -105,7 +105,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				// If the parameter isn't marked [NotNull] we can skip this
 				// argument. It might be interesting to complain for null
 				// passed to a params argument in the future.
-				if ( !parameter.HasAttribute( NotNullAttribute ) ) {
+				if ( !parameter.HasAttribute( context.Compilation, NotNullAttribute ) ) {
 					continue;
 				}
 

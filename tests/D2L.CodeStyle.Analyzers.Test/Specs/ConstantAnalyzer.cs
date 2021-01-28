@@ -1,20 +1,18 @@
 ﻿// analyzer: D2L.CodeStyle.Analyzers.Helpers.ConstantAnalyzer
 
-using D2L.CodeStyle.Annotations;
+using System;
 
 #region Relevant Types
-namespace D2L.CodeStyle.Annotations
+namespace D2L.CodeStyle.Annotations.Contract
 {
-	public static class Contract
-	{
-		public sealed class ConstantAttribute : Attribute { }
-	}
+	[AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
+	public sealed class ConstantAttribute : Attribute { }
 }
 #endregion
 
 namespace SpecTests
 {
-	using static Contract;
+	using D2L.CodeStyle.Annotations.Contract;
 
 	public sealed class Logger
 	{
