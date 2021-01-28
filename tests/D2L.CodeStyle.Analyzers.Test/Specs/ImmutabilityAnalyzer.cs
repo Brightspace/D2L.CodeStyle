@@ -1,6 +1,7 @@
 ﻿// analyzer: D2L.CodeStyle.Analyzers.Immutability.ImmutabilityAnalyzer
 
 using System;
+using System.ComponentModel;
 using D2L.CodeStyle.Annotations;
 
 #region Relevant Types
@@ -53,6 +54,40 @@ namespace SpecTests {
 
 		[Immutable]
 		public interface SomeImmutableInterface { }
+
+		#region Constructor immutability
+		[Immutable]
+		public sealed class Good : RegularInterface { }
+
+		public class Bad : RegularInterface { }
+
+		[Immutable]
+		public sealed class SomeClassWithConstructor {
+			public readonly RegularInterface m_interface = new Good();
+
+			public SomeClassWithConstructor() {
+				m_interface = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad,  (or [ImmutableBaseClass])) */ new Bad() /**/;
+			}
+		}
+
+		[Immutable]
+		public sealed class SomeOtherClassWithConstructor {
+			public readonly RegularInterface m_interface = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad,  (or [ImmutableBaseClass])) */ new Bad() /**/;
+
+			public SomeClassWithConstructor() {
+				m_interface = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad,  (or [ImmutableBaseClass])) */ new Bad() /**/;
+			}
+		}
+
+		[Immutable]
+		public sealed class SomeOtherOtherClassWithConstructor {
+			public readonly RegularInterface m_interface = new Good();
+
+			public SomeClassWithConstructor() {
+				m_interface = new Good();
+			}
+		}
+		#endregion
 
 
 		public class RegularClass {

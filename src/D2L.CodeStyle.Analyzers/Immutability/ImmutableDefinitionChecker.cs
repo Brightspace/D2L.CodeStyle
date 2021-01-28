@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
@@ -132,16 +134,21 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		private bool CheckField( DiagnosticSink diagnosticSink, IFieldSymbol field ) {
-			if ( field.IsImplicitlyDeclared ) {
+			if( field.IsImplicitlyDeclared ) {
 				// These correspond to auto-properties. That case gets handled
 				// in CheckProperty instead.
 				return true;
 			}
 
-			var decl = field.DeclaringSyntaxReferences.Single()
-				.GetSyntax() as VariableDeclaratorSyntax;
+			var decl = field.DeclaringSyntaxReferences
+			                .Single()
+			                .GetSyntax() as VariableDeclaratorSyntax;
 
 			var type = decl.FirstAncestorOrSelf<VariableDeclarationSyntax>().Type;
+
+			// Get all possible initializations of the field
+			ImmutableArray<ExpressionSyntax> initializers
+				= GetInitializers( field, decl.Initializer?.Value );
 
 			return CheckFieldOrProperty(
 				diagnosticSink,
@@ -150,20 +157,20 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				isReadOnly: field.IsReadOnly,
 				typeSyntax: type,
 				nameSyntax: decl.Identifier,
-				initializer: decl.Initializer?.Value
+				initializers: initializers
 			);
 		}
 
 
 		private bool CheckProperty( DiagnosticSink diagnosticSink, IPropertySymbol prop ) {
-			if ( prop.IsIndexer ) {
+			if( prop.IsIndexer ) {
 				// Indexer properties are just glorified method syntax and
 				// don't hold state.
 				// https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/indexers/
 				return true;
 			}
 
-			if ( prop.IsImplicitlyDeclared ) {
+			if( prop.IsImplicitlyDeclared ) {
 				// records have implicitly declared properties like
 				// EqualityContract which are OK but don't have a
 				// PropertyDeclarationSyntax etc.
@@ -175,13 +182,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				prop.DeclaringSyntaxReferences.Single().GetSyntax()
 			);
 
-			if ( !propInfo.IsAutoImplemented ) {
+			if( !propInfo.IsAutoImplemented ) {
 				// Properties that are auto-implemented have an implicit
 				// backing field that may be mutable. Otherwise, properties are
 				// just sugar for getter/setter methods and don't themselves
 				// contribute to mutability.
 				return true;
 			}
+
+			// Get all possible initializations of the property
+			ImmutableArray<ExpressionSyntax> initializers
+				= GetInitializers( prop, propInfo.Initializer );
 
 			return CheckFieldOrProperty(
 				diagnosticSink,
@@ -190,7 +201,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				isReadOnly: propInfo.IsReadOnly,
 				typeSyntax: propInfo.TypeSyntax,
 				nameSyntax: propInfo.Identifier,
-				initializer: propInfo.Initializer
+				initializers: initializers
 			);
 		}
 
@@ -201,11 +212,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			bool isReadOnly,
 			TypeSyntax typeSyntax,
 			SyntaxToken nameSyntax,
-			ExpressionSyntax initializer
+			ImmutableArray<ExpressionSyntax> initializers
 		) {
 			var immutable = true;
 
-			if ( !isReadOnly ) {
+			if( !isReadOnly ) {
 				diagnosticSink(
 					Diagnostic.Create(
 						Diagnostics.MemberIsNotReadOnly,
@@ -219,26 +230,110 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				immutable = false;
 			}
 
-			var stuff = GetStuffToCheckForMember(
-				type,
-				typeSyntax,
-				initializer
-			);
+			// Check all initializations of the member for immutability
+			foreach( ExpressionSyntax initializer in initializers ) {
+				var stuff = GetStuffToCheckForMember(
+					type,
+					typeSyntax,
+					initializer
+				);
 
-			if ( stuff == null ) {
-				// null is a signal that there is nothing further that needs to
-				// be checked
-				return immutable;
-			}
+				if( stuff == null ) {
+					// Null is a signal that there is nothing further that needs to
+					// be checked
+					continue;
+				}
 
-			var (typeToCheck, checkKind, getLocation) = stuff.Value;
+				var (typeToCheck, checkKind, getLocation) = stuff.Value;
 
-			if( !m_context.IsImmutable( typeToCheck, checkKind, getLocation, out var diagnostic ) ) {
+				if( m_context.IsImmutable(
+					typeToCheck,
+					checkKind,
+					getLocation,
+					out var diagnostic
+				) ) {
+					continue;
+				}
+
 				diagnosticSink( diagnostic );
 				immutable = false;
 			}
 
 			return immutable;
+		}
+
+
+		/// <summary>
+		/// A readonly field or property may be re-initialized in constructors.
+		/// This method finds all initializations of the field/property.
+		/// </summary>
+		/// <param name="symbol">The field/property to search for</param>
+		/// <param name="initialInitializer">The initialization with the declaration</param>
+		/// <returns>An immutable list of initializations</returns>
+		private ImmutableArray<ExpressionSyntax> GetInitializers(
+			ISymbol symbol,
+			ExpressionSyntax initialInitializer
+		) {
+			List<ExpressionSyntax> initializers = new() {initialInitializer};
+
+			// If the containing symbol isn't a named type (class) then there
+			// will be no constructors
+			if( symbol.ContainingSymbol is not INamedTypeSymbol namedTypeSymbol ) {
+				return initializers.ToImmutableArray();
+			}
+
+			// Iterate through all constructors in the class
+			foreach( IMethodSymbol methodSymbol in namedTypeSymbol.Constructors ) {
+				// Make sure the syntax of the constructor exists
+				if( methodSymbol.DeclaringSyntaxReferences.Length == 0 ) {
+					continue;
+				}
+
+				// Retrieve the constructor syntax
+				var methodSyntax = methodSymbol.DeclaringSyntaxReferences
+				                               .Single()
+				                               .GetSyntax() as ConstructorDeclarationSyntax;
+
+				// Make sure the constructor actually contains a body
+				if( methodSyntax?.Body?.Statements == null ) {
+					continue;
+				}
+
+				// Retrieve the semantic model from the compilation
+				SemanticModel semanticModel = m_compilation.GetSemanticModel( methodSyntax.SyntaxTree );
+
+				// Iterate through every statement in the constructor
+				foreach( StatementSyntax statement in methodSyntax.Body.Statements ) {
+					// If the current statement is not an expression,
+					// we don't care
+					if( statement is not ExpressionStatementSyntax expression ) {
+						continue;
+					}
+
+					// If the current expression is not an assignment,
+					// we don't care
+					if( expression.Expression is not AssignmentExpressionSyntax assignment ) {
+						continue;
+					}
+
+					// If the assignment is not related to the specific member,
+					// we don't care
+					var compareSymbol = semanticModel.GetSymbolInfo( assignment.Left ).Symbol;
+					if( !SymbolEqualityComparer.Default.Equals(
+							symbol,
+							compareSymbol
+						)
+					) {
+						continue;
+					}
+
+					// If we are assigning something to the specific member,
+					// add the assignment to the list
+					initializers.Add( assignment.Right );
+				}
+			}
+
+			return initializers.ToImmutableArray();
 		}
 
 		/// <summary>
@@ -269,10 +364,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			//   private readonly object m_lock = new object();
 			//
 			// is safe even though object in general is not.
-			//
-			// TODO: there is a bug: https://github.com/Brightspace/D2L.CodeStyle/issues/319
-			// The bug is that we need to check for other writes inside of our
-			// constructors before narrowing too much!
 
 			// Easy cases
 			switch( initializer.Kind() ) {
