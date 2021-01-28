@@ -146,9 +146,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			var type = decl.FirstAncestorOrSelf<VariableDeclarationSyntax>().Type;
 
-			// Get all possible initializations of the field
-			ImmutableArray<ExpressionSyntax> initializers
-				= GetInitializers( field, decl.Initializer?.Value );
+			// Get all possible assignments of the field
+			var assignments = GetAssignments( field, decl.Initializer?.Value );
 
 			return CheckFieldOrProperty(
 				diagnosticSink,
@@ -157,7 +156,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				isReadOnly: field.IsReadOnly,
 				typeSyntax: type,
 				nameSyntax: decl.Identifier,
-				initializers: initializers
+				assignments
 			);
 		}
 
@@ -190,9 +189,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return true;
 			}
 
-			// Get all possible initializations of the property
-			ImmutableArray<ExpressionSyntax> initializers
-				= GetInitializers( prop, propInfo.Initializer );
+			// Get all possible assignments of the property
+			var assignments = GetAssignments( prop, propInfo.Initializer );
 
 			return CheckFieldOrProperty(
 				diagnosticSink,
@@ -201,7 +199,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				isReadOnly: propInfo.IsReadOnly,
 				typeSyntax: propInfo.TypeSyntax,
 				nameSyntax: propInfo.Identifier,
-				initializers: initializers
+				assignments
 			);
 		}
 
@@ -212,7 +210,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			bool isReadOnly,
 			TypeSyntax typeSyntax,
 			SyntaxToken nameSyntax,
-			ImmutableArray<ExpressionSyntax> initializers
+			ImmutableArray<ExpressionSyntax> assignments
 		) {
 			var immutable = true;
 
@@ -230,16 +228,16 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				immutable = false;
 			}
 
-			// Check all initializations of the member for immutability
-			foreach( ExpressionSyntax initializer in initializers ) {
+			// Check all assignments of the member for immutability
+			foreach( var assignment in assignments ) {
 				var stuff = GetStuffToCheckForMember(
 					type,
 					typeSyntax,
-					initializer
+					assignment
 				);
 
 				if( stuff == null ) {
-					// Null is a signal that there is nothing further that needs to
+					// null is a signal that there is nothing further that needs to
 					// be checked
 					continue;
 				}
@@ -264,26 +262,25 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 
 		/// <summary>
-		/// A readonly field or property may be re-initialized in constructors.
-		/// This method finds all initializations of the field/property.
+		/// A readonly field or property may be re-assigned in constructors.
+		/// This method finds all assignments of the field/property.
 		/// </summary>
 		/// <param name="symbol">The field/property to search for</param>
-		/// <param name="initialInitializer">The initialization with the declaration</param>
-		/// <returns>An immutable list of initializations</returns>
-		private ImmutableArray<ExpressionSyntax> GetInitializers(
+		/// <param name="initializer">The initialization with the declaration</param>
+		/// <returns>An immutable list of assignments</returns>
+		private ImmutableArray<ExpressionSyntax> GetAssignments(
 			ISymbol symbol,
-			ExpressionSyntax initialInitializer
+			ExpressionSyntax initializer
 		) {
-			List<ExpressionSyntax> initializers = new() {initialInitializer};
+			List<ExpressionSyntax> assignments = new() {initializer};
 
 			// If the containing symbol isn't a named type (class) then there
 			// will be no constructors
 			if( symbol.ContainingSymbol is not INamedTypeSymbol namedTypeSymbol ) {
-				return initializers.ToImmutableArray();
+				return assignments.ToImmutableArray();
 			}
 
-			// Iterate through all constructors in the class
-			foreach( IMethodSymbol methodSymbol in namedTypeSymbol.Constructors ) {
+			foreach( var methodSymbol in namedTypeSymbol.Constructors ) {
 				// Make sure the syntax of the constructor exists
 				if( methodSymbol.DeclaringSyntaxReferences.Length == 0 ) {
 					continue;
@@ -299,11 +296,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					continue;
 				}
 
-				// Retrieve the semantic model from the compilation
-				SemanticModel semanticModel = m_compilation.GetSemanticModel( methodSyntax.SyntaxTree );
+				var semanticModel = m_compilation.GetSemanticModel( methodSyntax.SyntaxTree );
 
-				// Iterate through every statement in the constructor
-				foreach( StatementSyntax statement in methodSyntax.Body.Statements ) {
+				foreach( var statement in methodSyntax.Body.Statements ) {
 					// If the current statement is not an expression,
 					// we don't care
 					if( statement is not ExpressionStatementSyntax expression ) {
@@ -329,11 +324,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 					// If we are assigning something to the specific member,
 					// add the assignment to the list
-					initializers.Add( assignment.Right );
+					assignments.Add( assignment.Right );
 				}
 			}
 
-			return initializers.ToImmutableArray();
+			return assignments.ToImmutableArray();
 		}
 
 		/// <summary>
@@ -344,14 +339,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// </summary>
 		/// <param name="memberType">The type of the field/property</param>
 		/// <param name="memberTypeSyntax">The syntax for the type of the field/property</param>
-		/// <param name="initializer">The initializer syntax for the field/property (possibly null)</param>
+		/// <param name="assignment">The assignment syntax for the field/property (possibly null)</param>
 		/// <returns>null if no checks are needed, otherwise a bunch of stuff.</returns>
 		private (ITypeSymbol, ImmutableTypeKind, Func<Location>)? GetStuffToCheckForMember(
 			ITypeSymbol memberType,
 			TypeSyntax memberTypeSyntax,
-			ExpressionSyntax initializer
+			ExpressionSyntax assignment
 		) {
-			if( initializer == null ) {
+			if( assignment == null ) {
 				return (
 					memberType,
 					ImmutableTypeKind.Total,
@@ -359,14 +354,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				);
 			}
 
-			// When we have an initializer we use it to narrow our check, e.g.
+			// When we have an assignment we use it to narrow our check, e.g.
 			//
 			//   private readonly object m_lock = new object();
 			//
 			// is safe even though object in general is not.
 
 			// Easy cases
-			switch( initializer.Kind() ) {
+			switch( assignment.Kind() ) {
 				// This is perhaps a bit suspicious, because fields and
 				// properties have to be readonly, but it is safe...
 				case SyntaxKind.NullLiteralExpression:
@@ -380,21 +375,21 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					return null;
 			}
 
-			var model = m_compilation.GetSemanticModel( initializer.SyntaxTree );
-			var typeInfo = model.GetTypeInfo( initializer );
+			var model = m_compilation.GetSemanticModel( assignment.SyntaxTree );
+			var typeInfo = model.GetTypeInfo( assignment );
 
 			// Type can be null in the case of an implicit conversion where the
 			// expression alone doesn't have a type. For example:
 			//   int[] foo = { 1, 2, 3 };
 			var typeToCheck = typeInfo.Type ?? typeInfo.ConvertedType;
 
-			if ( initializer is BaseObjectCreationExpressionSyntax _ ) {
+			if ( assignment is BaseObjectCreationExpressionSyntax _ ) {
 				// When we have a new T() we don't need to worry about the value
 				// being anything other than an instance of T.
 				return (
 					typeToCheck,
 					ImmutableTypeKind.Instance,
-					() => initializer.GetLocation()
+					() => assignment.GetLocation()
 				);
 			}
 
@@ -402,7 +397,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return (
 				typeToCheck,
 				ImmutableTypeKind.Total,
-				() => initializer.GetLocation()
+				() => assignment.GetLocation()
 			);
 		}
 
