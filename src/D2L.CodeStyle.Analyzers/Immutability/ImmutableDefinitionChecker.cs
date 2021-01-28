@@ -274,37 +274,49 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			List<ExpressionSyntax> assignments = new() {initializer};
 
-			// If the containing symbol isn't a named type (class) then there
-			// will be no constructors
+			// If the containing symbol isn't a named type,
+			// then there is no .Constructors member
 			if( symbol.ContainingSymbol is not INamedTypeSymbol namedTypeSymbol ) {
 				return assignments.ToImmutableArray();
 			}
 
-			// Retrieve syntax of all constructors
-			foreach(
-				var constructorSyntax in
-				from syn in
-					from sym in namedTypeSymbol.Constructors
-					where sym.DeclaringSyntaxReferences.Length != 0
-					select sym.DeclaringSyntaxReferences
-					          .Single()
-					          .GetSyntax() as ConstructorDeclarationSyntax
-				where syn != null
-				select syn
-			) {
-				var semanticModel = m_compilation.GetSemanticModel( constructorSyntax.SyntaxTree );
-
-				// Add all assignments of which the left side is the
-				// field or property in question
-				assignments.AddRange(
-					from assignment in constructorSyntax.DescendantNodes()
-					                                    .OfType<AssignmentExpressionSyntax>()
-					let compareSymbol = semanticModel.GetSymbolInfo( assignment.Left )
-					                                 .Symbol
-					where SymbolEqualityComparer.Default.Equals( symbol, compareSymbol )
-					select assignment.Right
-				);
+			// If the symbol somehow has no syntax, ignore it
+			if( symbol.DeclaringSyntaxReferences.IsEmpty ) {
+				return assignments.ToImmutableArray();
 			}
+
+			// Retrieve the semantic model so that we can get a symbol
+			// from some syntax later
+			var semanticModel = m_compilation.GetSemanticModel(
+				symbol.DeclaringSyntaxReferences.Single().GetSyntax().SyntaxTree
+			);
+
+			// Retrieve a list of assignment expressions from any constructors
+			// within the class
+			var assignmentExpressions = namedTypeSymbol
+			                           .Constructors
+			                           .Where( sym => !sym.IsImplicitlyDeclared )
+			                           .Select( sym => sym.DeclaringSyntaxReferences
+			                                              .Single()
+			                                              .GetSyntax() )
+			                           .SelectMany( syn => syn.DescendantNodes() )
+			                           .OfType<AssignmentExpressionSyntax>();
+
+			// Add any assignments which act on the specific field/property
+			// to the list
+			assignments.AddRange(
+				assignmentExpressions
+				   .Select( expression => new {
+						expression,
+						symbol = semanticModel.GetSymbolInfo( expression.Left )
+						                      .Symbol
+					} )
+				   .Where( assignment => SymbolEqualityComparer.Default.Equals(
+					           symbol,
+					           assignment.symbol
+				           ) )
+				   .Select( assignment => assignment.expression.Right )
+			);
 
 			return assignments.ToImmutableArray();
 		}
