@@ -280,52 +280,30 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return assignments.ToImmutableArray();
 			}
 
-			foreach( var methodSymbol in namedTypeSymbol.Constructors ) {
-				// Make sure the syntax of the constructor exists
-				if( methodSymbol.DeclaringSyntaxReferences.Length == 0 ) {
-					continue;
-				}
+			// Retrieve syntax of all constructors
+			foreach(
+				var constructorSyntax in
+				from syn in
+					from sym in namedTypeSymbol.Constructors
+					where sym.DeclaringSyntaxReferences.Length != 0
+					select sym.DeclaringSyntaxReferences
+					          .Single()
+					          .GetSyntax() as ConstructorDeclarationSyntax
+				where syn != null
+				select syn
+			) {
+				var semanticModel = m_compilation.GetSemanticModel( constructorSyntax.SyntaxTree );
 
-				// Retrieve the constructor syntax
-				var methodSyntax = methodSymbol.DeclaringSyntaxReferences
-				                               .Single()
-				                               .GetSyntax() as ConstructorDeclarationSyntax;
-
-				// Make sure the constructor actually contains a body
-				if( methodSyntax?.Body?.Statements == null ) {
-					continue;
-				}
-
-				var semanticModel = m_compilation.GetSemanticModel( methodSyntax.SyntaxTree );
-
-				foreach( var statement in methodSyntax.Body.Statements ) {
-					// If the current statement is not an expression,
-					// we don't care
-					if( statement is not ExpressionStatementSyntax expression ) {
-						continue;
-					}
-
-					// If the current expression is not an assignment,
-					// we don't care
-					if( expression.Expression is not AssignmentExpressionSyntax assignment ) {
-						continue;
-					}
-
-					// If the assignment is not related to the specific member,
-					// we don't care
-					var compareSymbol = semanticModel.GetSymbolInfo( assignment.Left ).Symbol;
-					if( !SymbolEqualityComparer.Default.Equals(
-							symbol,
-							compareSymbol
-						)
-					) {
-						continue;
-					}
-
-					// If we are assigning something to the specific member,
-					// add the assignment to the list
-					assignments.Add( assignment.Right );
-				}
+				// Add all assignments of which the left side is the
+				// field or property in question
+				assignments.AddRange(
+					from assignment in constructorSyntax.DescendantNodes()
+					                                    .OfType<AssignmentExpressionSyntax>()
+					let compareSymbol = semanticModel.GetSymbolInfo( assignment.Left )
+					                                 .Symbol
+					where SymbolEqualityComparer.Default.Equals( symbol, compareSymbol )
+					select assignment.Right
+				);
 			}
 
 			return assignments.ToImmutableArray();
