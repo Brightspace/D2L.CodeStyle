@@ -216,32 +216,5 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 
 			return false;
 		}
-
-
-		/// <summary>
-		/// Check if the symbol has a specific attribute attached to it.
-		/// </summary>
-		/// <param name="symbol">The symbol to check for an attribute on</param>
-		/// <param name="compilation">The contextual compilation to lookup types</param>
-		/// <param name="attributeMetadataName">The class of the attribute to check for</param>
-		/// <returns>True if the attribute exists on the symbol, false otherwise</returns>
-		public static bool HasAttribute(
-			this ISymbol symbol,
-			Compilation compilation,
-			string attributeMetadataName
-		) {
-			var attributeSymbol = compilation.GetTypeByMetadataName( attributeMetadataName );
-
-			if( attributeSymbol == null ) {
-				return false;
-			}
-
-			return symbol.GetAttributes()
-				.Any( attr => SymbolEqualityComparer.Default.Equals(
-						attributeSymbol,
-						attr.AttributeClass
-					)
-				);
-		}
 	}
 }

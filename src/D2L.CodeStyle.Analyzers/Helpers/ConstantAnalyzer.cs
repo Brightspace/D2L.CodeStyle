@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -8,8 +9,6 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace D2L.CodeStyle.Analyzers.Helpers {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class ConstantAnalyzer : DiagnosticAnalyzer {
-		private const string AttributeName = "D2L.CodeStyle.Annotations.Contract.ConstantAttribute";
-
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
 			ImmutableArray.Create(
 				Diagnostics.NonConstantPassedToConstantParameter,
@@ -25,10 +24,15 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 		public static void CompilationStart(
 			CompilationStartAnalysisContext context
 		) {
+			var constantAttribute = context.Compilation.GetTypeByMetadataName(
+				"D2L.CodeStyle.Annotations.Contract.ConstantAttribute"
+			);
+
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeParameters(
 					ctx,
-					(ParameterSyntax)ctx.Node
+					(ParameterSyntax)ctx.Node,
+					constantAttribute
 				),
 				SyntaxKind.Parameter
 			);
@@ -36,7 +40,8 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeArguments(
 					ctx,
-					(ArgumentSyntax)ctx.Node
+					(ArgumentSyntax)ctx.Node,
+					constantAttribute
 				),
 				SyntaxKind.Argument
 			);
@@ -44,7 +49,8 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 
 		private static void AnalyzeParameters(
 			SyntaxNodeAnalysisContext context,
-			ParameterSyntax parameterSyntax
+			ParameterSyntax parameterSyntax,
+			ISymbol constantAttribute
 		) {
 			var parameter = context.SemanticModel.GetDeclaredSymbol( parameterSyntax );
 
@@ -54,23 +60,23 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 			}
 
 			// Parameter is not [Constant], so do nothing
-			if( !parameter.HasAttribute( context.Compilation, AttributeName ) ) {
+			if( !HasAttribute( parameter, constantAttribute ) ) {
 				return;
 			}
 
 			var type = parameter.Type;
 
-			// If the parameter is a valid type, there are no issues
-			if( type.SpecialType != SpecialType.None
-			) {
+			// Special types (bool, enum, int, string, etc) are the only types
+			// which might be constant, aside from type parameters filled with
+			// special types
+			if( type.SpecialType != SpecialType.None ) {
 				return;
 			}
 
-			// If the parameter is a generic type, there aren't issues yet...
+			// If the parameter is a type parameter, there aren't issues yet...
 			// There may be issues when the method is being called, but
 			// those are handled in the argument analyzer
-			if( type.Kind != SymbolKind.NamedType
-			) {
+			if( type.Kind == SymbolKind.TypeParameter ) {
 				return;
 			}
 
@@ -86,7 +92,9 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 
 		private static void AnalyzeArguments(
 			SyntaxNodeAnalysisContext context,
-			ArgumentSyntax argument ) {
+			ArgumentSyntax argument,
+			ISymbol constantAttribute
+		) {
 			// Get the associated parameter
 			var parameter = argument.DetermineParameter(
 				context.SemanticModel,
@@ -99,7 +107,7 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 			}
 
 			// Parameter is not [Constant], so do nothing
-			if( !parameter.HasAttribute( context.Compilation, AttributeName ) ) {
+			if( !HasAttribute( parameter, constantAttribute ) ) {
 				return;
 			}
 
@@ -131,6 +139,29 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 					)
 				);
 			}
+		}
+
+
+		/// <summary>
+		/// Check if the symbol has a specific attribute attached to it.
+		/// </summary>
+		/// <param name="symbol">The symbol to check for an attribute on</param>
+		/// <param name="attributeSymbol">The symbol of the attribute</param>
+		/// <returns>True if the attribute exists on the symbol, false otherwise</returns>
+		public static bool HasAttribute(
+			ISymbol symbol,
+			ISymbol attributeSymbol
+		) {
+			if( attributeSymbol == null ) {
+				return false;
+			}
+
+			return symbol.GetAttributes()
+				.Any( attr => SymbolEqualityComparer.Default.Equals(
+						attributeSymbol,
+						attr.AttributeClass
+					)
+				);
 		}
 	}
 }
