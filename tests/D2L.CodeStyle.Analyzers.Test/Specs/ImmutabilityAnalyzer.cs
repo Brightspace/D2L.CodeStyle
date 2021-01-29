@@ -118,12 +118,12 @@ namespace SpecTests {
 		}
 
 		[ConditionallyImmutable]
-		internal sealed class Foo<[ConditionallyImmutable.OnlyIf] T, U> where U : T {
-			public Foo( U you ) {
+		internal sealed class SomeClassWithConstructor7<[ConditionallyImmutable.OnlyIf] T, U> where U : T {
+			public T Tee { get; }
+			
+			public SomeClassWithConstructor7( U you ) {
 				Tee = you;
 			}
-​
-			public T Tee { get; }
 		}
 		#endregion
 
