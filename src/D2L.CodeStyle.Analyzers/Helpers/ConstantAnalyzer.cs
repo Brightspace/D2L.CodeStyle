@@ -73,9 +73,9 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 				return;
 			}
 
-			// If the parameter is a type parameter, there aren't issues yet...
-			// There may be issues when the method is being called, but
-			// those are handled in the argument analyzer
+			// If the parameter's type is a type parameter, then whether
+			// it can be constant depends on the type that gets filled;
+			// We can't determine that here
 			if( type.Kind == SymbolKind.TypeParameter ) {
 				return;
 			}
