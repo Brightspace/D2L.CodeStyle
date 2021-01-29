@@ -118,6 +118,16 @@ namespace SpecTests {
 				m_int = 29;
 			}
 		}
+
+		[ConditionallyImmutable]
+		internal sealed class Foo<[ConditionallyImmutable.OnlyIf] T, U> where U : T {
+			public Foo(U you)
+			{
+				Tee = you;
+			}
+​
+			public T Tee { get; }
+		}
 		#endregion
 
 

@@ -72,15 +72,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		/// <summary>
-		/// Determines if a type is an "always immutable" special type.
-		/// </summary>
-		/// <param name="type">The type to check</param>
-		/// <returns>Is the type always immutable?</returns>
-		public bool IsTotallyImmutableType( ITypeSymbol type ) {
-			return m_totallyImmutableSpecialTypes.Contains( type.SpecialType );
-		}
-
-		/// <summary>
 		/// Determines if a type is known to be immutable.
 		/// </summary>
 		/// <param name="type">The type to check</param>
@@ -103,7 +94,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			diagnostic = null;
 
 			// Things like int are totally OK
-			if( IsTotallyImmutableType( type ) ) {
+			if ( m_totallyImmutableSpecialTypes.Contains( type.SpecialType ) ) {
 				return true;
 			}
 
