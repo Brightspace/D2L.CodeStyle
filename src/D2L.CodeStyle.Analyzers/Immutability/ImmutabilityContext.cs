@@ -81,7 +81,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		public bool IsImmutable(
 			ITypeSymbol type,
 			ImmutableTypeKind kind,
-			Func<Location> getLocation,
+			SyntaxNode syntax,
 			out Diagnostic diagnostic
 		) {
 			if ( kind == ImmutableTypeKind.None ) {
@@ -114,7 +114,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						return info.IsImmutableDefinition(
 							context: this,
 							definition: namedType,
-							getLocation: getLocation,
+							getLocation: syntax.GetLocation,
 							out diagnostic
 						);
 					}
@@ -134,7 +134,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				case TypeKind.Array:
 					diagnostic = Diagnostic.Create(
 						Diagnostics.ArraysAreMutable,
-						getLocation(),
+						syntax.GetLocation(),
 						( type as IArrayTypeSymbol ).ElementType.Name
 					);
 
@@ -143,7 +143,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				case TypeKind.Delegate:
 					diagnostic = Diagnostic.Create(
 						Diagnostics.DelegateTypesPossiblyMutable,
-						getLocation()
+						syntax.GetLocation()
 					);
 
 					return false;
@@ -151,7 +151,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				case TypeKind.Dynamic:
 					diagnostic = Diagnostic.Create(
 						Diagnostics.DynamicObjectsAreMutable,
-						getLocation()
+						syntax.GetLocation()
 					);
 
 					return false;
@@ -167,7 +167,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 					diagnostic = Diagnostic.Create(
 						Diagnostics.TypeParameterIsNotKnownToBeImmutable,
-						getLocation(),
+						syntax.GetLocation(),
 						type.ToDisplayString()
 					);
 
@@ -176,7 +176,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				case TypeKind.Class:
 					diagnostic = Diagnostic.Create(
 						Diagnostics.NonImmutableTypeHeldByImmutable,
-						getLocation(),
+						syntax.GetLocation(),
 						type.TypeKind.ToString().ToLower(),
 						type.ToDisplayString(),
 						kind == ImmutableTypeKind.Instance && !type.IsSealed ? " (or [ImmutableBaseClass])" : ""
@@ -188,7 +188,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				case TypeKind.Struct:
 					diagnostic = Diagnostic.Create(
 						Diagnostics.NonImmutableTypeHeldByImmutable,
-						getLocation(),
+						syntax.getlocation(),
 						type.TypeKind.ToString().ToLower(),
 						type.ToDisplayString(),
 						""
@@ -200,7 +200,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				default:
 					diagnostic = Diagnostic.Create(
 						Diagnostics.UnexpectedTypeKind,
-						location: getLocation(),
+						syntax.GetLocation(),
 						type.Kind
 					);
 

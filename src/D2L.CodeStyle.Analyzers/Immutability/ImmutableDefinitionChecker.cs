@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
@@ -208,7 +209,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			bool isReadOnly,
 			TypeSyntax typeSyntax,
 			SyntaxToken nameSyntax,
-			ImmutableArray<ExpressionSyntax> assignments
+			IEnumerable<ExpressionSyntax> assignments
 		) {
 			var immutable = true;
 
@@ -226,11 +227,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				immutable = false;
 			}
 
+			// if the thing is totally immutable then :thumbsup:
+
 			// Check all assignments of the member for immutability
 			foreach( var assignment in assignments ) {
-				var stuff = GetStuffToCheckForMember(
-					type,
-					typeSyntax,
+				var stuff = GetStuffToCheckForAssignment(
 					assignment
 				);
 
@@ -240,12 +241,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					continue;
 				}
 
-				var (typeToCheck, checkKind, getLocation) = stuff.Value;
+				var (typeToCheck, checkKind) = stuff.Value;
 
 				if( m_context.IsImmutable(
 					typeToCheck,
 					checkKind,
-					getLocation,
+					assignment,
 					out var diagnostic
 				) ) {
 					continue;
@@ -258,7 +259,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return immutable;
 		}
 
-
 		/// <summary>
 		/// A readonly field or property may be re-assigned in constructors.
 		/// This method finds all assignments of the field/property.
@@ -266,7 +266,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// <param name="memberSymbol">The field/property to search for</param>
 		/// <param name="initializer">The initialization with the declaration</param>
 		/// <returns>An immutable list of assignments</returns>
-		private ImmutableArray<ExpressionSyntax> GetAssignments(
+		private IEnumerable<ExpressionSyntax> GetAssignments(
 			ISymbol memberSymbol,
 			ExpressionSyntax initializer
 		) {
@@ -280,15 +280,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					.Single()
 					.GetSyntax() )
 				.SelectMany( constructorSyntax => constructorSyntax.DescendantNodes() )
-				.OfType<AssignmentExpressionSyntax>();
-
-			// Add any assignments which act on the specific field/property
-			// to the list
-			return assignmentExpressions
+				.OfType<AssignmentExpressionSyntax>()
 				.Where( assignmentSyntax => IsAnAssignmentTo( assignmentSyntax, memberSymbol ) )
-				.Select( assignmentSyntax => assignmentSyntax.Right )
-				.Append( initializer )
-				.ToImmutableArray();
+				.Select( assignmentSyntax => assignmentSyntax.Right );
+
+			if ( initializer != null ) {
+				assignmentExpressions = assignmentExpressions.Append( initializer );
+			}
+
+			return assignmentExpressions;
 		}
 
 		private bool IsAnAssignmentTo(
@@ -318,19 +318,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// <param name="memberTypeSyntax">The syntax for the type of the field/property</param>
 		/// <param name="assignment">The assignment syntax for the field/property (possibly null)</param>
 		/// <returns>null if no checks are needed, otherwise a bunch of stuff.</returns>
-		private (ITypeSymbol, ImmutableTypeKind, Func<Location>)? GetStuffToCheckForMember(
-			ITypeSymbol memberType,
-			TypeSyntax memberTypeSyntax,
+		private (ITypeSymbol, ImmutableTypeKind)? GetStuffToCheckForAssignment(
 			ExpressionSyntax assignment
 		) {
-			if( assignment == null ) {
-				return (
-					memberType,
-					ImmutableTypeKind.Total,
-					() => memberTypeSyntax.GetLocation()
-				);
-			}
-
 			// When we have an assignment we use it to narrow our check, e.g.
 			//
 			//   private readonly object m_lock = new object();
@@ -365,16 +355,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// being anything other than an instance of T.
 				return (
 					typeToCheck,
-					ImmutableTypeKind.Instance,
-					() => assignment.GetLocation()
+					ImmutableTypeKind.Instance
 				);
 			}
 
 			// In general we need to handle subtypes.
 			return (
 				typeToCheck,
-				ImmutableTypeKind.Total,
-				() => assignment.GetLocation()
+				ImmutableTypeKind.Total
 			);
 		}
 
