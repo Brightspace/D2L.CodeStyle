@@ -1,6 +1,7 @@
 ﻿// analyzer: D2L.CodeStyle.Analyzers.Immutability.ImmutabilityAnalyzer
 
 using System;
+using System.ComponentModel;
 using D2L.CodeStyle.Annotations;
 
 #region Relevant Types
@@ -53,6 +54,51 @@ namespace SpecTests {
 
 		[Immutable]
 		public interface SomeImmutableInterface { }
+
+		#region Constructor immutability
+		[Immutable]
+		public sealed class Good : RegularInterface { }
+
+		public class Bad : RegularInterface { }
+
+		[Immutable]
+		public sealed class SomeClassWithConstructor1 {
+			public readonly RegularInterface m_interface = new Good();
+
+			public SomeClassWithConstructor1() {
+				m_interface = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad,  (or [ImmutableBaseClass])) */ new Bad() /**/;
+			}
+		}
+
+		[Immutable]
+		public sealed class SomeClassWithConstructor2 {
+			public readonly RegularInterface m_interface = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad,  (or [ImmutableBaseClass])) */ new Bad() /**/;
+
+			public SomeClassWithConstructor2() {
+				m_interface = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad,  (or [ImmutableBaseClass])) */ new Bad() /**/;
+			}
+		}
+
+		[Immutable]
+		public sealed class SomeClassWithConstructor3 {
+			public readonly RegularInterface m_interface = new Good();
+
+			public SomeClassWithConstructor3() {
+				m_interface = new Good();
+			}
+		}
+
+		[Immutable]
+		public sealed class SomeClassWithConstructor4 {
+			public readonly RegularInterface m_interface = new Good();
+
+			public SomeClassWithConstructor4() {
+				if( true == false ) {
+					m_interface = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad,  (or [ImmutableBaseClass])) */ new Bad() /**/;
+				}
+			}
+		}
+		#endregion
 
 
 		public class RegularClass {
