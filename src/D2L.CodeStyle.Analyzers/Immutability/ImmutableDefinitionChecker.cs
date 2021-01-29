@@ -226,6 +226,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				immutable = false;
 			}
 
+			if( m_context.IsTotallyImmutableType( type ) ) {
+				return immutable;
+			}
+
 			// Check all assignments of the member for immutability
 			foreach( var assignment in assignments ) {
 				var stuff = GetStuffToCheckForMember(
