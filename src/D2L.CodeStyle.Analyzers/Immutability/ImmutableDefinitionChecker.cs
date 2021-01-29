@@ -275,6 +275,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			var assignmentExpressions = ( memberSymbol.ContainingSymbol as INamedTypeSymbol )!
 				.Constructors
 				.Where( constructorSymbol => !constructorSymbol.IsImplicitlyDeclared )
+				.Where( constructorSymbol => constructorSymbol.IsStatic == memberSymbol.IsStatic )
 				.Select( constructorSymbol => constructorSymbol.DeclaringSyntaxReferences
 					.Single()
 					.GetSyntax() )
