@@ -566,7 +566,7 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor InvalidConstantType = new DiagnosticDescriptor(
 			id: "D2L0075",
 			title: "Invalid data type marked as [Constant].",
-			messageFormat: "The [Constant] attribute cannot be used on \"{0}\" types, because they cannot produce compile-time constants.",
+			messageFormat: "The [Constant] attribute cannot be used on \"{0}\" types, because they cannot be compile-time constants.",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true

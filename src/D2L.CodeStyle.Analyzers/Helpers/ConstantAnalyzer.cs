@@ -29,7 +29,7 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 			);
 
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeParameters(
+				ctx => AnalyzeParameter(
 					ctx,
 					(ParameterSyntax)ctx.Node,
 					constantAttribute
@@ -38,7 +38,7 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 			);
 
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeArguments(
+				ctx => AnalyzeArgument(
 					ctx,
 					(ArgumentSyntax)ctx.Node,
 					constantAttribute
@@ -47,7 +47,7 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 			);
 		}
 
-		private static void AnalyzeParameters(
+		private static void AnalyzeParameter(
 			SyntaxNodeAnalysisContext context,
 			ParameterSyntax parameterSyntax,
 			ISymbol constantAttribute
@@ -69,7 +69,7 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 			// Special types (bool, enum, int, string, etc) are the only types
 			// which might be constant, aside from type parameters filled with
 			// special types
-			if( type.SpecialType != SpecialType.None ) {
+			if( TypeCanBeConstant( type.SpecialType ) ) {
 				return;
 			}
 
@@ -90,7 +90,7 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 			);
 		}
 
-		private static void AnalyzeArguments(
+		private static void AnalyzeArgument(
 			SyntaxNodeAnalysisContext context,
 			ArgumentSyntax argument,
 			ISymbol constantAttribute
@@ -98,7 +98,7 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 			// Get the associated parameter
 			var parameter = argument.DetermineParameter(
 				context.SemanticModel,
-				allowParams: true
+				allowParams: false
 			);
 
 			// Parameter is somehow null, so do nothing
@@ -131,20 +131,39 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 		/// <param name="symbol">The symbol to check for an attribute on</param>
 		/// <param name="attributeSymbol">The symbol of the attribute</param>
 		/// <returns>True if the attribute exists on the symbol, false otherwise</returns>
-		public static bool HasAttribute(
+		private static bool HasAttribute(
 			ISymbol symbol,
 			ISymbol attributeSymbol
 		) {
-			if( attributeSymbol == null ) {
-				return false;
-			}
-
 			return symbol.GetAttributes()
 				.Any( attr => SymbolEqualityComparer.Default.Equals(
 						attributeSymbol,
 						attr.AttributeClass
 					)
 				);
+		}
+
+		private static bool TypeCanBeConstant( SpecialType specialType ) {
+			switch( specialType ) {
+				case SpecialType.System_Enum:
+				case SpecialType.System_Boolean:
+				case SpecialType.System_Char:
+				case SpecialType.System_SByte:
+				case SpecialType.System_Byte:
+				case SpecialType.System_Int16:
+				case SpecialType.System_UInt16:
+				case SpecialType.System_Int32:
+				case SpecialType.System_UInt32:
+				case SpecialType.System_Int64:
+				case SpecialType.System_UInt64:
+				case SpecialType.System_Decimal:
+				case SpecialType.System_Single:
+				case SpecialType.System_Double:
+				case SpecialType.System_String:
+					return true;
+				default:
+					return false;
+			}
 		}
 	}
 }
