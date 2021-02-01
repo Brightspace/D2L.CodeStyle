@@ -28,6 +28,11 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 				"D2L.CodeStyle.Annotations.Contract.ConstantAttribute"
 			);
 
+			// The D2L.CodeStyle.Annotations reference is optional
+			if ( constantAttribute == null || constantAttribute .Kind == SymbolKind.ErrorType ) {
+				return;
+			}
+
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeParameter(
 					ctx,
