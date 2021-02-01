@@ -39,8 +39,8 @@ namespace SpecTests
 		{
 			#region Invalid type tests
 			const Types.SomeClassImplementingInterface interfaceClass = new Types.SomeClassImplementingInterface { };
-			Types.SomeMethodWithConstantParameter<Types.SomeClassImplementingInterface>( /* InvalidConstantType(Class) */ interfaceClass /**/ );
-			Types.SomeMethodWithOneInterfaceParameter<Types.SomeClassImplementingInterface>(interfaceClass, /* InvalidConstantType(Class) */ interfaceClass /**/ );
+			Types.SomeMethodWithConstantParameter<Types.IInterface>( /* NonConstantPassedToConstantParameter(param1) */ interfaceClass /**/ );
+			Types.SomeMethodWithOneInterfaceParameter<Types.IInterface>( interfaceClass, /* NonConstantPassedToConstantParameter(param2) */ interfaceClass /**/ );
 			#endregion
 
 			#region Logger tests

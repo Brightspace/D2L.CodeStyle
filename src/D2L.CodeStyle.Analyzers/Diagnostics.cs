@@ -556,7 +556,7 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor NonConstantPassedToConstantParameter = new DiagnosticDescriptor(
 			id: "D2L0074",
 			title: "Constant parameter cannot be passed a non-constant value.",
-			messageFormat: "Parameter \"{0}\" is marked with the [Constant] attribute, and so cannot be passed a non-constant value.",
+			messageFormat: "The \"{0}\" parameter is marked with the [Constant] attribute, and so it must be passed a compile-time constant value.",
 			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
@@ -566,7 +566,7 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor InvalidConstantType = new DiagnosticDescriptor(
 			id: "D2L0075",
 			title: "Invalid data type marked as [Constant].",
-			messageFormat: "The [Constant] attribute cannot be used on \"{0}\" types.",
+			messageFormat: "The [Constant] attribute cannot be used on \"{0}\" types, because they cannot produce compile-time constants.",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true

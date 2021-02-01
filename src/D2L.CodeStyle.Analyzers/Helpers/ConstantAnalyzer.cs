@@ -111,23 +111,6 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 				return;
 			}
 
-			var type = context.SemanticModel.GetTypeInfo( argument.Expression ).Type;
-
-			// Check that the argument type is not a valid type
-			// Necessary to catch arguments which were generic in the declaration
-			if( type?.SpecialType == SpecialType.None ) {
-				// The current parameter type cannot be marked as [Constant]
-				context.ReportDiagnostic(
-					Diagnostic.Create(
-						descriptor: Diagnostics.InvalidConstantType,
-						location: argument.GetLocation(),
-						messageArgs: type.TypeKind
-					)
-				);
-
-				return;
-			}
-
 			// Check if the argument is a constant value
 			if( !context.SemanticModel.GetConstantValue( argument.Expression ).HasValue ) {
 				// Argument is not constant, so report it
