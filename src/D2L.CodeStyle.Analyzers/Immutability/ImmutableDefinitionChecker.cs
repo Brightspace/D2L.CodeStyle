@@ -226,6 +226,18 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				immutable = false;
 			}
 
+			// Perform an initial check to see if the member is totally immutable
+			// If this fails, then we need to perform assignment checks to ensure
+			// instance immutability
+			if( m_context.IsImmutable(
+				type,
+				ImmutableTypeKind.Total,
+				typeSyntax.GetLocation,
+				out _
+			) ) {
+				return immutable;
+			}
+
 			// Check all assignments of the member for immutability
 			foreach( var assignment in assignments ) {
 				var stuff = GetStuffToCheckForMember(

@@ -98,6 +98,33 @@ namespace SpecTests {
 				}
 			}
 		}
+
+		[Immutable]
+		public sealed class SomeClassWithConstructor5 {
+			public readonly int m_int = 5;
+
+			public SomeClassWithConstructor5() {
+				m_int = 29;
+			}
+		}
+
+		[Immutable]
+		public sealed class SomeClassWithConstructor6 {
+			public int /* MemberIsNotReadOnly(Field, m_int, SomeClassWithConstructor6) */ m_int /**/ = 5;
+
+			public SomeClassWithConstructor6() {
+				m_int = 29;
+			}
+		}
+
+		[ConditionallyImmutable]
+		internal sealed class SomeClassWithConstructor7<[ConditionallyImmutable.OnlyIf] T, U> where U : T {
+			public T Tee { get; }
+			
+			public SomeClassWithConstructor7( U you ) {
+				Tee = you;
+			}
+		}
 		#endregion
 
 
