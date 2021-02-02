@@ -100,14 +100,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// this is the case when a "delegate" is used
 				// eg delegate( int x, int y ) { return x + y; }
 				case AnonymousMethodExpressionSyntax:
-				// this is the case when the left hand side of the
-				// lambda has parens
-				// eg () => 1, (x, y) => x + y
-				case ParenthesizedLambdaExpressionSyntax:
-				// this is the case when the left hand side of the
-				// lambda does not have parens
-				// eg x => x + 1
-				case SimpleLambdaExpressionSyntax:
+				// this is the case when a lambda is used, regardless of parens
+				// eg () => 1,
+				//    (x, y) => x + y
+				//     x => x + 1
+				case LambdaExpressionSyntax:
 					bool hasCaptures = TryGetCaptures(
 						context,
 						argument,
