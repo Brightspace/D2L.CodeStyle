@@ -78,12 +78,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			Diagnostic diag;
-			SyntaxKind kind = argument.Kind();
-			switch( kind ) {
-
+			switch( argument ) {
 				// this is the case when a method reference is used
 				// eg Func<string, int> func = int.Parse
-				case SyntaxKind.SimpleMemberAccessExpression:
+				case MemberAccessExpressionSyntax:
 					if( IsStaticMemberAccess( context, argument ) ) {
 						return;
 					}
@@ -101,15 +99,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 				// this is the case when a "delegate" is used
 				// eg delegate( int x, int y ) { return x + y; }
-				case SyntaxKind.AnonymousMethodExpression:
+				case AnonymousMethodExpressionSyntax:
 				// this is the case when the left hand side of the
 				// lambda has parens
 				// eg () => 1, (x, y) => x + y
-				case SyntaxKind.ParenthesizedLambdaExpression:
+				case ParenthesizedLambdaExpressionSyntax:
 				// this is the case when the left hand side of the
 				// lambda does not have parens
 				// eg x => x + 1
-				case SyntaxKind.SimpleLambdaExpression:
+				case SimpleLambdaExpressionSyntax:
 					bool hasCaptures = TryGetCaptures(
 						context,
 						argument,
@@ -130,7 +128,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// this is the case where an expression is invoked,
 				// which returns a Func<T>
 				// eg ( () => { return () => 1 } )()
-				case SyntaxKind.InvocationExpression:
+				case InvocationExpressionSyntax:
 					// we are rejecting this because it is tricky to
 					// analyze properly, but also a bit ugly and should
 					// never really be necessary
@@ -157,7 +155,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				 *   void T() : this( StaticMemberMethod ) {}
 				 * }
 				 */
-				case SyntaxKind.IdentifierName:
+				case IdentifierNameSyntax:
 					/**
 					 * If it's a local parameter marked with [StatelessFunc] we're reasonably
 					 * certain it was analyzed on the caller side.
