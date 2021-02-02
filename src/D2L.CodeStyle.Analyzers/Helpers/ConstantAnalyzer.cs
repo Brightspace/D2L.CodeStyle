@@ -116,17 +116,25 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 				return;
 			}
 
-			// Check if the argument is a constant value
-			if( !context.SemanticModel.GetConstantValue( argument.Expression ).HasValue ) {
-				// Argument is not constant, so report it
-				context.ReportDiagnostic(
-					Diagnostic.Create(
-						descriptor: Diagnostics.NonConstantPassedToConstantParameter,
-						location: argument.GetLocation(),
-						messageArgs: parameter.Name
-					)
-				);
+			// Argument is a constant value, so do nothing
+			if( context.SemanticModel.GetConstantValue( argument.Expression ).HasValue ) {
+				return;
 			}
+
+			// Argument was defined as [Constant] already, so trust it
+			var argumentSymbol = context.SemanticModel.GetSymbolInfo( argument.Expression ).Symbol;
+			if( argumentSymbol != null && HasAttribute( argumentSymbol, constantAttribute ) ) {
+				return;
+			}
+
+			// Argument is not constant, so report it
+			context.ReportDiagnostic(
+				Diagnostic.Create(
+					descriptor: Diagnostics.NonConstantPassedToConstantParameter,
+					location: argument.GetLocation(),
+					messageArgs: parameter.Name
+				)
+			);
 		}
 
 
