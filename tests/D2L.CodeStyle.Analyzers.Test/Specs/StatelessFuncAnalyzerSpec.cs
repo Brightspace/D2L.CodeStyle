@@ -42,37 +42,52 @@ namespace SpecTests {
 
 	internal sealed class Usages {
 
+		public void ParenStatic() {
+			var func = new StatelessFunc<int>( static () => 0 );
+			AttributeFuncReceiver.Accept<int>( static () => 0 );
+		}
+
 		public void ParenNoClosures() {
-			var func = new StatelessFunc<int>( () => 0 );
-			AttributeFuncReceiver.Accept<int>( () => 0 );
+			var func = new StatelessFunc<int>( /* StatelessFuncIsnt(Lambda is not static) */ () => 0 /**/ );
+			AttributeFuncReceiver.Accept<int>( /* StatelessFuncIsnt(Lambda is not static) */ () => 0 /**/ );
 		}
 
 		public void ParenWithClosures() {
 			int zero = 0;
-			var func = new StatelessFunc<int>( /* StatelessFuncIsnt(Captured variable(s): zero) */ () => zero /**/ );
-			AttributeFuncReceiver.Accept<int>( /* StatelessFuncIsnt(Captured variable(s): zero) */ () => zero /**/ );
+			var func = new StatelessFunc<int>( /* StatelessFuncIsnt(Lambda is not static) */ () => zero /**/ );
+			AttributeFuncReceiver.Accept<int>( /* StatelessFuncIsnt(Lambda is not static) */ () => zero /**/ );
+		}
+
+		public void SimpleStatic() {
+			var func = new StatelessFunc<string, string>( static x => x + "\n" );
+			AttributeFuncReceiver.Accept<string, string>( static x => x + "\n" );
 		}
 
 		public void SimpleNoClosures() {
-			var func = new StatelessFunc<string, string>( x => x + "\n" );
-			AttributeFuncReceiver.Accept<string, string>( x => x + "\n" );
+			var func = new StatelessFunc<string, string>( /* StatelessFuncIsnt(Lambda is not static) */ x => x + "\n" /**/ );
+			AttributeFuncReceiver.Accept<string, string>( /* StatelessFuncIsnt(Lambda is not static) */ x => x + "\n" /**/ );
 		}
 
 		public void SimpleWithClosures() {
 			string trailing = "\n";
-			var func = new StatelessFunc<string, string>( /* StatelessFuncIsnt(Captured variable(s): trailing) */ x => x + trailing /**/ );
-			AttributeFuncReceiver.Accept<string, string>( /* StatelessFuncIsnt(Captured variable(s): trailing) */ x => x + trailing /**/ );
+			var func = new StatelessFunc<string, string>( /* StatelessFuncIsnt(Lambda is not static) */ x => x + trailing /**/ );
+			AttributeFuncReceiver.Accept<string, string>( /* StatelessFuncIsnt(Lambda is not static) */ x => x + trailing /**/ );
+		}
+
+		public void DelegateStatic() {
+			var func = new StatelessFunc<string, string>( static delegate ( string x ) { return x + "\n"; } );
+			AttributeFuncReceiver.Accept<string, string>( static delegate ( string x ) { return x + "\n"; } );
 		}
 
 		public void DelegateNoClosures() {
-			var func = new StatelessFunc<string, string>( delegate( string x ) { return x + "\n"; } );
-			AttributeFuncReceiver.Accept<string, string>( delegate ( string x ) { return x + "\n"; } );
+			var func = new StatelessFunc<string, string>( /* StatelessFuncIsnt(Delegate is not static) */ delegate ( string x ) { return x + "\n"; } /**/ );
+			AttributeFuncReceiver.Accept<string, string>( /* StatelessFuncIsnt(Delegate is not static) */ delegate ( string x ) { return x + "\n"; } /**/ );
 		}
 
 		public void DelegateWithClosures() {
 			string trailing = "\n";
-			var func = new StatelessFunc<string, string>(  /* StatelessFuncIsnt(Captured variable(s): trailing) */ delegate ( string x ) { return x + trailing; } /**/ );
-			AttributeFuncReceiver.Accept<string, string>(  /* StatelessFuncIsnt(Captured variable(s): trailing) */ delegate ( string x ) { return x + trailing; } /**/ );
+			var func = new StatelessFunc<string, string>(  /* StatelessFuncIsnt(Delegate is not static) */ delegate ( string x ) { return x + trailing; } /**/ );
+			AttributeFuncReceiver.Accept<string, string>(  /* StatelessFuncIsnt(Delegate is not static) */ delegate ( string x ) { return x + trailing; } /**/ );
 		}
 
 		public void NonStaticMember() {
@@ -85,30 +100,45 @@ namespace SpecTests {
 			AttributeFuncReceiver.Accept<string, int>( Int32.Parse );
 		}
 
-		public void MultiLine() {
+		public void MultiLineStatic() {
 			var func = new StatelessFunc<int>(
-				() => {
+				static () => {
 					int x = 0;
 					return x + 1;
 				}
 			);
 			AttributeFuncReceiver.Accept<int>(
-				 () => {
+				 static () => {
+					int x = 0;
+					return x + 1;
+				}
+			 );
+		}
+
+		public void MultiLine() {
+			var func = new StatelessFunc<int>(
+				/* StatelessFuncIsnt(Lambda is not static) */ () => {
+					int x = 0;
+					return x + 1;
+				} /**/
+			);
+			AttributeFuncReceiver.Accept<int>(
+				 /* StatelessFuncIsnt(Lambda is not static) */ () => {
 					 int x = 0;
 					 return x + 1;
-				 }
+				 } /**/
 			 );
 		}
 
 		public void MultiLineWithThisCapture() {
 			var func = new StatelessFunc<string>(
-				/* StatelessFuncIsnt(Captured variable(s): this) */ () => {
+				/* StatelessFuncIsnt(Lambda is not static) */ () => {
 					string trailing = "\n";
 					return this.ToString() + trailing;
 				} /**/
 			);
 			AttributeFuncReceiver.Accept<string>(
-				/* StatelessFuncIsnt(Captured variable(s): this) */ () => {
+				/* StatelessFuncIsnt(Lambda is not static) */ () => {
 					string trailing = "\n";
 					return this.ToString() + trailing;
 				} /**/
@@ -133,12 +163,12 @@ namespace SpecTests {
 		}
 
 		public void StatelessFunc() {
-			var func = new StatelessFunc<int>( new StatelessFunc<int>( () => 0 ) );
-			AttributeFuncReceiver.Accept( new StatelessFunc<int>( () => 0 ) );
+			var func = new StatelessFunc<int>( new StatelessFunc<int>( static () => 0 ) );
+			AttributeFuncReceiver.Accept( new StatelessFunc<int>( static () => 0 ) );
 		}
 
 		public void StatelessFuncFromVar() {
-			var f = new StatelessFunc<int>( () => 0 );
+			var f = new StatelessFunc<int>( static () => 0 );
 
 			var func = new StatelessFunc<int>( f );
 			AttributeFuncReceiver.Accept( f );
@@ -169,7 +199,7 @@ namespace SpecTests {
 		internal sealed class AnotherConstructor {
 
 			public AnotherConstructor( int i )
-				: this( /* StatelessFuncIsnt(Captured variable(s): i) */ () => ++i /**/ ) { }
+				: this( /* StatelessFuncIsnt(Lambda is not static) */ () => ++i /**/ ) { }
 
 			public AnotherConstructor()
 				: this( DoStuff ) { }
@@ -187,7 +217,7 @@ namespace SpecTests {
 			internal sealed class SubClass : BaseClass {
 
 				public SubClass( int i )
-					: base( /* StatelessFuncIsnt(Captured variable(s): i) */ () => ++i /**/ ) { }
+					: base( /* StatelessFuncIsnt(Lambda is not static) */ () => ++i /**/ ) { }
 
 			}
 		}

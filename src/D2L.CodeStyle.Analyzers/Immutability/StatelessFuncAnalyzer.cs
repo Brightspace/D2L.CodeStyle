@@ -99,26 +99,33 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 				// this is the case when a "delegate" is used
 				// eg delegate( int x, int y ) { return x + y; }
-				case AnonymousMethodExpressionSyntax:
+				case AnonymousMethodExpressionSyntax anonymousMethod:
+					// allow static delegates, since they can't capture non-static variables
+					if( anonymousMethod.Modifiers.Any( x => x.Kind() == SyntaxKind.StaticKeyword ) ) {
+						return;
+					}
+
+					diag = Diagnostic.Create(
+						Diagnostics.StatelessFuncIsnt,
+						argument.GetLocation(),
+						"Delegate is not static"
+					);
+					break;
+
 				// this is the case when a lambda is used, regardless of parens
 				// eg () => 1,
 				//    (x, y) => x + y
 				//     x => x + 1
-				case LambdaExpressionSyntax:
-					bool hasCaptures = TryGetCaptures(
-						context,
-						argument,
-						out ImmutableArray<ISymbol> captures
-					);
-					if( !hasCaptures ) {
+				case LambdaExpressionSyntax lambda:
+					// allow static lambdas, since they can't capture non-static variables
+					if( lambda.Modifiers.Any( x => x.Kind() == SyntaxKind.StaticKeyword ) ) {
 						return;
 					}
 
-					string captured = string.Join( ", ", captures.Select( c => c.Name ) );
 					diag = Diagnostic.Create(
 						Diagnostics.StatelessFuncIsnt,
 						argument.GetLocation(),
-						$"Captured variable(s): { captured }"
+						"Lambda is not static"
 					);
 					break;
 
@@ -212,20 +219,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			return symbol.IsStatic;
-		}
-
-		private static bool TryGetCaptures(
-			SyntaxNodeAnalysisContext context,
-			ExpressionSyntax expression,
-			out ImmutableArray<ISymbol> captures
-		) {
-
-			DataFlowAnalysis dataFlow = context
-				.SemanticModel
-				.AnalyzeDataFlow( expression );
-
-			captures = dataFlow.Captured;
-			return captures.Length > 0;
 		}
 
 		private static bool IsStatelessFunc(
