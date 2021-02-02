@@ -22,6 +22,9 @@ namespace SpecTests
 		public static void Error( [Constant] string message ) {
 			Logger.Error( message );
 		}
+		public static void OtherError( string message ) {
+			Logger.Error( /* NonConstantPassedToConstantParameter(message) */ message /**/ );
+		}
 	}
 
 	public sealed class Types
