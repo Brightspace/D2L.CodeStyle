@@ -155,7 +155,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				 *   void T() : this( StaticMemberMethod ) {}
 				 * }
 				 */
-				case IdentifierNameSyntax:
+				case IdentifierNameSyntax identifier:
 					/**
 					 * If it's a local parameter marked with [StatelessFunc] we're reasonably
 					 * certain it was analyzed on the caller side.
@@ -163,7 +163,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					if( IsParameterMarkedStateless(
 						model,
 						statelessFuncAttribute,
-						argument as IdentifierNameSyntax,
+						identifier,
 						context.CancellationToken
 					) ) {
 						return;
@@ -171,7 +171,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 					if( IsStaticMemberAccess(
 						context,
-						argument as IdentifierNameSyntax
+						identifier
 					) ) {
 						return;
 					}
