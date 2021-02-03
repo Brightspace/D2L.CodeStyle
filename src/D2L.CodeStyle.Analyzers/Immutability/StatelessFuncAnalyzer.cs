@@ -78,12 +78,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			Diagnostic diag;
-			SyntaxKind kind = argument.Kind();
-			switch( kind ) {
-
+			switch( argument ) {
 				// this is the case when a method reference is used
 				// eg Func<string, int> func = int.Parse
-				case SyntaxKind.SimpleMemberAccessExpression:
+				case MemberAccessExpressionSyntax:
 					if( IsStaticMemberAccess( context, argument ) ) {
 						return;
 					}
@@ -101,36 +99,40 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 				// this is the case when a "delegate" is used
 				// eg delegate( int x, int y ) { return x + y; }
-				case SyntaxKind.AnonymousMethodExpression:
-				// this is the case when the left hand side of the
-				// lambda has parens
-				// eg () => 1, (x, y) => x + y
-				case SyntaxKind.ParenthesizedLambdaExpression:
-				// this is the case when the left hand side of the
-				// lambda does not have parens
-				// eg x => x + 1
-				case SyntaxKind.SimpleLambdaExpression:
-					bool hasCaptures = TryGetCaptures(
-						context,
-						argument,
-						out ImmutableArray<ISymbol> captures
-					);
-					if( !hasCaptures ) {
+				case AnonymousMethodExpressionSyntax anonymousMethod:
+					// allow static delegates, since they can't capture non-static variables
+					if( anonymousMethod.Modifiers.Any( x => x.Kind() == SyntaxKind.StaticKeyword ) ) {
 						return;
 					}
 
-					string captured = string.Join( ", ", captures.Select( c => c.Name ) );
 					diag = Diagnostic.Create(
 						Diagnostics.StatelessFuncIsnt,
 						argument.GetLocation(),
-						$"Captured variable(s): { captured }"
+						"Delegate is not static"
+					);
+					break;
+
+				// this is the case when a lambda is used, regardless of parens
+				// eg () => 1,
+				//    (x, y) => x + y
+				//     x => x + 1
+				case LambdaExpressionSyntax lambda:
+					// allow static lambdas, since they can't capture non-static variables
+					if( lambda.Modifiers.Any( x => x.Kind() == SyntaxKind.StaticKeyword ) ) {
+						return;
+					}
+
+					diag = Diagnostic.Create(
+						Diagnostics.StatelessFuncIsnt,
+						argument.GetLocation(),
+						"Lambda is not static"
 					);
 					break;
 
 				// this is the case where an expression is invoked,
 				// which returns a Func<T>
 				// eg ( () => { return () => 1 } )()
-				case SyntaxKind.InvocationExpression:
+				case InvocationExpressionSyntax:
 					// we are rejecting this because it is tricky to
 					// analyze properly, but also a bit ugly and should
 					// never really be necessary
@@ -157,7 +159,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				 *   void T() : this( StaticMemberMethod ) {}
 				 * }
 				 */
-				case SyntaxKind.IdentifierName:
+				case IdentifierNameSyntax identifier:
 					/**
 					 * If it's a local parameter marked with [StatelessFunc] we're reasonably
 					 * certain it was analyzed on the caller side.
@@ -165,7 +167,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					if( IsParameterMarkedStateless(
 						model,
 						statelessFuncAttribute,
-						argument as IdentifierNameSyntax,
+						identifier,
 						context.CancellationToken
 					) ) {
 						return;
@@ -173,7 +175,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 					if( IsStaticMemberAccess(
 						context,
-						argument as IdentifierNameSyntax
+						identifier
 					) ) {
 						return;
 					}
@@ -217,20 +219,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			return symbol.IsStatic;
-		}
-
-		private static bool TryGetCaptures(
-			SyntaxNodeAnalysisContext context,
-			ExpressionSyntax expression,
-			out ImmutableArray<ISymbol> captures
-		) {
-
-			DataFlowAnalysis dataFlow = context
-				.SemanticModel
-				.AnalyzeDataFlow( expression );
-
-			captures = dataFlow.Captured;
-			return captures.Length > 0;
 		}
 
 		private static bool IsStatelessFunc(
