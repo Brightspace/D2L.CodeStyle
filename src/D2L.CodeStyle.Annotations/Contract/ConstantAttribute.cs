@@ -6,6 +6,6 @@ namespace D2L.CodeStyle.Annotations.Contract {
 	/// Indicates that a parameter must be called with a constant value
 	/// </summary>
 	[AttributeUsage( AttributeTargets.Parameter, AllowMultiple = false )]
-	public sealed class ConstantAttribute : Attribute {
+	public sealed class ConstantAttribute : ReadOnlyAttribute {
 	}
 }

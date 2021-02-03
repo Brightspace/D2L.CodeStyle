@@ -14,9 +14,17 @@ namespace SpecTests
 {
 	using D2L.CodeStyle.Annotations.Contract;
 
-	public sealed class Logger
-	{
+	public sealed class Logger {
 		public static void Error( [Constant] string message ) { }
+	}
+
+	public sealed class WrappedLogger {
+		public static void Error( [Constant] string message ) {
+			Logger.Error( message );
+		}
+		public static void OtherError( string message ) {
+			Logger.Error( /* NonConstantPassedToConstantParameter(message) */ message /**/ );
+		}
 	}
 
 	public sealed class Types
