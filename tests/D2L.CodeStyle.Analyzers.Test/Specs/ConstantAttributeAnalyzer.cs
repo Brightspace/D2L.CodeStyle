@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.Helpers.ConstantAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.ConstantAttributeAnalyzer
 
 using System;
 
