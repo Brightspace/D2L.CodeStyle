@@ -6,9 +6,9 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace D2L.CodeStyle.Analyzers.Helpers {
+namespace D2L.CodeStyle.Analyzers.ApiUsage {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
-	public sealed class ConstantAnalyzer : DiagnosticAnalyzer {
+	public sealed class ConstantAttributeAnalyzer : DiagnosticAnalyzer {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
 			ImmutableArray.Create(
 				Diagnostics.NonConstantPassedToConstantParameter,
