@@ -196,20 +196,11 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "Arguments that map to parameters with interchangable types should be named."
 		);
-		
+
 		// Retired:
 		// D2L0035 (SingletonDependencyHasCustomerState): "Singleton holding a dependency containing customer state.",
 		// D2L0036 (PublicClassHasHiddenCustomerState): "Missing CustomerState attribute."",
-
-		public static readonly DiagnosticDescriptor GenericArgumentImmutableMustBeApplied = new DiagnosticDescriptor(
-			id: "D2L0037",
-			title: "Missing immutability attribute.",
-			messageFormat: "Generic argument must be marked immutable.",
-			category: "Safety",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "Either an interface, base class or constraint indicates the generic argument must be immutable. Add [Immutable] to the generic argument in the class definintion."
-	   );
+		// D2L0037 (GenericArgumentImmutableMustBeApplied): "Missing immutability attribute."
 
 		// Retired:
 		// D2L0038 (GenericArgumentTypeMustBeImmutable): "Declared type is not immutable.",

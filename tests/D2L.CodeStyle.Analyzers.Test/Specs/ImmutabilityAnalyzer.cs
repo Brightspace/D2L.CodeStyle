@@ -139,14 +139,22 @@ namespace SpecTests {
 		public class RegularExtension : RegularClass { }
 		public sealed class RegularSealedExtension : RegularClass { }
 
+		public class SomeMutableClassWithImmutableTypeParameter<[Immutable] T> { }
+
 		[ImmutableBaseClass]
 		public class SomeImmutableBaseClass { }
 		static SomeImmutableBaseClass FuncReturningSomeImmutableBaseClass() => null;
 		public sealed class MutableExtensionOfSomeImmutableBaseClass : SomeImmutableBaseClass { }
 
+		[ImmutableBaseClass]
+		public class SomeImmutableGenericBaseClassRestrictingT<[Immutable] T> { }
+
 		[Immutable]
 		public class SomeImmutableClass { }
 		static SomeImmutableClass FuncReturningSomeImmutableClass() => null;
+
+		[Immutable]
+		public class SomeImmutableGenericClassRestrictingT<[Immutable] T> { }
 
 		[Immutable]
 		public sealed class ClassMarkedImmutableImplementingRegularInterface : RegularInterface { }
@@ -210,6 +218,15 @@ namespace SpecTests {
 	public sealed class AnalyzedClassMarkedImmutableExtendingImmutableClass : Types.SomeImmutableClass { }
 
 	[Immutable]
+	public sealed class AnalyzedClassWithNonImmutableTypeParameterImplementingImmutableInterfaceParameter<T, U> : Types.SomeImmutableGenericInterfaceRestrictingT</* TypeParameterIsNotKnownToBeImmutable(T) */ T /**/, U> { }
+
+	public sealed class NonImmutableClassWithNonImmutableTypeParameterImplementingImmutableBaseClassParameter<T> : Types.SomeImmutableGenericBaseClassRestrictingT</* TypeParameterIsNotKnownToBeImmutable(T) */ T /**/> { }
+	public sealed class NonImmutableClassWithNonImmutableTypeParameterImplementingImmutableBaseClassParameter<T> : Types.SomeMutableClassWithImmutableTypeParameter</* TypeParameterIsNotKnownToBeImmutable(T) */ T /**/> { }
+
+	[Immutable]
+	public sealed class AnalyzedClassWithNonImmutableTypeParameterImplementingImmutableBaseClassParameter<T> : Types.SomeImmutableGenericClassRestrictingT</* TypeParameterIsNotKnownToBeImmutable(T) */ T /**/> { }
+
+	[ Immutable]
 	[ConditionallyImmutable]
 	public sealed class /* ConflictingImmutability(Immutable, ConditionallyImmutable, class) */ AnalyzedClassMarkedWithMultipleImmutabilities1 /**/ { }
 
