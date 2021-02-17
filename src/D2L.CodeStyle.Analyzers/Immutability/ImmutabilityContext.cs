@@ -109,15 +109,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			if( type is INamedTypeSymbol namedType ) {
-				if( TryGetImmutableTypeInfo( namedType, out ImmutableTypeInfo info ) ) {
-					if( info.Kind.HasFlag( kind ) ) {
-						return info.IsImmutableDefinition(
-							context: this,
-							definition: namedType,
-							getLocation: getLocation,
-							out diagnostic
-						);
-					}
+				ImmutableTypeInfo info = GetImmutableTypeInfo( namedType );
+				if( info.Kind.HasFlag( kind ) ) {
+					return info.IsImmutableDefinition(
+						context: this,
+						definition: namedType,
+						getLocation: getLocation,
+						out diagnostic
+					);
 				}
 			}
 
@@ -208,30 +207,34 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 		}
 
-		private bool TryGetImmutableTypeInfo(
-			INamedTypeSymbol type,
-			out ImmutableTypeInfo info
+		public ImmutableTypeInfo GetImmutableTypeInfo(
+			INamedTypeSymbol type
 		) {
 			// Check for [Immutable] etc.
 			ImmutableTypeKind fromAttributes = GetImmutabilityFromAttributes( type );
 			if( fromAttributes != ImmutableTypeKind.None ) {
-				info = ImmutableTypeInfo.Create(
+				return ImmutableTypeInfo.Create(
 					kind: fromAttributes,
 					type: type
 				);
-				return true;
 			}
 
 			if( type.IsTupleType ) {
-				info = ImmutableTypeInfo.CreateWithAllConditionalTypeParameters(
+				return ImmutableTypeInfo.CreateWithAllConditionalTypeParameters(
 					kind: ImmutableTypeKind.Total,
 					type: type.OriginalDefinition
 				);
-				return true;
 			}
 
 			// Check if we were otherwise told that this type is immutable
-			return m_extraImmutableTypes.TryGetValue( type.OriginalDefinition, out info );
+			if( m_extraImmutableTypes.TryGetValue( type.OriginalDefinition, out ImmutableTypeInfo info ) ) {
+				return info;
+			}
+
+			return ImmutableTypeInfo.Create(
+				kind: ImmutableTypeKind.None,
+				type: type
+			);
 		}
 
 		private static ImmutableTypeKind GetImmutabilityFromAttributes(

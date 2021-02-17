@@ -27,6 +27,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		public INamedTypeSymbol Type { get; }
 
+		public bool IsConditional => m_conditionalTypeParameters.Length > 0;
+
 		public bool IsImmutableDefinition(
 			ImmutabilityContext context,
 			INamedTypeSymbol definition,
