@@ -9,58 +9,6 @@ using Microsoft.CodeAnalysis.CSharp;
 
 namespace D2L.CodeStyle.Analyzers.Extensions {
 	internal static partial class RoslynExtensions {
-		#region Stuff that can be deleted with  ImmutableGenericArgumentAnalyzer
-		/// <summary>
-		/// A list of marked immutable types owned externally.
-		/// </summary>
-		private static readonly ImmutableHashSet<string> MarkedImmutableTypes = ImmutableHashSet.Create(
-			"System.StringComparer",
-			"System.Text.ASCIIEncoding",
-			"System.Text.Encoding",
-			"System.Text.UTF8Encoding",
-			"System.IO.Abstractions.IFileSystem"
-		);
-
-		public static ImmutabilityScope GetImmutabilityScope( this ITypeSymbol type ) {
-			if( type.IsTypeMarkedImmutable() ) {
-				return ImmutabilityScope.SelfAndChildren;
-			}
-
-			if( type.IsTypeMarkedImmutableBaseClass() ) {
-				return ImmutabilityScope.Self;
-			}
-
-			return ImmutabilityScope.None;
-		}
-
-		private static bool IsTypeMarkedImmutable( this ITypeSymbol symbol ) {
-			if( symbol.IsExternallyOwnedMarkedImmutableType() ) {
-				return true;
-			}
-			if( Attributes.Objects.Immutable.IsDefined( symbol ) ) {
-				return true;
-			}
-			if( symbol.Interfaces.Any( IsTypeMarkedImmutable ) ) {
-				return true;
-			}
-			if( symbol.BaseType != null && IsTypeMarkedImmutable( symbol.BaseType ) ) {
-				return true;
-			}
-			return false;
-		}
-
-		private static bool IsTypeMarkedImmutableBaseClass( this ITypeSymbol symbol ) {
-			if( Attributes.Objects.ImmutableBaseClass.IsDefined( symbol ) ) {
-				return true;
-			}
-			return false;
-		}
-
-		private static bool IsExternallyOwnedMarkedImmutableType( this ITypeSymbol symbol ) {
-			return MarkedImmutableTypes.Contains( symbol.GetFullTypeName() );
-		}
-
-		#endregion
 
 		public static bool IsTypeMarkedSingleton( this ITypeSymbol symbol ) {
 			if( Attributes.Singleton.IsDefined( symbol ) ) {
