@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
@@ -208,7 +209,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			bool isReadOnly,
 			TypeSyntax typeSyntax,
 			SyntaxToken nameSyntax,
-			ImmutableArray<ExpressionSyntax> assignments
+			IEnumerable<ExpressionSyntax> assignments
 		) {
 			var immutable = true;
 
@@ -278,7 +279,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// <param name="memberSymbol">The field/property to search for</param>
 		/// <param name="initializer">The initialization with the declaration</param>
 		/// <returns>An immutable list of assignments</returns>
-		private ImmutableArray<ExpressionSyntax> GetAssignments(
+		private IEnumerable<ExpressionSyntax> GetAssignments(
 			ISymbol memberSymbol,
 			ExpressionSyntax initializer
 		) {
@@ -292,15 +293,16 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					.Single()
 					.GetSyntax() )
 				.SelectMany( constructorSyntax => constructorSyntax.DescendantNodes() )
-				.OfType<AssignmentExpressionSyntax>();
-
-			// Add any assignments which act on the specific field/property
-			// to the list
-			return assignmentExpressions
+				.OfType<AssignmentExpressionSyntax>()
 				.Where( assignmentSyntax => IsAnAssignmentTo( assignmentSyntax, memberSymbol ) )
-				.Select( assignmentSyntax => assignmentSyntax.Right )
-				.Append( initializer )
-				.ToImmutableArray();
+				.Select( assignmentSyntax => assignmentSyntax.Right );
+
+			if ( initializer != null ) {
+				assignmentExpressions = assignmentExpressions
+					.Append( initializer );
+			}
+
+			return assignmentExpressions;
 		}
 
 		private bool IsAnAssignmentTo(
@@ -335,14 +337,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			TypeSyntax memberTypeSyntax,
 			ExpressionSyntax assignment
 		) {
-			if( assignment == null ) {
-				return (
-					memberType,
-					ImmutableTypeKind.Total,
-					() => memberTypeSyntax.GetLocation()
-				);
-			}
-
 			// When we have an assignment we use it to narrow our check, e.g.
 			//
 			//   private readonly object m_lock = new object();
