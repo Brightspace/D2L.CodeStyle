@@ -16,7 +16,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 			new ConfigureInstancePluginsExpression(),
 			new RegisterDynamicObjectFactoryExpression(),
 			new RegisterPluginForExtensionPointExpression(),
-			new RegisterExtensionPointExpression()
+			new RegisterExtensionPointExpression(),
+			new MarkInterfaceAsPluginExpression()
 		);
 
 		private readonly INamedTypeSymbol m_dependencyRegistryType;
