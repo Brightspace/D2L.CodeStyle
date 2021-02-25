@@ -59,6 +59,9 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 				ObjectScope scope
 			) where TFactoryType : IFactory<TDependencyType>;
 
+		void MarkInterfaceAsPlugin<TDependencyType>( ObjectScope scope )
+			where TDependencyType : class;
+
 		void UnhandledRegisterMethod();
 	}
 	public static class ExtensionMethods {
