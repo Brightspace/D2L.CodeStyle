@@ -39,6 +39,23 @@ namespace SpecTests
 		public class SomeClassImplementingInterface : IInterface { }
 		public static void SomeMethodWithInterfaceParameter( /* InvalidConstantType(Interface) */ [Constant] IInterface @interface /**/ ) { }
 		public static void SomeMethodWithOneInterfaceParameter<T>(IInterface param1, [Constant] T param2) { }
+
+		[Constant]
+		public static string GetConstantMessage() {
+			const string CONSTANT_STR = "This is a constant message";
+			return CONSTANT_STR;
+		}
+
+		[Constant]
+		public static string TryToGetConstantMessage() {
+			string variableStr = "This is a variable message";
+			return /* NonConstantReturnedFromConstantMethod(TryToGetConstantMessage) */ randomString /**/;
+		}
+
+		public static string GetNonConstantMessage() {
+			string variableStr = "This is a variable message";
+			return randomString;
+		}
 	}
 
 	public sealed class Tests
@@ -174,6 +191,13 @@ namespace SpecTests
 			Types.SomeMethodWithTwoConstantParameters<bool>( CONSTANT_BOOL, /* NonConstantPassedToConstantParameter(param2) */ variableBool /**/ );
 			Types.SomeMethodWithTwoConstantParameters<bool>( /* NonConstantPassedToConstantParameter(param1) */ variableBool /**/, CONSTANT_BOOL );
 			Types.SomeMethodWithTwoConstantParameters<bool>( /* NonConstantPassedToConstantParameter(param1) */ variableBool /**/, /* NonConstantPassedToConstantParameter(param2) */ variableBool /**/ );
+			#endregion
+
+			#region Constant method tests
+
+			Types.SomeMethodWithConstantParameter<string>( Types.GetConstantMessage() );
+			Types.SomeMethodWithConstantParameter<string>( /* NonConstantPassedToConstantParameter(param1) */ Types.GetNonConstantMessage() /**/ );
+
 			#endregion
 		}
 	}

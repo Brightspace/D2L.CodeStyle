@@ -12,7 +12,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
 			ImmutableArray.Create(
 				Diagnostics.NonConstantPassedToConstantParameter,
-				Diagnostics.InvalidConstantType
+				Diagnostics.InvalidConstantType,
+				Diagnostics.NonConstantReturnedFromConstantMethod
 			);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -29,9 +30,18 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			);
 
 			// The D2L.CodeStyle.Annotations reference is optional
-			if ( constantAttribute == null || constantAttribute .Kind == SymbolKind.ErrorType ) {
+			if( constantAttribute == null || constantAttribute.Kind == SymbolKind.ErrorType ) {
 				return;
 			}
+
+			context.RegisterSyntaxNodeAction(
+				ctx => AnalyzeReturn(
+					ctx,
+					(ReturnStatementSyntax)ctx.Node,
+					constantAttribute
+				),
+				SyntaxKind.ReturnStatement
+			);
 
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeParameter(
@@ -49,6 +59,50 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 					constantAttribute
 				),
 				SyntaxKind.Argument
+			);
+		}
+
+		private static void AnalyzeReturn(
+			SyntaxNodeAnalysisContext context,
+			ReturnStatementSyntax returnSyntax,
+			ISymbol constantAttribute
+		) {
+			// Return statement has no expression, so do nothing
+			if( returnSyntax.Expression == null ) {
+				return;
+			}
+
+			var methodSyntax = returnSyntax.Parent?.Parent;
+
+			// Return is not in a method, so do nothing
+			if( methodSyntax == null ) {
+				return;
+			}
+
+			var method = context.SemanticModel.GetDeclaredSymbol( methodSyntax );
+
+			// Method is somehow null, so do nothing
+			if( method == null ) {
+				return;
+			}
+
+			// Return is not [Constant], so do nothing
+			if( !HasAttribute( method, constantAttribute ) ) {
+				return;
+			}
+
+			// Return value is a constant value, so do nothing
+			if( context.SemanticModel.GetConstantValue( returnSyntax.Expression ).HasValue ) {
+				return;
+			}
+
+			// Return value is not constant, so report it
+			context.ReportDiagnostic(
+				Diagnostic.Create(
+					descriptor: Diagnostics.NonConstantReturnedFromConstantMethod,
+					location: returnSyntax.Expression.GetLocation(),
+					messageArgs: method.Name
+				)
 			);
 		}
 

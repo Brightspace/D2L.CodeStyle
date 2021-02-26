@@ -562,5 +562,14 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor NonConstantReturnedFromConstantMethod = new DiagnosticDescriptor(
+			id: "D2L0076",
+			title: "Constant method cannot return a non-constant value.",
+			messageFormat: "The \"{0}\" method is marked with the [Constant] attribute, and so it must return a compile-time constant value.",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }
