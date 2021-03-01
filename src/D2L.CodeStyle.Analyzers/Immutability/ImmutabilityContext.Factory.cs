@@ -20,7 +20,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			("System.Collections.Generic.IReadOnlyList`1", default),
 			("System.Collections.Generic.IReadOnlyDictionary`2", default),
 			("System.Collections.Generic.IEnumerable`1", default),
-			("System.Lazy`1", default),
 			("System.Nullable`1", default),
 			("System.Tuple`1", default),
 			("System.Tuple`2", default),
