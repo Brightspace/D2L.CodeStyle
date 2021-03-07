@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using D2L.CodeStyle.Analyzers.CommonFixes;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
@@ -45,7 +46,55 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 		}
 
-		public void CompareConsistencyToBaseType(
+		public void CheckMethodDeclaration(
+			IMethodSymbol methodSymbol
+		) {
+			if( methodSymbol.TypeParameters.Length == 0 ) {
+				return;
+			}
+
+			MethodDeclarationSyntax methodSyntax = null;
+			Location[] parameterLocations = null;
+			Location GetLocationOfNthParameter( int N ) {
+				parameterLocations ??= new Location[ methodSymbol.TypeParameters.Length ];
+
+				if( parameterLocations[ N ] != default ) {
+					return parameterLocations[ N ];
+				}
+
+				methodSyntax ??= methodSymbol
+					.DeclaringSyntaxReferences[ 0 ]
+					.GetSyntax() as MethodDeclarationSyntax;
+
+				Location loc = parameterLocations[ N ] = methodSyntax.TypeParameterList.Parameters[ N ].GetLocation();
+				return loc;
+			}
+
+			ImmutableArray<IMethodSymbol> implementedMethods = methodSymbol.GetImplementedMethods();
+			foreach( IMethodSymbol implementedMethod in implementedMethods ) {
+				Debug.Assert( methodSymbol.TypeParameters.Length == implementedMethod.TypeParameters.Length );
+
+				for( int i = 0; i < methodSymbol.TypeParameters.Length; ++i ) {
+					ITypeParameterSymbol thisParameter = methodSymbol.TypeParameters[ i ];
+					ITypeParameterSymbol implementedParameter = implementedMethod.TypeParameters[ i ];
+
+					bool thisIsImmutable = Attributes.Objects.Immutable.IsDefined( thisParameter );
+					bool implementedIsImmutable = Attributes.Objects.Immutable.IsDefined( implementedParameter );
+
+					if( thisIsImmutable != implementedIsImmutable ) {
+						m_diagnosticSink( Diagnostic.Create(
+							Diagnostics.InconsistentMethodAttributeApplication,
+							GetLocationOfNthParameter( i ),
+							"Immutable",
+							$"{ methodSymbol.ContainingType.Name }.{ methodSymbol.Name }",
+							$"{ implementedMethod.ContainingType.Name }.{ implementedMethod.Name }"
+						) );
+					}
+				}
+			}
+		}
+
+		private void CompareConsistencyToBaseType(
 			ImmutableTypeInfo typeInfo,
 			ImmutableTypeInfo baseTypeInfo
 		) {

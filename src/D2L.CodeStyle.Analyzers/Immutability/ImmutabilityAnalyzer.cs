@@ -25,7 +25,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			Diagnostics.ConflictingImmutability,
 			Diagnostics.InvalidAuditType,
 
-			Diagnostics.MissingTransitiveImmutableAttribute
+			Diagnostics.MissingTransitiveImmutableAttribute,
+			Diagnostics.InconsistentMethodAttributeApplication
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -46,6 +47,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					(INamedTypeSymbol)ctx.Symbol
 				),
 				SymbolKind.NamedType
+			);
+
+			context.RegisterSymbolAction(
+				ctx => AnalyzeMethodDeclarationConsistency(
+					ctx,
+					immutabilityContext,
+					(IMethodSymbol)ctx.Symbol
+				),
+				SymbolKind.Method
 			);
 
 			context.RegisterSymbolAction(
@@ -117,6 +127,25 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 
 			checker.CheckMember( ctx.Symbol );
+		}
+
+		private static void AnalyzeMethodDeclarationConsistency(
+			SymbolAnalysisContext ctx,
+			ImmutabilityContext immutabilityContext,
+			IMethodSymbol methodSymbol
+		) {
+			// Static methods can't implement interface methods
+			if( methodSymbol.IsStatic ) {
+				return;
+			}
+
+			ImmutableAttributeConsistencyChecker consistencyChecker = new ImmutableAttributeConsistencyChecker(
+				compilation: ctx.Compilation,
+				diagnosticSink: ctx.ReportDiagnostic,
+				context: immutabilityContext
+			);
+
+			consistencyChecker.CheckMethodDeclaration( methodSymbol );
 		}
 
 		private static void AnalyzeTypeDeclaration(
