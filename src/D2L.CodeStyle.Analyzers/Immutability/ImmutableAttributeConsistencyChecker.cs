@@ -53,23 +53,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
-			MethodDeclarationSyntax methodSyntax = null;
-			Location[] parameterLocations = null;
-			Location GetLocationOfNthParameter( int N ) {
-				parameterLocations ??= new Location[ methodSymbol.TypeParameters.Length ];
-
-				if( parameterLocations[ N ] != default ) {
-					return parameterLocations[ N ];
-				}
-
-				methodSyntax ??= methodSymbol
-					.DeclaringSyntaxReferences[ 0 ]
-					.GetSyntax() as MethodDeclarationSyntax;
-
-				Location loc = parameterLocations[ N ] = methodSyntax.TypeParameterList.Parameters[ N ].GetLocation();
-				return loc;
-			}
-
 			ImmutableArray<IMethodSymbol> implementedMethods = methodSymbol.GetImplementedMethods();
 			foreach( IMethodSymbol implementedMethod in implementedMethods ) {
 				Debug.Assert( methodSymbol.TypeParameters.Length == implementedMethod.TypeParameters.Length );
@@ -84,7 +67,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					if( thisIsImmutable != implementedIsImmutable ) {
 						m_diagnosticSink( Diagnostic.Create(
 							Diagnostics.InconsistentMethodAttributeApplication,
-							GetLocationOfNthParameter( i ),
+							GetLocationOfNthTypeParameter( methodSymbol, i ),
 							"Immutable",
 							$"{ methodSymbol.ContainingType.Name }.{ methodSymbol.Name }",
 							$"{ implementedMethod.ContainingType.Name }.{ implementedMethod.Name }"
@@ -173,6 +156,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			return anySyntax;
+		}
+
+		private static Location GetLocationOfNthTypeParameter( IMethodSymbol methodSymbol, int N ) {
+			MethodDeclarationSyntax syntax = methodSymbol
+				.DeclaringSyntaxReferences[ 0 ]
+				.GetSyntax() as MethodDeclarationSyntax;
+
+			Location loc = syntax.TypeParameterList.Parameters[ N ].GetLocation();
+			return loc;
 		}
 
 	}
