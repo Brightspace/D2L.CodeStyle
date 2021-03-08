@@ -34,6 +34,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			("System.Guid", default),
 			("System.Index", default),
 			("System.Net.IPNetwork", default),
+			("System.Net.Http.HttpMethod", default),
 			("System.Range", default),
 			("System.Reflection.ConstructorInfo", default),
 			("System.Reflection.FieldInfo", default),
