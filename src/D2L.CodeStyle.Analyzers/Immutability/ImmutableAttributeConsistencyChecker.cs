@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using D2L.CodeStyle.Analyzers.CommonFixes;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
@@ -55,8 +54,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			ImmutableArray<IMethodSymbol> implementedMethods = methodSymbol.GetImplementedMethods();
 			foreach( IMethodSymbol implementedMethod in implementedMethods ) {
-				Debug.Assert( methodSymbol.TypeParameters.Length == implementedMethod.TypeParameters.Length );
-
 				for( int i = 0; i < methodSymbol.TypeParameters.Length; ++i ) {
 					ITypeParameterSymbol thisParameter = methodSymbol.TypeParameters[ i ];
 					ITypeParameterSymbol implementedParameter = implementedMethod.TypeParameters[ i ];
