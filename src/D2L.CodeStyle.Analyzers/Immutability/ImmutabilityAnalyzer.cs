@@ -23,7 +23,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			Diagnostics.UnnecessaryMutabilityAnnotation,
 			Diagnostics.UnexpectedConditionalImmutability,
 			Diagnostics.ConflictingImmutability,
-			Diagnostics.InvalidAuditType
+			Diagnostics.InvalidAuditType,
+
+			Diagnostics.MissingTransitiveImmutableAttribute
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -125,6 +127,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			if( typeSymbol.IsImplicitlyDeclared ) {
 				return;
 			}
+
+			ImmutableAttributeConsistencyChecker consistencyChecker = new ImmutableAttributeConsistencyChecker(
+				compilation: ctx.Compilation,
+				diagnosticSink: ctx.ReportDiagnostic,
+				context: immutabilityContext
+			);
+
+			consistencyChecker.CheckTypeDeclaration( typeSymbol );
 
 			if( typeSymbol.TypeKind == TypeKind.Interface ) {
 				return;

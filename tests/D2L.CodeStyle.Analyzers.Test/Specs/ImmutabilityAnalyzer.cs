@@ -1223,3 +1223,125 @@ namespace SpecTests {
 		ConciseRecord z
 	);
 }
+
+namespace ConsistencyTests {
+
+	using static Objects;
+
+	public interface IVanilla { }
+	public interface IVanilla2 { }
+	public class VanillaBase : IVanilla { }
+	public class VanillaDerived : VanillaBase { }
+	public sealed class VanillaDerived2 : VanillaDerived, IVanilla2 { }
+	public struct VanillaStruct : IVanilla, IVanilla2 { }
+
+	[Immutable]
+	public interface ISomethingImmutable { }
+
+	[Immutable]
+	public class HappyImplementor : ISomethingImmutable { }
+
+	[Immutable]
+	public sealed class HappyDeriver : HappyImplementor { }
+
+	[Immutable]
+	public struct HappyStructImplementor : ISomethingImmutable { }
+
+	public sealed class
+		/* MissingTransitiveImmutableAttribute(ConsistencyTests.SadImplementor, , interface, ConsistencyTests.ISomethingImmutable) */ SadImplementor /**/
+		: ISomethingImmutable { }
+
+	public struct
+		/* MissingTransitiveImmutableAttribute(ConsistencyTests.SadStructImplementor, , interface, ConsistencyTests.ISomethingImmutable) */ SadStructImplementor /**/
+		: ISomethingImmutable { }
+
+	public sealed class
+		/* MissingTransitiveImmutableAttribute(ConsistencyTests.SadDeriver, , base class, ConsistencyTests.HappyImplementor) */ SadDeriver /**/
+		: HappyImplementor { }
+
+	public sealed class
+		/* MissingTransitiveImmutableAttribute(ConsistencyTests.SadImplementor2, , interface, ConsistencyTests.ISomethingImmutable) */ SadImplementor2 /**/
+		: VanillaBase, IVanilla, IVanilla2, ISomethingImmutable { }
+
+	public sealed class
+		/* MissingTransitiveImmutableAttribute(ConsistencyTests.SadImplementor3, , base class, ConsistencyTests.HappyImplementor) */ SadImplementor3 /**/
+		: HappyImplementor, IVanilla, IVanilla2 { }
+
+	public interface
+		/* MissingTransitiveImmutableAttribute(ConsistencyTests.SadExtender, , interface, ConsistencyTests.ISomethingImmutable) */ SadExtender /**/
+		: ISomethingImmutable { }
+
+	// This won't emit an error because SadDeriver hasn't added [Immutable].
+	// There is a diagnostic for that mistake, but once its fixed we would
+	// get a diagnostic here. It would be nicer to developers to report all
+	// the violations, probably, but this keeps the implementation very simple
+	// and it's unlikely to come up in practice if you make small changes
+	// between compiles.
+	public sealed class IndirectlySadClass : SadDeriver { }
+
+	public partial class
+	/* MissingTransitiveImmutableAttribute(ConsistencyTests.PartialClass, , interface, ConsistencyTests.ISomethingImmutable) */ PartialClass /**/
+		: ISomethingImmutable { }
+
+	// This one doesn't get the diagnostic. We attach it to the one that specified
+	// the interface.
+	public partial class PartialClass { }
+
+	// We will emit another diagnostic here though... this makes sense but the
+	// code fix will try to apply multiple [Immutable] attributes which isn't
+	// allowed...
+	public partial class
+	/* MissingTransitiveImmutableAttribute(ConsistencyTests.PartialClass, , base class, ConsistencyTests.HappyImplementor) */ PartialClass /**/
+		: HappyImplementor { }
+
+	// This shouldn't crash the analyzer
+	public sealed class Foo : IThingThatDoesntExist { }
+
+	[Immutable]
+	public record UnsealedImmutableRecord { }
+
+	public sealed record
+		/* MissingTransitiveImmutableAttribute(ConsistencyTests.DerivedRecordMissingAttribute, , base class, ConsistencyTests.UnsealedImmutableRecord) */ DerivedRecordMissingAttribute /**/
+		: UnsealedImmutableRecord { }
+
+	[Immutable]
+	public sealed record SealedDerivedWithAttribute : UnsealedImmutableRecord { }
+
+	[Immutable]
+	public record UnsealedDerivedWithAttribute : UnsealedImmutableRecord { }
+
+	public record RegularRecord { }
+	public sealed record RegularDerivedRecord : RegularRecord { }
+
+	[Immutable]
+	public record ConciseRecord : UnsealedImmutableRecord;
+
+	[Immutable]
+	public record BaseRecordWithArgs( int x ) { }
+
+	[Immutable]
+	public record ImmutableDerivedWithArgs( int y ) : BaseRecordWithArgs( y );
+
+	public sealed record
+		/* MissingTransitiveImmutableAttribute(ConsistencyTests.DerivedRecordNoAttrConstArg, , base class, ConsistencyTests.BaseRecordWithArgs) */ DerivedRecordNoAttrConstArg /**/
+		: BaseRecordWithArgs( 0 );
+
+	public sealed record
+		/* MissingTransitiveImmutableAttribute(ConsistencyTests.DerivedRecordNoAttrWithArg, , base class, ConsistencyTests.BaseRecordWithArgs) */ DerivedRecordNoAttrWithArg /**/
+		( int z ) : BaseRecordWithArgs( z );
+
+	[ConditionallyImmutable]
+	public interface ISomethingConditionallyImmutable<[ConditionallyImmutable.OnlyIf] T> { }
+
+	[Immutable]
+	public sealed class ImmutableClassImplementingConditionallyImmutable<[Immutable] T> : ISomethingConditionallyImmutable<T> { }
+
+	[ConditionallyImmutable]
+	public sealed class ConditionallyImmutableClassImplementingConditionallyImmutable<[ConditionallyImmutable.OnlyIf] T> : ISomethingConditionallyImmutable<T> { }
+
+	public sealed class /* MissingTransitiveImmutableAttribute(ConsistencyTests.SadImplementerOfConditionallyImmutable,  (or [ConditionallyImmutable]), interface, ConsistencyTests.ISomethingConditionallyImmutable) */ SadImplementerOfConditionallyImmutable /**/<T> : ISomethingConditionallyImmutable<T> { }
+
+	public partial class PartialClassNeedingImmutable { }
+	public partial class /* MissingTransitiveImmutableAttribute(ConsistencyTests.PartialClassNeedingImmutable, , interface, ConsistencyTests.ISomethingImmutable) */ PartialClassNeedingImmutable /**/ : ISomethingImmutable { }
+	public partial class PartialClassNeedingImmutable { }
+}
