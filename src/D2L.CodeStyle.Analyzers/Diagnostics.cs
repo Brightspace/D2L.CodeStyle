@@ -562,5 +562,14 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor InconsistentMethodAttributeApplication = new DiagnosticDescriptor(
+			id: "D2L0076",
+			title: "Attribute is applied inconsistently to method definitions.",
+			messageFormat: "The [{0}] attribute is applied inconsistently between \"{1}\" and its source definition \"{2}\". This wiil cause inconsistent behaviour.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }

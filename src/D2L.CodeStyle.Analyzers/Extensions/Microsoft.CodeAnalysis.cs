@@ -164,5 +164,32 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 
 			return false;
 		}
+
+		public static ImmutableArray<IMethodSymbol> GetImplementedMethods(
+			this IMethodSymbol method
+		) {
+			if( method.ExplicitInterfaceImplementations.Length > 0 ) {
+				return method.ExplicitInterfaceImplementations;
+			}
+
+			ITypeSymbol type = method.ContainingType;
+
+			var result = ImmutableArray.CreateBuilder<IMethodSymbol>();
+
+			result.AddRange(
+				type.AllInterfaces
+					.SelectMany( i => i.GetMembers( method.Name ).OfType<IMethodSymbol>() )
+					.Where( m => method.Equals( type.FindImplementationForInterfaceMember( m ), SymbolEqualityComparer.Default ) )
+			); ;
+
+			// Check OverriddenMethod != null instead of IsOverride
+			// because "override void Foo() {}" will have IsOverride == true
+			// even if there isn't a Foo to override
+			if( method.OverriddenMethod != null ) {
+				result.Add( method.OverriddenMethod );
+			}
+
+			return result.ToImmutable();
+		}
 	}
 }

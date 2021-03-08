@@ -45,7 +45,36 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 		}
 
-		public void CompareConsistencyToBaseType(
+		public void CheckMethodDeclaration(
+			IMethodSymbol methodSymbol
+		) {
+			if( methodSymbol.TypeParameters.Length == 0 ) {
+				return;
+			}
+
+			ImmutableArray<IMethodSymbol> implementedMethods = methodSymbol.GetImplementedMethods();
+			foreach( IMethodSymbol implementedMethod in implementedMethods ) {
+				for( int i = 0; i < methodSymbol.TypeParameters.Length; ++i ) {
+					ITypeParameterSymbol thisParameter = methodSymbol.TypeParameters[ i ];
+					ITypeParameterSymbol implementedParameter = implementedMethod.TypeParameters[ i ];
+
+					bool thisIsImmutable = Attributes.Objects.Immutable.IsDefined( thisParameter );
+					bool implementedIsImmutable = Attributes.Objects.Immutable.IsDefined( implementedParameter );
+
+					if( thisIsImmutable != implementedIsImmutable ) {
+						m_diagnosticSink( Diagnostic.Create(
+							Diagnostics.InconsistentMethodAttributeApplication,
+							GetLocationOfNthTypeParameter( methodSymbol, i ),
+							"Immutable",
+							$"{ methodSymbol.ContainingType.Name }.{ methodSymbol.Name }",
+							$"{ implementedMethod.ContainingType.Name }.{ implementedMethod.Name }"
+						) );
+					}
+				}
+			}
+		}
+
+		private void CompareConsistencyToBaseType(
 			ImmutableTypeInfo typeInfo,
 			ImmutableTypeInfo baseTypeInfo
 		) {
@@ -124,6 +153,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			return anySyntax;
+		}
+
+		private static Location GetLocationOfNthTypeParameter( IMethodSymbol methodSymbol, int N ) {
+			MethodDeclarationSyntax syntax = methodSymbol
+				.DeclaringSyntaxReferences[ 0 ]
+				.GetSyntax() as MethodDeclarationSyntax;
+
+			Location loc = syntax.TypeParameterList.Parameters[ N ].GetLocation();
+			return loc;
 		}
 
 	}

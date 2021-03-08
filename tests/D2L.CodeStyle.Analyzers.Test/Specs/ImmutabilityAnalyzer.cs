@@ -1344,4 +1344,65 @@ namespace ConsistencyTests {
 	public partial class PartialClassNeedingImmutable { }
 	public partial class /* MissingTransitiveImmutableAttribute(ConsistencyTests.PartialClassNeedingImmutable, , interface, ConsistencyTests.ISomethingImmutable) */ PartialClassNeedingImmutable /**/ : ISomethingImmutable { }
 	public partial class PartialClassNeedingImmutable { }
+
+	public class ClassWithMethod {
+		public abstract void MethodWithImmutable<[Immutable] T>();
+	}
+	public interface IInterfaceWithMethodA {
+		void MethodWithImmutable<T, [Immutable] U>();
+	}
+	public interface IInterfaceWithMethodB {
+		void MethodWithImmutable<[Immutable] T, U>();
+	}
+
+	public class ClassImplicitlyImplementingMethodsA : IInterfaceWithMethodA {
+		public void MethodWithImmutable<
+			T,
+			[Immutable] U
+		>() { }
+	}
+	public class ClassImplicitlyImplementingMethodsB : IInterfaceWithMethodB {
+		public void MethodWithImmutable<
+			[Immutable] T,
+			U
+		>() { }
+	}
+	public class ClassImplicitlyImplementingMethodsInconsistent : IInterfaceWithMethodA, IInterfaceWithMethodB {
+		public void MethodWithImmutable<
+			/* InconsistentMethodAttributeApplication(Immutable, ClassImplicitlyImplementingMethodsInconsistent.MethodWithImmutable, IInterfaceWithMethodA.MethodWithImmutable) */ [Immutable] T /**/,
+			/* InconsistentMethodAttributeApplication(Immutable, ClassImplicitlyImplementingMethodsInconsistent.MethodWithImmutable, IInterfaceWithMethodA.MethodWithImmutable) */ U /**/
+		>() {}
+	}
+
+	public class ClassOverridingMethods : ClassWithMethod {
+		public override void MethodWithImmutable<
+			[Immutable] T
+		>() { }
+	}
+	public class ClassOverridingMethodsInconsistent : ClassWithMethod {
+		public override void MethodWithImmutable<
+			/* InconsistentMethodAttributeApplication(Immutable, ClassOverridingMethodsInconsistent.MethodWithImmutable, ClassWithMethod.MethodWithImmutable) */ T /**/
+		>() { }
+	}
+
+	public class ClassExplicitlyImplementingMethods : IInterfaceWithMethodA, IInterfaceWithMethodB {
+		void IInterfaceWithMethodA.MethodWithImmutable<
+			T,
+			[Immutable] U
+		>() { }
+		void IInterfaceWithMethodB.MethodWithImmutable<
+			[Immutable] T,
+			U
+		>()
+	}
+	public class ClassExplicitlyImplementingMethodsInconsistent : IInterfaceWithMethodA, IInterfaceWithMethodB {
+		void IInterfaceWithMethodA.MethodWithImmutable<
+			/* InconsistentMethodAttributeApplication(Immutable, ClassExplicitlyImplementingMethodsInconsistent.ConsistencyTests.IInterfaceWithMethodA.MethodWithImmutable, IInterfaceWithMethodA.MethodWithImmutable) */ [Immutable] T /**/,
+			/* InconsistentMethodAttributeApplication(Immutable, ClassExplicitlyImplementingMethodsInconsistent.ConsistencyTests.IInterfaceWithMethodA.MethodWithImmutable, IInterfaceWithMethodA.MethodWithImmutable) */ U /**/
+		>() { }
+		void IInterfaceWithMethodB.MethodWithImmutable<
+			/* InconsistentMethodAttributeApplication(Immutable, ClassExplicitlyImplementingMethodsInconsistent.ConsistencyTests.IInterfaceWithMethodB.MethodWithImmutable, IInterfaceWithMethodB.MethodWithImmutable) */ T /**/,
+			/* InconsistentMethodAttributeApplication(Immutable, ClassExplicitlyImplementingMethodsInconsistent.ConsistencyTests.IInterfaceWithMethodB.MethodWithImmutable, IInterfaceWithMethodB.MethodWithImmutable) */ [Immutable] U /**/
+		>()
+	}
 }
