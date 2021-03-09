@@ -345,8 +345,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// * what kind of check to do, and
 		/// * where to put any diagnostics.
 		/// </summary>
-		/// <param name="memberType">The type of the field/property</param>
-		/// <param name="memberTypeSyntax">The syntax for the type of the field/property</param>
 		/// <param name="assignment">The assignment syntax for the field/property (possibly null)</param>
 		/// <returns>null if no checks are needed, otherwise a bunch of stuff.</returns>
 		private (ITypeSymbol, ImmutableTypeKind, Func<Location>)? GetStuffToCheckForAssignment(
