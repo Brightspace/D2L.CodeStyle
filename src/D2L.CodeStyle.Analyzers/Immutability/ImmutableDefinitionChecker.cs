@@ -45,8 +45,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			if( type.TypeKind == TypeKind.Class ) {
 				// Check that the base class is immutable for classes
 				var baseClassOk = m_context.IsImmutable(
-					type.BaseType,
-					ImmutableTypeKind.Instance,
+					new ImmutabilityQuery(
+						ImmutableTypeKind.Instance,
+						type.BaseType
+					),
 					() => GetLocationOfBaseClass( type ),
 					out var diag
 				);
@@ -231,8 +233,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// If our field or property is a type that is always immutable then
 			// we can stop looking (all that matters is that we are readonly).
 			if( m_context.IsImmutable(
-				type,
-				ImmutableTypeKind.Total,
+				new ImmutabilityQuery(
+					ImmutableTypeKind.Total,
+					type
+				),
 				typeSyntax.GetLocation,
 				out var typeDiagnostic
 			) ) {
@@ -260,19 +264,16 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			var allAssignmentsAreOfImmutableValues = true;
 
 			foreach( var assignment in assignments ) {
-				var stuff = GetStuffToCheckForAssignment( assignment );
+				var query = GetStuffToCheckForAssignment( assignment );
 
-				if( stuff == null ) {
+				if( query == null ) {
 					// null is a signal that there is nothing further that needs to
 					// be checked for this assignment.
 					continue;
 				}
 
-				var (typeToCheck, checkKind) = stuff.Value;
-
 				if( m_context.IsImmutable(
-					typeToCheck,
-					checkKind,
+					query.Value,
 					() => assignment.GetLocation(),
 					out var diagnostic
 				) ) {
@@ -340,14 +341,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		/// <summary>
-		/// For a field/property assignment, figure out:
-		/// * which type to check,
-		/// * what kind of check to do, and
-		/// * where to put any diagnostics.
+		/// For a field/property assignment, figure out what needs to be checked for it.
 		/// </summary>
 		/// <param name="assignment">The assignment syntax for the field/property (possibly null)</param>
-		/// <returns>null if no checks are needed, otherwise a bunch of stuff.</returns>
-		private (ITypeSymbol, ImmutableTypeKind)? GetStuffToCheckForAssignment(
+		/// <returns>null if no checks are needed, otherwise the query we need to run.</returns>
+		private ImmutabilityQuery? GetStuffToCheckForAssignment(
 			ExpressionSyntax assignment
 		) {
 			// When we have an assignment we use it to narrow our check, e.g.
@@ -385,11 +383,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			if( assignment is BaseObjectCreationExpressionSyntax _ ) {
 				// When we have a new T() we don't need to worry about the value
 				// being anything other than an instance of T.
-				return (typeToCheck, ImmutableTypeKind.Instance);
+				return new ImmutabilityQuery(
+					ImmutableTypeKind.Instance,
+					typeToCheck
+				);
 			}
 
 			// In general we need to handle subtypes.
-			return (typeToCheck, ImmutableTypeKind.Total);
+			return new ImmutabilityQuery(
+				ImmutableTypeKind.Total,
+				typeToCheck
+			);
 		}
 
 		private static Location GetLocationOfMember( ISymbol s ) =>s

@@ -74,27 +74,25 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// <summary>
 		/// Determines if a type is known to be immutable.
 		/// </summary>
-		/// <param name="type">The type to check</param>
-		/// <param name="kind">The degree of immutability</param>
+		/// <param name="query">The type to check (and what kind of check to do.)</param>
 		/// <param name="diag">If this method returns false, an explaination for why its not known to be immutable.</param>
 		/// <returns>Is the type immutable?</returns>
 		public bool IsImmutable(
-			ITypeSymbol type,
-			ImmutableTypeKind kind,
+			ImmutabilityQuery query,
 			Func<Location> getLocation,
 			out Diagnostic diagnostic
 		) {
-			if ( kind == ImmutableTypeKind.None ) {
+			if ( query.Kind == ImmutableTypeKind.None ) {
 				throw new ArgumentException(
 					"ImmutabilityKind.None is not a valid question to ask this function",
-					nameof( kind )
+					nameof( query.Kind )
 				);
 			}
 
 			diagnostic = null;
 
 			// Things like int are totally OK
-			if ( m_totallyImmutableSpecialTypes.Contains( type.SpecialType ) ) {
+			if ( m_totallyImmutableSpecialTypes.Contains( query.Type.SpecialType ) ) {
 				return true;
 			}
 
@@ -104,13 +102,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			//
 			// This is hard-coded (rather than in m_extraImmutableTypes) to
 			// avoid the ITypeSymbol lookup.
-			if ( kind == ImmutableTypeKind.Instance && type.SpecialType == SpecialType.System_Object ) {
+			if ( query.Kind == ImmutableTypeKind.Instance && query.Type.SpecialType == SpecialType.System_Object ) {
 				return true;
 			}
 
-			if( type is INamedTypeSymbol namedType ) {
+			if( query.Type is INamedTypeSymbol namedType ) {
 				ImmutableTypeInfo info = GetImmutableTypeInfo( namedType );
-				if( info.Kind.HasFlag( kind ) ) {
+				if( info.Kind.HasFlag( query.Kind ) ) {
 					return info.IsImmutableDefinition(
 						context: this,
 						definition: namedType,
@@ -120,7 +118,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				}
 			}
 
-			switch( type.TypeKind ) {
+			switch( query.Type.TypeKind ) {
 				case TypeKind.Error:
 					// Just say this is fine -- there is some other compiler
 					// error in this case and we don't need to pile on.
@@ -134,7 +132,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					diagnostic = Diagnostic.Create(
 						Diagnostics.ArraysAreMutable,
 						getLocation(),
-						( type as IArrayTypeSymbol ).ElementType.Name
+						( query.Type as IArrayTypeSymbol ).ElementType.Name
 					);
 
 					return false;
@@ -156,18 +154,18 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					return false;
 
 				case TypeKind.TypeParameter:
-					if( GetImmutabilityFromAttributes( type ).HasFlag( ImmutableTypeKind.Total ) ) {
+					if( GetImmutabilityFromAttributes( query.Type ).HasFlag( ImmutableTypeKind.Total ) ) {
 						return true;
 					}
 
-					if( type is ITypeParameterSymbol tp && m_conditionalTypeParameters.Contains( tp ) ) {
+					if( query.Type is ITypeParameterSymbol tp && m_conditionalTypeParameters.Contains( tp ) ) {
 						return true;
 					}
 
 					diagnostic = Diagnostic.Create(
 						Diagnostics.TypeParameterIsNotKnownToBeImmutable,
 						getLocation(),
-						type.ToDisplayString()
+						query.Type.ToDisplayString()
 					);
 
 					return false;
@@ -176,9 +174,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					diagnostic = Diagnostic.Create(
 						Diagnostics.NonImmutableTypeHeldByImmutable,
 						getLocation(),
-						type.TypeKind.ToString().ToLower(),
-						type.ToDisplayString(),
-						kind == ImmutableTypeKind.Instance && !type.IsSealed ? " (or [ImmutableBaseClass])" : ""
+						query.Type.TypeKind.ToString().ToLower(),
+						query.Type.ToDisplayString(),
+						query.Kind == ImmutableTypeKind.Instance && !query.Type.IsSealed ? " (or [ImmutableBaseClass])" : ""
 					);
 
 					return false;
@@ -188,8 +186,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					diagnostic = Diagnostic.Create(
 						Diagnostics.NonImmutableTypeHeldByImmutable,
 						getLocation(),
-						type.TypeKind.ToString().ToLower(),
-						type.ToDisplayString(),
+						query.Type.TypeKind.ToString().ToLower(),
+						query.Type.ToDisplayString(),
 						""
 					);
 
@@ -200,7 +198,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					diagnostic = Diagnostic.Create(
 						Diagnostics.UnexpectedTypeKind,
 						location: getLocation(),
-						type.Kind
+						query.Type.Kind
 					);
 
 					return false;
