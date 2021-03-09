@@ -263,7 +263,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			var allAssignmentsAreOfImmutableValues = true;
 
 			foreach( var assignment in assignments ) {
-				var query = GetStuffToCheckForAssignment( assignment );
+				var query = GetImmutabilityQueryForAssignment( assignment );
 
 				if( query == null ) {
 					// null is a signal that there is nothing further that needs to
@@ -344,7 +344,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// </summary>
 		/// <param name="assignment">The assignment syntax for the field/property (possibly null)</param>
 		/// <returns>null if no checks are needed, otherwise the query we need to run.</returns>
-		private ImmutabilityQuery? GetStuffToCheckForAssignment(
+		private ImmutabilityQuery? GetImmutabilityQueryForAssignment(
 			ExpressionSyntax assignment
 		) {
 			// When we have an assignment we use it to narrow our check, e.g.
