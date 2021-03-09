@@ -1,7 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
-	internal struct ImmutabilityQuery {
+	internal readonly struct ImmutabilityQuery {
 		public ImmutabilityQuery(
 			ImmutableTypeKind kind,
 			ITypeSymbol type
