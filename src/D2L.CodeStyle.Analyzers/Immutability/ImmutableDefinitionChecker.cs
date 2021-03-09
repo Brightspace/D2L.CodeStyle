@@ -268,12 +268,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					continue;
 				}
 
-				var (typeToCheck, checkKind, getLocation) = stuff.Value;
+				var (typeToCheck, checkKind) = stuff.Value;
 
 				if( m_context.IsImmutable(
 					typeToCheck,
 					checkKind,
-					getLocation,
+					() => assignment.GetLocation(),
 					out var diagnostic
 				) ) {
 					continue;
@@ -349,7 +349,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// <param name="memberTypeSyntax">The syntax for the type of the field/property</param>
 		/// <param name="assignment">The assignment syntax for the field/property (possibly null)</param>
 		/// <returns>null if no checks are needed, otherwise a bunch of stuff.</returns>
-		private (ITypeSymbol, ImmutableTypeKind, Func<Location>)? GetStuffToCheckForAssignment(
+		private (ITypeSymbol, ImmutableTypeKind)? GetStuffToCheckForAssignment(
 			ExpressionSyntax assignment
 		) {
 			// When we have an assignment we use it to narrow our check, e.g.
@@ -387,19 +387,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			if( assignment is BaseObjectCreationExpressionSyntax _ ) {
 				// When we have a new T() we don't need to worry about the value
 				// being anything other than an instance of T.
-				return (
-					typeToCheck,
-					ImmutableTypeKind.Instance,
-					() => assignment.GetLocation()
-				);
+				return (typeToCheck, ImmutableTypeKind.Instance);
 			}
 
 			// In general we need to handle subtypes.
-			return (
-				typeToCheck,
-				ImmutableTypeKind.Total,
-				() => assignment.GetLocation()
-			);
+			return (typeToCheck, ImmutableTypeKind.Total);
 		}
 
 		private static Location GetLocationOfMember( ISymbol s ) =>s
