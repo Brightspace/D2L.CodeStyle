@@ -75,11 +75,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			if( MutabilityAuditor.CheckAudited(
 				member,
 				m_diagnosticSink,
-				out var location ) ) {
-
+				out var location
+			) ) {
 				// If they have one of the auditing attributes, run the
 				// checks anyway and error if they are unnecessary
 				if( CheckMember( diagnosticSink: _ => { }, member ) ) {
+
 					m_diagnosticSink(
 						Diagnostic.Create(
 							Diagnostics.UnnecessaryMutabilityAnnotation,
@@ -211,8 +212,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			SyntaxToken nameSyntax,
 			IEnumerable<ExpressionSyntax> assignments
 		) {
-			var immutable = true;
-
 			if ( !isReadOnly ) {
 				diagnosticSink(
 					Diagnostic.Create(
@@ -224,32 +223,48 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					)
 				);
 
-				immutable = false;
+				// Note: we're going to go looking for other errors.
+				// There shouldn't be any "return true" below, it should
+				// always be conditional on isReadOnly.
 			}
 
-			// Perform an initial check to see if the member is totally immutable
-			// If this fails, then we need to perform assignment checks to ensure
-			// instance immutability
+			// If our field or property is a type that is always immutable then
+			// we can stop looking (all that matters is that we are readonly).
 			if( m_context.IsImmutable(
 				type,
 				ImmutableTypeKind.Total,
 				typeSyntax.GetLocation,
-				out _
+				out var typeDiagnostic
 			) ) {
-				return immutable;
+				return isReadOnly;
 			}
 
-			// Check all assignments of the member for immutability
+			// Our field or property could hold mutable values, but it's safe
+			// as long as we always assign immutable values to it.
+
+			// Usually that would be difficult, but if we're readonly its a lot
+			// easier: we only have to look in our constructors (this applies
+			// even to protected readonly; these can't be set in derived
+			// constructors.)
+
+			// TODO: we don't really need this, but it has been our current
+			// behaviour... if we have a readonly field with no writes that's
+			// worth a diagnostic on its own (there are built in ones for that)
+			// but technically it doesn't add mutability.
+			// If we remove this we can rename typeDiagnostic to _ again.
+			if ( !assignments.Any() ) {
+				diagnosticSink( typeDiagnostic );
+				return false;
+			}
+
+			var allAssignmentsAreOfImmutableValues = true;
+
 			foreach( var assignment in assignments ) {
-				var stuff = GetStuffToCheckForMember(
-					type,
-					typeSyntax,
-					assignment
-				);
+				var stuff = GetStuffToCheckForAssignment( assignment );
 
 				if( stuff == null ) {
 					// null is a signal that there is nothing further that needs to
-					// be checked
+					// be checked for this assignment.
 					continue;
 				}
 
@@ -265,10 +280,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				}
 
 				diagnosticSink( diagnostic );
-				immutable = false;
+
+				// We're going to keep looking at all writes to surface as many
+				// relevant diagnostics as possible.
+				allAssignmentsAreOfImmutableValues = false;
 			}
 
-			return immutable;
+			return isReadOnly && allAssignmentsAreOfImmutableValues;
 		}
 
 
@@ -289,9 +307,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				.Constructors
 				.Where( constructorSymbol => !constructorSymbol.IsImplicitlyDeclared )
 				.Where( constructorSymbol => constructorSymbol.IsStatic == memberSymbol.IsStatic )
-				.Select( constructorSymbol => constructorSymbol.DeclaringSyntaxReferences
-					.Single()
-					.GetSyntax() )
+				.Select( constructorSymbol => constructorSymbol.DeclaringSyntaxReferences.Single() )
+				.Select( sr => sr.GetSyntax() )
 				.SelectMany( constructorSyntax => constructorSyntax.DescendantNodes() )
 				.OfType<AssignmentExpressionSyntax>()
 				.Where( assignmentSyntax => IsAnAssignmentTo( assignmentSyntax, memberSymbol ) )
@@ -323,7 +340,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		/// <summary>
-		/// For a field/property, figure out:
+		/// For a field/property assignment, figure out:
 		/// * which type to check,
 		/// * what kind of check to do, and
 		/// * where to put any diagnostics.
@@ -332,27 +349,28 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// <param name="memberTypeSyntax">The syntax for the type of the field/property</param>
 		/// <param name="assignment">The assignment syntax for the field/property (possibly null)</param>
 		/// <returns>null if no checks are needed, otherwise a bunch of stuff.</returns>
-		private (ITypeSymbol, ImmutableTypeKind, Func<Location>)? GetStuffToCheckForMember(
-			ITypeSymbol memberType,
-			TypeSyntax memberTypeSyntax,
+		private (ITypeSymbol, ImmutableTypeKind, Func<Location>)? GetStuffToCheckForAssignment(
 			ExpressionSyntax assignment
 		) {
 			// When we have an assignment we use it to narrow our check, e.g.
 			//
 			//   private readonly object m_lock = new object();
 			//
-			// is safe even though object in general is not.
+			// is safe even though object (the type of the field) in general is not.
 
 			// Easy cases
 			switch( assignment.Kind() ) {
-				// This is perhaps a bit suspicious, because fields and
-				// properties have to be readonly, but it is safe...
+				// Sometimes people explicitly (but needlessly) assign null in
+				// an initializer... this is safe.
 				case SyntaxKind.NullLiteralExpression:
 
 				// Lambda initializers for readonly members are safe
 				// because they can only close over other members, which
 				// will be checked independently, or static members of
 				// another class, which are also analyzed
+				//
+				// TODO: only true (in general) for initializers; non-static
+				// ones in constructors can close over mutable stack vars!
 				case SyntaxKind.SimpleLambdaExpression:
 				case SyntaxKind.ParenthesizedLambdaExpression:
 					return null;
