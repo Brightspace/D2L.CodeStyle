@@ -1448,6 +1448,7 @@ namespace ConsistencyTests {
 			SometimesBad2 = static () => 4;
 			SometimesBad2 = static () => AlwaysOk();
 			SometimesBad2 = /* AnonymousFunctionsMayCaptureMutability */ () => x++ /**/;
+			var x = SometimesBad2 = /* AnonymousFunctionsMayCaptureMutability */ () => x++ /**/;
 			SometimesBad2 = static () => 2;
         }
     }

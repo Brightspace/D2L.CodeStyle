@@ -211,7 +211,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			bool isReadOnly,
 			TypeSyntax typeSyntax,
 			SyntaxToken nameSyntax,
-			IEnumerable<ExpressionSyntax> assignments
+			IEnumerable<AssignmentInfo> assignments
 		) {
 			if ( !isReadOnly ) {
 				diagnosticSink(
@@ -277,7 +277,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					case AssignmentQueryKind.ImmutabilityQuery:
 						if( m_context.IsImmutable(
 							query,
-							() => assignment.GetLocation(),
+							() => assignment.Expression.GetLocation(),
 							out diagnostic
 						) ) {
 							continue;
@@ -295,6 +295,19 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return isReadOnly && allAssignmentsAreOfImmutableValues;
 		}
 
+		private readonly struct AssignmentInfo {
+			public AssignmentInfo(
+				bool isInitiailizer,
+				ExpressionSyntax expression
+			) {
+				IsInitializer = isInitiailizer;
+				Expression = expression;
+			}
+
+			public bool IsInitializer { get; }
+			public ExpressionSyntax Expression { get; }
+		}
+
 
 		/// <summary>
 		/// A readonly field or property may be re-assigned in constructors.
@@ -303,7 +316,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// <param name="memberSymbol">The field/property to search for</param>
 		/// <param name="initializer">The initialization with the declaration</param>
 		/// <returns>An immutable list of assignments</returns>
-		private IEnumerable<ExpressionSyntax> GetAssignments(
+		private IEnumerable<AssignmentInfo> GetAssignments(
 			ISymbol memberSymbol,
 			ExpressionSyntax initializer
 		) {
@@ -318,11 +331,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				.SelectMany( constructorSyntax => constructorSyntax.DescendantNodes() )
 				.OfType<AssignmentExpressionSyntax>()
 				.Where( assignmentSyntax => IsAnAssignmentTo( assignmentSyntax, memberSymbol ) )
-				.Select( assignmentSyntax => assignmentSyntax.Right );
+				.Select( assignmentSyntax => assignmentSyntax.Right )
+				.Select( expr => new AssignmentInfo( isInitiailizer: false, expr ) );
 
 			if ( initializer != null ) {
-				assignmentExpressions = assignmentExpressions
-					.Append( initializer );
+				assignmentExpressions = assignmentExpressions.Append(
+					new AssignmentInfo( isInitiailizer: true, initializer )
+				);
 			}
 
 			return assignmentExpressions;
@@ -359,7 +374,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// <param name="diagnostic">A diagnostic to report (if the return value is AssignmentQueryKind.Hopeless.)</param>
 		/// <returns>The details about what to check for this assignment</returns>
 		private AssignmentQueryKind GetQueryForAssignment(
-			ExpressionSyntax assignment,
+			AssignmentInfo assignment,
 			out ImmutabilityQuery query,
 			out Diagnostic diagnostic
 		) {
@@ -373,7 +388,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			diagnostic = null;
 
 			// Easy cases
-			switch( assignment.Kind() ) {
+			switch( assignment.Expression.Kind() ) {
 				case SyntaxKind.NullLiteralExpression:
 					// Sometimes people explicitly (but needlessly) assign null in
 					// an initializer... this is safe.
@@ -381,7 +396,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 				case SyntaxKind.SimpleLambdaExpression:
 				case SyntaxKind.ParenthesizedLambdaExpression:
-					if ( assignment.Parent.Parent is VariableDeclaratorSyntax ) {
+					if ( assignment.IsInitializer ) {
 						// Lambda initializers for readonly members are safe
 						// because they can only close over other members,
 						// which will be checked independently, or static
@@ -394,28 +409,28 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// lexical scope.
 
 					// static functions can't capture state.
-					if ( assignment.IsStaticFunction() ) {
+					if ( assignment.Expression.IsStaticFunction() ) {
 						return AssignmentQueryKind.NothingToCheck;
 					}
 
 					// In general we must panic.
 					diagnostic = Diagnostic.Create(
 						Diagnostics.AnonymousFunctionsMayCaptureMutability,
-						assignment.GetLocation()
+						assignment.Expression.GetLocation()
 					);
 
 					return AssignmentQueryKind.Hopeless;
 
 				default:
-					var model = m_compilation.GetSemanticModel( assignment.SyntaxTree );
-					var typeInfo = model.GetTypeInfo( assignment );
+					var model = m_compilation.GetSemanticModel( assignment.Expression.SyntaxTree );
+					var typeInfo = model.GetTypeInfo( assignment.Expression );
 
 					// Type can be null in the case of an implicit conversion where the
 					// expression alone doesn't have a type. For example:
 					//   int[] foo = { 1, 2, 3 };
 					var typeToCheck = typeInfo.Type ?? typeInfo.ConvertedType;
 
-					if( assignment is BaseObjectCreationExpressionSyntax _ ) {
+					if( assignment.Expression is BaseObjectCreationExpressionSyntax _ ) {
 						// When we have a new T() we don't need to worry about the value
 						// being anything other than an instance of T.
 						query = new ImmutabilityQuery(
