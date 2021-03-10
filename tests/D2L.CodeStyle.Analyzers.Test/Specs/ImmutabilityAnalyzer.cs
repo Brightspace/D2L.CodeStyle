@@ -111,9 +111,19 @@ namespace SpecTests {
 		[Immutable]
 		public sealed class SomeClassWithConstructor5 {
 			public readonly int m_int = 5;
+			public readonly object m_alwaysOk;
+			public readonly object m_sometimesBad;
 
 			public SomeClassWithConstructor5() {
 				m_int = 29;
+
+				m_alwaysOk = null;
+				m_alwaysOk = new object();
+
+				m_sometimesBad = null;
+				m_sometimesBad = new object();
+				m_sometimesBad = /* ArraysAreMutable(Int32) */ new[] { 3 } /**/;
+				m_sometimesBad = new Good();
 			}
 		}
 
