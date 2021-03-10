@@ -218,8 +218,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				}
 
 				if( !immutabilityContext.IsImmutable(
-					type: argument,
-					kind: ImmutableTypeKind.Total,
+					new ImmutabilityQuery(
+						ImmutableTypeKind.Total,
+						argument
+					),
 					// If the syntax is a GenericName (has explicit type arguments) then the error should be on the argument
 					// Otherwise, it should be on the identifier itself
 					getLocation: () => syntax is GenericNameSyntax genericSyntax

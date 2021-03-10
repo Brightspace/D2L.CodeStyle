@@ -130,7 +130,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 					//
 					// TODO: could make this better by exposing the minimum
 					// scope required for each type
-					if( !immutabilityCtx.IsImmutable( type, ImmutableTypeKind.Total, () => null, out var _ ) ) {
+
+					var query = new ImmutabilityQuery(
+						ImmutableTypeKind.Total,
+						type
+					);
+
+					if( !immutabilityCtx.IsImmutable( query, () => null, out var _ ) ) {
 						var diagnostic = GetUnsafeSingletonDiagnostic(
 							ctx.Compilation.Assembly,
 							ctx.Node,

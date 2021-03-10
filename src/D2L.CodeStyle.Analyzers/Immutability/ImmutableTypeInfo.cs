@@ -49,7 +49,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					continue;
 				}
 
-				if( !context.IsImmutable( argument, ImmutableTypeKind.Total, getLocation, out diagnostic ) ) {
+				if( !context.IsImmutable(
+					new ImmutabilityQuery(
+						ImmutableTypeKind.Total,
+						argument
+					),
+					getLocation,
+					out diagnostic
+				) ) {
 					return false;
 				}
 			}
