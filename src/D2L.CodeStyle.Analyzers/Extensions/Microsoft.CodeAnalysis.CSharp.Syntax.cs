@@ -60,9 +60,7 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			=> node.FirstAncestorOrSelf<DocumentationCommentTriviaSyntax>() != null;
 
 		public static bool IsStaticFunction( this ExpressionSyntax expr ) {
-			var afes = expr as AnonymousFunctionExpressionSyntax;
-
-			if ( afes == null ) {
+			if ( expr is not AnonymousFunctionExpressionSyntax afes ) {
 				return false;
 			}
 
