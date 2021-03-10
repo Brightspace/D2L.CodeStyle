@@ -420,8 +420,8 @@ namespace SpecTests {
 		static Func<object> /* MemberIsNotReadOnly(Field, m_field48, AnalyzedClassMarkedImmutable) */ m_field48 /**/ = () => null;
 		static readonly Func<object> m_field49 = () => null;
 		Func<object> /* MemberIsNotReadOnly(Field, m_field50, AnalyzedClassMarkedImmutable) */ m_field50 /**/ = () => null;
-		readonly Func<object> m_field51 = () => null;
-		Func<object> Property20 { get; } = () => null;
+		readonly Func<object> m_field51 = static () => null;
+		Func<object> Property20 { get; } = static () => null;
 		Func<object> Property21 { get { return () => null; } }
 
 
@@ -430,7 +430,7 @@ namespace SpecTests {
 		static readonly Func<object> m_field54 = () => { return null; };
 		Func<object> /* MemberIsNotReadOnly(Field, m_field55, AnalyzedClassMarkedImmutable) */ m_field55 /**/ = () => { return null; };
 		readonly Func<object> m_field56 = () => { return null; };
-		Func<object> Property22 { get; } = () => { return null; };
+		Func<object> Property22 { get; } = static () => { return null; };
 		Func<object> Property23 { get { return () => { return null; }; } }
 
 
@@ -1421,4 +1421,34 @@ namespace ConsistencyTests {
 			/* InconsistentMethodAttributeApplication(Immutable, ClassExplicitlyImplementingMethodsInconsistent.ConsistencyTests.IInterfaceWithMethodB.MethodWithImmutable, IInterfaceWithMethodB.MethodWithImmutable) */ [Immutable] U /**/
 		>()
 	}
+
+	[Immutable]
+	public sealed class ClassWithCapturedMutability {
+		public static readonly Func<int> AlwaysOk = static () => 3;
+		public static readonly Func<int> AlwaysOk2 = () => AlwaysOk() + AlwaysOk();
+		public static readonly Func<int> SometimesBad = () => AlwaysOk2();
+
+		// won't error, but its cool because we'll error for SometimesBad
+		public readonly Func<int> SometimesBad2 = () => SometimesBad()*3; 
+
+		static ClassWithCapturedMutability() {
+			int x = 0;
+
+			AlwaysOk = static () => 3;
+
+			// won't error, but its cool because we'll error for SometimesBad.
+			AlwaysOk2 = static () => SometimesBad();
+
+			SometimesBad = /* AnonymousFunctionsMayCaptureMutability */ () => x-- /**/;
+        }
+
+		ClassWithCapturedMutability() {
+			int x = 0;
+
+			SometimesBad2 = static () => 4;
+			SometimesBad2 = static () => AlwaysOk();
+			SometimesBad2 = /* AnonymousFunctionsMayCaptureMutability */ () => x++ /**/;
+			SometimesBad2 = static () => 2;
+        }
+    }
 }

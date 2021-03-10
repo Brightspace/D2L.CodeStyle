@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System.Linq;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -55,8 +56,19 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			return true;
 		}
 
-		public static bool IsFromDocComment(
-			this SyntaxNode node
-		) => node.FirstAncestorOrSelf<DocumentationCommentTriviaSyntax>() != null;
+		public static bool IsFromDocComment( this SyntaxNode node )
+			=> node.FirstAncestorOrSelf<DocumentationCommentTriviaSyntax>() != null;
+
+		public static bool IsStaticFunction( this ExpressionSyntax expr ) {
+			var afes = expr as AnonymousFunctionExpressionSyntax;
+
+			if ( afes == null ) {
+				return false;
+			}
+
+			return afes.Modifiers.Any(
+				m => m.IsKind( SyntaxKind.StaticKeyword )
+			);
+		}
 	}
 }
