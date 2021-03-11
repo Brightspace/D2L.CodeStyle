@@ -1,15 +1,6 @@
 ﻿
 // analyzer: D2L.CodeStyle.Analyzers.ApiUsage.Events.EventTypesAnalyzer
 
-namespace D2L.CodeStyle.Annotations {
-
-	using System;
-
-	public static class Objects {
-		public sealed class Immutable : Attribute {}
-	}
-}
-
 namespace D2L.LP.Distributed.Events.Domain {
 
 	using System;

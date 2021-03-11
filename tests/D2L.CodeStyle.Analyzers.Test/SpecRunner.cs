@@ -53,6 +53,7 @@ namespace D2L.CodeStyle.Analyzers {
 		private static readonly MetadataReference CSharpSymbolsReference = MetadataReference.CreateFromFile( typeof( CSharpCompilation ).Assembly.Location );
 		private static readonly MetadataReference CodeAnalysisReference = MetadataReference.CreateFromFile( typeof( Compilation ).Assembly.Location );
 		private static readonly MetadataReference SystemRuntimeReference = MetadataReference.CreateFromFile( Assembly.Load( "System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" ).Location );
+		private static readonly MetadataReference AnnotationsReference = MetadataReference.CreateFromFile( typeof( Annotations.Because ).Assembly.Location );
 
 		/// <summary>
 		/// Loads all the source code to all the spec files.
@@ -410,6 +411,7 @@ namespace D2L.CodeStyle.Analyzers {
 				.AddMetadataReference( projectId, CSharpSymbolsReference )
 				.AddMetadataReference( projectId, CodeAnalysisReference )
 				.AddMetadataReference( projectId, SystemRuntimeReference )
+				.AddMetadataReference( projectId, AnnotationsReference )
 
 				.AddDocument( documentId, filename, SourceText.From( source ) );
 

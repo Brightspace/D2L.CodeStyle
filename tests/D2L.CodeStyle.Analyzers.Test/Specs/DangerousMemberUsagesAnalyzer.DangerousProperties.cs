@@ -2,22 +2,6 @@
 
 using System;
 
-namespace D2L.CodeStyle.Annotations {
-
-	public static class DangerousPropertyUsage {
-
-		public sealed class AuditedAttribute : Attribute {
-			public AuditedAttribute( Type declaringType, string propertyName ) { }
-		}
-
-		public sealed class UnauditedAttribute : Attribute {
-			public UnauditedAttribute( Type declaringType, string propertyName ) { }
-		}
-	}
-
-	public sealed class ImmutableAttribute : Attribute { }
-}
-
 namespace System.Net {
 
 	public static class ServicePointManager {
@@ -64,23 +48,23 @@ namespace SpecTests {
 
 	internal sealed class AuditedUsages {
 
-		[DangerousPropertyUsage.Audited( typeof( ServicePointManager ), "DefaultConnectionLimit" )]
+		[DangerousPropertyUsage.Audited( typeof( ServicePointManager ), "DefaultConnectionLimit", "John Doe", "1970-01-01", "Rationale" )]
 		public int AuditedStaticGetUsage() {
 			return ServicePointManager.DefaultConnectionLimit;
 		}
 
-		[DangerousPropertyUsage.Audited( typeof( ServicePointManager ), "DefaultConnectionLimit" )]
+		[DangerousPropertyUsage.Audited( typeof( ServicePointManager ), "DefaultConnectionLimit", "John Doe", "1970-01-01", "Rationale" )]
 		public void AuditedStaticSetUsage() {
 			ServicePointManager.DefaultConnectionLimit = 99;
 		}
 
-		[DangerousPropertyUsage.Audited( typeof( HttpContext ), "Handler" )]
+		[DangerousPropertyUsage.Audited( typeof( HttpContext ), "Handler", "John Doe", "1970-01-01", "Rationale" )]
 		public IHttpHandler AuditedInstanceGetUsage() {
 			HttpContext context = new HttpContext();
 			return context.Handler;
 		}
 
-		[DangerousPropertyUsage.Audited( typeof( HttpContext ), "Handler" )]
+		[DangerousPropertyUsage.Audited( typeof( HttpContext ), "Handler", "John Doe", "1970-01-01", "Rationale" )]
 		public void AuditedStaticSetUsage() {
 			HttpContext context = new HttpContext();
 			context.Handler = null;

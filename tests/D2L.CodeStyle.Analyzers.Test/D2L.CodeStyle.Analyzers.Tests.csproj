@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\D2L.CodeStyle.Analyzers\D2L.CodeStyle.Analyzers.csproj" />
+    <ProjectReference Include="..\..\src\D2L.CodeStyle.Annotations\D2L.CodeStyle.Annotations.csproj" />
   </ItemGroup>
 
   <ItemGroup>
