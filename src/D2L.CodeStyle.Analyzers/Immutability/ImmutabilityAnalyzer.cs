@@ -38,11 +38,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		public static void CompilationStart(
 			CompilationStartAnalysisContext context
 		) {
-			ImmutabilityContext immutabilityContext = ImmutabilityContext.Create( context.Compilation );
+			if( !AnnotationsContext.TryCreate( context.Compilation, out AnnotationsContext annotationsContext ) ) {
+				return;
+			}
+			ImmutabilityContext immutabilityContext = ImmutabilityContext.Create( context.Compilation, annotationsContext );
 
 			context.RegisterSymbolAction(
 				ctx => AnalyzeTypeDeclaration(
 					ctx,
+					annotationsContext,
 					immutabilityContext,
 					(INamedTypeSymbol)ctx.Symbol
 				),
@@ -52,6 +56,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			context.RegisterSymbolAction(
 				ctx => AnalyzeMethodDeclarationConsistency(
 					ctx,
+					annotationsContext,
 					immutabilityContext,
 					(IMethodSymbol)ctx.Symbol
 				),
@@ -59,7 +64,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 
 			context.RegisterSymbolAction(
-				ctx => AnalyzeMember( ctx, immutabilityContext ),
+				ctx => AnalyzeMember( ctx, annotationsContext, immutabilityContext ),
 				SymbolKind.Field,
 				SymbolKind.Property
 			);
@@ -67,6 +72,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeTypeArguments(
 					ctx,
+					annotationsContext,
 					immutabilityContext,
 					(SimpleNameSyntax)ctx.Node
 				),
@@ -75,18 +81,27 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 
 			context.RegisterSyntaxNodeAction(
-				AnalyzeConditionalImmutabilityOnMethodDeclarations,
+				ctx => AnalyzeConditionalImmutabilityOnMethodDeclarations(
+					ctx,
+					annotationsContext
+				),
 				SyntaxKind.MethodDeclaration,
 				SyntaxKind.LocalFunctionStatement
 			);
 
 			context.RegisterSyntaxNodeAction(
-				AnalyzeConflictingImmutabilityOnTypeParameters,
+				ctx => AnalyzeConflictingImmutabilityOnTypeParameters(
+					ctx,
+					annotationsContext
+				),
 				SyntaxKind.TypeParameter
 			);
 
 			context.RegisterSyntaxNodeAction(
-				AnalyzeConflictingImmutabilityOnMember,
+				ctx => AnalyzeConflictingImmutabilityOnMember(
+					ctx,
+					annotationsContext
+				),
 				SyntaxKind.ClassDeclaration,
 				SyntaxKind.InterfaceDeclaration,
 				SyntaxKind.StructDeclaration
@@ -95,6 +110,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private static void AnalyzeMember(
 			SymbolAnalysisContext ctx,
+			AnnotationsContext annotationsContext,
 			ImmutabilityContext immutabilityContext
 		) {
 			// We only care about checking static fields/properties. These
@@ -123,7 +139,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			var checker = new ImmutableDefinitionChecker(
 				compilation: ctx.Compilation,
 				diagnosticSink: ctx.ReportDiagnostic,
-				context: immutabilityContext
+				context: immutabilityContext,
+				annotationsContext: annotationsContext
 			);
 
 			checker.CheckMember( ctx.Symbol );
@@ -131,6 +148,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private static void AnalyzeMethodDeclarationConsistency(
 			SymbolAnalysisContext ctx,
+			AnnotationsContext annotationsContext,
 			ImmutabilityContext immutabilityContext,
 			IMethodSymbol methodSymbol
 		) {
@@ -142,7 +160,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ImmutableAttributeConsistencyChecker consistencyChecker = new ImmutableAttributeConsistencyChecker(
 				compilation: ctx.Compilation,
 				diagnosticSink: ctx.ReportDiagnostic,
-				context: immutabilityContext
+				context: immutabilityContext,
+				annotationsContext: annotationsContext
 			);
 
 			consistencyChecker.CheckMethodDeclaration( methodSymbol );
@@ -150,6 +169,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private static void AnalyzeTypeDeclaration(
 			SymbolAnalysisContext ctx,
+			AnnotationsContext annotationsContext,
 			ImmutabilityContext immutabilityContext,
 			INamedTypeSymbol typeSymbol
 		) {
@@ -160,7 +180,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ImmutableAttributeConsistencyChecker consistencyChecker = new ImmutableAttributeConsistencyChecker(
 				compilation: ctx.Compilation,
 				diagnosticSink: ctx.ReportDiagnostic,
-				context: immutabilityContext
+				context: immutabilityContext,
+				annotationsContext: annotationsContext
 			);
 
 			consistencyChecker.CheckTypeDeclaration( typeSymbol );
@@ -169,21 +190,22 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
-			if( !Attributes.Objects.Immutable.IsDefined( typeSymbol )
-				&& !Attributes.Objects.ConditionallyImmutable.IsDefined( typeSymbol )
-				&& !Attributes.Objects.ImmutableBaseClass.IsDefined( typeSymbol )
+			if( !annotationsContext.Objects.Immutable.IsDefined( typeSymbol )
+				&& !annotationsContext.Objects.ConditionallyImmutable.IsDefined( typeSymbol )
+				&& !annotationsContext.Objects.ImmutableBaseClass.IsDefined( typeSymbol )
 			) {
 				return;
 			}
 
-			if( Attributes.Objects.ConditionallyImmutable.IsDefined( typeSymbol ) ) {
+			if( annotationsContext.Objects.ConditionallyImmutable.IsDefined( typeSymbol ) ) {
 				immutabilityContext = immutabilityContext.WithConditionalTypeParametersAsImmutable( typeSymbol );
 			}
 
 			ImmutableDefinitionChecker checker = new ImmutableDefinitionChecker(
 				compilation: ctx.Compilation,
 				diagnosticSink: ctx.ReportDiagnostic,
-				context: immutabilityContext
+				context: immutabilityContext,
+				annotationsContext: annotationsContext
 			);
 
 			checker.CheckDeclaration( typeSymbol );
@@ -191,6 +213,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private static void AnalyzeTypeArguments(
 			SyntaxNodeAnalysisContext ctx,
+			AnnotationsContext annotationsContext,
 			ImmutabilityContext immutabilityContext,
 			SimpleNameSyntax syntax
 		) {
@@ -213,7 +236,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// however the current information about immutable type parameters
 				// includes [Immutable] filling for what will instead be the upcoming
 				// [OnlyIf] (e.g. it would be broken for IEnumerable<>)
-				if( !Attributes.Objects.Immutable.IsDefined( parameter ) ) {
+				if( !annotationsContext.Objects.Immutable.IsDefined( parameter ) ) {
 					continue;
 				}
 
@@ -235,7 +258,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 		}
 
-		private static void AnalyzeConditionalImmutabilityOnMethodDeclarations( SyntaxNodeAnalysisContext ctx ) {
+		private static void AnalyzeConditionalImmutabilityOnMethodDeclarations(
+			SyntaxNodeAnalysisContext ctx,
+			AnnotationsContext annotationsContext
+		) {
 			// Get the symbol for the method
 			if( ctx.SemanticModel.GetDeclaredSymbol( ctx.Node ) is not IMethodSymbol symbol ) {
 				return;
@@ -243,7 +269,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			foreach( var parameter in symbol.TypeParameters ) {
 				// Check if the parameter has the [OnlyIf] attribute
-				if( !Attributes.Objects.OnlyIf.IsDefined( parameter ) ) {
+				if( !annotationsContext.Objects.OnlyIf.IsDefined( parameter ) ) {
 					continue;
 				}
 
@@ -255,14 +281,19 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 		}
 
-		private static void AnalyzeConflictingImmutabilityOnTypeParameters( SyntaxNodeAnalysisContext ctx ) {
+		private static void AnalyzeConflictingImmutabilityOnTypeParameters(
+			SyntaxNodeAnalysisContext ctx,
+			AnnotationsContext annotationsContext
+		) {
 			// Get the symbol for the parameter
 			if( ctx.SemanticModel.GetDeclaredSymbol( ctx.Node ) is not ITypeParameterSymbol symbol ) {
 				return;
 			}
 
 			// Check if the parameter has both the [Immutable] and the [OnlyIf] attributes
-			if( !Attributes.Objects.Immutable.IsDefined( symbol ) || !Attributes.Objects.OnlyIf.IsDefined( symbol ) ) {
+			if( !annotationsContext.Objects.Immutable.IsDefined( symbol )
+				|| !annotationsContext.Objects.OnlyIf.IsDefined( symbol )
+			) {
 				return;
 			}
 
@@ -277,7 +308,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		private static void AnalyzeConflictingImmutabilityOnMember(
-			SyntaxNodeAnalysisContext ctx ) {
+			SyntaxNodeAnalysisContext ctx,
+			AnnotationsContext annotationsContext
+		) {
 
 			// Ensure syntax is expected and get the symbol
 			if( ctx.Node is not TypeDeclarationSyntax syntax ) {
@@ -286,9 +319,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			var symbol = ctx.SemanticModel.GetDeclaredSymbol( syntax );
 
 			// Get information about immutability
-			bool hasImmutable = Attributes.Objects.Immutable.IsDefined( symbol );
-			bool hasConditionallyImmutable = Attributes.Objects.ConditionallyImmutable.IsDefined( symbol );
-			bool hasImmutableBase = Attributes.Objects.ImmutableBaseClass.IsDefined( symbol );
+			bool hasImmutable = annotationsContext.Objects.Immutable.IsDefined( symbol );
+			bool hasConditionallyImmutable = annotationsContext.Objects.ConditionallyImmutable.IsDefined( symbol );
+			bool hasImmutableBase = annotationsContext.Objects.ImmutableBaseClass.IsDefined( symbol );
 
 			// Check if there are conflicting immutability attributes
 			if( hasImmutable && hasConditionallyImmutable ) {

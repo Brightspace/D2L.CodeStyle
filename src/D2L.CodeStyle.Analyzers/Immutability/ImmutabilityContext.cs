@@ -16,6 +16,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 	/// as not known to be immutable that doesn't mean it is mutable.
 	/// </summary>
 	internal sealed partial class ImmutabilityContext {
+
+		private readonly AnnotationsContext m_annotationsContext;
 		private readonly ImmutableDictionary<INamedTypeSymbol, ImmutableTypeInfo> m_extraImmutableTypes;
 		private readonly ImmutableHashSet<ITypeParameterSymbol> m_conditionalTypeParameters;
 
@@ -42,9 +44,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		);
 
 		private ImmutabilityContext(
+			AnnotationsContext annotationsContext,
 			ImmutableDictionary<INamedTypeSymbol, ImmutableTypeInfo> extraImmutableTypes,
 			ImmutableHashSet<ITypeParameterSymbol> conditionalTypeParamemters
 		) {
+			m_annotationsContext = annotationsContext;
 			m_extraImmutableTypes = extraImmutableTypes;
 			m_conditionalTypeParameters = conditionalTypeParamemters;
 		}
@@ -59,13 +63,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		public ImmutabilityContext WithConditionalTypeParametersAsImmutable(
 			INamedTypeSymbol type
 		) {
-			if( !Attributes.Objects.ConditionallyImmutable.IsDefined( type ) ) {
+			if( !m_annotationsContext.Objects.ConditionallyImmutable.IsDefined( type ) ) {
 				throw new InvalidOperationException( $"{nameof( WithConditionalTypeParametersAsImmutable )} should only be called on ConditionallyImmutable types" );
 			}
 
-			var conditionalTypeParameters = type.TypeParameters.Where( p => Attributes.Objects.OnlyIf.IsDefined( p ) );
+			var conditionalTypeParameters = type.TypeParameters.Where( p => m_annotationsContext.Objects.OnlyIf.IsDefined( p ) );
 
 			return new ImmutabilityContext(
+				annotationsContext: m_annotationsContext,
 				extraImmutableTypes: m_extraImmutableTypes,
 				conditionalTypeParamemters: m_conditionalTypeParameters.Union( conditionalTypeParameters )
 			);
@@ -212,6 +217,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ImmutableTypeKind fromAttributes = GetImmutabilityFromAttributes( type );
 			if( fromAttributes != ImmutableTypeKind.None ) {
 				return ImmutableTypeInfo.Create(
+					annotationsContext: m_annotationsContext,
 					kind: fromAttributes,
 					type: type
 				);
@@ -230,23 +236,24 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			return ImmutableTypeInfo.Create(
+				annotationsContext: m_annotationsContext,
 				kind: ImmutableTypeKind.None,
 				type: type
 			);
 		}
 
-		private static ImmutableTypeKind GetImmutabilityFromAttributes(
+		private ImmutableTypeKind GetImmutabilityFromAttributes(
 			ITypeSymbol type
 		) {
-			if ( Attributes.Objects.Immutable.IsDefined( type ) ) {
+			if ( m_annotationsContext.Objects.Immutable.IsDefined( type ) ) {
 				return ImmutableTypeKind.Total;
 			}
 
-			if( Attributes.Objects.ConditionallyImmutable.IsDefined( type ) ) {
+			if( m_annotationsContext.Objects.ConditionallyImmutable.IsDefined( type ) ) {
 				return ImmutableTypeKind.Total;
 			}
 
-			if ( Attributes.Objects.ImmutableBaseClass.IsDefined( type ) ) {
+			if ( m_annotationsContext.Objects.ImmutableBaseClass.IsDefined( type ) ) {
 				return ImmutableTypeKind.Instance;
 			}
 

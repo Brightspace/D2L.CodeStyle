@@ -5,15 +5,16 @@ using static D2L.CodeStyle.Analyzers.Immutability.ImmutableDefinitionChecker;
 namespace D2L.CodeStyle.Analyzers.Immutability {
 	internal sealed class MutabilityAuditor {
 		public static bool CheckAudited(
+			AnnotationsContext annotationsContext,
 			ISymbol symbol,
 			DiagnosticSink diagnosticSink,
 			out Location location ) {
 
 			// Collect audit information
-			var hasStaticAudited = Attributes.Statics.Audited.IsDefined( symbol );
-			var hasStaticUnaudited = Attributes.Statics.Unaudited.IsDefined( symbol );
-			var hasMutabilityAudited = Attributes.Mutability.Audited.IsDefined( symbol );
-			var hasMutabilityUnaudited = Attributes.Mutability.Unaudited.IsDefined( symbol );
+			var hasStaticAudited = annotationsContext.Statics.Audited.IsDefined( symbol );
+			var hasStaticUnaudited = annotationsContext.Statics.Unaudited.IsDefined( symbol );
+			var hasMutabilityAudited = annotationsContext.Mutability.Audited.IsDefined( symbol );
+			var hasMutabilityUnaudited = annotationsContext.Mutability.Unaudited.IsDefined( symbol );
 			var hasBothStaticsAttributes = hasStaticAudited && hasStaticUnaudited;
 			var hasBothMutabilityAttributes = hasMutabilityAudited && hasMutabilityUnaudited;
 			var hasEitherStaticsAttributes = hasStaticAudited || hasStaticUnaudited;
@@ -67,8 +68,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					diagnosticSink( diagnostic );
 				}
 
-				attr = Attributes.Statics.Audited.GetAll( symbol ).FirstOrDefault()
-					?? Attributes.Statics.Unaudited.GetAll( symbol ).FirstOrDefault();
+				attr = annotationsContext.Statics.Audited.GetAll( symbol ).FirstOrDefault()
+					?? annotationsContext.Statics.Unaudited.GetAll( symbol ).FirstOrDefault();
 			} else {
 				// Check if a non-static member is using static audits
 				if( hasEitherStaticsAttributes ) {
@@ -81,8 +82,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					diagnosticSink( diagnostic );
 				}
 
-				attr = Attributes.Mutability.Audited.GetAll( symbol ).FirstOrDefault()
-					?? Attributes.Mutability.Unaudited.GetAll( symbol ).FirstOrDefault();
+				attr = annotationsContext.Mutability.Audited.GetAll( symbol ).FirstOrDefault()
+					?? annotationsContext.Mutability.Unaudited.GetAll( symbol ).FirstOrDefault();
 			}
 
 			if( attr != null ) {
