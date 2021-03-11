@@ -571,5 +571,14 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor AnonymousFunctionsMayCaptureMutability = new DiagnosticDescriptor(
+			id: "D2L0077",
+			title: "Anonymous functions may capture mutable state and thus can't be assigned to members of an immutable type.",
+			messageFormat: "Anonymous functions may capture mutable state and thus can't be assigned to members of an immutable type. Try making the function static, or moving the assignment to an initializer.",
+			category: "Immutability",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }

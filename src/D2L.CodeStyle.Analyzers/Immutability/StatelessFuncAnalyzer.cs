@@ -77,6 +77,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
+			// static functions can't capture state
+			if ( argument.IsStaticFunction() ) {
+				return;
+			}
+
 			Diagnostic diag;
 			switch( argument ) {
 				// this is the case when a method reference is used
@@ -100,11 +105,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// this is the case when a "delegate" is used
 				// eg delegate( int x, int y ) { return x + y; }
 				case AnonymousMethodExpressionSyntax anonymousMethod:
-					// allow static delegates, since they can't capture non-static variables
-					if( anonymousMethod.Modifiers.Any( x => x.Kind() == SyntaxKind.StaticKeyword ) ) {
-						return;
-					}
-
 					diag = Diagnostic.Create(
 						Diagnostics.StatelessFuncIsnt,
 						argument.GetLocation(),
@@ -117,11 +117,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				//    (x, y) => x + y
 				//     x => x + 1
 				case LambdaExpressionSyntax lambda:
-					// allow static lambdas, since they can't capture non-static variables
-					if( lambda.Modifiers.Any( x => x.Kind() == SyntaxKind.StaticKeyword ) ) {
-						return;
-					}
-
 					diag = Diagnostic.Create(
 						Diagnostics.StatelessFuncIsnt,
 						argument.GetLocation(),

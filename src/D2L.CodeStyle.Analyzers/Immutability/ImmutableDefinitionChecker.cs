@@ -211,7 +211,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			bool isReadOnly,
 			TypeSyntax typeSyntax,
 			SyntaxToken nameSyntax,
-			IEnumerable<ExpressionSyntax> assignments
+			IEnumerable<AssignmentInfo> assignments
 		) {
 			if ( !isReadOnly ) {
 				diagnosticSink(
@@ -263,30 +263,49 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			var allAssignmentsAreOfImmutableValues = true;
 
 			foreach( var assignment in assignments ) {
-				var query = GetImmutabilityQueryForAssignment( assignment );
+				var kind = GetQueryForAssignment( assignment, out var query, out var diagnostic );
 
-				if( query == null ) {
-					// null is a signal that there is nothing further that needs to
-					// be checked for this assignment.
-					continue;
+				switch( kind ) {
+					case AssignmentQueryKind.NothingToCheck:
+						continue;
+
+					case AssignmentQueryKind.Hopeless:
+						diagnosticSink( diagnostic );
+						allAssignmentsAreOfImmutableValues = false;
+						continue;
+
+					case AssignmentQueryKind.ImmutabilityQuery:
+						if( m_context.IsImmutable(
+							query,
+							() => assignment.Expression.GetLocation(),
+							out diagnostic
+						) ) {
+							continue;
+						}
+
+						diagnosticSink( diagnostic );
+
+						// We're going to keep looking at all writes to surface as many
+						// relevant diagnostics as possible.
+						allAssignmentsAreOfImmutableValues = false;
+						continue;
 				}
-
-				if( m_context.IsImmutable(
-					query.Value,
-					() => assignment.GetLocation(),
-					out var diagnostic
-				) ) {
-					continue;
-				}
-
-				diagnosticSink( diagnostic );
-
-				// We're going to keep looking at all writes to surface as many
-				// relevant diagnostics as possible.
-				allAssignmentsAreOfImmutableValues = false;
 			}
 
 			return isReadOnly && allAssignmentsAreOfImmutableValues;
+		}
+
+		private readonly struct AssignmentInfo {
+			public AssignmentInfo(
+				bool isInitiailizer,
+				ExpressionSyntax expression
+			) {
+				IsInitializer = isInitiailizer;
+				Expression = expression;
+			}
+
+			public bool IsInitializer { get; }
+			public ExpressionSyntax Expression { get; }
 		}
 
 
@@ -297,7 +316,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// <param name="memberSymbol">The field/property to search for</param>
 		/// <param name="initializer">The initialization with the declaration</param>
 		/// <returns>An immutable list of assignments</returns>
-		private IEnumerable<ExpressionSyntax> GetAssignments(
+		private IEnumerable<AssignmentInfo> GetAssignments(
 			ISymbol memberSymbol,
 			ExpressionSyntax initializer
 		) {
@@ -312,11 +331,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				.SelectMany( constructorSyntax => constructorSyntax.DescendantNodes() )
 				.OfType<AssignmentExpressionSyntax>()
 				.Where( assignmentSyntax => IsAnAssignmentTo( assignmentSyntax, memberSymbol ) )
-				.Select( assignmentSyntax => assignmentSyntax.Right );
+				.Select( assignmentSyntax => assignmentSyntax.Right )
+				.Select( expr => new AssignmentInfo( isInitiailizer: false, expr ) );
 
 			if ( initializer != null ) {
-				assignmentExpressions = assignmentExpressions
-					.Append( initializer );
+				assignmentExpressions = assignmentExpressions.Append(
+					new AssignmentInfo( isInitiailizer: true, initializer )
+				);
 			}
 
 			return assignmentExpressions;
@@ -339,13 +360,23 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 		}
 
+		private enum AssignmentQueryKind {
+			NothingToCheck,
+			ImmutabilityQuery,
+			Hopeless
+		}
+
 		/// <summary>
 		/// For a field/property assignment, figure out what needs to be checked for it.
 		/// </summary>
 		/// <param name="assignment">The assignment syntax for the field/property (possibly null)</param>
-		/// <returns>null if no checks are needed, otherwise the query we need to run.</returns>
-		private ImmutabilityQuery? GetImmutabilityQueryForAssignment(
-			ExpressionSyntax assignment
+		/// <param name="query">The query to do (if the return value is AssignmentQueryKind.ImmutabilityQuery.)</param>
+		/// <param name="diagnostic">A diagnostic to report (if the return value is AssignmentQueryKind.Hopeless.)</param>
+		/// <returns>The details about what to check for this assignment</returns>
+		private AssignmentQueryKind GetQueryForAssignment(
+			AssignmentInfo assignment,
+			out ImmutabilityQuery query,
+			out Diagnostic diagnostic
 		) {
 			// When we have an assignment we use it to narrow our check, e.g.
 			//
@@ -353,46 +384,69 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			//
 			// is safe even though object (the type of the field) in general is not.
 
-			// Easy cases
-			switch( assignment.Kind() ) {
-				// Sometimes people explicitly (but needlessly) assign null in
-				// an initializer... this is safe.
-				case SyntaxKind.NullLiteralExpression:
+			query = default;
+			diagnostic = null;
 
-				// Lambda initializers for readonly members are safe
-				// because they can only close over other members, which
-				// will be checked independently, or static members of
-				// another class, which are also analyzed
-				//
-				// TODO: only true (in general) for initializers; non-static
-				// ones in constructors can close over mutable stack vars!
+			// Easy cases
+			switch( assignment.Expression.Kind() ) {
+				case SyntaxKind.NullLiteralExpression:
+					// Sometimes people explicitly (but needlessly) assign null in
+					// an initializer... this is safe.
+					return AssignmentQueryKind.NothingToCheck;
+
 				case SyntaxKind.SimpleLambdaExpression:
 				case SyntaxKind.ParenthesizedLambdaExpression:
-					return null;
+					if ( assignment.IsInitializer ) {
+						// Lambda initializers for readonly members are safe
+						// because they can only close over other members,
+						// which will be checked independently, or static
+						// members of another class, which are also analyzed.
+						return AssignmentQueryKind.NothingToCheck;
+					}
+
+					// But for assignments inside a constructor we're in more
+					// trouble. They could capture arbitrary state from their
+					// lexical scope.
+
+					// static functions can't capture state.
+					if ( assignment.Expression.IsStaticFunction() ) {
+						return AssignmentQueryKind.NothingToCheck;
+					}
+
+					// In general we must panic.
+					diagnostic = Diagnostic.Create(
+						Diagnostics.AnonymousFunctionsMayCaptureMutability,
+						assignment.Expression.GetLocation()
+					);
+
+					return AssignmentQueryKind.Hopeless;
+
+				default:
+					var model = m_compilation.GetSemanticModel( assignment.Expression.SyntaxTree );
+					var typeInfo = model.GetTypeInfo( assignment.Expression );
+
+					// Type can be null in the case of an implicit conversion where the
+					// expression alone doesn't have a type. For example:
+					//   int[] foo = { 1, 2, 3 };
+					var typeToCheck = typeInfo.Type ?? typeInfo.ConvertedType;
+
+					if( assignment.Expression is BaseObjectCreationExpressionSyntax _ ) {
+						// When we have a new T() we don't need to worry about the value
+						// being anything other than an instance of T.
+						query = new ImmutabilityQuery(
+							ImmutableTypeKind.Instance,
+							typeToCheck
+						);
+					} else {
+						// In general we need to handle subtypes.
+						query = new ImmutabilityQuery(
+							ImmutableTypeKind.Total,
+							typeToCheck
+						);
+					}
+
+					return AssignmentQueryKind.ImmutabilityQuery;
 			}
-
-			var model = m_compilation.GetSemanticModel( assignment.SyntaxTree );
-			var typeInfo = model.GetTypeInfo( assignment );
-
-			// Type can be null in the case of an implicit conversion where the
-			// expression alone doesn't have a type. For example:
-			//   int[] foo = { 1, 2, 3 };
-			var typeToCheck = typeInfo.Type ?? typeInfo.ConvertedType;
-
-			if( assignment is BaseObjectCreationExpressionSyntax _ ) {
-				// When we have a new T() we don't need to worry about the value
-				// being anything other than an instance of T.
-				return new ImmutabilityQuery(
-					ImmutableTypeKind.Instance,
-					typeToCheck
-				);
-			}
-
-			// In general we need to handle subtypes.
-			return new ImmutabilityQuery(
-				ImmutableTypeKind.Total,
-				typeToCheck
-			);
 		}
 
 		private static Location GetLocationOfMember( ISymbol s ) =>s
