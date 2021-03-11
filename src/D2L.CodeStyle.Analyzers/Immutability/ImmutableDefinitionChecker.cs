@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
@@ -370,6 +371,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			Hopeless
 		}
 
+		internal static readonly ImmutableArray<string> KnownImmutableReturningMethods = ImmutableArray.Create(
+			"System.Array.Empty",
+			"System.Linq.Enumerable.Empty"
+		);
+		
 		/// <summary>
 		/// For a field/property assignment, figure out what needs to be checked for it.
 		/// </summary>
@@ -425,32 +431,47 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 					return AssignmentQueryKind.Hopeless;
 
-				default:
-					var model = m_compilation.GetSemanticModel( assignment.Expression.SyntaxTree );
-					var typeInfo = model.GetTypeInfo( assignment.Expression );
+				case SyntaxKind.InvocationExpression:
+					var semanticModel = m_compilation.GetSemanticModel( assignment.Expression.SyntaxTree );
+					var symbol = semanticModel.GetSymbolInfo( assignment.Expression ).Symbol;
 
-					// Type can be null in the case of an implicit conversion where the
-					// expression alone doesn't have a type. For example:
-					//   int[] foo = { 1, 2, 3 };
-					var typeToCheck = typeInfo.Type ?? typeInfo.ConvertedType;
-
-					if( assignment.Expression is BaseObjectCreationExpressionSyntax _ ) {
-						// When we have a new T() we don't need to worry about the value
-						// being anything other than an instance of T.
-						query = new ImmutabilityQuery(
-							ImmutableTypeKind.Instance,
-							typeToCheck
-						);
-					} else {
-						// In general we need to handle subtypes.
-						query = new ImmutabilityQuery(
-							ImmutableTypeKind.Total,
-							typeToCheck
-						);
+					if( symbol is not IMethodSymbol methodSymbol ) {
+						break;
 					}
 
-					return AssignmentQueryKind.ImmutabilityQuery;
+					var symbolName = methodSymbol.ContainingSymbol.ToDisplayString() + "." + methodSymbol.Name;
+
+					if( KnownImmutableReturningMethods.Contains( symbolName ) ) {
+						return AssignmentQueryKind.NothingToCheck;
+					}
+
+					break;
 			}
+
+			var model = m_compilation.GetSemanticModel( assignment.Expression.SyntaxTree );
+			var typeInfo = model.GetTypeInfo( assignment.Expression );
+
+			// Type can be null in the case of an implicit conversion where the
+			// expression alone doesn't have a type. For example:
+			//   int[] foo = { 1, 2, 3 };
+			var typeToCheck = typeInfo.Type ?? typeInfo.ConvertedType;
+
+			if( assignment.Expression is BaseObjectCreationExpressionSyntax _ ) {
+				// When we have a new T() we don't need to worry about the value
+				// being anything other than an instance of T.
+				query = new ImmutabilityQuery(
+					ImmutableTypeKind.Instance,
+					typeToCheck
+				);
+			} else {
+				// In general we need to handle subtypes.
+				query = new ImmutabilityQuery(
+					ImmutableTypeKind.Total,
+					typeToCheck
+				);
+			}
+
+			return AssignmentQueryKind.ImmutabilityQuery;
 		}
 
 		private static Location GetLocationOfMember( ISymbol s ) =>s

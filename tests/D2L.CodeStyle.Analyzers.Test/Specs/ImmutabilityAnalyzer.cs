@@ -1,8 +1,10 @@
 ﻿// analyzer: D2L.CodeStyle.Analyzers.Immutability.ImmutabilityAnalyzer
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Dynamic;
+using System.Linq;
 using D2L.CodeStyle.Annotations;
 using static D2L.CodeStyle.Annotations.Objects;
 
@@ -185,7 +187,12 @@ namespace SpecTests {
 
 		/// <summary><see cref="SomeGenericMethodCref{T}()"/></summary>
 		public static void SomeGenericMethodCref<[Immutable] T>( int x ) { }
-
+		
+		[Immutable]
+		public sealed class Tester {
+			private readonly IEnumerable<int> m_enumerable = Enumerable.Empty<int>();
+			private readonly int[] m_array = Array.Empty<int>()
+		}
 }
 
 	[Immutable]
