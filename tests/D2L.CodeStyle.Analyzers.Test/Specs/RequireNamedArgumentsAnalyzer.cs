@@ -2,10 +2,6 @@
 
 using D2L.CodeStyle.Annotations.Contract;
 
-namespace D2L.CodeStyle.Annotations.Contract {
-	public sealed class RequireNamedArgumentsAttribute : System.Attribute {}
-}
-
 namespace D2L {
 
 	public static class Foo {

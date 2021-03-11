@@ -5,12 +5,6 @@ using System.Collections.Generic;
 using D2L.CodeStyle.Annotations;
 using D2L.LP.Extensibility.Activation.Domain;
 
-namespace D2L.CodeStyle.Annotations {
-	public sealed class Objects {
-		public sealed class Immutable : Attribute { }
-	}
-}
-
 // copied from: http://search.dev.d2l/source/raw/Lms/core/lp/framework/core/D2L.LP.Foundation/LP/Extensibility/Activation/Domain/IDependencyRegistry.cs
 // and: http://search.dev.d2l/source/raw/Lms/core/lp/framework/core/D2L.LP.Foundation/LP/Extensibility/Activation/Domain/ObjectScope.cs
 namespace D2L.LP.Extensibility.Activation.Domain {

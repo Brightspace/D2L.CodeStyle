@@ -2,16 +2,6 @@
 
 using System;
 
-namespace D2L.CodeStyle.Annotations {
-	[AttributeUsage( AttributeTargets.Parameter, AllowMultiple = false )]
-	public class ReadOnlyAttribute : Attribute { }
-
-	namespace Contract {
-		[AttributeUsage( AttributeTargets.Parameter, AllowMultiple = false )]
-		public sealed class StatelessFuncAttribute : ReadOnlyAttribute { }
-	}
-}
-
 namespace D2L {
 
 	using D2L.CodeStyle.Annotations.Contract;

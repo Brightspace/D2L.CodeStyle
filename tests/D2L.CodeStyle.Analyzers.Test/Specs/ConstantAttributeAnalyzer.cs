@@ -2,14 +2,6 @@
 
 using System;
 
-#region Relevant Types
-namespace D2L.CodeStyle.Annotations.Contract
-{
-	[AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
-	public sealed class ConstantAttribute : Attribute { }
-}
-#endregion
-
 namespace SpecTests
 {
 	using D2L.CodeStyle.Annotations.Contract;

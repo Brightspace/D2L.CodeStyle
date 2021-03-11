@@ -8,23 +8,6 @@ using System.Web.Hosting;
 using D2L.CodeStyle.Annotations;
 using D2L.LP.Extensibility.Activation.Domain;
 
-namespace D2L.CodeStyle.Annotations {
-	public static class DangerousMethodUsage {
-
-		public sealed class AuditedAttribute : Attribute {
-
-			public AuditedAttribute( Type declaringType, string methodName ) { }
-		}
-
-		public sealed class UnauditedAttribute : Attribute {
-
-			public UnauditedAttribute( Type declaringType, string methodName ) { }
-		}
-	}
-
-	public sealed class ImmutableAttribute : Attribute { }
-}
-
 namespace System.Web.Hosting {
 
 	public static class HostingEnvironment {
@@ -112,26 +95,26 @@ namespace SpecTests {
 
 	internal sealed class AuditedUsages {
 
-		[DangerousMethodUsage.Audited( typeof( PropertyInfo ), "SetValue" )]
+		[DangerousMethodUsage.Audited( typeof( PropertyInfo ), "SetValue", "John Doe", "1970-01-01", "Rationale" )]
 		public AuditedUsages() {
 			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 			p.SetValue( "str", 7, null );
 		}
 
-		[DangerousMethodUsage.Audited( typeof( PropertyInfo ), "SetValue" )]
+		[DangerousMethodUsage.Audited( typeof( PropertyInfo ), "SetValue", "John Doe", "1970-01-01", "Rationale" )]
 		public void Method() {
 			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 			p.SetValue( "str", 7, null );
 		}
 
-		[DangerousMethodUsage.Audited( typeof( Task ), "Run" )]
+		[DangerousMethodUsage.Audited( typeof( Task ), "Run", "John Doe", "1970-01-01", "Rationale" )]
 		public void AsyncMethod() {
 			Task.Run<int>( () => Task.FromResult( 7 ) );
 		}
 
 		public int PropertyGetter {
 
-			[DangerousMethodUsage.Audited( typeof( PropertyInfo ), "SetValue" )]
+			[DangerousMethodUsage.Audited( typeof( PropertyInfo ), "SetValue", "John Doe", "1970-01-01", "Rationale" )]
 			get {
 				PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 				p.SetValue( "str", 7, null );
@@ -141,14 +124,14 @@ namespace SpecTests {
 
 		public int PropertySetter {
 
-			[DangerousMethodUsage.Audited( typeof( PropertyInfo ), "SetValue" )]
+			[DangerousMethodUsage.Audited( typeof( PropertyInfo ), "SetValue", "John Doe", "1970-01-01", "Rationale" )]
 			set {
 				PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 				p.SetValue( "str", value, null );
 			}
 		}
 
-		[DangerousMethodUsage.Audited( typeof( PropertyInfo ), "SetValue" )]
+		[DangerousMethodUsage.Audited( typeof( PropertyInfo ), "SetValue", "John Doe", "1970-01-01", "Rationale" )]
 		public void DelegateInsideMethod() {
 
 			Action hacker = () => {
@@ -157,12 +140,12 @@ namespace SpecTests {
 			};
 		}
 
-		[DangerousMethodUsage.Audited( typeof( HostingEnvironment ), "MapPath" )]
+		[DangerousMethodUsage.Audited( typeof( HostingEnvironment ), "MapPath", "John Doe", "1970-01-01", "Rationale" )]
 		public void MethodWithMapPath() {
 			HostingEnvironment.MapPath( "/d2l" );
 		}
 
-		[DangerousMethodUsage.Audited( typeof( HttpServerUtility ), "Transfer" )]
+		[DangerousMethodUsage.Audited( typeof( HttpServerUtility ), "Transfer", "John Doe", "1970-01-01", "Rationale" )]
 		public void MethodWithTransfer() {
 			HttpServerUtility obj = new HttpServerUtility();
 			obj.Transfer( "/new/path" );
@@ -274,7 +257,7 @@ namespace SpecTests {
 
 	internal sealed class UnrelatedAttributes {
 
-		[ImmutableAttribute]
+		[Objects.Immutable]
 		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ Method(/**/) {
 			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 			p.SetValue( "str", 7, null );
