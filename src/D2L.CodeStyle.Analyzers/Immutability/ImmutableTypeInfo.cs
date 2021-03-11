@@ -66,12 +66,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		public static ImmutableTypeInfo Create(
+			AnnotationsContext annotationsContext,
 			ImmutableTypeKind kind,
 			INamedTypeSymbol type
 		) {
 			ImmutableArray<bool> immutableTypeParameters = type
 				.TypeParameters
-				.Select( p => Attributes.Objects.OnlyIf.IsDefined( p ) )
+				.Select( p => annotationsContext.Objects.OnlyIf.IsDefined( p ) )
 				.ToImmutableArray();
 
 			return new ImmutableTypeInfo(

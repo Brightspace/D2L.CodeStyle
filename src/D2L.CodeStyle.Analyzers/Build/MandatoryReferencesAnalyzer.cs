@@ -19,9 +19,7 @@ namespace D2L.CodeStyle.Analyzers.Build {
 		public static void AnalyzeCompilation(
 			CompilationAnalysisContext ctx
 		) {
-			bool hasAnnotationsReference = ctx.Compilation
-				.References
-				.Any( IsTheAnnotationsAssembly );
+			bool hasAnnotationsReference = HasAnnotationsReference( ctx.Compilation );
 
 			if ( !hasAnnotationsReference ) {
 				ctx.ReportDiagnostic(
@@ -41,7 +39,13 @@ namespace D2L.CodeStyle.Analyzers.Build {
 			// * Should we open up a GitHub issue for this?
 		}
 
-		public static bool IsTheAnnotationsAssembly( MetadataReference mr ) {
+		public static bool HasAnnotationsReference( Compilation compilation ) {
+			return compilation
+				.References
+				.Any( IsTheAnnotationsAssembly );
+		}
+
+		private static bool IsTheAnnotationsAssembly( MetadataReference mr ) {
 			// There are 3 types of MetadataReference in Roslyn currently:
 			// * UnresolvedMetadataReference: this will have a Dispaly of
 			//   "Unresolved: <name>"

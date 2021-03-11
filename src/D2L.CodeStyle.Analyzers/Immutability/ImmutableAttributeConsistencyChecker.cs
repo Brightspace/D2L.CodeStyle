@@ -20,15 +20,18 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private readonly Compilation m_compilation;
 		private readonly DiagnosticSink m_diagnosticSink;
 		private readonly ImmutabilityContext m_context;
+		private readonly AnnotationsContext m_annotationsContext;
 
 		public ImmutableAttributeConsistencyChecker(
 			Compilation compilation,
 			DiagnosticSink diagnosticSink,
-			ImmutabilityContext context
+			ImmutabilityContext context,
+			AnnotationsContext annotationsContext
 		) {
 			m_compilation = compilation;
 			m_diagnosticSink = diagnosticSink;
 			m_context = context;
+			m_annotationsContext = annotationsContext;
 		}
 
 		public void CheckTypeDeclaration(
@@ -58,8 +61,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					ITypeParameterSymbol thisParameter = methodSymbol.TypeParameters[ i ];
 					ITypeParameterSymbol implementedParameter = implementedMethod.TypeParameters[ i ];
 
-					bool thisIsImmutable = Attributes.Objects.Immutable.IsDefined( thisParameter );
-					bool implementedIsImmutable = Attributes.Objects.Immutable.IsDefined( implementedParameter );
+					bool thisIsImmutable = m_annotationsContext.Objects.Immutable.IsDefined( thisParameter );
+					bool implementedIsImmutable = m_annotationsContext.Objects.Immutable.IsDefined( implementedParameter );
 
 					if( thisIsImmutable != implementedIsImmutable ) {
 						m_diagnosticSink( Diagnostic.Create(

@@ -14,15 +14,18 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private readonly Compilation m_compilation;
 		private readonly DiagnosticSink m_diagnosticSink;
 		private readonly ImmutabilityContext m_context;
+		private readonly AnnotationsContext m_annotationsContext;
 
 		public ImmutableDefinitionChecker(
 			Compilation compilation,
 			DiagnosticSink diagnosticSink,
-			ImmutabilityContext context
+			ImmutabilityContext context,
+			AnnotationsContext annotationsContext
 		) {
 			m_compilation = compilation;
 			m_diagnosticSink = diagnosticSink;
 			m_context = context;
+			m_annotationsContext = annotationsContext;
 		}
 
 		/// <remarks>
@@ -74,6 +77,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// </remarks>
 		public bool CheckMember( ISymbol member ) {
 			if( MutabilityAuditor.CheckAudited(
+				m_annotationsContext,
 				member,
 				m_diagnosticSink,
 				out var location

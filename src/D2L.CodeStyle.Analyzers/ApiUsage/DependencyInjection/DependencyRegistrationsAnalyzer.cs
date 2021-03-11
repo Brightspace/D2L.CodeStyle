@@ -43,7 +43,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 				return;
 			}
 
-			var immutabilityCtx = ImmutabilityContext.Create( context.Compilation );
+			if( !AnnotationsContext.TryCreate( context.Compilation, out AnnotationsContext annotationsContext ) ) {
+				return;
+			}
+			var immutabilityCtx = ImmutabilityContext.Create( context.Compilation, annotationsContext );
 
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeInvocation( ctx, immutabilityCtx, dependencyRegistry ),

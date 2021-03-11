@@ -77,7 +77,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			("System.IO.Abstractions.FileSystem", default)
 		);
 
-		internal static ImmutabilityContext Create( Compilation compilation ) {
+		internal static ImmutabilityContext Create( Compilation compilation, AnnotationsContext annotationsContext ) {
 			ImmutableDictionary<string, IAssemblySymbol> compilationAssmeblies = GetCompilationAssemblies( compilation );
 
 			var builder = ImmutableDictionary.CreateBuilder<INamedTypeSymbol, ImmutableTypeInfo>();
@@ -107,6 +107,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			return new ImmutabilityContext(
+				annotationsContext: annotationsContext,
 				extraImmutableTypes: builder.ToImmutable(),
 				conditionalTypeParamemters: ImmutableHashSet<ITypeParameterSymbol>.Empty
 			);
