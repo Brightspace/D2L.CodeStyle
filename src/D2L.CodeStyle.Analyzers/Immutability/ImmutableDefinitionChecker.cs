@@ -370,7 +370,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ImmutabilityQuery,
 			Hopeless
 		}
-		
 		/// <summary>
 		/// For a field/property assignment, figure out what needs to be checked for it.
 		/// </summary>
