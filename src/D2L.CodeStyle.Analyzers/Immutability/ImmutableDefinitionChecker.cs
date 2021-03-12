@@ -435,9 +435,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					}
 
 					methodSymbol = methodSymbol.OriginalDefinition;
+					var compilationAssemblies = ImmutabilityContext.GetCompilationAssemblies( m_compilation );
 
 					foreach( ( string typeName, string methodName, string qualifiedAssembly ) in ImmutabilityContext.KnownImmutableReturningMethods ) {
 						if( ImmutabilityContext.GetSymbol(
+							compilationAssemblies,
 							m_compilation,
 							qualifiedAssembly,
 							typeName,

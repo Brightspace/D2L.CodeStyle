@@ -86,12 +86,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		
 
 		internal static ImmutabilityContext Create( Compilation compilation, AnnotationsContext annotationsContext ) {
-			ImmutableDictionary<string, IAssemblySymbol> compilationAssmeblies = GetCompilationAssemblies( compilation );
 
+			var compilationAssemblies = GetCompilationAssemblies( compilation );
+			
 			var builder = ImmutableDictionary.CreateBuilder<INamedTypeSymbol, ImmutableTypeInfo>();
 
 			foreach( ( string typeName, string qualifiedAssembly ) in DefaultExtraTypes ) {
-				ISymbol symbol = GetSymbol( compilation, qualifiedAssembly, typeName );
+				ISymbol symbol = GetSymbol( compilationAssemblies, compilation, qualifiedAssembly, typeName );
 
 				if( symbol is not INamedTypeSymbol type) {
 					continue;
@@ -112,7 +113,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 		}
 
-		private static ImmutableDictionary<string, IAssemblySymbol> GetCompilationAssemblies( Compilation compilation ) {
+		public static ImmutableDictionary<string, IAssemblySymbol> GetCompilationAssemblies( Compilation compilation ) {
 			var builder = ImmutableDictionary.CreateBuilder<string, IAssemblySymbol>();
 
 			IAssemblySymbol compilationAssmebly = compilation.Assembly;
@@ -129,13 +130,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		public static ISymbol GetSymbol(
+			ImmutableDictionary<string, IAssemblySymbol> compilationAssemblies,
 			Compilation compilation,
 			string qualifiedAssembly,
 			string typeName,
 			string methodName = null
 		) {
-			ImmutableDictionary<string, IAssemblySymbol> compilationAssemblies = GetCompilationAssemblies( compilation );
-
 			INamedTypeSymbol type;
 
 			if( string.IsNullOrEmpty( qualifiedAssembly ) ) {
