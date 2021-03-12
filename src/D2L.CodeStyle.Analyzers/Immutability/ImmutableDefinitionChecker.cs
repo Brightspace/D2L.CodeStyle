@@ -370,6 +370,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ImmutabilityQuery,
 			Hopeless
 		}
+
 		/// <summary>
 		/// For a field/property assignment, figure out what needs to be checked for it.
 		/// </summary>
@@ -390,6 +391,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			query = default;
 			diagnostic = null;
+			SemanticModel semanticModel = null;
 
 			// Easy cases
 			switch( assignment.Expression.Kind() ) {
@@ -430,8 +432,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// Some methods are known to have return values that are
 					// immutable (such as Enumerable.Empty()).
 					// These should be considered immutable by the Analyzer.
-					if( m_compilation
-						.GetSemanticModel( assignment.Expression.SyntaxTree )
+					semanticModel ??= m_compilation.GetSemanticModel( assignment.Expression.SyntaxTree );
+					if( semanticModel
 						.GetSymbolInfo( assignment.Expression )
 						.Symbol is not IMethodSymbol methodSymbol
 					) {
@@ -446,8 +448,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			// If nothing above was caught, then fallback to querying.
-			var model = m_compilation.GetSemanticModel( assignment.Expression.SyntaxTree );
-			var typeInfo = model.GetTypeInfo( assignment.Expression );
+			semanticModel ??= m_compilation.GetSemanticModel( assignment.Expression.SyntaxTree );
+			var typeInfo = semanticModel.GetTypeInfo( assignment.Expression );
 
 			// Type can be null in the case of an implicit conversion where the
 			// expression alone doesn't have a type. For example:
