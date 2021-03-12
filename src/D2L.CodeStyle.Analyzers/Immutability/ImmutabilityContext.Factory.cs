@@ -87,7 +87,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		internal static ImmutabilityContext Create( Compilation compilation, AnnotationsContext annotationsContext ) {
 
-			var compilationAssemblies = GetCompilationAssemblies( compilation );
+			ImmutableDictionary<string, IAssemblySymbol> compilationAssemblies = GetCompilationAssemblies( compilation );
 
 			// Generate a dictionary of types that we have specifically determined
 			// should be considered Immutable by the Analyzer.
