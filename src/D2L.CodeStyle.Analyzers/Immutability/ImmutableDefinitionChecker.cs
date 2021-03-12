@@ -434,7 +434,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					if( m_compilation
 						.GetSemanticModel( assignment.Expression.SyntaxTree )
 						.GetSymbolInfo( assignment.Expression )
-						.Symbol is not IMethodSymbol methodSymbol ) {
+						.Symbol is not IMethodSymbol methodSymbol
+					) {
 						break;
 					}
 
