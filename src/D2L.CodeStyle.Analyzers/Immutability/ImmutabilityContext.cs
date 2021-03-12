@@ -19,6 +19,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private readonly AnnotationsContext m_annotationsContext;
 		private readonly ImmutableDictionary<INamedTypeSymbol, ImmutableTypeInfo> m_extraImmutableTypes;
+		private readonly ImmutableHashSet<IMethodSymbol> m_knownImmutableReturns;
 		private readonly ImmutableHashSet<ITypeParameterSymbol> m_conditionalTypeParameters;
 
 		// Hard code this to avoid looking up the ITypeSymbol to include it in m_extraImmutableTypes
@@ -46,10 +47,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private ImmutabilityContext(
 			AnnotationsContext annotationsContext,
 			ImmutableDictionary<INamedTypeSymbol, ImmutableTypeInfo> extraImmutableTypes,
+			ImmutableHashSet<IMethodSymbol> knownImmutableReturns,
 			ImmutableHashSet<ITypeParameterSymbol> conditionalTypeParamemters
 		) {
 			m_annotationsContext = annotationsContext;
 			m_extraImmutableTypes = extraImmutableTypes;
+			m_knownImmutableReturns = knownImmutableReturns;
 			m_conditionalTypeParameters = conditionalTypeParamemters;
 		}
 
@@ -72,6 +75,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return new ImmutabilityContext(
 				annotationsContext: m_annotationsContext,
 				extraImmutableTypes: m_extraImmutableTypes,
+				knownImmutableReturns: m_knownImmutableReturns,
 				conditionalTypeParamemters: m_conditionalTypeParameters.Union( conditionalTypeParameters )
 			);
 		}
@@ -208,6 +212,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 					return false;
 			}
+		}
+
+		/// <summary>
+		/// Determines if the return value of a method is known to be immutable.
+		/// </summary>
+		/// <param name="methodSymbol">The method to check</param>
+		/// <returns>Is the return value immutable?</returns>
+		public bool IsReturnValueKnownToBeImmutable( IMethodSymbol methodSymbol ) {
+			return m_knownImmutableReturns.Contains( methodSymbol.OriginalDefinition );
 		}
 
 		public ImmutableTypeInfo GetImmutableTypeInfo(

@@ -1,8 +1,10 @@
 ﻿// analyzer: D2L.CodeStyle.Analyzers.Immutability.ImmutabilityAnalyzer
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Dynamic;
+using System.Linq;
 using D2L.CodeStyle.Annotations;
 using static D2L.CodeStyle.Annotations.Objects;
 
@@ -689,6 +691,9 @@ namespace SpecTests {
 		readonly Types.SomeImmutableGenericInterfaceRestrictingTU</* NonImmutableTypeHeldByImmutable(class, object, ) */ object /**/, int>m_field176;
 		Types.SomeImmutableGenericInterfaceRestrictingTU</* NonImmutableTypeHeldByImmutable(class, object, ) */ object /**/, int> Property80 { get; }
 		Types.SomeImmutableGenericInterfaceRestrictingTU</* NonImmutableTypeHeldByImmutable(class, object, ) */ object /**/, int> Property81 { get { return default; } }
+
+		private readonly IEnumerable<int> m_enumerable = Enumerable.Empty<int>();
+		private readonly int[] m_array = Array.Empty<int>();
 	}
 
 	[Immutable]
