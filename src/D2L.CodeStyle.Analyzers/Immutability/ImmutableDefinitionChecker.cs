@@ -427,35 +427,25 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					return AssignmentQueryKind.Hopeless;
 
 				case SyntaxKind.InvocationExpression:
-					var semanticModel = m_compilation.GetSemanticModel( assignment.Expression.SyntaxTree );
-					var symbol = semanticModel.GetSymbolInfo( assignment.Expression ).Symbol;
 
-					if( symbol is not IMethodSymbol methodSymbol ) {
+					// Some methods are known to have return values that are
+					// immutable (such as Enumerable.Empty()).
+					// These should be considered immutable by the Analyzer.
+					if( m_compilation
+						.GetSemanticModel( assignment.Expression.SyntaxTree )
+						.GetSymbolInfo( assignment.Expression )
+						.Symbol is not IMethodSymbol methodSymbol ) {
 						break;
 					}
 
-					methodSymbol = methodSymbol.OriginalDefinition;
-					var compilationAssemblies = ImmutabilityContext.GetCompilationAssemblies( m_compilation );
-
-					foreach( ( string typeName, string methodName, string qualifiedAssembly ) in ImmutabilityContext.KnownImmutableReturningMethods ) {
-						if( ImmutabilityContext.GetSymbol(
-							compilationAssemblies,
-							m_compilation,
-							qualifiedAssembly,
-							typeName,
-							methodName
-						) is not IMethodSymbol knownMethodSymbol ) {
-							continue;
-						}
-
-						if( methodSymbol.Equals( knownMethodSymbol, SymbolEqualityComparer.Default ) ) {
-							return AssignmentQueryKind.NothingToCheck;
-						}
+					if( m_context.IsReturnValueKnownToBeImmutable( methodSymbol ) ) {
+						return AssignmentQueryKind.NothingToCheck;
 					}
 
 					break;
 			}
 
+			// If nothing above was caught, then fallback to querying.
 			var model = m_compilation.GetSemanticModel( assignment.Expression.SyntaxTree );
 			var typeInfo = model.GetTypeInfo( assignment.Expression );
 

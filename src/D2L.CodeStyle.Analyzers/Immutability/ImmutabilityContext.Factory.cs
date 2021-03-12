@@ -88,13 +88,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		internal static ImmutabilityContext Create( Compilation compilation, AnnotationsContext annotationsContext ) {
 
 			var compilationAssemblies = GetCompilationAssemblies( compilation );
-			
-			var builder = ImmutableDictionary.CreateBuilder<INamedTypeSymbol, ImmutableTypeInfo>();
 
+			// Generate a dictionary of types that we have specifically determined
+			// should be considered Immutable by the Analyzer.
+			var extraImmutableTypesBuilder = ImmutableDictionary.CreateBuilder<INamedTypeSymbol, ImmutableTypeInfo>();
 			foreach( ( string typeName, string qualifiedAssembly ) in DefaultExtraTypes ) {
 				ISymbol symbol = GetSymbol( compilationAssemblies, compilation, qualifiedAssembly, typeName );
 
-				if( symbol is not INamedTypeSymbol type) {
+				if( symbol is not INamedTypeSymbol type ) {
 					continue;
 				}
 
@@ -103,17 +104,31 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					type
 				);
 
-				builder.Add( type, info );
+				extraImmutableTypesBuilder.Add( type, info );
+			}
+
+			// Generate a set of methods that we have specifically determined
+			// have a return value which should be considered Immutable by the Analyzer.
+			var knownImmutableReturnsBuilder = ImmutableHashSet.CreateBuilder<IMethodSymbol>();
+			foreach( ( string typeName, string methodName, string qualifiedAssembly ) in KnownImmutableReturningMethods ) {
+				ISymbol symbol = GetSymbol( compilationAssemblies, compilation, qualifiedAssembly, typeName, methodName );
+
+				if( symbol is not IMethodSymbol methodSymbol ) {
+					continue;
+				}
+
+				knownImmutableReturnsBuilder.Add( methodSymbol );
 			}
 
 			return new ImmutabilityContext(
 				annotationsContext: annotationsContext,
-				extraImmutableTypes: builder.ToImmutable(),
+				extraImmutableTypes: extraImmutableTypesBuilder.ToImmutable(),
+				knownImmutableReturns: knownImmutableReturnsBuilder.ToImmutable(),
 				conditionalTypeParamemters: ImmutableHashSet<ITypeParameterSymbol>.Empty
 			);
 		}
 
-		public static ImmutableDictionary<string, IAssemblySymbol> GetCompilationAssemblies( Compilation compilation ) {
+		private static ImmutableDictionary<string, IAssemblySymbol> GetCompilationAssemblies( Compilation compilation ) {
 			var builder = ImmutableDictionary.CreateBuilder<string, IAssemblySymbol>();
 
 			IAssemblySymbol compilationAssmebly = compilation.Assembly;
@@ -129,7 +144,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return builder.ToImmutable();
 		}
 
-		public static ISymbol GetSymbol(
+		private static ISymbol GetSymbol(
 			ImmutableDictionary<string, IAssemblySymbol> compilationAssemblies,
 			Compilation compilation,
 			string qualifiedAssembly,
