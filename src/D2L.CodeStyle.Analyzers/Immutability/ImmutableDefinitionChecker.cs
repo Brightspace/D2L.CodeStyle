@@ -370,11 +370,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ImmutabilityQuery,
 			Hopeless
 		}
-
-		internal static readonly ImmutableArray<string> KnownImmutableReturningMethods = ImmutableArray.Create(
-			"System.Array.Empty",
-			"System.Linq.Enumerable.Empty"
-		);
 		
 		/// <summary>
 		/// For a field/property assignment, figure out what needs to be checked for it.
@@ -439,10 +434,21 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						break;
 					}
 
-					var symbolName = methodSymbol.ContainingSymbol.ToDisplayString() + "." + methodSymbol.Name;
+					methodSymbol = methodSymbol.OriginalDefinition;
 
-					if( KnownImmutableReturningMethods.Contains( symbolName ) ) {
-						return AssignmentQueryKind.NothingToCheck;
+					foreach( ( string typeName, string methodName, string qualifiedAssembly ) in ImmutabilityContext.KnownImmutableReturningMethods ) {
+						if( ImmutabilityContext.GetSymbol(
+							m_compilation,
+							qualifiedAssembly,
+							typeName,
+							methodName
+						) is not IMethodSymbol knownMethodSymbol ) {
+							continue;
+						}
+
+						if( methodSymbol.Equals( knownMethodSymbol, SymbolEqualityComparer.Default ) ) {
+							return AssignmentQueryKind.NothingToCheck;
+						}
 					}
 
 					break;

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
@@ -77,24 +78,22 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			("System.IO.Abstractions.FileSystem", default)
 		);
 
+
+		internal static readonly ImmutableArray<(string TypeName, string MethodName, string AssemblyName)> KnownImmutableReturningMethods = ImmutableArray.Create(
+			( "System.Array", "Empty", default(string) ),
+			( "System.Linq.Enumerable", "Empty", default(string) )
+		);
+		
+
 		internal static ImmutabilityContext Create( Compilation compilation, AnnotationsContext annotationsContext ) {
 			ImmutableDictionary<string, IAssemblySymbol> compilationAssmeblies = GetCompilationAssemblies( compilation );
 
 			var builder = ImmutableDictionary.CreateBuilder<INamedTypeSymbol, ImmutableTypeInfo>();
 
 			foreach( ( string typeName, string qualifiedAssembly ) in DefaultExtraTypes ) {
-				INamedTypeSymbol type;
-				if( string.IsNullOrEmpty( qualifiedAssembly ) ) {
-					type = compilation.GetTypeByMetadataName( typeName );
-				} else {
-					if( !compilationAssmeblies.TryGetValue( qualifiedAssembly, out IAssemblySymbol assembly ) ) {
-						continue;
-					}
+				ISymbol symbol = GetSymbol( compilation, qualifiedAssembly, typeName );
 
-					type = assembly.GetTypeByMetadataName( typeName );
-				}
-
-				if( type == null || type.Kind == SymbolKind.ErrorType ) {
+				if( symbol is not INamedTypeSymbol type) {
 					continue;
 				}
 
@@ -127,6 +126,42 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			return builder.ToImmutable();
+		}
+
+		public static ISymbol GetSymbol(
+			Compilation compilation,
+			string qualifiedAssembly,
+			string typeName,
+			string methodName = null
+		) {
+			ImmutableDictionary<string, IAssemblySymbol> compilationAssemblies = GetCompilationAssemblies( compilation );
+
+			INamedTypeSymbol type;
+
+			if( string.IsNullOrEmpty( qualifiedAssembly ) ) {
+				type = compilation.GetTypeByMetadataName( typeName );
+			} else {
+				if( !compilationAssemblies.TryGetValue( qualifiedAssembly, out IAssemblySymbol assembly ) ) {
+					return null;
+				}
+
+				type = assembly.GetTypeByMetadataName( typeName );
+			}
+
+			if( type == null || type.Kind == SymbolKind.ErrorType ) {
+				return null;
+			}
+
+			if( methodName == null ) {
+				return type;
+			}
+
+			ISymbol methodSymbol = type
+				.GetMembers( methodName )
+				.OfType<IMethodSymbol>()
+				.Single( m => m.Parameters.Length == 0 );
+
+			return methodSymbol;
 		}
 
 	}
