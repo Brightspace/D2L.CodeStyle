@@ -117,12 +117,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					continue;
 				}
 
-				IMethodSymbol methodSymbol = type
+				IMethodSymbol[] methodSymbol = type
 					.GetMembers( methodName )
 					.OfType<IMethodSymbol>()
-					.Single( m => m.Parameters.Length == 0 );
+					.Where( m => m.Parameters.Length == 0 )
+					.ToArray();
+					
+				if( methodSymbol.Length != 1 ) {
+					continue;
+				}
 
-				knownImmutableReturnsBuilder.Add( methodSymbol );
+				knownImmutableReturnsBuilder.Add( methodSymbol[0] );
 			}
 
 			return new ImmutabilityContext(
