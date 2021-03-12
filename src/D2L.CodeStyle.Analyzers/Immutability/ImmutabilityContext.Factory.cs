@@ -93,9 +93,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// should be considered Immutable by the Analyzer.
 			var extraImmutableTypesBuilder = ImmutableDictionary.CreateBuilder<INamedTypeSymbol, ImmutableTypeInfo>();
 			foreach( ( string typeName, string qualifiedAssembly ) in DefaultExtraTypes ) {
-				ISymbol symbol = GetSymbol( compilationAssemblies, compilation, qualifiedAssembly, typeName );
+				INamedTypeSymbol type = GetTypeSymbol( compilationAssemblies, compilation, qualifiedAssembly, typeName );
 
-				if( symbol is not INamedTypeSymbol type ) {
+				if( type == null ) {
 					continue;
 				}
 
@@ -111,11 +111,16 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// have a return value which should be considered Immutable by the Analyzer.
 			var knownImmutableReturnsBuilder = ImmutableHashSet.CreateBuilder<IMethodSymbol>();
 			foreach( ( string typeName, string methodName, string qualifiedAssembly ) in KnownImmutableReturningMethods ) {
-				ISymbol symbol = GetSymbol( compilationAssemblies, compilation, qualifiedAssembly, typeName, methodName );
+				INamedTypeSymbol type = GetTypeSymbol( compilationAssemblies, compilation, qualifiedAssembly, typeName );
 
-				if( symbol is not IMethodSymbol methodSymbol ) {
+				if( type == null ) {
 					continue;
 				}
+
+				IMethodSymbol methodSymbol = type
+					.GetMembers( methodName )
+					.OfType<IMethodSymbol>()
+					.Single( m => m.Parameters.Length == 0 );
 
 				knownImmutableReturnsBuilder.Add( methodSymbol );
 			}
@@ -144,12 +149,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return builder.ToImmutable();
 		}
 
-		private static ISymbol GetSymbol(
+		private static INamedTypeSymbol GetTypeSymbol(
 			ImmutableDictionary<string, IAssemblySymbol> compilationAssemblies,
 			Compilation compilation,
 			string qualifiedAssembly,
-			string typeName,
-			string methodName = null
+			string typeName
 		) {
 			INamedTypeSymbol type;
 
@@ -167,16 +171,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return null;
 			}
 
-			if( methodName == null ) {
-				return type;
-			}
-
-			ISymbol methodSymbol = type
-				.GetMembers( methodName )
-				.OfType<IMethodSymbol>()
-				.Single( m => m.Parameters.Length == 0 );
-
-			return methodSymbol;
+			return type;
 		}
 
 	}
