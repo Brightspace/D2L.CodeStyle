@@ -83,7 +83,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			( "System.Array", "Empty", default(string) ),
 			( "System.Linq.Enumerable", "Empty", default(string) )
 		);
-		
+
 
 		internal static ImmutabilityContext Create( Compilation compilation, AnnotationsContext annotationsContext ) {
 
@@ -122,7 +122,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					.OfType<IMethodSymbol>()
 					.Where( m => m.Parameters.Length == 0 )
 					.ToArray();
-					
+
 				if( methodSymbols.Length != 1 ) {
 					continue;
 				}

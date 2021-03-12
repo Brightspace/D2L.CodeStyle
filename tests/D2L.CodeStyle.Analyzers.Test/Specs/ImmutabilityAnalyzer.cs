@@ -187,12 +187,7 @@ namespace SpecTests {
 
 		/// <summary><see cref="SomeGenericMethodCref{T}()"/></summary>
 		public static void SomeGenericMethodCref<[Immutable] T>( int x ) { }
-		
-		[Immutable]
-		public sealed class Tester {
-			private readonly IEnumerable<int> m_enumerable = Enumerable.Empty<int>();
-			private readonly int[] m_array = Array.Empty<int>()
-		}
+
 }
 
 	[Immutable]
@@ -696,6 +691,9 @@ namespace SpecTests {
 		readonly Types.SomeImmutableGenericInterfaceRestrictingTU</* NonImmutableTypeHeldByImmutable(class, object, ) */ object /**/, int>m_field176;
 		Types.SomeImmutableGenericInterfaceRestrictingTU</* NonImmutableTypeHeldByImmutable(class, object, ) */ object /**/, int> Property80 { get; }
 		Types.SomeImmutableGenericInterfaceRestrictingTU</* NonImmutableTypeHeldByImmutable(class, object, ) */ object /**/, int> Property81 { get { return default; } }
+
+		private readonly IEnumerable<int> m_enumerable = Enumerable.Empty<int>();
+		private readonly int[] m_array = Array.Empty<int>();
 	}
 
 	[Immutable]
