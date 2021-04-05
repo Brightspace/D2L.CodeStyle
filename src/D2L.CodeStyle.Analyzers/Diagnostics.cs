@@ -580,5 +580,14 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor RpcContextMarkedDependency = new DiagnosticDescriptor(
+			id: "D2L0078",
+			title: "RPC context argument should not be marked [Dependency]",
+			messageFormat: "RPC context argument should not be marked [Dependency]",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }

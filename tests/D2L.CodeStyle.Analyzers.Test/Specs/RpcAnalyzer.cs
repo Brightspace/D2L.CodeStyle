@@ -123,5 +123,20 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 			[UndefinedAttribute] int x,
 			/* RpcArgumentSortOrder */ [Dependency] FooDependency foo /**/
 		) { }
+
+		[Rpc]
+		public static void RpcContextMarkedDependency(
+			/* RpcContextMarkedDependency */ [Dependency] IRpcContext context /**/
+		) { }
+
+		[Rpc]
+		public static void RpcPostContextMarkedDependency(
+			/* RpcContextMarkedDependency */ [Dependency] IRpcPostContext context /**/
+		) { }
+
+		[Rpc]
+		public static void RpcPostContextBaseMarkedDependency(
+			/* RpcContextMarkedDependency */ [Dependency] IRpcPostContextBase context /**/
+		) { }
 	}
 }
