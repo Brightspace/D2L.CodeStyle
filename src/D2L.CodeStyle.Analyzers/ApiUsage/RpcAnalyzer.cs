@@ -8,8 +8,11 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace D2L.CodeStyle.Analyzers.ApiUsage {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	internal sealed class RpcAnalyzer : DiagnosticAnalyzer {
-		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
-			=> ImmutableArray.Create( Diagnostics.RpcContextFirstArgument, Diagnostics.RpcArgumentSortOrder );
+		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
+			Diagnostics.RpcContextFirstArgument,
+			Diagnostics.RpcArgumentSortOrder,
+			Diagnostics.RpcContextMarkedDependency
+		);
 
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
@@ -83,7 +86,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				method,
 				rpcContextType: rpcContextType,
 				rpcPostContextType: rpcPostContextType,
-				rpcPostContextBaseType: rpcPostContextBaseType
+				rpcPostContextBaseType: rpcPostContextBaseType,
+				dependencyAttributeType: dependencyAttributeType
 			);
 
 			// dependencyAttributeType may be null if that DLL isn't
@@ -118,7 +122,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			MethodDeclarationSyntax method,
 			INamedTypeSymbol rpcContextType,
 			INamedTypeSymbol rpcPostContextType,
-			INamedTypeSymbol rpcPostContextBaseType
+			INamedTypeSymbol rpcPostContextBaseType,
+			INamedTypeSymbol dependencyAttributeType
 		) {
 			var ps = method.ParameterList.Parameters;
 
@@ -141,6 +146,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				context.ReportDiagnostic(
 					Diagnostic.Create( Diagnostics.RpcContextFirstArgument, firstParam.GetLocation() )
 				);
+			} else if( dependencyAttributeType != null
+				&& IsMarkedDependency( dependencyAttributeType, firstParam, context.SemanticModel )
+			) {
+				context.ReportDiagnostic(
+					Diagnostic.Create( Diagnostics.RpcContextMarkedDependency, firstParam.GetLocation() )
+				);
 			}
 		}
 
@@ -151,10 +162,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		) {
 			bool doneDependencies = false;
 			foreach( var param in ps.Skip( 1 ) ) {
-				var isDep = param
-					.AttributeLists
-					.SelectMany( al => al.Attributes )
-					.Any( attr => IsAttribute( dependencyAttributeType, attr, context.SemanticModel ) );
+				var isDep = IsMarkedDependency( dependencyAttributeType, param, context.SemanticModel );
 
 				if( !isDep && !doneDependencies ) {
 					doneDependencies = true;
@@ -163,6 +171,15 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				}
 			}
 		}
+
+		private static bool IsMarkedDependency(
+			INamedTypeSymbol dependencyAttributeType,
+			ParameterSyntax parameter,
+			SemanticModel model
+		) => parameter
+			.AttributeLists
+			.SelectMany( al => al.Attributes )
+			.Any( attr => IsAttribute( dependencyAttributeType, attr, model ) );
 
 		private static bool IsAttribute(
 			INamedTypeSymbol expectedType,
