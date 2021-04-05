@@ -147,7 +147,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 					Diagnostic.Create( Diagnostics.RpcContextFirstArgument, firstParam.GetLocation() )
 				);
 			} else if( dependencyAttributeType != null
-				&& IsMarkedDependcency( dependencyAttributeType, firstParam, context.SemanticModel )
+				&& IsMarkedDependency( dependencyAttributeType, firstParam, context.SemanticModel )
 			) {
 				context.ReportDiagnostic(
 					Diagnostic.Create( Diagnostics.RpcContextMarkedDependency, firstParam.GetLocation() )
@@ -162,7 +162,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		) {
 			bool doneDependencies = false;
 			foreach( var param in ps.Skip( 1 ) ) {
-				var isDep = IsMarkedDependcency( dependencyAttributeType, param, context.SemanticModel );
+				var isDep = IsMarkedDependency( dependencyAttributeType, param, context.SemanticModel );
 
 				if( !isDep && !doneDependencies ) {
 					doneDependencies = true;
@@ -172,7 +172,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			}
 		}
 
-		private static bool IsMarkedDependcency(
+		private static bool IsMarkedDependency(
 			INamedTypeSymbol dependencyAttributeType,
 			ParameterSyntax parameter,
 			SemanticModel model
