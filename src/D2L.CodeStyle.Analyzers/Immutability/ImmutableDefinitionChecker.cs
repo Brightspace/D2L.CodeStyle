@@ -357,13 +357,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				.Select( sr => sr.GetSyntax() )
 				.SelectMany( constructorSyntax => constructorSyntax.DescendantNodes() )
 				.OfType<AssignmentExpressionSyntax>()
-				.Where( assignmentSyntax => IsAnAssignmentTo( assignmentSyntax, memberSymbol ) )
-				.Select( assignmentSyntax => assignmentSyntax.Right )
-				.Select( expr => AssignmentInfo.Create(
-					model: m_compilation.GetSemanticModel( expr.SyntaxTree ),
-					isInitializer: false,
-					expression: expr
-				) );
+				.Select( assignmentSyntax => GetAssignmentInfoIfToSymbolOrNull( assignmentSyntax, memberSymbol ) )
+				.Where( info => info.HasValue )
+				.Select( info => info.Value );
 
 			if ( initializer != null ) {
 				assignmentExpressions = assignmentExpressions.Append(
@@ -378,7 +374,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return assignmentExpressions;
 		}
 
-		private bool IsAnAssignmentTo(
+		private AssignmentInfo? GetAssignmentInfoIfToSymbolOrNull(
 			AssignmentExpressionSyntax assignmentSyntax,
 			ISymbol memberSymbol
 		) {
@@ -387,9 +383,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			var leftSideSymbol = semanticModel.GetSymbolInfo( assignmentSyntax.Left )
 				.Symbol;
 
-			return SymbolEqualityComparer.Default.Equals(
+			if( !SymbolEqualityComparer.Default.Equals(
 				memberSymbol,
 				leftSideSymbol
+			) ) {
+				return null;
+			}
+
+			return AssignmentInfo.Create(
+				model: semanticModel,
+				isInitializer: false,
+				expression: assignmentSyntax.Right
 			);
 		}
 
