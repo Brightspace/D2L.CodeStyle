@@ -113,6 +113,15 @@ namespace SpecTests {
 				Tee = you;
 			}
 		}
+
+		[Immutable]
+		public sealed class SomeClassWithConstructor8 {
+			public readonly RegularInterface m_interface = new Good();
+
+			public SomeClassWithConstructor8() {
+				(m_interface) = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad,  (or [ImmutableBaseClass])) */ new Bad() /**/;
+			}
+		}
 		#endregion
 
 
