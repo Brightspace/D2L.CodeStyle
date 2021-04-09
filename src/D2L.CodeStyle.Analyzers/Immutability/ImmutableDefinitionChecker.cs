@@ -301,16 +301,38 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		private readonly struct AssignmentInfo {
-			public AssignmentInfo(
-				bool isInitiailizer,
-				ExpressionSyntax expression
+			private AssignmentInfo(
+				bool isInitializer,
+				ExpressionSyntax expression,
+				ITypeSymbol assignedType
 			) {
-				IsInitializer = isInitiailizer;
+				IsInitializer = isInitializer;
 				Expression = expression;
+				AssignedType = assignedType;
 			}
 
 			public bool IsInitializer { get; }
 			public ExpressionSyntax Expression { get; }
+			public ITypeSymbol AssignedType { get; }
+
+			public static AssignmentInfo Create(
+				SemanticModel model,
+				bool isInitializer,
+				ExpressionSyntax expression
+			) {
+				TypeInfo typeInfo = model.GetTypeInfo( expression );
+
+				// Type can be null in the case of an implicit conversion where the
+				// expression alone doesn't have a type. For example:
+				//   int[] foo = { 1, 2, 3 };
+				ITypeSymbol assignedType = typeInfo.Type ?? typeInfo.ConvertedType;
+
+				return new AssignmentInfo(
+					isInitializer: isInitializer,
+					expression: expression,
+					assignedType: assignedType
+				);
+			}
 		}
 
 
@@ -337,11 +359,19 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				.OfType<AssignmentExpressionSyntax>()
 				.Where( assignmentSyntax => IsAnAssignmentTo( assignmentSyntax, memberSymbol ) )
 				.Select( assignmentSyntax => assignmentSyntax.Right )
-				.Select( expr => new AssignmentInfo( isInitiailizer: false, expr ) );
+				.Select( expr => AssignmentInfo.Create(
+					model: m_compilation.GetSemanticModel( expr.SyntaxTree ),
+					isInitializer: false,
+					expression: expr
+				) );
 
 			if ( initializer != null ) {
 				assignmentExpressions = assignmentExpressions.Append(
-					new AssignmentInfo( isInitiailizer: true, initializer )
+					AssignmentInfo.Create(
+						model: m_compilation.GetSemanticModel( initializer.SyntaxTree ),
+						isInitializer: true,
+						expression: initializer
+					)
 				);
 			}
 
@@ -352,9 +382,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			AssignmentExpressionSyntax assignmentSyntax,
 			ISymbol memberSymbol
 		) {
-			var semanticModel = m_compilation.GetSemanticModel(
-				memberSymbol.DeclaringSyntaxReferences.Single().GetSyntax().SyntaxTree
-			);
+			var semanticModel = m_compilation.GetSemanticModel( assignmentSyntax.SyntaxTree );
 
 			var leftSideSymbol = semanticModel.GetSymbolInfo( assignmentSyntax.Left )
 				.Symbol;
@@ -391,7 +419,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			query = default;
 			diagnostic = null;
-			SemanticModel semanticModel = null;
 
 			// Easy cases
 			switch( assignment.Expression.Kind() ) {
@@ -432,7 +459,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// Some methods are known to have return values that are
 					// immutable (such as Enumerable.Empty()).
 					// These should be considered immutable by the Analyzer.
-					semanticModel ??= m_compilation.GetSemanticModel( assignment.Expression.SyntaxTree );
+					SemanticModel semanticModel = m_compilation.GetSemanticModel( assignment.Expression.SyntaxTree );
 					if( semanticModel
 						.GetSymbolInfo( assignment.Expression )
 						.Symbol is not IMethodSymbol methodSymbol
@@ -448,26 +475,19 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			// If nothing above was caught, then fallback to querying.
-			semanticModel ??= m_compilation.GetSemanticModel( assignment.Expression.SyntaxTree );
-			var typeInfo = semanticModel.GetTypeInfo( assignment.Expression );
-
-			// Type can be null in the case of an implicit conversion where the
-			// expression alone doesn't have a type. For example:
-			//   int[] foo = { 1, 2, 3 };
-			var typeToCheck = typeInfo.Type ?? typeInfo.ConvertedType;
 
 			if( assignment.Expression is BaseObjectCreationExpressionSyntax _ ) {
 				// When we have a new T() we don't need to worry about the value
 				// being anything other than an instance of T.
 				query = new ImmutabilityQuery(
 					ImmutableTypeKind.Instance,
-					typeToCheck
+					type: assignment.AssignedType
 				);
 			} else {
 				// In general we need to handle subtypes.
 				query = new ImmutabilityQuery(
 					ImmutableTypeKind.Total,
-					typeToCheck
+					type: assignment.AssignedType
 				);
 			}
 
