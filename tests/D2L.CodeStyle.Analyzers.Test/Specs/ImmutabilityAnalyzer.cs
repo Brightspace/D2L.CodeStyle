@@ -122,6 +122,63 @@ namespace SpecTests {
 				(m_interface) = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad,  (or [ImmutableBaseClass])) */ new Bad() /**/;
 			}
 		}
+
+		[Immutable]
+		public sealed class SomeClassWithConstructor9 {
+			public readonly RegularInterface m_interface = new Good();
+			public readonly RegularInterface m_interface2 = new Good();
+
+			public SomeClassWithConstructor9() {
+				(m_interface, m_interface2) = (
+					/* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad,  (or [ImmutableBaseClass])) */ new Bad() /**/,
+					new Good();
+				);
+			}
+		}
+
+		[Immutable]
+		public sealed class SomeClassWithConstructor10 {
+			public readonly RegularInterface m_interface = new Good();
+			public readonly RegularInterface m_interface2 = new Good();
+
+			public SomeClassWithConstructor10() {
+				(m_interface, m_interface2) = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad, ) */ GetValues() /**/;
+			}
+
+			public static (Bad, Good) GetValues() => default;
+		}
+
+		[Immutable]
+		public sealed class SomeClassWithConstructor11 {
+			public readonly RegularInterface m_interface = new Good();
+			public readonly RegularInterface m_interface2 = new Good();
+
+			public SomeClassWithConstructor11() {
+				(m_interface, m_interface2) = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad, ) */ GetValues() /**/;
+			}
+
+			public static DeconstructingClass GetValues() => default;
+
+			private sealed class DeconstructingClass {
+				public void Deconstruct( out Bad bad, out Good good ) => (bad, good) = (default, default);
+			}
+		}
+
+		[Immutable]
+		public sealed class SomeClassWithConstructor12 {
+			public readonly RegularInterface m_interface = new Good();
+			public readonly RegularInterface m_interface2 = new Good();
+
+			public SomeClassWithConstructor12() {
+				(m_interface, m_interface2) = /* NonImmutableTypeHeldByImmutable(blarg, blarg, blarg) | NonImmutableTypeHeldByImmutable(blarg, blarg, blarg) */ GetValues() /**/;
+			}
+
+			public static DeconstructingClass GetValues() => default;
+
+			private sealed class DeconstructingClass {
+				public void Deconstruct( out Good A, out Good B, out Good C ) => (A, B, C) = (default, default, default);
+			}
+		}
 		#endregion
 
 
@@ -1199,10 +1256,10 @@ namespace SpecTests {
 
 		int /* MemberIsNotReadOnly(Property, Y, SomeRecord) */ Y /**/ { get; set; }
 
-		/* NonImmutableTypeHeldByImmutable(class, object, ) */ object /**/ Z { get; }
+		object Z { get; }
 
 		public SomeRecord( SomeRecord v, int w, Types.SomeImmutableClass x, int y, object z )
-			=> (V, W, X, Y, Z) = (v, w, x, y, z);
+			=> (V, W, X, Y, Z) = (v, w, x, y, /* NonImmutableTypeHeldByImmutable(class, object, ) */ z /**/);
     }
 
 	record NonImmutableBaseRecord(object x);

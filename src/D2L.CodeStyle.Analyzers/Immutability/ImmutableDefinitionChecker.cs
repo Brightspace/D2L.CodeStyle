@@ -333,6 +333,18 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					assignedType: assignedType
 				);
 			}
+
+			public static AssignmentInfo Create(
+				bool isInitializer,
+				ExpressionSyntax expression,
+				ITypeSymbol assignedType
+			) {
+				return new AssignmentInfo(
+					isInitializer: isInitializer,
+					expression: expression,
+					assignedType: assignedType
+				);
+			}
 		}
 
 
@@ -380,21 +392,80 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			var semanticModel = m_compilation.GetSemanticModel( assignmentSyntax.SyntaxTree );
 
-			var leftSideSymbol = semanticModel.GetSymbolInfo( assignmentSyntax.Left )
-				.Symbol;
+			var lhsExpressions = assignmentSyntax.Left switch {
+				TupleExpressionSyntax tuple => tuple.Arguments.Select( arg => arg.Expression ).ToImmutableArray(),
+				_ => ImmutableArray.Create( assignmentSyntax.Left )
+			};
 
-			if( !SymbolEqualityComparer.Default.Equals(
-				memberSymbol,
-				leftSideSymbol
-			) ) {
-				return null;
+			for( var i = 0; i < lhsExpressions.Length; ++i ) {
+				var lhs = lhsExpressions[ i ];
+
+				var leftSideSymbol = semanticModel.GetSymbolInfo( lhs )
+					.Symbol;
+
+				if( !SymbolEqualityComparer.Default.Equals(
+					memberSymbol,
+					leftSideSymbol
+				) ) {
+					continue;
+				}
+
+				if( lhsExpressions.Length == 1 ) {
+					return AssignmentInfo.Create(
+						model: semanticModel,
+						isInitializer: false,
+						expression: assignmentSyntax.Right
+					);
+				}
+
+				if( semanticModel.GetTypeInfo( assignmentSyntax.Right ).Type is INamedTypeSymbol assignedType
+					&& assignedType.IsTupleType
+				) {
+					if( assignedType.TypeArguments.Length != lhsExpressions.Length ) {
+						return AssignmentInfo.Create(
+							isInitializer: false,
+							expression: assignmentSyntax.Right,
+							assignedType: null
+						);
+					}
+
+					ExpressionSyntax rhs = assignmentSyntax.Right switch {
+						TupleExpressionSyntax tuple => tuple.Arguments[ i ].Expression,
+						_ => assignmentSyntax.Right
+					};
+
+					return AssignmentInfo.Create(
+						isInitializer: false,
+						expression: rhs,
+						assignedType: assignedType.TypeArguments[ i ]
+					);
+				}
+
+				DeconstructionInfo deconstruction = semanticModel.GetDeconstructionInfo( assignmentSyntax );
+				if( deconstruction.Method == null ) {
+					return AssignmentInfo.Create(
+						isInitializer: false,
+						expression: assignmentSyntax.Right,
+						assignedType: null
+					);
+				}
+
+				if( deconstruction.Method.Parameters.Length != lhsExpressions.Length ) {
+					return AssignmentInfo.Create(
+						isInitializer: false,
+						expression: assignmentSyntax.Right,
+						assignedType: null
+					);
+				}
+
+				return AssignmentInfo.Create(
+					isInitializer: false,
+					expression: assignmentSyntax.Right,
+					assignedType: deconstruction.Method.Parameters[ i ].Type
+				);
 			}
 
-			return AssignmentInfo.Create(
-				model: semanticModel,
-				isInitializer: false,
-				expression: assignmentSyntax.Right
-			);
+			return null;
 		}
 
 		private enum AssignmentQueryKind {
@@ -476,6 +547,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					}
 
 					break;
+			}
+
+			if( assignment.AssignedType == null
+				|| assignment.AssignedType.TypeKind == TypeKind.Error
+			) {
+				diagnostic = Diagnostic.Create(
+					Diagnostics.NonImmutableTypeHeldByImmutable,
+					assignment.Expression.GetLocation(),
+					"blarg", "blarg", "blarg"
+				);
+				return AssignmentQueryKind.Hopeless;
 			}
 
 			// If nothing above was caught, then fallback to querying.
