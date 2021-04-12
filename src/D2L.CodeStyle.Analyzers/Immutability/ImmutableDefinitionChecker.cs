@@ -333,6 +333,18 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					assignedType: assignedType
 				);
 			}
+
+			public static AssignmentInfo Create(
+				bool isInitializer,
+				ExpressionSyntax expression,
+				ITypeSymbol assignedType
+			) {
+				return new AssignmentInfo(
+					isInitializer: isInitializer,
+					expression: expression,
+					assignedType: assignedType
+				);
+			}
 		}
 
 
@@ -357,13 +369,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				.Select( sr => sr.GetSyntax() )
 				.SelectMany( constructorSyntax => constructorSyntax.DescendantNodes() )
 				.OfType<AssignmentExpressionSyntax>()
-				.Where( assignmentSyntax => IsAnAssignmentTo( assignmentSyntax, memberSymbol ) )
-				.Select( assignmentSyntax => assignmentSyntax.Right )
-				.Select( expr => AssignmentInfo.Create(
-					model: m_compilation.GetSemanticModel( expr.SyntaxTree ),
-					isInitializer: false,
-					expression: expr
-				) );
+				.Select( assignmentSyntax => GetAssignmentInfoIfToSymbolOrNull( assignmentSyntax, memberSymbol ) )
+				.Where( info => info.HasValue )
+				.Select( info => info.Value );
 
 			if ( initializer != null ) {
 				assignmentExpressions = assignmentExpressions.Append(
@@ -378,19 +386,112 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return assignmentExpressions;
 		}
 
-		private bool IsAnAssignmentTo(
+		private AssignmentInfo? GetAssignmentInfoIfToSymbolOrNull(
 			AssignmentExpressionSyntax assignmentSyntax,
 			ISymbol memberSymbol
 		) {
 			var semanticModel = m_compilation.GetSemanticModel( assignmentSyntax.SyntaxTree );
 
-			var leftSideSymbol = semanticModel.GetSymbolInfo( assignmentSyntax.Left )
-				.Symbol;
+			var lhsExpressions = assignmentSyntax.Left switch {
+				TupleExpressionSyntax tuple => tuple.Arguments.Select( arg => arg.Expression ).ToImmutableArray(),
+				_ => ImmutableArray.Create( assignmentSyntax.Left )
+			};
 
-			return SymbolEqualityComparer.Default.Equals(
-				memberSymbol,
-				leftSideSymbol
-			);
+			for( var i = 0; i < lhsExpressions.Length; ++i ) {
+				var lhs = lhsExpressions[ i ];
+
+				var leftSideSymbol = semanticModel.GetSymbolInfo( lhs )
+					.Symbol;
+
+				if( !SymbolEqualityComparer.Default.Equals(
+					memberSymbol,
+					leftSideSymbol
+				) ) {
+					continue;
+				}
+
+				// LHS is just a single variable, no deconstruction happening
+				if( lhsExpressions.Length == 1 ) {
+					return AssignmentInfo.Create(
+						model: semanticModel,
+						isInitializer: false,
+						expression: assignmentSyntax.Right
+					);
+				}
+
+				// Value tuples are a common RHS assignment for deconstruction, but it's built-in and there's
+				// no deconstruction method. Handle value tuples specifically if it is one.
+				if( semanticModel.GetTypeInfo( assignmentSyntax.Right ).Type is INamedTypeSymbol assignedType
+					&& assignedType.IsTupleType
+				) {
+					if( assignedType.TypeArguments.Length != lhsExpressions.Length ) {
+						return AssignmentInfo.Create(
+							isInitializer: false,
+							expression: assignmentSyntax.Right,
+							assignedType: null
+						);
+					}
+
+					// If this is a value tuple literal then we can narrow in to the exact expression
+					// responsible for the tuple item. This allows for additional specificity prior to conversions
+					// or things like "known immutable method returns" (such as Array.Empty())
+					ExpressionSyntax rhs = assignmentSyntax.Right switch {
+						TupleExpressionSyntax tuple => tuple.Arguments[ i ].Expression,
+						_ => assignmentSyntax.Right
+					};
+
+					return AssignmentInfo.Create(
+						isInitializer: false,
+						expression: rhs,
+						assignedType: assignedType.TypeArguments[ i ]
+					);
+				}
+
+				// Other types can participate in deconstruction by specifying a deconstruction method
+				// public void Deconstruct( out T1 a, out T2 b ... )
+				// These methods must have a unique number of arguments. e.g. the following are ambiguous
+				//   public void Deconstruct( out string a, out string b )
+				//   public void Deconstruct( out int a, out int b )
+				// The overall deconstruction can be "nested" if a type's deconstruction includes a type which
+				// is itself deconstructed as well
+				DeconstructionInfo deconstruction = semanticModel.GetDeconstructionInfo( assignmentSyntax );
+
+				// If there was no method, then:
+				//   * This might've been something like a value tuple, where the deconstruction is implicit
+				//   * This isn't a valid assignment (and thus should be compiler error)
+				if( deconstruction.Method == null ) {
+					return AssignmentInfo.Create(
+						isInitializer: false,
+						expression: assignmentSyntax.Right,
+						assignedType: null
+					);
+				}
+
+				// DeconstructionInfo is a tree. Each non-terminal node has a method which produces the values
+				// Some child nodes may themselves have methods as well, producing more values (referred to as
+				// "nested" deconstruction).
+				//
+				// Only handling the simple case of non-nested deconstruction, meaning the tree has a depth of 2
+				// with a single method. In this case there should be a parameter for every variable being assigned to
+				if( deconstruction.Method.Parameters.Length != lhsExpressions.Length ) {
+					return AssignmentInfo.Create(
+						isInitializer: false,
+						expression: assignmentSyntax.Right,
+
+						// While we weren't able to determine the pre-conversion type being assigned (with this simple logic)
+						// just consider the variable's type so this isn't always a complete error
+						assignedType: semanticModel.GetTypeInfo( lhsExpressions[ i ] ).Type
+					);
+				}
+
+				return AssignmentInfo.Create(
+					isInitializer: false,
+					expression: assignmentSyntax.Right,
+					assignedType: deconstruction.Method.Parameters[ i ].Type
+				);
+			}
+
+			return null;
 		}
 
 		private enum AssignmentQueryKind {
@@ -472,6 +573,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					}
 
 					break;
+			}
+
+			if( assignment.AssignedType == null
+				|| assignment.AssignedType.TypeKind == TypeKind.Error
+			) {
+				diagnostic = Diagnostic.Create(
+					Diagnostics.NonImmutableTypeHeldByImmutable,
+					assignment.Expression.GetLocation(),
+					"blarg", "blarg", "blarg"
+				);
+				return AssignmentQueryKind.Hopeless;
 			}
 
 			// If nothing above was caught, then fallback to querying.
