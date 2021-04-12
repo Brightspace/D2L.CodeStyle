@@ -116,17 +116,17 @@ namespace SpecTests {
 
 		[Immutable]
 		public sealed class SomeClassWithConstructor8 {
-			public readonly RegularInterface m_interface = new Good();
+			public readonly RegularInterface m_interface;
 
 			public SomeClassWithConstructor8() {
-				(m_interface) = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad,  (or [ImmutableBaseClass])) */ new Bad() /**/;
+				( m_interface ) = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad,  (or [ImmutableBaseClass])) */ new Bad() /**/;
 			}
 		}
 
 		[Immutable]
 		public sealed class SomeClassWithConstructor9 {
-			public readonly RegularInterface m_interface = new Good();
-			public readonly RegularInterface m_interface2 = new Good();
+			public readonly RegularInterface m_interface;
+			public readonly RegularInterface m_interface2;
 
 			public SomeClassWithConstructor9() {
 				(m_interface, m_interface2) = (
@@ -138,8 +138,8 @@ namespace SpecTests {
 
 		[Immutable]
 		public sealed class SomeClassWithConstructor10 {
-			public readonly RegularInterface m_interface = new Good();
-			public readonly RegularInterface m_interface2 = new Good();
+			public readonly RegularInterface m_interface;
+			public readonly RegularInterface m_interface2;
 
 			public SomeClassWithConstructor10() {
 				(m_interface, m_interface2) = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad, ) */ GetValues() /**/;
@@ -150,8 +150,8 @@ namespace SpecTests {
 
 		[Immutable]
 		public sealed class SomeClassWithConstructor11 {
-			public readonly RegularInterface m_interface = new Good();
-			public readonly RegularInterface m_interface2 = new Good();
+			public readonly RegularInterface m_interface;
+			public readonly RegularInterface m_interface2;
 
 			public SomeClassWithConstructor11() {
 				(m_interface, m_interface2) = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad, ) */ GetValues() /**/;
@@ -159,15 +159,15 @@ namespace SpecTests {
 
 			public static DeconstructingClass GetValues() => default;
 
-			private sealed class DeconstructingClass {
+			public sealed class DeconstructingClass {
 				public void Deconstruct( out Bad bad, out Good good ) => (bad, good) = (default, default);
 			}
 		}
 
 		[Immutable]
 		public sealed class SomeClassWithConstructor12 {
-			public readonly RegularInterface m_interface = new Good();
-			public readonly RegularInterface m_interface2 = new Good();
+			public readonly RegularInterface m_interface;
+			public readonly RegularInterface m_interface2;
 
 			public SomeClassWithConstructor12() {
 				(m_interface, m_interface2) = /* NonImmutableTypeHeldByImmutable(blarg, blarg, blarg) | NonImmutableTypeHeldByImmutable(blarg, blarg, blarg) */ GetValues() /**/;
@@ -175,8 +175,51 @@ namespace SpecTests {
 
 			public static DeconstructingClass GetValues() => default;
 
-			private sealed class DeconstructingClass {
+			public sealed class DeconstructingClass {
 				public void Deconstruct( out Good A, out Good B, out Good C ) => (A, B, C) = (default, default, default);
+			}
+		}
+
+		[Immutable]
+		public sealed class SomeClassWithConstructor13 {
+			public readonly RegularInterface m_interface;
+			public readonly RegularInterface m_interface2;
+			public readonly RegularInterface m_interface3;
+
+			public SomeClassWithConstructor13() {
+				(m_interface, (m_interface2, m_interface3)) =
+					/*NonImmutableTypeHeldByImmutable(interface, SpecTests.Types.RegularInterface, ) | NonImmutableTypeHeldByImmutable(interface, SpecTests.Types.RegularInterface, ) | NonImmutableTypeHeldByImmutable(interface, SpecTests.Types.RegularInterface, ) */ GetValues() /**/;
+			}
+
+			public static DeconstructingClass GetValues() => default;
+
+			public sealed class DeconstructingClass {
+				public void Deconstruct( out Good A, out DeconstructingClass2 DC ) => (A, DC) = (default, default);
+			}
+
+			private sealed class DeconstructingClass2 {
+				public void Deconstruct( out Good B, out Good C ) => (B, C) = (default, default);
+			}
+		}
+
+		[Immutable]
+		public sealed class SomeClassWithConstructor14 {
+			public readonly Good m_interface;
+			public readonly Good m_interface2;
+			public readonly Good m_interface3;
+
+			public SomeClassWithConstructor14() {
+				(m_interface, (m_interface2, m_interface3)) = GetValues();
+			}
+
+			public static DeconstructingClass GetValues() => default;
+
+			public sealed class DeconstructingClass {
+				public void Deconstruct( out Good A, out DeconstructingClass2 DC ) => (A, DC) = (default, default);
+			}
+
+			public sealed class DeconstructingClass2 {
+				public void Deconstruct( out Good B, out Good C ) => (B, C) = (default, default);
 			}
 		}
 		#endregion

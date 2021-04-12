@@ -477,7 +477,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					return AssignmentInfo.Create(
 						isInitializer: false,
 						expression: assignmentSyntax.Right,
-						assignedType: null
+
+						// While we weren't able to determine the pre-conversion type being assigned (with this simple logic)
+						// just consider the variable's type so this isn't always a complete error
+						assignedType: semanticModel.GetTypeInfo( lhsExpressions[ i ] ).Type
 					);
 				}
 
