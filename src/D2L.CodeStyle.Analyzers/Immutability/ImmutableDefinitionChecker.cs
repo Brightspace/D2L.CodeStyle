@@ -410,6 +410,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					continue;
 				}
 
+				// LHS is just a single variable, no deconstruction happening
 				if( lhsExpressions.Length == 1 ) {
 					return AssignmentInfo.Create(
 						model: semanticModel,
@@ -418,6 +419,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					);
 				}
 
+				// Value tuples are a common RHS assignment for deconstruction, but it's built-in and there's
+				// no deconstruction method. Handle value tuples specifically if it is one.
 				if( semanticModel.GetTypeInfo( assignmentSyntax.Right ).Type is INamedTypeSymbol assignedType
 					&& assignedType.IsTupleType
 				) {
@@ -429,6 +432,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						);
 					}
 
+					// If this is a value tuple literal then we can narrow in to the exact expression
+					// responsible for the tuple item. This allows for additional specificity prior to conversions
+					// or things like "known immutable method returns" (such as Array.Empty())
 					ExpressionSyntax rhs = assignmentSyntax.Right switch {
 						TupleExpressionSyntax tuple => tuple.Arguments[ i ].Expression,
 						_ => assignmentSyntax.Right
@@ -441,7 +447,18 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					);
 				}
 
+				// Other types can participate in deconstruction by specifying a deconstruction method
+				// public void Deconstruct( out T1 a, out T2 b ... )
+				// These methods must have a unique number of arguments. e.g. the following are ambiguous
+				//   public void Deconstruct( out string a, out string b )
+				//   public void Deconstruct( out int a, out int b )
+				// The overall deconstruction can be "nested" if a type's deconstruction includes a type which
+				// is itself deconstructed as well
 				DeconstructionInfo deconstruction = semanticModel.GetDeconstructionInfo( assignmentSyntax );
+
+				// If there was no method, then:
+				//   * This might've been something like a value tuple, where the deconstruction is implicit
+				//   * This isn't a valid assignment (and thus should be compiler error)
 				if( deconstruction.Method == null ) {
 					return AssignmentInfo.Create(
 						isInitializer: false,
@@ -450,6 +467,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					);
 				}
 
+				// DeconstructionInfo is a tree. Each non-terminal node has a method which produces the values
+				// Some child nodes may themselves have methods as well, producing more values (referred to as
+				// "nested" deconstruction).
+				//
+				// Only handling the simple case of non-nested deconstruction, meaning the tree has a depth of 2
+				// with a single method. In this case there should be a parameter for every variable being assigned to
 				if( deconstruction.Method.Parameters.Length != lhsExpressions.Length ) {
 					return AssignmentInfo.Create(
 						isInitializer: false,
