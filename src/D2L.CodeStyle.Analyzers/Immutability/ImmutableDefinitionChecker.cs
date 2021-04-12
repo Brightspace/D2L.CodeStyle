@@ -69,6 +69,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				}
 			}
 
+			if( !CheckForDestructedAssignmentsInConstructors( type ) ) {
+				result = false;
+			}
+
 			return result;
 		}
 
@@ -298,6 +302,35 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			return isReadOnly && allAssignmentsAreOfImmutableValues;
+		}
+
+		private bool CheckForDestructedAssignmentsInConstructors( INamedTypeSymbol type ) {
+			bool result = true;
+
+			var constructors = type
+				.Constructors
+				.SelectMany( c => c.DeclaringSyntaxReferences.Select( r => r.GetSyntax() ) );
+
+			foreach( var constructor in constructors ) {
+				var assignments = constructor
+					.DescendantNodes()
+					.OfType<AssignmentExpressionSyntax>();
+
+				foreach( var assignment in assignments ) {
+					if( assignment.Left is not TupleExpressionSyntax ) {
+						continue;
+					}
+
+					m_diagnosticSink( Diagnostic.Create(
+						Diagnostics.UnknownImmutabilityAssignmentKind,
+						location: assignment.Left.GetLocation(),
+						"Deconstructed assignment"
+					) );
+					result = false;
+				}
+			}
+
+			return result;
 		}
 
 		private readonly struct AssignmentInfo {
