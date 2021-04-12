@@ -589,5 +589,15 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor UnknownImmutabilityAssignmentKind = new DiagnosticDescriptor(
+			id: "D2L0079",
+			title: "ImmutabilityAnalyzer does not understand this assignment expression",
+			messageFormat: "ImmutabilityAnalyzer does not understand this assignment expression due to: {0}.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "The analyzer does not understand the result of this assignment, and as such cannot determine if it is safe."
+		);
 	}
 }

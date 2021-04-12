@@ -25,6 +25,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			Diagnostics.ConflictingImmutability,
 			Diagnostics.InvalidAuditType,
 			Diagnostics.AnonymousFunctionsMayCaptureMutability,
+			Diagnostics.UnknownImmutabilityAssignmentKind,
 
 			Diagnostics.MissingTransitiveImmutableAttribute,
 			Diagnostics.InconsistentMethodAttributeApplication

@@ -122,6 +122,26 @@ namespace SpecTests {
 				(m_interface) = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.Bad,  (or [ImmutableBaseClass])) */ new Bad() /**/;
 			}
 		}
+
+		[Immutable]
+		public sealed class SomeClassWithConstructor9 {
+			public readonly RegularInterface m_interface = new Good();
+			public readonly RegularInterface m_interface2 = new Good();
+
+			public SomeClassWithConstructor9() {
+				/* UnknownImmutabilityAssignmentKind(Deconstructed assignment) */ (m_interface, m_interface2) /**/ = (new Good(), new Good());
+			}
+		}
+
+		[Immutable]
+		public sealed class SomeClassWithConstructor10 {
+			public readonly /* NonImmutableTypeHeldByImmutable(interface, SpecTests.Types.RegularInterface, ) */ RegularInterface /**/ m_interface;
+			public readonly /* NonImmutableTypeHeldByImmutable(interface, SpecTests.Types.RegularInterface, ) */ RegularInterface /**/ m_interface2;
+
+			public SomeClassWithConstructor10() {
+				/* UnknownImmutabilityAssignmentKind(Deconstructed assignment) */ (m_interface, m_interface2) /**/ = (new Good(), new Good());
+			}
+		}
 		#endregion
 
 
@@ -1202,7 +1222,7 @@ namespace SpecTests {
 		/* NonImmutableTypeHeldByImmutable(class, object, ) */ object /**/ Z { get; }
 
 		public SomeRecord( SomeRecord v, int w, Types.SomeImmutableClass x, int y, object z )
-			=> (V, W, X, Y, Z) = (v, w, x, y, z);
+			=> /* UnknownImmutabilityAssignmentKind(Deconstructed assignment) */ (V, W, X, Y, Z) /**/ = (v, w, x, y, z);
     }
 
 	record NonImmutableBaseRecord(object x);
