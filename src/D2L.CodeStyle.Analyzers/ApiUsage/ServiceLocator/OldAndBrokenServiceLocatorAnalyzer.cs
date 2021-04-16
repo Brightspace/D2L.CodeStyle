@@ -36,6 +36,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			var factoryType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.OldAndBrokenServiceLocatorFactory" );
 			var activatorType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.IObjectActivator" );
 			var customActivatorType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.ICustomObjectActivator" );
+			var staticDILocatorType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.Default.StaticDI.Current" );
 
 			// If those type lookups failed then OldAndBrokenServiceLocator
 			// cannot resolve and we don't need to register our analyzer.
@@ -51,7 +52,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				locatorType,
 				factoryType,
 				activatorType,
-				customActivatorType
+				customActivatorType,
+				staticDILocatorType
 			);
 
 			AllowedTypeList allowedTypeList = AllowedTypeList.CreateFromAnalyzerOptions(
