@@ -30,6 +30,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// Framework Types
 			("System.ComponentModel.TypeConverter", default),
 			("System.DateTime", default),
+			("System.DateTimeOffset", default),
 			("System.Drawing.Imaging.ImageFormat", default),
 			("System.Drawing.Size", default), // only safe because it's a struct with primitive fields
 			("System.Guid", default),
