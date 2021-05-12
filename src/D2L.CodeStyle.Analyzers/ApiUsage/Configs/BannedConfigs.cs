@@ -12,7 +12,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 			.Add( "GetOrg", ImmutableDictionary.Create<string, string>( StringComparer.OrdinalIgnoreCase )
 				.Add( "d2l.Settings.WebServerName", "WebServerName is being moved to Hiera data. Use IUrlFormatter or IWebServerNameProvider instead." )
 				.Add( "d2l.System.Aws.Region", "Use IOrgAwsRegionProvider instead." )
-				.Add( "d2l.System.Services.ProductTelemetryEndpoint", "Use ITelemetryEventLogger.Endpoint( orgId ) instead." )
 
 				.Add( "Directories.Org.Content", "Use IFileSystemRootProvider.GetContentPath( orgId ) instead." )
 				.Add( "Directories.Org.Shared", "Use IFileSystemRootProvider.GetSharedPath( orgId ) instead." )
