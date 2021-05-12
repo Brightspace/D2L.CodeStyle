@@ -53,6 +53,11 @@ namespace D2L.CodeStyle.Analyzers.Specs {
 				orgId: 123
 			);
 
+			m_configViewer.GetOrg<string>(
+				configName: /* BannedConfig(d2l.System.Services.ProductTelemetryEndpoint, ProductTelemetryEndpoint is encapsulated in LP framework core. Use ITelemetryEventLogger.Endpoint( orgId ) instead.) */ "d2l.System.Services.ProductTelemetryEndpoint" /**/,
+				orgId: 123,
+			);
+
 			// <T> isn't considered
 			m_configViewer.GetOrg<int>(
 				123,
