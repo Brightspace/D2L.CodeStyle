@@ -31,19 +31,27 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			Diagnostics.InconsistentMethodAttributeApplication
 		);
 
+		private readonly ImmutableHashSet<string> m_additionalImmutableTypes;
+
+		public ImmutabilityAnalyzer() : this( ImmutableHashSet<string>.Empty ) { }
+
+		public ImmutabilityAnalyzer( ImmutableHashSet<string> additionalImmutableTypes ) {
+			m_additionalImmutableTypes = additionalImmutableTypes;
+		}
+
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
 			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics );
 			context.RegisterCompilationStartAction( CompilationStart );
 		}
 
-		public static void CompilationStart(
+		public void CompilationStart(
 			CompilationStartAnalysisContext context
 		) {
 			if( !AnnotationsContext.TryCreate( context.Compilation, out AnnotationsContext annotationsContext ) ) {
 				return;
 			}
-			ImmutabilityContext immutabilityContext = ImmutabilityContext.Create( context.Compilation, annotationsContext );
+			ImmutabilityContext immutabilityContext = ImmutabilityContext.Create( context.Compilation, annotationsContext, m_additionalImmutableTypes );
 
 			context.RegisterSymbolAction(
 				ctx => AnalyzeTypeDeclaration(
