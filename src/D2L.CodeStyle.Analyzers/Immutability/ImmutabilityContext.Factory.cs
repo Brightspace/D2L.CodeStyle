@@ -86,17 +86,43 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		);
 
 
-		internal static ImmutabilityContext Create( Compilation compilation, AnnotationsContext annotationsContext ) {
+		internal static ImmutabilityContext Create(
+			Compilation compilation,
+			AnnotationsContext annotationsContext,
+			ImmutableHashSet<string> additionalImmutableTypes = default
+		) {
+			if( additionalImmutableTypes == default ) {
+				additionalImmutableTypes = ImmutableHashSet<string>.Empty;
+			}
 
 			ImmutableDictionary<string, IAssemblySymbol> compilationAssemblies = GetCompilationAssemblies( compilation );
 
 			// Generate a dictionary of types that we have specifically determined
 			// should be considered Immutable by the Analyzer.
-			var extraImmutableTypesBuilder = ImmutableDictionary.CreateBuilder<INamedTypeSymbol, ImmutableTypeInfo>();
+			var extraImmutableTypesBuilder = ImmutableDictionary.CreateBuilder<INamedTypeSymbol, ImmutableTypeInfo>( SymbolEqualityComparer.Default );
 			foreach( ( string typeName, string qualifiedAssembly ) in DefaultExtraTypes ) {
 				INamedTypeSymbol type = GetTypeSymbol( compilationAssemblies, compilation, qualifiedAssembly, typeName );
 
 				if( type == null ) {
+					continue;
+				}
+
+				ImmutableTypeInfo info = ImmutableTypeInfo.CreateWithAllConditionalTypeParameters(
+					ImmutableTypeKind.Total,
+					type
+				);
+
+				extraImmutableTypesBuilder.Add( type, info );
+			}
+
+			foreach( string typeName in additionalImmutableTypes ) {
+				INamedTypeSymbol type = GetTypeSymbol( compilationAssemblies, compilation, qualifiedAssembly: default, typeName );
+
+				if( type == null ) {
+					continue;
+				}
+
+				if( extraImmutableTypesBuilder.ContainsKey( type ) ) {
 					continue;
 				}
 
