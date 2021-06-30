@@ -32,6 +32,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			.Add<Thread>(
 				nameof( Thread.Sleep )
 			)
+			.Add<Assembly>(
+				nameof( Assembly.Load )
+			)
 			.AddMethod(
 				"MapPath",
 				new[] {
