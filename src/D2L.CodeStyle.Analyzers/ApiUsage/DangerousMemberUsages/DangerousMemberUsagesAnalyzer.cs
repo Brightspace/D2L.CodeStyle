@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
@@ -17,6 +18,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 
 		private const string DangerousPropertyAuditedAttributeFullName = "D2L.CodeStyle.Annotations.DangerousPropertyUsage+AuditedAttribute";
 		private const string DangerousPropertyUnauditedAttributeFullName = "D2L.CodeStyle.Annotations.DangerousPropertyUsage+UnauditedAttribute";
+
+		private const string DangerousMemberFullName = "D2L.CodeStyle.Annotations.Objects+DangerousMember";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.DangerousMethodsShouldBeAvoided,
@@ -42,12 +45,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 
 			INamedTypeSymbol auditedAttributeType = compilation.GetTypeByMetadataName( DangerousMethodAuditedAttributeFullName );
 			INamedTypeSymbol unauditedAttributeType = compilation.GetTypeByMetadataName( DangerousMethodUnauditedAttributeFullName );
+			INamedTypeSymbol dangerousMemberType = compilation.GetTypeByMetadataName( DangerousMemberFullName );
 			IImmutableSet<ISymbol> dangerousMethods = GetDangerousMethods( compilation );
 
 			context.RegisterSyntaxNodeAction(
 					ctxt => {
 						if( ctxt.Node is InvocationExpressionSyntax invocation ) {
-							AnalyzeMethodInvocation( ctxt, invocation, auditedAttributeType, unauditedAttributeType, dangerousMethods );
+							AnalyzeMethodInvocation( ctxt, invocation, auditedAttributeType, unauditedAttributeType, dangerousMemberType, dangerousMethods );
 						}
 					},
 					SyntaxKind.InvocationExpression
@@ -60,12 +64,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 
 			INamedTypeSymbol auditedAttributeType = compilation.GetTypeByMetadataName( DangerousPropertyAuditedAttributeFullName );
 			INamedTypeSymbol unauditedAttributeType = compilation.GetTypeByMetadataName( DangerousPropertyUnauditedAttributeFullName );
+			INamedTypeSymbol dangerousMemberType = compilation.GetTypeByMetadataName( DangerousMemberFullName );
 			IImmutableSet<ISymbol> dangerousProperties = GetDangerousProperties( compilation );
 
 			context.RegisterSyntaxNodeAction(
 					ctxt => {
 						if( ctxt.Node is MemberAccessExpressionSyntax propertyAccess ) {
-							AnalyzePropertyAccess( ctxt, propertyAccess, auditedAttributeType, unauditedAttributeType, dangerousProperties );
+							AnalyzePropertyAccess( ctxt, propertyAccess, auditedAttributeType, unauditedAttributeType, dangerousMemberType, dangerousProperties );
 						}
 					},
 					SyntaxKind.SimpleMemberAccessExpression
@@ -77,6 +82,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				InvocationExpressionSyntax invocation,
 				INamedTypeSymbol auditedAttributeType,
 				INamedTypeSymbol unauditedAttributeType,
+				INamedTypeSymbol dangerousMemberType,
 				IImmutableSet<ISymbol> dangerousMethods
 			) {
 
@@ -84,7 +90,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				.GetSymbolInfo( invocation.Expression )
 				.Symbol;
 
-			if( !AnalyzePotentiallyDangerousMember( context, methodSymbol, auditedAttributeType, unauditedAttributeType, dangerousMethods ) ) {
+			if( !AnalyzePotentiallyDangerousMember( context, methodSymbol, auditedAttributeType, unauditedAttributeType, dangerousMemberType, dangerousMethods ) ) {
 				return;
 			}
 
@@ -96,6 +102,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				MemberAccessExpressionSyntax propertyAccess,
 				INamedTypeSymbol auditedAttributeType,
 				INamedTypeSymbol unauditedAttributeType,
+				INamedTypeSymbol dangerousMemberType,
 				IImmutableSet<ISymbol> dangerousProperties
 			) {
 
@@ -103,7 +110,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				.GetSymbolInfo( propertyAccess )
 				.Symbol;
 
-			if( !AnalyzePotentiallyDangerousMember( context, propertySymbol, auditedAttributeType, unauditedAttributeType, dangerousProperties ) ) {
+			if( !AnalyzePotentiallyDangerousMember( context, propertySymbol, auditedAttributeType, unauditedAttributeType, dangerousMemberType, dangerousProperties ) ) {
 				return;
 			}
 
@@ -115,6 +122,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				ISymbol memberSymbol,
 				INamedTypeSymbol auditedAttributeType,
 				INamedTypeSymbol unauditedAttributeType,
+				INamedTypeSymbol dangerousMemberType,
 				IImmutableSet<ISymbol> dangerousMembers
 			) {
 
@@ -122,7 +130,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				return false;
 			}
 
-			if( !IsDangerousMemberSymbol( memberSymbol, dangerousMembers ) ) {
+			if( !IsDangerousMemberSymbol( memberSymbol, dangerousMembers ) && !IsDangerousMemberAttribute( memberSymbol, dangerousMemberType ) ) {
 				return false;
 			}
 
@@ -135,6 +143,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			}
 
 			return true;
+		}
+
+		private bool IsDangerousMemberAttribute( ISymbol memberSymbol, INamedTypeSymbol dangerousMemberType ) {
+			return memberSymbol.GetAttributes().Where( attr => attr.AttributeClass.Equals( dangerousMemberType, SymbolEqualityComparer.Default ) ).Any();
 		}
 
 		private static bool IsDangerousMemberSymbol(
