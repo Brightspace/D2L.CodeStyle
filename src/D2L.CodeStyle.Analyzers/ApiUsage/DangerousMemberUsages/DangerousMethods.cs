@@ -10,6 +10,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 
 		internal static readonly IReadOnlyDictionary<string, ImmutableArray<string>> Definitions =
 			ImmutableDictionary.Create<string, ImmutableArray<string>>()
+			.Add<Assembly>(
+				nameof( Assembly.Load )
+			)
 			.Add<FieldInfo>(
 				nameof( FieldInfo.GetValue ),
 				nameof( FieldInfo.SetValue ),
