@@ -2,7 +2,7 @@
 
 // ReSharper disable once CheckNamespace
 namespace D2L.CodeStyle.Annotations {
-	public static class Objects {
+	public static partial class Objects {
 
 		public abstract class ImmutableAttributeBase : Attribute {}
 
