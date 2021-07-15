@@ -19,7 +19,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 		private const string DangerousPropertyAuditedAttributeFullName = "D2L.CodeStyle.Annotations.DangerousPropertyUsage+AuditedAttribute";
 		private const string DangerousPropertyUnauditedAttributeFullName = "D2L.CodeStyle.Annotations.DangerousPropertyUsage+UnauditedAttribute";
 
-		private const string DangerousMemberFullName = "D2L.CodeStyle.Annotations.Objects+DangerousMember";
+		private const string DangerousMethodFullName = "D2L.CodeStyle.Annotations.Objects+DangerousMethod";
+		private const string DangerousPropertyFullName = "D2L.CodeStyle.Annotations.Objects+DangerousProperty";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.DangerousMethodsShouldBeAvoided,
@@ -45,7 +46,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 
 			INamedTypeSymbol auditedAttributeType = compilation.GetTypeByMetadataName( DangerousMethodAuditedAttributeFullName );
 			INamedTypeSymbol unauditedAttributeType = compilation.GetTypeByMetadataName( DangerousMethodUnauditedAttributeFullName );
-			INamedTypeSymbol dangerousMemberType = compilation.GetTypeByMetadataName( DangerousMemberFullName );
+			INamedTypeSymbol dangerousMemberType = compilation.GetTypeByMetadataName( DangerousMethodFullName );
 			IImmutableSet<ISymbol> dangerousMethods = GetDangerousMethods( compilation );
 
 			context.RegisterSyntaxNodeAction(
@@ -64,7 +65,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 
 			INamedTypeSymbol auditedAttributeType = compilation.GetTypeByMetadataName( DangerousPropertyAuditedAttributeFullName );
 			INamedTypeSymbol unauditedAttributeType = compilation.GetTypeByMetadataName( DangerousPropertyUnauditedAttributeFullName );
-			INamedTypeSymbol dangerousMemberType = compilation.GetTypeByMetadataName( DangerousMemberFullName );
+			INamedTypeSymbol dangerousMemberType = compilation.GetTypeByMetadataName( DangerousPropertyFullName );
 			IImmutableSet<ISymbol> dangerousProperties = GetDangerousProperties( compilation );
 
 			context.RegisterSyntaxNodeAction(
