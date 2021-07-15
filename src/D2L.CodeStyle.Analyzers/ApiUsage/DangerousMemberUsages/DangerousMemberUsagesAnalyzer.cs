@@ -147,7 +147,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 		}
 
 		private bool IsDangerousMemberAttribute( ISymbol memberSymbol, INamedTypeSymbol dangerousMemberType ) {
-			return memberSymbol.GetAttributes().Where( attr => attr.AttributeClass.Equals( dangerousMemberType, SymbolEqualityComparer.Default ) ).Any();
+			return memberSymbol.GetAttributes().Any( attr => attr.AttributeClass.Equals( dangerousMemberType, SymbolEqualityComparer.Default ) );
 		}
 
 		private static bool IsDangerousMemberSymbol(
