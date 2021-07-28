@@ -599,5 +599,15 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "The analyzer does not understand the result of this assignment, and as such cannot determine if it is safe."
 		);
+
+		public static readonly DiagnosticDescriptor RpcInvalidParameterType = new DiagnosticDescriptor(
+			id: "D2L0080",
+			title: "Invalid RPC parameter type",
+			messageFormat: "RPC parameters must be of a valid type",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "RPC parameters must be of a valid type"
+		);
 	}
 }

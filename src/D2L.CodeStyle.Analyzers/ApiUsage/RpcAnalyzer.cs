@@ -1,5 +1,7 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -11,7 +13,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.RpcContextFirstArgument,
 			Diagnostics.RpcArgumentSortOrder,
-			Diagnostics.RpcContextMarkedDependency
+			Diagnostics.RpcContextMarkedDependency,
+			Diagnostics.RpcInvalidParameterType
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -27,23 +30,28 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			var rpcPostContextType = context.Compilation.GetTypeByMetadataName( "D2L.Web.IRpcPostContext" );
 			var rpcPostContextBaseType = context.Compilation.GetTypeByMetadataName( "D2L.Web.RequestContext.IRpcPostContextBase" );
 			var dependencyAttributeType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.DependencyAttribute" );
+			var deserializerType = context.Compilation.GetTypeByMetadataName( "D2L.Serialization.IDeserializer" );
 
 			// If any of those type lookups failed then presumably D2L.Web is
 			// not referenced and we don't need to register our analyzer.
 
-			if ( rpcAttributeType == null || rpcAttributeType.Kind == SymbolKind.ErrorType ) {
+			if( rpcAttributeType == null || rpcAttributeType.Kind == SymbolKind.ErrorType ) {
 				return;
 			}
 
-			if ( rpcContextType == null || rpcContextType.Kind == SymbolKind.ErrorType ) {
+			if( rpcContextType == null || rpcContextType.Kind == SymbolKind.ErrorType ) {
 				return;
 			}
 
-			if ( rpcPostContextType == null || rpcPostContextType.Kind == SymbolKind.ErrorType ) {
+			if( rpcPostContextType == null || rpcPostContextType.Kind == SymbolKind.ErrorType ) {
 				return;
 			}
 
-			if ( rpcPostContextBaseType == null || rpcPostContextBaseType.Kind == SymbolKind.ErrorType ) {
+			if( rpcPostContextBaseType == null || rpcPostContextBaseType.Kind == SymbolKind.ErrorType ) {
+				return;
+			}
+
+			if( deserializerType == null || deserializerType.Kind == SymbolKind.ErrorType ) {
 				return;
 			}
 
@@ -57,7 +65,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 					rpcContextType: rpcContextType,
 					rpcPostContextType: rpcPostContextType,
 					rpcPostContextBaseType: rpcPostContextBaseType,
-					dependencyAttributeType: dependencyAttributeType
+					dependencyAttributeType: dependencyAttributeType,
+					deserializerType: deserializerType
 				),
 				SyntaxKind.MethodDeclaration
 			);
@@ -69,15 +78,16 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			INamedTypeSymbol rpcContextType,
 			INamedTypeSymbol rpcPostContextType,
 			INamedTypeSymbol rpcPostContextBaseType,
-			INamedTypeSymbol dependencyAttributeType
+			INamedTypeSymbol dependencyAttributeType,
+			INamedTypeSymbol deserializerType
 		) {
 			var method = context.Node as MethodDeclarationSyntax;
 
-			if ( method == null ) {
+			if( method == null ) {
 				return;
 			}
 
-			if ( !CheckThatMethodIsRpc( context, method, rpcAttributeType ) ) {
+			if( !CheckThatMethodIsRpc( context, method, rpcAttributeType ) ) {
 				return;
 			}
 
@@ -92,7 +102,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 
 			// dependencyAttributeType may be null if that DLL isn't
 			// referenced. In that case don't do some of these checks.
-			if ( dependencyAttributeType != null ) {
+			if( dependencyAttributeType != null ) {
 				CheckThatDependencyArgumentsAreSortedCorrectly(
 					context,
 					method.ParameterList.Parameters,
@@ -101,6 +111,27 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 
 				// other things to check:
 				// - appropriate use of [Dependency]
+			}
+
+			CheckThatRpcParametersAreValid( context, method, deserializerType );
+		}
+
+		private static void CheckThatRpcParametersAreValid(
+			SyntaxNodeAnalysisContext context,
+			MethodDeclarationSyntax method,
+			INamedTypeSymbol deserializerType
+		) {
+			if( deserializerType.GetType() == null ) {
+				throw new Exception( "Failed to resolve type: 'D2L.Serialization.IDeserializer'" );
+			}
+			var parameters = method.ParameterList.Parameters;
+			foreach( var parameterType in parameters.Select( p => p.Type ).Where( parameterType => parameterType != null ) ) {
+				bool isValidParameterType = WebpagesRpcParameterTypeValidator.IsValidParameterType( type: parameterType.GetType(), deserializerType: deserializerType.GetType() );
+				if( !isValidParameterType ) {
+					context.ReportDiagnostic(
+						Diagnostic.Create( Diagnostics.RpcInvalidParameterType, parameterType.GetLocation() )
+					);
+				}
 			}
 		}
 
