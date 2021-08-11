@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
+using D2L.CodeStyle.Analyzers;
+using D2L.CodeStyle.Analyzers.ApiUsage;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -23,6 +26,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			context.RegisterCompilationStartAction( RegisterRpcAnalyzer );
 		}
 
+		private static ImmutableHashSet<INamedTypeSymbol> knownRpcParameterTypes;
+
 		public static void RegisterRpcAnalyzer( CompilationStartAnalysisContext context ) {
 			// Cache some important type lookups
 			var rpcAttributeType = context.Compilation.GetTypeByMetadataName( "D2L.Web.RpcAttribute" );
@@ -31,6 +36,26 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			var rpcPostContextBaseType = context.Compilation.GetTypeByMetadataName( "D2L.Web.RequestContext.IRpcPostContextBase" );
 			var dependencyAttributeType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.DependencyAttribute" );
 			var deserializerType = context.Compilation.GetTypeByMetadataName( "D2L.Serialization.IDeserializer" );
+			var treeNodeType = context.Compilation.GetTypeByMetadataName( "D2L.Web.UI.TreeControl.ITreeNode" );
+			var dictionaryType = context.Compilation.GetTypeByMetadataName( "System.Collections.Generic.IDictionary<string,string>" );
+
+			knownRpcParameterTypes = ImmutableHashSet.Create<INamedTypeSymbol>(
+				context.Compilation.GetTypeByMetadataName( "System.Boolean" ),
+				context.Compilation.GetTypeByMetadataName( "System.Decimal" ),
+				context.Compilation.GetTypeByMetadataName( "System.Float" ),
+				context.Compilation.GetTypeByMetadataName( "System.Int32" ),
+				context.Compilation.GetTypeByMetadataName( "System.Int64" ),
+				context.Compilation.GetTypeByMetadataName( "System.String" ),
+				context.Compilation.GetTypeByMetadataName( "System.Boolean" )
+			);
+
+			if( treeNodeType != null && treeNodeType.Kind != SymbolKind.ErrorType ) {
+				knownRpcParameterTypes = knownRpcParameterTypes.Add( treeNodeType );
+			}
+
+			if( dictionaryType != null && dictionaryType.Kind != SymbolKind.ErrorType ) {
+				knownRpcParameterTypes = knownRpcParameterTypes.Add( dictionaryType );
+			}
 
 			// If any of those type lookups failed then presumably D2L.Web is
 			// not referenced and we don't need to register our analyzer.
@@ -51,13 +76,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				return;
 			}
 
-			if( deserializerType == null || deserializerType.Kind == SymbolKind.ErrorType ) {
-				return;
-			}
-
 			// intentionally not checking dependencyAttributeType: still want
 			// the analyzer to run if that is not in scope.
-
 			context.RegisterSyntaxNodeAction(
 				ctx => AnalyzeMethod(
 					ctx,
@@ -113,7 +133,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				// - appropriate use of [Dependency]
 			}
 
-			CheckThatRpcParametersAreValid( context, method, deserializerType );
+			CheckThatRpcParametersAreValid( context: context, method: method, deserializerType: deserializerType );
 		}
 
 		private static void CheckThatRpcParametersAreValid(
@@ -121,12 +141,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			MethodDeclarationSyntax method,
 			INamedTypeSymbol deserializerType
 		) {
-			if( deserializerType.GetType() == null ) {
-				throw new Exception( "Failed to resolve type: 'D2L.Serialization.IDeserializer'" );
-			}
-			var parameters = method.ParameterList.Parameters;
+
+			// Skip validating IRpcContext
+			var parameters = method.ParameterList.Parameters.Skip( 1 );
+
 			foreach( var parameterType in parameters.Select( p => p.Type ).Where( parameterType => parameterType != null ) ) {
-				bool isValidParameterType = WebpagesRpcParameterTypeValidator.IsValidParameterType( type: parameterType.GetType(), deserializerType: deserializerType.GetType() );
+				var parameterTypeSymbol = context.SemanticModel.GetSymbolInfo( parameterType ).Symbol as INamedTypeSymbol;
+				bool isValidParameterType = WebpagesRpcParameterTypeValidator.IsValidParameterType( context: context, type: parameterTypeSymbol, deserializerType: deserializerType, knownRpcParameterTypes: knownRpcParameterTypes );
 				if( !isValidParameterType ) {
 					context.ReportDiagnostic(
 						Diagnostic.Create( Diagnostics.RpcInvalidParameterType, parameterType.GetLocation() )

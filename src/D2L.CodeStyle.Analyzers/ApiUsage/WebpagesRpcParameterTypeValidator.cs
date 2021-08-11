@@ -1,76 +1,69 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage {
 
 	internal sealed class WebpagesRpcParameterTypeValidator {
 
-		private static readonly ImmutableHashSet<Type> KnownRpcParameterTypes = ImmutableHashSet.Create<Type>(
-			typeof( bool ),
-			typeof( decimal ),
-			typeof( double ),
-			typeof( float ),
-			typeof( int ),
-			typeof( long ),
-			typeof( string ),
-			typeof( IDictionary<string, string> )
-		);
+		public static bool IsValidParameterType(
+			SyntaxNodeAnalysisContext context,
+			INamedTypeSymbol type,
+			INamedTypeSymbol deserializerType,
+			ImmutableHashSet<INamedTypeSymbol> knownRpcParameterTypes
+		) {
 
-		public static bool IsValidParameterType( Type type, Type deserializerType ) {
+			bool isDeserializerTypeDefined = deserializerType != null && deserializerType.Kind != SymbolKind.ErrorType;
 
-			if( KnownRpcParameterTypes.Contains( type ) ) {
+			if( knownRpcParameterTypes.Contains( type ) ) {
 				return true;
 			}
 
-			if( type.Name == "ITreeNode" ) {
+			if( type.EnumUnderlyingType != null ) {
 				return true;
 			}
 
-			if( type.IsEnum ) {
+			if( isDeserializerTypeDefined && HasConstructorDeserializer( type, deserializerType ) ) {
 				return true;
 			}
 
-			if( HasConstructorDeserializer( type, deserializerType ) ) {
+			if( isDeserializerTypeDefined && IsDeserializable( type, deserializerType ) ) {
 				return true;
 			}
 
-			if( IsDeserializable( type, deserializerType ) ) {
-				return true;
-			}
-
-			if( type.IsArray ) {
-				if( IsValidParameterType( type.GetElementType(), deserializerType ) ) {
+			if( type.TypeKind == TypeKind.Array ) {
+				var arrayType = ( type as IArrayTypeSymbol ).ElementType as INamedTypeSymbol;
+				if( IsValidParameterType( context, arrayType, deserializerType, knownRpcParameterTypes ) ) {
 					return true;
 				}
 			}
 
-			if( type.IsGenericType && type.GetGenericTypeDefinition().Equals( typeof( IDictionary<,> ) ) ) {
-				Type[] dictionaryTypes = type.GetGenericArguments();
-				bool validKeyType = IsValidParameterType( dictionaryTypes[0], deserializerType );
-				bool validValueType = IsValidParameterType( dictionaryTypes[1], deserializerType );
+			if( type.IsGenericType && SymbolEqualityComparer.Default.Equals( type.OriginalDefinition, context.Compilation.GetTypeByMetadataName( "System.Collections.Generic.IDictionary<,>" ) ) ) {
+				var dictionaryTypes = type.TypeArguments;
+				bool validKeyType = IsValidParameterType( context, dictionaryTypes[0] as INamedTypeSymbol, deserializerType, knownRpcParameterTypes );
+				bool validValueType = IsValidParameterType( context, dictionaryTypes[1] as INamedTypeSymbol, deserializerType, knownRpcParameterTypes );
 
 				if( validKeyType && validValueType ) {
 					return true;
 				}
 			}
+
 			return false;
 		}
 
-		private static bool HasConstructorDeserializer( Type type, Type deserializerType ) {
-			ConstructorInfo deserializer = type.GetConstructor(
-						BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
-						binder: null,
-						types: new[] { deserializerType },
-						modifiers: null
-					);
-			return deserializer != null;
+		private static bool HasConstructorDeserializer( INamedTypeSymbol type, INamedTypeSymbol deserializerType ) {
+			var deserializer = type.Constructors
+				.Where( constructorSymbol => constructorSymbol.TypeArguments.Contains( deserializerType ) );
+			return deserializer.Any();
 		}
 
-		private static bool IsDeserializable( Type type, Type deserializerType ) {
-			return deserializerType.IsAssignableFrom( type );
+		private static bool IsDeserializable( INamedTypeSymbol type, INamedTypeSymbol deserializerType ) {
+			return deserializerType.AllInterfaces.Any( i => SymbolEqualityComparer.Default.Equals( i, type ) );
 		}
 	}
 }
