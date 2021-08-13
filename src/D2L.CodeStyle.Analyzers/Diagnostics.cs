@@ -607,7 +607,7 @@ namespace D2L.CodeStyle.Analyzers {
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
-			description: "RPC parameters must be of a valid type"
+			description: "RPC parameters must be of a valid type."
 		);
 	}
 }
