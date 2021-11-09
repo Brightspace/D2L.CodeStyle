@@ -39,6 +39,9 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 		public ClassWithDeserializerConstructor() { }
 		public ClassWithDeserializerConstructor( IDeserializer deserializer ) { }
 	}
+	public sealed class ClassWithPrivateDeserializerConstructor {
+		private ClassWithPrivateDeserializerConstructor( IDeserializer deserializer ) { }
+	}
 
 	public sealed class OkayRpcHandler {
 		public void NonRpcMethod( int x ) { }
@@ -183,6 +186,12 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 		public static void NonDeserializbleClass(
 			IRpcContext context,
 			/* RpcInvalidParameterType */ SomeClass /**/ foo
+		) { }
+
+		[Rpc]
+		public static void ClassWithPrivateDeserializerConstructor(
+			IRpcContext context,
+			/* RpcInvalidParameterType */ ClassWithPrivateDeserializerConstructor /**/ foo
 		) { }
 	}
 }

@@ -84,6 +84,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			}
 
 			foreach( var constructor in type.Constructors ) {
+				if( constructor.DeclaredAccessibility != Accessibility.Public ) {
+					continue;
+				}
+
 				var parameters = constructor.Parameters;
 
 				if( parameters.Length != 1 ) {
