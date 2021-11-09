@@ -62,6 +62,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 
 		[Rpc]
 		public static void RpcWithMultipleParameters( IRpcContext context, int x, int y ) { }
+
 		[Rpc]
 		public static void RpcWithDependencyParameter(
 			IRpcContext context,
