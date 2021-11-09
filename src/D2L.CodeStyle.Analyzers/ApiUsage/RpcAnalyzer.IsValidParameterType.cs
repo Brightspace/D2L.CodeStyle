@@ -20,9 +20,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				return true;
 			}
 
-			if( type.TypeKind == TypeKind.Array ) {
-				var arrayType = ( type as IArrayTypeSymbol ).ElementType as INamedTypeSymbol;
-				return IsValidParameterType( context, arrayType, rpcTypes );
+			if( type is IArrayTypeSymbol arrayType ) {
+				return IsValidParameterType( context, arrayType.ElementType, rpcTypes );
 			}
 
 			if( !( type is INamedTypeSymbol namedType ) ) {
