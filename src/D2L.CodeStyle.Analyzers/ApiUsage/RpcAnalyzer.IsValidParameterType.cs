@@ -10,12 +10,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		private static bool IsValidParameterType(
 			SyntaxNodeAnalysisContext context,
 			ITypeSymbol type,
-			INamedTypeSymbol deserializableType,
-			INamedTypeSymbol deserializerType,
-			INamedTypeSymbol dictionaryType,
-			ImmutableHashSet<INamedTypeSymbol> knownRpcParameterTypes
+			RpcTypes rpcTypes
 		) {
-			if( knownRpcParameterTypes.Contains( type ) ) {
+			if( rpcTypes.KnownRpcParameters.Contains( type ) ) {
 				return true;
 			}
 
@@ -25,50 +22,29 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 
 			if( type.TypeKind == TypeKind.Array ) {
 				var arrayType = ( type as IArrayTypeSymbol ).ElementType as INamedTypeSymbol;
-				return IsValidParameterType(
-					context: context,
-					type: arrayType,
-					deserializableType: deserializableType,
-					deserializerType: deserializerType,
-					dictionaryType: dictionaryType,
-					knownRpcParameterTypes: knownRpcParameterTypes
-				);
+				return IsValidParameterType( context, type, rpcTypes );
 			}
 
 			if( !( type is INamedTypeSymbol namedType ) ) {
 				return false;
 			}
 
-			if( HasConstructorDeserializer( namedType, deserializerType ) ) {
+			if( HasConstructorDeserializer( namedType, rpcTypes ) ) {
 				return true;
 			}
 
-			if( IsDeserializable( namedType, deserializableType ) ) {
+			if( IsDeserializable( namedType, rpcTypes ) ) {
 				return true;
 			}
 
-			if( namedType.IsGenericType && SymbolEqualityComparer.Default.Equals( namedType.OriginalDefinition, dictionaryType ) ) {
+			if( namedType.IsGenericType && SymbolEqualityComparer.Default.Equals( namedType.OriginalDefinition, rpcTypes.IDictionary ) ) {
 				var dictionaryTypes = namedType.TypeArguments;
 
-				if( !IsValidParameterType(
-					context: context,
-					type: dictionaryTypes[0],
-					deserializableType: deserializableType,
-					deserializerType: deserializerType,
-					dictionaryType: dictionaryType,
-					knownRpcParameterTypes: knownRpcParameterTypes
-				) ) {
+				if( !IsValidParameterType( context, dictionaryTypes[0], rpcTypes ) ) {
 					return false;
 				}
 
-				if( !IsValidParameterType(
-					context: context,
-					type: dictionaryTypes[1],
-					deserializableType: deserializableType,
-					deserializerType: deserializerType,
-					dictionaryType: dictionaryType,
-					knownRpcParameterTypes: knownRpcParameterTypes
-				) ) {
+				if( !IsValidParameterType( context, dictionaryTypes[1], rpcTypes ) ) {
 					return false;
 				}
 
@@ -78,8 +54,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			return false;
 		}
 
-		private static bool HasConstructorDeserializer( INamedTypeSymbol type, INamedTypeSymbol deserializerType ) {
-			if( deserializerType == null || deserializerType.Kind == SymbolKind.ErrorType ) {
+		private static bool HasConstructorDeserializer( INamedTypeSymbol type, RpcTypes rpcTypes ) {
+			if( rpcTypes.IDeserializer == null || rpcTypes.IDeserializer.Kind == SymbolKind.ErrorType ) {
 				return false;
 			}
 
@@ -95,7 +71,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				}
 
 				IParameterSymbol parameter = parameters[0];
-				if( SymbolEqualityComparer.Default.Equals( parameter.Type, deserializerType ) ) {
+				if( SymbolEqualityComparer.Default.Equals( parameter.Type, rpcTypes.IDeserializer ) ) {
 					return true;
 				}
 			}
@@ -103,12 +79,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			return false;
 		}
 
-		private static bool IsDeserializable( INamedTypeSymbol type, INamedTypeSymbol deserializableType ) {
-			if( deserializableType == null || deserializableType.Kind == SymbolKind.ErrorType ) {
+		private static bool IsDeserializable( INamedTypeSymbol type, RpcTypes rpcTypes ) {
+			if( rpcTypes.IDeserializable == null || rpcTypes.IDeserializable.Kind == SymbolKind.ErrorType ) {
 				return false;
 			}
 
-			return type.AllInterfaces.Any( i => SymbolEqualityComparer.Default.Equals( i, deserializableType ) );
+			return type.AllInterfaces.Any( i => SymbolEqualityComparer.Default.Equals( i, rpcTypes.IDeserializable ) );
 		}
 	}
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -27,26 +28,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			var rpcContextType = context.Compilation.GetTypeByMetadataName( "D2L.Web.IRpcContext" );
 			var rpcPostContextType = context.Compilation.GetTypeByMetadataName( "D2L.Web.IRpcPostContext" );
 			var rpcPostContextBaseType = context.Compilation.GetTypeByMetadataName( "D2L.Web.RequestContext.IRpcPostContextBase" );
-			var dependencyAttributeType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.DependencyAttribute" );
-			var deserializableType = context.Compilation.GetTypeByMetadataName( "D2L.Serialization.IDeserializable" );
-			var deserializerType = context.Compilation.GetTypeByMetadataName( "D2L.Serialization.IDeserializer" );
-			var dictionaryType = context.Compilation.GetTypeByMetadataName( "System.Collections.Generic.IDictionary`2" );
-
-			ImmutableHashSet<INamedTypeSymbol> knownRpcParameterTypes = ImmutableHashSet.Create<INamedTypeSymbol>(
-				SymbolEqualityComparer.Default,
-				context.Compilation.GetSpecialType( SpecialType.System_Boolean ),
-				context.Compilation.GetSpecialType( SpecialType.System_Decimal ),
-				context.Compilation.GetSpecialType( SpecialType.System_Double ),
-				context.Compilation.GetSpecialType( SpecialType.System_Single ),
-				context.Compilation.GetSpecialType( SpecialType.System_Int32 ),
-				context.Compilation.GetSpecialType( SpecialType.System_Int64 ),
-				context.Compilation.GetSpecialType( SpecialType.System_String )
-			);
-
-			var treeNodeType = context.Compilation.GetTypeByMetadataName( "D2L.Web.UI.TreeControl.ITreeNode" );
-			if( treeNodeType != null && treeNodeType.Kind != SymbolKind.ErrorType ) {
-				knownRpcParameterTypes = knownRpcParameterTypes.Add( treeNodeType );
-			}
 
 			// If any of those type lookups failed then presumably D2L.Web is
 			// not referenced and we don't need to register our analyzer.
@@ -67,36 +48,46 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				return;
 			}
 
-			// intentionally not checking dependencyAttributeType: still want
-			// the analyzer to run if that is not in scope.
-			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeMethod(
-					ctx,
-					rpcAttributeType: rpcAttributeType,
-					rpcContextType: rpcContextType,
-					rpcPostContextType: rpcPostContextType,
-					rpcPostContextBaseType: rpcPostContextBaseType,
-					dependencyAttributeType: dependencyAttributeType,
-					deserializableType: deserializableType,
-					deserializerType: deserializerType,
-					dictionaryType: dictionaryType,
-					knownRpcParameterTypes: knownRpcParameterTypes
+			ImmutableHashSet<INamedTypeSymbol> knownRpcParameterTypes = ImmutableHashSet.Create<INamedTypeSymbol>(
+				SymbolEqualityComparer.Default,
+				context.Compilation.GetSpecialType( SpecialType.System_Boolean ),
+				context.Compilation.GetSpecialType( SpecialType.System_Decimal ),
+				context.Compilation.GetSpecialType( SpecialType.System_Double ),
+				context.Compilation.GetSpecialType( SpecialType.System_Single ),
+				context.Compilation.GetSpecialType( SpecialType.System_Int32 ),
+				context.Compilation.GetSpecialType( SpecialType.System_Int64 ),
+				context.Compilation.GetSpecialType( SpecialType.System_String )
+			);
+
+			var treeNodeType = context.Compilation.GetTypeByMetadataName( "D2L.Web.UI.TreeControl.ITreeNode" );
+			if( treeNodeType != null && treeNodeType.Kind != SymbolKind.ErrorType ) {
+				knownRpcParameterTypes = knownRpcParameterTypes.Add( treeNodeType );
+			}
+
+			RpcTypes rpcTypes = new(
+				RpcAttribute: rpcAttributeType,
+				RpcContexts: ImmutableHashSet.Create<INamedTypeSymbol>(
+					SymbolEqualityComparer.Default,
+					rpcContextType,
+					rpcPostContextType,
+					rpcPostContextBaseType
 				),
+				DependencyAttribute: context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.DependencyAttribute" ),
+				IDeserializable: context.Compilation.GetTypeByMetadataName( "D2L.Serialization.IDeserializable" ),
+				IDeserializer: context.Compilation.GetTypeByMetadataName( "D2L.Serialization.IDeserializer" ),
+				IDictionary: context.Compilation.GetTypeByMetadataName( "System.Collections.Generic.IDictionary`2" ),
+				KnownRpcParameters: knownRpcParameterTypes
+			);
+
+			context.RegisterSyntaxNodeAction(
+				ctx => AnalyzeMethod( ctx, rpcTypes ),
 				SyntaxKind.MethodDeclaration
 			);
 		}
 
 		private static void AnalyzeMethod(
 			SyntaxNodeAnalysisContext context,
-			INamedTypeSymbol rpcAttributeType,
-			INamedTypeSymbol rpcContextType,
-			INamedTypeSymbol rpcPostContextType,
-			INamedTypeSymbol rpcPostContextBaseType,
-			INamedTypeSymbol dependencyAttributeType,
-			INamedTypeSymbol deserializableType,
-			INamedTypeSymbol deserializerType,
-			INamedTypeSymbol dictionaryType,
-			ImmutableHashSet<INamedTypeSymbol> knownRpcParameterTypes
+			RpcTypes rpcTypes
 		) {
 			var method = context.Node as MethodDeclarationSyntax;
 
@@ -104,73 +95,43 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				return;
 			}
 
-			if( !CheckThatMethodIsRpc( context, method, rpcAttributeType ) ) {
+			if( !CheckThatMethodIsRpc( context, method, rpcTypes ) ) {
 				return;
 			}
 
-			CheckThatFirstArgumentIsIRpcContext(
-				context,
-				method,
-				rpcContextType: rpcContextType,
-				rpcPostContextType: rpcPostContextType,
-				rpcPostContextBaseType: rpcPostContextBaseType,
-				dependencyAttributeType: dependencyAttributeType
-			);
+			CheckThatFirstArgumentIsIRpcContext( context, method, rpcTypes );
 
 			// dependencyAttributeType may be null if that DLL isn't
 			// referenced. In that case don't do some of these checks.
-			if( dependencyAttributeType != null ) {
-				CheckThatDependencyArgumentsAreSortedCorrectly(
-					context,
-					method.ParameterList.Parameters,
-					dependencyAttributeType
-				);
+			CheckThatDependencyArgumentsAreSortedCorrectly(
+				context,
+				method.ParameterList.Parameters,
+				rpcTypes
+			);
 
-				// other things to check:
-				// - appropriate use of [Dependency]
-			}
+			// other things to check:
+			// - appropriate use of [Dependency]
 
 			CheckThatRpcParametersAreValid(
 				context: context,
 				ps: method.ParameterList.Parameters,
-				dependencyAttributeType: dependencyAttributeType,
-				deserializableType: deserializableType,
-				deserializerType: deserializerType,
-				dictionaryType: dictionaryType,
-				knownRpcParameterTypes: knownRpcParameterTypes
+				rpcTypes
 			);
 		}
 
 		private static void CheckThatRpcParametersAreValid(
 			SyntaxNodeAnalysisContext context,
 			SeparatedSyntaxList<ParameterSyntax> ps,
-			INamedTypeSymbol dependencyAttributeType,
-			INamedTypeSymbol deserializableType,
-			INamedTypeSymbol deserializerType,
-			INamedTypeSymbol dictionaryType,
-			ImmutableHashSet<INamedTypeSymbol> knownRpcParameterTypes
+			RpcTypes rpcTypes
 		) {
 			foreach( var parameter in ps.Skip( 1 ) ) {
 				// Skip injected parameters
-				if( dependencyAttributeType != null ) {
-					if( IsMarkedDependency(
-						dependencyAttributeType: dependencyAttributeType,
-						parameter: parameter,
-						model: context.SemanticModel
-					) ) {
-						continue;
-					}
+				if( IsMarkedDependency( context.SemanticModel, parameter, rpcTypes ) ) {
+					continue;
 				}
 
 				var parameterTypeSymbol = context.SemanticModel.GetSymbolInfo( parameter.Type ).Symbol as ITypeSymbol;
-				bool isValidParameterType = IsValidParameterType(
-					context: context,
-					type: parameterTypeSymbol,
-					deserializableType: deserializableType,
-					deserializerType: deserializerType,
-					dictionaryType: dictionaryType,
-					knownRpcParameterTypes: knownRpcParameterTypes
-				);
+				bool isValidParameterType = IsValidParameterType( context, parameterTypeSymbol, rpcTypes );
 				if( !isValidParameterType ) {
 					context.ReportDiagnostic(
 						Diagnostic.Create( Diagnostics.RpcInvalidParameterType, parameter.Type.GetLocation() )
@@ -182,12 +143,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		private static bool CheckThatMethodIsRpc(
 			SyntaxNodeAnalysisContext context,
 			MethodDeclarationSyntax method,
-			INamedTypeSymbol rpcAttributeType
+			RpcTypes rpcTypes
 		) {
 			bool isRpc = method
 				.AttributeLists
 				.SelectMany( al => al.Attributes )
-				.Any( attr => IsAttribute( rpcAttributeType, attr, context.SemanticModel ) );
+				.Any( attr => IsAttribute( rpcTypes.RpcAttribute, attr, context.SemanticModel ) );
 
 			return isRpc;
 		}
@@ -195,10 +156,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		private static void CheckThatFirstArgumentIsIRpcContext(
 			SyntaxNodeAnalysisContext context,
 			MethodDeclarationSyntax method,
-			INamedTypeSymbol rpcContextType,
-			INamedTypeSymbol rpcPostContextType,
-			INamedTypeSymbol rpcPostContextBaseType,
-			INamedTypeSymbol dependencyAttributeType
+			RpcTypes rpcTypes
 		) {
 			var ps = method.ParameterList.Parameters;
 
@@ -212,18 +170,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			var firstParam = method.ParameterList.Parameters[0];
 			var firstParamType = context.SemanticModel.GetSymbolInfo( firstParam.Type ).Symbol;
 
-			var firstParamIsReasonableType =
-				rpcContextType.Equals( firstParamType, SymbolEqualityComparer.Default ) ||
-				rpcPostContextType.Equals( firstParamType, SymbolEqualityComparer.Default ) ||
-				rpcPostContextBaseType.Equals( firstParamType, SymbolEqualityComparer.Default );
-
-			if( !firstParamIsReasonableType ) {
+			if( !rpcTypes.RpcContexts.Contains( firstParamType ) ) {
 				context.ReportDiagnostic(
 					Diagnostic.Create( Diagnostics.RpcContextFirstArgument, firstParam.GetLocation() )
 				);
-			} else if( dependencyAttributeType != null
-				&& IsMarkedDependency( dependencyAttributeType, firstParam, context.SemanticModel )
-			) {
+			} else if( IsMarkedDependency( context.SemanticModel, firstParam, rpcTypes ) ) {
 				context.ReportDiagnostic(
 					Diagnostic.Create( Diagnostics.RpcContextMarkedDependency, firstParam.GetLocation() )
 				);
@@ -233,11 +184,15 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		private static void CheckThatDependencyArgumentsAreSortedCorrectly(
 			SyntaxNodeAnalysisContext context,
 			SeparatedSyntaxList<ParameterSyntax> ps,
-			INamedTypeSymbol dependencyAttributeType
+			RpcTypes rpcTypes
 		) {
+			if( rpcTypes.DependencyAttribute == null ) {
+				return;
+			}
+
 			bool doneDependencies = false;
 			foreach( var param in ps.Skip( 1 ) ) {
-				var isDep = IsMarkedDependency( dependencyAttributeType, param, context.SemanticModel );
+				var isDep = IsMarkedDependency( context.SemanticModel, param, rpcTypes );
 
 				if( !isDep && !doneDependencies ) {
 					doneDependencies = true;
@@ -248,13 +203,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		}
 
 		private static bool IsMarkedDependency(
-			INamedTypeSymbol dependencyAttributeType,
+			SemanticModel model,
 			ParameterSyntax parameter,
-			SemanticModel model
+			RpcTypes rpcTypes
 		) => parameter
 			.AttributeLists
 			.SelectMany( al => al.Attributes )
-			.Any( attr => IsAttribute( dependencyAttributeType, attr, model ) );
+			.Any( attr => IsAttribute( rpcTypes.DependencyAttribute, attr, model ) );
 
 		private static bool IsAttribute(
 			INamedTypeSymbol expectedType,
@@ -267,5 +222,23 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			// so we need to look at symbol.ContainingType
 			return expectedType.Equals( attributeConstructorType?.ContainingType, SymbolEqualityComparer.Default );
 		}
+
+		//private static (IParameterSymbol context, ImmutableArray<IParameterSymbol> dependencies, ImmutableArray<IParameterSymbol> parameters) Split(
+		//	SyntaxNodeAnalysisContext context,
+		//	MethodDeclarationSyntax method,
+		//	Func<IParameterSymbol, bool> isDependency
+		//) {
+
+		//}
+
+		private sealed record RpcTypes(
+			INamedTypeSymbol RpcAttribute,
+			ImmutableHashSet<INamedTypeSymbol> RpcContexts,
+			INamedTypeSymbol DependencyAttribute,
+			INamedTypeSymbol IDeserializable,
+			INamedTypeSymbol IDeserializer,
+			INamedTypeSymbol IDictionary,
+			ImmutableHashSet<INamedTypeSymbol> KnownRpcParameters
+		);
 	}
 }
