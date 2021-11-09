@@ -99,7 +99,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				return;
 			}
 
-			var (rpcContext, _, parameters) = Split( context, method, rpcTypes );
+			var (rpcContext, parameters) = Split( context, method, rpcTypes );
 
 			CheckThatFirstArgumentIsIRpcContext( context, method, rpcContext, rpcTypes );
 
@@ -162,7 +162,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			}
 		}
 
-		private static ((IParameterSymbol Symbol, ParameterSyntax Syntax) rpcContext, ImmutableArray<(IParameterSymbol Symbol, ParameterSyntax Syntax)> dependencies, ImmutableArray<(IParameterSymbol Symbol, ParameterSyntax Syntax)> parameters) Split(
+		private static ((IParameterSymbol Symbol, ParameterSyntax Syntax) rpcContext, ImmutableArray<(IParameterSymbol Symbol, ParameterSyntax Syntax)> parameters) Split(
 			SyntaxNodeAnalysisContext context,
 			MethodDeclarationSyntax method,
 			RpcTypes rpcTypes
@@ -170,7 +170,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			var parameters = method.ParameterList.Parameters;
 
 			if( parameters.Count == 0 ) {
-				return (default, ImmutableArray<(IParameterSymbol, ParameterSyntax)>.Empty, ImmutableArray<(IParameterSymbol, ParameterSyntax)>.Empty);
+				return (default, ImmutableArray<(IParameterSymbol, ParameterSyntax)>.Empty);
 			}
 
 			SemanticModel model = context.SemanticModel;
@@ -179,7 +179,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 
 			ParameterSyntax rpcContextSyntax = parameters[ index++ ];
 			IParameterSymbol rpcContext = model.GetDeclaredSymbol( rpcContextSyntax );
-			var dependenciesBuilder = ImmutableArray.CreateBuilder<(IParameterSymbol, ParameterSyntax)>();
 			var parametersBuilder = ImmutableArray.CreateBuilder<(IParameterSymbol, ParameterSyntax)>();
 
 			for( ; index < parameters.Count; ++index ) {
@@ -187,8 +186,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				IParameterSymbol parameter = model.GetDeclaredSymbol( syntax );
 
 				if( IsMarkedAsDependency( parameter, rpcTypes ) ) {
-					dependenciesBuilder.Add( (parameter, syntax) );
-
 					if( parametersBuilder.Count > 0 ) {
 						context.ReportDiagnostic( Diagnostic.Create( Diagnostics.RpcArgumentSortOrder, syntax.GetLocation() ) );
 					}
@@ -199,7 +196,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				parametersBuilder.Add( (parameter, syntax) );
 			}
 
-			return ((rpcContext, rpcContextSyntax), dependenciesBuilder.ToImmutable(), parametersBuilder.ToImmutable());
+			return ((rpcContext, rpcContextSyntax), parametersBuilder.ToImmutable());
 		}
 
 		private static bool IsMarkedAsDependency(
