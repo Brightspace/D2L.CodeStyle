@@ -120,8 +120,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 		) { }
 	}
 
-	public sealed class BadRpcs
-	{
+	public sealed class BadRpcs {
 		// The first argument must be wither IRpcContext, IRpcPostContext or IRpcPostContextBase
 
 		[Rpc]
