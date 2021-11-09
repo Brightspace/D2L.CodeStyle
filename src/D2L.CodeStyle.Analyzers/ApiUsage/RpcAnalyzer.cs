@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Linq;
-using System.Reflection;
-using D2L.CodeStyle.Analyzers;
-using D2L.CodeStyle.Analyzers.ApiUsage;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -12,7 +7,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
-	internal sealed class RpcAnalyzer : DiagnosticAnalyzer {
+	internal sealed partial class RpcAnalyzer : DiagnosticAnalyzer {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.RpcContextFirstArgument,
 			Diagnostics.RpcArgumentSortOrder,
@@ -26,8 +21,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			context.RegisterCompilationStartAction( RegisterRpcAnalyzer );
 		}
 
-		private static ImmutableHashSet<INamedTypeSymbol> knownRpcParameterTypes;
-
 		public static void RegisterRpcAnalyzer( CompilationStartAnalysisContext context ) {
 			// Cache some important type lookups
 			var rpcAttributeType = context.Compilation.GetTypeByMetadataName( "D2L.Web.RpcAttribute" );
@@ -35,26 +28,24 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			var rpcPostContextType = context.Compilation.GetTypeByMetadataName( "D2L.Web.IRpcPostContext" );
 			var rpcPostContextBaseType = context.Compilation.GetTypeByMetadataName( "D2L.Web.RequestContext.IRpcPostContextBase" );
 			var dependencyAttributeType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.DependencyAttribute" );
+			var deserializableType = context.Compilation.GetTypeByMetadataName( "D2L.Serialization.IDeserializable" );
 			var deserializerType = context.Compilation.GetTypeByMetadataName( "D2L.Serialization.IDeserializer" );
-			var treeNodeType = context.Compilation.GetTypeByMetadataName( "D2L.Web.UI.TreeControl.ITreeNode" );
-			var dictionaryType = context.Compilation.GetTypeByMetadataName( "System.Collections.Generic.IDictionary<string,string>" );
+			var dictionaryType = context.Compilation.GetTypeByMetadataName( "System.Collections.Generic.IDictionary`2" );
 
-			knownRpcParameterTypes = ImmutableHashSet.Create<INamedTypeSymbol>(
-				context.Compilation.GetTypeByMetadataName( "System.Boolean" ),
-				context.Compilation.GetTypeByMetadataName( "System.Decimal" ),
-				context.Compilation.GetTypeByMetadataName( "System.Float" ),
-				context.Compilation.GetTypeByMetadataName( "System.Int32" ),
-				context.Compilation.GetTypeByMetadataName( "System.Int64" ),
-				context.Compilation.GetTypeByMetadataName( "System.String" ),
-				context.Compilation.GetTypeByMetadataName( "System.Boolean" )
+			ImmutableHashSet<INamedTypeSymbol> knownRpcParameterTypes = ImmutableHashSet.Create<INamedTypeSymbol>(
+				SymbolEqualityComparer.Default,
+				context.Compilation.GetSpecialType( SpecialType.System_Boolean ),
+				context.Compilation.GetSpecialType( SpecialType.System_Decimal ),
+				context.Compilation.GetSpecialType( SpecialType.System_Double ),
+				context.Compilation.GetSpecialType( SpecialType.System_Single ),
+				context.Compilation.GetSpecialType( SpecialType.System_Int32 ),
+				context.Compilation.GetSpecialType( SpecialType.System_Int64 ),
+				context.Compilation.GetSpecialType( SpecialType.System_String )
 			);
 
+			var treeNodeType = context.Compilation.GetTypeByMetadataName( "D2L.Web.UI.TreeControl.ITreeNode" );
 			if( treeNodeType != null && treeNodeType.Kind != SymbolKind.ErrorType ) {
 				knownRpcParameterTypes = knownRpcParameterTypes.Add( treeNodeType );
-			}
-
-			if( dictionaryType != null && dictionaryType.Kind != SymbolKind.ErrorType ) {
-				knownRpcParameterTypes = knownRpcParameterTypes.Add( dictionaryType );
 			}
 
 			// If any of those type lookups failed then presumably D2L.Web is
@@ -86,7 +77,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 					rpcPostContextType: rpcPostContextType,
 					rpcPostContextBaseType: rpcPostContextBaseType,
 					dependencyAttributeType: dependencyAttributeType,
-					deserializerType: deserializerType
+					deserializableType: deserializableType,
+					deserializerType: deserializerType,
+					dictionaryType: dictionaryType,
+					knownRpcParameterTypes: knownRpcParameterTypes
 				),
 				SyntaxKind.MethodDeclaration
 			);
@@ -99,7 +93,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			INamedTypeSymbol rpcPostContextType,
 			INamedTypeSymbol rpcPostContextBaseType,
 			INamedTypeSymbol dependencyAttributeType,
-			INamedTypeSymbol deserializerType
+			INamedTypeSymbol deserializableType,
+			INamedTypeSymbol deserializerType,
+			INamedTypeSymbol dictionaryType,
+			ImmutableHashSet<INamedTypeSymbol> knownRpcParameterTypes
 		) {
 			var method = context.Node as MethodDeclarationSyntax;
 
@@ -133,24 +130,50 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				// - appropriate use of [Dependency]
 			}
 
-			CheckThatRpcParametersAreValid( context: context, method: method, deserializerType: deserializerType );
+			CheckThatRpcParametersAreValid(
+				context: context,
+				ps: method.ParameterList.Parameters,
+				dependencyAttributeType: dependencyAttributeType,
+				deserializableType: deserializableType,
+				deserializerType: deserializerType,
+				dictionaryType: dictionaryType,
+				knownRpcParameterTypes: knownRpcParameterTypes
+			);
 		}
 
 		private static void CheckThatRpcParametersAreValid(
 			SyntaxNodeAnalysisContext context,
-			MethodDeclarationSyntax method,
-			INamedTypeSymbol deserializerType
+			SeparatedSyntaxList<ParameterSyntax> ps,
+			INamedTypeSymbol dependencyAttributeType,
+			INamedTypeSymbol deserializableType,
+			INamedTypeSymbol deserializerType,
+			INamedTypeSymbol dictionaryType,
+			ImmutableHashSet<INamedTypeSymbol> knownRpcParameterTypes
 		) {
+			foreach( var parameter in ps.Skip( 1 ) ) {
+				// Skip injected parameters
+				if( dependencyAttributeType != null ) {
+					if( IsMarkedDependency(
+						dependencyAttributeType: dependencyAttributeType,
+						parameter: parameter,
+						model: context.SemanticModel
+					) ) {
+						continue;
+					}
+				}
 
-			// Skip validating IRpcContext
-			var parameters = method.ParameterList.Parameters.Skip( 1 );
-
-			foreach( var parameterType in parameters.Select( p => p.Type ).Where( parameterType => parameterType != null ) ) {
-				var parameterTypeSymbol = context.SemanticModel.GetSymbolInfo( parameterType ).Symbol as INamedTypeSymbol;
-				bool isValidParameterType = WebpagesRpcParameterTypeValidator.IsValidParameterType( context: context, type: parameterTypeSymbol, deserializerType: deserializerType, knownRpcParameterTypes: knownRpcParameterTypes );
+				var parameterTypeSymbol = context.SemanticModel.GetSymbolInfo( parameter.Type ).Symbol as ITypeSymbol;
+				bool isValidParameterType = IsValidParameterType(
+					context: context,
+					type: parameterTypeSymbol,
+					deserializableType: deserializableType,
+					deserializerType: deserializerType,
+					dictionaryType: dictionaryType,
+					knownRpcParameterTypes: knownRpcParameterTypes
+				);
 				if( !isValidParameterType ) {
 					context.ReportDiagnostic(
-						Diagnostic.Create( Diagnostics.RpcInvalidParameterType, parameterType.GetLocation() )
+						Diagnostic.Create( Diagnostics.RpcInvalidParameterType, parameter.Type.GetLocation() )
 					);
 				}
 			}

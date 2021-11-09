@@ -1,7 +1,9 @@
 ﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.RpcAnalyzer
 
 using System;
+using System.Collections.Generic;
 using D2L.LP.Extensibility.Activation.Domain;
+using D2L.Serialization;
 using D2L.Web;
 using D2L.Web.RequestContext;
 
@@ -19,9 +21,24 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 	public class DependencyAttribute : Attribute { }
 }
 
+namespace D2L.Serialization {
+	interface IDeserializer { }
+	interface IDeserializable {
+		void Deserialize( IDeserializer deserializer );
+	}
+}
+
 namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 	public sealed class FooDependency { }
 	public sealed class BarDependency { }
+	public sealed class SomeClass { }
+	public sealed class DeserializableClass : IDeserializable {
+		void IDeserializable.Deserialize( IDeserializer deserializer ) { }
+	}
+	public sealed class ClassWithDeserializerConstructor {
+		public ClassWithDeserializerConstructor() { }
+		public ClassWithDeserializerConstructor( IDeserializer deserializer ) { }
+	}
 
 	public sealed class OkayRpcHandler {
 		public void NonRpcMethod( int x ) { }
@@ -46,21 +63,21 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 		[Rpc]
 		public static void RpcWithMultipleParameters( IRpcContext context, int x, int y ) { }
 		[Rpc]
-		public static void RpcWithDependencyParameter(IRpcContext context, [Dependency] /* RpcInvalidParameterType */ FooDependency /**/ x) { }
+		public static void RpcWithDependencyParameter(IRpcContext context, [Dependency] FooDependency x) { }
 
 		[Rpc]
 		public static void RpcWithMultipleDependencyParameters(
 			IRpcContext context,
-			[Dependency] /* RpcInvalidParameterType */ FooDependency /**/ x,
-			[Dependency] /* RpcInvalidParameterType */ BarDependency /**/ y
+			[Dependency] FooDependency x,
+			[Dependency] BarDependency y
 		)
 		{ }
 
 		[Rpc]
 		public static void GeneralRpc(
 			IRpcContext context,
-			[Dependency] /* RpcInvalidParameterType */ FooDependency /**/ x,
-			[Dependency] /* RpcInvalidParameterType */ BarDependency /**/ y
+			[Dependency] FooDependency x,
+			[Dependency] BarDependency y
 
 		int a,
 			string b
@@ -70,12 +87,34 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 		[Rpc]
 		public static void GeneralRpcWithWeirdParameterAttribute(
 			IRpcContext context,
-			[Dependency] /* RpcInvalidParameterType */ FooDependency /**/ x,
-			[Dependency] /* RpcInvalidParameterType */ BarDependency /**/ y
+			[Dependency] FooDependency x,
+			[Dependency] BarDependency y
 			int a,
 			[UndefinedAttribute] string b
 		)
 		{ }
+
+		[Rpc]
+		public static void GeneralRpcWithAcceptableTypes(
+			IRpcContext context,
+			[Dependency] FooDependency x,
+			[Dependency] BarDependency y
+			bool a,
+			decimal b,
+			double c,
+			float d,
+			int e,
+			long f,
+			string g,
+			bool[] h,
+			IDictionary<string, string> i,
+			DeserializableClass j,
+			ClassWithDeserializerConstructor k,
+			DeserializableClass[] l,
+			ClassWithDeserializerConstructor m,
+			IDictionary<ClassWithDeserializerConstructor, int> n,
+			IDictionary<ClassWithDeserializerConstructor, int> o
+		) { }
 	}
 
 	public sealed class BadRpcs
@@ -107,7 +146,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 		public static void IncorrectDependencySortOrder(
 			IRpcContext context,
 			int x,
-			/* RpcArgumentSortOrder */ [Dependency] /* RpcInvalidParameterType */ FooDependency /**/ foo /**/
+			/* RpcArgumentSortOrder */ [Dependency] FooDependency foo /**/
 		)
 		{ }
 
@@ -116,8 +155,8 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 			IRpcContext context,
 			int x,
 			int y,
-			/* RpcArgumentSortOrder */ [Dependency] /* RpcInvalidParameterType */ FooDependency /**/ foo /**/,
-			/* RpcArgumentSortOrder */ [Dependency] /* RpcInvalidParameterType */ BarDependency /**/ bar /**/
+			/* RpcArgumentSortOrder */ [Dependency] FooDependency foo /**/,
+			/* RpcArgumentSortOrder */ [Dependency] BarDependency bar /**/
 		)
 		{ }
 
@@ -125,7 +164,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 		public static void IncorrectDependencySortOrderEvenWithRandomBadAttributeInTheMiddle(
 			IRpcContext context,
 			[UndefinedAttribute] int x,
-			/* RpcArgumentSortOrder */ [Dependency]  /* RpcInvalidParameterType */ FooDependency /**/ foo /**/
+			/* RpcArgumentSortOrder */ [Dependency] FooDependency foo /**/
 		)
 		{ }
 
@@ -146,5 +185,11 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 			/* RpcContextMarkedDependency */ [Dependency] IRpcPostContextBase context /**/
 		)
 		{ }
+
+		[Rpc]
+		public static void NonDeserializbleClass(
+			IRpcContext context,
+			/* RpcInvalidParameterType */ SomeClass /**/ foo
+		) { }
 	}
 }
