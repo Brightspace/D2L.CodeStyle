@@ -81,8 +81,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 			IRpcContext context,
 			[Dependency] FooDependency x,
 			[Dependency] BarDependency y
-
-		int a,
+			int a,
 			string b
 		) { }
 
