@@ -63,15 +63,17 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 		[Rpc]
 		public static void RpcWithMultipleParameters( IRpcContext context, int x, int y ) { }
 		[Rpc]
-		public static void RpcWithDependencyParameter(IRpcContext context, [Dependency] FooDependency x) { }
+		public static void RpcWithDependencyParameter(
+			IRpcContext context,
+			[Dependency] FooDependency x
+		) { }
 
 		[Rpc]
 		public static void RpcWithMultipleDependencyParameters(
 			IRpcContext context,
 			[Dependency] FooDependency x,
 			[Dependency] BarDependency y
-		)
-		{ }
+		) { }
 
 		[Rpc]
 		public static void GeneralRpc(
@@ -81,8 +83,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 
 		int a,
 			string b
-		)
-		{ }
+		) { }
 
 		[Rpc]
 		public static void GeneralRpcWithWeirdParameterAttribute(
@@ -91,8 +92,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 			[Dependency] BarDependency y
 			int a,
 			[UndefinedAttribute] string b
-		)
-		{ }
+		) { }
 
 		[Rpc]
 		public static void GeneralRpcWithAcceptableTypes(
@@ -135,8 +135,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 		public static void BadFirstArgument2(
 			/* RpcContextFirstArgument */ int x /**/,
 			/* RpcInvalidParameterType */ IRpcContext /**/ context
-		)
-		{ }
+		) { }
 
 		// [Dependency] arguments must come after the first argument but before
 		// any of the arguments that aren't [Dependency] (those come from the
@@ -147,8 +146,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 			IRpcContext context,
 			int x,
 			/* RpcArgumentSortOrder */ [Dependency] FooDependency foo /**/
-		)
-		{ }
+		) { }
 
 		[Rpc]
 		public static void IncorrectDependencySortOrderWithMultipleThings(
@@ -157,34 +155,29 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 			int y,
 			/* RpcArgumentSortOrder */ [Dependency] FooDependency foo /**/,
 			/* RpcArgumentSortOrder */ [Dependency] BarDependency bar /**/
-		)
-		{ }
+		) { }
 
 		[Rpc]
 		public static void IncorrectDependencySortOrderEvenWithRandomBadAttributeInTheMiddle(
 			IRpcContext context,
 			[UndefinedAttribute] int x,
 			/* RpcArgumentSortOrder */ [Dependency] FooDependency foo /**/
-		)
-		{ }
+		) { }
 
 		[Rpc]
 		public static void RpcContextMarkedDependency(
 			/* RpcContextMarkedDependency */ [Dependency] IRpcContext context /**/
-		)
-		{ }
+		) { }
 
 		[Rpc]
 		public static void RpcPostContextMarkedDependency(
 			/* RpcContextMarkedDependency */ [Dependency] IRpcPostContext context /**/
-		)
-		{ }
+		) { }
 
 		[Rpc]
 		public static void RpcPostContextBaseMarkedDependency(
 			/* RpcContextMarkedDependency */ [Dependency] IRpcPostContextBase context /**/
-		)
-		{ }
+		) { }
 
 		[Rpc]
 		public static void NonDeserializbleClass(
