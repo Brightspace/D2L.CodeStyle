@@ -22,7 +22,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 
 			if( type.TypeKind == TypeKind.Array ) {
 				var arrayType = ( type as IArrayTypeSymbol ).ElementType as INamedTypeSymbol;
-				return IsValidParameterType( context, type, rpcTypes );
+				return IsValidParameterType( context, arrayType, rpcTypes );
 			}
 
 			if( !( type is INamedTypeSymbol namedType ) ) {
