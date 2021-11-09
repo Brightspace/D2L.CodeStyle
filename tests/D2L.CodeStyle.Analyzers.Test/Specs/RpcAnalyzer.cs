@@ -80,7 +80,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 		public static void GeneralRpc(
 			IRpcContext context,
 			[Dependency] FooDependency x,
-			[Dependency] BarDependency y
+			[Dependency] BarDependency y,
 			int a,
 			string b
 		) { }
@@ -89,7 +89,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 		public static void GeneralRpcWithWeirdParameterAttribute(
 			IRpcContext context,
 			[Dependency] FooDependency x,
-			[Dependency] BarDependency y
+			[Dependency] BarDependency y,
 			int a,
 			[UndefinedAttribute] string b
 		) { }
@@ -98,7 +98,7 @@ namespace D2L.CodeStyle.Analyzers.RpcDependencies.Examples {
 		public static void GeneralRpcWithAcceptableTypes(
 			IRpcContext context,
 			[Dependency] FooDependency x,
-			[Dependency] BarDependency y
+			[Dependency] BarDependency y,
 			bool a,
 			decimal b,
 			double c,
