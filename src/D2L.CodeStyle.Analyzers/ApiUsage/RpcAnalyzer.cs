@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -7,11 +8,12 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
-	internal sealed class RpcAnalyzer : DiagnosticAnalyzer {
+	internal sealed partial class RpcAnalyzer : DiagnosticAnalyzer {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.RpcContextFirstArgument,
 			Diagnostics.RpcArgumentSortOrder,
-			Diagnostics.RpcContextMarkedDependency
+			Diagnostics.RpcContextMarkedDependency,
+			Diagnostics.RpcInvalidParameterType
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -26,93 +28,94 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			var rpcContextType = context.Compilation.GetTypeByMetadataName( "D2L.Web.IRpcContext" );
 			var rpcPostContextType = context.Compilation.GetTypeByMetadataName( "D2L.Web.IRpcPostContext" );
 			var rpcPostContextBaseType = context.Compilation.GetTypeByMetadataName( "D2L.Web.RequestContext.IRpcPostContextBase" );
-			var dependencyAttributeType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.DependencyAttribute" );
 
 			// If any of those type lookups failed then presumably D2L.Web is
 			// not referenced and we don't need to register our analyzer.
 
-			if ( rpcAttributeType == null || rpcAttributeType.Kind == SymbolKind.ErrorType ) {
+			if( rpcAttributeType == null || rpcAttributeType.Kind == SymbolKind.ErrorType ) {
 				return;
 			}
 
-			if ( rpcContextType == null || rpcContextType.Kind == SymbolKind.ErrorType ) {
+			if( rpcContextType == null || rpcContextType.Kind == SymbolKind.ErrorType ) {
 				return;
 			}
 
-			if ( rpcPostContextType == null || rpcPostContextType.Kind == SymbolKind.ErrorType ) {
+			if( rpcPostContextType == null || rpcPostContextType.Kind == SymbolKind.ErrorType ) {
 				return;
 			}
 
-			if ( rpcPostContextBaseType == null || rpcPostContextBaseType.Kind == SymbolKind.ErrorType ) {
+			if( rpcPostContextBaseType == null || rpcPostContextBaseType.Kind == SymbolKind.ErrorType ) {
 				return;
 			}
 
-			// intentionally not checking dependencyAttributeType: still want
-			// the analyzer to run if that is not in scope.
+			ImmutableHashSet<INamedTypeSymbol> knownRpcParameterTypes = ImmutableHashSet.Create<INamedTypeSymbol>(
+				SymbolEqualityComparer.Default,
+				context.Compilation.GetSpecialType( SpecialType.System_Boolean ),
+				context.Compilation.GetSpecialType( SpecialType.System_Decimal ),
+				context.Compilation.GetSpecialType( SpecialType.System_Double ),
+				context.Compilation.GetSpecialType( SpecialType.System_Single ),
+				context.Compilation.GetSpecialType( SpecialType.System_Int32 ),
+				context.Compilation.GetSpecialType( SpecialType.System_Int64 ),
+				context.Compilation.GetSpecialType( SpecialType.System_String )
+			);
+
+			var treeNodeType = context.Compilation.GetTypeByMetadataName( "D2L.Web.UI.TreeControl.ITreeNode" );
+			if( treeNodeType != null && treeNodeType.Kind != SymbolKind.ErrorType ) {
+				knownRpcParameterTypes = knownRpcParameterTypes.Add( treeNodeType );
+			}
+
+			RpcTypes rpcTypes = new(
+				RpcAttribute: rpcAttributeType,
+				RpcContexts: ImmutableHashSet.Create<INamedTypeSymbol>(
+					SymbolEqualityComparer.Default,
+					rpcContextType,
+					rpcPostContextType,
+					rpcPostContextBaseType
+				),
+				DependencyAttribute: context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.DependencyAttribute" ),
+				IDeserializable: context.Compilation.GetTypeByMetadataName( "D2L.Serialization.IDeserializable" ),
+				IDeserializer: context.Compilation.GetTypeByMetadataName( "D2L.Serialization.IDeserializer" ),
+				IDictionary: context.Compilation.GetTypeByMetadataName( "System.Collections.Generic.IDictionary`2" ),
+				KnownRpcParameters: knownRpcParameterTypes
+			);
 
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeMethod(
-					ctx,
-					rpcAttributeType: rpcAttributeType,
-					rpcContextType: rpcContextType,
-					rpcPostContextType: rpcPostContextType,
-					rpcPostContextBaseType: rpcPostContextBaseType,
-					dependencyAttributeType: dependencyAttributeType
-				),
+				ctx => AnalyzeMethod( ctx, rpcTypes ),
 				SyntaxKind.MethodDeclaration
 			);
 		}
 
 		private static void AnalyzeMethod(
 			SyntaxNodeAnalysisContext context,
-			INamedTypeSymbol rpcAttributeType,
-			INamedTypeSymbol rpcContextType,
-			INamedTypeSymbol rpcPostContextType,
-			INamedTypeSymbol rpcPostContextBaseType,
-			INamedTypeSymbol dependencyAttributeType
+			RpcTypes rpcTypes
 		) {
 			var method = context.Node as MethodDeclarationSyntax;
 
-			if ( method == null ) {
+			if( method == null ) {
 				return;
 			}
 
-			if ( !CheckThatMethodIsRpc( context, method, rpcAttributeType ) ) {
+			if( !CheckThatMethodIsRpc( context, method, rpcTypes ) ) {
 				return;
 			}
 
-			CheckThatFirstArgumentIsIRpcContext(
-				context,
-				method,
-				rpcContextType: rpcContextType,
-				rpcPostContextType: rpcPostContextType,
-				rpcPostContextBaseType: rpcPostContextBaseType,
-				dependencyAttributeType: dependencyAttributeType
-			);
+			var (rpcContext, parameters) = Split( context, method, rpcTypes );
 
-			// dependencyAttributeType may be null if that DLL isn't
-			// referenced. In that case don't do some of these checks.
-			if ( dependencyAttributeType != null ) {
-				CheckThatDependencyArgumentsAreSortedCorrectly(
-					context,
-					method.ParameterList.Parameters,
-					dependencyAttributeType
-				);
+			CheckThatFirstArgumentIsIRpcContext( context, method, rpcContext, rpcTypes );
 
-				// other things to check:
-				// - appropriate use of [Dependency]
-			}
+			CheckThatRpcParametersAreValid( context, parameters, rpcTypes );
 		}
 
 		private static bool CheckThatMethodIsRpc(
 			SyntaxNodeAnalysisContext context,
 			MethodDeclarationSyntax method,
-			INamedTypeSymbol rpcAttributeType
+			RpcTypes rpcTypes
 		) {
-			bool isRpc = method
-				.AttributeLists
-				.SelectMany( al => al.Attributes )
-				.Any( attr => IsAttribute( rpcAttributeType, attr, context.SemanticModel ) );
+			bool isRpc = context
+				.SemanticModel
+				.GetDeclaredSymbol( method )
+				.GetAttributes()
+				.Any( a => SymbolEqualityComparer.Default.Equals( a.AttributeClass, rpcTypes.RpcAttribute ) );
 
 			return isRpc;
 		}
@@ -120,77 +123,107 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		private static void CheckThatFirstArgumentIsIRpcContext(
 			SyntaxNodeAnalysisContext context,
 			MethodDeclarationSyntax method,
-			INamedTypeSymbol rpcContextType,
-			INamedTypeSymbol rpcPostContextType,
-			INamedTypeSymbol rpcPostContextBaseType,
-			INamedTypeSymbol dependencyAttributeType
+			(IParameterSymbol Symbol, ParameterSyntax Syntax) rpcContext,
+			RpcTypes rpcTypes
 		) {
-			var ps = method.ParameterList.Parameters;
-
-			if( ps.Count == 0 ) {
+			if( rpcContext == default) {
 				context.ReportDiagnostic(
 					Diagnostic.Create( Diagnostics.RpcContextFirstArgument, method.ParameterList.GetLocation() )
 				);
 				return;
 			}
 
-			var firstParam = method.ParameterList.Parameters[0];
-			var firstParamType = context.SemanticModel.GetSymbolInfo( firstParam.Type ).Symbol;
-
-			var firstParamIsReasonableType =
-				rpcContextType.Equals( firstParamType, SymbolEqualityComparer.Default ) ||
-				rpcPostContextType.Equals( firstParamType, SymbolEqualityComparer.Default ) ||
-				rpcPostContextBaseType.Equals( firstParamType, SymbolEqualityComparer.Default );
-
-			if( !firstParamIsReasonableType ) {
+			if( !rpcTypes.RpcContexts.Contains( rpcContext.Symbol.Type ) ) {
 				context.ReportDiagnostic(
-					Diagnostic.Create( Diagnostics.RpcContextFirstArgument, firstParam.GetLocation() )
+					Diagnostic.Create( Diagnostics.RpcContextFirstArgument, rpcContext.Syntax.GetLocation() )
 				);
-			} else if( dependencyAttributeType != null
-				&& IsMarkedDependency( dependencyAttributeType, firstParam, context.SemanticModel )
-			) {
+				return;
+			}
+
+			if( IsMarkedAsDependency( rpcContext.Symbol, rpcTypes ) ) {
 				context.ReportDiagnostic(
-					Diagnostic.Create( Diagnostics.RpcContextMarkedDependency, firstParam.GetLocation() )
+					Diagnostic.Create( Diagnostics.RpcContextMarkedDependency, rpcContext.Syntax.GetLocation() )
 				);
 			}
 		}
 
-		private static void CheckThatDependencyArgumentsAreSortedCorrectly(
+		private static void CheckThatRpcParametersAreValid(
 			SyntaxNodeAnalysisContext context,
-			SeparatedSyntaxList<ParameterSyntax> ps,
-			INamedTypeSymbol dependencyAttributeType
+			ImmutableArray<(IParameterSymbol Symbol, ParameterSyntax Syntax)> parameters,
+			RpcTypes rpcTypes
 		) {
-			bool doneDependencies = false;
-			foreach( var param in ps.Skip( 1 ) ) {
-				var isDep = IsMarkedDependency( dependencyAttributeType, param, context.SemanticModel );
-
-				if( !isDep && !doneDependencies ) {
-					doneDependencies = true;
-				} else if( isDep && doneDependencies ) {
-					context.ReportDiagnostic( Diagnostic.Create( Diagnostics.RpcArgumentSortOrder, param.GetLocation() ) );
+			foreach( var parameter in parameters ) {
+				bool isValidParameterType = IsValidParameterType( context, parameter.Symbol.Type, rpcTypes );
+				if( !isValidParameterType ) {
+					context.ReportDiagnostic(
+						Diagnostic.Create( Diagnostics.RpcInvalidParameterType, parameter.Syntax.Type.GetLocation() )
+					);
 				}
 			}
 		}
 
-		private static bool IsMarkedDependency(
-			INamedTypeSymbol dependencyAttributeType,
-			ParameterSyntax parameter,
-			SemanticModel model
-		) => parameter
-			.AttributeLists
-			.SelectMany( al => al.Attributes )
-			.Any( attr => IsAttribute( dependencyAttributeType, attr, model ) );
-
-		private static bool IsAttribute(
-			INamedTypeSymbol expectedType,
-			AttributeSyntax attr,
-			SemanticModel model
+		private static ((IParameterSymbol Symbol, ParameterSyntax Syntax) rpcContext, ImmutableArray<(IParameterSymbol Symbol, ParameterSyntax Syntax)> parameters) Split(
+			SyntaxNodeAnalysisContext context,
+			MethodDeclarationSyntax method,
+			RpcTypes rpcTypes
 		) {
-			var attributeConstructorType = model.GetSymbolInfo( attr ).Symbol;
+			var parameters = method.ParameterList.Parameters;
 
-			// Note: symbol corresponds to the constructor for the attribute,
-			// so we need to look at symbol.ContainingType
-			return expectedType.Equals( attributeConstructorType?.ContainingType, SymbolEqualityComparer.Default );
+			if( parameters.Count == 0 ) {
+				return (default, ImmutableArray<(IParameterSymbol, ParameterSyntax)>.Empty);
+			}
+
+			SemanticModel model = context.SemanticModel;
+
+			int index = 0;
+
+			ParameterSyntax rpcContextSyntax = parameters[ index++ ];
+			IParameterSymbol rpcContext = model.GetDeclaredSymbol( rpcContextSyntax );
+			var parametersBuilder = ImmutableArray.CreateBuilder<(IParameterSymbol, ParameterSyntax)>();
+
+			for( ; index < parameters.Count; ++index ) {
+				ParameterSyntax syntax = parameters[ index ];
+				IParameterSymbol parameter = model.GetDeclaredSymbol( syntax );
+
+				if( IsMarkedAsDependency( parameter, rpcTypes ) ) {
+					if( parametersBuilder.Count > 0 ) {
+						context.ReportDiagnostic( Diagnostic.Create( Diagnostics.RpcArgumentSortOrder, syntax.GetLocation() ) );
+					}
+
+					continue;
+				}
+
+				parametersBuilder.Add( (parameter, syntax) );
+			}
+
+			return ((rpcContext, rpcContextSyntax), parametersBuilder.ToImmutable());
 		}
+
+		private static bool IsMarkedAsDependency(
+			IParameterSymbol parameter,
+			RpcTypes rpcTypes
+		) {
+			if( rpcTypes.DependencyAttribute == null ) {
+				return false;
+			}
+
+			foreach( AttributeData attribute in parameter.GetAttributes() ) {
+				if( SymbolEqualityComparer.Default.Equals( attribute.AttributeClass, rpcTypes.DependencyAttribute ) ) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		private sealed record RpcTypes(
+			INamedTypeSymbol RpcAttribute,
+			ImmutableHashSet<INamedTypeSymbol> RpcContexts,
+			INamedTypeSymbol DependencyAttribute,
+			INamedTypeSymbol IDeserializable,
+			INamedTypeSymbol IDeserializer,
+			INamedTypeSymbol IDictionary,
+			ImmutableHashSet<INamedTypeSymbol> KnownRpcParameters
+		);
 	}
 }
