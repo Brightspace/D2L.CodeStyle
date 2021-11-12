@@ -39,4 +39,10 @@ namespace SpecTests {
 
 	}
 
+	public class /* UnnecessaryAllowedListEntry(SpecTests.AllowedClass2\, JsonParamBinderAnalyzer, LegacyJsonParamBinderAllowedList.txt) */ AllowedClass2 /**/ {
+
+		public void Test( int x ) { }
+
+	}
+
 }

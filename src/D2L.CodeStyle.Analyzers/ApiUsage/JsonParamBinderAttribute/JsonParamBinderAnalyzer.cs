@@ -91,7 +91,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 			INamedTypeSymbol jsonParamBinderT,
 			AllowedTypeList allowedTypeList
 		) {
-			if( !( context.Symbol is INamedTypeSymbol namedType ) ) {
+			if( context.Symbol is not INamedTypeSymbol namedType  ) {
 				return;
 			}
 
@@ -99,24 +99,17 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 				return;
 			}
 
-			Location diagnosticLocation = null;
-			foreach( var syntaxRef in namedType.DeclaringSyntaxReferences ) {
-				var typeSyntax = syntaxRef.GetSyntax( context.CancellationToken ) as TypeDeclarationSyntax;
-
-				diagnosticLocation = diagnosticLocation ?? typeSyntax.Identifier.GetLocation();
-
-				SemanticModel model = context.Compilation.GetSemanticModel( typeSyntax.SyntaxTree );
-
-				bool usesDisallowedTypes = typeSyntax
-					.DescendantNodes()
-					.OfType<AttributeSyntax>()
-					.Any( syntax => AttributeIsOfDisallowedType( model, jsonParamBinderT, syntax ) );
-
-				if( usesDisallowedTypes ) {
-					return;
+			foreach( var method in namedType.GetMembers().OfType<IMethodSymbol>() ) {
+				foreach( var parameter in method.Parameters ) {
+					foreach( var attribute in parameter.GetAttributes() ) {
+						if( SymbolEqualityComparer.Default.Equals( attribute.AttributeClass, jsonParamBinderT ) ) {
+							return;
+						}
+					}
 				}
 			}
 
+			Location diagnosticLocation = namedType.Locations.FirstOrDefault();
 			if( diagnosticLocation != null ) {
 				allowedTypeList.ReportEntryAsUnnecesary(
 					entry: namedType,
