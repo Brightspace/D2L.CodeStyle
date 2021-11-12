@@ -54,17 +54,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
-			// This foreach can be replaced if symbol.IsReadOnly when we update
-			// to CodeAnalysis 3.1.0 (VS2019)
-			foreach( SyntaxReference declarationRef in declarationRefs ) {
-				StructDeclarationSyntax declaration = declarationRef
-					.GetSyntax( context.CancellationToken ) as StructDeclarationSyntax;
-
-				foreach( SyntaxToken token in declaration.Modifiers ) {
-					if( token.IsKind( SyntaxKind.ReadOnlyKeyword ) ) {
-						return;
-					}
-				}
+			if( symbol.IsReadOnly ) {
+				return;
 			}
 
 			if( !ShouldBeReadOnly( symbol ) ) {
