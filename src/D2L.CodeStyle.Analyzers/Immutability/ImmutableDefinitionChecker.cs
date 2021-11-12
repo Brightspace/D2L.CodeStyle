@@ -606,9 +606,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// properties. init-only properties can be overwritten by
 					// callers (rather than just constructors) which are well
 					// outside the scope of our analysis.
-					isInitOnly ? null : prop.Initializer?.Value,
+					Initializer: isInitOnly ? null : prop.Initializer?.Value,
 
-					prop.IsAutoImplemented(),
+					IsAutoImplemented: prop.IsAutoImplemented(),
 					isReadOnly
 				),
 				ParameterSyntax param => (
