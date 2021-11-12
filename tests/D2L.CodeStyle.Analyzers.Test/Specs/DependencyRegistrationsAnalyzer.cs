@@ -41,25 +41,17 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 				ObjectScope scope
 			) where TFactoryType : IFactory<TDependencyType>;
 
-		void MarkInterfaceAsPlugin<TDependencyType>( ObjectScope scope )
-			where TDependencyType : class;
+		void ConfigurePlugins<TPlugin>(
+			ObjectScope scope
+		);
+
+		void ConfigureOrderedPlugins<TPlugin, TComparer>(
+			ObjectScope scope
+		) where TComparer : IComparer<TPlugin>, new();
 
 		void UnhandledRegisterMethod();
 	}
 	public static class ExtensionMethods {
-		// from: http://search.dev.d2l/source/xref/Lms/core/lp/framework/core/D2L.LP.Foundation/LP/Extensibility/Activation/Domain/IDependencyRegistryConfigurePluginsExtensions.cs
-		public static void ConfigurePlugins<TPlugin>(
-				this IDependencyRegistry registry,
-				ObjectScope scope
-			) {
-		}
-
-		public static void ConfigureOrderedPlugins<TPlugin, TComparer>(
-				this IDependencyRegistry registry,
-				ObjectScope scope
-			) where TComparer : IComparer<TPlugin>, new() {
-		}
-
 		// from: http://search.dev.d2l/source/xref/Lms/core/lp/framework/core/D2L.LP.Foundation/LP/Extensibility/Activation/Domain/DependencyRegistryExtensionPointExtensions.cs
 		public static void RegisterPluginExtensionPoint<TExtensionPoint, T>(
 				this IDependencyRegistry @this,
@@ -113,8 +105,8 @@ namespace SpecTests {
 			//reg.RegisterFactory<ISingleton, ImmutableThingFactory>( ObjectScope.Singleton );
 			//reg.RegisterPluginFactory<ISingleton, ImmutableThingFactory>( ObjectScope.Singleton );
 			//reg.Register( typeof( ISingleton ), typeof( ImmutableThing ), ObjectScope.Singleton );
-			//reg.ConfigurePlugins<ImmutableThing>( ObjectScope.Singleton );
-			//reg.ConfigureOrderedPlugins<ImmutableThing, SomeComparer<ImmutableThing>>( ObjectScope.Singleton );
+			reg.ConfigurePlugins<ImmutableThing>( ObjectScope.Singleton );
+			reg.ConfigureOrderedPlugins<ImmutableThing, SomeComparer<ImmutableThing>>( ObjectScope.Singleton );
 			//reg.ConfigureInstancePlugins<ImmutableThing>( ObjectScope.Singleton );
 			//reg.ConfigureInstancePlugins<ImmutableThing, DefaultExtensionPoint<ImmutableThing>>( ObjectScope.Singleton );
 			//reg.RegisterPluginExtensionPoint<DefaultExtensionPoint<ImmutableThing>, ImmutableThing>( ObjectScope.Singleton );

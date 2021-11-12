@@ -2,19 +2,17 @@
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
-	// void ConfigurePlugins<TPlugin>( this IDependencyRegistry registry, ObjectScope scope )
-	// void ConfigureOrderedPlugins<TPlugin, TComparer>( this IDependencyRegistry registry, ObjectScope scope ) 
+	// void ConfigurePlugins<TPlugin>( ObjectScope scope )
+	// void ConfigureOrderedPlugins<TPlugin, TComparer>( ObjectScope scope ) 
 	//		where TComparer : IComparer<TPlugin>, new()
 	internal sealed class ConfigurePluginsExpression : DependencyRegistrationExpression {
 		internal override bool CanHandleMethod( IMethodSymbol method ) {
 			return
 				( method.Name == "ConfigurePlugins"
-				&& method.IsExtensionMethod
 				&& method.TypeParameters.Length == 1
 				&& method.Parameters.Length == 1 )
 				||
 				( method.Name == "ConfigureOrderedPlugins"
-				&& method.IsExtensionMethod
 				&& method.TypeParameters.Length == 2
 				&& method.Parameters.Length == 1 );
 		}

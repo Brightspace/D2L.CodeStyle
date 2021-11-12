@@ -16,7 +16,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 		private static readonly IImmutableSet<string> s_blessedClasses = ImmutableHashSet.Create(
 			"D2L.LP.Extensibility.Activation.Domain.DependencyRegistryExtensionPointExtensions",
 			"D2L.LP.Extensibility.Activation.Domain.DynamicObjectFactoryRegistryExtensions",
-			"D2L.LP.Extensibility.Activation.Domain.IDependencyRegistryConfigurePluginsExtensions",
 			"D2L.LP.Extensibility.Activation.Domain.IDependencyRegistryExtensions",
 			"D2L.LP.Extensibility.Activation.Domain.LegacyPluginsDependencyLoaderExtensions",
 
