@@ -1336,10 +1336,15 @@ namespace ConsistencyTests {
 	public record UnsealedDerivedWithAttribute : UnsealedImmutableRecord { }
 
 	public record RegularRecord { }
+	public record class RegularExplicitRecord { }
 	public sealed record RegularDerivedRecord : RegularRecord { }
+	public sealed record class RegularDerivedExplicitRecord : RegularRecord { }
 
 	[Immutable]
 	public record ConciseRecord : UnsealedImmutableRecord;
+
+	[Immutable]
+	public record class ConsiseExplicitRecord : UnsealedImmutableRecord;
 
 	[Immutable]
 	public record BaseRecordWithArgs( int x ) { }
@@ -1356,8 +1361,8 @@ namespace ConsistencyTests {
 		( int z ) : BaseRecordWithArgs( z );
 
 	public sealed record class
-	/* MissingTransitiveImmutableAttribute(ConsistencyTests.DerivedExplicitRecordNoAttrConstArg, , base class, ConsistencyTests.BaseRecordWithArgs) */ DerivedExplicitRecordNoAttrConstArg /**/
-	: BaseRecordWithArgs( 0 );
+		/* MissingTransitiveImmutableAttribute(ConsistencyTests.DerivedExplicitRecordNoAttrConstArg, , base class, ConsistencyTests.BaseRecordWithArgs) */ DerivedExplicitRecordNoAttrConstArg /**/
+		: BaseRecordWithArgs( 0 );
 
 	public sealed record class
 		/* MissingTransitiveImmutableAttribute(ConsistencyTests.DerivedExplicitRecordNoAttrWithArg, , base class, ConsistencyTests.BaseRecordWithArgs) */ DerivedExplicitRecordNoAttrWithArg /**/
