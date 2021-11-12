@@ -53,7 +53,7 @@ namespace SpecTests
 			Logger.Error( /* NonConstantPassedToConstantParameter(message) */ $"Organization {orgId} is not constant." /**/ );
 
 			const string CONSTANT_STRING = "Foo";
-			Logger.Error( $"Interpolated strings of constant strings are compile-time constants as of C#10." );
+			Logger.Error( $"Interpolated strings of constant strings (like {CONSTANT_STRING}) are compile-time constants as of C#10." );
 			#endregion
 
 			#region String tests
