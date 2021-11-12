@@ -1,1 +1,2 @@
 ﻿SpecTests.AllowedClass, JsonParamBinderAnalyzer
+SpecTests.AllowedClass2, JsonParamBinderAnalyzer
