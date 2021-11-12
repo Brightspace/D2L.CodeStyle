@@ -1355,6 +1355,36 @@ namespace ConsistencyTests {
 		/* MissingTransitiveImmutableAttribute(ConsistencyTests.DerivedRecordNoAttrWithArg, , base class, ConsistencyTests.BaseRecordWithArgs) */ DerivedRecordNoAttrWithArg /**/
 		( int z ) : BaseRecordWithArgs( z );
 
+	public sealed record class
+	/* MissingTransitiveImmutableAttribute(ConsistencyTests.DerivedExplicitRecordNoAttrConstArg, , base class, ConsistencyTests.BaseRecordWithArgs) */ DerivedExplicitRecordNoAttrConstArg /**/
+	: BaseRecordWithArgs( 0 );
+
+	public sealed record class
+		/* MissingTransitiveImmutableAttribute(ConsistencyTests.DerivedExplicitRecordNoAttrWithArg, , base class, ConsistencyTests.BaseRecordWithArgs) */ DerivedExplicitRecordNoAttrWithArg /**/
+		( int z ) : BaseRecordWithArgs( z );
+
+
+	[Immutable]
+	public readonly record struct ReadOnlyRecordStruct() { }
+
+	[Immutable]
+	public readonly record struct ReadOnlyRecordStructWithArg( int x ) { }
+
+	[Immutable]
+	public record struct RecordStruct() { }
+
+	[Immutable]
+	public record struct RecordStructWithArg(
+		int /* MemberIsNotReadOnly(Property, x, RecordStructWithArg) */ x /**/
+	) { }
+
+	[Immutable]
+	public record struct RecordStructWithExplicitReadOnlyArgImpl(
+		int x
+	) {
+		public int x { get; init; }
+	}
+
 	[ConditionallyImmutable]
 	public interface ISomethingConditionallyImmutable<[ConditionallyImmutable.OnlyIf] T> { }
 
