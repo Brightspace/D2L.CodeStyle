@@ -49,32 +49,26 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 			ObjectScope scope
 		) where TComparer : IComparer<TPlugin>, new();
 
-		void UnhandledRegisterMethod();
-	}
-	public static class ExtensionMethods {
-		// from: http://search.dev.d2l/source/xref/Lms/core/lp/framework/core/D2L.LP.Foundation/LP/Extensibility/Activation/Domain/DependencyRegistryExtensionPointExtensions.cs
-		public static void RegisterPluginExtensionPoint<TExtensionPoint, T>(
-				this IDependencyRegistry @this,
+		void RegisterPluginExtensionPoint<TExtensionPoint, T>(
 				ObjectScope scope
-			) where TExtensionPoint : IExtensionPoint<T> {
-		}
+			) where TExtensionPoint : IExtensionPoint<T>;
 
-		public static void RegisterPlugin<TExtensionPoint, TDependencyType, TConcreteType>(
-				this IDependencyRegistry @this,
+		void RegisterPlugin<TExtensionPoint, TDependencyType, TConcreteType>(
 				ObjectScope scope
 			)
 			where TConcreteType : TDependencyType
-			where TExtensionPoint : IExtensionPoint<TDependencyType> {
-		}
+			where TExtensionPoint : IExtensionPoint<TDependencyType>;
 
-		public static void RegisterPluginFactory<TExtensionPoint, TDependencyType, TFactoryType>(
-				this IDependencyRegistry @this,
+		void RegisterPluginFactory<TExtensionPoint, TDependencyType, TFactoryType>(
 				ObjectScope scope
 			)
 			where TFactoryType : IFactory<TDependencyType>
-			where TExtensionPoint : IExtensionPoint<TDependencyType> {
-		}
+			where TExtensionPoint : IExtensionPoint<TDependencyType>;
 
+		void UnhandledRegisterMethod();
+	}
+
+	public static class ExtensionMethods {
 		// from: http://search.dev.d2l/source/xref/Lms/core/lp/framework/core/D2L.LP/LP/Extensibility/Plugins/DI/LegacyPluginsDependencyLoaderExtensions.cs
 		public static void ConfigureInstancePlugins<TPlugin>(
 				this IDependencyRegistry registry,
