@@ -3,14 +3,12 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
-	// 	public static void RegisterPlugin<TExtensionPoint, TDependencyType, TConcreteType>(
-	//			this IDependencyRegistry @this,
+	// 	void RegisterPlugin<TExtensionPoint, TDependencyType, TConcreteType>(
 	//			ObjectScope scope
 	//		)
 	//		where TConcreteType : TDependencyType
 	//		where TExtensionPoint : IExtensionPoint<TDependencyType>;
-	//	public static void RegisterPluginFactory<TExtensionPoint, TDependencyType, TFactoryType>(
-	//			this IDependencyRegistry @this,
+	//	void RegisterPluginFactory<TExtensionPoint, TDependencyType, TFactoryType>(
 	//			ObjectScope scope
 	//		)
 	//		where TFactoryType : IFactory<TDependencyType>
