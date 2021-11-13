@@ -67,7 +67,6 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 
 		void UnhandledRegisterMethod();
 	}
-
 	public static class ExtensionMethods {
 		// from: http://search.dev.d2l/source/xref/Lms/core/lp/framework/core/D2L.LP/LP/Extensibility/Plugins/DI/LegacyPluginsDependencyLoaderExtensions.cs
 		public static void ConfigureInstancePlugins<TPlugin>(
