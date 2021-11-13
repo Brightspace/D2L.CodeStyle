@@ -41,48 +41,33 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 				ObjectScope scope
 			) where TFactoryType : IFactory<TDependencyType>;
 
-		void MarkInterfaceAsPlugin<TDependencyType>( ObjectScope scope )
-			where TDependencyType : class;
+		void ConfigurePlugins<TPlugin>(
+			ObjectScope scope
+		);
+
+		void ConfigureOrderedPlugins<TPlugin, TComparer>(
+			ObjectScope scope
+		) where TComparer : IComparer<TPlugin>, new();
+
+		void RegisterPluginExtensionPoint<TExtensionPoint, T>(
+				ObjectScope scope
+			) where TExtensionPoint : IExtensionPoint<T>;
+
+		void RegisterPlugin<TExtensionPoint, TDependencyType, TConcreteType>(
+				ObjectScope scope
+			)
+			where TConcreteType : TDependencyType
+			where TExtensionPoint : IExtensionPoint<TDependencyType>;
+
+		void RegisterPluginFactory<TExtensionPoint, TDependencyType, TFactoryType>(
+				ObjectScope scope
+			)
+			where TFactoryType : IFactory<TDependencyType>
+			where TExtensionPoint : IExtensionPoint<TDependencyType>;
 
 		void UnhandledRegisterMethod();
 	}
 	public static class ExtensionMethods {
-		// from: http://search.dev.d2l/source/xref/Lms/core/lp/framework/core/D2L.LP.Foundation/LP/Extensibility/Activation/Domain/IDependencyRegistryConfigurePluginsExtensions.cs
-		public static void ConfigurePlugins<TPlugin>(
-				this IDependencyRegistry registry,
-				ObjectScope scope
-			) {
-		}
-
-		public static void ConfigureOrderedPlugins<TPlugin, TComparer>(
-				this IDependencyRegistry registry,
-				ObjectScope scope
-			) where TComparer : IComparer<TPlugin>, new() {
-		}
-
-		// from: http://search.dev.d2l/source/xref/Lms/core/lp/framework/core/D2L.LP.Foundation/LP/Extensibility/Activation/Domain/DependencyRegistryExtensionPointExtensions.cs
-		public static void RegisterPluginExtensionPoint<TExtensionPoint, T>(
-				this IDependencyRegistry @this,
-				ObjectScope scope
-			) where TExtensionPoint : IExtensionPoint<T> {
-		}
-
-		public static void RegisterPlugin<TExtensionPoint, TDependencyType, TConcreteType>(
-				this IDependencyRegistry @this,
-				ObjectScope scope
-			)
-			where TConcreteType : TDependencyType
-			where TExtensionPoint : IExtensionPoint<TDependencyType> {
-		}
-
-		public static void RegisterPluginFactory<TExtensionPoint, TDependencyType, TFactoryType>(
-				this IDependencyRegistry @this,
-				ObjectScope scope
-			)
-			where TFactoryType : IFactory<TDependencyType>
-			where TExtensionPoint : IExtensionPoint<TDependencyType> {
-		}
-
 		// from: http://search.dev.d2l/source/xref/Lms/core/lp/framework/core/D2L.LP/LP/Extensibility/Plugins/DI/LegacyPluginsDependencyLoaderExtensions.cs
 		public static void ConfigureInstancePlugins<TPlugin>(
 				this IDependencyRegistry registry,
@@ -113,8 +98,8 @@ namespace SpecTests {
 			//reg.RegisterFactory<ISingleton, ImmutableThingFactory>( ObjectScope.Singleton );
 			//reg.RegisterPluginFactory<ISingleton, ImmutableThingFactory>( ObjectScope.Singleton );
 			//reg.Register( typeof( ISingleton ), typeof( ImmutableThing ), ObjectScope.Singleton );
-			//reg.ConfigurePlugins<ImmutableThing>( ObjectScope.Singleton );
-			//reg.ConfigureOrderedPlugins<ImmutableThing, SomeComparer<ImmutableThing>>( ObjectScope.Singleton );
+			reg.ConfigurePlugins<ImmutableThing>( ObjectScope.Singleton );
+			reg.ConfigureOrderedPlugins<ImmutableThing, SomeComparer<ImmutableThing>>( ObjectScope.Singleton );
 			//reg.ConfigureInstancePlugins<ImmutableThing>( ObjectScope.Singleton );
 			//reg.ConfigureInstancePlugins<ImmutableThing, DefaultExtensionPoint<ImmutableThing>>( ObjectScope.Singleton );
 			//reg.RegisterPluginExtensionPoint<DefaultExtensionPoint<ImmutableThing>, ImmutableThing>( ObjectScope.Singleton );

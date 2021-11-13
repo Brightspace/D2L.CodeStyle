@@ -3,14 +3,12 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
-	// 	public static void RegisterPlugin<TExtensionPoint, TDependencyType, TConcreteType>(
-	//			this IDependencyRegistry @this,
+	// 	void RegisterPlugin<TExtensionPoint, TDependencyType, TConcreteType>(
 	//			ObjectScope scope
 	//		)
 	//		where TConcreteType : TDependencyType
 	//		where TExtensionPoint : IExtensionPoint<TDependencyType>;
-	//	public static void RegisterPluginFactory<TExtensionPoint, TDependencyType, TFactoryType>(
-	//			this IDependencyRegistry @this,
+	//	void RegisterPluginFactory<TExtensionPoint, TDependencyType, TFactoryType>(
 	//			ObjectScope scope
 	//		)
 	//		where TFactoryType : IFactory<TDependencyType>
@@ -18,7 +16,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 	internal sealed class RegisterPluginForExtensionPointExpression : DependencyRegistrationExpression {
 		internal override bool CanHandleMethod( IMethodSymbol method ) {
 			return ( method.Name == "RegisterPlugin" || method.Name == "RegisterPluginFactory" )
-				&& method.IsExtensionMethod
 				&& method.Parameters.Length == 1
 				&& method.TypeArguments.Length == 3;
 		}
