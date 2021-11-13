@@ -7,14 +7,11 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 	internal sealed class DependencyRegistry {
 		private static readonly ImmutableArray<DependencyRegistrationExpression> s_registrationExpressions = ImmutableArray.Create<DependencyRegistrationExpression>(
-			new RegisterParentAwareFactoryExpression(),
-			new RegisterInstantiatedObjectExpression(),
 			new NonGenericRegisterExpression(),
 			new FullyGenericRegisterExpression(),
 			new RegisterSubInterfaceExpression(),
 			new ConfigurePluginsExpression(),
 			new ConfigureInstancePluginsExpression(),
-			new RegisterDynamicObjectFactoryExpression(),
 			new RegisterPluginForExtensionPointExpression(),
 			new RegisterExtensionPointExpression(),
 			new MarkInterfaceAsPluginExpression()

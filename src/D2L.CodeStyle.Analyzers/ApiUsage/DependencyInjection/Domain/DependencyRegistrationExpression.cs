@@ -23,11 +23,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 			SemanticModel semanticModel,
 			out ObjectScope scope
 		) {
-			scope = ObjectScope.AlwaysCreateNewInstance; // bogus
-
 			var scopeArgumentValue = semanticModel.GetConstantValue( argument.Expression );
 			if( !scopeArgumentValue.HasValue ) {
 				// this can happen if someone is typing, or in the rare case that someone doesn't pass this value inline (i.e., uses a variable)
+				scope = default;
 				return false;
 			}
 

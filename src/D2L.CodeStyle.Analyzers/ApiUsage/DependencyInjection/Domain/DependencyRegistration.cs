@@ -6,24 +6,18 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 			ObjectScope scope,
 			ITypeSymbol dependencyType,
 			ITypeSymbol concreteType = null,
-			ITypeSymbol factoryType = null,
-			ITypeSymbol dynamicObjectType = null,
-			bool isInstanceRegistration = false
+			ITypeSymbol factoryType = null
 		) {
 			ObjectScope = scope;
 			DependencyType = dependencyType;
 			ConcreteType = concreteType;
 			FactoryType = factoryType;
-			DynamicObjectFactoryType = dynamicObjectType;
-			IsInstanceRegistration = isInstanceRegistration;
 		}
 
 		public ObjectScope ObjectScope { get; }
 		public ITypeSymbol DependencyType { get; }
 		public ITypeSymbol ConcreteType { get; }
 		public ITypeSymbol FactoryType { get; }
-		public ITypeSymbol DynamicObjectFactoryType { get; }
-		public bool IsInstanceRegistration { get; }
 
 		internal static DependencyRegistration Marker( ObjectScope scope, ITypeSymbol dependencyType )
 			=> new DependencyRegistration(
@@ -45,21 +39,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 				factoryType: factoryType,
 				concreteType: concreteType
 			);
-
-		internal static DependencyRegistration DynamicObjectFactory( ObjectScope scope, ITypeSymbol dependencyType, ITypeSymbol dynamicObjectType )
-			=> new DependencyRegistration(
-				scope,
-				dependencyType: dependencyType,
-				dynamicObjectType: dynamicObjectType
-			);
-
-		internal static DependencyRegistration Instance( ObjectScope scope, ITypeSymbol dependencyType, ITypeSymbol concreteType )
-			=> new DependencyRegistration(
-				scope,
-				dependencyType: dependencyType,
-				concreteType: concreteType,
-				isInstanceRegistration: true
-			);
 	}
 
 	/// <summary>
@@ -67,7 +46,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 	/// so that the values match.
 	/// </summary>
 	internal enum ObjectScope {
-		AlwaysCreateNewInstance = 0,
 		Singleton = 1,
 		WebRequest = 3
 	}

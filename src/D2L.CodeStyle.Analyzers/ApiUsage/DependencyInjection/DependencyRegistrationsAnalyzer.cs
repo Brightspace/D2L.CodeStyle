@@ -222,18 +222,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 				return ImmutableArray.Create( registration.ConcreteType );
 			}
 
-			// if we have a dynamically generated objectfactory, use its constructor arguments
-			if( !registration.DynamicObjectFactoryType.IsNullOrErrorType() ) {
-				ImmutableArray<ITypeSymbol> dependencies;
-				if( TryGetDependenciesFromConstructor( registration.DynamicObjectFactoryType, out dependencies ) ) {
-					return dependencies;
-				}
-				// this is a dynamic object factory, but either 
-				// (1) there is no public constructor, or 
-				// (2) one of the parameter's types doesn't exist
-				// in all cases, fall back to dependency type
-			}
-
 			// otherwise use the dependency type
 			return ImmutableArray.Create( registration.DependencyType );
 		}
@@ -246,11 +234,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 		/// <param name="instantiatedType"></param>
 		/// <returns></returns>
 		private bool TryGetInstantiatedTypeForRegistration( DependencyRegistration registration, out ITypeSymbol instantiatedType ) {
-			if( registration.IsInstanceRegistration ) {
-				instantiatedType = null;
-				return false;
-			}
-
 			ITypeSymbol type = registration.FactoryType ?? registration.ConcreteType;
 
 			if( type.IsNullOrErrorType() ) {
