@@ -9,7 +9,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 	internal sealed class RegisterExtensionPointExpression : DependencyRegistrationExpression {
 		internal override bool CanHandleMethod( IMethodSymbol method ) {
 			return method.Name == "RegisterPluginExtensionPoint"
-				&& method.IsExtensionMethod
 				&& method.Parameters.Length == 1
 				&& method.TypeArguments.Length == 2;
 		}
