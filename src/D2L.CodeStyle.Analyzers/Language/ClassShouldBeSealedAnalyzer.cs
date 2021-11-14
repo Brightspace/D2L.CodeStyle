@@ -71,6 +71,10 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
+			if( symbol.TypeKind != TypeKind.Class ) {
+				return;
+			}
+
 			// We can ignore types in other assemblies (forgetting about
 			// InternalsVisibleTo because if we're seeing them here they must
 			// be public so 1) not our deal 2) not subtypes of our internal
@@ -119,9 +123,9 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				.First()
 				.GetSyntax();
 
-			if ( firstDecl is ClassDeclarationSyntax ) {
+			if ( firstDecl is TypeDeclarationSyntax declaration ) {
 				// at this point we know its a class, its private or internal and its not sealed
-				privateOrInternalUnsealedClasses[symbol] = (firstDecl as ClassDeclarationSyntax).Identifier.GetLocation();
+				privateOrInternalUnsealedClasses[symbol] = declaration.Identifier.GetLocation();
 			}
 		}
 
