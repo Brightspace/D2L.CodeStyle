@@ -1,10 +1,10 @@
 ﻿using System.Collections.Immutable;
 using System.Linq;
-using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
@@ -33,37 +33,30 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				return;
 			}
 
-			context.RegisterSyntaxNodeAction(
+			context.RegisterSymbolAction(
 				ctx => AnalyzeParameter(
 					ctx,
-					(ParameterSyntax)ctx.Node,
+					(IParameterSymbol)ctx.Symbol,
 					constantAttribute
 				),
-				SyntaxKind.Parameter
+				SymbolKind.Parameter
 			);
 
-			context.RegisterSyntaxNodeAction(
+			context.RegisterOperationAction(
 				ctx => AnalyzeArgument(
 					ctx,
-					(ArgumentSyntax)ctx.Node,
+					(IArgumentOperation)ctx.Operation,
 					constantAttribute
 				),
-				SyntaxKind.Argument
+				OperationKind.Argument
 			);
 		}
 
 		private static void AnalyzeParameter(
-			SyntaxNodeAnalysisContext context,
-			ParameterSyntax parameterSyntax,
+			SymbolAnalysisContext context,
+			IParameterSymbol parameter,
 			ISymbol constantAttribute
 		) {
-			var parameter = context.SemanticModel.GetDeclaredSymbol( parameterSyntax );
-
-			// Parameter is somehow null, so do nothing
-			if( parameter == null ) {
-				return;
-			}
-
 			// Parameter is not [Constant], so do nothing
 			if( !HasAttribute( parameter, constantAttribute ) ) {
 				return;
@@ -89,27 +82,18 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			context.ReportDiagnostic(
 				Diagnostic.Create(
 					descriptor: Diagnostics.InvalidConstantType,
-					location: parameterSyntax.GetLocation(),
+					location: parameter.Locations.First(),
 					messageArgs: type.TypeKind
 				)
 			);
 		}
 
 		private static void AnalyzeArgument(
-			SyntaxNodeAnalysisContext context,
-			ArgumentSyntax argument,
+			OperationAnalysisContext context,
+			IArgumentOperation argument,
 			ISymbol constantAttribute
 		) {
-			// Get the associated parameter
-			var parameter = argument.DetermineParameter(
-				context.SemanticModel,
-				allowParams: false
-			);
-
-			// Parameter is somehow null, so do nothing
-			if( parameter == null ) {
-				return;
-			}
+			var parameter = argument.Parameter;
 
 			// Parameter is not [Constant], so do nothing
 			if( !HasAttribute( parameter, constantAttribute ) ) {
@@ -117,12 +101,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			}
 
 			// Argument is a constant value, so do nothing
-			if( context.SemanticModel.GetConstantValue( argument.Expression ).HasValue ) {
+			if( argument.Value.ConstantValue.HasValue ) {
 				return;
 			}
 
 			// Argument was defined as [Constant] already, so trust it
-			var argumentSymbol = context.SemanticModel.GetSymbolInfo( argument.Expression ).Symbol;
+			var argumentSymbol = argument.SemanticModel.GetSymbolInfo( (argument.Syntax as ArgumentSyntax).Expression ).Symbol;
 			if( argumentSymbol != null && HasAttribute( argumentSymbol, constantAttribute ) ) {
 				return;
 			}
@@ -131,7 +115,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			context.ReportDiagnostic(
 				Diagnostic.Create(
 					descriptor: Diagnostics.NonConstantPassedToConstantParameter,
-					location: argument.GetLocation(),
+					location: argument.Syntax.GetLocation(),
 					messageArgs: parameter.Name
 				)
 			);

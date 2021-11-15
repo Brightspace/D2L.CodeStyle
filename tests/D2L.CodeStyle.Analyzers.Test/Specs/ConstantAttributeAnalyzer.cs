@@ -29,7 +29,7 @@ namespace SpecTests
 
 		public interface IInterface { }
 		public class SomeClassImplementingInterface : IInterface { }
-		public static void SomeMethodWithInterfaceParameter( /* InvalidConstantType(Interface) */ [Constant] IInterface @interface /**/ ) { }
+		public static void SomeMethodWithInterfaceParameter( [Constant] IInterface /* InvalidConstantType(Interface) */ @interface /**/ ) { }
 		public static void SomeMethodWithOneInterfaceParameter<T>(IInterface param1, [Constant] T param2) { }
 	}
 
