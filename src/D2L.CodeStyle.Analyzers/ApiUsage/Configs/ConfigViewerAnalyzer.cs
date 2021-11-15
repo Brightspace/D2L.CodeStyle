@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 
@@ -37,48 +35,36 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 				return;
 			}
 
-			context.RegisterSyntaxNodeAction(
+			context.RegisterOperationAction(
 				ctx => ConfigViewerInvocationAnalysis(
 					ctx,
-					IConfigViewer,
 					bannedConfigs,
-					ctx.Node as InvocationExpressionSyntax
+					ctx.Operation as IInvocationOperation
 				),
-				SyntaxKind.InvocationExpression
+				OperationKind.Invocation
 			);
 		}
 
 		private void ConfigViewerInvocationAnalysis(
-			SyntaxNodeAnalysisContext context,
-			INamedTypeSymbol IConfigViewer,
-			IReadOnlyDictionary<ISymbol, IReadOnlyDictionary<string, string>> bannedConfigs,
-			InvocationExpressionSyntax invocationSyntax
+			OperationAnalysisContext context,
+			IReadOnlyDictionary<IMethodSymbol, IReadOnlyDictionary<string, string>> bannedConfigs,
+			IInvocationOperation invocationOperation
 		) {
-			SemanticModel model = context.SemanticModel;
-
-			ISymbol methodSymbol = model.GetSymbolInfo( invocationSyntax.Expression ).Symbol;
-
-			if( methodSymbol == null || methodSymbol.Kind == SymbolKind.ErrorType ) {
-				return;
-			}
-
 			if( !bannedConfigs.TryGetValue(
-				methodSymbol.OriginalDefinition,
+				invocationOperation.TargetMethod.OriginalDefinition,
 				out IReadOnlyDictionary<string, string> messages
 			) ) {
 				return;
 			}
 
 			if( !TryGetConfigNameArgumentFromInvocation(
-				model,
-				invocationSyntax,
-				out ExpressionSyntax configNameArg
+				invocationOperation,
+				out IOperation configNameArg
 			) ) {
 				return;
 			}
 
 			if( !TryGetConfigNameFromInvocation(
-				model,
 				configNameArg,
 				out string configName
 			) ) {
@@ -100,15 +86,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 		}
 
 		private bool TryGetConfigNameArgumentFromInvocation(
-			SemanticModel model,
-			InvocationExpressionSyntax invocationSyntax,
-			out ExpressionSyntax configNameArg
+			IInvocationOperation invocationSyntax,
+			out IOperation configNameArg
 		) {
-			foreach( ArgumentSyntax arg in invocationSyntax.ArgumentList.Arguments ) {
-				IParameterSymbol parameter = arg.DetermineParameter( model );
-
-				if( parameter.Name == "configName" ) {
-					configNameArg = arg.Expression;
+			foreach( IArgumentOperation arg in invocationSyntax.Arguments ) {
+				if( arg.Parameter.Name == "configName" ) {
+					configNameArg = arg.Value;
 					return true;
 				}
 			}
@@ -118,11 +101,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 		}
 
 		private bool TryGetConfigNameFromInvocation(
-			SemanticModel model,
-			ExpressionSyntax configNameArg,
+			IOperation configNameArg,
 			out string configName
 		) {
-			Optional<object> maybeConfigName = model.GetConstantValue( configNameArg );
+			Optional<object> maybeConfigName = configNameArg.ConstantValue;
 			if( !maybeConfigName.HasValue ) {
 				configName = null;
 				return false;
@@ -133,24 +115,24 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 		}
 
 		private void ReportDiagnostic(
-			SyntaxNodeAnalysisContext context,
-			ExpressionSyntax configNameArg,
+			OperationAnalysisContext context,
+			IOperation configNameArg,
 			string configName,
 			string deprecationMessage
 		) {
 			context.ReportDiagnostic( Diagnostic.Create(
 				Diagnostics.BannedConfig,
-				configNameArg.GetLocation(),
+				configNameArg.Syntax.GetLocation(),
 				configName,
 				deprecationMessage
 			) );
 		}
 
-		private IReadOnlyDictionary<ISymbol, IReadOnlyDictionary<string, string>> GetBannedConfigs(
+		private IReadOnlyDictionary<IMethodSymbol, IReadOnlyDictionary<string, string>> GetBannedConfigs(
 			INamedTypeSymbol IConfigViewer
 		) {
 			var builder = ImmutableDictionary.CreateBuilder<
-				ISymbol,
+				IMethodSymbol,
 				IReadOnlyDictionary<string, string>
 			>();
 
@@ -159,9 +141,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 
 				var methods = IConfigViewer
 					.GetMembers( methodName )
-					.Where( m => m.Kind == SymbolKind.Method );
+					.OfType<IMethodSymbol>();
 
-				foreach( ISymbol method in methods ) {
+				foreach( IMethodSymbol method in methods ) {
 					builder.Add( method, definition.Value );
 				}
 			}
