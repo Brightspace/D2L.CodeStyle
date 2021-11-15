@@ -1,16 +1,39 @@
 ﻿// analyzer: D2L.CodeStyle.Analyzers.Language.ClassShouldBeSealedAnalyzer
 
 namespace D2L.CodeStyle.Analyzers.Specs {
-	public class PublicClass { } // no diagnostic because its public
+	// no diagnostic because they're public
+	public class PublicClass { }
+	public record PublicRecord { }
+	public record class PublicRecordClass { }
+
 	internal abstract class AbstractClass { } // no diagnostic because its abstract (but it is dead code)
 	interface ISomeInterface { } // interfaces can't be sealed
 	internal struct Struct { } // structs are implicitly sealed
 	internal static class StaticClass { }
 
+	// already sealed
 	internal sealed class SealedClass { } // already sealed
+	internal sealed record SealedRecord { }
+	internal sealed record SealedRecordClass { }
 
 	internal class /* ClassShouldBeSealed */ InternalUnsealedClass /**/ {
 		private class /* ClassShouldBeSealed */ PrivateUnsealedClass /**/ { }
+	}
+
+	internal record /* ClassShouldBeSealed */ InternalUnsealedRecord /**/ {
+		private record /* ClassShouldBeSealed */ PrivateUnsealedRecord /**/ { }
+	}
+
+	internal record class /* ClassShouldBeSealed */ InternalUnsealedRecordClass /**/ {
+		private record class /* ClassShouldBeSealed */ PrivateUnsealedRecordClass /**/ { }
+	}
+
+	internal record /* ClassShouldBeSealed */ InternalUnsealedRecordWithArg /**/ ( int Arg ) {
+		private record /* ClassShouldBeSealed */ PrivateUnsealedRecordWithArg /**/ ( int Arg ) { }
+	}
+
+	internal record class /* ClassShouldBeSealed */ InternalUnsealedRecordClassWithArg /**/ ( int Arg ) {
+		private record class /* ClassShouldBeSealed */ PrivateUnsealedRecordClassWithArg /**/ ( int Arg ) { }
 	}
 
 	// internal/private classes can be unsealed if they are actually used as a base somewhere
