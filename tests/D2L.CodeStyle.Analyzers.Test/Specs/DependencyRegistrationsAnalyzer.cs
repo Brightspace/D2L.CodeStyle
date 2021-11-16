@@ -49,6 +49,17 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 			ObjectScope scope
 		) where TComparer : IComparer<TPlugin>, new();
 
+		void ConfigurePlugins<TExtensionPoint, T>(
+			ObjectScope scope
+		) where TExtensionPoint : IExtensionPoint<T>;
+
+		void ConfigureOrderedPlugins<TExtensionPoint, TPlugin, TComparer>(
+			ObjectScope scope
+		)
+			where TExtensionPoint : IExtensionPoint<T>
+			where TComparer : IComparer<TPlugin>, new()
+		;
+
 		void RegisterPluginExtensionPoint<TExtensionPoint, T>(
 				ObjectScope scope
 			) where TExtensionPoint : IExtensionPoint<T>;
