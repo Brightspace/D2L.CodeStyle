@@ -11,9 +11,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 			new FullyGenericRegisterExpression(),
 			new RegisterSubInterfaceExpression(),
 			new ConfigurePluginsExpression(),
+			new ConfigurePluginsExtensionPointExpression(),
 			new ConfigureInstancePluginsExpression(),
 			new RegisterPluginForExtensionPointExpression(),
-			new RegisterExtensionPointExpression(),
 			new MarkInterfaceAsPluginExpression()
 		);
 
