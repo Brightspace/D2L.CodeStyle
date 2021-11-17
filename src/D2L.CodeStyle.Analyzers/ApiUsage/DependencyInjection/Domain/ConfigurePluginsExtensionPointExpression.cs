@@ -7,13 +7,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 	// void ConfigureOrderedPlugins<TExtensionPoint, TPlugin, TComparer>( ObjectScope scope )
 	//      where TExtensionPoint : IExtensionPoint<TPlugin>
 	//		where TComparer : IComparer<TPlugin>, new()
-	// 	void RegisterPluginExtensionPoint<TExtensionPoint, T>()
-	//      where TExtensionPoint : IExtensionPoint<T>
 	internal sealed class ConfigurePluginsExtensionPointExpression : DependencyRegistrationExpression {
 		internal override bool CanHandleMethod( IMethodSymbol method ) {
 			return ( method.Name == "ConfigurePlugins" && method.TypeParameters.Length == 2 && method.Parameters.Length == 1 )
 				|| ( method.Name == "ConfigureOrderedPlugins" && method.TypeParameters.Length == 3 && method.Parameters.Length == 1 )
-				|| ( method.Name == "RegisterPluginExtensionPoint" && method.Parameters.Length == 1 && method.TypeArguments.Length == 2 )
 			;
 		}
 

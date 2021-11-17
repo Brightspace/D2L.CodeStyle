@@ -60,10 +60,6 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 			where TComparer : IComparer<TPlugin>, new()
 		;
 
-		void RegisterPluginExtensionPoint<TExtensionPoint, T>(
-				ObjectScope scope
-			) where TExtensionPoint : IExtensionPoint<T>;
-
 		void RegisterPlugin<TExtensionPoint, TDependencyType, TConcreteType>(
 				ObjectScope scope
 			)
@@ -113,7 +109,7 @@ namespace SpecTests {
 			reg.ConfigureOrderedPlugins<ImmutableThing, SomeComparer<ImmutableThing>>( ObjectScope.Singleton );
 			//reg.ConfigureInstancePlugins<ImmutableThing>( ObjectScope.Singleton );
 			//reg.ConfigureInstancePlugins<ImmutableThing, DefaultExtensionPoint<ImmutableThing>>( ObjectScope.Singleton );
-			//reg.RegisterPluginExtensionPoint<DefaultExtensionPoint<ImmutableThing>, ImmutableThing>( ObjectScope.Singleton );
+			//reg.ConfigurePlugins<DefaultExtensionPoint<ImmutableThing>, ImmutableThing>( ObjectScope.Singleton );
 			//reg.RegisterPlugin<DefaultExtensionPoint<ISingleton>, ISingleton, ImmutableThing>( ObjectScope.Singleton );
 			//reg.RegisterSubInterface<ISingleton, IImmutableSubSingleton>( ObjectScope.Singleton );
 
@@ -135,7 +131,7 @@ namespace SpecTests {
 		//	reg.ConfigureOrderedPlugins<INotSingleton, SomeComparer<DoesntMatter>>( ObjectScope.WebRequest );
 		//	reg.ConfigureInstancePlugins<INotSingleton>( ObjectScope.WebRequest );
 		//	reg.ConfigureInstancePlugins<INotSingleton, DefaultExtensionPoint<INotSingleton>>( ObjectScope.WebRequest );
-		//	reg.RegisterPluginExtensionPoint<DefaultExtensionPoint<INotSingleton>, DoesntMatter>( ObjectScope.WebRequest );
+		//	reg.ConfigurePlugins<DefaultExtensionPoint<INotSingleton>, DoesntMatter>( ObjectScope.WebRequest );
 		//	reg.RegisterPlugin<DefaultExtensionPoint<INotSingleton>, INotSingleton, DoesntMatter>( ObjectScope.WebRequest );
 
 		//	// Interfaces marked as singleton cannot have web request registrations.
