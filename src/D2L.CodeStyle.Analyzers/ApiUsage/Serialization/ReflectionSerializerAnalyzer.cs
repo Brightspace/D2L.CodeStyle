@@ -69,11 +69,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 			switch( attributeList.Parent ) {
 
-				case RecordDeclarationSyntax @record:
+				case RecordDeclarationSyntax record:
 					AnalyzeRecordDeclarationSyntax( context, model, record );
-					break;
-
-				default:
 					break;
 			}
 		}
