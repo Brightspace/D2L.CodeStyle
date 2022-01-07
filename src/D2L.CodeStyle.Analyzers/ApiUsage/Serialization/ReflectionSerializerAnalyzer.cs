@@ -20,7 +20,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			ReflectionSerializer_Record_NoPublicConstructor,
 			ReflectionSerializer_Record_MultiplePublicConstructors,
-			ReflectionSerializer_Record_ConstructorParameterCannotBeDeserialized
+			ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Error
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -70,12 +70,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			switch( attributeList.Parent ) {
 
 				case RecordDeclarationSyntax record:
-					AnalyzeRecordDeclarationSyntax( context, model, record );
+					AnalyzeRecordDeclaration( context, model, record );
 					break;
 			}
 		}
 
-		private void AnalyzeRecordDeclarationSyntax(
+		private void AnalyzeRecordDeclaration(
 				SyntaxNodeAnalysisContext context,
 				ReflectionSerializerModel model,
 				RecordDeclarationSyntax record
@@ -134,50 +134,39 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				}
 			}
 
-			INamedTypeSymbol recordType = context.SemanticModel.GetDeclaredSymbol( record );
-
 			if( constructorParameters != null ) {
-
-				ImmutableHashSet<string> serializedPropertyNames = model.GetPublicReadablePropertyNames( recordType );
-
-				foreach( ParameterSyntax parameter in constructorParameters.Parameters ) {
-					string parameterName = parameter.Identifier.ValueText;
-
-					if( !serializedPropertyNames.Contains( parameterName ) ) {
-						ReportConstructorParameterCannotBeDeserialized( context, parameter );
-					}
-				}
+				AnalyzeConstructorParameters(
+						context,
+						model,
+						record,
+						constructorParameters,
+						asErrors: true
+					);
 			}
 
 			if( isPartial ) {
 
-				int totalConstructors = recordType
-					.GetMembers()
-					.Where( IsPublicInstanceConstructor )
-					.Count();
+				/*
+				 * Only validate the constructor parameters using symbols in the event that
+				 * the constructor is defined in another partial declaration
+				 */
+				ConstructorParameterValidation parameterValidation = constructorParameters == null
+					? ConstructorParameterValidation.AsErrors
+					: ConstructorParameterValidation.None;
 
-				switch( totalConstructors ) {
-
-					case 0:
-						ReportDiagnostic(
-								context,
-								ReflectionSerializer_Record_NoPublicConstructor,
-								record
-							);
-						break;
-
-					case 1:
-						break;
-
-					default:
-						ReportDiagnostic(
-								context,
-								ReflectionSerializer_Record_MultiplePublicConstructors,
-								record
-							);
-						break;
-				}
+				AnalyzePublicInstanceConstructors(
+						context,
+						model,
+						record,
+						parameterValidation
+					);
 			}
+		}
+
+		private enum ConstructorParameterValidation {
+			None,
+			AsErrors,
+			AsWarnings
 		}
 
 		private static void ReportDiagnostic(
@@ -211,20 +200,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			}
 		}
 
-		private static void ReportConstructorParameterCannotBeDeserialized(
-				SyntaxNodeAnalysisContext context,
-				ParameterSyntax parameter
-			) {
-
-			Diagnostic diagnostic = Diagnostic.Create(
-					descriptor: ReflectionSerializer_Record_ConstructorParameterCannotBeDeserialized,
-					location: parameter.Identifier.GetLocation(),
-					messageArgs: parameter.Identifier.ValueText
-				);
-
-			context.ReportDiagnostic( diagnostic );
-		}
-
 		private static ImmutableArray<ConstructorDeclarationSyntax> GetPublicInstanceConstructors(
 				TypeDeclarationSyntax syntax
 			) {
@@ -241,21 +216,148 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			return constructors;
 		}
 
-		private static bool IsPublicInstanceConstructor( ISymbol symbol ) {
-
-			if( symbol.DeclaredAccessibility != Accessibility.Public ) {
-				return false;
-			}
-
-			if( !( symbol is IMethodSymbol method ) ) {
-				return false;
-			}
+		private static bool IsPublicInstanceConstructor( IMethodSymbol method ) {
 
 			if( method.MethodKind != MethodKind.Constructor ) {
 				return false;
 			}
 
+			if( method.DeclaredAccessibility != Accessibility.Public ) {
+				return false;
+			}
+
 			return true;
+		}
+
+		private static void AnalyzePublicInstanceConstructors(
+				SyntaxNodeAnalysisContext context,
+				ReflectionSerializerModel model,
+				TypeDeclarationSyntax type,
+				ConstructorParameterValidation paramcterValidation
+			) {
+
+			INamedTypeSymbol typeSymbol = context.SemanticModel.GetDeclaredSymbol( type );
+
+			ImmutableArray<IMethodSymbol> constructors = typeSymbol
+				.GetMembers()
+				.OfType<IMethodSymbol>()
+				.Where( IsPublicInstanceConstructor )
+				.ToImmutableArray();
+
+			switch( constructors.Length ) {
+
+				case 0:
+					ReportDiagnostic(
+							context,
+							ReflectionSerializer_Record_NoPublicConstructor,
+							type
+						);
+					break;
+
+				case 1:
+
+					switch( paramcterValidation ) {
+
+						case ConstructorParameterValidation.AsErrors:
+							AnalyzeConstructorParameters(
+									context,
+									model,
+									type,
+									constructors[ 0 ].Parameters,
+									asErrors: true
+								);
+							break;
+
+						case ConstructorParameterValidation.AsWarnings:
+							AnalyzeConstructorParameters(
+									context,
+									model,
+									type,
+									constructors[ 0 ].Parameters,
+									asErrors: false
+								);
+							break;
+					}
+					break;
+
+				default:
+					ReportDiagnostic(
+							context,
+							ReflectionSerializer_Record_MultiplePublicConstructors,
+							type
+						);
+					break;
+			}
+		}
+
+		/// <summary>
+		/// Analyzes the constructor parameters using the syntax in the event of a partial type,
+		/// where the [ReflectionSerializer] attribute and constructor are defined in the same file.
+		/// </summary>
+		private static void AnalyzeConstructorParameters(
+				SyntaxNodeAnalysisContext context,
+				ReflectionSerializerModel model,
+				TypeDeclarationSyntax type,
+				ParameterListSyntax constructorParameters,
+				bool asErrors
+			) {
+
+			INamedTypeSymbol typeSymbol = context.SemanticModel.GetDeclaredSymbol( type );
+			ImmutableHashSet<string> serializedPropertyNames = model.GetPublicReadablePropertyNames( typeSymbol );
+
+			foreach( ParameterSyntax parameter in constructorParameters.Parameters ) {
+
+				string parameterName = parameter.Identifier.ValueText;
+				if( !serializedPropertyNames.Contains( parameterName ) ) {
+
+					DiagnosticDescriptor descriptor = asErrors
+						? ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Error
+						: ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Warning;
+
+					Diagnostic diagnostic = Diagnostic.Create(
+							descriptor: descriptor,
+							location: parameter.Identifier.GetLocation(),
+							messageArgs: parameter.Identifier.ValueText
+						);
+
+					context.ReportDiagnostic( diagnostic );
+				}
+			}
+		}
+
+		/// <summary>
+		/// Analyzes the constructor parameters using the symbols in the event of a partial type,
+		/// where the [ReflectionSerializer] attribute and constructor are not in the same file.
+		/// </summary>
+		private static void AnalyzeConstructorParameters(
+				SyntaxNodeAnalysisContext context,
+				ReflectionSerializerModel model,
+				TypeDeclarationSyntax type,
+				ImmutableArray<IParameterSymbol> constructorParameters,
+				bool asErrors
+			) {
+
+			INamedTypeSymbol typeSymbol = context.SemanticModel.GetDeclaredSymbol( type );
+			ImmutableHashSet<string> serializedPropertyNames = model.GetPublicReadablePropertyNames( typeSymbol );
+
+			foreach( IParameterSymbol parameter in constructorParameters ) {
+
+				string parameterName = parameter.Name;
+				if( !serializedPropertyNames.Contains( parameterName ) ) {
+
+					DiagnosticDescriptor descriptor = asErrors
+						? ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Error
+						: ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Warning;
+
+					Diagnostic diagnostic = Diagnostic.Create(
+							descriptor: descriptor,
+							location: type.Identifier.GetLocation(),
+							messageArgs: parameter.Name
+						);
+
+					context.ReportDiagnostic( diagnostic );
+				}
+			}
 		}
 	}
 }

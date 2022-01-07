@@ -137,8 +137,25 @@ namespace SpecTests {
 		[ReflectionSerializer]
 		public sealed record ParameterCannotBeDeserializedBecauseIngored(
 				[property: ReflectionSerializer.Ignore]
-				int /* ReflectionSerializer_Record_ConstructorParameterCannotBeDeserialized(X) */ X /**/
+				int /* ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Error(X) */ X /**/
 			);
+
+		[ReflectionSerializer]
+		public sealed partial record PartialParameterCannotBeDeserializedBecauseIngored_WhenSameFile(
+				[property: ReflectionSerializer.Ignore]
+				int /* ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Error(X) */ X /**/
+			);
+
+		[ReflectionSerializer]
+		public sealed partial record /* ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Error(x) */ PartialParameterCannotBeDeserializedBecauseIngored_WhenDifferentFile /**/ {
+			[ReflectionSerializer.Ignore]
+			public int X { get; }
+		}
+		public sealed partial record PartialParameterCannotBeDeserializedBecauseIngored_WhenDifferentFile {
+			public PartialParameterCannotBeDeserializedBecauseIngored_WhenDifferentFile( int x ) {
+				X = x;
+			}
+		}
 	}
 
 	namespace Unrelated {
