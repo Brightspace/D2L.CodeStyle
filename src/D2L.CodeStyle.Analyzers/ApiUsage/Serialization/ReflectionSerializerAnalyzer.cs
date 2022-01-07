@@ -140,7 +140,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 						model,
 						record,
 						constructorParameters,
-						asErrors: true
+						ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Error
 					);
 			}
 
@@ -150,23 +150,18 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				 * Only validate the constructor parameters using symbols in the event that
 				 * the constructor is defined in another partial declaration
 				 */
-				ConstructorParameterValidation parameterValidation = constructorParameters == null
-					? ConstructorParameterValidation.AsErrors
-					: ConstructorParameterValidation.None;
+				DiagnosticDescriptor parameterCannotBeDeserializedDescriptor =
+					( constructorParameters == null )
+					? ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Error
+					: null;
 
 				AnalyzePublicInstanceConstructors(
 						context,
 						model,
 						record,
-						parameterValidation
+						parameterCannotBeDeserializedDescriptor
 					);
 			}
-		}
-
-		private enum ConstructorParameterValidation {
-			None,
-			AsErrors,
-			AsWarnings
 		}
 
 		private static void ReportDiagnostic(
@@ -233,7 +228,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				SyntaxNodeAnalysisContext context,
 				ReflectionSerializerModel model,
 				TypeDeclarationSyntax type,
-				ConstructorParameterValidation paramcterValidation
+				DiagnosticDescriptor parameterCannotBeDeserializedDescriptor
 			) {
 
 			INamedTypeSymbol typeSymbol = context.SemanticModel.GetDeclaredSymbol( type );
@@ -255,28 +250,14 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 					break;
 
 				case 1:
-
-					switch( paramcterValidation ) {
-
-						case ConstructorParameterValidation.AsErrors:
-							AnalyzeConstructorParameters(
-									context,
-									model,
-									type,
-									constructors[ 0 ].Parameters,
-									asErrors: true
-								);
-							break;
-
-						case ConstructorParameterValidation.AsWarnings:
-							AnalyzeConstructorParameters(
-									context,
-									model,
-									type,
-									constructors[ 0 ].Parameters,
-									asErrors: false
-								);
-							break;
+					if( parameterCannotBeDeserializedDescriptor != null ) {
+						AnalyzeConstructorParameters(
+								context,
+								model,
+								type,
+								constructors[ 0 ].Parameters,
+								parameterCannotBeDeserializedDescriptor
+							);
 					}
 					break;
 
@@ -299,7 +280,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				ReflectionSerializerModel model,
 				TypeDeclarationSyntax type,
 				ParameterListSyntax constructorParameters,
-				bool asErrors
+				DiagnosticDescriptor parameterCannotBeDeserializedDescriptor
 			) {
 
 			INamedTypeSymbol typeSymbol = context.SemanticModel.GetDeclaredSymbol( type );
@@ -312,9 +293,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 					ReportConstructorParameterCannotBeDeserialized(
 							context,
+							descriptor: parameterCannotBeDeserializedDescriptor,
 							identifier: parameter.Identifier,
-							parameterName: parameter.Identifier.ValueText,
-							asError: asErrors
+							parameterName: parameter.Identifier.ValueText
 						);
 				}
 			}
@@ -329,7 +310,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				ReflectionSerializerModel model,
 				TypeDeclarationSyntax type,
 				ImmutableArray<IParameterSymbol> constructorParameters,
-				bool asErrors
+				DiagnosticDescriptor parameterCannotBeDeserializedDescriptor
 			) {
 
 			INamedTypeSymbol typeSymbol = context.SemanticModel.GetDeclaredSymbol( type );
@@ -342,9 +323,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 					ReportConstructorParameterCannotBeDeserialized(
 							context,
+							descriptor: parameterCannotBeDeserializedDescriptor,
 							identifier: type.Identifier,
-							parameterName: parameter.Name,
-							asError: asErrors
+							parameterName: parameter.Name
 						);
 				}
 			}
@@ -352,14 +333,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 		private static void ReportConstructorParameterCannotBeDeserialized(
 				SyntaxNodeAnalysisContext context,
+				DiagnosticDescriptor descriptor,
 				SyntaxToken identifier,
-				string parameterName,
-				bool asError
+				string parameterName
 			) {
-
-			DiagnosticDescriptor descriptor = asError
-				? ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Error
-				: ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Warning;
 
 			Diagnostic diagnostic = Diagnostic.Create(
 					descriptor: descriptor,
