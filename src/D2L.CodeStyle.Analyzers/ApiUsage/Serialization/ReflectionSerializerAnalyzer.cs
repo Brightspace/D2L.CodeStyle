@@ -39,82 +39,47 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				throw new InvalidOperationException( "Could not fine ReflectionSerializer.Ignore attribute type." );
 			}
 
-			context.RegisterSemanticModelAction(
-					c => AnalyzeSemanticModel(
+			context.RegisterSyntaxNodeAction(
+					c => AnalyzeAttributeSyntax(
 						c,
+						(AttributeSyntax)c.Node,
 						new ReflectionSerializerModel(
 							c.SemanticModel,
 							reflectionSerializerAttributeType,
 							ignoreAttributeType
 						)
-					)
+					),
+					SyntaxKind.Attribute
 				);
 		}
 
-		private void AnalyzeSemanticModel(
-				SemanticModelAnalysisContext context,
+		private void AnalyzeAttributeSyntax(
+				SyntaxNodeAnalysisContext context,
+				AttributeSyntax attribute,
 				ReflectionSerializerModel model
 			) {
 
-			SyntaxNode root = context.SemanticModel.SyntaxTree.GetRoot();
-
-			IEnumerable<TypeDeclarationSyntax> typeDeclarations = root
-				.DescendantNodes( DescendIntoTypeDeclarations, descendIntoTrivia: false )
-				.Where( IsReflectionSerializerTargetTypeDeclaration )
-				.Cast<TypeDeclarationSyntax>();
-
-			foreach( TypeDeclarationSyntax typeDeclaration in typeDeclarations ) {
-
-				if( !model.DefinesReflectionSerializerAttribute( typeDeclaration ) ) {
-					continue;
-				}
-
-				switch( typeDeclaration ) {
-
-					case RecordDeclarationSyntax @record:
-						AnalyzeRecordDeclarationSyntax( context, model, record );
-						break;
-
-					default:
-						break;
-				}
+			if( !model.IsReflectionSerializerAttribute( attribute ) ) {
+				return;
 			}
-		}
 
-		private static bool DescendIntoTypeDeclarations( SyntaxNode node ) {
+			if( !( attribute.Parent is AttributeListSyntax attributeList ) ) {
+				return;
+			}
 
-			SyntaxKind kind = node.Kind();
-			switch( kind ) {
+			switch( attributeList.Parent ) {
 
-				case SyntaxKind.CompilationUnit:
-				case SyntaxKind.ClassDeclaration:
-				case SyntaxKind.IndexerDeclaration:
-				case SyntaxKind.NamespaceDeclaration:
-				case SyntaxKind.RecordDeclaration:
-				case SyntaxKind.StructDeclaration:
-					return true;
+				case RecordDeclarationSyntax @record:
+					AnalyzeRecordDeclarationSyntax( context, model, record );
+					break;
 
 				default:
-					return false;
-			}
-		}
-
-		private static bool IsReflectionSerializerTargetTypeDeclaration( SyntaxNode node ) {
-
-			switch( node.Kind() ) {
-
-				case SyntaxKind.ClassDeclaration:
-				case SyntaxKind.RecordDeclaration:
-				case SyntaxKind.StructDeclaration:
-					return true;
-
-				default:
-					return false;
+					break;
 			}
 		}
 
 		private void AnalyzeRecordDeclarationSyntax(
-				SemanticModelAnalysisContext context,
+				SyntaxNodeAnalysisContext context,
 				ReflectionSerializerModel model,
 				RecordDeclarationSyntax record
 			) {
@@ -161,7 +126,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 		}
 
 		private static void ReportNoPublicRecordConstructor(
-				SemanticModelAnalysisContext context,
+				SyntaxNodeAnalysisContext context,
 				RecordDeclarationSyntax record
 			) {
 
@@ -174,7 +139,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 		}
 
 		private static void ReportMultipleRecordPublicConstructors(
-				SemanticModelAnalysisContext context,
+				SyntaxNodeAnalysisContext context,
 				IEnumerable<ConstructorDeclarationSyntax> constructors
 			) {
 
@@ -190,7 +155,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 		}
 
 		private static void ReportConstructorParameterCannotBeDeserialized(
-				SemanticModelAnalysisContext context,
+				SyntaxNodeAnalysisContext context,
 				ParameterSyntax parameter
 			) {
 
