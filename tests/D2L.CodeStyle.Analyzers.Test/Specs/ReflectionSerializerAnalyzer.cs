@@ -5,7 +5,11 @@ using D2L.LP.Serialization;
 
 namespace D2L.LP.Serialization {
 
-	[AttributeUsage( AttributeTargets.Class | AttributeTargets.Struct )]
+	[AttributeUsage(
+		AttributeTargets.Class | AttributeTargets.Struct,
+		AllowMultiple = false,
+		Inherited = false
+	)]
 	public sealed class ReflectionSerializerAttribute : Attribute { }
 
 	public static partial class ReflectionSerializer {
@@ -27,12 +31,25 @@ namespace SpecTests {
 		public sealed record PrimaryConstructorOnly( int X );
 
 		[ReflectionSerializer]
+		public sealed partial record PartialPrimaryConstructorOnly( int X );
+		public sealed partial record PartialPrimaryConstructorOnly { }
+
+		[ReflectionSerializer]
 		public sealed record PublicConstructorOnly {
 			public PublicConstructorOnly( int x ) {
 				X = x;
 			}
 			public int X { get; }
 		}
+
+		[ReflectionSerializer]
+		public sealed partial record PartialPublicConstructorOnly {
+			public PartialPublicConstructorOnly( int x ) {
+				X = x;
+			}
+			public int X { get; }
+		}
+		public sealed partial record PartialPublicConstructorOnly { }
 
 		[ReflectionSerializer]
 		public sealed record PrimaryAndPublicConstructor( int X, int Y ) {
@@ -46,6 +63,18 @@ namespace SpecTests {
 		}
 
 		[ReflectionSerializer]
+		public sealed partial record /* ReflectionSerializer_Record_MultiplePublicConstructors() */ PartialPrimaryAndPublicConstructorWithPrimaryAttributed /**/ ( int X, int Y );
+		public sealed partial record PartialPrimaryAndPublicConstructorWithPrimaryAttributed {
+			public PartialPrimaryAndPublicConstructorWithPrimaryAttributed( int x ) : this( X: x, Y: 0 ) { }
+		}
+
+		public sealed partial record PartialPrimaryAndPublicConstructorWithPublicAttributed( int X, int Y );
+		[ReflectionSerializer]
+		public sealed partial record /* ReflectionSerializer_Record_MultiplePublicConstructors() */ PartialPrimaryAndPublicConstructorWithPublicAttributed /**/ {
+			public PartialPrimaryAndPublicConstructorWithPublicAttributed( int x ) : this( X: x, Y: 0 ) { }
+		}
+
+		[ReflectionSerializer]
 		public sealed record TwoPublicConstructor {
 			public TwoPublicConstructor( int x, int y ) {
 				X = x;
@@ -54,6 +83,19 @@ namespace SpecTests {
 			public /* ReflectionSerializer_Record_MultiplePublicConstructors() */ TwoPublicConstructor /**/( int X ) : this( x: X, y: 0 ) { }
 			public int X { get; }
 			public int Y { get; }
+		}
+
+		[ReflectionSerializer]
+		public sealed partial record /* ReflectionSerializer_Record_MultiplePublicConstructors() */ PartialTwoPublicConstructor /**/ {
+			public PartialTwoPublicConstructor( int x, int y ) {
+				X = x;
+				Y = y;
+			}
+			public int X { get; }
+			public int Y { get; }
+		}
+		public sealed partial record PartialTwoPublicConstructor {
+			public TwoPublicConstructor( int X ) : this( x: X, y: 0 ) { }
 		}
 
 		[ReflectionSerializer]
@@ -79,6 +121,14 @@ namespace SpecTests {
 		}
 
 		[ReflectionSerializer]
+		public sealed partial record /* ReflectionSerializer_Record_NoPublicConstructor() */ PartialNoPublicConstructor /**/ {
+			internal PartialNoPublicConstructor( int x ) {
+				X = x;
+			}
+			public int X { get; }
+		}
+
+		[ReflectionSerializer]
 		public abstract record BaseRecord( int X );
 
 		[ReflectionSerializer]
@@ -89,7 +139,6 @@ namespace SpecTests {
 				[property: ReflectionSerializer.Ignore]
 				int /* ReflectionSerializer_Record_ConstructorParameterCannotBeDeserialized(X) */ X /**/
 			);
-
 	}
 
 	namespace Unrelated {

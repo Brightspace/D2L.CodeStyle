@@ -26,22 +26,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			m_ignoreAttributeType = ignoreAttributeType;
 		}
 
-		public ImmutableArray<ConstructorDeclarationSyntax> GetPublicInstanceConstructors(
-				TypeDeclarationSyntax syntax
-			) {
-
-			ImmutableArray<ConstructorDeclarationSyntax> constructors = syntax
-				.ChildNodes()
-				.OfType<ConstructorDeclarationSyntax>()
-				.Where( c => (
-					c.Modifiers.IndexOf( SyntaxKind.PublicKeyword ) >= 0
-					& c.Modifiers.IndexOf( SyntaxKind.StaticKeyword ) < 0
-				) )
-				.ToImmutableArray();
-
-			return constructors;
-		}
-
 		public bool IsReflectionSerializerAttribute( AttributeSyntax attribute ) {
 			return m_model.IsAttributeOfType( attribute, m_reflectionSerializerAttributeType );
 		}
