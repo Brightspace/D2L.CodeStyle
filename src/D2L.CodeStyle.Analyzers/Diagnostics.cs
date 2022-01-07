@@ -609,5 +609,35 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true,
 			description: "RPC parameters must be of a valid type."
 		);
+
+		public static readonly DiagnosticDescriptor ReflectionSerializer_Record_NoPublicConstructor = new DiagnosticDescriptor(
+			id: "D2L0081",
+			title: "[ReflectionSerializer] attribute requires records to have an inline primary constructor or a single public constructor",
+			messageFormat: "The type has no public constructors. [ReflectionSerializer] attribute requires records to have an inline primary constructor or a single public constructor.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "The [ReflectionSerializer] attribute requires records to have an inline primary constructor or a single public constructor."
+		);
+
+		public static readonly DiagnosticDescriptor ReflectionSerializer_Record_MultiplePublicConstructors = new DiagnosticDescriptor(
+			id: "D2L0082",
+			title: "[ReflectionSerializer] attribute requires a single public constructor or a default constructor",
+			messageFormat: "The type has too many public constructors. [ReflectionSerializer] attribute requires records to have an inline primary constructor or a single public constructor.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "The [ReflectionSerializer] attribute requires records to have an inline primary constructor or a single public constructor."
+		);
+
+		public static readonly DiagnosticDescriptor ReflectionSerializer_Record_ConstructorParameterCannotBeDeserialized = new DiagnosticDescriptor(
+			id: "D2L0083",
+			title: "[ReflectionSerializer] attribute requires that constructor parameters have a corresponding property of the same name in order to deserialize.",
+			messageFormat: "The '{0}' parameter is missing a corresponding property of the same name. [ReflectionSerializer] requires that constructor parameters have a corresponding property of the same name in order to deserialize.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true,
+			description: "[ReflectionSerializer] attribute requires that constructor parameters have a corresponding property of the same name in order to deserialize."
+		);
 	}
 }

@@ -68,5 +68,13 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 				m => m.IsKind( SyntaxKind.StaticKeyword )
 			);
 		}
+
+		public static bool IsPublic( this BaseMethodDeclarationSyntax method ) {
+			return method.Modifiers.IndexOf( SyntaxKind.PublicKeyword ) >= 0;
+		}
+
+		public static bool IsStatic( this BaseMethodDeclarationSyntax method ) {
+			return method.Modifiers.IndexOf( SyntaxKind.StaticKeyword ) >= 0;
+		}
 	}
 }
