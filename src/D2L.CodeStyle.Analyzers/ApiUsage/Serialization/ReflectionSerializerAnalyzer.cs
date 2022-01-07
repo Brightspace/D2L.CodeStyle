@@ -310,17 +310,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				string parameterName = parameter.Identifier.ValueText;
 				if( !serializedPropertyNames.Contains( parameterName ) ) {
 
-					DiagnosticDescriptor descriptor = asErrors
-						? ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Error
-						: ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Warning;
-
-					Diagnostic diagnostic = Diagnostic.Create(
-							descriptor: descriptor,
-							location: parameter.Identifier.GetLocation(),
-							messageArgs: parameter.Identifier.ValueText
+					ReportConstructorParameterCannotBeDeserialized(
+							context,
+							identifier: parameter.Identifier,
+							parameterName: parameter.Identifier.ValueText,
+							asError: asErrors
 						);
-
-					context.ReportDiagnostic( diagnostic );
 				}
 			}
 		}
@@ -345,19 +340,34 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				string parameterName = parameter.Name;
 				if( !serializedPropertyNames.Contains( parameterName ) ) {
 
-					DiagnosticDescriptor descriptor = asErrors
-						? ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Error
-						: ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Warning;
-
-					Diagnostic diagnostic = Diagnostic.Create(
-							descriptor: descriptor,
-							location: type.Identifier.GetLocation(),
-							messageArgs: parameter.Name
+					ReportConstructorParameterCannotBeDeserialized(
+							context,
+							identifier: type.Identifier,
+							parameterName: parameter.Name,
+							asError: asErrors
 						);
-
-					context.ReportDiagnostic( diagnostic );
 				}
 			}
+		}
+
+		private static void ReportConstructorParameterCannotBeDeserialized(
+				SyntaxNodeAnalysisContext context,
+				SyntaxToken identifier,
+				string parameterName,
+				bool asError
+			) {
+
+			DiagnosticDescriptor descriptor = asError
+				? ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Error
+				: ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Warning;
+
+			Diagnostic diagnostic = Diagnostic.Create(
+					descriptor: descriptor,
+					location: identifier.GetLocation(),
+					messageArgs: parameterName
+				);
+
+			context.ReportDiagnostic( diagnostic );
 		}
 	}
 }
