@@ -156,6 +156,16 @@ namespace SpecTests {
 				X = x;
 			}
 		}
+
+		[ReflectionSerializer]
+		public record EmptyRecord();
+
+		[ReflectionSerializer]
+		public partial record PartialEmptyRecord_AttributeInSameFile();
+
+		public partial record PartialEmptyRecord_AttributeInDifferentFile();
+		[ReflectionSerializer]
+		public partial record PartialEmptyRecord_AttributeInDifferentFile { }
 	}
 
 	namespace Unrelated {
