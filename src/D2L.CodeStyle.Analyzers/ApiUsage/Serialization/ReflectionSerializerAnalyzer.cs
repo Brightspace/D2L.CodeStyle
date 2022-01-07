@@ -85,14 +85,20 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			) {
 
 			bool hasPrimaryConstructor = record.ParameterList != null;
-			ImmutableArray<ConstructorDeclarationSyntax> constructors = GetPublicInstanceConstructors( record );
+
+			ImmutableArray<ConstructorDeclarationSyntax> constructors =
+				model.GetPublicInstanceConstructors( record );
 
 			ParameterListSyntax constructorParameters;
 
 			if( hasPrimaryConstructor ) {
 
 				if( constructors.Length > 0 ) {
-					ReportMultipleRecordPublicConstructors( context, constructors );
+					ReportDiagnostics(
+							context,
+							ReflectionSerializer_Record_MultiplePublicConstructors,
+							constructors
+						);
 					return;
 				}
 
@@ -101,12 +107,20 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			} else {
 
 				if( constructors.Length == 0 ) {
-					ReportNoPublicRecordConstructor( context, record );
+					ReportDiagnostic(
+							context,
+							ReflectionSerializer_Record_NoPublicConstructor,
+							record
+						);
 					return;
 				}
 
 				if( constructors.Length > 1 ) {
-					ReportMultipleRecordPublicConstructors( context, constructors.Skip( 1 ) );
+					ReportDiagnostics(
+							context,
+							ReflectionSerializer_Record_MultiplePublicConstructors,
+							constructors.Skip( 1 )
+						);
 					return;
 				}
 
@@ -125,28 +139,30 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			}
 		}
 
-		private static void ReportNoPublicRecordConstructor(
+		private static void ReportDiagnostic(
 				SyntaxNodeAnalysisContext context,
-				RecordDeclarationSyntax record
+				DiagnosticDescriptor descriptor,
+				TypeDeclarationSyntax type
 			) {
 
 			Diagnostic diagnostic = Diagnostic.Create(
-					descriptor: ReflectionSerializer_Record_NoPublicConstructor,
-					location: record.Identifier.GetLocation()
+					descriptor: descriptor,
+					location: type.Identifier.GetLocation()
 				);
 
 			context.ReportDiagnostic( diagnostic );
 		}
 
-		private static void ReportMultipleRecordPublicConstructors(
+		private static void ReportDiagnostics(
 				SyntaxNodeAnalysisContext context,
+				DiagnosticDescriptor descriptor,
 				IEnumerable<ConstructorDeclarationSyntax> constructors
 			) {
 
 			foreach( ConstructorDeclarationSyntax constructor in constructors ) {
 
 				Diagnostic diagnostic = Diagnostic.Create(
-						descriptor: ReflectionSerializer_Record_MultiplePublicConstructors,
+						descriptor: descriptor,
 						location: constructor.Identifier.GetLocation()
 					);
 
@@ -166,19 +182,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				);
 
 			context.ReportDiagnostic( diagnostic );
-		}
-
-		private static ImmutableArray<ConstructorDeclarationSyntax> GetPublicInstanceConstructors(
-				TypeDeclarationSyntax syntax
-			) {
-
-			ImmutableArray<ConstructorDeclarationSyntax> constructors = syntax
-				.ChildNodes()
-				.OfType<ConstructorDeclarationSyntax>()
-				.Where( c => c.IsPublic() && !c.IsStatic() )
-				.ToImmutableArray();
-
-			return constructors;
 		}
 	}
 }

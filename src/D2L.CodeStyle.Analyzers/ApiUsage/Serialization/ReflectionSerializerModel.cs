@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
@@ -25,27 +26,20 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			m_ignoreAttributeType = ignoreAttributeType;
 		}
 
-		public bool DefinesReflectionSerializerAttribute( TypeDeclarationSyntax type ) {
+		public ImmutableArray<ConstructorDeclarationSyntax> GetPublicInstanceConstructors(
+				TypeDeclarationSyntax syntax
+			) {
 
-			if( type.AttributeLists == null ) {
-				return false;
-			}
+			ImmutableArray<ConstructorDeclarationSyntax> constructors = syntax
+				.ChildNodes()
+				.OfType<ConstructorDeclarationSyntax>()
+				.Where( c => (
+					c.Modifiers.IndexOf( SyntaxKind.PublicKeyword ) >= 0
+					& c.Modifiers.IndexOf( SyntaxKind.StaticKeyword ) < 0
+				) )
+				.ToImmutableArray();
 
-			foreach( AttributeListSyntax attributeList in type.AttributeLists ) {
-
-				if( attributeList.Attributes == null ) {
-					continue;
-				}
-
-				foreach( AttributeSyntax attribute in attributeList.Attributes ) {
-
-					if( IsReflectionSerializerAttribute( attribute ) ) {
-						return true;
-					}
-				}
-			}
-
-			return false;
+			return constructors;
 		}
 
 		public bool IsReflectionSerializerAttribute( AttributeSyntax attribute ) {
