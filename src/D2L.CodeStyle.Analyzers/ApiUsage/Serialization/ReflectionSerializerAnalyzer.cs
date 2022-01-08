@@ -18,10 +18,47 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 		private const string IgnoreAttributeFullName = "D2L.LP.Serialization.ReflectionSerializer+IgnoreAttribute";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
+			ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Error,
+			ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Warning,
+			ReflectionSerializer_Class_NoPublicConstructor_Error,
+			ReflectionSerializer_Class_NoPublicConstructor_Warning,
+			ReflectionSerializer_Class_MultiplePublicConstructors_Error,
+			ReflectionSerializer_Class_MultiplePublicConstructors_Warning,
+			ReflectionSerializer_Struct_NoPublicConstructor,
+			ReflectionSerializer_Struct_MultiplePublicConstructors,
 			ReflectionSerializer_Record_NoPublicConstructor,
-			ReflectionSerializer_Record_MultiplePublicConstructors,
-			ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Error
+			ReflectionSerializer_Record_MultiplePublicConstructors
 		);
+
+		private sealed record TypeDiagnostics(
+				DiagnosticDescriptor NoPublicConstructor,
+				DiagnosticDescriptor MultiplePublicConstructors,
+				DiagnosticDescriptor ConstructorParameterCannotBeDeserialized
+			);
+
+		private static readonly TypeDiagnostics ClassWarningDiagnostics = new TypeDiagnostics(
+				NoPublicConstructor: ReflectionSerializer_Class_NoPublicConstructor_Warning,
+				MultiplePublicConstructors: ReflectionSerializer_Class_MultiplePublicConstructors_Warning,
+				ConstructorParameterCannotBeDeserialized: ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Warning
+			);
+
+		private static readonly TypeDiagnostics ClassErrorDiagnostics = new TypeDiagnostics(
+				NoPublicConstructor: ReflectionSerializer_Class_NoPublicConstructor_Error,
+				MultiplePublicConstructors: ReflectionSerializer_Class_MultiplePublicConstructors_Error,
+				ConstructorParameterCannotBeDeserialized: ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Warning
+			);
+
+		private static readonly TypeDiagnostics RecordDiagnostics = new TypeDiagnostics(
+				NoPublicConstructor: ReflectionSerializer_Record_NoPublicConstructor,
+				MultiplePublicConstructors: ReflectionSerializer_Record_MultiplePublicConstructors,
+				ConstructorParameterCannotBeDeserialized: ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Error
+			);
+
+		private static readonly TypeDiagnostics StructDiagnostics = new TypeDiagnostics(
+				NoPublicConstructor: ReflectionSerializer_Struct_NoPublicConstructor,
+				MultiplePublicConstructors: ReflectionSerializer_Struct_MultiplePublicConstructors,
+				ConstructorParameterCannotBeDeserialized: ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Error
+			);
 
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
@@ -69,9 +106,83 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 			switch( attributeList.Parent ) {
 
+				case ClassDeclarationSyntax @class:
+					AnalyzeClassAndStructDeclaration( context, model, @class, ClassWarningDiagnostics );
+					break;
+
 				case RecordDeclarationSyntax record:
 					AnalyzeRecordDeclaration( context, model, record );
 					break;
+
+				case StructDeclarationSyntax @struct:
+					AnalyzeClassAndStructDeclaration( context, model, @struct, StructDiagnostics );
+					break;
+			}
+		}
+
+		private void AnalyzeClassAndStructDeclaration(
+				SyntaxNodeAnalysisContext context,
+				ReflectionSerializerModel model,
+				TypeDeclarationSyntax type,
+				TypeDiagnostics diagnostics
+			) {
+
+			bool isPartial = type.Modifiers.IndexOf( SyntaxKind.PartialKeyword ) >= 0;
+
+			ImmutableArray<ConstructorDeclarationSyntax> constructors =
+				GetPublicInstanceConstructors( type );
+
+			ParameterListSyntax constructorParameters;
+
+			switch( constructors.Length ) {
+
+				case 0:
+					if( !isPartial ) {
+						ReportDiagnostic(
+								context,
+								diagnostics.NoPublicConstructor,
+								type
+							);
+						return;
+					}
+
+					constructorParameters = null;
+					break;
+
+				case 1:
+					constructorParameters = constructors[ 0 ].ParameterList;
+					break;
+
+				default:
+					ReportDiagnostics(
+							context,
+							diagnostics.MultiplePublicConstructors,
+							constructors.Skip( 1 )
+						);
+					return;
+			}
+
+			if( constructorParameters != null ) {
+				AnalyzeConstructorParameters(
+						context,
+						model,
+						type,
+						constructorParameters,
+						diagnostics.ConstructorParameterCannotBeDeserialized
+					);
+			}
+
+			if( isPartial ) {
+
+				/*
+				 * Only validate the constructor parameters using symbols in the event that
+				 * the constructor is defined in another partial declaration
+				 */
+				TypeDiagnostics constructorDiagnostics = ( constructorParameters == null )
+					? diagnostics
+					: diagnostics with { ConstructorParameterCannotBeDeserialized = null };
+
+				AnalyzePublicInstanceConstructors( context, model, type, constructorDiagnostics );
 			}
 		}
 
@@ -81,6 +192,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				RecordDeclarationSyntax record
 			) {
 
+			TypeDiagnostics diagnostics = RecordDiagnostics;
 			bool hasPrimaryConstructor = record.ParameterList != null;
 			bool isPartial = record.Modifiers.IndexOf( SyntaxKind.PartialKeyword ) >= 0;
 
@@ -94,7 +206,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				if( constructors.Length > 0 ) {
 					ReportDiagnostics(
 							context,
-							ReflectionSerializer_Record_MultiplePublicConstructors,
+							diagnostics.MultiplePublicConstructors,
 							constructors
 						);
 					return;
@@ -111,7 +223,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 							ReportDiagnostic(
 									context,
-									ReflectionSerializer_Record_NoPublicConstructor,
+									diagnostics.NoPublicConstructor,
 									record
 								);
 							return;
@@ -127,7 +239,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 					default:
 						ReportDiagnostics(
 								context,
-								ReflectionSerializer_Record_MultiplePublicConstructors,
+								diagnostics.MultiplePublicConstructors,
 								constructors.Skip( 1 )
 							);
 						return;
@@ -140,7 +252,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 						model,
 						record,
 						constructorParameters,
-						ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Error
+						diagnostics.ConstructorParameterCannotBeDeserialized
 					);
 			}
 
@@ -150,17 +262,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				 * Only validate the constructor parameters using symbols in the event that
 				 * the constructor is defined in another partial declaration
 				 */
-				DiagnosticDescriptor parameterCannotBeDeserializedDescriptor =
-					( constructorParameters == null )
-					? ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Error
-					: null;
+				TypeDiagnostics constructorDiagnostics = ( constructorParameters == null )
+					? diagnostics
+					: diagnostics with { ConstructorParameterCannotBeDeserialized = null };
 
-				AnalyzePublicInstanceConstructors(
-						context,
-						model,
-						record,
-						parameterCannotBeDeserializedDescriptor
-					);
+				AnalyzePublicInstanceConstructors( context, model, record, constructorDiagnostics );
 			}
 		}
 
@@ -228,7 +334,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				SyntaxNodeAnalysisContext context,
 				ReflectionSerializerModel model,
 				TypeDeclarationSyntax type,
-				DiagnosticDescriptor parameterCannotBeDeserializedDescriptor
+				TypeDiagnostics diagnostics
 			) {
 
 			INamedTypeSymbol typeSymbol = context.SemanticModel.GetDeclaredSymbol( type );
@@ -244,19 +350,19 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				case 0:
 					ReportDiagnostic(
 							context,
-							ReflectionSerializer_Record_NoPublicConstructor,
+							diagnostics.NoPublicConstructor,
 							type
 						);
 					break;
 
 				case 1:
-					if( parameterCannotBeDeserializedDescriptor != null ) {
+					if( diagnostics.ConstructorParameterCannotBeDeserialized != null ) {
 						AnalyzeConstructorParameters(
 								context,
 								model,
 								type,
 								constructors[ 0 ].Parameters,
-								parameterCannotBeDeserializedDescriptor
+								diagnostics.ConstructorParameterCannotBeDeserialized
 							);
 					}
 					break;
@@ -264,7 +370,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				default:
 					ReportDiagnostic(
 							context,
-							ReflectionSerializer_Record_MultiplePublicConstructors,
+							diagnostics.MultiplePublicConstructors,
 							type
 						);
 					break;
@@ -280,7 +386,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				ReflectionSerializerModel model,
 				TypeDeclarationSyntax type,
 				ParameterListSyntax constructorParameters,
-				DiagnosticDescriptor parameterCannotBeDeserializedDescriptor
+				DiagnosticDescriptor parameterCannotBeDeserializedDiagnostic
 			) {
 
 			INamedTypeSymbol typeSymbol = context.SemanticModel.GetDeclaredSymbol( type );
@@ -293,7 +399,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 					ReportConstructorParameterCannotBeDeserialized(
 							context,
-							descriptor: parameterCannotBeDeserializedDescriptor,
+							descriptor: parameterCannotBeDeserializedDiagnostic,
 							identifier: parameter.Identifier,
 							parameterName: parameter.Identifier.ValueText
 						);
@@ -310,7 +416,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				ReflectionSerializerModel model,
 				TypeDeclarationSyntax type,
 				ImmutableArray<IParameterSymbol> constructorParameters,
-				DiagnosticDescriptor parameterCannotBeDeserializedDescriptor
+				DiagnosticDescriptor parameterCannotBeDeserializedDiagnostic
 			) {
 
 			INamedTypeSymbol typeSymbol = context.SemanticModel.GetDeclaredSymbol( type );
@@ -323,7 +429,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 					ReportConstructorParameterCannotBeDeserialized(
 							context,
-							descriptor: parameterCannotBeDeserializedDescriptor,
+							descriptor: parameterCannotBeDeserializedDiagnostic,
 							identifier: type.Identifier,
 							parameterName: parameter.Name
 						);

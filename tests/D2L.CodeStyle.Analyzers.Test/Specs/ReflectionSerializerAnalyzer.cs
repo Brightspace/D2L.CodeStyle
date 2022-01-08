@@ -25,6 +25,61 @@ namespace D2L.LP.Serialization {
 
 namespace SpecTests {
 
+	namespace Classes {
+
+		[ReflectionSerializer]
+		public sealed class PublicConstructorOnly {
+			public PublicConstructorOnly( int x ) {
+				X = x;
+			}
+			public int X { get; }
+		}
+
+		[ReflectionSerializer]
+		public sealed class PublicAndInternalConstructor {
+			public PublicAndInternalConstructor( int x, int y ) {
+				X = x;
+				Y = y;
+			}
+			internal PublicAndInternalConstructor( int x )
+				: this( x: x, y: 0 ) {
+			}
+			public int X { get; }
+			public int Y { get; }
+		}
+
+		[ReflectionSerializer]
+		public sealed class /* ReflectionSerializer_Class_NoPublicConstructor_Warning() */ NoPublicConstructors /**/ {
+			internal NoPublicConstructors( int x ) {
+				X = x;
+			}
+			public int X { get; }
+		}
+
+		[ReflectionSerializer]
+		public sealed class MultiplePublicConstructors {
+			public MultiplePublicConstructors( int x, int y ) {
+				X = x;
+				Y = y;
+			}
+			public /* ReflectionSerializer_Class_MultiplePublicConstructors_Warning() */ MultiplePublicConstructors /**/ ( int x )
+				: this( x: x, y: 0 ) {
+			}
+			public int X { get; }
+			public int Y { get; }
+		}
+
+		[ReflectionSerializer]
+		public sealed class ParameterCannotBeDeserialized_BecauseNameMismatch {
+			public ParameterCannotBeDeserialized_BecauseNameMismatch(
+				int /* ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Warning(value) */ value /**/
+			) {
+				X = value;
+			}
+			public int X { get; }
+		}
+	}
+
 	namespace Records {
 
 		[ReflectionSerializer]
@@ -40,6 +95,19 @@ namespace SpecTests {
 				X = x;
 			}
 			public int X { get; }
+		}
+
+		[ReflectionSerializer]
+		public sealed record PublicAndInternalConstructor {
+			public PublicAndInternalConstructor( int x, int y ) {
+				X = x;
+				Y = y;
+			}
+			internal PublicAndInternalConstructor( int x )
+				: this( x: x, y: 0 ) {
+			}
+			public int X { get; }
+			public int Y { get; }
 		}
 
 		[ReflectionSerializer]
@@ -95,7 +163,7 @@ namespace SpecTests {
 			public int Y { get; }
 		}
 		public sealed partial record PartialTwoPublicConstructor {
-			public TwoPublicConstructor( int X ) : this( x: X, y: 0 ) { }
+			public PartialTwoPublicConstructor( int X ) : this( x: X, y: 0 ) { }
 		}
 
 		[ReflectionSerializer]
@@ -166,6 +234,61 @@ namespace SpecTests {
 		public partial record PartialEmptyRecord_AttributeInDifferentFile();
 		[ReflectionSerializer]
 		public partial record PartialEmptyRecord_AttributeInDifferentFile { }
+	}
+
+	namespace Structs {
+
+		[ReflectionSerializer]
+		public readonly struct PublicConstructorOnly {
+			public PublicConstructorOnly( int x ) {
+				X = x;
+			}
+			public int X { get; }
+		}
+
+		[ReflectionSerializer]
+		public readonly struct PublicAndInternalConstructor {
+			public PublicAndInternalConstructor( int x, int y ) {
+				X = x;
+				Y = y;
+			}
+			internal PublicAndInternalConstructor( int x )
+				: this( x: x, y: 0 ) {
+			}
+			public int X { get; }
+			public int Y { get; }
+		}
+
+		[ReflectionSerializer]
+		public readonly struct /* ReflectionSerializer_Struct_NoPublicConstructor() */ NoPublicConstructors /**/ {
+			internal NoPublicConstructors( int x ) {
+				X = x;
+			}
+			public int X { get; }
+		}
+
+		[ReflectionSerializer]
+		public readonly struct MultiplePublicConstructors {
+			public MultiplePublicConstructors( int x, int y ) {
+				X = x;
+				Y = y;
+			}
+			public /* ReflectionSerializer_Struct_MultiplePublicConstructors() */ MultiplePublicConstructors /**/ ( int x )
+				: this( x: x, y: 0 ) {
+			}
+			public int X { get; }
+			public int Y { get; }
+		}
+
+		[ReflectionSerializer]
+		public readonly struct ParameterCannotBeDeserialized_BecauseNameMismatch {
+			public ParameterCannotBeDeserialized_BecauseNameMismatch(
+				int /* ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Error(value) */ value /**/
+			) {
+				X = value;
+			}
+			public int X { get; }
+		}
 	}
 
 	namespace Unrelated {
