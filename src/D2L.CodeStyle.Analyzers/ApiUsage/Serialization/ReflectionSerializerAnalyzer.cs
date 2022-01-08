@@ -45,7 +45,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 		private static readonly TypeDiagnostics ClassErrorDiagnostics = new TypeDiagnostics(
 				NoPublicConstructor: ReflectionSerializer_Class_NoPublicConstructor_Error,
 				MultiplePublicConstructors: ReflectionSerializer_Class_MultiplePublicConstructors_Error,
-				ConstructorParameterCannotBeDeserialized: ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Warning
+				ConstructorParameterCannotBeDeserialized: ReflectionSerializer_ConstructorParameterCannotBeDeserialized_Error
 			);
 
 		private static readonly TypeDiagnostics RecordDiagnostics = new TypeDiagnostics(
