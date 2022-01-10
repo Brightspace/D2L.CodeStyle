@@ -56,9 +56,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			if( !comp.TryGetTypeByMetadataName( ReflectionSerializerAttributeFullName, out INamedTypeSymbol reflectionSerializerAttributeType ) ) {
 				return;
 			}
-			if( !comp.TryGetTypeByMetadataName( DisableAnalyzerFullName, out INamedTypeSymbol disableAnalyzerAttributeType ) ) {
-				disableAnalyzerAttributeType = null;
-			}
 			if( !comp.TryGetTypeByMetadataName( IgnoreAttributeFullName, out INamedTypeSymbol ignoreAttributeType ) ) {
 				throw new InvalidOperationException( "Could not fine ReflectionSerializer.Ignore attribute type." );
 			}
@@ -69,7 +66,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 						(AttributeSyntax)c.Node,
 						new ReflectionSerializerModel(
 							semanticModel: c.SemanticModel,
-							disableAnalyzerAttributeType: disableAnalyzerAttributeType,
 							ignoreAttributeType: ignoreAttributeType,
 							reflectionSerializerAttributeType: reflectionSerializerAttributeType
 						)
@@ -95,6 +91,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			switch( attributeList.Parent ) {
 
 				case ClassDeclarationSyntax @class:
+
 					AnalyzeClassDeclaration( context, model, @class );
 					break;
 
@@ -107,14 +104,14 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 		private void AnalyzeClassDeclaration(
 				SyntaxNodeAnalysisContext context,
 				ReflectionSerializerModel model,
-				TypeDeclarationSyntax type
+				ClassDeclarationSyntax type
 			) {
 
-			INamedTypeSymbol typeSymbol = context.SemanticModel.GetDeclaredSymbol( type );
-			if( model.HasDisableAnalyzerAttribute( typeSymbol ) ) {
+			if( type.Modifiers.IndexOf( SyntaxKind.AbstractKeyword ) >= 0 ) {
 				return;
 			}
 
+			INamedTypeSymbol typeSymbol = context.SemanticModel.GetDeclaredSymbol( type );
 			TypeDiagnostics diagnostics = ClassDiagnostics;
 			bool isPartial = type.Modifiers.IndexOf( SyntaxKind.PartialKeyword ) >= 0;
 
@@ -187,6 +184,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				ReflectionSerializerModel model,
 				RecordDeclarationSyntax type
 			) {
+
+			if( type.Modifiers.IndexOf( SyntaxKind.AbstractKeyword ) >= 0 ) {
+				return;
+			}
 
 			INamedTypeSymbol typeSymbol = context.SemanticModel.GetDeclaredSymbol( type );
 

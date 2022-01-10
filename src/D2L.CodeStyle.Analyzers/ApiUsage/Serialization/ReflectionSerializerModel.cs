@@ -12,19 +12,16 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 	internal sealed class ReflectionSerializerModel {
 
 		private readonly SemanticModel m_semanticModel;
-		private readonly INamedTypeSymbol m_disableAnalyzerAttributeType;
 		private readonly INamedTypeSymbol m_ignoreAttributeType;
 		private readonly INamedTypeSymbol m_reflectionSerializerAttributeType;
 
 		public ReflectionSerializerModel(
 				SemanticModel semanticModel,
-				INamedTypeSymbol disableAnalyzerAttributeType,
 				INamedTypeSymbol ignoreAttributeType,
 				INamedTypeSymbol reflectionSerializerAttributeType
 			) {
 
 			m_semanticModel = semanticModel;
-			m_disableAnalyzerAttributeType = disableAnalyzerAttributeType;
 			m_ignoreAttributeType = ignoreAttributeType;
 			m_reflectionSerializerAttributeType = reflectionSerializerAttributeType;
 		}
@@ -88,10 +85,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			}
 
 			return true;
-		}
-
-		public bool HasDisableAnalyzerAttribute( ISymbol symbol ) {
-			return HasAttributeOfType( symbol, m_disableAnalyzerAttributeType );
 		}
 
 		private bool HasIgnoreAttribute( ISymbol symbol ) {
