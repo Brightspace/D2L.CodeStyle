@@ -11,23 +11,26 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 	internal sealed class ReflectionSerializerModel {
 
-		private readonly SemanticModel m_model;
-		private readonly INamedTypeSymbol m_reflectionSerializerAttributeType;
+		private readonly SemanticModel m_semanticModel;
+		private readonly INamedTypeSymbol m_disableAnalyzerAttributeType;
 		private readonly INamedTypeSymbol m_ignoreAttributeType;
+		private readonly INamedTypeSymbol m_reflectionSerializerAttributeType;
 
 		public ReflectionSerializerModel(
-				SemanticModel model,
-				INamedTypeSymbol reflectionSerializerAttributeType,
-				INamedTypeSymbol ignoreAttributeType
+				SemanticModel semanticModel,
+				INamedTypeSymbol disableAnalyzerAttributeType,
+				INamedTypeSymbol ignoreAttributeType,
+				INamedTypeSymbol reflectionSerializerAttributeType
 			) {
 
-			m_model = model;
-			m_reflectionSerializerAttributeType = reflectionSerializerAttributeType;
+			m_semanticModel = semanticModel;
+			m_disableAnalyzerAttributeType = disableAnalyzerAttributeType;
 			m_ignoreAttributeType = ignoreAttributeType;
+			m_reflectionSerializerAttributeType = reflectionSerializerAttributeType;
 		}
 
 		public bool IsReflectionSerializerAttribute( AttributeSyntax attribute ) {
-			return m_model.IsAttributeOfType( attribute, m_reflectionSerializerAttributeType );
+			return m_semanticModel.IsAttributeOfType( attribute, m_reflectionSerializerAttributeType );
 		}
 
 		public ImmutableHashSet<string> GetPublicReadablePropertyNames( INamedTypeSymbol type ) {
@@ -71,7 +74,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				return false;
 			}
 
-			if( HasIgnoreAttribute( property.GetAttributes() ) ) {
+			if( HasIgnoreAttribute( property ) ) {
 				return false;
 			}
 
@@ -80,18 +83,34 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				return false;
 			}
 
-			if( HasIgnoreAttribute( getMethod.GetAttributes() ) ) {
+			if( HasIgnoreAttribute( getMethod ) ) {
 				return false;
 			}
 
 			return true;
 		}
 
-		private bool HasIgnoreAttribute( ImmutableArray<AttributeData> attributes ) {
+		public bool HasDisableAnalyzerAttribute( ISymbol symbol ) {
+			return HasAttributeOfType( symbol, m_disableAnalyzerAttributeType );
+		}
 
+		private bool HasIgnoreAttribute( ISymbol symbol ) {
+			return HasAttributeOfType( symbol, m_ignoreAttributeType );
+		}
+
+		private bool HasAttributeOfType(
+				ISymbol symbol,
+				INamedTypeSymbol type
+			) {
+
+			ImmutableArray<AttributeData> attributes = symbol.GetAttributes();
 			foreach( AttributeData attribute in attributes ) {
 
-				if( SymbolEqualityComparer.Default.Equals( attribute.AttributeClass, m_ignoreAttributeType ) ) {
+				if( SymbolEqualityComparer.Default.Equals(
+						attribute.AttributeClass,
+						type
+					) ) {
+
 					return true;
 				}
 			}
