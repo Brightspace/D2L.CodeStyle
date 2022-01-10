@@ -6,7 +6,7 @@ using D2L.LP.Serialization;
 namespace D2L.LP.Serialization {
 
 	[AttributeUsage(
-		AttributeTargets.Class | AttributeTargets.Struct,
+		AttributeTargets.Class,
 		AllowMultiple = false,
 		Inherited = false
 	)]
