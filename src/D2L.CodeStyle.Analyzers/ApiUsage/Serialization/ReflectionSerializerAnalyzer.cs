@@ -44,12 +44,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				ConstructorParameterCannotBeDeserialized: ReflectionSerializer_ConstructorParameterCannotBeDeserialized
 			);
 
-		private static readonly TypeDiagnostics StructDiagnostics = new TypeDiagnostics(
-				NoPublicConstructor: ReflectionSerializer_Struct_NoPublicConstructor,
-				MultiplePublicConstructors: ReflectionSerializer_Struct_MultiplePublicConstructors,
-				ConstructorParameterCannotBeDeserialized: ReflectionSerializer_ConstructorParameterCannotBeDeserialized
-			);
-
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
 			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics );

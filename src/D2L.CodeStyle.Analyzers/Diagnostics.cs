@@ -640,28 +640,8 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "The [ReflectionSerializer] attribute requires classes to have a single public constructor."
 		);
 
-		public static readonly DiagnosticDescriptor ReflectionSerializer_Struct_NoPublicConstructor = new DiagnosticDescriptor(
-			id: "D2L0084",
-			title: "[ReflectionSerializer] attribute requires structs to have a single public constructor",
-			messageFormat: "The type has no public constructors. [ReflectionSerializer] attribute requires structs to have a single public constructor.",
-			category: "Correctness",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "The [ReflectionSerializer] attribute requires classes to have a single public constructor."
-		);
-
-		public static readonly DiagnosticDescriptor ReflectionSerializer_Struct_MultiplePublicConstructors = new DiagnosticDescriptor(
-			id: "D2L0085",
-			title: "[ReflectionSerializer] attribute requires structs to have a single public constructor",
-			messageFormat: "The type has too many public constructors. [ReflectionSerializer] attribute requires structs to have a single public constructor.",
-			category: "Correctness",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "The [ReflectionSerializer] attribute requires classes to have a single public constructor."
-		);
-
 		public static readonly DiagnosticDescriptor ReflectionSerializer_Record_NoPublicConstructor = new DiagnosticDescriptor(
-			id: "D2L0086",
+			id: "D2L0084",
 			title: "[ReflectionSerializer] attribute requires records to have an inline primary constructor or a single public constructor",
 			messageFormat: "The type has no public constructors. [ReflectionSerializer] attribute requires records to have an inline primary constructor or a single public constructor.",
 			category: "Correctness",
@@ -671,7 +651,7 @@ namespace D2L.CodeStyle.Analyzers {
 		);
 
 		public static readonly DiagnosticDescriptor ReflectionSerializer_Record_MultiplePublicConstructors = new DiagnosticDescriptor(
-			id: "D2L0087",
+			id: "D2L0085",
 			title: "[ReflectionSerializer] attribute requires a single public constructor or a default constructor",
 			messageFormat: "The type has too many public constructors. [ReflectionSerializer] attribute requires records to have an inline primary constructor or a single public constructor.",
 			category: "Correctness",
