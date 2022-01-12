@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
@@ -21,7 +22,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			ReflectionSerializer_Class_NoPublicConstructor,
 			ReflectionSerializer_Class_MultiplePublicConstructors,
 			ReflectionSerializer_Record_NoPublicConstructor,
-			ReflectionSerializer_Record_MultiplePublicConstructors
+			ReflectionSerializer_Record_MultiplePublicConstructors,
+			ReflectionSerializer_Record_InitOnlySetter
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -71,28 +73,55 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 			TypeDeclaration typeDeclaration = GetTypeDeclaration( context, reflectionSerializerAttribute );
 
+			AnalyzeConstructors( context, model, type, typeDeclaration );
+
+			if( typeDeclaration.Kind == TypeDeclarationKind.Record ) {
+
+				AnalyzeRecordProperties( context, type );
+			}
+		}
+
+		private static void AnalyzeConstructors(
+				SymbolAnalysisContext context,
+				ReflectionSerializerModel model,
+				INamedTypeSymbol type,
+				TypeDeclaration typeDeclaration
+			) {
+
 			ImmutableArray<IMethodSymbol> constructors = type.InstanceConstructors;
 
 			ImmutableArray<IMethodSymbol> publicConstructors = constructors
 				.Where( c => c.DeclaredAccessibility == Accessibility.Public )
 				.ToImmutableArray();
 
-			if( publicConstructors.Length == 0 ) {
+			if( publicConstructors.IsEmpty ) {
 
 				ReportNoPublicConstructor( context, typeDeclaration );
 				return;
 			}
 
+			/*
+			 * The ReflectionSerializer picks the first constructor so just assuming symbols
+			 * align with reflection.  In any event, we will follow up with reporting that 
+			 * multiple constructors exist.
+			 */
+			IMethodSymbol deserializationConstructor = publicConstructors[0];
+			AnalyzeConstructorParameters( context, model, type, deserializationConstructor );
+
 			if( publicConstructors.Length > 1 ) {
-
 				ReportMultiplePublicConstructors( context, typeDeclaration, publicConstructors );
-				return;
 			}
+		}
 
-			IMethodSymbol constructor = publicConstructors[0];
+		private static void AnalyzeConstructorParameters(
+				SymbolAnalysisContext context,
+				ReflectionSerializerModel model,
+				INamedTypeSymbol type,
+				IMethodSymbol constructor
+			) {
 
 			ImmutableArray<IParameterSymbol> constructorParameters = constructor.Parameters;
-			if( constructorParameters.Length == 0 ) {
+			if( constructorParameters.IsEmpty ) {
 				return;
 			}
 
@@ -185,12 +214,65 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			context.ReportDiagnostic( diagnostic );
 		}
 
+		private static void AnalyzeRecordProperties(
+				SymbolAnalysisContext context,
+				INamedTypeSymbol type
+			) {
+
+			IEnumerable<IPropertySymbol> instanceProperties = type
+				.GetMembers()
+				.Where( m => !m.IsStatic )
+				.OfType<IPropertySymbol>();
+
+			foreach( IPropertySymbol property in instanceProperties ) {
+				AnalyzeRecordProperty( context, property );
+			}
+		}
+
+		private static void AnalyzeRecordProperty(
+				SymbolAnalysisContext context,
+				IPropertySymbol property
+			) {
+
+			if( property.DeclaringSyntaxReferences.IsEmpty ) {
+				return;
+			}
+
+			SyntaxNode declaringSyntax = property
+				.DeclaringSyntaxReferences[0]
+				.GetSyntax( context.CancellationToken );
+
+			if( !( declaringSyntax is PropertyDeclarationSyntax declaration ) ) {
+				return;
+			}
+
+			AccessorListSyntax accessors = declaration.AccessorList;
+			if( accessors == null ) {
+				return;
+			}
+
+			for( int i = 0; i < accessors.Accessors.Count; i++ ) {
+
+				AccessorDeclarationSyntax accessor = accessors.Accessors[i];
+				if( accessor.Kind() == SyntaxKind.InitAccessorDeclaration ) {
+
+					Diagnostic d = Diagnostic.Create(
+							ReflectionSerializer_Record_InitOnlySetter,
+							accessor.Keyword.GetLocation()
+						);
+
+					context.ReportDiagnostic( d );
+					return;
+				}
+			}
+		}
+
 		private enum TypeDeclarationKind {
 			Class,
 			Record
 		}
 
-		private record TypeDeclaration(
+		private sealed record TypeDeclaration(
 				TypeDeclarationKind Kind,
 				TypeDeclarationSyntax Syntax
 			);
@@ -200,7 +282,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				AttributeData reflectionSerializerAttribute
 			) {
 
-			SyntaxNode attribute = reflectionSerializerAttribute.ApplicationSyntaxReference
+			SyntaxNode attribute = reflectionSerializerAttribute
+				.ApplicationSyntaxReference
 				.GetSyntax( context.CancellationToken );
 
 			if( !( attribute.Parent is AttributeListSyntax attributeList ) ) {

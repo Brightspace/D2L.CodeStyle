@@ -654,5 +654,14 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor ReflectionSerializer_Record_InitOnlySetter = new DiagnosticDescriptor(
+			id: "D2L0086",
+			title: "[ReflectionSerializer] attribute does not support records with init only property setters.",
+			messageFormat: "Init only property setters are not supported. [ReflectionSerializer] attribute does not support deserialization into init only property setters.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }

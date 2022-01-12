@@ -28,6 +28,9 @@ namespace SpecTests {
 	namespace Classes {
 
 		[ReflectionSerializer]
+		public sealed class Empty { }
+
+		[ReflectionSerializer]
 		public sealed class PublicConstructorOnly {
 			public PublicConstructorOnly( int x ) {
 				X = x;
@@ -77,10 +80,19 @@ namespace SpecTests {
 				X = value;
 			}
 			public int X { get; }
-		}
-	}
+        }
 
-	namespace Records {
+        [ReflectionSerializer]
+        public sealed class GetterSetter {
+			public int X { get; set; }
+			public int Y { get; set; }
+		}
+    }
+
+    namespace Records {
+
+		[ReflectionSerializer]
+		public sealed record Empty();
 
 		[ReflectionSerializer]
 		public sealed record PrimaryConstructorOnly( int X );
@@ -234,6 +246,11 @@ namespace SpecTests {
 		public partial record PartialEmptyRecord_AttributeInDifferentFile();
 		[ReflectionSerializer]
 		public partial record PartialEmptyRecord_AttributeInDifferentFile { }
+
+		[ReflectionSerializer]
+		public sealed record GetterInitOnlySetter {
+			public int X { get; /* ReflectionSerializer_Record_InitOnlySetter */ init /**/; }
+		}
 	}
 
 	namespace Unrelated {
