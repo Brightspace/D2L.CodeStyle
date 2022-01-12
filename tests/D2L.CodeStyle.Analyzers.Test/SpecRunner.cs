@@ -371,7 +371,7 @@ namespace D2L.CodeStyle.Analyzers {
 					// defined in Common.Diagnostics
 					DiagnosticDescriptor descriptor;
 					if( !m_possibleDiagnostics.TryGetValue( diagnosticExpectation.Name, out descriptor ) ) {
-						Assert.Fail( $"Comment at {start.Trivia.GetLocation()} doesn't map to a diagnostic defined in Common.Diagnostic" );
+						Assert.Fail( $"Comment on line {start.Trivia.GetLocation().GetLineSpan().StartLinePosition.Line + 1} with {diagnosticExpectation.Name} doesn't map to a diagnostic defined in Common.Diagnostic" );
 
 					}
 
