@@ -20,12 +20,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			ReflectionSerializer_ConstructorParameter_CannotBeDeserialized,
 			ReflectionSerializer_ConstructorParameter_InvalidRefKind,
-			ReflectionSerializer_Class_NoPublicConstructor,
 			ReflectionSerializer_Class_MultiplePublicConstructors,
-			ReflectionSerializer_Record_NoPublicConstructor,
-			ReflectionSerializer_Record_MultiplePublicConstructors,
+			ReflectionSerializer_Class_NoPublicConstructor,
+			ReflectionSerializer_Class_Static,
 			ReflectionSerializer_Record_InitOnlySetter,
-			ReflectionSerializer_Class_Static
+			ReflectionSerializer_Record_MultiplePublicConstructors,
+			ReflectionSerializer_Record_NoPublicConstructor
 		);
 
 		public override void Initialize( AnalysisContext context ) {
