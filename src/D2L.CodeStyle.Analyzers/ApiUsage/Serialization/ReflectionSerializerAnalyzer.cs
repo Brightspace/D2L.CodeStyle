@@ -18,7 +18,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 		private const string IgnoreAttributeFullName = "D2L.LP.Serialization.ReflectionSerializer+IgnoreAttribute";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-			ReflectionSerializer_ConstructorParameterCannotBeDeserialized,
+			ReflectionSerializer_ConstructorParameter_CannotBeDeserialized,
+			ReflectionSerializer_ConstructorParameter_InvalidRefKind,
 			ReflectionSerializer_Class_NoPublicConstructor,
 			ReflectionSerializer_Class_MultiplePublicConstructors,
 			ReflectionSerializer_Record_NoPublicConstructor,
@@ -135,8 +136,15 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 			foreach( IParameterSymbol parameter in constructorParameters ) {
 
-				if( !serializedPropertyNames.Contains( parameter.Name ) ) {
-					ReportConstructorParameterCannotBeDeserialized( context, parameter );
+				RefKind refKind = parameter.RefKind;
+				if( refKind == RefKind.None ) {
+
+					if( !serializedPropertyNames.Contains( parameter.Name ) ) {
+						ReportConstructorParameterCannotBeDeserialized( context, parameter );
+					}
+
+				} else {
+					ReportConstructorParameterInvalidRefKind( context, parameter, refKind );
 				}
 			}
 		}
@@ -212,9 +220,29 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			ParameterSyntax declaration = GetFirstDeclaringSyntax<ParameterSyntax>( context, parameter );
 
 			Diagnostic diagnostic = Diagnostic.Create(
-					descriptor: ReflectionSerializer_ConstructorParameterCannotBeDeserialized,
+					descriptor: ReflectionSerializer_ConstructorParameter_CannotBeDeserialized,
 					location: declaration.Identifier.GetLocation(),
 					messageArgs: new[] { parameter.Name }
+				);
+
+			context.ReportDiagnostic( diagnostic );
+		}
+
+		private static void ReportConstructorParameterInvalidRefKind(
+				SymbolAnalysisContext context,
+				IParameterSymbol parameter,
+				RefKind refKind
+			) {
+
+			ParameterSyntax declaration = GetFirstDeclaringSyntax<ParameterSyntax>( context, parameter );
+
+			Diagnostic diagnostic = Diagnostic.Create(
+					descriptor: ReflectionSerializer_ConstructorParameter_InvalidRefKind,
+					location: declaration.Identifier.GetLocation(),
+					messageArgs: new[] {
+						parameter.Name,
+						refKind.ToString().ToLowerInvariant()
+					}
 				);
 
 			context.ReportDiagnostic( diagnostic );

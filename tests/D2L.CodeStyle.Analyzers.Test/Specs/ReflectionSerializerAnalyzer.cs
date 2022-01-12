@@ -75,7 +75,7 @@ namespace SpecTests {
 		[ReflectionSerializer]
 		public sealed class ParameterCannotBeDeserialized_BecauseNameMismatch {
 			public ParameterCannotBeDeserialized_BecauseNameMismatch(
-				int /* ReflectionSerializer_ConstructorParameterCannotBeDeserialized(value) */ value /**/
+				int /* ReflectionSerializer_ConstructorParameter_CannotBeDeserialized(value) */ value /**/
 			) {
 				X = value;
 			}
@@ -85,8 +85,8 @@ namespace SpecTests {
 		[ReflectionSerializer]
 		public sealed class ParameterCannotBeDeserialized_And_MultipleConstructors {
 			public ParameterCannotBeDeserialized_And_MultipleConstructors(
-				int /* ReflectionSerializer_ConstructorParameterCannotBeDeserialized(value) */ value /**/
-			) : this( x: value, y: 0 ) {}
+				int /* ReflectionSerializer_ConstructorParameter_CannotBeDeserialized(value) */ value /**/
+			) : this( x: value, y: 0 ) { }
 			public /* ReflectionSerializer_Class_MultiplePublicConstructors() */ ParameterCannotBeDeserialized_And_MultipleConstructors /**/ ( int x, int y ) {
 				X = x;
 				Y = y;
@@ -100,7 +100,26 @@ namespace SpecTests {
 			public int X { get; set; }
 			public int Y { get; set; }
 		}
-    }
+
+		[ReflectionSerializer]
+		public static class /* ReflectionSerializer_Class_Static() */ Static /**/ { }
+		
+		[ReflectionSerializer]
+		public sealed class OutputParameterNotSupported {
+			public OutputParameterNotSupported(
+				out int /* ReflectionSerializer_ConstructorParameter_InvalidRefKind(value,out) */ value /**/
+			) {
+				value = 1;
+			}
+        }
+		
+		[ReflectionSerializer]
+		public sealed class RefParameterNotSupported {
+			public RefParameterNotSupported(
+				ref int /* ReflectionSerializer_ConstructorParameter_InvalidRefKind(value,ref) */ value /**/
+			) { }
+        }
+	}
 
     namespace Records {
 
@@ -230,13 +249,13 @@ namespace SpecTests {
 		[ReflectionSerializer]
 		public sealed record ParameterCannotBeDeserializedBecauseIngored(
 				[property: ReflectionSerializer.Ignore]
-				int /* ReflectionSerializer_ConstructorParameterCannotBeDeserialized(X) */ X /**/
+				int /* ReflectionSerializer_ConstructorParameter_CannotBeDeserialized(X) */ X /**/
 			);
 
 		[ReflectionSerializer]
 		public sealed partial record PartialParameterCannotBeDeserializedBecauseIngored_WhenSameFile(
 				[property: ReflectionSerializer.Ignore]
-				int /* ReflectionSerializer_ConstructorParameterCannotBeDeserialized(X) */ X /**/
+				int /* ReflectionSerializer_ConstructorParameter_CannotBeDeserialized(X) */ X /**/
 			);
 
 		[ReflectionSerializer]
@@ -245,7 +264,7 @@ namespace SpecTests {
 			public int X { get; }
 		}
 		public sealed partial record PartialParameterCannotBeDeserializedBecauseIngored_WhenDifferentFile {
-			public PartialParameterCannotBeDeserializedBecauseIngored_WhenDifferentFile( int /* ReflectionSerializer_ConstructorParameterCannotBeDeserialized(x) */ x /**/ ) {
+			public PartialParameterCannotBeDeserializedBecauseIngored_WhenDifferentFile( int /* ReflectionSerializer_ConstructorParameter_CannotBeDeserialized(x) */ x /**/ ) {
 				X = x;
 			}
 		}
