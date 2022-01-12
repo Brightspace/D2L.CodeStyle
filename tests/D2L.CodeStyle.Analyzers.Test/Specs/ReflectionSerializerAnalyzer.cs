@@ -52,7 +52,7 @@ namespace SpecTests {
 		}
 
 		[ReflectionSerializer]
-		public sealed class /* ReflectionSerializer_Class_NoPublicConstructor() */ NoPublicConstructors /**/ {
+		public sealed class /* ReflectionSerializer_NoPublicConstructor() */ NoPublicConstructors /**/ {
 			internal NoPublicConstructors( int x ) {
 				X = x;
 			}
@@ -65,7 +65,7 @@ namespace SpecTests {
 				X = x;
 				Y = y;
 			}
-			public /* ReflectionSerializer_Class_MultiplePublicConstructors() */ MultiplePublicConstructors /**/ ( int x )
+			public /* ReflectionSerializer_MultiplePublicConstructors() */ MultiplePublicConstructors /**/ ( int x )
 				: this( x: x, y: 0 ) {
 			}
 			public int X { get; }
@@ -87,7 +87,7 @@ namespace SpecTests {
 			public ParameterCannotBeDeserialized_And_MultipleConstructors(
 				int /* ReflectionSerializer_ConstructorParameter_CannotBeDeserialized(value) */ value /**/
 			) : this( x: value, y: 0 ) { }
-			public /* ReflectionSerializer_Class_MultiplePublicConstructors() */ ParameterCannotBeDeserialized_And_MultipleConstructors /**/ ( int x, int y ) {
+			public /* ReflectionSerializer_MultiplePublicConstructors() */ ParameterCannotBeDeserialized_And_MultipleConstructors /**/ ( int x, int y ) {
 				X = x;
 				Y = y;
 			}
@@ -108,7 +108,7 @@ namespace SpecTests {
 		}
 
 		[ReflectionSerializer]
-		public static class /* ReflectionSerializer_Class_Static() */ Static /**/ { }
+		public static class /* ReflectionSerializer_StaticClass() */ Static /**/ { }
 		
 		[ReflectionSerializer]
 		public sealed class OutputParameterNotSupported {
@@ -171,25 +171,25 @@ namespace SpecTests {
 
 		[ReflectionSerializer]
 		public sealed record PrimaryAndPublicConstructor( int X, int Y ) {
-			public /* ReflectionSerializer_Record_MultiplePublicConstructors() */ PrimaryAndPublicConstructor /**/( int x ) : this( X: x, Y: 0 ) { }
+			public /* ReflectionSerializer_MultiplePublicConstructors() */ PrimaryAndPublicConstructor /**/( int x ) : this( X: x, Y: 0 ) { }
 		}
 
 		[ReflectionSerializer]
 		public sealed record PrimaryAndMultiplePublicConstructors( int X, int Y, int Z ) {
-			public /* ReflectionSerializer_Record_MultiplePublicConstructors() */ PrimaryAndMultiplePublicConstructors /**/( int x ) : this( X: x, Y: 0, Z: 0 ) { }
-			public /* ReflectionSerializer_Record_MultiplePublicConstructors() */ PrimaryAndMultiplePublicConstructors /**/( int x, int y ) : this( X: x, Y: y, Z: 0 ) { }
+			public /* ReflectionSerializer_MultiplePublicConstructors() */ PrimaryAndMultiplePublicConstructors /**/( int x ) : this( X: x, Y: 0, Z: 0 ) { }
+			public /* ReflectionSerializer_MultiplePublicConstructors() */ PrimaryAndMultiplePublicConstructors /**/( int x, int y ) : this( X: x, Y: y, Z: 0 ) { }
 		}
 
 		[ReflectionSerializer]
 		public sealed partial record PartialPrimaryAndPublicConstructorWithPrimaryAttributed ( int X, int Y );
 		public sealed partial record PartialPrimaryAndPublicConstructorWithPrimaryAttributed {
-			public /* ReflectionSerializer_Record_MultiplePublicConstructors() */ PartialPrimaryAndPublicConstructorWithPrimaryAttributed /**/ (int x ) : this( X: x, Y: 0 ) { }
+			public /* ReflectionSerializer_MultiplePublicConstructors() */ PartialPrimaryAndPublicConstructorWithPrimaryAttributed /**/ (int x ) : this( X: x, Y: 0 ) { }
 		}
 
 		public sealed partial record PartialPrimaryAndPublicConstructorWithPublicAttributed( int X, int Y );
 		[ReflectionSerializer]
 		public sealed partial record PartialPrimaryAndPublicConstructorWithPublicAttributed {
-			public /* ReflectionSerializer_Record_MultiplePublicConstructors() */ PartialPrimaryAndPublicConstructorWithPublicAttributed /**/(int x ) : this( X: x, Y: 0 ) { }
+			public /* ReflectionSerializer_MultiplePublicConstructors() */ PartialPrimaryAndPublicConstructorWithPublicAttributed /**/(int x ) : this( X: x, Y: 0 ) { }
 		}
 
 		[ReflectionSerializer]
@@ -198,7 +198,7 @@ namespace SpecTests {
 				X = x;
 				Y = y;
 			}
-			public /* ReflectionSerializer_Record_MultiplePublicConstructors() */ TwoPublicConstructor /**/( int X ) : this( x: X, y: 0 ) { }
+			public /* ReflectionSerializer_MultiplePublicConstructors() */ TwoPublicConstructor /**/( int X ) : this( x: X, y: 0 ) { }
 			public int X { get; }
 			public int Y { get; }
 		}
@@ -213,7 +213,7 @@ namespace SpecTests {
 			public int Y { get; }
 		}
 		public sealed partial record PartialTwoPublicConstructor {
-			public /* ReflectionSerializer_Record_MultiplePublicConstructors() */ PartialTwoPublicConstructor /**/( int X ) : this( x: X, y: 0 ) { }
+			public /* ReflectionSerializer_MultiplePublicConstructors() */ PartialTwoPublicConstructor /**/( int X ) : this( x: X, y: 0 ) { }
 		}
 
 		[ReflectionSerializer]
@@ -223,15 +223,15 @@ namespace SpecTests {
 				Y = y;
 				Z = z;
 			}
-			public /* ReflectionSerializer_Record_MultiplePublicConstructors() */ MultiplePublicConstructor /**/( int x ) : this( x: x, y: 0, z: 0 ) { }
-			public /* ReflectionSerializer_Record_MultiplePublicConstructors() */ MultiplePublicConstructor /**/( int x, int y ) : this( x: x, y: y, z: 0 ) { }
+			public /* ReflectionSerializer_MultiplePublicConstructors() */ MultiplePublicConstructor /**/( int x ) : this( x: x, y: 0, z: 0 ) { }
+			public /* ReflectionSerializer_MultiplePublicConstructors() */ MultiplePublicConstructor /**/( int x, int y ) : this( x: x, y: y, z: 0 ) { }
 			public int X { get; }
 			public int Y { get; }
 			public int Z { get; }
 		}
 
 		[ReflectionSerializer]
-		public sealed record /* ReflectionSerializer_Record_NoPublicConstructor() */ NoPublicConstructor /**/ {
+		public sealed record /* ReflectionSerializer_NoPublicConstructor() */ NoPublicConstructor /**/ {
 			internal NoPublicConstructor( int x ) {
 				X = x;
 			}
@@ -239,7 +239,7 @@ namespace SpecTests {
 		}
 
 		[ReflectionSerializer]
-		public sealed partial record /* ReflectionSerializer_Record_NoPublicConstructor() */ PartialNoPublicConstructor /**/ {
+		public sealed partial record /* ReflectionSerializer_NoPublicConstructor() */ PartialNoPublicConstructor /**/ {
 			internal PartialNoPublicConstructor( int x ) {
 				X = x;
 			}
@@ -287,7 +287,7 @@ namespace SpecTests {
 
 		[ReflectionSerializer]
 		public sealed record GetterInitOnlySetter {
-			public int X { get; /* ReflectionSerializer_Record_InitOnlySetter */ init /**/; }
+			public int X { get; /* ReflectionSerializer_InitOnlySetter */ init /**/; }
 		}
 	}
 

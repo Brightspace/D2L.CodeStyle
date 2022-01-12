@@ -20,12 +20,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			ReflectionSerializer_ConstructorParameter_CannotBeDeserialized,
 			ReflectionSerializer_ConstructorParameter_InvalidRefKind,
-			ReflectionSerializer_Class_MultiplePublicConstructors,
-			ReflectionSerializer_Class_NoPublicConstructor,
-			ReflectionSerializer_Class_Static,
-			ReflectionSerializer_Record_InitOnlySetter,
-			ReflectionSerializer_Record_MultiplePublicConstructors,
-			ReflectionSerializer_Record_NoPublicConstructor
+			ReflectionSerializer_InitOnlySetter,
+			ReflectionSerializer_MultiplePublicConstructors,
+			ReflectionSerializer_NoPublicConstructor,
+			ReflectionSerializer_StaticClass
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -73,26 +71,22 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				return;
 			}
 
-			TypeDeclaration typeDeclaration = GetTypeDeclaration( context, reflectionSerializerAttribute );
+			TypeDeclarationSyntax typeDeclaration = GetTypeDeclaration( context, reflectionSerializerAttribute );
 
 			if( type.IsStatic ) {
-				ReportStaticClass( context, typeDeclaration );
+				ReportStaticClass( context, reflectionSerializerAttribute );
 				return;
 			}
 
-			AnalyzeConstructors( context, model, type, typeDeclaration );
-
-			if( typeDeclaration.Kind == TypeDeclarationKind.Record ) {
-
-				AnalyzeRecordProperties( context, type );
-			}
+			AnalyzeConstructors( context, model, reflectionSerializerAttribute, type );
+			AnalyzeProperties( context, type );
 		}
 
 		private static void AnalyzeConstructors(
 				SymbolAnalysisContext context,
 				ReflectionSerializerModel model,
-				INamedTypeSymbol type,
-				TypeDeclaration typeDeclaration
+				AttributeData reflectionSerializerAttribute,
+				INamedTypeSymbol type
 			) {
 
 			ImmutableArray<IMethodSymbol> constructors = type.InstanceConstructors;
@@ -103,7 +97,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 			if( publicConstructors.IsEmpty ) {
 
-				ReportNoPublicConstructor( context, typeDeclaration );
+				ReportNoPublicConstructor( context, reflectionSerializerAttribute );
 				return;
 			}
 
@@ -116,7 +110,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			AnalyzeConstructorParameters( context, model, type, deserializationConstructor );
 
 			if( publicConstructors.Length > 1 ) {
-				ReportMultiplePublicConstructors( context, typeDeclaration, publicConstructors );
+				ReportMultiplePublicConstructors( context, publicConstructors );
 			}
 		}
 
@@ -151,27 +145,14 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 		private static void ReportNoPublicConstructor(
 				SymbolAnalysisContext context,
-				TypeDeclaration typeDeclaration
+				AttributeData reflectionSerializerAttribute
 			) {
 
-			DiagnosticDescriptor descriptor;
-			switch( typeDeclaration.Kind ) {
-
-				case TypeDeclarationKind.Class:
-					descriptor = ReflectionSerializer_Class_NoPublicConstructor;
-					break;
-
-				case TypeDeclarationKind.Record:
-					descriptor = ReflectionSerializer_Record_NoPublicConstructor;
-					break;
-
-				default:
-					throw new NotSupportedException( $"Unsupported type declaration kind: { typeDeclaration.Kind }" );
-			}
+			TypeDeclarationSyntax typeDeclaration = GetTypeDeclaration( context, reflectionSerializerAttribute );
 
 			Diagnostic d = Diagnostic.Create(
-					descriptor,
-					typeDeclaration.Syntax.Identifier.GetLocation()
+					ReflectionSerializer_NoPublicConstructor,
+					typeDeclaration.Identifier.GetLocation()
 				);
 
 			context.ReportDiagnostic( d );
@@ -179,24 +160,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 		private static void ReportMultiplePublicConstructors(
 				SymbolAnalysisContext context,
-				TypeDeclaration typeDeclaration,
 				ImmutableArray<IMethodSymbol> constructors
 			) {
-
-			DiagnosticDescriptor descriptor;
-			switch( typeDeclaration.Kind ) {
-
-				case TypeDeclarationKind.Class:
-					descriptor = ReflectionSerializer_Class_MultiplePublicConstructors;
-					break;
-
-				case TypeDeclarationKind.Record:
-					descriptor = ReflectionSerializer_Record_MultiplePublicConstructors;
-					break;
-
-				default:
-					throw new NotSupportedException( $"Unsupported type declaration kind: { typeDeclaration.Kind }" );
-			}
 
 			for( int i = 1; i < constructors.Length; i++ ) {
 
@@ -204,7 +169,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				ConstructorDeclarationSyntax declaration = GetFirstDeclaringSyntax<ConstructorDeclarationSyntax>( context, constructor );
 
 				Diagnostic diagnostic = Diagnostic.Create(
-					descriptor: descriptor,
+					descriptor: ReflectionSerializer_MultiplePublicConstructors,
 					location: declaration.Identifier.GetLocation()
 				);
 
@@ -248,7 +213,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			context.ReportDiagnostic( diagnostic );
 		}
 
-		private static void AnalyzeRecordProperties(
+		private static void AnalyzeProperties(
 				SymbolAnalysisContext context,
 				INamedTypeSymbol type
 			) {
@@ -291,7 +256,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				if( accessor.Kind() == SyntaxKind.InitAccessorDeclaration ) {
 
 					Diagnostic d = Diagnostic.Create(
-							ReflectionSerializer_Record_InitOnlySetter,
+							ReflectionSerializer_InitOnlySetter,
 							accessor.Keyword.GetLocation()
 						);
 
@@ -303,28 +268,20 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 		private static void ReportStaticClass(
 				SymbolAnalysisContext context,
-				TypeDeclaration typeDeclaration
+				AttributeData reflectionSerializerAttribute
 			) {
 
+			TypeDeclarationSyntax typeDeclaration = GetTypeDeclaration( context, reflectionSerializerAttribute );
+
 			Diagnostic d = Diagnostic.Create(
-					ReflectionSerializer_Class_Static,
-					typeDeclaration.Syntax.Identifier.GetLocation()
+					ReflectionSerializer_StaticClass,
+					typeDeclaration.Identifier.GetLocation()
 				);
 
 			context.ReportDiagnostic( d );
 		}
 
-		private enum TypeDeclarationKind {
-			Class,
-			Record
-		}
-
-		private sealed record TypeDeclaration(
-				TypeDeclarationKind Kind,
-				TypeDeclarationSyntax Syntax
-			);
-
-		private static TypeDeclaration GetTypeDeclaration(
+		private static TypeDeclarationSyntax GetTypeDeclaration(
 				SymbolAnalysisContext context,
 				AttributeData reflectionSerializerAttribute
 			) {
@@ -337,17 +294,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				throw new InvalidOperationException( $"Unexpected parent kind of AttributeSyntax: { attribute.Parent.Kind() }" );
 			}
 
-			switch( attributeList.Parent ) {
-
-				case ClassDeclarationSyntax @class:
-					return new( TypeDeclarationKind.Class, @class );
-
-				case RecordDeclarationSyntax record:
-					return new( TypeDeclarationKind.Record, record );
-
-				default:
-					throw new NotSupportedException( $"Unsupported [ReflectionSerializer] attribute target kind: { attributeList.Parent.Kind() }" );
+			if( !( attributeList.Parent is TypeDeclarationSyntax typeDeclaration ) ) {
+				throw new InvalidOperationException( $"Unsupported [ReflectionSerializer] attribute target kind: { attributeList.Parent.Kind() }" );
 			}
+
+			return typeDeclaration;
 		}
 
 		private static T GetFirstDeclaringSyntax<T>(

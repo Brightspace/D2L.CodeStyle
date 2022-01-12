@@ -612,70 +612,52 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor ReflectionSerializer_ConstructorParameter_CannotBeDeserialized = new DiagnosticDescriptor(
 			id: "D2L0081",
-			title: "[ReflectionSerializer] attribute requires that constructor parameters have a corresponding property of the same name.",
+			title: "[ReflectionSerializer] attribute requires that constructor parameters have a corresponding property of the same name",
 			messageFormat: "The '{0}' parameter is missing a corresponding property of the same name. [ReflectionSerializer] requires that constructor parameters have a corresponding property of the same name in order to deserialize.",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
 
-		public static readonly DiagnosticDescriptor ReflectionSerializer_Class_NoPublicConstructor = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor ReflectionSerializer_NoPublicConstructor = new DiagnosticDescriptor(
 			id: "D2L0082",
-			title: "[ReflectionSerializer] attribute requires classes to have a public constructor.",
-			messageFormat: "The type has no public constructors. [ReflectionSerializer] attribute requires classes to have a public constructor in order to deserialize.",
+			title: "[ReflectionSerializer] attribute requires classes and records to have a public constructor",
+			messageFormat: "The type has no public constructors. [ReflectionSerializer] attribute requires classes and records to have a public constructor in order to deserialize. Records are encouraged to use an inline primary constructor.",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
 
-		public static readonly DiagnosticDescriptor ReflectionSerializer_Class_MultiplePublicConstructors = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor ReflectionSerializer_MultiplePublicConstructors = new DiagnosticDescriptor(
 			id: "D2L0083",
-			title: "[ReflectionSerializer] attribute requires classes to have a single public constructor.",
-			messageFormat: "The type has too many public constructors. [ReflectionSerializer] attribute requires classes to have a single public constructor in order to deterministically deserialize",
+			title: "[ReflectionSerializer] attribute requires classes and records to have a single public constructor",
+			messageFormat: "The type has too many public constructors. [ReflectionSerializer] attribute requires classes and records to have a single public constructor in order to deterministically deserialize.",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
 
-		public static readonly DiagnosticDescriptor ReflectionSerializer_Class_Static = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor ReflectionSerializer_StaticClass = new DiagnosticDescriptor(
 			id: "D2L0084",
-			title: "[ReflectionSerializer] attribute cannot be applied to static classes.",
-			messageFormat: "[ReflectionSerializer] attribute cannot be applied to static classes.",
+			title: "[ReflectionSerializer] attribute cannot be applied to static classes",
+			messageFormat: "The [ReflectionSerializer] attribute cannot be applied to static classes",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
 
-		public static readonly DiagnosticDescriptor ReflectionSerializer_Record_NoPublicConstructor = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor ReflectionSerializer_InitOnlySetter = new DiagnosticDescriptor(
 			id: "D2L0085",
-			title: "[ReflectionSerializer] attribute requires records to have an inline primary constructor or a public constructor.",
-			messageFormat: "The type has no public constructors. [ReflectionSerializer] attribute requires records to have an inline primary constructor or a public constructor.",
-			category: "Correctness",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true
-		);
-
-		public static readonly DiagnosticDescriptor ReflectionSerializer_Record_MultiplePublicConstructors = new DiagnosticDescriptor(
-			id: "D2L0086",
-			title: "[ReflectionSerializer] attribute requires records to have just an inline primary constructor or a single public constructor.",
-			messageFormat: "The type has too many public constructors. [ReflectionSerializer] attribute requires records to have just an inline primary constructor or a single public constructor.",
-			category: "Correctness",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true
-		);
-
-		public static readonly DiagnosticDescriptor ReflectionSerializer_Record_InitOnlySetter = new DiagnosticDescriptor(
-			id: "D2L0087",
-			title: "[ReflectionSerializer] attribute does not support records with init only property setters.",
-			messageFormat: "Init only property setters are not supported. [ReflectionSerializer] attribute does not support deserialization into init only property setters.",
+			title: "[ReflectionSerializer] attribute does not support init-only property setters",
+			messageFormat: "Init-only property setters are not supported. The [ReflectionSerializer] attribute does not support deserialization into init-only property setters.",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
 
 		public static readonly DiagnosticDescriptor ReflectionSerializer_ConstructorParameter_InvalidRefKind = new DiagnosticDescriptor(
-			id: "D2L0088",
-			title: "[ReflectionSerializer] attribute only supports input constructor parameters.",
+			id: "D2L0086",
+			title: "[ReflectionSerializer] attribute only supports input constructor parameters",
 			messageFormat: "The {0} keyword is not support on the '{1}' parameter. The [ReflectionSerializer] attribute only supports input constructor parameters.",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
