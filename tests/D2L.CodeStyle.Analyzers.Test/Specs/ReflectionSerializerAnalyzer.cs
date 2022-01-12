@@ -82,7 +82,20 @@ namespace SpecTests {
 			public int X { get; }
         }
 
-        [ReflectionSerializer]
+		[ReflectionSerializer]
+		public sealed class ParameterCannotBeDeserialized_And_MultipleConstructors {
+			public ParameterCannotBeDeserialized_And_MultipleConstructors(
+				int /* ReflectionSerializer_ConstructorParameterCannotBeDeserialized(value) */ value /**/
+			) : this( x: value, y: 0 ) {}
+			public /* ReflectionSerializer_Class_MultiplePublicConstructors() */ ParameterCannotBeDeserialized_And_MultipleConstructors /**/ ( int x, int y ) {
+				X = x;
+				Y = y;
+			}
+			public int X { get; }
+			public int Y { get; }
+		}
+
+		[ReflectionSerializer]
         public sealed class GetterSetter {
 			public int X { get; set; }
 			public int Y { get; set; }
