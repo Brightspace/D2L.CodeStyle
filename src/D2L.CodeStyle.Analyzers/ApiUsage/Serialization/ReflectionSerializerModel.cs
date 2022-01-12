@@ -2,32 +2,22 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 	internal sealed class ReflectionSerializerModel {
 
-		private readonly SemanticModel m_semanticModel;
 		private readonly INamedTypeSymbol m_ignoreAttributeType;
 		private readonly INamedTypeSymbol m_reflectionSerializerAttributeType;
 
 		public ReflectionSerializerModel(
-				SemanticModel semanticModel,
 				INamedTypeSymbol ignoreAttributeType,
 				INamedTypeSymbol reflectionSerializerAttributeType
 			) {
 
-			m_semanticModel = semanticModel;
 			m_ignoreAttributeType = ignoreAttributeType;
 			m_reflectionSerializerAttributeType = reflectionSerializerAttributeType;
-		}
-
-		public bool IsReflectionSerializerAttribute( AttributeSyntax attribute ) {
-			return m_semanticModel.IsAttributeOfType( attribute, m_reflectionSerializerAttributeType );
 		}
 
 		public ImmutableHashSet<string> GetPublicReadablePropertyNames( INamedTypeSymbol type ) {
@@ -88,12 +78,17 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 		}
 
 		private bool HasIgnoreAttribute( ISymbol symbol ) {
-			return HasAttributeOfType( symbol, m_ignoreAttributeType );
+			return HasAttributeOfType( symbol, m_ignoreAttributeType, out _ );
+		}
+
+		public bool HasReflectionSerializerAttribute( INamedTypeSymbol symbol, out AttributeData attribute ) {
+			return HasAttributeOfType( symbol, m_reflectionSerializerAttributeType, out attribute );
 		}
 
 		private bool HasAttributeOfType(
 				ISymbol symbol,
-				INamedTypeSymbol type
+				INamedTypeSymbol type,
+				out AttributeData attributeData
 			) {
 
 			ImmutableArray<AttributeData> attributes = symbol.GetAttributes();
@@ -104,10 +99,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 						type
 					) ) {
 
+					attributeData = attribute;
 					return true;
 				}
 			}
 
+			attributeData = null;
 			return false;
 		}
 	}

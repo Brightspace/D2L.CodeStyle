@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
@@ -15,7 +14,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 	internal sealed class ReflectionSerializerAnalyzer : DiagnosticAnalyzer {
 
 		private const string ReflectionSerializerAttributeFullName = "D2L.LP.Serialization.ReflectionSerializerAttribute";
-		private const string DisableAnalyzerFullName = "D2L.LP.Serialization.ReflectionSerializer+DisableAnalyzerAttribute";
 		private const string IgnoreAttributeFullName = "D2L.LP.Serialization.ReflectionSerializer+IgnoreAttribute";
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
@@ -26,31 +24,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			ReflectionSerializer_Record_MultiplePublicConstructors
 		);
 
-		private sealed record TypeDiagnostics(
-				DiagnosticDescriptor NoPublicConstructor,
-				DiagnosticDescriptor MultiplePublicConstructors,
-				DiagnosticDescriptor ConstructorParameterCannotBeDeserialized
-			);
-
-		private static readonly TypeDiagnostics ClassDiagnostics = new TypeDiagnostics(
-				NoPublicConstructor: ReflectionSerializer_Class_NoPublicConstructor,
-				MultiplePublicConstructors: ReflectionSerializer_Class_MultiplePublicConstructors,
-				ConstructorParameterCannotBeDeserialized: ReflectionSerializer_ConstructorParameterCannotBeDeserialized
-			);
-
-		private static readonly TypeDiagnostics RecordDiagnostics = new TypeDiagnostics(
-				NoPublicConstructor: ReflectionSerializer_Record_NoPublicConstructor,
-				MultiplePublicConstructors: ReflectionSerializer_Record_MultiplePublicConstructors,
-				ConstructorParameterCannotBeDeserialized: ReflectionSerializer_ConstructorParameterCannotBeDeserialized
-			);
-
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
 			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics );
-			context.RegisterCompilationStartAction( RegisterScopeBuilderAnalyzer );
+			context.RegisterCompilationStartAction( CompilationStart );
 		}
 
-		private void RegisterScopeBuilderAnalyzer( CompilationStartAnalysisContext context ) {
+		private void CompilationStart( CompilationStartAnalysisContext context ) {
 
 			Compilation comp = context.Compilation;
 			if( !comp.TryGetTypeByMetadataName( ReflectionSerializerAttributeFullName, out INamedTypeSymbol reflectionSerializerAttributeType ) ) {
@@ -60,403 +40,196 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				throw new InvalidOperationException( "Could not fine ReflectionSerializer.Ignore attribute type." );
 			}
 
-			context.RegisterSyntaxNodeAction(
-					c => AnalyzeAttributeSyntax(
-						c,
-						(AttributeSyntax)c.Node,
-						new ReflectionSerializerModel(
-							semanticModel: c.SemanticModel,
-							ignoreAttributeType: ignoreAttributeType,
-							reflectionSerializerAttributeType: reflectionSerializerAttributeType
-						)
-					),
-					SyntaxKind.Attribute
+			ReflectionSerializerModel model = new ReflectionSerializerModel(
+					ignoreAttributeType: ignoreAttributeType,
+					reflectionSerializerAttributeType: reflectionSerializerAttributeType
+				);
+
+			context.RegisterSymbolAction(
+					c => AnalyzeAttributeSyntax( c, model, (INamedTypeSymbol)c.Symbol ),
+					SymbolKind.NamedType
 				);
 		}
 
-		private void AnalyzeAttributeSyntax(
-				SyntaxNodeAnalysisContext context,
-				AttributeSyntax attribute,
-				ReflectionSerializerModel model
+		private static void AnalyzeAttributeSyntax(
+				SymbolAnalysisContext context,
+				ReflectionSerializerModel model,
+				INamedTypeSymbol type
 			) {
 
-			if( !model.IsReflectionSerializerAttribute( attribute ) ) {
+			if( type.TypeKind != TypeKind.Class ) {
 				return;
 			}
 
-			if( !( attribute.Parent is AttributeListSyntax attributeList ) ) {
+			if( type.IsAbstract ) {
 				return;
 			}
 
-			switch( attributeList.Parent ) {
+			if( !model.HasReflectionSerializerAttribute( type, out AttributeData reflectionSerializerAttribute ) ) {
+				return;
+			}
 
-				case ClassDeclarationSyntax @class:
+			TypeDeclaration typeDeclaration = GetTypeDeclaration( context, reflectionSerializerAttribute );
 
-					AnalyzeClassDeclaration( context, model, @class );
-					break;
+			ImmutableArray<IMethodSymbol> constructors = type.InstanceConstructors;
 
-				case RecordDeclarationSyntax record:
-					AnalyzeRecordDeclaration( context, model, record );
-					break;
+			ImmutableArray<IMethodSymbol> publicConstructors = constructors
+				.Where( c => c.DeclaredAccessibility == Accessibility.Public )
+				.ToImmutableArray();
+
+			if( publicConstructors.Length == 0 ) {
+
+				ReportNoPublicConstructor( context, typeDeclaration );
+				return;
+			}
+
+			if( publicConstructors.Length > 1 ) {
+
+				ReportMultiplePublicConstructors( context, typeDeclaration, publicConstructors );
+				return;
+			}
+
+			IMethodSymbol constructor = publicConstructors[0];
+
+			ImmutableArray<IParameterSymbol> constructorParameters = constructor.Parameters;
+			if( constructorParameters.Length == 0 ) {
+				return;
+			}
+
+			ImmutableHashSet<string> serializedPropertyNames = model.GetPublicReadablePropertyNames( type );
+
+			foreach( IParameterSymbol parameter in constructorParameters ) {
+
+				if( !serializedPropertyNames.Contains( parameter.Name ) ) {
+					ReportConstructorParameterCannotBeDeserialized( context, parameter );
+				}
 			}
 		}
 
-		private void AnalyzeClassDeclaration(
-				SyntaxNodeAnalysisContext context,
-				ReflectionSerializerModel model,
-				ClassDeclarationSyntax type
+		private static void ReportNoPublicConstructor(
+				SymbolAnalysisContext context,
+				TypeDeclaration typeDeclaration
 			) {
 
-			if( type.Modifiers.IndexOf( SyntaxKind.AbstractKeyword ) >= 0 ) {
-				return;
-			}
+			DiagnosticDescriptor descriptor;
+			switch( typeDeclaration.Kind ) {
 
-			INamedTypeSymbol typeSymbol = context.SemanticModel.GetDeclaredSymbol( type );
-			TypeDiagnostics diagnostics = ClassDiagnostics;
-			bool isPartial = type.Modifiers.IndexOf( SyntaxKind.PartialKeyword ) >= 0;
-
-			ImmutableArray<ConstructorDeclarationSyntax> constructors =
-				GetPublicInstanceConstructors( type );
-
-			ParameterListSyntax constructorParameters;
-
-			switch( constructors.Length ) {
-
-				case 0:
-					if( !isPartial ) {
-						ReportDiagnostic(
-								context,
-								diagnostics.NoPublicConstructor,
-								type
-							);
-						return;
-					}
-
-					constructorParameters = null;
+				case TypeDeclarationKind.Class:
+					descriptor = ReflectionSerializer_Class_NoPublicConstructor;
 					break;
 
-				case 1:
-					constructorParameters = constructors[ 0 ].ParameterList;
+				case TypeDeclarationKind.Record:
+					descriptor = ReflectionSerializer_Record_NoPublicConstructor;
 					break;
 
 				default:
-					ReportDiagnostics(
-							context,
-							diagnostics.MultiplePublicConstructors,
-							constructors.Skip( 1 )
-						);
-					return;
+					throw new NotSupportedException( $"Unsupported type declaration kind: { typeDeclaration.Kind }" );
 			}
 
-			if( constructorParameters != null ) {
-				AnalyzeConstructorParameters(
-						context,
-						model,
-						type,
-						typeSymbol,
-						constructorParameters,
-						diagnostics.ConstructorParameterCannotBeDeserialized
-					);
-			}
-
-			if( isPartial ) {
-
-				/*
-				 * Only validate the constructor parameters using symbols in the event that
-				 * the constructor is defined in another partial declaration
-				 */
-				TypeDiagnostics constructorDiagnostics = ( constructorParameters == null )
-					? diagnostics
-					: diagnostics with { ConstructorParameterCannotBeDeserialized = null };
-
-				AnalyzePublicInstanceConstructors(
-						context,
-						model,
-						type,
-						typeSymbol,
-						constructorDiagnostics
-					);
-			}
-		}
-
-		private void AnalyzeRecordDeclaration(
-				SyntaxNodeAnalysisContext context,
-				ReflectionSerializerModel model,
-				RecordDeclarationSyntax type
-			) {
-
-			if( type.Modifiers.IndexOf( SyntaxKind.AbstractKeyword ) >= 0 ) {
-				return;
-			}
-
-			INamedTypeSymbol typeSymbol = context.SemanticModel.GetDeclaredSymbol( type );
-
-			TypeDiagnostics diagnostics = RecordDiagnostics;
-			bool hasPrimaryConstructor = type.ParameterList != null;
-			bool isPartial = type.Modifiers.IndexOf( SyntaxKind.PartialKeyword ) >= 0;
-
-			ImmutableArray<ConstructorDeclarationSyntax> constructors =
-				GetPublicInstanceConstructors( type );
-
-			ParameterListSyntax constructorParameters;
-
-			if( hasPrimaryConstructor ) {
-
-				if( constructors.Length > 0 ) {
-					ReportDiagnostics(
-							context,
-							diagnostics.MultiplePublicConstructors,
-							constructors
-						);
-					return;
-				}
-
-				constructorParameters = type.ParameterList;
-
-			} else {
-
-				switch( constructors.Length ) {
-
-					case 0:
-						if( !isPartial ) {
-
-							ReportDiagnostic(
-									context,
-									diagnostics.NoPublicConstructor,
-									type
-								);
-							return;
-						}
-
-						constructorParameters = null;
-						break;
-
-					case 1:
-						constructorParameters = constructors[ 0 ].ParameterList;
-						break;
-
-					default:
-						ReportDiagnostics(
-								context,
-								diagnostics.MultiplePublicConstructors,
-								constructors.Skip( 1 )
-							);
-						return;
-				}
-			}
-
-			if( constructorParameters != null ) {
-				AnalyzeConstructorParameters(
-						context,
-						model,
-						type,
-						typeSymbol,
-						constructorParameters,
-						diagnostics.ConstructorParameterCannotBeDeserialized
-					);
-			}
-
-			if( isPartial ) {
-
-				/*
-				 * Only validate the constructor parameters using symbols in the event that
-				 * the constructor is defined in another partial declaration
-				 */
-				TypeDiagnostics constructorDiagnostics = ( constructorParameters == null )
-					? diagnostics
-					: diagnostics with { ConstructorParameterCannotBeDeserialized = null };
-
-				AnalyzePublicInstanceConstructors(
-						context,
-						model,
-						type,
-						typeSymbol,
-						constructorDiagnostics
-					);
-			}
-		}
-
-		private static void ReportDiagnostic(
-				SyntaxNodeAnalysisContext context,
-				DiagnosticDescriptor descriptor,
-				TypeDeclarationSyntax type
-			) {
-
-			Diagnostic diagnostic = Diagnostic.Create(
-					descriptor: descriptor,
-					location: type.Identifier.GetLocation()
+			Diagnostic d = Diagnostic.Create(
+					descriptor,
+					typeDeclaration.Syntax.Identifier.GetLocation()
 				);
 
-			context.ReportDiagnostic( diagnostic );
+			context.ReportDiagnostic( d );
 		}
 
-		private static void ReportDiagnostics(
-				SyntaxNodeAnalysisContext context,
-				DiagnosticDescriptor descriptor,
-				IEnumerable<ConstructorDeclarationSyntax> constructors
+		private static void ReportMultiplePublicConstructors(
+				SymbolAnalysisContext context,
+				TypeDeclaration typeDeclaration,
+				ImmutableArray<IMethodSymbol> constructors
 			) {
 
-			foreach( ConstructorDeclarationSyntax constructor in constructors ) {
+			DiagnosticDescriptor descriptor;
+			switch( typeDeclaration.Kind ) {
+
+				case TypeDeclarationKind.Class:
+					descriptor = ReflectionSerializer_Class_MultiplePublicConstructors;
+					break;
+
+				case TypeDeclarationKind.Record:
+					descriptor = ReflectionSerializer_Record_MultiplePublicConstructors;
+					break;
+
+				default:
+					throw new NotSupportedException( $"Unsupported type declaration kind: { typeDeclaration.Kind }" );
+			}
+
+			for( int i = 1; i < constructors.Length; i++ ) {
+
+				IMethodSymbol constructor = constructors[i];
+				ConstructorDeclarationSyntax declaration = GetFirstDeclaringSyntax<ConstructorDeclarationSyntax>( context, constructor );
 
 				Diagnostic diagnostic = Diagnostic.Create(
-						descriptor: descriptor,
-						location: constructor.Identifier.GetLocation()
-					);
+					descriptor: descriptor,
+					location: declaration.Identifier.GetLocation()
+				);
 
 				context.ReportDiagnostic( diagnostic );
 			}
 		}
 
-		private static ImmutableArray<ConstructorDeclarationSyntax> GetPublicInstanceConstructors(
-				TypeDeclarationSyntax syntax
-			) {
-
-			ImmutableArray<ConstructorDeclarationSyntax> constructors = syntax
-				.ChildNodes()
-				.OfType<ConstructorDeclarationSyntax>()
-				.Where( c => (
-					c.Modifiers.IndexOf( SyntaxKind.PublicKeyword ) >= 0
-					& c.Modifiers.IndexOf( SyntaxKind.StaticKeyword ) < 0
-				) )
-				.ToImmutableArray();
-
-			return constructors;
-		}
-
-		private static bool IsPublicInstanceConstructor( IMethodSymbol method ) {
-
-			if( method.MethodKind != MethodKind.Constructor ) {
-				return false;
-			}
-
-			if( method.DeclaredAccessibility != Accessibility.Public ) {
-				return false;
-			}
-
-			return true;
-		}
-
-		private static void AnalyzePublicInstanceConstructors(
-				SyntaxNodeAnalysisContext context,
-				ReflectionSerializerModel model,
-				TypeDeclarationSyntax type,
-				INamedTypeSymbol typeSymbol,
-				TypeDiagnostics diagnostics
-			) {
-
-			ImmutableArray<IMethodSymbol> constructors = typeSymbol
-				.GetMembers()
-				.OfType<IMethodSymbol>()
-				.Where( IsPublicInstanceConstructor )
-				.ToImmutableArray();
-
-			switch( constructors.Length ) {
-
-				case 0:
-					ReportDiagnostic(
-							context,
-							diagnostics.NoPublicConstructor,
-							type
-						);
-					break;
-
-				case 1:
-					if( diagnostics.ConstructorParameterCannotBeDeserialized != null ) {
-						AnalyzeConstructorParameters(
-								context,
-								model,
-								type,
-								typeSymbol,
-								constructors[ 0 ].Parameters,
-								diagnostics.ConstructorParameterCannotBeDeserialized
-							);
-					}
-					break;
-
-				default:
-					ReportDiagnostic(
-							context,
-							diagnostics.MultiplePublicConstructors,
-							type
-						);
-					break;
-			}
-		}
-
-		/// <summary>
-		/// Analyzes the constructor parameters using the syntax in the event of a partial type,
-		/// where the [ReflectionSerializer] attribute and constructor are defined in the same file.
-		/// </summary>
-		private static void AnalyzeConstructorParameters(
-				SyntaxNodeAnalysisContext context,
-				ReflectionSerializerModel model,
-				TypeDeclarationSyntax type,
-				INamedTypeSymbol typeSymbol,
-				ParameterListSyntax constructorParameters,
-				DiagnosticDescriptor parameterCannotBeDeserializedDiagnostic
-			) {
-
-			ImmutableHashSet<string> serializedPropertyNames = model.GetPublicReadablePropertyNames( typeSymbol );
-
-			foreach( ParameterSyntax parameter in constructorParameters.Parameters ) {
-
-				string parameterName = parameter.Identifier.ValueText;
-				if( !serializedPropertyNames.Contains( parameterName ) ) {
-
-					ReportConstructorParameterCannotBeDeserialized(
-							context,
-							descriptor: parameterCannotBeDeserializedDiagnostic,
-							identifier: parameter.Identifier,
-							parameterName: parameter.Identifier.ValueText
-						);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Analyzes the constructor parameters using the symbols in the event of a partial type,
-		/// where the [ReflectionSerializer] attribute and constructor are not in the same file.
-		/// </summary>
-		private static void AnalyzeConstructorParameters(
-				SyntaxNodeAnalysisContext context,
-				ReflectionSerializerModel model,
-				TypeDeclarationSyntax type,
-				INamedTypeSymbol typeSymbol,
-				ImmutableArray<IParameterSymbol> constructorParameters,
-				DiagnosticDescriptor parameterCannotBeDeserializedDiagnostic
-			) {
-
-			ImmutableHashSet<string> serializedPropertyNames = model.GetPublicReadablePropertyNames( typeSymbol );
-
-			foreach( IParameterSymbol parameter in constructorParameters ) {
-
-				string parameterName = parameter.Name;
-				if( !serializedPropertyNames.Contains( parameterName ) ) {
-
-					ReportConstructorParameterCannotBeDeserialized(
-							context,
-							descriptor: parameterCannotBeDeserializedDiagnostic,
-							identifier: type.Identifier,
-							parameterName: parameter.Name
-						);
-				}
-			}
-		}
-
 		private static void ReportConstructorParameterCannotBeDeserialized(
-				SyntaxNodeAnalysisContext context,
-				DiagnosticDescriptor descriptor,
-				SyntaxToken identifier,
-				string parameterName
+				SymbolAnalysisContext context,
+				IParameterSymbol parameter
 			) {
+
+			ParameterSyntax declaration = GetFirstDeclaringSyntax<ParameterSyntax>( context, parameter );
 
 			Diagnostic diagnostic = Diagnostic.Create(
-					descriptor: descriptor,
-					location: identifier.GetLocation(),
-					messageArgs: parameterName
+					descriptor: ReflectionSerializer_ConstructorParameterCannotBeDeserialized,
+					location: declaration.Identifier.GetLocation(),
+					messageArgs: new[] { parameter.Name }
 				);
 
 			context.ReportDiagnostic( diagnostic );
+		}
+
+		private enum TypeDeclarationKind {
+			Class,
+			Record
+		}
+
+		private record TypeDeclaration(
+				TypeDeclarationKind Kind,
+				TypeDeclarationSyntax Syntax
+			);
+
+		private static TypeDeclaration GetTypeDeclaration(
+				SymbolAnalysisContext context,
+				AttributeData reflectionSerializerAttribute
+			) {
+
+			SyntaxNode attribute = reflectionSerializerAttribute.ApplicationSyntaxReference
+				.GetSyntax( context.CancellationToken );
+
+			if( !( attribute.Parent is AttributeListSyntax attributeList ) ) {
+				throw new InvalidOperationException( $"Unexpected parent kind of AttributeSyntax: { attribute.Parent.Kind() }" );
+			}
+
+			switch( attributeList.Parent ) {
+
+				case ClassDeclarationSyntax @class:
+					return new( TypeDeclarationKind.Class, @class );
+
+				case RecordDeclarationSyntax record:
+					return new( TypeDeclarationKind.Record, record );
+
+				default:
+					throw new NotSupportedException( $"Unsupported [ReflectionSerializer] attribute target kind: { attributeList.Parent.Kind() }" );
+			}
+		}
+
+		private static T GetFirstDeclaringSyntax<T>(
+				SymbolAnalysisContext context,
+				ISymbol symbol
+			) where T : SyntaxNode {
+
+			SyntaxNode syntax = symbol.DeclaringSyntaxReferences
+				.First()
+				.GetSyntax( context.CancellationToken );
+
+			return (T)syntax;
 		}
 	}
 }
