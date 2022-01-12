@@ -222,11 +222,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				.OfType<IPropertySymbol>();
 
 			foreach( IPropertySymbol property in instanceProperties ) {
-				AnalyzeRecordProperty( context, property );
+				AnalyzeProperty( context, property );
 			}
 		}
 
-		private static void AnalyzeRecordProperty(
+		private static void AnalyzeProperty(
 				SymbolAnalysisContext context,
 				IPropertySymbol property
 			) {
