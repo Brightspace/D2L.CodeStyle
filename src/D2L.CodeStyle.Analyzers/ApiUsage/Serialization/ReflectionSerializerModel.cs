@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
-	internal sealed class ReflectionSerializerModel {
+		internal sealed class ReflectionSerializerModel {
 
 		private readonly INamedTypeSymbol m_ignoreAttributeType;
 		private readonly INamedTypeSymbol m_reflectionSerializerAttributeType;

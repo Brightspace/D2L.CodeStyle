@@ -23,7 +23,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			ReflectionSerializer_Class_MultiplePublicConstructors,
 			ReflectionSerializer_Record_NoPublicConstructor,
 			ReflectionSerializer_Record_MultiplePublicConstructors,
-			ReflectionSerializer_Record_InitOnlySetter
+			ReflectionSerializer_Record_InitOnlySetter,
+			ReflectionSerializer_Class_Static
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -72,6 +73,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			}
 
 			TypeDeclaration typeDeclaration = GetTypeDeclaration( context, reflectionSerializerAttribute );
+
+			if( type.IsStatic ) {
+				ReportStaticClass( context, typeDeclaration );
+				return;
+			}
 
 			AnalyzeConstructors( context, model, type, typeDeclaration );
 
@@ -265,6 +271,19 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 					return;
 				}
 			}
+		}
+
+		private static void ReportStaticClass(
+				SymbolAnalysisContext context,
+				TypeDeclaration typeDeclaration
+			) {
+
+			Diagnostic d = Diagnostic.Create(
+					ReflectionSerializer_Class_Static,
+					typeDeclaration.Syntax.Identifier.GetLocation()
+				);
+
+			context.ReportDiagnostic( d );
 		}
 
 		private enum TypeDeclarationKind {
