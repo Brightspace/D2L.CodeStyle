@@ -71,8 +71,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				return;
 			}
 
-			TypeDeclarationSyntax typeDeclaration = GetTypeDeclaration( context, reflectionSerializerAttribute );
-
 			if( type.IsStatic ) {
 				ReportStaticClass( context, reflectionSerializerAttribute );
 				return;
