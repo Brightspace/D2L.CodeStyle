@@ -96,7 +96,13 @@ namespace SpecTests {
 		}
 
 		[ReflectionSerializer]
-        public sealed class GetterSetter {
+		internal sealed class GetterSetter_InternalClass {
+			public int X { get; set; }
+			public int Y { get; set; }
+		}
+
+		[ReflectionSerializer]
+		public sealed class GetterSetter_PublicClass {
 			public int X { get; set; }
 			public int Y { get; set; }
 		}
