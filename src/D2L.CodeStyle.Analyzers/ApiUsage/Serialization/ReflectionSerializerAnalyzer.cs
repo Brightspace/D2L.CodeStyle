@@ -104,8 +104,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			IMethodSymbol deserializationConstructor = publicConstructors[0];
 			AnalyzeConstructorParameters( context, model, type, deserializationConstructor );
 
-			if( publicConstructors.Length > 1 ) {
-				ReportMultiplePublicConstructors( context, publicConstructors );
+			for( int i = 1; i < publicConstructors.Length; i++ ) {
+				ReportMultiplePublicConstructors( context, publicConstructors[ i ] );
 			}
 		}
 
@@ -155,21 +155,17 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 		private static void ReportMultiplePublicConstructors(
 				SymbolAnalysisContext context,
-				ImmutableArray<IMethodSymbol> constructors
+				IMethodSymbol constructor
 			) {
 
-			for( int i = 1; i < constructors.Length; i++ ) {
+			ConstructorDeclarationSyntax declaration = GetFirstDeclaringSyntax<ConstructorDeclarationSyntax>( context, constructor );
 
-				IMethodSymbol constructor = constructors[i];
-				ConstructorDeclarationSyntax declaration = GetFirstDeclaringSyntax<ConstructorDeclarationSyntax>( context, constructor );
+			Diagnostic diagnostic = Diagnostic.Create(
+				descriptor: ReflectionSerializer_MultiplePublicConstructors,
+				location: declaration.Identifier.GetLocation()
+			);
 
-				Diagnostic diagnostic = Diagnostic.Create(
-					descriptor: ReflectionSerializer_MultiplePublicConstructors,
-					location: declaration.Identifier.GetLocation()
-				);
-
-				context.ReportDiagnostic( diagnostic );
-			}
+			context.ReportDiagnostic( diagnostic );
 		}
 
 		private static void ReportConstructorParameterCannotBeDeserialized(
