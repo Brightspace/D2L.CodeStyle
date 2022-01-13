@@ -665,7 +665,7 @@ namespace D2L.CodeStyle.Analyzers {
 		);
 
 		public static readonly DiagnosticDescriptor InterfaceBinder_InterfacesOnly = new DiagnosticDescriptor(
-			id: "D2LXXXX",
+			id: "D2L0087",
 			title: "InterfaceBinder<T> can only be used with interfaces",
 			messageFormat: "The generic type argument '{0}' is not an interface. The InterfaceBinder<T> can only be used with interfaces.",
 			category: "Correctness",
