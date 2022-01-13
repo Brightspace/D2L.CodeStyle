@@ -80,7 +80,7 @@ namespace SpecTests {
 				X = value;
 			}
 			public int X { get; }
-        }
+		}
 
 		[ReflectionSerializer]
 		public sealed class ParameterCannotBeDeserialized_And_MultipleConstructors {
@@ -109,7 +109,7 @@ namespace SpecTests {
 
 		[ReflectionSerializer]
 		public static class /* ReflectionSerializer_StaticClass() */ Static /**/ { }
-		
+
 		[ReflectionSerializer]
 		public sealed class OutputParameterNotSupported {
 			public OutputParameterNotSupported(
@@ -117,17 +117,37 @@ namespace SpecTests {
 			) {
 				value = 1;
 			}
-        }
-		
+		}
+
 		[ReflectionSerializer]
 		public sealed class RefParameterNotSupported {
 			public RefParameterNotSupported(
 				ref int /* ReflectionSerializer_ConstructorParameter_InvalidRefKind(value,ref) */ value /**/
 			) { }
-        }
+		}
+
+		[ReflectionSerializer]
+		public sealed class GetterSetter_WithMultipleConstructors {
+
+			public /* ReflectionSerializer_MultiplePublicConstructors() */ GetterSetter_WithMultipleConstructors /**/ ( int x )
+				: this( x: x, y: 0 ) {
+			}
+
+			public GetterSetter_WithMultipleConstructors()
+				: this( x: 0, y: 0 ) {
+			}
+
+			public /* ReflectionSerializer_MultiplePublicConstructors() */ GetterSetter_WithMultipleConstructors /**/ ( int x, int y ) {
+				X = x;
+				Y = y;
+			}
+
+			public int X { get; set; }
+			public int Y { get; set; }
+		}
 	}
 
-    namespace Records {
+	namespace Records {
 
 		[ReflectionSerializer]
 		public sealed record Empty();
@@ -181,15 +201,15 @@ namespace SpecTests {
 		}
 
 		[ReflectionSerializer]
-		public sealed partial record PartialPrimaryAndPublicConstructorWithPrimaryAttributed ( int X, int Y );
+		public sealed partial record PartialPrimaryAndPublicConstructorWithPrimaryAttributed( int X, int Y );
 		public sealed partial record PartialPrimaryAndPublicConstructorWithPrimaryAttributed {
-			public /* ReflectionSerializer_MultiplePublicConstructors() */ PartialPrimaryAndPublicConstructorWithPrimaryAttributed /**/ (int x ) : this( X: x, Y: 0 ) { }
+			public /* ReflectionSerializer_MultiplePublicConstructors() */ PartialPrimaryAndPublicConstructorWithPrimaryAttributed /**/ ( int x ) : this( X: x, Y: 0 ) { }
 		}
 
 		public sealed partial record PartialPrimaryAndPublicConstructorWithPublicAttributed( int X, int Y );
 		[ReflectionSerializer]
 		public sealed partial record PartialPrimaryAndPublicConstructorWithPublicAttributed {
-			public /* ReflectionSerializer_MultiplePublicConstructors() */ PartialPrimaryAndPublicConstructorWithPublicAttributed /**/(int x ) : this( X: x, Y: 0 ) { }
+			public /* ReflectionSerializer_MultiplePublicConstructors() */ PartialPrimaryAndPublicConstructorWithPublicAttributed /**/( int x ) : this( X: x, Y: 0 ) { }
 		}
 
 		[ReflectionSerializer]

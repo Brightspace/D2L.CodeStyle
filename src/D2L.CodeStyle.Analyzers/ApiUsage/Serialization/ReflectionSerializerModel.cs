@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
-		internal sealed class ReflectionSerializerModel {
+	internal sealed class ReflectionSerializerModel {
 
 		private readonly INamedTypeSymbol m_ignoreAttributeType;
 		private readonly INamedTypeSymbol m_reflectionSerializerAttributeType;
@@ -18,6 +18,28 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 			m_ignoreAttributeType = ignoreAttributeType;
 			m_reflectionSerializerAttributeType = reflectionSerializerAttributeType;
+		}
+
+		public ImmutableArray<IMethodSymbol> GetOrderedPublicInstanceConstructors( INamedTypeSymbol type ) {
+
+			var builder = ImmutableArray.CreateBuilder<IMethodSymbol>();
+
+			foreach( IMethodSymbol constructor in type.InstanceConstructors ) {
+
+				if( constructor.DeclaredAccessibility == Accessibility.Public ) {
+
+					if( constructor.Parameters.IsEmpty ) {
+
+						// empty constructor takes priority over all others
+						builder.Insert( 0, constructor );
+
+					} else {
+						builder.Add( constructor );
+					}
+				}
+			}
+
+			return builder.ToImmutable();
 		}
 
 		public ImmutableHashSet<string> GetPublicReadablePropertyNames( INamedTypeSymbol type ) {
