@@ -87,11 +87,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				INamedTypeSymbol type
 			) {
 
-			ImmutableArray<IMethodSymbol> constructors = type.InstanceConstructors;
-
-			ImmutableArray<IMethodSymbol> publicConstructors = constructors
-				.Where( c => c.DeclaredAccessibility == Accessibility.Public )
-				.ToImmutableArray();
+			ImmutableArray<IMethodSymbol> publicConstructors = model
+				.GetOrderedPublicInstanceConstructors( type );
 
 			if( publicConstructors.IsEmpty ) {
 
