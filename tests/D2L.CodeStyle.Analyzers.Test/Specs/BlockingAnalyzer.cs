@@ -76,7 +76,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 				/* OnlyCallBlockingMethodsFromMethods(SomeBlockingMethod,lambdas) */ BasicTests.SomeBlockingMethod() /**/;
 
 			Del del3 = delegate () { /* OnlyCallBlockingMethodsFromMethods(SomeBlockingMethod,delegates) */ BasicTests.SomeBlockingMethod() /**/; };
-        }
+		}
 	}
 
 	public static class InheritanceTests {
@@ -85,7 +85,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 			void BlockingInterfaceMethod();
 
 			void NonBlockingInterfaceMethod();
-        }
+		}
 
 		public abstract class Base {
 			[Blocking]
@@ -97,7 +97,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 			public abstract void NonBlockingAbstractMethod();
 
 			public virtual void NonBlockingVirtualMethod() { }
-        }
+		}
 
 		public sealed class Good : Base, IInterface {
 			[Blocking]
@@ -106,14 +106,14 @@ namespace D2L.CodeStyle.Analyzers.Async {
 			public void NonBlockingInterfaceMethod() { }
 
 			[Blocking]
-            public override void BlockingAbstractMethod() {}
+			public override void BlockingAbstractMethod() {}
 
 			[Blocking]
 			public override void BlockingVirtualMethod() {}
 
 			public override void NonBlockingAbstractMethod() {}
 			public override void NonBlockingVirtualMethod() {}
-        }
+		}
 
 		public sealed class Bad : Base, IInterface {
 			[Blocking]
@@ -128,7 +128,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 			}
 
 			[Blocking]
-            public override void BlockingAbstractMethod() {}
+			public override void BlockingAbstractMethod() {}
 
 			// This one is info for a suggested edit, not an error.
 			public override void /* NonBlockingImplementationOfBlockingThing(Bad.BlockingVirtualMethod,Base.BlockingVirtualMethod) */ BlockingVirtualMethod /**/ () {}
@@ -145,7 +145,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 
 			public void NonBlockingInstanceMethod() {
 				/* BlockingCallersMustBeBlocking(SomeBlockingMethod,NonBlockingInstanceMethod) */ BasicTests.SomeBlockingMethod() /**/;
-            }
-        }
+			}
+		}
 	}
 }
