@@ -54,7 +54,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 		}
 
 		// Blocking calls in constructors are surprising/dangerous
-		public BlockingAnalyzerTests() {
+		public BasicTests() {
 			/* OnlyCallBlockingMethodsFromMethods(SomeBlockingMethod, constructors) */ SomeBlockingMethod() /**/;
 		}
 
@@ -68,11 +68,11 @@ namespace D2L.CodeStyle.Analyzers.Async {
 
 			/* BlockingCallersMustBeBlocking(BlockingSubMethod,NonBlockingMethodWithBlockingSubMethod) */ BlockingSubMethod() /**/;
 
-			var x = _ =>
+			Action<int> x = _ =>
 				/* OnlyCallBlockingMethodsFromMethods(SomeBlockingMethod,lambdas) */ BasicTests.SomeBlockingMethod() /**/;
 
 			// The other lambda syntax with parentisized args:
-			var y = (w, z) =>
+			Action<int,int> y = (w, z) =>
 				/* OnlyCallBlockingMethodsFromMethods(SomeBlockingMethod,lambdas) */ BasicTests.SomeBlockingMethod() /**/;
 
 			Del del3 = delegate () { /* OnlyCallBlockingMethodsFromMethods(SomeBlockingMethod,delegates) */ BasicTests.SomeBlockingMethod() /**/; };
