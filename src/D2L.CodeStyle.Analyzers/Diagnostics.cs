@@ -672,5 +672,68 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor AsyncMethodCannotBeBlocking = new DiagnosticDescriptor(
+			id: "D2L0088",
+			title: "Async methods cannot have the [Blocking] attribute",
+			messageFormat: "Methods are either async, [Blocking], or neither. Remove the [Blocking] attribute from {0}.",
+			category: "Async",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor AsyncMethodCannotCallBlockingMethod = new DiagnosticDescriptor(
+			id: "D2L0089",
+			title: "Async methods cannot call blocking methods",
+			messageFormat: "Calling blocking methods from async methods can lead to a variety of deadlocks and performance problems. Replace the call to {0} with an async version.",
+			category: "Async",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor OnlyCallBlockingMethodsFromMethods = new DiagnosticDescriptor(
+			id: "D2L0090",
+			title: "Only methods can call blocking methods",
+			messageFormat: "Blocking methods like {0} are only allowed inside other blocking methods, not {1}.",
+			category: "Async",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor BlockingCallersMustBeBlocking = new DiagnosticDescriptor(
+			id: "D2L0091",
+			title: "Methods that call blocking methods must have the [Blocking] attribute",
+			messageFormat: "The call to {0} is blocking, so {1} must have the [Blocking] attribute.",
+			category: "Async",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor UnnecessaryBlocking = new DiagnosticDescriptor(
+			id: "D2L0092",
+			title: "[Blocking] may be unnecessary",
+			messageFormat: "{0} doesn't call any blocking methods, so the [Blocking] attribute may be unnecessary. If this diagnostic is a surprise it may mean that something is not properly annotated, or you are doing something fancy.",
+			category: "Async",
+			defaultSeverity: DiagnosticSeverity.Warning, // Not error! For special cases.
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor DontIntroduceBlockingInImplementation = new DiagnosticDescriptor(
+			id: "D2L0093",
+			title: "Don't add [Blocking] to an overridden method that isn't itself blocking",
+			messageFormat: "{0} implements {1}, which is not blocking. Callers of {1} will not expect blocking.",
+			category: "Async",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor NonBlockingImplementationOfBlockingThing = new DiagnosticDescriptor(
+			id: "D2L0094",
+			title: "Method implements a blocking method but isn't itself blocking",
+			messageFormat: "{0} does not have the [Blocking] attribute but implements the blocking method {1}. Add [Blocking] if you're going to call other blocking methods within {0}.",
+			category: "Async",
+			defaultSeverity: DiagnosticSeverity.Info, // Only used for the suggested edit
+			isEnabledByDefault: true
+		);
 	}
 }
