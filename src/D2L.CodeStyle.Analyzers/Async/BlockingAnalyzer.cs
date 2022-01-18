@@ -74,7 +74,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 					ctx,
 					attr,
 					havePossiblyUnusedBlockingAttribute: havePossiblyUnusedBlockingAttribute.Keys,
-					hasCallsToSomethingBlocking: haveCallsToSomethingBlocking.Keys
+					haveCallsToSomethingBlocking: haveCallsToSomethingBlocking.Keys
 				)
 			);
 		}
