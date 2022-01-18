@@ -55,7 +55,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 				SymbolKind.Method
 			);
 
-			var callsSomethingBlocking = new ConcurrentDictionary<IMethodSymbol, bool>(
+			var haveCallsToSomethingBlocking = new ConcurrentDictionary<IMethodSymbol, bool>(
 				SymbolEqualityComparer.Default
 			);
 
@@ -74,7 +74,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 					ctx,
 					attr,
 					havePossiblyUnusedBlockingAttribute: havePossiblyUnusedBlockingAttribute.Keys,
-					callsSomethingBlocking: callsSomethingBlocking.Keys
+					hasCallsToSomethingBlocking: haveCallsToSomethingBlocking.Keys
 				)
 			);
 		}
@@ -248,11 +248,11 @@ namespace D2L.CodeStyle.Analyzers.Async {
 			CompilationAnalysisContext ctx,
 			INamedTypeSymbol blockingAttr,
 			ICollection<IMethodSymbol> havePossiblyUnusedBlockingAttribute,
-			ICollection<IMethodSymbol> callsSomethingBlocking
+			ICollection<IMethodSymbol> haveCallsToSomethingBlocking
 		) {
 			// Emit a warning when [Blocking] looks unnecessary.
 
-			var unnecessaryThings = havePossiblyUnusedBlockingAttribute.Except( callsSomethingBlocking );
+			var unnecessaryThings = havePossiblyUnusedBlockingAttribute.Except( haveCallsToSomethingBlocking );
 
 			foreach( var thing in unnecessaryThings ) {
 				if( thing.IsAbstract || thing.IsAsync ) {
