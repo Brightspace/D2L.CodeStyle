@@ -33,11 +33,19 @@ namespace D2L.CodeStyle.Analyzers.Async {
 		}
 
 		private static void CompilationStart( CompilationStartAnalysisContext ctx ) {
-			var attr = ctx.Compilation.GetTypeByMetadataName(
+			var blockingAttr = ctx.Compilation.GetTypeByMetadataName(
 				"D2L.CodeStyle.Annotations.BlockingAttribute"
 			);
 
-			if( attr == null ) {
+			if( blockingAttr == null ) {
+				return;
+			}
+
+			var asyncResultType = ctx.Compilation.GetTypeByMetadataName(
+				"System.IAsyncResult"
+			);
+
+			if( asyncResultType == null ) {
 				return;
 			}
 
@@ -48,7 +56,8 @@ namespace D2L.CodeStyle.Analyzers.Async {
 			ctx.RegisterSymbolAction(
 				ctx => InspectMethodDeclaration(
 					ctx,
-					attr,
+					blockingAttr: blockingAttr,
+					asyncResultType: asyncResultType,
 					noteMethodWithPossiblyUnusedBlockingAttribute: m
 						=> havePossiblyUnusedBlockingAttribute[m] = true
 				),
@@ -62,7 +71,8 @@ namespace D2L.CodeStyle.Analyzers.Async {
 			ctx.RegisterSyntaxNodeAction(
 				ctx => InspectMethodCall(
 					ctx,
-					attr,
+					blockingAttr: blockingAttr,
+					asyncResultType: asyncResultType,
 					noteMethodHasBlockingCall: m => haveCallsToSomethingBlocking[m] = true
 				),
 				SyntaxKind.InvocationExpression
@@ -72,7 +82,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 			ctx.RegisterCompilationEndAction(
 				ctx => WarnForUnusedBlockingAttributes(
 					ctx,
-					attr,
+					blockingAttr,
 					havePossiblyUnusedBlockingAttribute: havePossiblyUnusedBlockingAttribute.Keys,
 					haveCallsToSomethingBlocking: haveCallsToSomethingBlocking.Keys
 				)
@@ -82,6 +92,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 		private static void InspectMethodDeclaration(
 			SymbolAnalysisContext ctx,
 			INamedTypeSymbol blockingAttr,
+			INamedTypeSymbol asyncResultType,
 			Action<IMethodSymbol> noteMethodWithPossiblyUnusedBlockingAttribute
 		) {
 			var methodSymbol = (IMethodSymbol)ctx.Symbol;
@@ -133,13 +144,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 
 			// So we do have a [Blocking] attribute.
 
-			if( implementedBlockingThings.Count == 0 ) {
-				// We're not forced to have [Blocking] due to what we implement, so check
-				// if we need it at all.
-				noteMethodWithPossiblyUnusedBlockingAttribute( methodSymbol );
-			}
-
-			if( methodSymbol.IsAsync ) {
+			if( ReturnsAwaitableValue( methodSymbol, asyncResultType ) ) {
 				// TODO: code fix to remove [Blocking]
 
 				ctx.ReportDiagnostic(
@@ -150,6 +155,12 @@ namespace D2L.CodeStyle.Analyzers.Async {
 					)
 				);
 				return;
+			}
+
+			if( implementedBlockingThings.Count == 0 ) {
+				// We're not forced to have [Blocking] due to what we implement, so check
+				// if we need it at all.
+				noteMethodWithPossiblyUnusedBlockingAttribute( methodSymbol );
 			}
 
 			// Don't let us use [Blocking] if we're implementing something non-blocking,
@@ -180,6 +191,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 		private static void InspectMethodCall(
 			SyntaxNodeAnalysisContext ctx,
 			INamedTypeSymbol blockingAttr,
+			INamedTypeSymbol asyncResultType,
 			Action<IMethodSymbol> noteMethodHasBlockingCall
 		) {
 			// Goal: find calls to blocking methods inside non-blocking methods, or in properties.
@@ -212,14 +224,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 				return;
 			}
 
-			if( HasAttribute( myMethodSymbol, blockingAttr ) ) {
-				// We have [Blocking] so we're allowed to call other [Blocking] things,
-				// but make note that we definitely require blocking.
-				noteMethodHasBlockingCall( myMethodSymbol );
-				return;
-			}
-
-			if( myMethodSymbol.IsAsync ) {
+			if( ReturnsAwaitableValue( myMethodSymbol, asyncResultType ) ) {
 				ctx.ReportDiagnostic(
 					Diagnostic.Create(
 						Diagnostics.AsyncMethodCannotCallBlockingMethod,
@@ -229,6 +234,13 @@ namespace D2L.CodeStyle.Analyzers.Async {
 				);
 
 				// TODO: code fix that looks for an async equivalent and suggests calling it instead.
+				return;
+			}
+
+			if( HasAttribute( myMethodSymbol, blockingAttr ) ) {
+				// We have [Blocking] so we're allowed to call other [Blocking] things,
+				// but make note that we definitely require blocking.
+				noteMethodHasBlockingCall( myMethodSymbol );
 				return;
 			}
 
@@ -244,6 +256,10 @@ namespace D2L.CodeStyle.Analyzers.Async {
 			// TODO: code fix to add blocking
 		}
 
+		private static bool ReturnsAwaitableValue( IMethodSymbol method, INamedTypeSymbol asyncResultType ) =>
+			method.ReturnType.AllInterfaces
+				.Contains( asyncResultType, SymbolEqualityComparer.Default );
+
 		private static void WarnForUnusedBlockingAttributes(
 			CompilationAnalysisContext ctx,
 			INamedTypeSymbol blockingAttr,
@@ -255,7 +271,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 			var unnecessaryThings = havePossiblyUnusedBlockingAttribute.Except( haveCallsToSomethingBlocking );
 
 			foreach( var thing in unnecessaryThings ) {
-				if( thing.IsAbstract || thing.IsAsync ) {
+				if( thing.IsAbstract ) {
 					continue;
 				}
 
