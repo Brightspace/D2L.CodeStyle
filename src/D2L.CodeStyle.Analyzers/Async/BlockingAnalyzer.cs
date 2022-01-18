@@ -63,7 +63,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 				ctx => InspectMethodCall(
 					ctx,
 					attr,
-					noteMethodHasBlockingCall: m => callsSomethingBlocking[m] = true
+					noteMethodHasBlockingCall: m => haveCallsToSomethingBlocking[m] = true
 				),
 				SyntaxKind.InvocationExpression
 			);
