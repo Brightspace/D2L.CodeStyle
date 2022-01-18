@@ -196,11 +196,6 @@ namespace D2L.CodeStyle.Analyzers.Async {
 
 			var invokedMethodSymbol = (IMethodSymbol)invokedSymbolInfo.Symbol;
 
-			// async methods are never [Blocking] (see other parts of the analyzer)
-			if( invokedMethodSymbol.IsAsync ) {
-				return;
-			}
-
 			// If the thing we're calling isn't [Blocking] then OK.
 			// TODO: support other means of inferring blockingness for 3rd party libraries.
 			if( !HasAttribute( invokedMethodSymbol, blockingAttr ) ) {
