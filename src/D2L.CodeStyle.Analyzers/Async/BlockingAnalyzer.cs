@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System;
 using D2L.CodeStyle.Analyzers.Extensions;
 using System.Diagnostics;
+using D2L.CodeStyle.Analyzers.CommonFixes;
 
 namespace D2L.CodeStyle.Analyzers.Async {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
@@ -22,6 +23,11 @@ namespace D2L.CodeStyle.Analyzers.Async {
 			Diagnostics.DontIntroduceBlockingInImplementation,
 			Diagnostics.NonBlockingImplementationOfBlockingThing
 		);
+
+		private static readonly ImmutableDictionary<string, string> FixArgs = new Dictionary<string, string>() {
+			{ AddAttributeCodeFix.USING_NAMESPACE_ARG, "D2L.CodeStyle.Annotations" },
+			{ AddAttributeCodeFix.ATTRIBUTE_NAME_ARG, "Blocking" }
+		}.ToImmutableDictionary();
 
 		public override void Initialize( AnalysisContext context ) {
 			context.ConfigureGeneratedCodeAnalysis(
@@ -126,14 +132,13 @@ namespace D2L.CodeStyle.Analyzers.Async {
 					// Still output a diagnostic so that we can suggest a code fix in the
 					// IDE to add [Blocking].
 
-					// TODO: code fix to add [Blocking]
-
 					var decl = methodSymbol.DeclaringSyntaxReferences.First().GetSyntax() as MethodDeclarationSyntax;
 
 					ctx.ReportDiagnostic(
 						Diagnostic.Create(
 							Diagnostics.NonBlockingImplementationOfBlockingThing,
 							decl.Identifier.GetLocation(),
+							properties: FixArgs,
 							$"{methodSymbol.ContainingType.Name}.{methodSymbol.Name}",
 							$"{implementedBlockingThings[0].ContainingType.Name}.{implementedBlockingThings[0].Name}"
 						)
@@ -214,7 +219,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 				return;
 			}
 
-			if( !TryGetContainingMethod( ctx, invocation, invokedMethodSymbol, out var myMethodDeclaration ) ) {
+			if( !TryGetContainingMethod( ctx, invocation, invokedMethodSymbol, out var myMethodDeclaration, out var methodNameLocation ) ) {
 				return;
 			}
 
@@ -247,13 +252,13 @@ namespace D2L.CodeStyle.Analyzers.Async {
 			ctx.ReportDiagnostic(
 				Diagnostic.Create(
 					Diagnostics.BlockingCallersMustBeBlocking,
-					invocation.GetLocation(),
+					location: invocation.GetLocation(),
+					additionalLocations: new[] { methodNameLocation },
+					properties: FixArgs,
 					invokedMethodSymbol.Name,
 					myMethodSymbol.Name
 				)
 			);
-
-			// TODO: code fix to add blocking
 		}
 
 		private static bool ReturnsAwaitableValue( IMethodSymbol method, INamedTypeSymbol asyncResultType ) =>
@@ -293,7 +298,8 @@ namespace D2L.CodeStyle.Analyzers.Async {
 			SyntaxNodeAnalysisContext ctx,
 			InvocationExpressionSyntax invocation,
 			IMethodSymbol invokedMethodSymbol,
-			out SyntaxNode decl
+			out SyntaxNode decl,
+			out Location identifierLocation
 		) {
 			// Find the thing that "owns" this invocation... hopefully its a
 			// method (maybe a local one) but it constructor or an initializer or...
@@ -308,10 +314,15 @@ namespace D2L.CodeStyle.Analyzers.Async {
 				}
 			);
 
-			if( earliestAncestor.IsKind( SyntaxKind.MethodDeclaration )
-			 || earliestAncestor.IsKind( SyntaxKind.LocalFunctionStatement )
-			) {
+			if( earliestAncestor.IsKind( SyntaxKind.MethodDeclaration ) ) {
 				decl = earliestAncestor;
+				identifierLocation = ( (MethodDeclarationSyntax)decl ).Identifier.GetLocation();
+				return true;
+			}
+
+			if( earliestAncestor.IsKind( SyntaxKind.LocalFunctionStatement ) ) {
+				decl = earliestAncestor;
+				identifierLocation = ( (LocalFunctionStatementSyntax)decl ).Identifier.GetLocation();
 				return true;
 			}
 
@@ -351,6 +362,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 				)
 			);
 
+			identifierLocation = null;
 			decl = null;
 			return false;
 		}

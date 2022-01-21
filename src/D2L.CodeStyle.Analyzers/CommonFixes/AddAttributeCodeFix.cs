@@ -31,7 +31,9 @@ namespace D2L.CodeStyle.Analyzers.CommonFixes {
 
 		public override ImmutableArray<string> FixableDiagnosticIds
 			=> ImmutableArray.Create(
-				Diagnostics.MissingTransitiveImmutableAttribute.Id
+				Diagnostics.MissingTransitiveImmutableAttribute.Id,
+				Diagnostics.BlockingCallersMustBeBlocking.Id,
+				Diagnostics.NonBlockingImplementationOfBlockingThing.Id
 			);
 
 		public override FixAllProvider GetFixAllProvider() {
@@ -46,9 +48,16 @@ namespace D2L.CodeStyle.Analyzers.CommonFixes {
 				.ConfigureAwait( false ) as CompilationUnitSyntax;
 
 			foreach( var diagnostic in context.Diagnostics ) {
-				var identifierSpan = diagnostic.Location.SourceSpan;
+				// Sometimes the diagnostic is on the declaration that needs the attribute,
+				// if not it is the last "additional location" by convention.
+				var location = diagnostic.AdditionalLocations?.LastOrDefault() ?? diagnostic.Location;
 
-				var decl = root.FindNode( identifierSpan ) as TypeDeclarationSyntax;
+				var node = root.FindNode( location.SourceSpan );
+				var decl = node as MemberDeclarationSyntax;
+
+				if( decl == null ) {
+					throw new NotImplementedException( $"Adding attributes to {node.Kind()} is not supported. This is a D2L.CodeStyle.Analyzers bug." );
+				}
 
 				(bool usingStatic, string usingNs, string attrName)
 					= GetFixArgs( diagnostic.Properties );
@@ -74,7 +83,7 @@ namespace D2L.CodeStyle.Analyzers.CommonFixes {
 		private static Task<Document> Fix(
 			Document orig,
 			CompilationUnitSyntax root,
-			TypeDeclarationSyntax decl,
+			MemberDeclarationSyntax decl,
 			bool usingStatic,
 			string usingNs,
 			string attrName,
@@ -90,6 +99,7 @@ namespace D2L.CodeStyle.Analyzers.CommonFixes {
 
 			return Task.FromResult( newDoc );
 		}
+
 
 		private static CompilationUnitSyntax AddUsingIfNecessary(
 			CompilationUnitSyntax root,
@@ -108,11 +118,11 @@ namespace D2L.CodeStyle.Analyzers.CommonFixes {
 			return root.WithUsings( root.Usings.Add( usingDirective ) );
 
 			bool IsTheNecessaryUsingDirective( UsingDirectiveSyntax u ) {
-				if ( u.StaticKeyword == null && usingStatic ) {
+				if ( u.StaticKeyword.Kind() == SyntaxKind.None && usingStatic ) {
 					return false;
 				}
 
-				if ( u.StaticKeyword != null && !usingStatic ) {
+				if ( u.StaticKeyword.Kind() != SyntaxKind.None && !usingStatic ) {
 					return false;
 				}
 
@@ -121,8 +131,8 @@ namespace D2L.CodeStyle.Analyzers.CommonFixes {
 			}
 		}
 		
-		private static TypeDeclarationSyntax AddAttribute(
-			TypeDeclarationSyntax decl,
+		private static MemberDeclarationSyntax AddAttribute(
+			MemberDeclarationSyntax decl,
 			string attrName
 		) {
 			var attrSyntax = CreateAttributeSyntax( attrName );
@@ -135,17 +145,20 @@ namespace D2L.CodeStyle.Analyzers.CommonFixes {
 			// add an attribute list.
 			decl = decl.WithoutLeadingTrivia();
 
-			// TypeDeclarationSyntax (the base class of these 3 types) doesn't
-			// have AddAttributeLists... so we need to copy+paste some code.
+			// MethodDeclarationSyntax doesn't have AddAttributeLists... so we
+			// need to copy+paste some code.
 
-			if ( decl is ClassDeclarationSyntax cls ) {
+			if( decl is ClassDeclarationSyntax cls ) {
 				decl = cls.AddAttributeLists( attrSyntax );
 
-			} else if ( decl is StructDeclarationSyntax st ) {
+			} else if( decl is StructDeclarationSyntax st ) {
 				decl = st.AddAttributeLists( attrSyntax );
 
-			} else if ( decl is InterfaceDeclarationSyntax iface ) {
+			} else if( decl is InterfaceDeclarationSyntax iface ) {
 				decl = iface.AddAttributeLists( attrSyntax );
+
+			} else if( decl is MethodDeclarationSyntax method ) {
+				decl = method.AddAttributeLists( attrSyntax );
 
 			} else {
 				throw new NotImplementedException();
