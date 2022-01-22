@@ -145,7 +145,7 @@ namespace D2L.CodeStyle.Analyzers.CommonFixes {
 			// add an attribute list.
 			decl = decl.WithoutLeadingTrivia();
 
-			// MethodDeclarationSyntax doesn't have AddAttributeLists... so we
+			// MemberDeclarationSyntax doesn't have AddAttributeLists... so we
 			// need to copy+paste some code.
 
 			if( decl is ClassDeclarationSyntax cls ) {
