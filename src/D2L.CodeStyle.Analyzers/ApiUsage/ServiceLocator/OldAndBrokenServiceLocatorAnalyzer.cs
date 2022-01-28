@@ -93,7 +93,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				return;
 			}
 
-			if( !IdentifierIsOfDisallowedType( context.SemanticModel, disallowedTypes, syntax ) ) {
+			if( !IdentifierIsOfDisallowedType( context.SemanticModel, disallowedTypes, syntax, context.CancellationToken ) ) {
 				return;
 			}
 
