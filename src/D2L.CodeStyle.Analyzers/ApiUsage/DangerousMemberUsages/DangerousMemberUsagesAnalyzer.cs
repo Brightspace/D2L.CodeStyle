@@ -81,7 +81,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			) {
 
 			ISymbol methodSymbol = context.SemanticModel
-				.GetSymbolInfo( invocation.Expression )
+				.GetSymbolInfo( invocation.Expression, context.CancellationToken )
 				.Symbol;
 
 			if( !AnalyzePotentiallyDangerousMember( context, methodSymbol, auditedAttributeType, unauditedAttributeType, dangerousMethods ) ) {
@@ -100,7 +100,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			) {
 
 			ISymbol propertySymbol = context.SemanticModel
-				.GetSymbolInfo( propertyAccess )
+				.GetSymbolInfo( propertyAccess, context.CancellationToken )
 				.Symbol;
 
 			if( !AnalyzePotentiallyDangerousMember( context, propertySymbol, auditedAttributeType, unauditedAttributeType, dangerousProperties ) ) {

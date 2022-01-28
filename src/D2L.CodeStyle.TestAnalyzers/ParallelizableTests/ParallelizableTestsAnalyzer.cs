@@ -72,7 +72,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ParallelizableTests {
 				return;
 			}
 
-			var invokedMethod = context.SemanticModel.GetSymbolInfo( root ).Symbol;
+			var invokedMethod = context.SemanticModel.GetSymbolInfo( root, context.CancellationToken ).Symbol;
 			if( invokedMethod == null ) {
 				return;
 			}

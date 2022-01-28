@@ -17,7 +17,8 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 		public static IParameterSymbol DetermineParameter(
 			this ArgumentSyntax argument,
 			SemanticModel semanticModel,
-			bool allowParams = false
+			bool allowParams,
+			CancellationToken cancellationToken
 		) {
 			var argumentList = argument.Parent as BaseArgumentListSyntax;
 			if( argumentList == null ) {
@@ -38,7 +39,7 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 					return null;
 			}
 
-			var symbol = semanticModel.GetSymbolInfo( invocableExpression ).Symbol;
+			var symbol = semanticModel.GetSymbolInfo( invocableExpression, cancellationToken ).Symbol;
 			if( symbol == null ) {
 				return null;
 			}

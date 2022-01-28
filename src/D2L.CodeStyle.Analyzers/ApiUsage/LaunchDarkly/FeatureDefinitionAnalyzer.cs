@@ -50,7 +50,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly {
 			) {
 
 			SimpleBaseTypeSyntax baseTypeSyntax = (SimpleBaseTypeSyntax)context.Node;
-			SymbolInfo baseTypeSymbol = context.SemanticModel.GetSymbolInfo( baseTypeSyntax.Type );
+			SymbolInfo baseTypeSymbol = context.SemanticModel.GetSymbolInfo( baseTypeSyntax.Type, context.CancellationToken );
 
 			INamedTypeSymbol baseSymbol = ( baseTypeSymbol.Symbol as INamedTypeSymbol );
 			if( baseSymbol.IsNullOrErrorType() ) {

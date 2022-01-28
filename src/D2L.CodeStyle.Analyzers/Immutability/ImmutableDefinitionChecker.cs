@@ -423,7 +423,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			var semanticModel = m_compilation.GetSemanticModel( assignmentSyntax.SyntaxTree );
 
-			var leftSideSymbol = semanticModel.GetSymbolInfo( assignmentSyntax.Left )
+			var leftSideSymbol = semanticModel.GetSymbolInfo( assignmentSyntax.Left, m_cancellationToken )
 				.Symbol;
 
 			return SymbolEqualityComparer.Default.Equals(
@@ -500,7 +500,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// These should be considered immutable by the Analyzer.
 					SemanticModel semanticModel = m_compilation.GetSemanticModel( assignment.Expression.SyntaxTree );
 					if( semanticModel
-						.GetSymbolInfo( assignment.Expression )
+						.GetSymbolInfo( assignment.Expression, m_cancellationToken )
 						.Symbol is not IMethodSymbol methodSymbol
 					) {
 						break;

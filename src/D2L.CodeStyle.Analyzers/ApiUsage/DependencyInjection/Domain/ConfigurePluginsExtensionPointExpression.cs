@@ -14,7 +14,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 			;
 		}
 
-		internal override DependencyRegistration GetRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
+		internal override DependencyRegistration GetRegistration(
+			IMethodSymbol method,
+			SeparatedSyntaxList<ArgumentSyntax> arguments,
+			SemanticModel semanticModel,
+			CancellationToken cancellationToken
+		) {
 			if( arguments.Count != 1 ) {
 				return null;
 			}

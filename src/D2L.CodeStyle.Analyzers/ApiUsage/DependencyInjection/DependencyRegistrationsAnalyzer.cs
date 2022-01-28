@@ -60,7 +60,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 			if( root == null ) {
 				return;
 			}
-			var method = context.SemanticModel.GetSymbolInfo( root ).Symbol as IMethodSymbol;
+			var method = context.SemanticModel.GetSymbolInfo( root, context.CancellationToken ).Symbol as IMethodSymbol;
 			if( method == null ) {
 				return;
 			}
@@ -91,10 +91,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 				return;
 			}
 
-			var dependencyRegistration = dependencyRegistrationExpresion.GetRegistration( 
+			var dependencyRegistration = dependencyRegistrationExpresion.GetRegistration(
 				method,
 				root.ArgumentList.Arguments,
-				context.SemanticModel
+				context.SemanticModel,
+				context.CancellationToken
 			);
 			if( dependencyRegistration == null ) {
 				/* This can happen in the following scenarios:

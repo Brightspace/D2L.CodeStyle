@@ -53,7 +53,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ContentPhysicalPaths {
 			) {
 
 			ISymbol propertySymbol = context.SemanticModel
-				.GetSymbolInfo( context.Node )
+				.GetSymbolInfo( context.Node, context.CancellationToken )
 				.Symbol;
 
 			if( propertySymbol.IsNullOrErrorType() ) {

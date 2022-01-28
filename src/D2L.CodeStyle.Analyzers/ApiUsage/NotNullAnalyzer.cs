@@ -92,7 +92,8 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 
 				var parameter = argument.DetermineParameter(
 					context.SemanticModel,
-					allowParams: true
+					allowParams: true,
+					context.CancellationToken
 				);
 
 				// This corresponds to some manner of broken code. The

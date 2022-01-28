@@ -54,7 +54,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			SemanticModel model = context.SemanticModel;
 
-			IParameterSymbol param = syntax.DetermineParameter( model );
+			IParameterSymbol param = syntax.DetermineParameter(
+				model,
+				allowParams: false,
+				context.CancellationToken
+			);
 
 			if( param == null ) {
 				return;
@@ -207,7 +211,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			ISymbol symbol = context
 				.SemanticModel
-				.GetSymbolInfo( expression ).Symbol;
+				.GetSymbolInfo( expression, context.CancellationToken ).Symbol;
 
 			if( symbol == null ) {
 				return false;
@@ -233,7 +237,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			IdentifierNameSyntax identifer,
 			CancellationToken ct
 		) {
-			ISymbol symbol = model.GetSymbolInfo( identifer ).Symbol;
+			ISymbol symbol = model.GetSymbolInfo( identifer, ct ).Symbol;
 			if( symbol == null ) {
 				return false;
 			}
