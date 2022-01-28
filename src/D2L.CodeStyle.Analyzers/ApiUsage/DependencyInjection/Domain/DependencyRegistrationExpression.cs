@@ -15,7 +15,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 		internal abstract DependencyRegistration GetRegistration(
 			IMethodSymbol method, 
 			SeparatedSyntaxList<ArgumentSyntax> arguments, 
-			SemanticModel semanticModel
+			SemanticModel semanticModel,
+			CancellationToken cancellationToken
 		);
 
 		protected bool TryGetObjectScope(

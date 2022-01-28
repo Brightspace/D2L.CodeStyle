@@ -203,7 +203,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 
 			var invocation = (InvocationExpressionSyntax)ctx.Node;
 
-			var invokedSymbolInfo = ctx.SemanticModel.GetSymbolInfo( invocation.Expression );
+			var invokedSymbolInfo = ctx.SemanticModel.GetSymbolInfo( invocation.Expression, ctx.CancellationToken );
 
 			// Unfortunately there are ways to use this to dodge analysis, but
 			// there is only so much we can do.

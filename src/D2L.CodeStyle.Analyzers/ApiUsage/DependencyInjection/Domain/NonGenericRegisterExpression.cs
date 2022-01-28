@@ -10,7 +10,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 				&& method.Parameters.Length == 3;
 		}
 
-		internal override DependencyRegistration GetRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
+		internal override DependencyRegistration GetRegistration(
+			IMethodSymbol method,
+			SeparatedSyntaxList<ArgumentSyntax> arguments,
+			SemanticModel semanticModel,
+			CancellationToken cancellationToken
+		) {
 			if( arguments.Count != 3 ) {
 				return null;
 			}
@@ -23,13 +28,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 			if( dependencyTypeExpression == null ) {
 				return null;
 			}
-			var dependencyType = semanticModel.GetSymbolInfo( dependencyTypeExpression.Type ).Symbol as ITypeSymbol;
+			var dependencyType = semanticModel.GetSymbolInfo( dependencyTypeExpression.Type, cancellationToken ).Symbol as ITypeSymbol;
 
 			var concreteTypeExpression = arguments[1].Expression as TypeOfExpressionSyntax;
 			if( concreteTypeExpression == null ) {
 				return null;
 			}
-			var concreteType = semanticModel.GetSymbolInfo( concreteTypeExpression.Type ).Symbol as ITypeSymbol;
+			var concreteType = semanticModel.GetSymbolInfo( concreteTypeExpression.Type, cancellationToken ).Symbol as ITypeSymbol;
 
 			ObjectScope scope;
 			if( !TryGetObjectScope( arguments[2], semanticModel, out scope ) ) {

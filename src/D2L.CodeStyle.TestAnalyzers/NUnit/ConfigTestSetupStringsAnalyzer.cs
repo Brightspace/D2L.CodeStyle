@@ -75,7 +75,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
 				ISymbol symbol = context
 					.SemanticModel
-					.GetSymbolInfo( attribute )
+					.GetSymbolInfo( attribute, context.CancellationToken )
 					.Symbol;
 
 				if( symbol.IsNullOrErrorType() ) {

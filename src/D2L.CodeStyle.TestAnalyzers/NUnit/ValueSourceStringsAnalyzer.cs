@@ -41,7 +41,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 			}
 
 			foreach( var attribute in attributes ) {
-				var symbol = context.SemanticModel.GetSymbolInfo( attribute ).Symbol;
+				var symbol = context.SemanticModel.GetSymbolInfo( attribute, context.CancellationToken ).Symbol;
 
 				if( symbol == null ) {
 					continue;

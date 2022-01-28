@@ -87,7 +87,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			if( root == null ) {
 				return;
 			}
-			var symbolinfo = context.SemanticModel.GetSymbolInfo( root );
+			var symbolinfo = context.SemanticModel.GetSymbolInfo( root, context.CancellationToken );
 
 			var method = symbolinfo.Symbol as IMethodSymbol;
 

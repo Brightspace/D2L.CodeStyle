@@ -72,7 +72,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 			) {
 
 			ISymbol expessionSymbol = context.SemanticModel
-				.GetSymbolInfo( invocation.Expression )
+				.GetSymbolInfo( invocation.Expression, context.CancellationToken )
 				.Symbol;
 
 			if( expessionSymbol.IsNullOrErrorType() ) {

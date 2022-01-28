@@ -83,7 +83,8 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 			if( !IsTestServiceLocatorFactoryCreate(
 				context.SemanticModel,
 				disallowedType,
-				invocationExpression
+				invocationExpression,
+				context.CancellationToken
 			) ) {
 				return;
 			}
@@ -141,7 +142,8 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 					.Where( i => IsTestServiceLocatorFactoryCreate(
 						model,
 						factoryType,
-						i
+						i,
+						context.CancellationToken
 					) );
 
 				if( testServiceLocatorFactoryCreates.Any() ) {
@@ -163,9 +165,10 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 		private static bool IsTestServiceLocatorFactoryCreate(
 			SemanticModel model,
 			INamedTypeSymbol factoryType,
-			InvocationExpressionSyntax invocationExpression
+			InvocationExpressionSyntax invocationExpression,
+			CancellationToken cancellationToken
 		) {
-			SymbolInfo symbolInfo = model.GetSymbolInfo( invocationExpression );
+			SymbolInfo symbolInfo = model.GetSymbolInfo( invocationExpression, cancellationToken );
 
 			IMethodSymbol method = symbolInfo.Symbol as IMethodSymbol;
 

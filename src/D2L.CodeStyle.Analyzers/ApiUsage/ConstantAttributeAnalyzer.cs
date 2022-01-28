@@ -106,7 +106,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			}
 
 			// Argument was defined as [Constant] already, so trust it
-			var argumentSymbol = argument.SemanticModel.GetSymbolInfo( (argument.Syntax as ArgumentSyntax).Expression ).Symbol;
+			var argumentSymbol = argument.SemanticModel.GetSymbolInfo( (argument.Syntax as ArgumentSyntax).Expression, context.CancellationToken ).Symbol;
 			if( argumentSymbol != null && HasAttribute( argumentSymbol, constantAttribute ) ) {
 				return;
 			}

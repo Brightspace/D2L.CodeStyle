@@ -86,14 +86,14 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			}
 
 			ImmutableArray<ArgParamBinding> unnamedArgs =
-				GetUnnamedArgs( ctx.SemanticModel, args )
+				GetUnnamedArgs( ctx.SemanticModel, args, ctx.CancellationToken )
 				.ToImmutableArray();
 
 			if( unnamedArgs.IsEmpty ) {
 				return;
 			}
 
-			bool requireNamedArguments = HasRequireNamedArgumentsAttribute( ctx.SemanticModel, args );
+			bool requireNamedArguments = HasRequireNamedArgumentsAttribute( ctx.SemanticModel, args, ctx.CancellationToken );
 			if( requireNamedArguments ) {
 
 				var fixerContext = CreateFixerContext( unnamedArgs );
@@ -197,7 +197,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		/// </summary>
 		private static IEnumerable<ArgParamBinding> GetUnnamedArgs(
 				SemanticModel model,
-				ArgumentListSyntax args
+				ArgumentListSyntax args,
+				CancellationToken cancellationToken
 			) {
 
 			for( int idx = 0; idx < args.Arguments.Count; idx++ ) {
@@ -217,7 +218,9 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					// be named. Named params really suck so we may still
 					// encourage it but APIs that take params and many other
 					// args would suck anyway.
-					allowParams: false
+					allowParams: false,
+
+					cancellationToken
 				);
 
 				// Not sure if this can happen but it'd be hard to name this
@@ -305,10 +308,11 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 		private static bool HasRequireNamedArgumentsAttribute(
 				SemanticModel model,
-				ArgumentListSyntax args
+				ArgumentListSyntax args,
+				CancellationToken cancellationToken
 			) {
 
-			ISymbol symbol = model.GetSymbolInfo( args.Parent ).Symbol;
+			ISymbol symbol = model.GetSymbolInfo( args.Parent , cancellationToken ).Symbol;
 			if( symbol == null ) {
 				return false;
 			}
