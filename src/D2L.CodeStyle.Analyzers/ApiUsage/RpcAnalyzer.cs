@@ -113,7 +113,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		) {
 			bool isRpc = context
 				.SemanticModel
-				.GetDeclaredSymbol( method )
+				.GetDeclaredSymbol( method, context.CancellationToken )
 				.GetAttributes()
 				.Any( a => SymbolEqualityComparer.Default.Equals( a.AttributeClass, rpcTypes.RpcAttribute ) );
 
@@ -178,12 +178,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			int index = 0;
 
 			ParameterSyntax rpcContextSyntax = parameters[ index++ ];
-			IParameterSymbol rpcContext = model.GetDeclaredSymbol( rpcContextSyntax );
+			IParameterSymbol rpcContext = model.GetDeclaredSymbol( rpcContextSyntax, context.CancellationToken );
 			var parametersBuilder = ImmutableArray.CreateBuilder<(IParameterSymbol, ParameterSyntax)>();
 
 			for( ; index < parameters.Count; ++index ) {
 				ParameterSyntax syntax = parameters[ index ];
-				IParameterSymbol parameter = model.GetDeclaredSymbol( syntax );
+				IParameterSymbol parameter = model.GetDeclaredSymbol( syntax, context.CancellationToken );
 
 				if( IsMarkedAsDependency( parameter, rpcTypes ) ) {
 					if( parametersBuilder.Count > 0 ) {

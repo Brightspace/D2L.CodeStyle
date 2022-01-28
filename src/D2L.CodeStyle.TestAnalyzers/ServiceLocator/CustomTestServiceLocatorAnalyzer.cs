@@ -95,7 +95,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 			);
 
 			var parentSymbols = parentClasses.Select(
-				c => context.SemanticModel.GetDeclaredSymbol( c )
+				c => context.SemanticModel.GetDeclaredSymbol( c, context.CancellationToken )
 			);
 
 			bool isAllowed = parentSymbols.Any(

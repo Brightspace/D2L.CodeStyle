@@ -275,7 +275,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			AnnotationsContext annotationsContext
 		) {
 			// Get the symbol for the method
-			if( ctx.SemanticModel.GetDeclaredSymbol( ctx.Node ) is not IMethodSymbol symbol ) {
+			if( ctx.SemanticModel.GetDeclaredSymbol( ctx.Node, ctx.CancellationToken ) is not IMethodSymbol symbol ) {
 				return;
 			}
 
@@ -298,7 +298,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			AnnotationsContext annotationsContext
 		) {
 			// Get the symbol for the parameter
-			if( ctx.SemanticModel.GetDeclaredSymbol( ctx.Node ) is not ITypeParameterSymbol symbol ) {
+			if( ctx.SemanticModel.GetDeclaredSymbol( ctx.Node , ctx.CancellationToken ) is not ITypeParameterSymbol symbol ) {
 				return;
 			}
 
@@ -328,7 +328,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			if( ctx.Node is not TypeDeclarationSyntax syntax ) {
 				return;
 			}
-			var symbol = ctx.SemanticModel.GetDeclaredSymbol( syntax );
+			var symbol = ctx.SemanticModel.GetDeclaredSymbol( syntax, ctx.CancellationToken );
 
 			// Get information about immutability
 			bool hasImmutable = annotationsContext.Objects.Immutable.IsDefined( symbol );

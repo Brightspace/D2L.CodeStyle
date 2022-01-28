@@ -223,7 +223,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 				return;
 			}
 
-			var myMethodSymbol = (IMethodSymbol)ctx.SemanticModel.GetDeclaredSymbol( myMethodDeclaration );
+			var myMethodSymbol = (IMethodSymbol)ctx.SemanticModel.GetDeclaredSymbol( myMethodDeclaration , ctx.CancellationToken );
 
 			if( myMethodSymbol == null ) {
 				return;

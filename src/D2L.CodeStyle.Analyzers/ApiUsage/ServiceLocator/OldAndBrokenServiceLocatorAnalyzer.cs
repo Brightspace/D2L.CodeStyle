@@ -98,7 +98,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			}
 
 			var parentClasses = context.Node.Ancestors().OfType<TypeDeclarationSyntax>();
-			var parentSymbols = parentClasses.Select( c => context.SemanticModel.GetDeclaredSymbol( c ) ).ToImmutableArray();
+			var parentSymbols = parentClasses.Select( c => context.SemanticModel.GetDeclaredSymbol( c, context.CancellationToken ) ).ToImmutableArray();
 
 			if( parentSymbols.Any( s => Attributes.DIFramework.IsDefined( s ) ) ) {
 				//Classes in the DI Framework are allowed to use locators and activators
