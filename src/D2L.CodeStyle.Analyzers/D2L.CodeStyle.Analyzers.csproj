@@ -6,7 +6,7 @@
     <Title>D2L.CodeStyle.Analyzers</Title>
     <Product>D2L.CodeStyle</Product>
     <Description>D2L.CodeStyle analyzers</Description>
-    <Version>0.180.0</Version>
+    <Version>0.181.0</Version>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Brightspace/D2L.CodeStyle</PackageProjectUrl>
     <Authors>D2L</Authors>
