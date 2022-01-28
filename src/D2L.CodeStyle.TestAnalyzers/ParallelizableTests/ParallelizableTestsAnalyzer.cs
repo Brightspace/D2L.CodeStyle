@@ -88,7 +88,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ParallelizableTests {
 			if( containingMethod == null ) {
 				return;
 			}
-			if( IsMarkedIsolated( context.SemanticModel.GetDeclaredSymbol( containingMethod ) ) ) {
+			if( IsMarkedIsolated( context.SemanticModel.GetDeclaredSymbol( containingMethod, context.CancellationToken ) ) ) {
 				return;
 			}
 
@@ -97,7 +97,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ParallelizableTests {
 			if( containingClass == null ) {
 				return;
 			}
-			if( IsMarkedIsolated( context.SemanticModel.GetDeclaredSymbol( containingClass ) ) ) {
+			if( IsMarkedIsolated( context.SemanticModel.GetDeclaredSymbol( containingClass, context.CancellationToken ) ) ) {
 				return;
 			}
 

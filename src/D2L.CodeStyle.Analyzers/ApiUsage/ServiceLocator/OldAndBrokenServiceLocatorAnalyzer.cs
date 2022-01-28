@@ -93,12 +93,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				return;
 			}
 
-			if( !IdentifierIsOfDisallowedType( context.SemanticModel, disallowedTypes, syntax ) ) {
+			if( !IdentifierIsOfDisallowedType( context.SemanticModel, disallowedTypes, syntax, context.CancellationToken ) ) {
 				return;
 			}
 
 			var parentClasses = context.Node.Ancestors().OfType<TypeDeclarationSyntax>();
-			var parentSymbols = parentClasses.Select( c => context.SemanticModel.GetDeclaredSymbol( c ) ).ToImmutableArray();
+			var parentSymbols = parentClasses.Select( c => context.SemanticModel.GetDeclaredSymbol( c, context.CancellationToken ) ).ToImmutableArray();
 
 			if( parentSymbols.Any( s => Attributes.DIFramework.IsDefined( s ) ) ) {
 				//Classes in the DI Framework are allowed to use locators and activators
@@ -138,7 +138,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				bool usesDisallowedTypes = typeSyntax
 					.DescendantNodes()
 					.OfType<IdentifierNameSyntax>()
-					.Any( syntax => IdentifierIsOfDisallowedType( model, disallowedTypes, syntax ) );
+					.Any( syntax => IdentifierIsOfDisallowedType( model, disallowedTypes, syntax, context.CancellationToken ) );
 
 				if( usesDisallowedTypes ) {
 					return;
@@ -157,9 +157,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 		private static bool IdentifierIsOfDisallowedType(
 			SemanticModel model,
 			ImmutableArray<INamedTypeSymbol> disallowedTypes,
-			IdentifierNameSyntax syntax
+			IdentifierNameSyntax syntax,
+			CancellationToken cancellationToken
 		) {
-			var actualType = model.GetTypeInfo( syntax ).Type as INamedTypeSymbol;
+			var actualType = model.GetTypeInfo( syntax, cancellationToken ).Type as INamedTypeSymbol;
 
 			if( actualType == null ) {
 				return false;

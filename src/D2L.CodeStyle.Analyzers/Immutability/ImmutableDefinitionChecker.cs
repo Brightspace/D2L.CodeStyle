@@ -16,17 +16,20 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private readonly DiagnosticSink m_diagnosticSink;
 		private readonly ImmutabilityContext m_context;
 		private readonly AnnotationsContext m_annotationsContext;
+		private readonly CancellationToken m_cancellationToken;
 
 		public ImmutableDefinitionChecker(
 			Compilation compilation,
 			DiagnosticSink diagnosticSink,
 			ImmutabilityContext context,
-			AnnotationsContext annotationsContext
+			AnnotationsContext annotationsContext,
+			CancellationToken cancellationToken
 		) {
 			m_compilation = compilation;
 			m_diagnosticSink = diagnosticSink;
 			m_context = context;
 			m_annotationsContext = annotationsContext;
+			m_cancellationToken = cancellationToken;
 		}
 
 		/// <remarks>
@@ -351,9 +354,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			public static AssignmentInfo Create(
 				SemanticModel model,
 				bool isInitializer,
-				ExpressionSyntax expression
+				ExpressionSyntax expression,
+				CancellationToken cancellationToken
 			) {
-				TypeInfo typeInfo = model.GetTypeInfo( expression );
+				TypeInfo typeInfo = model.GetTypeInfo( expression, cancellationToken );
 
 				// Type can be null in the case of an implicit conversion where the
 				// expression alone doesn't have a type. For example:
@@ -395,7 +399,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				.Select( expr => AssignmentInfo.Create(
 					model: m_compilation.GetSemanticModel( expr.SyntaxTree ),
 					isInitializer: false,
-					expression: expr
+					expression: expr,
+					m_cancellationToken
 				) );
 
 			if ( initializer != null ) {
@@ -403,7 +408,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					AssignmentInfo.Create(
 						model: m_compilation.GetSemanticModel( initializer.SyntaxTree ),
 						isInitializer: true,
-						expression: initializer
+						expression: initializer,
+						m_cancellationToken
 					)
 				);
 			}
@@ -563,7 +569,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					candidate.SyntaxTree
 				);
 
-				var candidateInfo = model.GetTypeInfo( candidate.Type );
+				var candidateInfo = model.GetTypeInfo( candidate.Type, m_cancellationToken );
 
 				if ( candidateInfo.Type == null ) {
 					continue;

@@ -59,7 +59,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			}
 
 			var method = ctx.SemanticModel
-				.GetDeclaredSymbol( methodDecl );
+				.GetDeclaredSymbol( methodDecl, ctx.CancellationToken );
 
 			if ( method == null || method.Kind == SymbolKind.ErrorType ) {
 				return;
@@ -98,7 +98,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			}
 
 			var implType = ctx.SemanticModel
-				.GetDeclaredSymbol( (TypeDeclarationSyntax)baseList.Parent );
+				.GetDeclaredSymbol( (TypeDeclarationSyntax)baseList.Parent, ctx.CancellationToken );
 
 			// The most expensive thing we do:
 			var interfaceMethodsAndImpls = implType

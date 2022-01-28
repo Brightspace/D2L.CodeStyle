@@ -55,7 +55,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				INamedTypeSymbol immutableAttributeType
 			) {
 
-			INamedTypeSymbol declarationType = context.SemanticModel.GetDeclaredSymbol( declaration );
+			INamedTypeSymbol declarationType = context.SemanticModel.GetDeclaredSymbol( declaration, context.CancellationToken );
 
 			bool hasEventAttribute = HasAttribute( declarationType, eventAttributeType );
 			if( !hasEventAttribute ) {

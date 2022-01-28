@@ -69,7 +69,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 				return;
 			}
 
-			if( IsExpressionInClassInIgnoreList( root, context.SemanticModel ) ) {
+			if( IsExpressionInClassInIgnoreList( root, context.SemanticModel, context.CancellationToken ) ) {
 				return;
 			}
 
@@ -293,8 +293,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 			return true;
 		}
 
-		private bool IsExpressionInClassInIgnoreList( InvocationExpressionSyntax expr, SemanticModel semanticModel ) {
-			var structOrClass = GetClassOrStructContainingExpression( expr, semanticModel );
+		private bool IsExpressionInClassInIgnoreList(
+			InvocationExpressionSyntax expr,
+			SemanticModel semanticModel,
+			CancellationToken cancellationToken
+		) {
+			var structOrClass = GetClassOrStructContainingExpression( expr, semanticModel, cancellationToken );
 			if( structOrClass.IsNullOrErrorType() ) {
 				// we failed to pull out the class/struct this invocation is being called from
 				// so don't ignore it
@@ -311,13 +315,14 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 
 		private ITypeSymbol GetClassOrStructContainingExpression(
 			InvocationExpressionSyntax expr,
-			SemanticModel semanticModel
+			SemanticModel semanticModel,
+			CancellationToken cancellationToken
 		) {
 			foreach( var ancestor in expr.Ancestors() ) {
 				if( ancestor is StructDeclarationSyntax ) {
-					return semanticModel.GetDeclaredSymbol( ancestor as StructDeclarationSyntax );
+					return semanticModel.GetDeclaredSymbol( ancestor as StructDeclarationSyntax, cancellationToken );
 				} else if( ancestor is ClassDeclarationSyntax ) {
-					return semanticModel.GetDeclaredSymbol( ancestor as ClassDeclarationSyntax );
+					return semanticModel.GetDeclaredSymbol( ancestor as ClassDeclarationSyntax, cancellationToken );
 				}
 			}
 			return null;
