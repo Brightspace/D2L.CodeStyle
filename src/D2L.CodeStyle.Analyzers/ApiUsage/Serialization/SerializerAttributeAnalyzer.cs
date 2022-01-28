@@ -91,7 +91,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				return;
 			}
 
-			ITypeSymbol serializerType = model.GetTypeInfo( typeofSyntax.Type ).Type;
+			ITypeSymbol serializerType = model
+				.GetTypeInfo( typeofSyntax.Type, context.CancellationToken )
+				.Type;
 
 			if( DoesImplementOneOfSerializerInterfaces(
 					serializerType,

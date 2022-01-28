@@ -150,7 +150,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				compilation: ctx.Compilation,
 				diagnosticSink: ctx.ReportDiagnostic,
 				context: immutabilityContext,
-				annotationsContext: annotationsContext
+				annotationsContext: annotationsContext,
+				cancellationToken: ctx.CancellationToken
 			);
 
 			checker.CheckMember( ctx.Symbol );
@@ -215,7 +216,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				compilation: ctx.Compilation,
 				diagnosticSink: ctx.ReportDiagnostic,
 				context: immutabilityContext,
-				annotationsContext: annotationsContext
+				annotationsContext: annotationsContext,
+				cancellationToken: ctx.CancellationToken
 			);
 
 			checker.CheckDeclaration( typeSymbol );

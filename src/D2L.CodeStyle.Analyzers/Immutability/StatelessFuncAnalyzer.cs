@@ -72,7 +72,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			* source if it's a StatelessFunc<T> we're reasonably
 			* certain its been analyzed.
 			*/
-			ISymbol type = model.GetTypeInfo( argument ).Type;
+			ISymbol type = model.GetTypeInfo( argument, context.CancellationToken ).Type;
 			if( type != null && IsStatelessFunc( type, statelessFuncs ) ) {
 				return;
 			}
