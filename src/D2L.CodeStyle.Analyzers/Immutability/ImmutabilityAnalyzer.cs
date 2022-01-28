@@ -298,7 +298,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			AnnotationsContext annotationsContext
 		) {
 			// Get the symbol for the parameter
-			if( ctx.SemanticModel.GetDeclaredSymbol( ctx.Node , ctx.CancellationToken ) is not ITypeParameterSymbol symbol ) {
+			if( ctx.SemanticModel.GetDeclaredSymbol( ctx.Node, ctx.CancellationToken ) is not ITypeParameterSymbol symbol ) {
 				return;
 			}
 
