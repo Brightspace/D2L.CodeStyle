@@ -103,7 +103,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				}
 
 				SyntaxTriviaList leadingTrivia =
-					arg.RefOrOutKeyword.Kind() == SyntaxKind.None
+					arg.RefOrOutKeyword.IsKind( SyntaxKind.None )
 					? arg.Expression.GetLeadingTrivia()
 					: arg.RefOrOutKeyword.LeadingTrivia;
 

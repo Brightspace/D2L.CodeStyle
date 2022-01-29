@@ -118,11 +118,11 @@ namespace D2L.CodeStyle.Analyzers.CommonFixes {
 			return root.WithUsings( root.Usings.Add( usingDirective ) );
 
 			bool IsTheNecessaryUsingDirective( UsingDirectiveSyntax u ) {
-				if ( u.StaticKeyword.Kind() == SyntaxKind.None && usingStatic ) {
+				if ( u.StaticKeyword.IsKind( SyntaxKind.None ) && usingStatic ) {
 					return false;
 				}
 
-				if ( u.StaticKeyword.Kind() != SyntaxKind.None && !usingStatic ) {
+				if ( !u.StaticKeyword.IsKind( SyntaxKind.None ) && !usingStatic ) {
 					return false;
 				}
 
