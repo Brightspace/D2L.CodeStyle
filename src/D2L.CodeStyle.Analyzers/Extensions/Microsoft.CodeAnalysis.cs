@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿#nullable enable
+
 using System.Collections.Immutable;
-using System.IO;
-using System.Linq;
-using D2L.CodeStyle.Analyzers.Immutability;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -45,7 +43,7 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			return fullyQualifiedName;
 		}
 
-		public static bool IsNullOrErrorType( this ITypeSymbol symbol ) {
+		public static bool IsNullOrErrorType( [NotNullWhen( false )] this ITypeSymbol? symbol ) {
 			if( symbol == null ) {
 				return true;
 			}
@@ -59,7 +57,7 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			return false;
 		}
 
-		public static bool IsNullOrErrorType( this ISymbol symbol ) {
+		public static bool IsNullOrErrorType( [NotNullWhen( false )] this ISymbol? symbol ) {
 			if( symbol == null ) {
 				return true;
 			}
@@ -94,7 +92,7 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 		public static bool TryGetTypeByMetadataName(
 				this Compilation compilation,
 				string fullyQualifiedMetadataName,
-				out INamedTypeSymbol typeSymbol
+				[NotNullWhen( true )] out INamedTypeSymbol? typeSymbol
 			) {
 
 			typeSymbol = compilation.GetTypeByMetadataName( fullyQualifiedMetadataName );
