@@ -26,7 +26,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 			Compilation compilation = context.Compilation;
 
-			IImmutableSet<INamedTypeSymbol> disallowedEventHandlerInterfaces = GetDisallowedEventHandlerInterfaces( compilation );
+			ImmutableHashSet<INamedTypeSymbol> disallowedEventHandlerInterfaces = GetDisallowedEventHandlerInterfaces( compilation );
 			if( disallowedEventHandlerInterfaces.IsEmpty ) {
 				return;
 			}
@@ -39,7 +39,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 		private static void AnalyzeType(
 				SymbolAnalysisContext context,
-				IImmutableSet<INamedTypeSymbol> disallowedEventHandlerInterfaces,
+				ImmutableHashSet<INamedTypeSymbol> disallowedEventHandlerInterfaces,
 				INamedTypeSymbol type
 			) {
 
@@ -74,9 +74,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 			context.ReportDiagnostic( diagnostic );
 		}
 
-		private static IImmutableSet<INamedTypeSymbol> GetDisallowedEventHandlerInterfaces( Compilation compilation ) {
+		private static ImmutableHashSet<INamedTypeSymbol> GetDisallowedEventHandlerInterfaces( Compilation compilation ) {
 
-			IImmutableSet<INamedTypeSymbol> types = EventHandlersDisallowedList.DisallowedTypes
+			ImmutableHashSet<INamedTypeSymbol> types = EventHandlersDisallowedList.DisallowedTypes
 				.SelectMany( genericType => GetGenericTypes( compilation, genericType.Key, genericType.Value ) )
 				.ToImmutableHashSet<INamedTypeSymbol>( SymbolEqualityComparer.Default );
 
