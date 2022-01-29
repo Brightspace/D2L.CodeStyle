@@ -168,15 +168,14 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			) {
 
 			var builder = ImmutableHashSet.CreateBuilder<ISymbol>( SymbolEqualityComparer.Default );
+			hasMethods = false;
+			hasProperties = false;
 
 			IEnumerable<KeyValuePair<string, ImmutableArray<string>>> definitions = Enumerable
 				.Concat(
 					DangerousMethods.Definitions,
 					DangerousProperties.Definitions
 				);
-
-			hasMethods = false;
-			hasProperties = false;
 
 			foreach( KeyValuePair<string, ImmutableArray<string>> pairs in definitions ) {
 
