@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using System.Collections.Immutable;
+using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
@@ -189,7 +190,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			foreach( KeyValuePair<string, ImmutableArray<string>> pairs in definitions ) {
 
 				INamedTypeSymbol? type = compilation.GetTypeByMetadataName( pairs.Key );
-				if( type == null ) {
+				if( type.IsNullOrErrorType() ) {
 					continue;
 				}
 
