@@ -95,8 +95,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				return false;
 			}
 
-			bool isAuditAttribute = auditAttributes.Contains( attributeClass );
-			if( !isAuditAttribute ) {
+			if( !auditAttributes.Contains( attributeClass ) ) {
 				return false;
 			}
 
