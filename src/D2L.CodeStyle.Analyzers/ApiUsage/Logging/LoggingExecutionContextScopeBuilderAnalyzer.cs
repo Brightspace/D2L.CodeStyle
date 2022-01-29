@@ -30,29 +30,28 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Logging {
 				return;
 			}
 
-			ImmutableHashSet<IMethodSymbol> ILoggingExecutionContextScopeBuilderRunSymbols = ILoggingExecutionContextScopeBuilder
+			ImmutableHashSet<ISymbol> ILoggingExecutionContextScopeBuilderRunSymbols = ILoggingExecutionContextScopeBuilder
 				.GetMembers()
 				.Where( m => m.Kind == SymbolKind.Method )
 				.Where( m => m.MetadataName == "Run" )
-				.Cast<IMethodSymbol>()
-				.ToImmutableHashSet();
+				.ToImmutableHashSet( SymbolEqualityComparer.Default );
 
 			// Can't find ILoggingExecutionContextScopeBuilder.Run or ILoggingExecutionContextScopeBuilder.Run<T>
 			if( !ILoggingExecutionContextScopeBuilderRunSymbols.Any() ) {
 				return;
 			}
 
-			ImmutableHashSet<INamedTypeSymbol> taskTypeBuiltins = ImmutableHashSet
-				.Create(
+			ImmutableHashSet<ISymbol> taskTypeBuiltins = 
+				new[] {
 					context.Compilation.GetTypeByMetadataName( "System.Threading.Tasks.Task" ),
 					context.Compilation.GetTypeByMetadataName( "System.Threading.Tasks.Task`1" ),
 					context.Compilation.GetTypeByMetadataName( "System.Threading.Tasks.ValueTask" ),
 					context.Compilation.GetTypeByMetadataName( "System.Threading.Tasks.ValueTask`1" ),
 					context.Compilation.GetTypeByMetadataName( "System.Runtime.CompilerServices.ConfiguredTaskAwaitable" ),
 					context.Compilation.GetTypeByMetadataName( "System.Runtime.CompilerServices.ConfiguredTaskAwaitable`1" )
-				)
+				}
 				.Where( x => x != null && x.Kind != SymbolKind.ErrorType )
-				.ToImmutableHashSet();
+				.ToImmutableHashSet( SymbolEqualityComparer.Default );
 
 			// [AsyncMethodBuilder] is used to create custom awaitable types
 			// See https://blogs.msdn.microsoft.com/seteplia/2018/01/11/extending-the-async-methods-in-c/
@@ -72,9 +71,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Logging {
 
 		private void RunInvocationAnalysis(
 			SyntaxNodeAnalysisContext context,
-			IImmutableSet<IMethodSymbol> ILoggingExecutionContextScopeBuilderRunSymbols,
+			IImmutableSet<ISymbol> ILoggingExecutionContextScopeBuilderRunSymbols,
 			INamedTypeSymbol AsyncMethodBuilderAttribute,
-			IImmutableSet<INamedTypeSymbol> taskTypeBuiltins,
+			IImmutableSet<ISymbol> taskTypeBuiltins,
 			InvocationExpressionSyntax invocationSyntax
 		) {
 			SemanticModel model = context.SemanticModel;
@@ -117,7 +116,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Logging {
 
 		private static bool IsRunInvocation(
 			SemanticModel model,
-			IImmutableSet<IMethodSymbol> ILoggingExecutionContextScopeBuilderRunSymbols,
+			IImmutableSet<ISymbol> ILoggingExecutionContextScopeBuilderRunSymbols,
 			InvocationExpressionSyntax invocationSyntax,
 			CancellationToken ct
 		) {
@@ -184,7 +183,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Logging {
 		}
 
 		private static bool IsAwaitable(
-			IImmutableSet<INamedTypeSymbol> taskTypeBuiltins,
+			IImmutableSet<ISymbol> taskTypeBuiltins,
 			INamedTypeSymbol AsyncMethodBuilderAttribute,
 			ITypeSymbol type
 		) {

@@ -24,16 +24,18 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		private static void RegisterAnalyzer(
 			CompilationStartAnalysisContext context
 		) {
-			ImmutableHashSet<INamedTypeSymbol> configuredTaskTypes = ImmutableHashSet
-				.Create(
+
+			ImmutableHashSet<ITypeSymbol> configuredTaskTypes =
+				new[] {
 					context.Compilation.GetTypeByMetadataName( "System.Runtime.CompilerServices.ConfiguredTaskAwaitable" ),
 					context.Compilation.GetTypeByMetadataName( "System.Runtime.CompilerServices.ConfiguredTaskAwaitable`1" ),
 					context.Compilation.GetTypeByMetadataName( "System.Runtime.CompilerServices.ConfiguredValueTaskAwaitable" ),
 					context.Compilation.GetTypeByMetadataName( "System.Runtime.CompilerServices.ConfiguredValueTaskAwaitable`1" )
-				)
+				}
 				.Where( x => x != null && x.Kind != SymbolKind.ErrorType )
-				.ToImmutableHashSet();
-			if( !configuredTaskTypes.Any() ) {
+				.ToImmutableHashSet<ITypeSymbol>( SymbolEqualityComparer.Default );
+
+			if( configuredTaskTypes.IsEmpty ) {
 				return;
 			}
 
@@ -49,7 +51,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 		private static void AnalyzeAwait(
 			OperationAnalysisContext context,
-			ImmutableHashSet<INamedTypeSymbol> configuredTaskTypes,
+			ImmutableHashSet<ITypeSymbol> configuredTaskTypes,
 			IAwaitOperation operation
 		) {
 			IOperation rhs = operation.Operation;
