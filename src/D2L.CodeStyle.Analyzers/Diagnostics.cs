@@ -13,7 +13,7 @@ namespace D2L.CodeStyle.Analyzers {
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
-			description: "RPCs must take an IRpcContext, IRpcPostContext or IRpcPostContextBase as their first argument"
+			description: "RPCs must take an IRpcContext, IRpcPostContext or IRpcPostContextBase as their first argument."
 		);
 
 		public static readonly DiagnosticDescriptor RpcArgumentSortOrder = new DiagnosticDescriptor(
@@ -23,13 +23,13 @@ namespace D2L.CodeStyle.Analyzers {
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
-			description: "Dependency-injected arguments in RPC methods must preceed other parameters (other than the first context argument)"
+			description: "Dependency-injected arguments in RPC methods must preceed other parameters (other than the first context argument)."
 		);
 
 		public static readonly DiagnosticDescriptor UnsafeSingletonRegistration = new DiagnosticDescriptor(
 			id: "D2L0006",
-			title: "Ensure that a singleton is safe in undifferentiated servers.",
-			messageFormat: "The type '{0}' is not safe to register as a singleton, because it is not marked with [Immutable].",
+			title: "Ensure that a singleton is safe in undifferentiated servers",
+			messageFormat: "The type '{0}' is not safe to register as a singleton, because it is not marked with [Immutable]",
 			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Info,
 			isEnabledByDefault: true,
@@ -42,7 +42,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor OldAndBrokenLocatorIsObsolete = new DiagnosticDescriptor(
 			id: "D2L0009",
-			title: "OldAndBrokenServiceLocator should be avoided.  Use dependency injection instead.",
+			title: "OldAndBrokenServiceLocator should be avoided (use dependency injection instead)",
 			messageFormat: "OldAndBrokenServiceLocator should be avoided.  Use dependency injection instead.",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
@@ -52,7 +52,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor NullPassedToNotNullParameter = new DiagnosticDescriptor(
 			id: "D2L0010",
-			title: "Parameter cannot be passed with a null value.",
+			title: "Parameter cannot be passed with a null value",
 			messageFormat: "Parameter \"{0}\" cannot be passed a null value",
 			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Error,
@@ -62,8 +62,8 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor SingletonRegistrationTypeUnknown = new DiagnosticDescriptor(
 			id: "D2L0011",
-			title: "Unable to resolve the concrete or plugin type for this registration.",
-			messageFormat: "Unable to determine the concrete or plugin type for this registration; please make sure to reference the type's assembly.",
+			title: "Unable to resolve the concrete or plugin type for this registration",
+			messageFormat: "Unable to determine the concrete or plugin type for this registration; please make sure to reference the type's assembly",
 			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
@@ -72,7 +72,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor RegistrationKindUnknown = new DiagnosticDescriptor(
 			id: "D2L0012",
-			title: "Unable to determine the kind of dependency registration attempted.",
+			title: "Unable to determine the kind of dependency registration attempted",
 			messageFormat: "The attempted DI registration is not known to our analysis or there was an error analyzing it. This is mostly likely because the ObjectScope is being passed as a variable, or this is a new kind of registration and needs to be handled.",
 			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Error,
@@ -82,8 +82,8 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor ClassShouldBeSealed = new DiagnosticDescriptor(
 			id: "D2L0013",
-			title: "Non-public class should be sealed because it doesn't have any subtypes.",
-			messageFormat: "Non-public class should be sealed because it doesn't have any subtypes.",
+			title: "Non-public class should be sealed because it doesn't have any subtypes",
+			messageFormat: "Non-public class should be sealed because it doesn't have any subtypes",
 			category: "Style",
 			defaultSeverity: DiagnosticSeverity.Info,
 			isEnabledByDefault: true,
@@ -100,7 +100,7 @@ namespace D2L.CodeStyle.Analyzers {
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
-			description: "Can only use OldAndBrokenSingletonLocator to inject interfaces with the [Singleton] attribute"
+			description: "Can only use OldAndBrokenSingletonLocator to inject interfaces with the [Singleton] attribute."
 		);
 
 		public static readonly DiagnosticDescriptor DangerousMethodsShouldBeAvoided = new DiagnosticDescriptor(
@@ -110,13 +110,13 @@ namespace D2L.CodeStyle.Analyzers {
 			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
-			description: "Avoid using of dangerous methods"
+			description: "Avoid using of dangerous methods."
 		);
 
 		public static readonly DiagnosticDescriptor AttributeRegistrationMismatch = new DiagnosticDescriptor(
 			id: "D2L0019",
-			title: "Singleton attribute cannot appear on non-singleton object scopes.",
-			messageFormat: "The type '{0}' is marked as [Singleton] but is registered with a conflicting object scope.",
+			title: "Singleton attribute cannot appear on non-singleton object scopes",
+			messageFormat: "The type '{0}' is marked as [Singleton] but is registered with a conflicting object scope",
 			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
@@ -130,7 +130,7 @@ namespace D2L.CodeStyle.Analyzers {
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
-			description: "Must be one of: bool, int, float, string"
+			description: "Must be one of [ bool, int, float, string ]."
 		);
 
 		public static readonly DiagnosticDescriptor ObsoleteJsonParamBinder = new DiagnosticDescriptor(
@@ -169,7 +169,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor TooManyUnnamedArgs = new DiagnosticDescriptor(
 			id: "D2L0032",
-			title: "Name arguments for readability.",
+			title: "Name arguments for readability",
 			messageFormat: "There are more than {0} unnamed arguments. Use named arguments for readability.",
 			category: "Readability",
 			defaultSeverity: DiagnosticSeverity.Error,
@@ -179,7 +179,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor LiteralArgShouldBeNamed = new DiagnosticDescriptor(
 			id: "D2L0033",
-			title: "Literal arguments should be named for readability.",
+			title: "Literal arguments should be named for readability",
 			messageFormat: "The argument for the {0} parameter is a literal expression. It's often hard to tell what the parameter for the argument is at the call-site in this case. Please use a named argument for readability.",
 			category: "Readability",
 			defaultSeverity: DiagnosticSeverity.Info, // TODO: Change to Error once fixed in LMS
@@ -189,7 +189,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor ArgumentsWithInterchangableTypesShouldBeNamed = new DiagnosticDescriptor(
 			id: "D2L0034",
-			title: "Arguments that map to parameters with interchangable types should be named.",
+			title: "Arguments that map to parameters with interchangable types should be named",
 			messageFormat: "The parameters {0} and {1} have interchangable types. There is a risk of not passing arguments to the right parameters. Please use named arguments for readability.",
 			category: "Readability",
 			defaultSeverity: DiagnosticSeverity.Info,
@@ -212,13 +212,13 @@ namespace D2L.CodeStyle.Analyzers {
 			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
-			description: "Avoid using of dangerous properties"
+			description: "Avoid using of dangerous properties."
 		);
 
 		public static readonly DiagnosticDescriptor MissingTransitiveImmutableAttribute = new DiagnosticDescriptor(
 			id: "D2L0040",
 			title: "Missing an explicit transitive [Immutable] attribute",
-			messageFormat: "{0} should be [Immutable]{1} because the {2} {3} is.",
+			messageFormat: "{0} should be [Immutable]{1} because the {2} {3} is",
 			category: "",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
@@ -242,14 +242,14 @@ namespace D2L.CodeStyle.Analyzers {
 			category: "Build",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
-			description: "To use D2L.CodeStyle.Analyzers you must also reference the assembly D2L.CodeStyle.Annotations"
+			description: "To use D2L.CodeStyle.Analyzers you must also reference the assembly D2L.CodeStyle.Annotations."
 		);
 
 		public static readonly DiagnosticDescriptor EventTypeMissingEventAttribute = new DiagnosticDescriptor(
 			id: "D2L0043",
 			title: "Event Type Missing [Event] Attribute",
 			description: "All event types must be marked with [Event] attribute.",
-			messageFormat: "Event type {0} must be marked with [Event] attribute.",
+			messageFormat: "Event type {0} must be marked with [Event] attribute",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
@@ -259,7 +259,7 @@ namespace D2L.CodeStyle.Analyzers {
 			id: "D2L0044",
 			title: "Event Handler Type Missing [EventHandler] Attribute",
 			description: "All event handler types must be marked with [EventHandler] attribute.",
-			messageFormat: "Event handler type {0} must be marked with [EventHandler] attribute.",
+			messageFormat: "Event handler type {0} must be marked with [EventHandler] attribute",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
@@ -268,7 +268,7 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor EventTypeMissingImmutableAttribute = new DiagnosticDescriptor(
 			id: "D2L0045",
 			title: "Event Type Missing [Immutable] Attribute",
-			messageFormat: "{0} must be marked [Immutable] because all event types must be immutable.",
+			messageFormat: "{0} must be marked [Immutable] because all event types must be immutable",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
@@ -278,7 +278,7 @@ namespace D2L.CodeStyle.Analyzers {
     public static readonly DiagnosticDescriptor DependencyRegistraionMissingPublicConstructor = new DiagnosticDescriptor(
 			id: "D2L0046",
 			title: "Dependency Registration Missing Public Constructor",
-			messageFormat: "{0} must have a public constructor if it is to be registered for DI.",
+			messageFormat: "{0} must have a public constructor if it is to be registered for DI",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
@@ -287,7 +287,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor IncludeDefaultValueInOverrideForReadability = new DiagnosticDescriptor(
 			id: "D2L0047",
-			title: "The parameter {0} has a default value in {1}, but not here. This causes inconsistent behaviour and reduces readability. Please repeat the default value here explicitly.",
+			title: "The parameter {0} has a default value in {1}, but not here. This causes inconsistent behaviour and reduces readability. Please repeat the default value here explicitly",
 			messageFormat: "The parameter {0} has a default value in {1}, but not here. This causes inconsistent behaviour and reduces readability. Please repeat the default value here explicitly.",
 			category: "Language",
 			defaultSeverity: DiagnosticSeverity.Error,
@@ -302,7 +302,7 @@ namespace D2L.CodeStyle.Analyzers {
 			category: "Language",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
-			description: "The parameter {0} does not have a default value in the original version of this method in {1}, but does here. This causes inconsistent behaviour. Please remove the default (or add it everywhere.)"
+			description: "The parameter {0} does not have a default value in the original version of this method in {1}, but does here. This causes inconsistent behaviour. Please remove the default (or add it everywhere)."
 		);
 
 		public static readonly DiagnosticDescriptor DefaultValuesInOverridesShouldBeConsistent = new DiagnosticDescriptor(
@@ -317,8 +317,8 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor LoggingContextRunAwaitable = new DiagnosticDescriptor(
 			id: "D2L0050",
-			title: "Use RunAsync for awaitable actions.",
-			messageFormat: "Use RunAsync for awaitable actions.",
+			title: "Use RunAsync for awaitable actions",
+			messageFormat: "Use RunAsync for awaitable actions",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
@@ -337,8 +337,8 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor ContentPhysicalPathUsages = new DiagnosticDescriptor(
 			id: "D2L0052",
-			title: "Use the ContentPath property.",
-			messageFormat: "Use the ContentPath property instead.",
+			title: "Use the ContentPath property",
+			messageFormat: "Use the ContentPath property instead",
 			category: "Storageable",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
@@ -388,7 +388,7 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor UnnecessaryAllowedListEntry = new DiagnosticDescriptor(
 			id: "D2L0057",
 			title: "Unnecessarily listed in an analyzer allowed list",
-			messageFormat: "The entry for '{0}' in '{1}' is unnecessary.",
+			messageFormat: "The entry for '{0}' in '{1}' is unnecessary",
 			category: "Cleanliness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
@@ -397,7 +397,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor NamedArgumentsRequired = new DiagnosticDescriptor(
 			id: "D2L0058",
-			title: "Named arguments are required for readability.",
+			title: "Named arguments are required for readability",
 			messageFormat: "Named arguments are required for this call. Use named arguments for readability.",
 			category: "Readability",
 			defaultSeverity: DiagnosticSeverity.Error,
@@ -407,8 +407,8 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor InvalidSerializerType = new DiagnosticDescriptor(
 			id: "D2L0059",
-			title: "Serializers must implement D2L.LP.Serialization.ITrySerializer.",
-			messageFormat: "'{0}' does not implement D2L.LP.Serialization.ITrySerializer.",
+			title: "Serializers must implement D2L.LP.Serialization.ITrySerializer",
+			messageFormat: "'{0}' does not implement D2L.LP.Serialization.ITrySerializer",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
@@ -418,7 +418,7 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor EventTypeNotSealed = new DiagnosticDescriptor(
 			id: "D2L0060",
 			title: "Event Type Not Sealed",
-			messageFormat: "{0} must be sealed because you can register event handlers based on inheritance.",
+			messageFormat: "{0} must be sealed because you can register event handlers based on inheritance",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
@@ -428,7 +428,7 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor MutableBaseType = new DiagnosticDescriptor(
 			id: "D2L0061",
 			title: "Base class for immutable type must be [Immutable] (or [ImmutableBaseClass])",
-			messageFormat: "{0}'s base class is {1} which is missing [Immutable] (or, more weakly, [ImmutableBaseClass]).",
+			messageFormat: "{0}'s base class is {1} which is missing [Immutable] (or, more weakly, [ImmutableBaseClass])",
 			category: "Immutability",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
@@ -436,7 +436,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor ArraysAreMutable = new DiagnosticDescriptor(
 			id: "D2L0062",
-			title: "Arrays are mutable and thus can't be held by an immutable type.",
+			title: "Arrays are mutable and thus can't be held by an immutable type",
 			messageFormat: "{0}[]'s are mutable even if {0}'s are immutable because array items can be substituted. Prefer an immutable container type such as ImmutableArray<{0}>.",
 			category: "Immutability",
 			defaultSeverity: DiagnosticSeverity.Error,
@@ -445,8 +445,8 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor DynamicObjectsAreMutable = new DiagnosticDescriptor(
 			id: "D2L0063",
-			title: "Dynamic objects are mutable and thus can't be held by an immutable type.",
-			messageFormat: "Dynamic objects are mutable and thus can't be held by an immutable type.",
+			title: "Dynamic objects are mutable and thus can't be held by an immutable type",
+			messageFormat: "Dynamic objects are mutable and thus can't be held by an immutable type",
 			category: "Immutability",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
@@ -454,7 +454,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor TypeParameterIsNotKnownToBeImmutable = new DiagnosticDescriptor(
 			id: "D2L0064",
-			title: "Type parameter is not known to be immutable.",
+			title: "Type parameter is not known to be immutable",
 			messageFormat: "The type parameter {0} is not known to be immutable. Add [Immutable] to it.",
 			category: "Immutability",
 			defaultSeverity: DiagnosticSeverity.Error,
@@ -463,7 +463,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor UnexpectedTypeKind = new DiagnosticDescriptor(
 			id: "D2L0065",
-			title: "Unsupported type kind inside an immutable type declaration.",
+			title: "Unsupported type kind inside an immutable type declaration",
 			messageFormat: "The type kind {0} is unexpected/unhandled by the immutability analyzer, and for safety we are emitting an error. This is a bug in the analyzer.",
 			category: "Immutability",
 			defaultSeverity: DiagnosticSeverity.Error,
@@ -473,7 +473,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor NonImmutableTypeHeldByImmutable = new DiagnosticDescriptor(
 			id: "D2L0066",
-			title: "Type may be mutable.",
+			title: "Type may be mutable",
 			messageFormat: "The {0} \"{1}\" is missing the [Immutable]{2} attribute, so it isn't safe to be held by an immutable type",
 			category: "Immutability",
 			defaultSeverity: DiagnosticSeverity.Error,
@@ -482,8 +482,8 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor MemberIsNotReadOnly = new DiagnosticDescriptor(
 			id: "D2L0067",
-			title: "Member must be readonly inside immutable type.",
-			messageFormat: "The {0} {1} must be readonly because {2} is immutable.",
+			title: "Member must be readonly inside immutable type",
+			messageFormat: "The {0} {1} must be readonly because {2} is immutable",
 			category: "Immutability",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
@@ -491,7 +491,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor UnexpectedMemberKind = new DiagnosticDescriptor(
 			id: "D2L0068",
-			title: "Unsupported member type in immutable type declaration.",
+			title: "Unsupported member type in immutable type declaration",
 			messageFormat: "The member {0} is of type {1} which is not supported by the immutability analyzer. This is a bug.",
 			category: "Immutability",
 			defaultSeverity: DiagnosticSeverity.Error,
@@ -501,7 +501,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor DelegateTypesPossiblyMutable = new DiagnosticDescriptor(
 			id: "D2L0069",
-			title: "Delegates members are not allowed in immutable types.",
+			title: "Delegates members are not allowed in immutable types",
 			messageFormat: "Delegate fields and properties can close over mutable state. For safety, we don't allow these in immutable types.",
 			category: "Immutability",
 			defaultSeverity: DiagnosticSeverity.Error,
@@ -510,7 +510,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor EventMemberMutable = new DiagnosticDescriptor(
 			id: "D2L0070",
-			title: "Event members are not allowed in immtuable types.",
+			title: "Event members are not allowed in immtuable types",
 			messageFormat: "Event members hold registered event handlers. We consider this to be a source of mutability.",
 			category: "Immutability",
 			defaultSeverity: DiagnosticSeverity.Error,
@@ -519,8 +519,8 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor UnexpectedConditionalImmutability = new DiagnosticDescriptor(
 			id: "D2L0071",
-			title: "The [ConditionallyImmutable.OnlyIf] attribute cannot be used with methods.",
-			messageFormat: "The [ConditionallyImmutable.OnlyIf] attribute is only valid on parameters of named types.",
+			title: "The [ConditionallyImmutable.OnlyIf] attribute cannot be used with methods",
+			messageFormat: "The [ConditionallyImmutable.OnlyIf] attribute is only valid on parameters of named types",
 			category: "Immutability",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
@@ -528,8 +528,8 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor ConflictingImmutability = new DiagnosticDescriptor(
 			id: "D2L0072",
-			title: "Conflicting immutability attributes.",
-			messageFormat: "The [{0}] and [{1}] attributes cannot be used on the same {2}.",
+			title: "Conflicting immutability attributes",
+			messageFormat: "The [{0}] and [{1}] attributes cannot be used on the same {2}",
 			category: "Immutability",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
@@ -537,8 +537,8 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor InvalidAuditType = new DiagnosticDescriptor(
 			id: "D2L0073",
-			title: "Wrong type of auditing was used.",
-			messageFormat: "A {0} {1} should be audited using the [{2}] attributes.",
+			title: "Wrong type of auditing was used",
+			messageFormat: "A {0} {1} should be audited using the [{2}] attributes",
 			category: "Immutability",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
@@ -546,8 +546,8 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor NonConstantPassedToConstantParameter = new DiagnosticDescriptor(
 			id: "D2L0074",
-			title: "Constant parameter cannot be passed a non-constant value.",
-			messageFormat: "The \"{0}\" parameter is marked with the [Constant] attribute, and so it must be passed a compile-time constant value.",
+			title: "Constant parameter cannot be passed a non-constant value",
+			messageFormat: "The \"{0}\" parameter is marked with the [Constant] attribute, and so it must be passed a compile-time constant value",
 			category: "Safety",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
@@ -556,8 +556,8 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor InvalidConstantType = new DiagnosticDescriptor(
 			id: "D2L0075",
-			title: "Invalid data type marked as [Constant].",
-			messageFormat: "The [Constant] attribute cannot be used on \"{0}\" types, because they cannot be compile-time constants.",
+			title: "Invalid data type marked as [Constant]",
+			messageFormat: "The [Constant] attribute cannot be used on \"{0}\" types, because they cannot be compile-time constants",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
@@ -565,7 +565,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor InconsistentMethodAttributeApplication = new DiagnosticDescriptor(
 			id: "D2L0076",
-			title: "Attribute is applied inconsistently to method definitions.",
+			title: "Attribute is applied inconsistently to method definitions",
 			messageFormat: "The [{0}] attribute is applied inconsistently between \"{1}\" and its source definition \"{2}\". This wiil cause inconsistent behaviour.",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
@@ -574,7 +574,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor AnonymousFunctionsMayCaptureMutability = new DiagnosticDescriptor(
 			id: "D2L0077",
-			title: "Anonymous functions may capture mutable state and thus can't be assigned to members of an immutable type.",
+			title: "Anonymous functions may capture mutable state and thus can't be assigned to members of an immutable type",
 			messageFormat: "Anonymous functions may capture mutable state and thus can't be assigned to members of an immutable type. Try making the function static, or moving the assignment to an initializer.",
 			category: "Immutability",
 			defaultSeverity: DiagnosticSeverity.Error,
@@ -593,7 +593,7 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor UnknownImmutabilityAssignmentKind = new DiagnosticDescriptor(
 			id: "D2L0079",
 			title: "ImmutabilityAnalyzer does not understand this assignment expression",
-			messageFormat: "ImmutabilityAnalyzer does not understand this assignment expression due to: {0}.",
+			messageFormat: "ImmutabilityAnalyzer does not understand this assignment expression due to: {0}",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
@@ -694,7 +694,7 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor OnlyCallBlockingMethodsFromMethods = new DiagnosticDescriptor(
 			id: "D2L0090",
 			title: "Only methods can call blocking methods",
-			messageFormat: "Blocking methods like {0} are only allowed inside other blocking methods, not {1}.",
+			messageFormat: "Blocking methods like {0} are only allowed inside other blocking methods, not {1}",
 			category: "Async",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
@@ -703,7 +703,7 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor BlockingCallersMustBeBlocking = new DiagnosticDescriptor(
 			id: "D2L0091",
 			title: "Methods that call blocking methods must have the [Blocking] attribute",
-			messageFormat: "The call to {0} is blocking, so {1} must have the [Blocking] attribute.",
+			messageFormat: "The call to {0} is blocking, so {1} must have the [Blocking] attribute",
 			category: "Async",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
