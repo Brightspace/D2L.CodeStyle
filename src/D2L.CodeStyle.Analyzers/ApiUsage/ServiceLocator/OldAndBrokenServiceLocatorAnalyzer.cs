@@ -97,8 +97,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 
 			ISymbol caller = context.ContainingSymbol;
 
-			ImmutableArray<INamedTypeSymbol> callerContainingTypes = caller
-				.GetAllContainingTypes( sortDeepestFirst: true );
+			ImmutableArray<INamedTypeSymbol> callerContainingTypes = caller.GetAllContainingTypes();
 
 			// Allow the DI framework to call the disallowed types
 			if( callerContainingTypes.Any( Attributes.DIFramework.IsDefined ) ) {

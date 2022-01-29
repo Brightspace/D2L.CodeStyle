@@ -106,4 +106,14 @@ namespace D2L.CodeStyle.Analyzers.OldAndBrokenLocator.Examples {
 			return 0;
 		}
 	}
+
+	[DIFramework]
+	public sealed class DIFrameworkClassNestedClass {
+		private static class Nested {
+			public static void UseDIFramework() {
+				IServiceLocator ok = OldAndBrokenServiceLocator.Instance;
+				IServiceLocator alsoOk = OldAndBrokenServiceLocatorFactory.Create();
+			}
+		}
+	}
 }

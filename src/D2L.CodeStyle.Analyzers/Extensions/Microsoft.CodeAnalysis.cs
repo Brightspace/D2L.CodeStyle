@@ -190,16 +190,7 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			return result.ToImmutable();
 		}
 
-		/// <summary>
-		/// Returns all containing types.
-		/// </summary>
-		/// <param name="symbol">The symbol to start searching from.</param>
-		/// <param name="sortDeepestFirst">If <c>true</c>, the immediate parent container type is returned first; otherwise the root container type is returned first.</param>
-		/// <returns></returns>
-		public static ImmutableArray<INamedTypeSymbol> GetAllContainingTypes(
-				this ISymbol symbol,
-				bool sortDeepestFirst
-			) {
+		public static ImmutableArray<INamedTypeSymbol> GetAllContainingTypes( this ISymbol symbol ) {
 
 			INamedTypeSymbol containingType = symbol.ContainingType;
 			if( containingType == null ) {
@@ -214,10 +205,7 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 				containingType = containingType.ContainingType;
 			}
 
-			if( !sortDeepestFirst ) {
-				builder.Reverse();
-			}
-
+			builder.Reverse();
 			return builder.ToImmutable();
 		}
 	}
