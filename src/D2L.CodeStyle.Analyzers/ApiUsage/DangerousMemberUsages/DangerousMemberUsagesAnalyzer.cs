@@ -44,9 +44,17 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			context.RegisterOperationAction(
 					ctxt => {
 						IInvocationOperation invocation = (IInvocationOperation)ctxt.Operation;
-						AnalyzeMethodInvocation( ctxt, invocation, auditedAttributeType, unauditedAttributeType, dangerousMethods );
+						AnalyzeMethod( ctxt, invocation.TargetMethod, auditedAttributeType, unauditedAttributeType, dangerousMethods );
 					},
 					OperationKind.Invocation
+				);
+
+			context.RegisterOperationAction(
+					ctxt => {
+						IMethodReferenceOperation operation = (IMethodReferenceOperation)ctxt.Operation;
+						AnalyzeMethod( ctxt, operation.Method, auditedAttributeType, unauditedAttributeType, dangerousMethods );
+					},
+					OperationKind.MethodReference
 				);
 		}
 
@@ -67,21 +75,19 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				);
 		}
 
-		private void AnalyzeMethodInvocation(
+		private void AnalyzeMethod(
 				OperationAnalysisContext context,
-				IInvocationOperation invocation,
+				IMethodSymbol method,
 				INamedTypeSymbol auditedAttributeType,
 				INamedTypeSymbol unauditedAttributeType,
 				IImmutableSet<ISymbol> dangerousMethods
 			) {
 
-			IMethodSymbol targetMethod = invocation.TargetMethod;
-
-			if( !AnalyzePotentiallyDangerousMember( context, targetMethod, auditedAttributeType, unauditedAttributeType, dangerousMethods ) ) {
+			if( !AnalyzePotentiallyDangerousMember( context, method, auditedAttributeType, unauditedAttributeType, dangerousMethods ) ) {
 				return;
 			}
 
-			ReportDiagnostic( context, targetMethod, Diagnostics.DangerousMethodsShouldBeAvoided );
+			ReportDiagnostic( context, method, Diagnostics.DangerousMethodsShouldBeAvoided );
 		}
 
 		private void AnalyzePropertyReference(
@@ -263,6 +269,5 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 
 			return builder.ToImmutable();
 		}
-
 	}
 }

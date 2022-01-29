@@ -91,6 +91,11 @@ namespace SpecTests {
 		public void/* DangerousMethodsShouldBeAvoided(System.Threading.Thread.Sleep) */ MethodWithThreadSleepTimeSpan(/**/) {
 			System.Threading.Thread.Sleep( TimeSpan.FromMilliseconds( 1 ) );
 		}
+
+		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ MethodReference(/**/) {
+			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
+			Action<object, object, object[]> setter = p.SetValue;
+		}
 	}
 
 	internal sealed class AuditedUsages {
