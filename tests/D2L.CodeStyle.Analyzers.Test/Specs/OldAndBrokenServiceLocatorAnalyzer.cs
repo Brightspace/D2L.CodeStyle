@@ -108,9 +108,9 @@ namespace D2L.CodeStyle.Analyzers.OldAndBrokenLocator.Examples {
 	}
 
 	[DIFramework]
-	public sealed class DIFrameworkClassNestedClass {
+	public sealed class DIFrameworkUsageInNestedClass {
 		private static class Nested {
-			public static void UseDIFramework() {
+			public static void Usage() {
 				IServiceLocator ok = OldAndBrokenServiceLocator.Instance;
 				IServiceLocator alsoOk = OldAndBrokenServiceLocatorFactory.Create();
 			}
