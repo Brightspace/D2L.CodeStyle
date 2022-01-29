@@ -43,6 +43,5 @@ namespace DisallowedImplementations {
 		: IOrgEventHandler<UserInteractionEvent>, IOrgEventHandler<string> { }
 
 	public sealed class /* EventHandlerDisallowed(D2L.LP.Distributed.Events.Handlers.IOrgEventHandler<D2L.LP.Distributed.Events.ExternalPublish.UserInteraction.UserInteractionEvent>) */ MultiEventHandler_UserInteractionOrgEventHandler_Last /**/
-		: IOrgEventHandler<string>, IOrgEventHandler<UserInteractionEvent>{ }
-
+		: IOrgEventHandler<string>, IOrgEventHandler<UserInteractionEvent> { }
 }
