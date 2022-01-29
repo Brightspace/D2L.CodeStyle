@@ -4,7 +4,14 @@ using System;
 using D2L.LP.Extensibility.Activation.Domain;
 
 namespace D2L.LP.Extensibility.Activation.Domain {
-	public interface IServiceLocator { }
+
+	public sealed class DIFrameworkAttribute : Attribute { }
+
+	public interface IObjectActivator {
+		void Create();
+	}
+
+	public interface IServiceLocator {}
 
 	public class OldAndBrokenServiceLocator {
 		public static IServiceLocator Instance {
@@ -13,10 +20,8 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 	}
 
 	public class OldAndBrokenServiceLocatorFactory {
-		public IServiceLocator Create() { return null; }
+		public static IServiceLocator Create() { return null; }
 	}
-
-	public sealed class DIFrameworkAttribute : Attribute { }
 }
 
 namespace D2L.CodeStyle.Analyzers.OldAndBrokenLocator.Examples {
@@ -28,11 +33,16 @@ namespace D2L.CodeStyle.Analyzers.OldAndBrokenLocator.Examples {
 		public BadClass() { }
 
 		public void UsesBrokenLocator() {
-			IServiceLocator locator = /* OldAndBrokenLocatorIsObsolete */ OldAndBrokenServiceLocator /**/.Instance;
+			IServiceLocator locator = /* OldAndBrokenLocatorIsObsolete */ OldAndBrokenServiceLocator.Instance /**/;
 		}
 
 		public void UsesBrokenLocatorFactory() {
-			IServiceLocator locator = /* OldAndBrokenLocatorIsObsolete */ OldAndBrokenServiceLocatorFactory /**/.Create();
+			IServiceLocator locator = /* OldAndBrokenLocatorIsObsolete */ OldAndBrokenServiceLocatorFactory.Create() /**/;
+		}
+
+		public void UseOfObjectActivator() {
+			IObjectActivator act;
+			/* OldAndBrokenLocatorIsObsolete */ act.Create() /**/;
 		}
 	}
 
