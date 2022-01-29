@@ -34,17 +34,17 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			if( model.HasMethods ) {
 
 				context.RegisterOperationAction(
-						ctxt => {
-							IInvocationOperation invocation = (IInvocationOperation)ctxt.Operation;
-							AnalyzeMethod( ctxt, model, invocation.TargetMethod );
+						context => {
+							IInvocationOperation invocation = (IInvocationOperation)context.Operation;
+							AnalyzeMethod( context, model, invocation.TargetMethod );
 						},
 						OperationKind.Invocation
 					);
 
 				context.RegisterOperationAction(
-						ctxt => {
-							IMethodReferenceOperation operation = (IMethodReferenceOperation)ctxt.Operation;
-							AnalyzeMethod( ctxt, model, operation.Method );
+						context => {
+							IMethodReferenceOperation operation = (IMethodReferenceOperation)context.Operation;
+							AnalyzeMethod( context, model, operation.Method );
 						},
 						OperationKind.MethodReference
 					);
@@ -53,9 +53,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			if( model.HasProperties ) {
 
 				context.RegisterOperationAction(
-						ctxt => {
-							IPropertyReferenceOperation propertyReference = (IPropertyReferenceOperation)ctxt.Operation;
-							AnalyzeProperty( ctxt, model, propertyReference.Property );
+						context => {
+							IPropertyReferenceOperation propertyReference = (IPropertyReferenceOperation)context.Operation;
+							AnalyzeProperty( context, model, propertyReference.Property );
 						},
 						OperationKind.PropertyReference
 					);
