@@ -89,7 +89,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			return false;
 		}
 
-		private bool IsAuditAttribute(
+		private static bool IsAuditAttribute(
 				ISymbol member,
 				AttributeData attribute,
 				AuditAttributePair auditAttributes

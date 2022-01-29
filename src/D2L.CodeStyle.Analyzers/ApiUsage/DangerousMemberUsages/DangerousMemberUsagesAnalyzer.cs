@@ -62,7 +62,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			}
 		}
 
-		private void AnalyzeMethod(
+		private static void AnalyzeMethod(
 				OperationAnalysisContext context,
 				DangerousMembersModel model,
 				IMethodSymbol method
@@ -75,7 +75,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			ReportDiagnostic( context, method, Diagnostics.DangerousMethodsShouldBeAvoided );
 		}
 
-		private void AnalyzeProperty(
+		private static void AnalyzeProperty(
 				OperationAnalysisContext context,
 				DangerousMembersModel model,
 				IPropertySymbol property
@@ -88,7 +88,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			ReportDiagnostic( context, property, Diagnostics.DangerousPropertiesShouldBeAvoided );
 		}
 
-		private void ReportDiagnostic(
+		private static void ReportDiagnostic(
 				OperationAnalysisContext context,
 				ISymbol memberSymbol,
 				DiagnosticDescriptor diagnosticDescriptor
