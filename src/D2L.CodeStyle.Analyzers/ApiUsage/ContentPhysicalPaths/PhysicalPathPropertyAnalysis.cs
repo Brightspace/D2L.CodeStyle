@@ -147,7 +147,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ContentPhysicalPaths {
 			IImmutableSet<ISymbol> properties = type
 				.GetMembers( m_dangerousPropertyName )
 				.Where( m => m.Kind == SymbolKind.Property )
-				.ToImmutableHashSet();
+				.ToImmutableHashSet( SymbolEqualityComparer.Default );
 
 			return properties;
 		}

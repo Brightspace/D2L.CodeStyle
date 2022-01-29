@@ -42,7 +42,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 			IImmutableSet<ISymbol> genericPublishMethods = PublisherTypeNames
 				.SelectMany( typeName =>  GetGenericPublishMethods( compilation, typeName ) )
-				.ToImmutableHashSet();
+				.ToImmutableHashSet( SymbolEqualityComparer.Default );
 
 			context.RegisterSyntaxNodeAction(
 					ctxt => AnalyzeMethodInvocation(

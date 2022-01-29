@@ -265,7 +265,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private static ImmutableHashSet<ISymbol> GetStatelessFuncTypes( Compilation compilation) {
 
-			var builder = ImmutableHashSet.CreateBuilder<ISymbol>();
+			var builder = ImmutableHashSet.CreateBuilder( SymbolEqualityComparer.Default );
 
 			var types = new string[] {
 				"D2L.StatelessFunc`1",
@@ -296,7 +296,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				builder.Add( typeSymbol.OriginalDefinition );
 			}
 
-			return builder.ToImmutableHashSet();
+			return builder.ToImmutable();
 		}
 	}
 }

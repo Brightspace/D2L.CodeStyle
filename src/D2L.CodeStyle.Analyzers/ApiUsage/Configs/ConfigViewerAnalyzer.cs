@@ -134,7 +134,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 			var builder = ImmutableDictionary.CreateBuilder<
 				IMethodSymbol,
 				IReadOnlyDictionary<string, string>
-			>();
+			>( SymbolEqualityComparer.Default );
 
 			foreach( var definition in BannedConfigs.Definitions ) {
 				string methodName = definition.Key;

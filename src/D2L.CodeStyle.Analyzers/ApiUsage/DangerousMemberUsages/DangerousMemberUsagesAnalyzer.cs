@@ -222,7 +222,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 
 		private static IImmutableSet<ISymbol> GetDangerousMethods( Compilation compilation ) {
 
-			ImmutableHashSet<ISymbol>.Builder builder = ImmutableHashSet.CreateBuilder<ISymbol>();
+			ImmutableHashSet<ISymbol>.Builder builder = ImmutableHashSet.CreateBuilder( SymbolEqualityComparer.Default );
 
 			foreach( KeyValuePair<string, ImmutableArray<string>> pairs in DangerousMethods.Definitions ) {
 
@@ -245,12 +245,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				}
 			}
 
-			return builder.ToImmutableHashSet();
+			return builder.ToImmutable();
 		}
 
 		private static IImmutableSet<ISymbol> GetDangerousProperties( Compilation compilation ) {
 
-			ImmutableHashSet<ISymbol>.Builder builder = ImmutableHashSet.CreateBuilder<ISymbol>();
+			ImmutableHashSet<ISymbol>.Builder builder = ImmutableHashSet.CreateBuilder( SymbolEqualityComparer.Default );
 
 			foreach( KeyValuePair<string, ImmutableArray<string>> pairs in DangerousProperties.Definitions ) {
 
@@ -270,7 +270,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				}
 			}
 
-			return builder.ToImmutableHashSet();
+			return builder.ToImmutable();
 		}
 
 	}

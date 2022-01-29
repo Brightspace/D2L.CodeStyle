@@ -29,8 +29,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			CompilationStartAnalysisContext context
 		) {
 			// There is no ConcurrentHashSet<T>, so use a dummy bool
-			var privateOrInternalBaseClasses = new ConcurrentDictionary<INamedTypeSymbol, bool>();
-			var privateOrInternalUnsealedClasses = new ConcurrentDictionary<INamedTypeSymbol, Location>();
+			var privateOrInternalBaseClasses = new ConcurrentDictionary<INamedTypeSymbol, bool>( SymbolEqualityComparer.Default );
+			var privateOrInternalUnsealedClasses = new ConcurrentDictionary<INamedTypeSymbol, Location>( SymbolEqualityComparer.Default );
 
 			// During symbol action execution (and syntax node) we can't cheaply
 			// (as far as I know) answer "are there any subtypes of T?", so
