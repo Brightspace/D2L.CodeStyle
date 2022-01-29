@@ -1,10 +1,9 @@
-﻿using System.Collections.Generic;
+﻿#nullable enable
+
 using System.Collections.Immutable;
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
@@ -32,33 +31,44 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				return;
 			}
 
-			context.RegisterSyntaxNodeAction(
-					c => AnalyzeSimpleBaseType( c, disallowedTypes ),
-					SyntaxKind.SimpleBaseType
+			context.RegisterSymbolAction(
+					c => AnalyzeType( c, disallowedTypes, (INamedTypeSymbol)c.Symbol ),
+					SymbolKind.NamedType
 				);
 		}
 
-		private void AnalyzeSimpleBaseType(
-				SyntaxNodeAnalysisContext context,
-				IImmutableSet<INamedTypeSymbol> disallowedTypes
+		private static void AnalyzeType(
+				SymbolAnalysisContext context,
+				IImmutableSet<INamedTypeSymbol> disallowedTypes,
+				INamedTypeSymbol type
 			) {
 
-			SimpleBaseTypeSyntax baseTypeSyntax = (SimpleBaseTypeSyntax)context.Node;
-			SymbolInfo baseTypeSymbol = context.SemanticModel.GetSymbolInfo( baseTypeSyntax.Type, context.CancellationToken );
-
-			INamedTypeSymbol baseSymbol = ( baseTypeSymbol.Symbol as INamedTypeSymbol );
-			if( baseSymbol.IsNullOrErrorType() ) {
+			ImmutableArray<INamedTypeSymbol> interfaces = type.Interfaces;
+			if( interfaces.IsEmpty ) {
 				return;
 			}
 
-			if( !disallowedTypes.Contains( baseSymbol ) ) {
-				return;
+			foreach( INamedTypeSymbol @interface in interfaces ) {
+
+				if( disallowedTypes.Contains( @interface ) ) {
+					ReportEventHandlerDisallowed( context, type, @interface );
+				}
 			}
+		}
+
+		private static void ReportEventHandlerDisallowed(
+				SymbolAnalysisContext context,
+				INamedTypeSymbol type,
+				INamedTypeSymbol eventHandlerInterface
+			) {
 
 			Diagnostic diagnostic = Diagnostic.Create(
-					Diagnostics.EventHandlerDisallowed,
-					baseTypeSyntax.GetLocation(),
-					baseSymbol.ToDisplayString()
+					descriptor: Diagnostics.EventHandlerDisallowed,
+					location: type.Locations[ 0 ],
+					additionalLocations: type.Locations.Skip( 1 ),
+					messageArgs: new[] {
+						eventHandlerInterface.ToDisplayString()
+					}
 				);
 
 			context.ReportDiagnostic( diagnostic );
@@ -79,13 +89,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				ImmutableArray<ImmutableArray<string>> genericTypeArgumentSets
 			) {
 
-			INamedTypeSymbol genericTypeDefinition = compilation.GetTypeByMetadataName( genericTypeName );
+			INamedTypeSymbol? genericTypeDefinition = compilation.GetTypeByMetadataName( genericTypeName );
 			if( genericTypeDefinition.IsNullOrErrorType() ) {
 				yield break;
 			}
 
 			foreach( ImmutableArray<string> genericTypeArguments in genericTypeArgumentSets ) {
-				if( TryGetGenericType( compilation, genericTypeDefinition, genericTypeArguments, out INamedTypeSymbol genericType ) ) {
+				if( TryGetGenericType( compilation, genericTypeDefinition, genericTypeArguments, out INamedTypeSymbol? genericType ) ) {
 					yield return genericType;
 				}
 			}
@@ -95,7 +105,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				Compilation compilation,
 				INamedTypeSymbol genericTypeDefinition,
 				ImmutableArray<string> genericTypeArguments,
-				out INamedTypeSymbol genericType
+				[NotNullWhen( true )] out INamedTypeSymbol? genericType
 			) {
 
 			INamedTypeSymbol[] genericTypeArgumentSymbols = new INamedTypeSymbol[ genericTypeArguments.Length ];
@@ -103,7 +113,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 			for( int i = 0; i < genericTypeArguments.Length; i++ ) {
 				string genericTypeArgumentName = genericTypeArguments[ i ];
 
-				INamedTypeSymbol genericTypeArgumentSymbol = compilation.GetTypeByMetadataName( genericTypeArgumentName );
+				INamedTypeSymbol? genericTypeArgumentSymbol = compilation.GetTypeByMetadataName( genericTypeArgumentName );
 				if( genericTypeArgumentSymbol.IsNullOrErrorType() ) {
 
 					genericType = null;
