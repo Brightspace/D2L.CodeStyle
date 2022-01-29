@@ -70,17 +70,17 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			return true;
 		}
 
-		private bool IsWellKnownDangerousMember( ISymbol memberSymbol ) {
+		private bool IsWellKnownDangerousMember( ISymbol member ) {
 
-			ISymbol originalDefinition = memberSymbol.OriginalDefinition;
+			ISymbol originalDefinition = member.OriginalDefinition;
 
 			if( m_dangerousMembers.Contains( originalDefinition ) ) {
 				return true;
 			}
 
-			if( !memberSymbol.Equals( originalDefinition, SymbolEqualityComparer.Default ) ) {
+			if( !member.Equals( originalDefinition, SymbolEqualityComparer.Default ) ) {
 
-				if( m_dangerousMembers.Contains( memberSymbol ) ) {
+				if( m_dangerousMembers.Contains( member ) ) {
 					return true;
 				}
 			}
