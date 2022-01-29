@@ -136,7 +136,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			// Generate a set of methods that we have specifically determined
 			// have a return value which should be considered Immutable by the Analyzer.
-			var knownImmutableReturnsBuilder = ImmutableHashSet.CreateBuilder<IMethodSymbol>();
+			var knownImmutableReturnsBuilder = ImmutableHashSet.CreateBuilder<IMethodSymbol>( SymbolEqualityComparer.Default );
 			foreach( ( string typeName, string methodName, string qualifiedAssembly ) in KnownImmutableReturningMethods ) {
 				INamedTypeSymbol type = GetTypeSymbol( compilationAssemblies, compilation, qualifiedAssembly, typeName );
 

@@ -49,7 +49,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 			}
 
 			IImmutableSet<ISymbol> genericRegisterMethods = GetGenericRegisterMethods( compilation )
-				.ToImmutableHashSet();
+				.ToImmutableHashSet( SymbolEqualityComparer.Default );
 
 			context.RegisterSyntaxNodeAction(
 					ctxt => AnalyzeMethodInvocation(

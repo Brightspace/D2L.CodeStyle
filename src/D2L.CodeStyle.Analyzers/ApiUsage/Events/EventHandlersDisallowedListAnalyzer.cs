@@ -68,7 +68,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 			IImmutableSet<INamedTypeSymbol> types = EventHandlersDisallowedList.DisallowedTypes
 				.SelectMany( genericType => GetGenericTypes( compilation, genericType.Key, genericType.Value ) )
-				.ToImmutableHashSet();
+				.ToImmutableHashSet<INamedTypeSymbol>( SymbolEqualityComparer.Default );
 
 			return types;
 		}

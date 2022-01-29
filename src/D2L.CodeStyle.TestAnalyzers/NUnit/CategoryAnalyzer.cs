@@ -231,7 +231,8 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 			}
 
 			ImmutableHashSet<INamedTypeSymbol> testAttributes = ImmutableHashSet
-				.Create(
+				.Create<INamedTypeSymbol>(
+					SymbolEqualityComparer.Default,
 					compilation.GetTypeByMetadataName( "NUnit.Framework.TestAttribute" ),
 					compilation.GetTypeByMetadataName( "NUnit.Framework.TestCaseAttribute" ),
 					compilation.GetTypeByMetadataName( "NUnit.Framework.TestCaseSourceAttribute" ),
