@@ -95,7 +95,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				return false;
 			}
 
-			bool isAuditAttribute = auditAttributes.IsOneOf( attributeClass );
+			bool isAuditAttribute = auditAttributes.Contains( attributeClass );
 			if( !isAuditAttribute ) {
 				return false;
 			}
@@ -215,7 +215,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				INamedTypeSymbol? Unaudited
 			) {
 
-			public bool IsOneOf( INamedTypeSymbol attribute ) {
+			public bool Contains( INamedTypeSymbol attribute ) {
 
 				if( attribute.Equals( Audited, SymbolEqualityComparer.Default ) ) {
 					return true;
