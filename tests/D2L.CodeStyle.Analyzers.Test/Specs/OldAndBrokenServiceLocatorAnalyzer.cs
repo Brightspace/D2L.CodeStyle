@@ -64,7 +64,7 @@ namespace D2L.CodeStyle.Analyzers.OldAndBrokenLocator.Examples {
 
 		public void Uses_ICustomObjectActivator() {
 			/* OldAndBrokenLocatorIsObsolete */ ICustomObjectActivator /**/ activator = default;
-			/* OldAndBrokenLocatorIsObsolete */ activator /**/.Create();
+			/* OldAndBrokenLocatorIsObsolete */ activator /**/.Create<string>();
 			Func<string> activatorFunc = /* OldAndBrokenLocatorIsObsolete */ activator /**/.Create<string>;
 		}
 
@@ -104,6 +104,16 @@ namespace D2L.CodeStyle.Analyzers.OldAndBrokenLocator.Examples {
 			IServiceLocator ok = OldAndBrokenServiceLocator.Instance;
 			IServiceLocator alsoOk = OldAndBrokenServiceLocatorFactory.Create();
 			return 0;
+		}
+	}
+
+	[DIFramework]
+	public sealed class DIFrameworkUsageInNestedClass {
+		private static class Nested {
+			public static void Usage() {
+				IServiceLocator ok = OldAndBrokenServiceLocator.Instance;
+				IServiceLocator alsoOk = OldAndBrokenServiceLocatorFactory.Create();
+			}
 		}
 	}
 }
