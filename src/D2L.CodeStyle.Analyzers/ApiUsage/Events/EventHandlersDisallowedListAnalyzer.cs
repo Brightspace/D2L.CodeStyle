@@ -26,20 +26,20 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 			Compilation compilation = context.Compilation;
 
-			IImmutableSet<INamedTypeSymbol> disallowedTypes = GetDisallowedTypes( compilation );
-			if( disallowedTypes.Count == 0 ) {
+			IImmutableSet<INamedTypeSymbol> disallowedEventHandlerInterfaces = GetDisallowedEventHandlerInterfaces( compilation );
+			if( disallowedEventHandlerInterfaces.Count == 0 ) {
 				return;
 			}
 
 			context.RegisterSymbolAction(
-					c => AnalyzeType( c, disallowedTypes, (INamedTypeSymbol)c.Symbol ),
+					c => AnalyzeType( c, disallowedEventHandlerInterfaces, (INamedTypeSymbol)c.Symbol ),
 					SymbolKind.NamedType
 				);
 		}
 
 		private static void AnalyzeType(
 				SymbolAnalysisContext context,
-				IImmutableSet<INamedTypeSymbol> disallowedTypes,
+				IImmutableSet<INamedTypeSymbol> disallowedEventHandlerInterfaces,
 				INamedTypeSymbol type
 			) {
 
@@ -50,7 +50,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 			foreach( INamedTypeSymbol @interface in interfaces ) {
 
-				if( disallowedTypes.Contains( @interface ) ) {
+				if( disallowedEventHandlerInterfaces.Contains( @interface ) ) {
 					ReportEventHandlerDisallowed( context, type, @interface );
 				}
 			}
@@ -74,7 +74,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 			context.ReportDiagnostic( diagnostic );
 		}
 
-		private static IImmutableSet<INamedTypeSymbol> GetDisallowedTypes( Compilation compilation ) {
+		private static IImmutableSet<INamedTypeSymbol> GetDisallowedEventHandlerInterfaces( Compilation compilation ) {
 
 			IImmutableSet<INamedTypeSymbol> types = EventHandlersDisallowedList.DisallowedTypes
 				.SelectMany( genericType => GetGenericTypes( compilation, genericType.Key, genericType.Value ) )
