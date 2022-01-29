@@ -130,7 +130,7 @@ namespace D2L.CodeStyle.Analyzers.Contract {
 				return false;
 			}
 
-			return litExpr.Token.Kind() == SyntaxKind.NullKeyword;
+			return litExpr.Token.IsKind( SyntaxKind.NullKeyword );
 		}
 
 		private static bool SymbolHasAttribute(
