@@ -8,11 +8,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 
 	internal sealed class DangerousMembersModel {
 
-		private readonly record struct AuditAttributePair(
-				INamedTypeSymbol? Audited,
-				INamedTypeSymbol? Unaudited
-			);
-
 		private const string DangerousMethodAuditedAttributeFullName = "D2L.CodeStyle.Annotations.DangerousMethodUsage+AuditedAttribute";
 		private const string DangerousMethodUnauditedAttributeFullName = "D2L.CodeStyle.Annotations.DangerousMethodUsage+UnauditedAttribute";
 
@@ -96,15 +91,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			) {
 
 			INamedTypeSymbol? attributeClass = attribute.AttributeClass;
-			if( attributeClass == null ) {
+			if( attributeClass.IsNullOrErrorType() ) {
 				return false;
 			}
 
-			bool isAudited = (
-					attributeClass.Equals( auditAttributes.Audited, SymbolEqualityComparer.Default )
-					|| attributeClass.Equals( auditAttributes.Unaudited, SymbolEqualityComparer.Default )
-				);
-			if( !isAudited ) {
+			bool isAuditAttribute = auditAttributes.IsOneOf( attributeClass );
+			if( !isAuditAttribute ) {
 				return false;
 			}
 
@@ -216,6 +208,25 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			}
 
 			return builder.ToImmutable();
+		}
+
+		private readonly record struct AuditAttributePair(
+				INamedTypeSymbol? Audited,
+				INamedTypeSymbol? Unaudited
+			) {
+
+			public bool IsOneOf( INamedTypeSymbol attribute ) {
+
+				if( attribute.Equals( Audited, SymbolEqualityComparer.Default ) ) {
+					return true;
+				}
+
+				if( attribute.Equals( Unaudited, SymbolEqualityComparer.Default ) ) {
+					return true;
+				}
+
+				return false;
+			}
 		}
 	}
 }

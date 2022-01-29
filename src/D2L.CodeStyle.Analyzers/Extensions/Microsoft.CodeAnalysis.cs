@@ -43,7 +43,7 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			return fullyQualifiedName;
 		}
 
-		public static bool IsNullOrErrorType( [NotNullWhen( true )] this ITypeSymbol? symbol ) {
+		public static bool IsNullOrErrorType( [NotNullWhen( false )] this ITypeSymbol? symbol ) {
 			if( symbol == null ) {
 				return true;
 			}
@@ -57,7 +57,7 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			return false;
 		}
 
-		public static bool IsNullOrErrorType( [NotNullWhen( true )] this ISymbol? symbol ) {
+		public static bool IsNullOrErrorType( [NotNullWhen( false )] this ISymbol? symbol ) {
 			if( symbol == null ) {
 				return true;
 			}
