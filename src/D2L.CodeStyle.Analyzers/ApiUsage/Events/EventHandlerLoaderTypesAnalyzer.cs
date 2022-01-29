@@ -37,12 +37,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 			Compilation compilation = context.Compilation;
 
-			INamedTypeSymbol eventAttributeType = compilation.GetTypeByMetadataName( EventAttributeFullName );
+			INamedTypeSymbol? eventAttributeType = compilation.GetTypeByMetadataName( EventAttributeFullName );
 			if( eventAttributeType.IsNullOrErrorType() ) {
 				return;
 			}
 
-			INamedTypeSymbol eventHandlerAttributeType = compilation.GetTypeByMetadataName( EventHandlerAttributeFullName );
+			INamedTypeSymbol? eventHandlerAttributeType = compilation.GetTypeByMetadataName( EventHandlerAttributeFullName );
 			if( eventHandlerAttributeType.IsNullOrErrorType() ) {
 				return;
 			}
@@ -102,7 +102,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 			bool hasAttr = eventTypeSymbol
 				.GetAttributes()
-				.Any( attr => attr.AttributeClass.Equals( eventAttributeType, SymbolEqualityComparer.Default ) );
+				.Any( attr => SymbolEqualityComparer.Default.Equals( attr.AttributeClass, eventAttributeType ) );
 
 			if( hasAttr ) {
 				return;
@@ -126,7 +126,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 			bool hasAttr = eventHandlerSymbol
 				.GetAttributes()
-				.Any( attr => attr.AttributeClass.Equals( eventHandlerAttributeType, SymbolEqualityComparer.Default ) );
+				.Any( attr => SymbolEqualityComparer.Default.Equals( attr.AttributeClass, eventHandlerAttributeType ) );
 
 			if( hasAttr ) {
 				return;
@@ -143,7 +143,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 		private static IEnumerable<ISymbol> GetGenericRegisterMethods( Compilation compilation ) {
 
-			INamedTypeSymbol registryType = compilation.GetTypeByMetadataName( IEventHandlerRegistryFullName );
+			INamedTypeSymbol? registryType = compilation.GetTypeByMetadataName( IEventHandlerRegistryFullName );
 			if( registryType.IsNullOrErrorType() ) {
 				return Enumerable.Empty<ISymbol>();
 			}
