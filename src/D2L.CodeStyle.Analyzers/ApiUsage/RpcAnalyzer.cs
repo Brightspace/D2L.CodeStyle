@@ -48,7 +48,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				return;
 			}
 
-			ImmutableHashSet<INamedTypeSymbol> knownRpcParameterTypes = ImmutableHashSet.Create<INamedTypeSymbol>(
+			ImmutableHashSet<ITypeSymbol> knownRpcParameterTypes = ImmutableHashSet.Create<ITypeSymbol>(
 				SymbolEqualityComparer.Default,
 				context.Compilation.GetSpecialType( SpecialType.System_Boolean ),
 				context.Compilation.GetSpecialType( SpecialType.System_Decimal ),
@@ -66,7 +66,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 
 			RpcTypes rpcTypes = new(
 				RpcAttribute: rpcAttributeType,
-				RpcContexts: ImmutableHashSet.Create<INamedTypeSymbol>(
+				RpcContexts: ImmutableHashSet.Create<ITypeSymbol>(
 					SymbolEqualityComparer.Default,
 					rpcContextType,
 					rpcPostContextType,
@@ -218,12 +218,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 
 		private sealed record RpcTypes(
 			INamedTypeSymbol RpcAttribute,
-			ImmutableHashSet<INamedTypeSymbol> RpcContexts,
+			ImmutableHashSet<ITypeSymbol> RpcContexts,
 			INamedTypeSymbol DependencyAttribute,
 			INamedTypeSymbol IDeserializable,
 			INamedTypeSymbol IDeserializer,
 			INamedTypeSymbol IDictionary,
-			ImmutableHashSet<INamedTypeSymbol> KnownRpcParameters
+			ImmutableHashSet<ITypeSymbol> KnownRpcParameters
 		);
 	}
 }

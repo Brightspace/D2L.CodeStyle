@@ -54,7 +54,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			private static readonly SyntaxToken READONLY_SYNTAX
 				= SyntaxFactory.Token( SyntaxKind.ReadOnlyKeyword );
-			private async static Task<Document> AddReadonlyModifier(
+			private static Task<Document> AddReadonlyModifier(
 				Document doc,
 				SyntaxNode root,
 				StructDeclarationSyntax declaration,
@@ -66,7 +66,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 				root = root.ReplaceNode( declaration, declaration.WithModifiers( modifiers ) );
 				doc = doc.WithSyntaxRoot( root );
-				return doc;
+				return Task.FromResult( doc );
 			}
 
 			private static int GetModifierInsertLocation(
