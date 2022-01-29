@@ -1,11 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
+﻿using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
@@ -51,38 +48,27 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 			IImmutableSet<ISymbol> genericRegisterMethods = GetGenericRegisterMethods( compilation )
 				.ToImmutableHashSet( SymbolEqualityComparer.Default );
 
-			context.RegisterSyntaxNodeAction(
+			context.RegisterOperationAction(
 					ctxt => AnalyzeMethodInvocation(
 						ctxt,
-						(InvocationExpressionSyntax)ctxt.Node,
+						(IInvocationOperation)ctxt.Operation,
 						eventAttributeType,
 						eventHandlerAttributeType,
 						genericRegisterMethods
 					),
-					SyntaxKind.InvocationExpression
+					OperationKind.Invocation
 				);
 		}
 
 		private void AnalyzeMethodInvocation(
-				SyntaxNodeAnalysisContext context,
-				InvocationExpressionSyntax invocation,
+				OperationAnalysisContext context,
+				IInvocationOperation invocation,
 				INamedTypeSymbol eventAttributeType,
 				INamedTypeSymbol eventHandlerAttributeType,
 				IImmutableSet<ISymbol> genericRegisterMethods
 			) {
 
-			ISymbol expessionSymbol = context.SemanticModel
-				.GetSymbolInfo( invocation.Expression, context.CancellationToken )
-				.Symbol;
-
-			if( expessionSymbol.IsNullOrErrorType() ) {
-				return;
-			}
-
-			if( !( expessionSymbol is IMethodSymbol methodSymbol ) ) {
-				return;
-			}
-
+			IMethodSymbol methodSymbol = invocation.TargetMethod;
 			if( !methodSymbol.IsGenericMethod ) {
 				return;
 			}
@@ -106,8 +92,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 		}
 
 		private static void InspectEventType(
-				SyntaxNodeAnalysisContext context,
-				InvocationExpressionSyntax invocation,
+				OperationAnalysisContext context,
+				IInvocationOperation invocation,
 				INamedTypeSymbol eventAttributeType,
 				ITypeSymbol eventTypeSymbol
 			) {
@@ -122,7 +108,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 			Diagnostic diagnostic = Diagnostic.Create(
 					Diagnostics.EventTypeMissingEventAttribute,
-					invocation.GetLocation(),
+					invocation.Syntax.GetLocation(),
 					eventTypeSymbol.ToDisplayString()
 				);
 
@@ -130,8 +116,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 		}
 
 		private static void InspectEventHandlerType(
-				SyntaxNodeAnalysisContext context,
-				InvocationExpressionSyntax invocation,
+				OperationAnalysisContext context,
+				IInvocationOperation invocation,
 				INamedTypeSymbol eventHandlerAttributeType,
 				ITypeSymbol eventHandlerSymbol
 			) {
@@ -146,7 +132,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 			Diagnostic diagnostic = Diagnostic.Create(
 					Diagnostics.EventHandlerTypeMissingEventAttribute,
-					invocation.GetLocation(),
+					invocation.Syntax.GetLocation(),
 					eventHandlerSymbol.ToDisplayString()
 				);
 
