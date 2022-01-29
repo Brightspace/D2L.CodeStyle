@@ -27,7 +27,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 			Compilation compilation = context.Compilation;
 
 			IImmutableSet<INamedTypeSymbol> disallowedEventHandlerInterfaces = GetDisallowedEventHandlerInterfaces( compilation );
-			if( disallowedEventHandlerInterfaces.Count == 0 ) {
+			if( disallowedEventHandlerInterfaces.IsEmpty ) {
 				return;
 			}
 
