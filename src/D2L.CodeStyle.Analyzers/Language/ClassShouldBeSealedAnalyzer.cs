@@ -121,7 +121,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			var firstDecl = symbol
 				.DeclaringSyntaxReferences
 				.First()
-				.GetSyntax();
+				.GetSyntax( context.CancellationToken );
 
 			if ( firstDecl is TypeDeclarationSyntax declaration ) {
 				// at this point we know its a class, its private or internal and its not sealed
