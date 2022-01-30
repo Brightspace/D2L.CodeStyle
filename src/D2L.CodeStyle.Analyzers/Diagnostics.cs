@@ -1,5 +1,3 @@
-#nullable disable
-
 using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers {
