@@ -80,7 +80,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			AnalyzeMethod(
 				ctx.ReportDiagnostic,
 				baseMethod: method.OverriddenMethod,
-				implMethod: method
+				implMethod: method,
+				ctx.CancellationToken
 			);
 		}
 
@@ -137,7 +138,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				AnalyzeMethod(
 					ctx.ReportDiagnostic,
 					baseMethod: ifaceMethod,
-					implMethod: implMethod
+					implMethod: implMethod,
+					ctx.CancellationToken
 				);
 			}
 		}
@@ -145,7 +147,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		private static void AnalyzeMethod(
 			Action<Diagnostic> reportDiagnostic,
 			IMethodSymbol baseMethod,
-			IMethodSymbol implMethod
+			IMethodSymbol implMethod,
+			CancellationToken cancellationToken
 		) {
 			foreach( var implParameter in implMethod.Parameters ) {
 				// The order of parameters in both methods will line up
@@ -170,7 +173,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					reportDiagnostic(
 						Diagnostic.Create(
 							Diagnostics.IncludeDefaultValueInOverrideForReadability,
-							GetLocation( implParameter ),
+							GetLocation( implParameter, cancellationToken ),
 							implParameter.Name,
 							baseMethod.ContainingType.Name
 						)
@@ -185,7 +188,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					reportDiagnostic(
 						Diagnostic.Create(
 							Diagnostics.DontIntroduceNewDefaultValuesInOverrides,
-							GetLocation( implParameter ),
+							GetLocation( implParameter, cancellationToken ),
 							implParameter.Name,
 							baseMethod.ContainingType.Name
 						)
@@ -212,7 +215,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					reportDiagnostic(
 						Diagnostic.Create(
 							Diagnostics.DefaultValuesInOverridesShouldBeConsistent,
-							GetLocation( implParameter ),
+							GetLocation( implParameter, cancellationToken ),
 							implParameter.Name,
 							FormatDefaultValue( implDefault ),
 							FormatDefaultValue( baseDefault ),
@@ -235,10 +238,10 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			return val.ToString();
 		}
 
-		private static Location GetLocation( IParameterSymbol param ) {
+		private static Location GetLocation( IParameterSymbol param, CancellationToken cancellationToken ) {
 			return param
 				.DeclaringSyntaxReferences[0]
-				.GetSyntax()
+				.GetSyntax( cancellationToken )
 				.GetLocation();
 		}
 	}
