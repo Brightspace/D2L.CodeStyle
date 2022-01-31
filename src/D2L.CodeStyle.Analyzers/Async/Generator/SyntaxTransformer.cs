@@ -82,11 +82,7 @@ public abstract class SyntaxTransformer {
 		Func<T, U?> transformer
 	) where T : SyntaxNode
 	  where U : SyntaxNode
-	=> SyntaxFactory.List(
-		(IEnumerable<U>)input // Cast away the ? because of the Where filter
-			.Select( transformer )
-			.Where( NotNull )
-	);
+	=> SyntaxFactory.List( TransformAllCore( input, transformer ) );
 
 	/// <summary>
 	/// Transform every element of a SeparatedSyntaxList and filter out nulls.
@@ -96,23 +92,29 @@ public abstract class SyntaxTransformer {
 		Func<T, U?> transformer
 	) where T : SyntaxNode
 	  where U : SyntaxNode
-	=> SyntaxFactory.SeparatedList(
-		(IEnumerable<U>)input // Cast away the ? because of the Where filter
-			.Select( transformer )
-			.Where( NotNull )
-	);
+	=> SyntaxFactory.SeparatedList( TransformAllCore( input, transformer ) );
 
 	/// <summary>
-	/// Transform every element of a SyntaxTokenList and filter out nulls.
+	/// Transform every element of a SyntaxTokenList and filter out default tokens.
 	/// </summary>
 	protected SyntaxTokenList TransformAll(
 		SyntaxTokenList input,
-		Func<SyntaxToken, SyntaxToken?> transformer
+		Func<SyntaxToken, SyntaxToken> transformer
 	) => SyntaxFactory.TokenList(
-		input.Select( transformer )
-			.Where( NotNull )
-			.Select( static t => t!.Value )
+		TransformAllCore( input, transformer )
 	);
 
-	private static bool NotNull<T>( T? t ) => t != null;
+	private static IEnumerable<U> TransformAllCore<T, U>(
+		IEnumerable<T> input,
+		Func<T, U?> transformer
+	) {
+		foreach( var node in input ) {
+			var transformed = transformer( node );
+
+			if( transformed != null ) {
+				yield return transformed;
+			}
+		}
+	}
 }
+
