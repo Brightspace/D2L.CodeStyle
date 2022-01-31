@@ -29,7 +29,7 @@ public abstract class SyntaxTransformer {
 		T? Value,
 		ImmutableArray<Diagnostic> Diagnostics
 	) {
-		public bool Success => Diagnostics.Length == 0;
+		public bool Success => Diagnostics.IsEmpty;
 
 		public TransformResult( ImmutableArray<Diagnostic> diagnostics ) : this(
 			Value: default,
@@ -46,7 +46,7 @@ public abstract class SyntaxTransformer {
 		var result = m_diagnostics.ToImmutable();
 		m_diagnostics.Clear();
 
-		if( result.Length == 0 ) {
+		if( result.IsEmpty ) {
 			return new( value );
 		}
 
