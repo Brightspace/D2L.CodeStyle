@@ -89,13 +89,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 		) {
 			foreach( IArgumentOperation arg in invocationSyntax.Arguments ) {
 
-				IParameterSymbol? parameter = arg.Parameter;
-				if( parameter != null ) {
+				IParameterSymbol parameter = arg.Parameter!; // config name isn't an args list parameter
 
-					if( parameter.Name == "configName" ) {
-						configNameArg = arg.Value;
-						return true;
-					}
+				if( parameter.Name == "configName" ) {
+					configNameArg = arg.Value;
+					return true;
 				}
 			}
 
@@ -113,6 +111,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 				return false;
 			}
 
+			// when null constant is passed as the config name
 			if( !( maybeConfigName.Value is string stringValue ) ) {
 				configName = null;
 				return false;
