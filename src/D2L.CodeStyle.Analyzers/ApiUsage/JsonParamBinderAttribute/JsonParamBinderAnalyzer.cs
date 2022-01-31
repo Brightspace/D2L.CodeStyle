@@ -1,7 +1,4 @@
-#nullable disable
-
 using System.Collections.Immutable;
-using System.Linq;
 using D2L.CodeStyle.Analyzers.Helpers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -66,7 +63,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 				return;
 			}
 
-			ISymbol methodSymbol = context.ContainingSymbol;
+			ISymbol? methodSymbol = context.ContainingSymbol;
+			if( methodSymbol == null ) {
+				return;
+			}
+
 			if( methodSymbol.Kind != SymbolKind.Method ) {
 				return;
 			}
@@ -111,7 +112,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 				}
 			}
 
-			Location diagnosticLocation = namedType.Locations.FirstOrDefault();
+			Location? diagnosticLocation = namedType.Locations.FirstOrDefault();
 			if( diagnosticLocation != null ) {
 				allowedTypeList.ReportEntryAsUnnecesary(
 					entry: namedType,

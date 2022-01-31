@@ -1,5 +1,3 @@
-#nullable disable
-
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -16,7 +14,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 			;
 		}
 
-		internal override DependencyRegistration GetRegistration(
+		internal override DependencyRegistration? GetRegistration(
 			IMethodSymbol method,
 			SeparatedSyntaxList<ArgumentSyntax> arguments,
 			SemanticModel semanticModel,

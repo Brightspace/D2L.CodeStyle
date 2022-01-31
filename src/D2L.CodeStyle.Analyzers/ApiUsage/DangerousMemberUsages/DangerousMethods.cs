@@ -1,10 +1,5 @@
-#nullable disable
-
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 
@@ -54,7 +49,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				}
 			)
 
-			.AddMethod( 
+			.AddMethod(
 				"Transfer",
 				new[] {
 					"System.Web.HttpServerUtility",

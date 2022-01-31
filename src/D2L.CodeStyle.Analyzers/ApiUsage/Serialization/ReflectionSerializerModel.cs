@@ -1,9 +1,5 @@
-#nullable disable
-
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
@@ -48,7 +44,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 			var propertyNames = ImmutableHashSet.CreateBuilder( StringComparer.OrdinalIgnoreCase );
 
-			INamedTypeSymbol currentType = type;
+			INamedTypeSymbol? currentType = type;
 			do {
 				ImmutableArray<ISymbol> members = currentType.GetMembers();
 
@@ -89,7 +85,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				return false;
 			}
 
-			IMethodSymbol getMethod = property.GetMethod;
+			IMethodSymbol? getMethod = property.GetMethod;
 			if( getMethod == null ) {
 				return false;
 			}
@@ -105,14 +101,14 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			return HasAttributeOfType( symbol, m_ignoreAttributeType, out _ );
 		}
 
-		public bool HasReflectionSerializerAttribute( INamedTypeSymbol symbol, out AttributeData attribute ) {
+		public bool HasReflectionSerializerAttribute( INamedTypeSymbol symbol, [NotNullWhen( true )] out AttributeData? attribute ) {
 			return HasAttributeOfType( symbol, m_reflectionSerializerAttributeType, out attribute );
 		}
 
 		private bool HasAttributeOfType(
 				ISymbol symbol,
 				INamedTypeSymbol type,
-				out AttributeData attributeData
+				[NotNullWhen( true )] out AttributeData? attributeData
 			) {
 
 			ImmutableArray<AttributeData> attributes = symbol.GetAttributes();

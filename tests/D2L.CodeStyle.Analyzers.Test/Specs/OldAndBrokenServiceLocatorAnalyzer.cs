@@ -25,6 +25,16 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 	public class OldAndBrokenServiceLocatorFactory {
 		public static IServiceLocator Create() { return null; }
 	}
+
+	public static class ObjectActivatorExtensions {
+		public static bool TryCreateInstance<T, TF>(
+			this IObjectActivator activator,
+			out T instance
+		) {
+			instance = null;
+			return false;
+		}
+	}
 }
 
 namespace D2L.LP.Extensibility.Activation.Domain.Default.StaticDI {
@@ -48,29 +58,35 @@ namespace D2L.CodeStyle.Analyzers.OldAndBrokenLocator.Examples {
 		public BadClass() { }
 
 		public void Uses_OldAndBrokenServiceLocator() {
-			IServiceLocator locator = /* OldAndBrokenLocatorIsObsolete */ OldAndBrokenServiceLocator /**/.Instance;
+			IServiceLocator locator = /* OldAndBrokenLocatorIsObsolete */ OldAndBrokenServiceLocator.Instance /**/;
 		}
 
 		public void Uses_OldAndBrokenServiceLocatorFactory() {
-			IServiceLocator locator = /* OldAndBrokenLocatorIsObsolete */ OldAndBrokenServiceLocatorFactory /**/.Create();
-			Func<IServiceLocator> locatorFactory =  /* OldAndBrokenLocatorIsObsolete */ OldAndBrokenServiceLocatorFactory /**/.Create;
+			IServiceLocator locator = /* OldAndBrokenLocatorIsObsolete */ OldAndBrokenServiceLocatorFactory.Create() /**/;
+			Func<IServiceLocator> locatorFactory =  /* OldAndBrokenLocatorIsObsolete */ OldAndBrokenServiceLocatorFactory.Create /**/;
 		}
 
 		public void Uses_IObjectActivator() {
-			/* OldAndBrokenLocatorIsObsolete */ IObjectActivator /**/ activator = default;
-			/* OldAndBrokenLocatorIsObsolete */ activator /**/.Create<string>();
-			Func<string> activatorFunc = /* OldAndBrokenLocatorIsObsolete */ activator /**/.Create<string>;
+			IObjectActivator activator = default;
+			/* OldAndBrokenLocatorIsObsolete */ activator.Create<string>() /**/;
+			Func<string> activatorFunc = /* OldAndBrokenLocatorIsObsolete */ activator.Create<string> /**/;
+		}
+
+		public void Uses_IObjectActivatorExtension() {
+			IObjectActivator activator = default;
+			/* OldAndBrokenLocatorIsObsolete */ activator.TryCreateInstance<string, string>( out string instance ) /**/;
+			var x = /* OldAndBrokenLocatorIsObsolete */ activator.TryCreateInstance<string, string> /**/;
 		}
 
 		public void Uses_ICustomObjectActivator() {
-			/* OldAndBrokenLocatorIsObsolete */ ICustomObjectActivator /**/ activator = default;
-			/* OldAndBrokenLocatorIsObsolete */ activator /**/.Create<string>();
-			Func<string> activatorFunc = /* OldAndBrokenLocatorIsObsolete */ activator /**/.Create<string>;
+			ICustomObjectActivator activator = default;
+			/* OldAndBrokenLocatorIsObsolete */ activator.Create<string>() /**/;
+			Func<string> activatorFunc = /* OldAndBrokenLocatorIsObsolete */ activator.Create<string> /**/;
 		}
 
 		public void Uses_StaticDILocator() {
-			ISimpleActivator activator = /* OldAndBrokenLocatorIsObsolete */ StaticDILocator /**/.Current;
-			ISimpleActivator activator = /* OldAndBrokenLocatorIsObsolete */ StaticDILocator /**/.CreateIsolatedActivator();
+			ISimpleActivator activator = /* OldAndBrokenLocatorIsObsolete */ StaticDILocator.Current /**/;
+			ISimpleActivator activator = /* OldAndBrokenLocatorIsObsolete */ StaticDILocator.CreateIsolatedActivator() /**/;
 		}
 	}
 

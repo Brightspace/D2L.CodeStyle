@@ -38,7 +38,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
-			IEnumerable<IdentifierNameSyntax> usingAliases = GetUsingAliases( attribute );
+			IEnumerable<IdentifierNameSyntax> usingAliases = GetUsingAliases( attribute, context.CancellationToken  );
 			foreach( IdentifierNameSyntax usingAlias in usingAliases ) {
 
 				if( !IsEquivalentToUsingAlias( attributeName, usingAlias ) ) {
@@ -81,11 +81,15 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			return equivalent;
 		}
 
-		private IEnumerable<IdentifierNameSyntax> GetUsingAliases( AttributeSyntax attribute ) {
+		private IEnumerable<IdentifierNameSyntax> GetUsingAliases(
+				AttributeSyntax attribute,
+				CancellationToken cancellationToken
+			) {
 
-			IEnumerable<UsingDirectiveSyntax> rootUsingDirectives = attribute.Ancestors()
-				.OfType<CompilationUnitSyntax>()
-				.SelectMany( compilationUnit => compilationUnit.Usings );
+			IEnumerable<UsingDirectiveSyntax> rootUsingDirectives = attribute
+				.SyntaxTree
+				.GetCompilationUnitRoot( cancellationToken )
+				.Usings;
 
 			IEnumerable<UsingDirectiveSyntax> namespacedUsingDirectives = attribute
 				.Ancestors()

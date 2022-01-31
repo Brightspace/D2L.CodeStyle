@@ -187,5 +187,24 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 
 			return result.ToImmutable();
 		}
+
+		public static ImmutableArray<INamedTypeSymbol> GetAllContainingTypes( this ISymbol symbol ) {
+
+			INamedTypeSymbol containingType = symbol.ContainingType;
+			if( containingType == null ) {
+				return ImmutableArray<INamedTypeSymbol>.Empty;
+			}
+
+			var builder = ImmutableArray.CreateBuilder<INamedTypeSymbol>();
+
+			while( containingType != null ) {
+
+				builder.Add( containingType );
+				containingType = containingType.ContainingType;
+			}
+
+			builder.Reverse();
+			return builder.ToImmutable();
+		}
 	}
 }
