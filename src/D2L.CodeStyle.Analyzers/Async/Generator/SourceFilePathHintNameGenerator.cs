@@ -106,7 +106,7 @@ namespace D2L.CodeStyle.Analyzers.Async.Generator {
 
 				used.Add( candidate );
 
-				yield return candidate;
+				yield return candidate + ".g";
 			}
 		}
 	}

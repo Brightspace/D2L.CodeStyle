@@ -24,7 +24,7 @@ internal class SourceFilePathHintNameGeneratorTests {
 
 		CollectionAssert.AreEqual(
 			ImmutableArray.Create(
-				"bar"
+				"bar.g"
 			),
 			gen.GetHintNames()
 		);
@@ -41,8 +41,8 @@ internal class SourceFilePathHintNameGeneratorTests {
 
 		CollectionAssert.AreEqual(
 			ImmutableArray.Create(
-				"bar",
-				"baz"
+				"bar.g",
+				"baz.g"
 			),
 			gen.GetHintNames()
 		);
@@ -62,9 +62,9 @@ internal class SourceFilePathHintNameGeneratorTests {
 
 		CollectionAssert.AreEqual(
 			ImmutableArray.Create(
-				"sub_bar",
-				"sub_baz",
-				"quux"
+				"sub_bar.g",
+				"sub_baz.g",
+				"quux.g"
 			),
 			gen.GetHintNames()
 		);
@@ -84,9 +84,9 @@ internal class SourceFilePathHintNameGeneratorTests {
 
 		CollectionAssert.AreEqual(
 			ImmutableArray.Create(
-				"sub_bar",
-				"sub_baz",
-				"sub_bar0"
+				"sub_bar.g",
+				"sub_baz.g",
+				"sub_bar0.g"
 			),
 			gen.GetHintNames()
 		);
@@ -103,8 +103,8 @@ internal class SourceFilePathHintNameGeneratorTests {
 
 		CollectionAssert.AreEqual(
 			ImmutableArray.Create(
-				@"C_foo_bar_abc",
-				@"D_foo_bar_baz_def"
+				@"C_foo_bar_abc.g",
+				@"D_foo_bar_baz_def.g"
 			),
 			gen.GetHintNames()
 		);
@@ -122,9 +122,9 @@ internal class SourceFilePathHintNameGeneratorTests {
 
 		CollectionAssert.AreEqual(
 			ImmutableArray.Create(
-				"bar_abc",
-				"def",
-				"bar_baz_ghi"
+				"bar_abc.g",
+				"def.g",
+				"bar_baz_ghi.g"
 			),
 			gen.GetHintNames()
 		);
