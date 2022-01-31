@@ -1,6 +1,3 @@
-#nullable disable
-
-using System.Collections.Generic;
 using System.Collections.Immutable;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {

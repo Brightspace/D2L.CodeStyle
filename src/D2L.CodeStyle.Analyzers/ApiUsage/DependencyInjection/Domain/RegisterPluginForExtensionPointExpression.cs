@@ -1,6 +1,3 @@
-#nullable disable
-
-using System;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -22,7 +19,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 				&& method.TypeArguments.Length == 3;
 		}
 
-		internal override DependencyRegistration GetRegistration(
+		internal override DependencyRegistration? GetRegistration(
 			IMethodSymbol method,
 			SeparatedSyntaxList<ArgumentSyntax> arguments,
 			SemanticModel semanticModel,

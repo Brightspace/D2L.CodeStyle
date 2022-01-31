@@ -33,10 +33,15 @@ namespace DisallowedImplementations {
 	using D2L.LP.Distributed.Events.ExternalPublish.UserInteraction;
 	using D2L.LP.Distributed.Events.Handlers;
 
-	public sealed class UserInteractionEventHandler :/* EventHandlerDisallowed(D2L.LP.Distributed.Events.Handlers.IEventHandler<D2L.LP.Distributed.Events.ExternalPublish.UserInteraction.UserInteractionEvent>) */ IEventHandler<UserInteractionEvent> /**/{ }
-	public sealed class UserInteractionOrgEventHandler :/* EventHandlerDisallowed(D2L.LP.Distributed.Events.Handlers.IOrgEventHandler<D2L.LP.Distributed.Events.ExternalPublish.UserInteraction.UserInteractionEvent>) */ IOrgEventHandler<UserInteractionEvent> /**/{ }
+	public sealed class /* EventHandlerDisallowed(D2L.LP.Distributed.Events.Handlers.IEventHandler<D2L.LP.Distributed.Events.ExternalPublish.UserInteraction.UserInteractionEvent>) */ UserInteractionEventHandler /**/
+		: IEventHandler<UserInteractionEvent> { }
 
-	public sealed class UserInteractionOrgEventHandler : IOrgEventHandler<string>,/* EventHandlerDisallowed(D2L.LP.Distributed.Events.Handlers.IOrgEventHandler<D2L.LP.Distributed.Events.ExternalPublish.UserInteraction.UserInteractionEvent>) */ IOrgEventHandler<UserInteractionEvent> /**/{ }
-	public sealed class UserInteractionOrgEventHandler :/* EventHandlerDisallowed(D2L.LP.Distributed.Events.Handlers.IOrgEventHandler<D2L.LP.Distributed.Events.ExternalPublish.UserInteraction.UserInteractionEvent>) */ IOrgEventHandler<UserInteractionEvent> /**/, IOrgEventHandler<string> { }
+	public sealed class /* EventHandlerDisallowed(D2L.LP.Distributed.Events.Handlers.IOrgEventHandler<D2L.LP.Distributed.Events.ExternalPublish.UserInteraction.UserInteractionEvent>) */ UserInteractionOrgEventHandler /**/
+		: IOrgEventHandler<UserInteractionEvent> { }
 
+	public sealed class /* EventHandlerDisallowed(D2L.LP.Distributed.Events.Handlers.IOrgEventHandler<D2L.LP.Distributed.Events.ExternalPublish.UserInteraction.UserInteractionEvent>) */ MultiEventHandler_UserInteractionOrgEventHandler_First /**/
+		: IOrgEventHandler<UserInteractionEvent>, IOrgEventHandler<string> { }
+
+	public sealed class /* EventHandlerDisallowed(D2L.LP.Distributed.Events.Handlers.IOrgEventHandler<D2L.LP.Distributed.Events.ExternalPublish.UserInteraction.UserInteractionEvent>) */ MultiEventHandler_UserInteractionOrgEventHandler_Last /**/
+		: IOrgEventHandler<string>, IOrgEventHandler<UserInteractionEvent> { }
 }

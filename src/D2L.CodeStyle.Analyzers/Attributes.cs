@@ -1,10 +1,8 @@
-#nullable disable
-
-using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers {
+
 	internal static class Attributes {
 
 		internal static readonly RoslynAttribute Singleton = new RoslynAttribute( "D2L.LP.Extensibility.Activation.Domain.SingletonAttribute" );
@@ -19,29 +17,23 @@ namespace D2L.CodeStyle.Analyzers {
 				m_fullTypeName = fullTypeName;
 			}
 
-			internal ImmutableArray<AttributeData> GetAll( ISymbol s ) {
-				var arr = ImmutableArray.CreateBuilder<AttributeData>();
+			internal bool IsDefined( ISymbol type ) {
 
-				foreach( var attr in s.GetAttributes() ) {
-					var attrFullTypeName = attr.AttributeClass.GetFullTypeName();
-					if( attrFullTypeName == m_fullTypeName ) {
-						arr.Add( attr );
+				foreach( AttributeData attr in type.GetAttributes() ) {
+
+					INamedTypeSymbol? attributeClass = attr.AttributeClass;
+					if( attributeClass.IsNullOrErrorType() ) {
+						continue;
 					}
-				}
 
-				return arr.ToImmutable();
-			}
-
-			internal bool IsDefined( ISymbol s ) {
-				foreach( var attr in s.GetAttributes() ) {
-					var attrFullTypeName = attr.AttributeClass.GetFullTypeName();
-					if( attrFullTypeName == m_fullTypeName ) {
+					string attributeName = attributeClass.GetFullTypeName();
+					if( attributeName.Equals( m_fullTypeName, StringComparison.Ordinal ) ) {
 						return true;
 					}
 				}
+
 				return false;
 			}
-
 		}
 	}
 }

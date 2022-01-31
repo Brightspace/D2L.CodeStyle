@@ -736,8 +736,17 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true
 		);
 
-		public static readonly DiagnosticDescriptor AliasingAttributeNamesNotSupported = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor GenericGeneratorError = new DiagnosticDescriptor(
 			id: "D2L0095",
+			title: "A source generator encountered an unexpected situation. This is a bug in D2L.CodeStyle.Analyzers.",
+			messageFormat: "The source generator {0} encountered an unexpected situation: {1}",
+			category: "Generators",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor AliasingAttributeNamesNotSupported = new DiagnosticDescriptor(
+			id: "D2L0096",
 			title: "Aliasing attribute class names not supported",
 			messageFormat: "Aliasing attribute class names makes code less readable and forces analyzers to use the symbolic model for type equality (which is expensive)",
 			category: "Correctness",
