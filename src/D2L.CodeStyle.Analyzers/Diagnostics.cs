@@ -744,5 +744,14 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor ConciseAttributeName = new DiagnosticDescriptor(
+			id: "D2L0096",
+			title: "Attributes should be declared concisely without 'Attribute' suffix",
+			messageFormat: "Attributes should be declared concisely without 'Attribute' suffix. This reduces the permutations analyzers have to consider.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }
