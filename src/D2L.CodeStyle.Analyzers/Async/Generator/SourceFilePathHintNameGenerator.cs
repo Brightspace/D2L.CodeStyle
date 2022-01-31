@@ -54,13 +54,16 @@ namespace D2L.CodeStyle.Analyzers.Async.Generator {
 		}
 
 		private static string RemoveFileName( string sourcePath ) {
-			var dir = Path.GetDirectoryName( sourcePath );
+			var lastSlashIdx = Math.Max(
+				sourcePath.LastIndexOf( '/' ),
+				sourcePath.LastIndexOf( '\\' )
+			);
 
-			if( sourcePath.Length > dir.Length ) {
-				dir += sourcePath[dir.Length];
+			if( lastSlashIdx == -1 ) {
+				return sourcePath;
 			}
 
-			return dir;
+			return sourcePath.Substring( 0, lastSlashIdx + 1 );
 		}
 
 		private static readonly Regex PathSeparators = new(
