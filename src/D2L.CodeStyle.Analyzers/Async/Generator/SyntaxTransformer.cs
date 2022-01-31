@@ -25,7 +25,7 @@ public abstract class SyntaxTransformer {
 	/// <summary>
 	/// Suggested return type for public transformation methods.
 	/// </summary>
-	public sealed record TransformResult<T>(
+	public record struct TransformResult<T>(
 		T? Value,
 		ImmutableArray<Diagnostic> Diagnostics
 	) {
