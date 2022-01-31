@@ -118,21 +118,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				return;
 			}
 
-			ISymbol caller = context.ContainingSymbol;
-
-			ImmutableArray<INamedTypeSymbol> callerContainingTypes = caller.GetAllContainingTypes();
-
-			// Allow the DI framework to call the disallowed types
-			if( callerContainingTypes.Any( Attributes.DIFramework.IsDefined ) ) {
+			if( HasExemption( context.ContainingSymbol, typeRules ) ) {
 				return;
-			}
-
-			if( m_excludeKnownProblems ) {
-
-				// Allow the types listed in OldAndBrokenServiceLocatorAllowedList.txt
-				if( callerContainingTypes.Any( typeRules.Allowed.Contains ) ) {
-					return;
-				}
 			}
 
 			Diagnostic diagnostic = Diagnostic.Create(
@@ -148,25 +135,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			ITypeSymbol type,
 			TypeRuleSets typeRules
 		) {
+
 			if( !typeRules.Disallowed.Contains( type ) ) {
 				return;
 			}
 
-			ISymbol caller = context.Symbol.ContainingSymbol;
-
-			ImmutableArray<INamedTypeSymbol> callerContainingTypes = caller.GetAllContainingTypes();
-
-			// Allow the DI framework to call the disallowed types
-			if( callerContainingTypes.Any( Attributes.DIFramework.IsDefined ) ) {
+			if( HasExemption( context.Symbol, typeRules ) ) {
 				return;
-			}
-
-			if( m_excludeKnownProblems ) {
-
-				// Allow the types listed in OldAndBrokenServiceLocatorAllowedList.txt
-				if( callerContainingTypes.Any( typeRules.Allowed.Contains ) ) {
-					return;
-				}
 			}
 
 			Diagnostic diagnostic = Diagnostic.Create(
@@ -175,6 +150,29 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			);
 
 			context.ReportDiagnostic( diagnostic );
+		}
+
+		private bool HasExemption(
+				ISymbol symbol,
+				TypeRuleSets typeRules
+			) {
+
+			ImmutableArray<INamedTypeSymbol> containingTypes = symbol.GetAllContainingTypes();
+
+			// Allow the DI framework to call the disallowed types
+			if( containingTypes.Any( Attributes.DIFramework.IsDefined ) ) {
+				return true;
+			}
+
+			if( m_excludeKnownProblems ) {
+
+				// Allow the types listed in OldAndBrokenServiceLocatorAllowedList.txt
+				if( containingTypes.Any( typeRules.Allowed.Contains ) ) {
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		private void PreventUnnecessaryAllowedListing(

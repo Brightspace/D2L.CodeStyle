@@ -125,10 +125,20 @@ namespace D2L.CodeStyle.Analyzers.OldAndBrokenLocator.Examples {
 	[DIFramework]
 	public sealed class DIFrameworkClass {
 
+		private readonly IObjectActivator m_objectActivator;
+
+		public DIFrameworkClass( IObjectActivator objectActivator ) {
+			m_objectActivator = objectActivator;
+		}
+
 		public int InDIFrameworkClass() {
 			IServiceLocator ok = OldAndBrokenServiceLocator.Instance;
 			IServiceLocator alsoOk = OldAndBrokenServiceLocatorFactory.Create();
 			return 0;
+		}
+
+		public IObjectActivator Activator {
+			get { return m_objectActivator; }
 		}
 	}
 
