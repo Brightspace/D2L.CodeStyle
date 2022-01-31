@@ -1,9 +1,5 @@
-#nullable disable
-
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -11,8 +7,10 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
+
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class SingletonLocatorAnalyzer : DiagnosticAnalyzer {
+
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 			=> ImmutableArray.Create( Diagnostics.SingletonLocatorMisuse );
 
@@ -32,15 +30,25 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				return;
 			}
 
-			IDictionary<INamedTypeSymbol, int> containerTypes = new [] {
-					new { TypeName = "D2L.LP.Extensibility.Activation.Domain.IPlugins`1", ContainedTypeIdx = 0 },
-					new { TypeName = "D2L.LP.Extensibility.Activation.Domain.IPlugins`2", ContainedTypeIdx = 1 },
-					new { TypeName = "D2L.LP.Extensibility.Plugins.IInstancePlugins`1",   ContainedTypeIdx = 0 },
-					new { TypeName = "D2L.LP.Extensibility.Plugins.IInstancePlugins`2",   ContainedTypeIdx = 0 }
+			var containerTypeMappings = new (string typeName, int containedTypeIdx)[] {
+					new ( "D2L.LP.Extensibility.Activation.Domain.IPlugins`1", 0 ),
+					new ( "D2L.LP.Extensibility.Activation.Domain.IPlugins`2", 1 ),
+					new ( "D2L.LP.Extensibility.Plugins.IInstancePlugins`1",   0 ),
+					new ( "D2L.LP.Extensibility.Plugins.IInstancePlugins`2",   0 )
+				};
+
+			var containerTypesBuilder = ImmutableDictionary.CreateBuilder<INamedTypeSymbol, int>( SymbolEqualityComparer.Default );
+
+			foreach( (string typeName, int containedTypeIdx) in containerTypeMappings ) {
+
+				INamedTypeSymbol? type = context.Compilation.GetTypeByMetadataName( typeName );
+				if( !type.IsNullOrErrorType() ) {
+
+					containerTypesBuilder.Add( type, containedTypeIdx );
 				}
-				.Select( x => new { Type = context.Compilation.GetTypeByMetadataName( x.TypeName ), x.ContainedTypeIdx } )
-				.Where( x => !x.Type.IsNullOrErrorType() )
-				.ToDictionary( x => x.Type, x => x.ContainedTypeIdx );
+			}
+
+			ImmutableDictionary<INamedTypeSymbol, int> containerTypes = containerTypesBuilder.ToImmutable();
 
 			context.RegisterSyntaxNodeAction(
 				ctx => EnforceSingletonsOnly(
@@ -60,7 +68,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				return false;
 			}
 
-			bool IsContainerType( ITypeSymbol type, out ITypeSymbol containedType ) {
+			bool IsContainerType(
+					ITypeSymbol type,
+					[NotNullWhen( true )] out ITypeSymbol? containedType
+				) {
 
 				if( !( type is INamedTypeSymbol namedType ) ) {
 					containedType = null;
@@ -77,7 +88,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			}
 		}
 
-		private delegate bool IsContainerType( ITypeSymbol type, out ITypeSymbol containedType );
+		private delegate bool IsContainerType(
+				ITypeSymbol type,
+				[NotNullWhen( true )] out ITypeSymbol? containedType
+			);
 
 		// Enforce that SingletonLocator can only load actual [Singleton]s
 		private static void EnforceSingletonsOnly(
@@ -124,7 +138,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			//It's ok as long as the attribute is present, error otherwise
 			ITypeSymbol typeArg = method.TypeArguments.First();
 
-			if( isContainerType( typeArg, out ITypeSymbol containedType ) ) {
+			if( isContainerType( typeArg, out ITypeSymbol? containedType ) ) {
 				typeArg = containedType;
 			}
 
@@ -137,13 +151,14 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			);
 		}
 
-		private static ExpressionSyntax GetRootNode( SyntaxNodeAnalysisContext context ) {
+		private static ExpressionSyntax? GetRootNode( SyntaxNodeAnalysisContext context ) {
+
 			//It turns out that depending on how you call the locator, it might contain any of:
 			//* a SimpleMemberAccessExpression
 			//* an InvocationExpression
 			//* an InvocationExpression wrapped around a SimpleMemberAccessExpression
 			//We want to count each of these as a single error (avoid double counting the last case)
-			ExpressionSyntax root = context.Node as InvocationExpressionSyntax;
+			ExpressionSyntax? root = context.Node as InvocationExpressionSyntax;
 			if( root != null ) {
 				return root;
 			}
