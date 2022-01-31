@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Text.RegularExpressions;
 
 namespace D2L.CodeStyle.Analyzers.Async.Generator {
