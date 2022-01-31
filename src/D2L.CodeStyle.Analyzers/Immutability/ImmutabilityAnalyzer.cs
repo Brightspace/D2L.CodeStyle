@@ -1,4 +1,6 @@
-﻿using System.Collections.Immutable;
+#nullable disable
+
+using System.Collections.Immutable;
 using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
@@ -175,7 +177,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				annotationsContext: annotationsContext
 			);
 
-			consistencyChecker.CheckMethodDeclaration( methodSymbol );
+			consistencyChecker.CheckMethodDeclaration( methodSymbol, ctx.CancellationToken );
 		}
 
 		private static void AnalyzeTypeDeclaration(
@@ -195,7 +197,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				annotationsContext: annotationsContext
 			);
 
-			consistencyChecker.CheckTypeDeclaration( typeSymbol );
+			consistencyChecker.CheckTypeDeclaration( typeSymbol, ctx.CancellationToken );
 
 			if( typeSymbol.TypeKind == TypeKind.Interface ) {
 				return;
@@ -288,7 +290,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// Create the diagnostic on the parameter (including the attribute)
 				var diagnostic = Diagnostic.Create(
 					Diagnostics.UnexpectedConditionalImmutability,
-					parameter.DeclaringSyntaxReferences[0].GetSyntax().GetLocation() );
+					parameter.DeclaringSyntaxReferences[0].GetSyntax( ctx.CancellationToken ).GetLocation() );
 				ctx.ReportDiagnostic( diagnostic );
 			}
 		}
@@ -312,7 +314,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// Create the diagnostic on the parameter (excluding the attribute)
 			var diagnostic = Diagnostic.Create(
 				Diagnostics.ConflictingImmutability,
-				symbol.DeclaringSyntaxReferences[0].GetSyntax().GetLastToken().GetLocation(),
+				symbol.DeclaringSyntaxReferences[0].GetSyntax( ctx.CancellationToken ).GetLastToken().GetLocation(),
 				"Immutable",
 				"ConditionallyImmutable.OnlyIf",
 				symbol.Kind.ToString().ToLower() );

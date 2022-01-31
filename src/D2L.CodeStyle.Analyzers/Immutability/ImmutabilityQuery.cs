@@ -1,4 +1,6 @@
-﻿using Microsoft.CodeAnalysis;
+#nullable disable
+
+using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
 	internal readonly struct ImmutabilityQuery {

@@ -1,4 +1,6 @@
-﻿using System;
+#nullable disable
+
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.CommonFixes;
@@ -35,21 +37,23 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		public void CheckTypeDeclaration(
-			INamedTypeSymbol typeSymbol
+			INamedTypeSymbol typeSymbol,
+			CancellationToken cancellationToken
 		) {
 			ImmutableTypeInfo typeInfo = m_context.GetImmutableTypeInfo( typeSymbol );
 
 			if( typeSymbol.BaseType != null ) {
-				CompareConsistencyToBaseType( typeInfo, m_context.GetImmutableTypeInfo( typeSymbol.BaseType ) );
+				CompareConsistencyToBaseType( typeInfo, m_context.GetImmutableTypeInfo( typeSymbol.BaseType ), cancellationToken );
 			}
 
 			foreach( INamedTypeSymbol interfaceType in typeSymbol.Interfaces ) {
-				CompareConsistencyToBaseType( typeInfo, m_context.GetImmutableTypeInfo( interfaceType ) );
+				CompareConsistencyToBaseType( typeInfo, m_context.GetImmutableTypeInfo( interfaceType ), cancellationToken );
 			}
 		}
 
 		public void CheckMethodDeclaration(
-			IMethodSymbol methodSymbol
+			IMethodSymbol methodSymbol,
+			CancellationToken cancellationToken
 		) {
 			if( methodSymbol.TypeParameters.Length == 0 ) {
 				return;
@@ -67,7 +71,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					if( thisIsImmutable != implementedIsImmutable ) {
 						m_diagnosticSink( Diagnostic.Create(
 							Diagnostics.InconsistentMethodAttributeApplication,
-							GetLocationOfNthTypeParameter( methodSymbol, i ),
+							GetLocationOfNthTypeParameter( methodSymbol, i, cancellationToken ),
 							"Immutable",
 							$"{ methodSymbol.ContainingType.Name }.{ methodSymbol.Name }",
 							$"{ implementedMethod.ContainingType.Name }.{ implementedMethod.Name }"
@@ -79,7 +83,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private void CompareConsistencyToBaseType(
 			ImmutableTypeInfo typeInfo,
-			ImmutableTypeInfo baseTypeInfo
+			ImmutableTypeInfo baseTypeInfo,
+			CancellationToken cancellationToken
 		) {
 			switch( baseTypeInfo.Kind ) {
 				case ImmutableTypeKind.None:
@@ -107,7 +112,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 					TypeDeclarationSyntax syntax = FindDeclarationImplementingType(
 						typeSymbol: typeInfo.Type,
-						baseTypeSymbol: baseTypeInfo.Type
+						baseTypeSymbol: baseTypeInfo.Type,
+						cancellationToken
 					);
 
 					m_diagnosticSink(
@@ -131,11 +137,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private TypeDeclarationSyntax FindDeclarationImplementingType(
 			INamedTypeSymbol typeSymbol,
-			INamedTypeSymbol baseTypeSymbol
+			INamedTypeSymbol baseTypeSymbol,
+			CancellationToken cancellationToken
 		) {
 			TypeDeclarationSyntax anySyntax = null;
 			foreach( var reference in typeSymbol.DeclaringSyntaxReferences ) {
-				var syntax = reference.GetSyntax() as TypeDeclarationSyntax;
+				var syntax = reference.GetSyntax( cancellationToken ) as TypeDeclarationSyntax;
 				anySyntax = syntax;
 
 				var baseTypes = syntax.BaseList?.Types;
@@ -158,10 +165,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return anySyntax;
 		}
 
-		private static Location GetLocationOfNthTypeParameter( IMethodSymbol methodSymbol, int N ) {
+		private static Location GetLocationOfNthTypeParameter(
+				IMethodSymbol methodSymbol,
+				int N,
+				CancellationToken cancellationToken
+			) {
+
 			MethodDeclarationSyntax syntax = methodSymbol
 				.DeclaringSyntaxReferences[ 0 ]
-				.GetSyntax() as MethodDeclarationSyntax;
+				.GetSyntax( cancellationToken ) as MethodDeclarationSyntax;
 
 			Location loc = syntax.TypeParameterList.Parameters[ N ].GetLocation();
 			return loc;

@@ -1,11 +1,10 @@
-﻿using System.Collections.Generic;
+﻿#nullable enable
+
 using System.Collections.Immutable;
-using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
@@ -35,45 +34,34 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 			Compilation compilation = context.Compilation;
 
-			INamedTypeSymbol eventAttributeType = compilation.GetTypeByMetadataName( EventAttributeFullName );
+			INamedTypeSymbol? eventAttributeType = compilation.GetTypeByMetadataName( EventAttributeFullName );
 			if( eventAttributeType.IsNullOrErrorType() ) {
 				return;
 			}
 
 			IImmutableSet<ISymbol> genericPublishMethods = PublisherTypeNames
-				.SelectMany( typeName =>  GetGenericPublishMethods( compilation, typeName ) )
+				.SelectMany( typeName => GetGenericPublishMethods( compilation, typeName ) )
 				.ToImmutableHashSet( SymbolEqualityComparer.Default );
 
-			context.RegisterSyntaxNodeAction(
+			context.RegisterOperationAction(
 					ctxt => AnalyzeMethodInvocation(
 						ctxt,
-						(InvocationExpressionSyntax)ctxt.Node,
+						(IInvocationOperation)ctxt.Operation,
 						eventAttributeType,
 						genericPublishMethods
 					),
-					SyntaxKind.InvocationExpression
+					OperationKind.Invocation
 				);
 		}
 
 		private void AnalyzeMethodInvocation(
-				SyntaxNodeAnalysisContext context,
-				InvocationExpressionSyntax invocation,
+				OperationAnalysisContext context,
+				IInvocationOperation invocation,
 				INamedTypeSymbol eventAttributeType,
 				IImmutableSet<ISymbol> genericPublishMethods
 			) {
 
-			ISymbol expessionSymbol = context.SemanticModel
-				.GetSymbolInfo( invocation.Expression, context.CancellationToken )
-				.Symbol;
-
-			if( expessionSymbol.IsNullOrErrorType() ) {
-				return;
-			}
-
-			if( !( expessionSymbol is IMethodSymbol methodSymbol ) ) {
-				return;
-			}
-
+			IMethodSymbol methodSymbol = invocation.TargetMethod;
 			if( !methodSymbol.IsGenericMethod ) {
 				return;
 			}
@@ -89,7 +77,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 			bool hasEventAttr = eventTypeSymbol
 				.GetAttributes()
-				.Any( attr => attr.AttributeClass.Equals( eventAttributeType, SymbolEqualityComparer.Default ) );
+				.Any( attr => SymbolEqualityComparer.Default.Equals( attr.AttributeClass, eventAttributeType ) );
 
 			if( hasEventAttr ) {
 				return;
@@ -101,7 +89,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 			Diagnostic diagnostic = Diagnostic.Create(
 					Diagnostics.EventTypeMissingEventAttribute,
-					invocation.GetLocation(),
+					invocation.Syntax.GetLocation(),
 					eventTypeSymbol.ToDisplayString()
 				);
 
@@ -113,7 +101,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				string publisherTypeName
 			) {
 
-			INamedTypeSymbol publisherType = compilation.GetTypeByMetadataName( publisherTypeName );
+			INamedTypeSymbol? publisherType = compilation.GetTypeByMetadataName( publisherTypeName );
 			if( publisherType.IsNullOrErrorType() ) {
 				return Enumerable.Empty<ISymbol>();
 			}

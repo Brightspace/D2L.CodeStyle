@@ -1,4 +1,6 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+#nullable disable
+
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
 // From: https://github.com/dotnet/runtime/commit/6072e4d3a7a2a1493f514cdf4be75a3d56580e84#diff-afc57cc6e9c659ebf491bc78d06cdb5b13d5a049122d8a41f744a515f493663b

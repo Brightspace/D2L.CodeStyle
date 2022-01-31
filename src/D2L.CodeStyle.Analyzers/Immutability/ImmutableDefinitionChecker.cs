@@ -1,4 +1,6 @@
-﻿using System;
+#nullable disable
+
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -88,6 +90,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				m_annotationsContext,
 				member,
 				m_diagnosticSink,
+				m_cancellationToken,
 				out var location
 			) ) {
 				// If they have one of the auditing attributes, run the
@@ -155,7 +158,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			var decl = field.DeclaringSyntaxReferences.Single()
-				.GetSyntax() as VariableDeclaratorSyntax;
+				.GetSyntax( m_cancellationToken ) as VariableDeclaratorSyntax;
 
 			var type = decl.FirstAncestorOrSelf<VariableDeclarationSyntax>().Type;
 
@@ -191,7 +194,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			var propInfo = GetPropertyStuff(
 				prop,
-				prop.DeclaringSyntaxReferences.Single().GetSyntax()
+				prop.DeclaringSyntaxReferences.Single().GetSyntax( m_cancellationToken )
 			);
 
 			if ( !propInfo.IsAutoImplemented ) {
@@ -312,7 +315,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			var constructors = type
 				.Constructors
-				.SelectMany( c => c.DeclaringSyntaxReferences.Select( r => r.GetSyntax() ) );
+				.SelectMany( c => c.DeclaringSyntaxReferences.Select( r => r.GetSyntax( m_cancellationToken ) ) );
 
 			foreach( var constructor in constructors ) {
 				var assignments = constructor
@@ -391,7 +394,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				.Where( constructorSymbol => !constructorSymbol.IsImplicitlyDeclared )
 				.Where( constructorSymbol => constructorSymbol.IsStatic == memberSymbol.IsStatic )
 				.Select( constructorSymbol => constructorSymbol.DeclaringSyntaxReferences.Single() )
-				.Select( sr => sr.GetSyntax() )
+				.Select( sr => sr.GetSyntax( m_cancellationToken ) )
 				.SelectMany( constructorSyntax => constructorSyntax.DescendantNodes() )
 				.OfType<AssignmentExpressionSyntax>()
 				.Where( assignmentSyntax => IsAnAssignmentTo( assignmentSyntax, memberSymbol ) )
@@ -533,9 +536,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			return AssignmentQueryKind.ImmutabilityQuery;
 		}
 
-		private static Location GetLocationOfMember( ISymbol s ) =>s
+		private Location GetLocationOfMember( ISymbol s ) =>s
 			.DeclaringSyntaxReferences.Single()
-			.GetSyntax()
+			.GetSyntax( m_cancellationToken )
 			.FirstAncestorOrSelf<MemberDeclarationSyntax>()
 			.GetLocation();
 
@@ -557,7 +560,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// (interfaces always go after the base class, if it is listed.)
 
 			var candidates = type.DeclaringSyntaxReferences
-				.Select( r => r.GetSyntax() )
+				.Select( r => r.GetSyntax( m_cancellationToken ) )
 				.Cast<TypeDeclarationSyntax>()
 				.Where( r => r.BaseList != null )
 				// Take _at most_ the first item from each BaseList.Types
@@ -583,7 +586,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// If we couldn't find a candidate just use the first class decl
 			// as the diagnostic target. I'm not sure this can happen.
 			return type.DeclaringSyntaxReferences.First()
-				.GetSyntax()
+				.GetSyntax( m_cancellationToken )
 				.GetLocation();
 		}
 
