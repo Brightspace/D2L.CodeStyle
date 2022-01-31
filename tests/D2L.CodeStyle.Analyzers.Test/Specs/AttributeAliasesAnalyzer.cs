@@ -2,6 +2,8 @@
 
 using System;
 
+using RootAliasAttribute = Test.Attributes.TestAttribute;
+
 namespace Test.Attributes {
 
 	[AttributeUsage( AttributeTargets.All, AllowMultiple = true )]
@@ -19,7 +21,18 @@ namespace Test.Cases {
 		[ /* AliasingAttributeNamesNotSupported() */ ShortAlias /**/ ]
 		[ /* AliasingAttributeNamesNotSupported() */ LongAlias /**/ ]
 		[ /* AliasingAttributeNamesNotSupported() */ LongAliasAttribute /**/ ]
+		[ /* AliasingAttributeNamesNotSupported() */ RootAlias /**/ ]
+		[ /* AliasingAttributeNamesNotSupported() */ RootAliasAttribute /**/ ]
 		public sealed class Usage { }
+
+		// Verifies that all namespaces are checked
+		namespace Nested {
+
+			[ /* AliasingAttributeNamesNotSupported() */ ShortAlias /**/ ]
+			[ /* AliasingAttributeNamesNotSupported() */ LongAlias /**/ ]
+			[ /* AliasingAttributeNamesNotSupported() */ LongAliasAttribute /**/ ]
+			public sealed class Usage { }
+		}
 	}
 
 	namespace ImportAliases {

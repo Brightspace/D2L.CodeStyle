@@ -83,12 +83,19 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 		private IEnumerable<IdentifierNameSyntax> GetUsingAliases( AttributeSyntax attribute ) {
 
-			IEnumerable<UsingDirectiveSyntax> usingDirectives = attribute
+			IEnumerable<UsingDirectiveSyntax> rootUsingDirectives = attribute.Ancestors()
+				.OfType<CompilationUnitSyntax>()
+				.SelectMany( compilationUnit => compilationUnit.Usings );
+
+			IEnumerable<UsingDirectiveSyntax> namespacedUsingDirectives = attribute
 				.Ancestors()
 				.OfType<BaseNamespaceDeclarationSyntax>()
 				.SelectMany( @namespace => @namespace.Usings );
 
-			foreach( UsingDirectiveSyntax usingDirective in usingDirectives ) {
+			IEnumerable<UsingDirectiveSyntax> allUsingDirectives = Enumerable
+				.Concat( rootUsingDirectives, namespacedUsingDirectives );
+
+			foreach( UsingDirectiveSyntax usingDirective in allUsingDirectives ) {
 
 				NameEqualsSyntax? alias = usingDirective.Alias;
 				if( alias == null ) {
