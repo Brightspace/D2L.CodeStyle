@@ -17,6 +17,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				"D2L.LP.Extensibility.Activation.Domain.OldAndBrokenServiceLocatorFactory",
 				"D2L.LP.Extensibility.Activation.Domain.IObjectActivator",
 				"D2L.LP.Extensibility.Activation.Domain.ICustomObjectActivator",
+				"D2L.LP.Extensibility.Activation.Domain.ObjectActivatorExtensions",
 				"D2L.LP.Extensibility.Activation.Domain.Default.StaticDI.StaticDILocator"
 			);
 
