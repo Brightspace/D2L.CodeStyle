@@ -36,6 +36,12 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 			return false;
 		}
 	}
+
+	[DIFramework]
+	public sealed class ObjectActivatorFactory {
+		public static IObjectActivator DefaultActivator { get; }
+	}
+
 }
 
 namespace D2L.LP.Extensibility.Activation.Domain.Default.StaticDI {
@@ -91,6 +97,10 @@ namespace D2L.CodeStyle.Analyzers.OldAndBrokenLocator.Examples {
 			ICustomObjectActivator activator = default;
 			/* OldAndBrokenLocatorIsObsolete */ activator.Create<string>() /**/;
 			Func<string> activatorFunc = /* OldAndBrokenLocatorIsObsolete */ activator.Create<string> /**/;
+		}
+
+		public void Uses_ObjectActicatorFactory() {
+			IObjectActivator activator = /* OldAndBrokenLocatorIsObsolete */ ObjectActivatorFactory.DefaultActivator /**/;
 		}
 
 		public void Uses_StaticDILocator() {
