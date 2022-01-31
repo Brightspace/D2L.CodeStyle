@@ -1,7 +1,5 @@
-#nullable disable
-
 using System.Collections.Immutable;
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 using D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain;
 using D2L.CodeStyle.Analyzers.Extensions;
 using D2L.CodeStyle.Analyzers.Immutability;
@@ -11,6 +9,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
+
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class DependencyRegistrationsAnalyzer : DiagnosticAnalyzer {
 
@@ -23,7 +22,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 			"SpecTests.SomeTestCases.RegistrationCallsInThisStructAreIgnored" // this comes from a test
 		);
 
-		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create( 
+		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.UnsafeSingletonRegistration,
 			Diagnostics.RegistrationKindUnknown,
 			Diagnostics.AttributeRegistrationMismatch,
@@ -76,11 +75,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 			}
 
 			DependencyRegistrationExpression dependencyRegistrationExpresion;
-			if( !registry.TryMapRegistrationMethod( 
-				method, 
-				root.ArgumentList.Arguments, 
-				context.SemanticModel, 
-				out dependencyRegistrationExpresion 
+			if( !registry.TryMapRegistrationMethod(
+				method,
+				root.ArgumentList.Arguments,
+				context.SemanticModel,
+				out dependencyRegistrationExpresion
 			) ) {
 				// this can happen where there's a new registration method
 				// that we can't map to
@@ -162,7 +161,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 				ctx.ReportDiagnostic( diagnostic );
 			}
 
-			if( TryGetInstantiatedTypeForRegistration( registration, out ITypeSymbol instantiatedType ) ) {
+			if( TryGetInstantiatedTypeForRegistration( registration, out ITypeSymbol? instantiatedType ) ) {
 				if( !TryGetInjectableConstructor( instantiatedType, out IMethodSymbol injectableConstructor ) ) {
 					var diagnostic = Diagnostic.Create(
 						Diagnostics.DependencyRegistraionMissingPublicConstructor,
@@ -211,7 +210,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 				syntax.GetLocation(),
 				effectiveSeverity: sev,
 				additionalLocations: ImmutableArray<Location>.Empty,
-				properties: ImmutableDictionary<string, string>.Empty,
+				properties: ImmutableDictionary<string, string?>.Empty,
 				type.GetFullTypeNameWithGenericArguments()
 			);
 		}
@@ -233,8 +232,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 		/// <param name="registration"></param>
 		/// <param name="instantiatedType"></param>
 		/// <returns></returns>
-		private bool TryGetInstantiatedTypeForRegistration( DependencyRegistration registration, out ITypeSymbol instantiatedType ) {
-			ITypeSymbol type = registration.FactoryType ?? registration.ConcreteType;
+		private bool TryGetInstantiatedTypeForRegistration(
+			DependencyRegistration registration,
+			[NotNullWhen( true )] out ITypeSymbol? instantiatedType
+		) {
+			ITypeSymbol? type = registration.FactoryType ?? registration.ConcreteType;
 
 			if( type.IsNullOrErrorType() ) {
 				instantiatedType = null;
@@ -283,7 +285,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 			return true;
 		}
 
-		private bool TryGetDependenciesFromConstructor( ITypeSymbol type, out ImmutableArray<ITypeSymbol> dependencies  ) {
+		private bool TryGetDependenciesFromConstructor( ITypeSymbol type, out ImmutableArray<ITypeSymbol> dependencies ) {
 			if( !TryGetInjectableConstructor( type, out IMethodSymbol ctor ) ) {
 				dependencies = ImmutableArray<ITypeSymbol>.Empty;
 				return false;
@@ -316,16 +318,20 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection {
 			return false;
 		}
 
-		private ITypeSymbol GetClassOrStructContainingExpression(
+		private ITypeSymbol? GetClassOrStructContainingExpression(
 			InvocationExpressionSyntax expr,
 			SemanticModel semanticModel,
 			CancellationToken cancellationToken
 		) {
 			foreach( var ancestor in expr.Ancestors() ) {
-				if( ancestor is StructDeclarationSyntax ) {
-					return semanticModel.GetDeclaredSymbol( ancestor as StructDeclarationSyntax, cancellationToken );
-				} else if( ancestor is ClassDeclarationSyntax ) {
-					return semanticModel.GetDeclaredSymbol( ancestor as ClassDeclarationSyntax, cancellationToken );
+
+				switch( ancestor ) {
+
+					case StructDeclarationSyntax structDeclaration:
+						return semanticModel.GetDeclaredSymbol( structDeclaration, cancellationToken );
+
+					case ClassDeclarationSyntax classDeclaration:
+						return semanticModel.GetDeclaredSymbol( classDeclaration, cancellationToken );
 				}
 			}
 			return null;

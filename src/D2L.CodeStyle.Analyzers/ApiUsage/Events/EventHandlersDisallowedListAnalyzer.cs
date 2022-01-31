@@ -1,8 +1,5 @@
-#nullable disable
-
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -48,7 +45,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 			SimpleBaseTypeSyntax baseTypeSyntax = (SimpleBaseTypeSyntax)context.Node;
 			SymbolInfo baseTypeSymbol = context.SemanticModel.GetSymbolInfo( baseTypeSyntax.Type, context.CancellationToken );
 
-			INamedTypeSymbol baseSymbol = ( baseTypeSymbol.Symbol as INamedTypeSymbol );
+			INamedTypeSymbol? baseSymbol = ( baseTypeSymbol.Symbol as INamedTypeSymbol );
 			if( baseSymbol.IsNullOrErrorType() ) {
 				return;
 			}
@@ -81,13 +78,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				ImmutableArray<ImmutableArray<string>> genericTypeArgumentSets
 			) {
 
-			INamedTypeSymbol genericTypeDefinition = compilation.GetTypeByMetadataName( genericTypeName );
+			INamedTypeSymbol? genericTypeDefinition = compilation.GetTypeByMetadataName( genericTypeName );
 			if( genericTypeDefinition.IsNullOrErrorType() ) {
 				yield break;
 			}
 
 			foreach( ImmutableArray<string> genericTypeArguments in genericTypeArgumentSets ) {
-				if( TryGetGenericType( compilation, genericTypeDefinition, genericTypeArguments, out INamedTypeSymbol genericType ) ) {
+				if( TryGetGenericType( compilation, genericTypeDefinition, genericTypeArguments, out INamedTypeSymbol? genericType ) ) {
 					yield return genericType;
 				}
 			}
@@ -97,7 +94,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				Compilation compilation,
 				INamedTypeSymbol genericTypeDefinition,
 				ImmutableArray<string> genericTypeArguments,
-				out INamedTypeSymbol genericType
+				[NotNullWhen( true )] out INamedTypeSymbol? genericType
 			) {
 
 			INamedTypeSymbol[] genericTypeArgumentSymbols = new INamedTypeSymbol[ genericTypeArguments.Length ];
@@ -105,7 +102,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 			for( int i = 0; i < genericTypeArguments.Length; i++ ) {
 				string genericTypeArgumentName = genericTypeArguments[ i ];
 
-				INamedTypeSymbol genericTypeArgumentSymbol = compilation.GetTypeByMetadataName( genericTypeArgumentName );
+				INamedTypeSymbol? genericTypeArgumentSymbol = compilation.GetTypeByMetadataName( genericTypeArgumentName );
 				if( genericTypeArgumentSymbol.IsNullOrErrorType() ) {
 
 					genericType = null;

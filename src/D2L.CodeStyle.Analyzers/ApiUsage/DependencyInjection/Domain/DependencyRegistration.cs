@@ -1,5 +1,3 @@
-#nullable disable
-
 using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
@@ -7,8 +5,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 		private DependencyRegistration(
 			ObjectScope scope,
 			ITypeSymbol dependencyType,
-			ITypeSymbol concreteType = null,
-			ITypeSymbol factoryType = null
+			ITypeSymbol? concreteType = null,
+			ITypeSymbol? factoryType = null
 		) {
 			ObjectScope = scope;
 			DependencyType = dependencyType;
@@ -18,8 +16,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 
 		public ObjectScope ObjectScope { get; }
 		public ITypeSymbol DependencyType { get; }
-		public ITypeSymbol ConcreteType { get; }
-		public ITypeSymbol FactoryType { get; }
+		public ITypeSymbol? ConcreteType { get; }
+		public ITypeSymbol? FactoryType { get; }
 
 		internal static DependencyRegistration Marker( ObjectScope scope, ITypeSymbol dependencyType )
 			=> new DependencyRegistration(

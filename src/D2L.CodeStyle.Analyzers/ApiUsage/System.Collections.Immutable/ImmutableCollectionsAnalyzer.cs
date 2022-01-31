@@ -1,5 +1,3 @@
-#nullable disable
-
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -32,16 +30,20 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.SystemCollectionsImmutable {
 			}
 
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeNewImmutableArray( ctx, immutableArrayType ),
+				ctx => AnalyzeNewImmutableArray(
+					ctx,
+					( ObjectCreationExpressionSyntax )ctx.Node,
+					immutableArrayType
+				),
 				SyntaxKind.ObjectCreationExpression
 			);
 		}
 
 		public static void AnalyzeNewImmutableArray(
 			SyntaxNodeAnalysisContext context,
+			ObjectCreationExpressionSyntax node,
 			INamedTypeSymbol immutableArrayType
 		) {
-			var node = context.Node as ObjectCreationExpressionSyntax;
 
 			// We're only concerned with the default (no arg) constructor for ImmutableArray
 			if( node.ArgumentList != null && node.ArgumentList.Arguments.Count != 0 ) {

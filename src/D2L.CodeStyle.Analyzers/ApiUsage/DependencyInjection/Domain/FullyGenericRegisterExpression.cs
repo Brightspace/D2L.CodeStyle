@@ -1,5 +1,3 @@
-#nullable disable
-
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -25,7 +23,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 				&& method.Parameters.Length == 1;
 		}
 
-		internal override DependencyRegistration GetRegistration(
+		internal override DependencyRegistration? GetRegistration(
 			IMethodSymbol method,
 			SeparatedSyntaxList<ArgumentSyntax> arguments,
 			SemanticModel semanticModel,
@@ -42,7 +40,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 			return GetNonFactoryRegistration( method, arguments, semanticModel );
 		}
 
-		private DependencyRegistration GetNonFactoryRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
+		private DependencyRegistration? GetNonFactoryRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
 			ObjectScope scope;
 			if( !TryGetObjectScope( arguments[0], semanticModel, out scope ) ) {
 				return null;
@@ -55,7 +53,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {
 			);
 		}
 
-		private DependencyRegistration GetFactoryRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
+		private DependencyRegistration? GetFactoryRegistration( IMethodSymbol method, SeparatedSyntaxList<ArgumentSyntax> arguments, SemanticModel semanticModel ) {
 			ObjectScope scope;
 			if( !TryGetObjectScope( arguments[0], semanticModel, out scope ) ) {
 				return null;

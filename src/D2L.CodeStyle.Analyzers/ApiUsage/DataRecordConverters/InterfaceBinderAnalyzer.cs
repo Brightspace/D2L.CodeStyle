@@ -1,5 +1,3 @@
-#nullable disable
-
 using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
@@ -28,7 +26,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DataRecordConverters {
 		private void CompilationStart( CompilationStartAnalysisContext context ) {
 
 			Compilation comp = context.Compilation;
-			if( !comp.TryGetTypeByMetadataName( InterfaceBinderFullName, out INamedTypeSymbol interfaceBinderType ) ) {
+			if( !comp.TryGetTypeByMetadataName( InterfaceBinderFullName, out INamedTypeSymbol? interfaceBinderType ) ) {
 				return;
 			}
 
@@ -49,7 +47,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DataRecordConverters {
 				return;
 			}
 
-			ITypeSymbol genericType = context.SemanticModel
+			ITypeSymbol? genericType = context.SemanticModel
 				.GetTypeInfo( genericName, context.CancellationToken )
 				.Type;
 
@@ -63,7 +61,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DataRecordConverters {
 
 			TypeSyntax interfaceArgument = argumentList.Arguments[ 0 ];
 
-			ITypeSymbol interfaceType = context.SemanticModel
+			ITypeSymbol? interfaceType = context.SemanticModel
 				.GetTypeInfo( interfaceArgument, context.CancellationToken )
 				.Type;
 
