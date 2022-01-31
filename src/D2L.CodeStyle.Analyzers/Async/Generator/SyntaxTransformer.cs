@@ -18,8 +18,6 @@ public abstract class SyntaxTransformer {
 	/// <summary>
 	/// A name for the generator that will be shown to the user if we crash
 	/// </summary>
-	protected abstract string Name { get; }
-
 	public SyntaxTransformer( SemanticModel model ) {
 		m_model = model;
 	}
@@ -74,7 +72,7 @@ public abstract class SyntaxTransformer {
 	/// <param name="location"></param>
 	/// <param name="what"></param>
 	protected void GeneratorError( Location location, string what ) =>
-		ReportDiagnostic( Diagnostics.GenericGeneratorError, location, Name, what );
+		ReportDiagnostic( Diagnostics.GenericGeneratorError, location, GetType().Name, what );
 
 	/// <summary>
 	/// Transform every element of a SyntaxList and filter out nulls.
