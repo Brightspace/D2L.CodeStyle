@@ -1,4 +1,6 @@
-﻿using Microsoft.CodeAnalysis;
+#nullable disable
+
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.DependencyInjection.Domain {

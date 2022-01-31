@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers {
 	public static class Diagnostics {
