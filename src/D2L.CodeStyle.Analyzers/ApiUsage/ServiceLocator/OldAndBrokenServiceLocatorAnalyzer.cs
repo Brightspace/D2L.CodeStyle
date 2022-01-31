@@ -1,28 +1,36 @@
-#nullable disable
-
 using System.Collections.Immutable;
+using D2L.CodeStyle.Analyzers.Extensions;
 using D2L.CodeStyle.Analyzers.Helpers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
+
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class OldAndBrokenServiceLocatorAnalyzer : DiagnosticAnalyzer {
+
+		private static readonly ImmutableArray<string> DisallowedTypeMetadataNames = ImmutableArray.Create(
+				"D2L.LP.Extensibility.Activation.Domain.OldAndBrokenServiceLocator",
+				"D2L.LP.Extensibility.Activation.Domain.OldAndBrokenServiceLocatorFactory",
+				"D2L.LP.Extensibility.Activation.Domain.IObjectActivator",
+				"D2L.LP.Extensibility.Activation.Domain.ICustomObjectActivator",
+				"D2L.LP.Extensibility.Activation.Domain.Default.StaticDI.StaticDILocator"
+			);
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.OldAndBrokenLocatorIsObsolete,
 			Diagnostics.UnnecessaryAllowedListEntry
 		);
-		private readonly bool _excludeKnownProblems;
 
-		public OldAndBrokenServiceLocatorAnalyzer() : this( true ) { }
+		private readonly bool m_excludeKnownProblems;
 
-		public OldAndBrokenServiceLocatorAnalyzer(
-			bool excludeKnownProblemDlls
-		) {
-			_excludeKnownProblems = excludeKnownProblemDlls;
+		public OldAndBrokenServiceLocatorAnalyzer() : this( excludeKnownProblemDlls: true ) { }
+
+		public OldAndBrokenServiceLocatorAnalyzer( bool excludeKnownProblemDlls ) {
+			m_excludeKnownProblems = excludeKnownProblemDlls;
 		}
 
 		public override void Initialize( AnalysisContext context ) {
@@ -32,105 +40,103 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 		}
 
 		public void RegisterServiceLocatorAnalyzer( CompilationStartAnalysisContext context ) {
-			// Cache some important type lookups
-			var locatorType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.OldAndBrokenServiceLocator" );
-			var factoryType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.OldAndBrokenServiceLocatorFactory" );
-			var activatorType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.IObjectActivator" );
-			var customActivatorType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.ICustomObjectActivator" );
-			var staticDILocatorType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.Default.StaticDI.StaticDILocator" );
 
-			// If those type lookups failed then OldAndBrokenServiceLocator
-			// cannot resolve and we don't need to register our analyzer.
-
-			if( locatorType == null || locatorType.Kind == SymbolKind.ErrorType ) {
+			ImmutableHashSet<ITypeSymbol> disallowedTypes = GetDisallowedTypes( context.Compilation );
+			if( disallowedTypes.IsEmpty ) {
 				return;
 			}
-			if ( factoryType == null || factoryType.Kind == SymbolKind.ErrorType ) {
-				return;
-			}
-
-			ImmutableArray<INamedTypeSymbol> disallowedTypes = ImmutableArray.Create(
-				locatorType,
-				factoryType,
-				activatorType,
-				customActivatorType,
-				staticDILocatorType
-			);
 
 			AllowedTypeList allowedTypeList = AllowedTypeList.CreateFromAnalyzerOptions(
 				allowedListFileName: "OldAndBrokenServiceLocatorAllowedList.txt",
 				analyzerOptions: context.Options
 			);
 
-			//Prevent static usage of OldAndBrokenServiceLocator
-			//For example, OldAndBrokenServiceLocator.Instance.Get<IFoo>()
-			context.RegisterSyntaxNodeAction(
-				ctx => PreventOldAndBrokenUsage(
-					ctx,
-					disallowedTypes,
-					allowedTypeList
-				),
-				SyntaxKind.IdentifierName
+			TypeRuleSets typeRules = new( allowedTypeList, disallowedTypes );
+
+			context.RegisterOperationAction(
+				context => {
+					IInvocationOperation invocation = (IInvocationOperation)context.Operation;
+					AnalyzeMemberUsage( context, invocation.TargetMethod, typeRules );
+				},
+				OperationKind.Invocation
+			);
+
+			context.RegisterOperationAction(
+				context => {
+					IMethodReferenceOperation reference = (IMethodReferenceOperation)context.Operation;
+					AnalyzeMemberUsage( context, reference.Method, typeRules );
+				},
+				OperationKind.MethodReference
+			);
+
+			context.RegisterOperationAction(
+				context => {
+					IPropertyReferenceOperation reference = (IPropertyReferenceOperation)context.Operation;
+					AnalyzeMemberUsage( context, reference.Property, typeRules );
+				},
+				OperationKind.PropertyReference
 			);
 
 			context.RegisterSymbolAction(
-				ctx => PreventUnnecessaryAllowedListing(
-					ctx,
-					disallowedTypes,
-					allowedTypeList
-				),
+				ctx => PreventUnnecessaryAllowedListing( ctx, typeRules ),
 				SymbolKind.NamedType
 			);
 		}
 
-		//Prevent static usage of OldAndBrokenServiceLocator
-		//For example, OldAndBrokenServiceLocator.Instance.Get<IFoo>()
-		private void PreventOldAndBrokenUsage(
-			SyntaxNodeAnalysisContext context,
-			ImmutableArray<INamedTypeSymbol> disallowedTypes,
-			AllowedTypeList allowedTypeList
+		private void AnalyzeMemberUsage(
+			OperationAnalysisContext context,
+			ISymbol member,
+			TypeRuleSets typeRules
 		) {
-			if( !( context.Node is IdentifierNameSyntax syntax ) ) {
+
+			if( !typeRules.Disallowed.Contains( member.ContainingType ) ) {
 				return;
 			}
 
-			if( !IdentifierIsOfDisallowedType( context.SemanticModel, disallowedTypes, syntax, context.CancellationToken ) ) {
+			ISymbol caller = context.ContainingSymbol;
+
+			ImmutableArray<INamedTypeSymbol> callerContainingTypes = caller.GetAllContainingTypes();
+
+			// Allow the DI framework to call the disallowed types
+			if( callerContainingTypes.Any( Attributes.DIFramework.IsDefined ) ) {
 				return;
 			}
 
-			var parentClasses = context.Node.Ancestors().OfType<TypeDeclarationSyntax>();
-			var parentSymbols = parentClasses.Select( c => context.SemanticModel.GetDeclaredSymbol( c, context.CancellationToken ) ).ToImmutableArray();
+			if( m_excludeKnownProblems ) {
 
-			if( parentSymbols.Any( s => Attributes.DIFramework.IsDefined( s ) ) ) {
-				//Classes in the DI Framework are allowed to use locators and activators
-				return;
+				// Allow the types listed in OldAndBrokenServiceLocatorAllowedList.txt
+				if( callerContainingTypes.Any( typeRules.Allowed.Contains ) ) {
+					return;
+				}
 			}
 
-			if( _excludeKnownProblems && parentSymbols.Any( allowedTypeList.Contains ) ) {
-				return;
-			}
-
-			context.ReportDiagnostic(
-				Diagnostic.Create( Diagnostics.OldAndBrokenLocatorIsObsolete, syntax.GetLocation() )
+			Diagnostic diagnostic = Diagnostic.Create(
+				Diagnostics.OldAndBrokenLocatorIsObsolete,
+				context.Operation.Syntax.GetLocation()
 			);
+
+			context.ReportDiagnostic( diagnostic );
 		}
 
 		private void PreventUnnecessaryAllowedListing(
 			SymbolAnalysisContext context,
-			ImmutableArray<INamedTypeSymbol> disallowedTypes,
-			AllowedTypeList allowedTypeList
+			TypeRuleSets typeRules
 		) {
 			if( !( context.Symbol is INamedTypeSymbol namedType ) ) {
 				return;
 			}
 
-			if( !allowedTypeList.Contains( namedType ) ) {
+			if( !typeRules.Allowed.Contains( namedType ) ) {
 				return;
 			}
 
-			Location diagnosticLocation = null;
+			Location? diagnosticLocation = null;
 			foreach( var syntaxRef in namedType.DeclaringSyntaxReferences ) {
-				var typeSyntax = syntaxRef.GetSyntax( context.CancellationToken ) as TypeDeclarationSyntax;
+
+				TypeDeclarationSyntax? typeSyntax = syntaxRef.GetSyntax( context.CancellationToken ) as TypeDeclarationSyntax;
+				if( typeSyntax == null ) {
+					throw new InvalidOperationException( "Existing implementation assumed not null" );
+				}
 
 				diagnosticLocation = diagnosticLocation ?? typeSyntax.Identifier.GetLocation();
 
@@ -139,7 +145,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				bool usesDisallowedTypes = typeSyntax
 					.DescendantNodes()
 					.OfType<IdentifierNameSyntax>()
-					.Any( syntax => IdentifierIsOfDisallowedType( model, disallowedTypes, syntax, context.CancellationToken ) );
+					.Any( syntax => IdentifierIsOfDisallowedType( model, typeRules.Disallowed, syntax, context.CancellationToken ) );
 
 				if( usesDisallowedTypes ) {
 					return;
@@ -147,7 +153,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			}
 
 			if( diagnosticLocation != null ) {
-				allowedTypeList.ReportEntryAsUnnecesary(
+				typeRules.Allowed.ReportEntryAsUnnecesary(
 					entry: namedType,
 					location: diagnosticLocation,
 					report: context.ReportDiagnostic
@@ -157,13 +163,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 
 		private static bool IdentifierIsOfDisallowedType(
 			SemanticModel model,
-			ImmutableArray<INamedTypeSymbol> disallowedTypes,
+			ImmutableHashSet<ITypeSymbol> disallowedTypes,
 			IdentifierNameSyntax syntax,
 			CancellationToken cancellationToken
 		) {
-			var actualType = model.GetTypeInfo( syntax, cancellationToken ).Type as INamedTypeSymbol;
 
-			if( actualType == null ) {
+			ITypeSymbol? actualType = model.GetTypeInfo( syntax, cancellationToken ).Type;
+			if( actualType.IsNullOrErrorType() ) {
 				return false;
 			}
 
@@ -173,5 +179,25 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 
 			return true;
 		}
+
+		private ImmutableHashSet<ITypeSymbol> GetDisallowedTypes( Compilation compilation ) {
+
+			var builder = ImmutableHashSet.CreateBuilder<ITypeSymbol>( SymbolEqualityComparer.Default );
+
+			foreach( string metadataName in DisallowedTypeMetadataNames ) {
+
+				INamedTypeSymbol? factoryType = compilation.GetTypeByMetadataName( metadataName );
+				if( !factoryType.IsNullOrErrorType() ) {
+					builder.Add( factoryType );
+				}
+			}
+
+			return builder.ToImmutable();
+		}
+
+		private readonly record struct TypeRuleSets(
+			AllowedTypeList Allowed,
+			ImmutableHashSet<ITypeSymbol> Disallowed
+		);
 	}
 }

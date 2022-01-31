@@ -2,8 +2,6 @@ using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
@@ -26,46 +24,57 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 
 			Compilation compilation = context.Compilation;
 
-			IImmutableSet<INamedTypeSymbol> disallowedTypes = GetDisallowedTypes( compilation );
-			if( disallowedTypes.Count == 0 ) {
+			ImmutableHashSet<INamedTypeSymbol> disallowedEventHandlerInterfaces = GetDisallowedEventHandlerInterfaces( compilation );
+			if( disallowedEventHandlerInterfaces.IsEmpty ) {
 				return;
 			}
 
-			context.RegisterSyntaxNodeAction(
-					c => AnalyzeSimpleBaseType( c, disallowedTypes ),
-					SyntaxKind.SimpleBaseType
+			context.RegisterSymbolAction(
+					c => AnalyzeType( c, disallowedEventHandlerInterfaces, (INamedTypeSymbol)c.Symbol ),
+					SymbolKind.NamedType
 				);
 		}
 
-		private void AnalyzeSimpleBaseType(
-				SyntaxNodeAnalysisContext context,
-				IImmutableSet<INamedTypeSymbol> disallowedTypes
+		private static void AnalyzeType(
+				SymbolAnalysisContext context,
+				ImmutableHashSet<INamedTypeSymbol> disallowedEventHandlerInterfaces,
+				INamedTypeSymbol type
 			) {
 
-			SimpleBaseTypeSyntax baseTypeSyntax = (SimpleBaseTypeSyntax)context.Node;
-			SymbolInfo baseTypeSymbol = context.SemanticModel.GetSymbolInfo( baseTypeSyntax.Type, context.CancellationToken );
-
-			INamedTypeSymbol? baseSymbol = ( baseTypeSymbol.Symbol as INamedTypeSymbol );
-			if( baseSymbol.IsNullOrErrorType() ) {
+			ImmutableArray<INamedTypeSymbol> interfaces = type.Interfaces;
+			if( interfaces.IsEmpty ) {
 				return;
 			}
 
-			if( !disallowedTypes.Contains( baseSymbol ) ) {
-				return;
+			foreach( INamedTypeSymbol @interface in interfaces ) {
+
+				if( disallowedEventHandlerInterfaces.Contains( @interface ) ) {
+					ReportEventHandlerDisallowed( context, type, @interface );
+				}
 			}
+		}
+
+		private static void ReportEventHandlerDisallowed(
+				SymbolAnalysisContext context,
+				INamedTypeSymbol type,
+				INamedTypeSymbol eventHandlerInterface
+			) {
 
 			Diagnostic diagnostic = Diagnostic.Create(
-					Diagnostics.EventHandlerDisallowed,
-					baseTypeSyntax.GetLocation(),
-					baseSymbol.ToDisplayString()
+					descriptor: Diagnostics.EventHandlerDisallowed,
+					location: type.Locations[ 0 ],
+					additionalLocations: type.Locations.Skip( 1 ),
+					messageArgs: new[] {
+						eventHandlerInterface.ToDisplayString()
+					}
 				);
 
 			context.ReportDiagnostic( diagnostic );
 		}
 
-		private static IImmutableSet<INamedTypeSymbol> GetDisallowedTypes( Compilation compilation ) {
+		private static ImmutableHashSet<INamedTypeSymbol> GetDisallowedEventHandlerInterfaces( Compilation compilation ) {
 
-			IImmutableSet<INamedTypeSymbol> types = EventHandlersDisallowedList.DisallowedTypes
+			ImmutableHashSet<INamedTypeSymbol> types = EventHandlersDisallowedList.DisallowedTypes
 				.SelectMany( genericType => GetGenericTypes( compilation, genericType.Key, genericType.Value ) )
 				.ToImmutableHashSet<INamedTypeSymbol>( SymbolEqualityComparer.Default );
 

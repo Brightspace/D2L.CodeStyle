@@ -1,9 +1,5 @@
-#nullable disable
-
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
@@ -41,7 +37,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 				ctx => ConfigViewerInvocationAnalysis(
 					ctx,
 					bannedConfigs,
-					ctx.Operation as IInvocationOperation
+					(IInvocationOperation)ctx.Operation
 				),
 				OperationKind.Invocation
 			);
@@ -61,14 +57,14 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 
 			if( !TryGetConfigNameArgumentFromInvocation(
 				invocationOperation,
-				out IOperation configNameArg
+				out IOperation? configNameArg
 			) ) {
 				return;
 			}
 
 			if( !TryGetConfigNameFromInvocation(
 				configNameArg,
-				out string configName
+				out string? configName
 			) ) {
 				return;
 			}
@@ -89,10 +85,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 
 		private bool TryGetConfigNameArgumentFromInvocation(
 			IInvocationOperation invocationSyntax,
-			out IOperation configNameArg
+			[NotNullWhen( true )] out IOperation? configNameArg
 		) {
 			foreach( IArgumentOperation arg in invocationSyntax.Arguments ) {
-				if( arg.Parameter.Name == "configName" ) {
+
+				IParameterSymbol parameter = arg.Parameter!; // config name isn't an args list parameter
+
+				if( parameter.Name == "configName" ) {
 					configNameArg = arg.Value;
 					return true;
 				}
@@ -104,15 +103,21 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 
 		private bool TryGetConfigNameFromInvocation(
 			IOperation configNameArg,
-			out string configName
+			[NotNullWhen( true )] out string? configName
 		) {
-			Optional<object> maybeConfigName = configNameArg.ConstantValue;
+			Optional<object?> maybeConfigName = configNameArg.ConstantValue;
 			if( !maybeConfigName.HasValue ) {
 				configName = null;
 				return false;
 			}
 
-			configName = ( string )maybeConfigName.Value;
+			// when null constant is passed as the config name
+			if( !( maybeConfigName.Value is string stringValue ) ) {
+				configName = null;
+				return false;
+			}
+
+			configName = stringValue;
 			return true;
 		}
 
