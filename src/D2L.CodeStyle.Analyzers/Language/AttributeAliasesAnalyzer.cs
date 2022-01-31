@@ -34,7 +34,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			) {
 
 			// if it's not an identifier, then it's qualified and not aliasing the attribute name
-			if( !( attribute.Name is IdentifierNameSyntax attributeName ) ) {
+			if( attribute.Name is not IdentifierNameSyntax attributeName  ) {
 				return;
 			}
 
