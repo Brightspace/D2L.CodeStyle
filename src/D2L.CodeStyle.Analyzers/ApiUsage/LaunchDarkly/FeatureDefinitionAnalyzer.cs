@@ -1,5 +1,3 @@
-#nullable disable
-
 using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
@@ -35,7 +33,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly {
 
 			Compilation compilation = context.Compilation;
 
-			INamedTypeSymbol featureDefinitionType = compilation.GetTypeByMetadataName( FeatureDefinitionFullName );
+			INamedTypeSymbol? featureDefinitionType = compilation.GetTypeByMetadataName( FeatureDefinitionFullName );
 			if( featureDefinitionType.IsNullOrErrorType() ) {
 				return;
 			}
@@ -54,7 +52,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly {
 			SimpleBaseTypeSyntax baseTypeSyntax = (SimpleBaseTypeSyntax)context.Node;
 			SymbolInfo baseTypeSymbol = context.SemanticModel.GetSymbolInfo( baseTypeSyntax.Type, context.CancellationToken );
 
-			INamedTypeSymbol baseSymbol = ( baseTypeSymbol.Symbol as INamedTypeSymbol );
+			INamedTypeSymbol? baseSymbol = ( baseTypeSymbol.Symbol as INamedTypeSymbol );
 			if( baseSymbol.IsNullOrErrorType() ) {
 				return;
 			}
