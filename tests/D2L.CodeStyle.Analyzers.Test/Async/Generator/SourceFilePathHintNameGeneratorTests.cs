@@ -91,4 +91,42 @@ internal class SourceFilePathHintNameGeneratorTests {
 			gen.GetHintNames()
 		);
 	}
+
+	[Test]
+	public void Ugly() {
+		var gen = SourceFilePathHintNameGenerator.Create(
+			ImmutableArray.Create(
+				@"C:\foo\bar\abc.cs",
+				@"D:\foo\bar\baz\def.cs"
+			)
+		);
+
+		CollectionAssert.AreEqual(
+			ImmutableArray.Create(
+				@"C_foo_bar_abc",
+				@"D_foo_bar_baz_def"
+			),
+			gen.GetHintNames()
+		);
+	}
+
+	[Test]
+	public void UnixStylePaths() {
+		var gen = SourceFilePathHintNameGenerator.Create(
+			ImmutableArray.Create(
+				"foo/bar/abc.cs",
+				"foo/def.cs",
+				"foo/bar/baz/ghi.cs"
+			)
+		);
+
+		CollectionAssert.AreEqual(
+			ImmutableArray.Create(
+				"bar_abc",
+				"def",
+				"bar_baz_ghi"
+			),
+			gen.GetHintNames()
+		);
+	}
 }
