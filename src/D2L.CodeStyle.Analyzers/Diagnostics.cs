@@ -744,5 +744,14 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor AliasingAttributeNamesNotSupported = new DiagnosticDescriptor(
+			id: "D2L0096",
+			title: "Aliasing attribute class names not supported",
+			messageFormat: "Aliasing attribute class names makes code less readable and forces analyzers to use the symbolic model for type equality (which is expensive)",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }
