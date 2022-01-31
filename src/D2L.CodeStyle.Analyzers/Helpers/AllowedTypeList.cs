@@ -1,9 +1,7 @@
 #nullable disable
 
-using System;
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
-using System.IO;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
@@ -25,6 +23,8 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 		private readonly string m_allowedListFileName;
 		private readonly ImmutableHashSet<string> m_allowedList;
 
+		private readonly ConcurrentDictionary<INamedTypeSymbol, bool> m_used = new( SymbolEqualityComparer.Default );
+
 		private AllowedTypeList(
 			string allowedListFileName,
 			ImmutableHashSet<string> allowedList
@@ -34,23 +34,55 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 		}
 
 		public bool Contains( INamedTypeSymbol entry ) {
+			if( ContainsInternal( entry ) ) {
+				m_used[ entry ] = true;
+				return true;
+			}
+
+			return false;
+		}
+
+		public void CollectSymbolIfContained( SymbolAnalysisContext ctx ) {
+			ISymbol symbol = ctx.Symbol;
+
+			if( symbol.Kind != SymbolKind.NamedType ) {
+				return;
+			}
+
+			INamedTypeSymbol entry = (INamedTypeSymbol)symbol;
+
+			if( ContainsInternal( entry ) ) {
+				m_used.TryAdd( entry, false );
+			}
+		}
+
+		public void ReportUnnecessaryEntries(
+			CompilationAnalysisContext ctx
+		) {
+			foreach( var kv in m_used ) {
+				bool used = kv.Value;
+				if( used ) {
+					continue;
+				}
+
+				INamedTypeSymbol entry = kv.Key;
+				if( entry.Locations.IsEmpty ) {
+					continue;
+				}
+
+				ctx.ReportDiagnostic( Diagnostic.Create(
+					descriptor: Diagnostics.UnnecessaryAllowedListEntry,
+					location: entry.Locations[0],
+					FormatEntry( entry ),
+					m_allowedListFileName
+				) );
+			}
+		}
+
+		private bool ContainsInternal( INamedTypeSymbol entry ) {
 			string entryString = FormatEntry( entry );
 			bool contains = m_allowedList.Contains( entryString );
 			return contains;
-		}
-
-		public delegate void ReportDiagnostic( Diagnostic diagnostic );
-		public void ReportEntryAsUnnecesary(
-			INamedTypeSymbol entry,
-			Location location,
-			ReportDiagnostic report
-		) {
-			report( Diagnostic.Create(
-				descriptor: Diagnostics.UnnecessaryAllowedListEntry,
-				location: location,
-				FormatEntry( entry ),
-				m_allowedListFileName
-			) );
 		}
 
 		private static string FormatEntry( INamedTypeSymbol entry ) {

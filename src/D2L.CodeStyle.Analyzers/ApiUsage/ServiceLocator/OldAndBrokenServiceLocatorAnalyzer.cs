@@ -2,8 +2,6 @@ using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Extensions;
 using D2L.CodeStyle.Analyzers.Helpers;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
 
@@ -96,8 +94,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			);
 
 			context.RegisterSymbolAction(
-				ctx => PreventUnnecessaryAllowedListing( ctx, typeRules ),
+				allowedTypeList.CollectSymbolIfContained,
 				SymbolKind.NamedType
+			);
+
+			context.RegisterCompilationEndAction(
+				allowedTypeList.ReportUnnecessaryEntries
 			);
 		}
 
@@ -163,68 +165,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			}
 
 			return false;
-		}
-
-		private void PreventUnnecessaryAllowedListing(
-			SymbolAnalysisContext context,
-			TypeRuleSets typeRules
-		) {
-			if( !( context.Symbol is INamedTypeSymbol namedType ) ) {
-				return;
-			}
-
-			if( !typeRules.Allowed.Contains( namedType ) ) {
-				return;
-			}
-
-			Location? diagnosticLocation = null;
-			foreach( var syntaxRef in namedType.DeclaringSyntaxReferences ) {
-
-				TypeDeclarationSyntax? typeSyntax = syntaxRef.GetSyntax( context.CancellationToken ) as TypeDeclarationSyntax;
-				if( typeSyntax == null ) {
-					throw new InvalidOperationException( "Existing implementation assumed not null" );
-				}
-
-				diagnosticLocation = diagnosticLocation ?? typeSyntax.Identifier.GetLocation();
-
-				SemanticModel model = context.Compilation.GetSemanticModel( typeSyntax.SyntaxTree );
-
-				bool usesDisallowedTypes = typeSyntax
-					.DescendantNodes()
-					.OfType<IdentifierNameSyntax>()
-					.Any( syntax => IdentifierIsOfDisallowedType( model, typeRules.Disallowed, syntax, context.CancellationToken ) );
-
-				if( usesDisallowedTypes ) {
-					return;
-				}
-			}
-
-			if( diagnosticLocation != null ) {
-				typeRules.Allowed.ReportEntryAsUnnecesary(
-					entry: namedType,
-					location: diagnosticLocation,
-					report: context.ReportDiagnostic
-				);
-			}
-		}
-
-		private static bool IdentifierIsOfDisallowedType(
-			SemanticModel model,
-			ImmutableHashSet<ITypeSymbol> disallowedTypes,
-			IdentifierNameSyntax syntax,
-			CancellationToken cancellationToken
-		) {
-
-			ITypeSymbol? actualType = model.GetTypeInfo( syntax, cancellationToken ).Type;
-			if( actualType.IsNullOrErrorType() ) {
-				return false;
-			}
-
-			if( !disallowedTypes.Contains( actualType ) ) {
-				return false;
-			}
-
-			return true;
 		}
 
 		private ImmutableHashSet<ITypeSymbol> GetDisallowedTypes( Compilation compilation ) {

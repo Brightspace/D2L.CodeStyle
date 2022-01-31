@@ -41,12 +41,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 			);
 
 			context.RegisterSymbolAction(
-				ctx => PreventUnnecessaryAllowedListing(
-					ctx,
-					attributeType,
-					allowedTypeList
-				),
+				allowedTypeList.CollectSymbolIfContained,
 				SymbolKind.NamedType
+			);
+
+			context.RegisterCompilationEndAction(
+				allowedTypeList.ReportUnnecessaryEntries
 			);
 		}
 
@@ -87,39 +87,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 			);
 
 			context.ReportDiagnostic( diagnostic );
-		}
-
-		private void PreventUnnecessaryAllowedListing(
-			SymbolAnalysisContext context,
-			INamedTypeSymbol jsonParamBinderT,
-			AllowedTypeList allowedTypeList
-		) {
-			if( context.Symbol is not INamedTypeSymbol namedType  ) {
-				return;
-			}
-
-			if( !allowedTypeList.Contains( namedType ) ) {
-				return;
-			}
-
-			foreach( var method in namedType.GetMembers().OfType<IMethodSymbol>() ) {
-				foreach( var parameter in method.Parameters ) {
-					foreach( var attribute in parameter.GetAttributes() ) {
-						if( SymbolEqualityComparer.Default.Equals( attribute.AttributeClass, jsonParamBinderT ) ) {
-							return;
-						}
-					}
-				}
-			}
-
-			Location? diagnosticLocation = namedType.Locations.FirstOrDefault();
-			if( diagnosticLocation != null ) {
-				allowedTypeList.ReportEntryAsUnnecesary(
-					entry: namedType,
-					location: diagnosticLocation,
-					report: context.ReportDiagnostic
-				);
-			}
 		}
 
 		private static bool AttributeIsOfDisallowedType(
