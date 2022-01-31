@@ -26,14 +26,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			Diagnostics.UnnecessaryAllowedListEntry
 		);
 
-		private readonly bool m_excludeKnownProblems;
-
-		public OldAndBrokenServiceLocatorAnalyzer() : this( excludeKnownProblemDlls: true ) { }
-
-		public OldAndBrokenServiceLocatorAnalyzer( bool excludeKnownProblemDlls ) {
-			m_excludeKnownProblems = excludeKnownProblemDlls;
-		}
-
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
 			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics );
@@ -164,12 +156,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				return true;
 			}
 
-			if( m_excludeKnownProblems ) {
-
-				// Allow the types listed in OldAndBrokenServiceLocatorAllowedList.txt
-				if( containingTypes.Any( typeRules.Allowed.Contains ) ) {
-					return true;
-				}
+			// Allow the types listed in OldAndBrokenServiceLocatorAllowedList.txt
+			if( containingTypes.Any( typeRules.Allowed.Contains ) ) {
+				return true;
 			}
 
 			return false;
