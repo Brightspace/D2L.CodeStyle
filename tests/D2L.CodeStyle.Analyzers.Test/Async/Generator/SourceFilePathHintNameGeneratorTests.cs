@@ -22,7 +22,7 @@ internal class SourceFilePathHintNameGeneratorTests {
 			)
 		);
 
-		CollectionAssert.AreEquivalent(
+		CollectionAssert.AreEqual(
 			ImmutableArray.Create(
 				"bar"
 			),
@@ -39,7 +39,7 @@ internal class SourceFilePathHintNameGeneratorTests {
 			)
 		);
 
-		CollectionAssert.AreEquivalent(
+		CollectionAssert.AreEqual(
 			ImmutableArray.Create(
 				"bar",
 				"baz"
@@ -60,7 +60,7 @@ internal class SourceFilePathHintNameGeneratorTests {
 			)
 		);
 
-		CollectionAssert.AreEquivalent(
+		CollectionAssert.AreEqual(
 			ImmutableArray.Create(
 				"sub_bar",
 				"sub_baz",
@@ -82,7 +82,7 @@ internal class SourceFilePathHintNameGeneratorTests {
 			)
 		);
 
-		CollectionAssert.AreEquivalent(
+		CollectionAssert.AreEqual(
 			ImmutableArray.Create(
 				"sub_bar",
 				"sub_baz",
