@@ -1,4 +1,6 @@
-﻿using System.Linq;
+#nullable disable
+
+using System.Linq;
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -132,7 +134,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 					// Still output a diagnostic so that we can suggest a code fix in the
 					// IDE to add [Blocking].
 
-					var decl = methodSymbol.DeclaringSyntaxReferences.First().GetSyntax() as MethodDeclarationSyntax;
+					var decl = methodSymbol.DeclaringSyntaxReferences.First().GetSyntax( ctx.CancellationToken ) as MethodDeclarationSyntax;
 
 					ctx.ReportDiagnostic(
 						Diagnostic.Create(
@@ -155,7 +157,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 				ctx.ReportDiagnostic(
 					Diagnostic.Create(
 						Diagnostics.AsyncMethodCannotBeBlocking,
-						attrData.ApplicationSyntaxReference.GetSyntax().GetLocation(),
+						attrData.ApplicationSyntaxReference.GetSyntax( ctx.CancellationToken ).GetLocation(),
 						methodSymbol.Name
 					)
 				);
@@ -176,7 +178,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 				ctx.ReportDiagnostic(
 					Diagnostic.Create(
 						Diagnostics.DontIntroduceBlockingInImplementation,
-						attrData.ApplicationSyntaxReference.GetSyntax().GetLocation(),
+						attrData.ApplicationSyntaxReference.GetSyntax( ctx.CancellationToken ).GetLocation(),
 						$"{methodSymbol.ContainingType.Name}.{methodSymbol.Name}",
 						// Just use the first one as an example:
 						$"{implementedNonBlockingThings[0].ContainingType.Name}.{implementedNonBlockingThings[0].Name}"
@@ -285,7 +287,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 				ctx.ReportDiagnostic(
 					Diagnostic.Create(
 						Diagnostics.UnnecessaryBlocking,
-						attr.ApplicationSyntaxReference.GetSyntax().GetLocation(),
+						attr.ApplicationSyntaxReference.GetSyntax( ctx.CancellationToken ).GetLocation(),
 						thing.Name
 					)
 				);

@@ -1,5 +1,3 @@
-﻿#nullable enable
-
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using D2L.CodeStyle.Analyzers.Extensions;

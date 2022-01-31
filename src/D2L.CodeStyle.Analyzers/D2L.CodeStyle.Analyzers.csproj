@@ -17,6 +17,7 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <IncludeBuildOutput>False</IncludeBuildOutput>
     <IncludeSymbols>True</IncludeSymbols>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

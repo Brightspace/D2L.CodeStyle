@@ -1,4 +1,6 @@
-﻿using System.Linq;
+#nullable disable
+
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using static D2L.CodeStyle.Analyzers.Immutability.ImmutableDefinitionChecker;
 
@@ -8,7 +10,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			AnnotationsContext annotationsContext,
 			ISymbol symbol,
 			DiagnosticSink diagnosticSink,
-			out Location location ) {
+			CancellationToken cancellationToken,
+			out Location location
+		) {
 
 			// Collect audit information
 			var hasStaticAudited = annotationsContext.Statics.Audited.IsDefined( symbol );
@@ -28,7 +32,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			var syntaxLocation = symbol
 				.DeclaringSyntaxReferences[0]
-				.GetSyntax()
+				.GetSyntax( cancellationToken )
 				.GetLastToken()
 				.GetLocation();
 
@@ -87,14 +91,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			if( attr != null ) {
-				location = GetLocation( attr );
+				location = GetLocation( attr, cancellationToken );
 				return true;
 			}
 			location = null;
 			return false;
 		}
 
-		private static Location GetLocation( AttributeData attr )
-			=> attr.ApplicationSyntaxReference.GetSyntax().GetLocation();
+		private static Location GetLocation( AttributeData attr, CancellationToken cancellationToken )
+			=> attr.ApplicationSyntaxReference.GetSyntax( cancellationToken ).GetLocation();
 	}
 }
