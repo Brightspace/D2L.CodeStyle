@@ -25,6 +25,16 @@ namespace D2L.LP.Extensibility.Activation.Domain {
 	public class OldAndBrokenServiceLocatorFactory {
 		public static IServiceLocator Create() { return null; }
 	}
+
+	public static class ObjectActivatorExtensions {
+		public static bool TryCreateInstance<T, TF>(
+			this IObjectActivator activator,
+			out T instance
+		) {
+			instance = null;
+			return false;
+		}
+	}
 }
 
 namespace D2L.LP.Extensibility.Activation.Domain.Default.StaticDI {
@@ -60,6 +70,12 @@ namespace D2L.CodeStyle.Analyzers.OldAndBrokenLocator.Examples {
 			IObjectActivator activator = default;
 			/* OldAndBrokenLocatorIsObsolete */ activator.Create<string>() /**/;
 			Func<string> activatorFunc = /* OldAndBrokenLocatorIsObsolete */ activator.Create<string> /**/;
+		}
+
+		public void Uses_IObjectActivatorExtension() {
+			IObjectActivator activator = default;
+			/* OldAndBrokenLocatorIsObsolete */ activator.TryCreateInstance<string, string>( out string instance ) /**/;
+			var x = /* OldAndBrokenLocatorIsObsolete */ activator.TryCreateInstance<string, string> /**/;
 		}
 
 		public void Uses_ICustomObjectActivator() {
