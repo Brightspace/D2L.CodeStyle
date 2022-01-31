@@ -68,8 +68,8 @@ namespace D2L.CodeStyle.Analyzers.Specs {
 			// Other configs names are okay
 			m_configViewer.GetOrg<string>( 123, "foo.Bar.Baz" );
 
+			// Null config name really shouldn't be ok but the analyzer doesn't currently report about it
 			m_configViewer.GetOrg<string>( 123, null );
 		}
-
 	}
 }
