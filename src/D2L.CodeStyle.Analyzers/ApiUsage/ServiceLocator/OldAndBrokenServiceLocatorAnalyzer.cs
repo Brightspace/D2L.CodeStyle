@@ -90,7 +90,26 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 		) {
 
 			if( !typeRules.Disallowed.Contains( member.ContainingType ) ) {
-				return;
+				if( member.Kind != SymbolKind.Method ) {
+					return;
+				}
+
+				IMethodSymbol method = (IMethodSymbol)member;
+				if( !method.IsExtensionMethod ) {
+					return;
+				}
+
+				bool extensionMethodCanBeAppliedToDisallowedType = false;
+				foreach( ITypeSymbol disallowedType in typeRules.Disallowed ) {
+					if (method.ReduceExtensionMethod( disallowedType ) is not null) {
+						extensionMethodCanBeAppliedToDisallowedType = true;
+						continue;
+					}
+				}
+
+				if( !extensionMethodCanBeAppliedToDisallowedType ) {
+					return;
+				}
 			}
 
 			ISymbol caller = context.ContainingSymbol;
