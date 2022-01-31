@@ -79,6 +79,30 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			);
 
 			context.RegisterSymbolAction(
+				context => {
+					IFieldSymbol field = (IFieldSymbol)context.Symbol;
+					AnalyzeTypeUsage( context, field.Type, typeRules );
+				},
+				SymbolKind.Field
+			);
+
+			context.RegisterSymbolAction(
+				context => {
+					IParameterSymbol parameter = (IParameterSymbol)context.Symbol;
+					AnalyzeTypeUsage( context, parameter.Type, typeRules );
+				},
+				SymbolKind.Parameter
+			);
+
+			context.RegisterSymbolAction(
+				context => {
+					IPropertySymbol property = (IPropertySymbol)context.Symbol;
+					AnalyzeTypeUsage( context, property.Type, typeRules );
+				},
+				SymbolKind.Property
+			);
+
+			context.RegisterSymbolAction(
 				ctx => PreventUnnecessaryAllowedListing( ctx, typeRules ),
 				SymbolKind.NamedType
 			);
@@ -114,6 +138,40 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			Diagnostic diagnostic = Diagnostic.Create(
 				Diagnostics.OldAndBrokenLocatorIsObsolete,
 				context.Operation.Syntax.GetLocation()
+			);
+
+			context.ReportDiagnostic( diagnostic );
+		}
+
+		private void AnalyzeTypeUsage(
+			SymbolAnalysisContext context,
+			ITypeSymbol type,
+			TypeRuleSets typeRules
+		) {
+			if( !typeRules.Disallowed.Contains( type ) ) {
+				return;
+			}
+
+			ISymbol caller = context.Symbol.ContainingSymbol;
+
+			ImmutableArray<INamedTypeSymbol> callerContainingTypes = caller.GetAllContainingTypes();
+
+			// Allow the DI framework to call the disallowed types
+			if( callerContainingTypes.Any( Attributes.DIFramework.IsDefined ) ) {
+				return;
+			}
+
+			if( m_excludeKnownProblems ) {
+
+				// Allow the types listed in OldAndBrokenServiceLocatorAllowedList.txt
+				if( callerContainingTypes.Any( typeRules.Allowed.Contains ) ) {
+					return;
+				}
+			}
+
+			Diagnostic diagnostic = Diagnostic.Create(
+				Diagnostics.OldAndBrokenLocatorIsObsolete,
+				context.Symbol.Locations[ 0 ]
 			);
 
 			context.ReportDiagnostic( diagnostic );
