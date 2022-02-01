@@ -27,6 +27,7 @@ namespace SpecTests {
 
 		internal static void Accept<TResult>( [StatelessFunc] Func<TResult> f ) { }
 		internal static void Accept<T1, TResult>( [StatelessFunc] Func<T1, TResult> f ) { }
+		internal static void AcceptDefault<TResult>( [StatelessFunc] Func<TResult> f = null ) { }
 
 	}
 
@@ -64,20 +65,20 @@ namespace SpecTests {
 			AttributeFuncReceiver.Accept<string, string>( /* StatelessFuncIsnt(Lambda is not static) */ x => x + trailing /**/ );
 		}
 
-		public void DelegateStatic() {
+		public void LambdaStatic() {
 			var func = new StatelessFunc<string, string>( static delegate ( string x ) { return x + "\n"; } );
 			AttributeFuncReceiver.Accept<string, string>( static delegate ( string x ) { return x + "\n"; } );
 		}
 
-		public void DelegateNoClosures() {
-			var func = new StatelessFunc<string, string>( /* StatelessFuncIsnt(Delegate is not static) */ delegate ( string x ) { return x + "\n"; } /**/ );
-			AttributeFuncReceiver.Accept<string, string>( /* StatelessFuncIsnt(Delegate is not static) */ delegate ( string x ) { return x + "\n"; } /**/ );
+		public void LambdaNoClosures() {
+			var func = new StatelessFunc<string, string>( /* StatelessFuncIsnt(Lambda is not static) */ delegate ( string x ) { return x + "\n"; } /**/ );
+			AttributeFuncReceiver.Accept<string, string>( /* StatelessFuncIsnt(Lambda is not static) */ delegate ( string x ) { return x + "\n"; } /**/ );
 		}
 
-		public void DelegateWithClosures() {
+		public void LambdaWithClosures() {
 			string trailing = "\n";
-			var func = new StatelessFunc<string, string>(  /* StatelessFuncIsnt(Delegate is not static) */ delegate ( string x ) { return x + trailing; } /**/ );
-			AttributeFuncReceiver.Accept<string, string>(  /* StatelessFuncIsnt(Delegate is not static) */ delegate ( string x ) { return x + trailing; } /**/ );
+			var func = new StatelessFunc<string, string>(  /* StatelessFuncIsnt(Lambda is not static) */ delegate ( string x ) { return x + trailing; } /**/ );
+			AttributeFuncReceiver.Accept<string, string>(  /* StatelessFuncIsnt(Lambda is not static) */ delegate ( string x ) { return x + trailing; } /**/ );
 		}
 
 		public void NonStaticMember() {
@@ -88,6 +89,10 @@ namespace SpecTests {
 		public void StaticMember() {
 			var func = new StatelessFunc<string, int>( Int32.Parse );
 			AttributeFuncReceiver.Accept<string, int>( Int32.Parse );
+		}
+
+		public void DefaultArgument() {
+			AttributeFuncReceiver.AcceptDefault<string>();
 		}
 
 		public void MultiLineStatic() {
@@ -182,8 +187,17 @@ namespace SpecTests {
 		}
 
 		public void FuncFromParam( Func<int> f ) {
-			var func = new StatelessFunc<int>( /* StatelessFuncIsnt(Unable to determine if f is stateless.) */ f /**/ );
-			AttributeFuncReceiver.Accept( /* StatelessFuncIsnt(Unable to determine if f is stateless.) */ f /**/ );
+			var func = new StatelessFunc<int>( /* StatelessFuncIsnt(Parameter f is not marked [StatelessFunc].) */ f /**/ );
+			AttributeFuncReceiver.Accept( /* StatelessFuncIsnt(Parameter f is not marked [StatelessFunc].) */ f /**/ );
+		}
+
+		public void StatelessFuncFromInvocation() {
+			StatelessFunc<int> getStatelessFunc() {
+				return null;
+			}
+
+			var func = new StatelessFunc<int>( getStatelessFunc() );
+			AttributeFuncReceiver.Accept( getStatelessFunc() );
 		}
 
 		internal sealed class AnotherConstructor {
@@ -210,6 +224,41 @@ namespace SpecTests {
 					: base( /* StatelessFuncIsnt(Lambda is not static) */ () => ++i /**/ ) { }
 
 			}
+		}
+
+		internal class ClassWithMembers {
+
+			private readonly Func<int> m_nonStaticField = static () => 1;
+			private static readonly Func<int> m_staticField = static () => 2;
+
+			private Func<int> NonStaticProperty { get; } = static () => 3;
+			private static Func<int> StaticProperty { get; } = static () => 4;
+
+			private int NonStaticMethod() => 5;
+			private static int StaticMethod() => 6;
+
+			public void ReferencesMembers() {
+
+				var f1 = new StatelessFunc<int>( /* StatelessFuncIsnt(m_nonStaticField is not static) */ m_nonStaticField /**/ );
+				AttributeFuncReceiver.Accept( /* StatelessFuncIsnt(m_nonStaticField is not static) */ m_nonStaticField /**/ );
+
+				var f2 = new StatelessFunc<int>( m_staticField );
+				AttributeFuncReceiver.Accept( m_staticField );
+
+				var f3 = new StatelessFunc<int>( /* StatelessFuncIsnt(NonStaticProperty is not static) */ NonStaticProperty /**/ );
+				AttributeFuncReceiver.Accept( /* StatelessFuncIsnt(NonStaticProperty is not static) */ NonStaticProperty /**/ );
+
+				var f4 = new StatelessFunc<int>( StaticProperty );
+				AttributeFuncReceiver.Accept( StaticProperty );
+
+				var f5 = new StatelessFunc<int>( /* StatelessFuncIsnt(NonStaticMethod is not static) */ NonStaticMethod /**/ );
+				AttributeFuncReceiver.Accept( /* StatelessFuncIsnt(NonStaticMethod is not static) */ NonStaticMethod /**/ );
+
+				var f6 = new StatelessFunc<int>( StaticMethod );
+				AttributeFuncReceiver.Accept( StaticMethod );
+
+			}
+
 		}
 	}
 }

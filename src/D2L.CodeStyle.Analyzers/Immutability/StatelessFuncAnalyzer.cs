@@ -1,14 +1,7 @@
-#nullable disable
-
-using D2L.CodeStyle.Analyzers.Extensions;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Diagnostics;
-
 using System.Collections.Immutable;
-using System.Linq;
-using System.Threading;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
@@ -27,7 +20,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private static void RegisterAnalysis( CompilationStartAnalysisContext context ) {
 
 			Compilation compilation = context.Compilation;
-			ISymbol statelessFuncAttr = compilation.GetTypeByMetadataName( "D2L.CodeStyle.Annotations.Contract.StatelessFuncAttribute" );
+			INamedTypeSymbol? statelessFuncAttr = compilation.GetTypeByMetadataName( "D2L.CodeStyle.Annotations.Contract.StatelessFuncAttribute" );
 
 			if( statelessFuncAttr == null ) {
 				return;
@@ -35,159 +28,168 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			ImmutableHashSet<ISymbol> statelessFuncs = GetStatelessFuncTypes( compilation );
 
-			context.RegisterSyntaxNodeAction(
+			context.RegisterOperationAction(
 				ctx => {
 					AnalyzeArgument(
 						ctx,
+						(IArgumentOperation)ctx.Operation,
 						statelessFuncAttr,
 						statelessFuncs
 					);
 				},
-				SyntaxKind.Argument
+				OperationKind.Argument
 			);
 		}
 
 		private static void AnalyzeArgument(
-			SyntaxNodeAnalysisContext context,
+			OperationAnalysisContext context,
+			IArgumentOperation argumentOperation,
 			ISymbol statelessFuncAttribute,
 			ImmutableHashSet<ISymbol> statelessFuncs
 		) {
-			ArgumentSyntax syntax = context.Node as ArgumentSyntax;
+			if( argumentOperation.ArgumentKind == ArgumentKind.DefaultValue ) {
+				return;
+			}
 
-			SemanticModel model = context.SemanticModel;
-
-			IParameterSymbol param = syntax.DetermineParameter(
-				model,
-				allowParams: false,
-				context.CancellationToken
-			);
-
+			IParameterSymbol? param = argumentOperation.Parameter;
 			if( param == null ) {
 				return;
 			}
 
-			ImmutableArray<AttributeData> paramAttributes = param.GetAttributes();
-			if( !paramAttributes.Any( a => a.AttributeClass.Equals( statelessFuncAttribute, SymbolEqualityComparer.Default ) ) ) {
+			if( !IsParameterMarkedStateless( statelessFuncAttribute, param ) ) {
 				return;
 			}
 
-			ExpressionSyntax argument = syntax.Expression;
+			IOperation operationToInspect = argumentOperation.Value;
+			switch( operationToInspect ) {
+				/**
+				 * Any statement defining an anonymous function:
+				 *   () => 0
+				 *   x => 0
+				 *   delegate () { return 0; }
+				 * We grab the target to get the actual function out instead of
+				 * the act of defining it.
+				 */
+				case IDelegateCreationOperation delegateCreation:
+					operationToInspect = delegateCreation.Target;
+					break;
+
+				/**
+				 * If the argument is being converted, get the original value
+				 * and check its type / operation instead. This comes up for
+				 * this case specifically:
+				 *   new StatelessFunc<int>( new StatelessFunc<int>( ... ) );
+				 * Because new StatelessFunc takes Funcs, the argument is
+				 * implicitly converted to a Func. We need to look at the value
+				 * to determine it was of type StatelessFunc and accept it.
+				 */
+				case IConversionOperation conversionOperation:
+					operationToInspect = conversionOperation.Operand;
+					break;
+			}
 
 			/**
 			* Even though we haven't specifically accounted for its
 			* source if it's a StatelessFunc<T> we're reasonably
 			* certain its been analyzed.
 			*/
-			ISymbol type = model.GetTypeInfo( argument, context.CancellationToken ).Type;
+			ISymbol? type = operationToInspect.Type;
 			if( type != null && IsStatelessFunc( type, statelessFuncs ) ) {
 				return;
 			}
 
-			// static functions can't capture state
-			if ( argument.IsStaticFunction() ) {
-				return;
-			}
-
 			Diagnostic diag;
-			switch( argument ) {
+			switch( operationToInspect ) {
 				// this is the case when a method reference is used
 				// eg Func<string, int> func = int.Parse
-				case MemberAccessExpressionSyntax:
-					if( IsStaticMemberAccess( context, argument ) ) {
+				case IMemberReferenceOperation memberReference:
+					if( memberReference.Member.IsStatic ) {
 						return;
 					}
 
 					// non-static member access means that state could
 					// be used / held.
-					// TODO: Look for [Immutable] on the member's type
-					// to determine if the non-static member is safe
 					diag = Diagnostic.Create(
 						Diagnostics.StatelessFuncIsnt,
-						argument.GetLocation(),
-						$"{ argument.ToString() } is not static"
+						argumentOperation.Syntax.GetLocation(),
+						$"{ argumentOperation.Syntax } is not static"
 					);
 					break;
 
-				// this is the case when a "delegate" is used
-				// eg delegate( int x, int y ) { return x + y; }
-				case AnonymousMethodExpressionSyntax anonymousMethod:
-					diag = Diagnostic.Create(
-						Diagnostics.StatelessFuncIsnt,
-						argument.GetLocation(),
-						"Delegate is not static"
-					);
-					break;
+				/**
+				 * Any lambda / delegate. See first switch re DelegateCreation.
+				 */
+				case IAnonymousFunctionOperation lambda:
+					if( lambda.Symbol.IsStatic ) {
+						return;
+					}
 
-				// this is the case when a lambda is used, regardless of parens
-				// eg () => 1,
-				//    (x, y) => x + y
-				//     x => x + 1
-				case LambdaExpressionSyntax lambda:
 					diag = Diagnostic.Create(
 						Diagnostics.StatelessFuncIsnt,
-						argument.GetLocation(),
+						argumentOperation.Syntax.GetLocation(),
 						"Lambda is not static"
 					);
 					break;
 
 				// this is the case where an expression is invoked,
-				// which returns a Func<T>
-				// eg ( () => { return () => 1 } )()
-				case InvocationExpressionSyntax:
+				// which returns a Func<T>:
+				//   ( () => { return () => 1 } )()
+				// Invocations which return a StatelessFunc were handled by the
+				// type check.
+				case IInvocationOperation:
 					// we are rejecting this because it is tricky to
 					// analyze properly, but also a bit ugly and should
 					// never really be necessary
 					diag = Diagnostic.Create(
 						Diagnostics.StatelessFuncIsnt,
-						argument.GetLocation(),
-						$"Invocations are not allowed: { argument.ToString() }"
+						argumentOperation.Syntax.GetLocation(),
+						$"Invocations are not allowed: { argumentOperation.Syntax }"
 					);
 
 					break;
 
 				/**
-				 * This is the case where a variable is passed in
-				 * eg Foo( f )
-				 * Where f might be a local variable, a parameter, or field
-				 *
-				 * class C<T> {
-				 *   StatelessFunc<T> m_f;
-				 *
-				 *   void P( StatelessFunc<T> f ) { Foo( f ); }
-				 *   void Q( [StatelessFunc] Func<T> f ) { Foo( f ); }
-				 *   void R() { StatelessFunc<T> f; Foo( f ); }
-				 *   void S() { Foo( m_f ); }
-				 *   void T() : this( StaticMemberMethod ) {}
-				 * }
+				 * This is the case where a paraeter is passed in
+				 *   void MyMethod<T>( Func<T> f ) {
+				 *     Foo( f )
+				 *   }
+				 *   void MyMethod<T>( [StatelessFunc] Func<T> f ) {
+				 *     Foo( f )
+				 *   }
+				 * If the parameter was StatelesFunc<T>, it was allowed via the
+				 * type check.
 				 */
-				case IdentifierNameSyntax identifier:
+				case IParameterReferenceOperation paramReference:
 					/**
 					 * If it's a local parameter marked with [StatelessFunc] we're reasonably
 					 * certain it was analyzed on the caller side.
 					 */
 					if( IsParameterMarkedStateless(
-						model,
 						statelessFuncAttribute,
-						identifier,
-						context.CancellationToken
+						paramReference.Parameter
 					) ) {
 						return;
 					}
 
-					if( IsStaticMemberAccess(
-						context,
-						identifier
-					) ) {
-						return;
-					}
-
-					/**
-					 * If it's any other variable. We're not sure
-					 */
 					diag = Diagnostic.Create(
 						Diagnostics.StatelessFuncIsnt,
-						argument.GetLocation(),
-						$"Unable to determine if { argument.ToString() } is stateless."
+						argumentOperation.Syntax.GetLocation(),
+						$"Parameter { argumentOperation.Syntax } is not marked [StatelessFunc]."
+					);
+					break;
+
+				/**
+				 * This is the case where a local variable is passed in
+				 *   var f = () => 0;
+				 *   Foo( f )
+				 * If the variable was StatelessFunc<T>, it was allowed via the
+				 * type check.
+				 */
+				case ILocalReferenceOperation:
+					diag = Diagnostic.Create(
+						Diagnostics.StatelessFuncIsnt,
+						argumentOperation.Syntax.GetLocation(),
+						$"Unable to determine if { argumentOperation.Syntax } is stateless."
 					);
 
 					break;
@@ -197,29 +199,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// reject usages we do not understand yet
 					diag = Diagnostic.Create(
 						Diagnostics.StatelessFuncIsnt,
-						argument.GetLocation(),
-						$"Unable to determine safety of { argument.ToString() }. This is an unexpectes usage of StatelessFunc<T>"
+						argumentOperation.Syntax.GetLocation(),
+						$"Unable to determine safety of { argumentOperation.Syntax }. This is an unexpectes usage of StatelessFunc<T>"
 					);
 
 					break;
 			}
 
 			context.ReportDiagnostic( diag );
-		}
-
-		private static bool IsStaticMemberAccess(
-			SyntaxNodeAnalysisContext context,
-			ExpressionSyntax expression
-		) {
-			ISymbol symbol = context
-				.SemanticModel
-				.GetSymbolInfo( expression, context.CancellationToken ).Symbol;
-
-			if( symbol == null ) {
-				return false;
-			}
-
-			return symbol.IsStatic;
 		}
 
 		private static bool IsStatelessFunc(
@@ -234,30 +221,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		private static bool IsParameterMarkedStateless(
-			SemanticModel model,
-			ISymbol statelessFuncAttr,
-			IdentifierNameSyntax identifer,
-			CancellationToken ct
+			ISymbol statelessFuncAttribute,
+			IParameterSymbol param
 		) {
-			ISymbol symbol = model.GetSymbolInfo( identifer, ct ).Symbol;
-			if( symbol == null ) {
-				return false;
-			}
-
-			var declarations = symbol.DeclaringSyntaxReferences;
-			if( declarations.Length != 1 ) {
-				return false;
-			}
-
-			ParameterSyntax parameterSyntax = declarations[0].GetSyntax( ct ) as ParameterSyntax;
-			if( parameterSyntax == null ) {
-				return false;
-			}
-
-			IParameterSymbol parameter = model.GetDeclaredSymbol( parameterSyntax, ct );
-
-			foreach( AttributeData attr in parameter.GetAttributes() ) {
-				if( attr.AttributeClass.Equals( statelessFuncAttr, SymbolEqualityComparer.Default ) ) {
+			ImmutableArray<AttributeData> paramAttributes = param.GetAttributes();
+			foreach( AttributeData a in paramAttributes ) {
+				if( SymbolEqualityComparer.Default.Equals( a.AttributeClass, statelessFuncAttribute ) ) {
 					return true;
 				}
 			}
@@ -267,7 +236,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private static ImmutableHashSet<ISymbol> GetStatelessFuncTypes( Compilation compilation) {
 
-			var builder = ImmutableHashSet.CreateBuilder( SymbolEqualityComparer.Default );
+			var builder = ImmutableHashSet.CreateBuilder<ISymbol>( SymbolEqualityComparer.Default );
 
 			var types = new string[] {
 				"D2L.StatelessFunc`1",
@@ -284,7 +253,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			};
 
 			foreach( string typeName in types ) {
-				INamedTypeSymbol typeSymbol = compilation.GetTypeByMetadataName( typeName );
+				INamedTypeSymbol? typeSymbol = compilation.GetTypeByMetadataName( typeName );
 
 				if( typeSymbol == null ) {
 					// These types are usually defined in another assembly,
