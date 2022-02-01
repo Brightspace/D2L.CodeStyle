@@ -17,6 +17,7 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <IncludeBuildOutput>False</IncludeBuildOutput>
     <IncludeSymbols>True</IncludeSymbols>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
