@@ -65,17 +65,17 @@ namespace SpecTests {
 			AttributeFuncReceiver.Accept<string, string>( /* StatelessFuncIsnt(Lambda is not static) */ x => x + trailing /**/ );
 		}
 
-		public void LambdaStatic() {
+		public void DelegateStatic() {
 			var func = new StatelessFunc<string, string>( static delegate ( string x ) { return x + "\n"; } );
 			AttributeFuncReceiver.Accept<string, string>( static delegate ( string x ) { return x + "\n"; } );
 		}
 
-		public void LambdaNoClosures() {
+		public void DelegateNoClosures() {
 			var func = new StatelessFunc<string, string>( /* StatelessFuncIsnt(Lambda is not static) */ delegate ( string x ) { return x + "\n"; } /**/ );
 			AttributeFuncReceiver.Accept<string, string>( /* StatelessFuncIsnt(Lambda is not static) */ delegate ( string x ) { return x + "\n"; } /**/ );
 		}
 
-		public void LambdaWithClosures() {
+		public void DelegateWithClosures() {
 			string trailing = "\n";
 			var func = new StatelessFunc<string, string>(  /* StatelessFuncIsnt(Lambda is not static) */ delegate ( string x ) { return x + trailing; } /**/ );
 			AttributeFuncReceiver.Accept<string, string>(  /* StatelessFuncIsnt(Lambda is not static) */ delegate ( string x ) { return x + trailing; } /**/ );
