@@ -1,11 +1,9 @@
-#nullable disable
-
+using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using System.Collections.Immutable;
-using System.Linq;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
 
@@ -15,6 +13,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.ReadOnlyParameterIsnt
 		);
+
+		private const string FullyQualifiedAttributeName = "D2L.CodeStyle.Annotations.ReadOnlyAttribute";
+		private static readonly ImmutableArray<string> UnqualifiedAttributeNames = ImmutableArray.Create( "ReadOnly", "ReadOnlyAttribute" );
 
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
@@ -26,8 +27,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			Compilation compilation = context.Compilation;
 
-			INamedTypeSymbol readOnlyAttribute = compilation.GetTypeByMetadataName( "D2L.CodeStyle.Annotations.ReadOnlyAttribute" );
-
+			INamedTypeSymbol? readOnlyAttribute = compilation.GetTypeByMetadataName( FullyQualifiedAttributeName );
 			if( readOnlyAttribute == null ) {
 				return;
 			}
@@ -36,7 +36,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				ctx => AnalyzeParameter(
 					ctx: ctx,
 					readOnlyAttribute: readOnlyAttribute,
-					syntax: ctx.Node as ParameterSyntax
+					syntax: (ParameterSyntax)ctx.Node
 				),
 				SyntaxKind.Parameter
 			);
@@ -47,9 +47,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			INamedTypeSymbol readOnlyAttribute,
 			ParameterSyntax syntax
 		) {
+
+			if( !HasOnlyAttributeCandidates( syntax ) ) {
+				return;
+			}
+
 			SemanticModel model = ctx.SemanticModel;
 
-			IParameterSymbol parameter = model.GetDeclaredSymbol( syntax, ctx.CancellationToken );
+			IParameterSymbol? parameter = model.GetDeclaredSymbol( syntax, ctx.CancellationToken );
+			if( parameter.IsNullOrErrorType() ) {
+				return;
+			}
 
 			if( !IsMarkedReadOnly( readOnlyAttribute, parameter ) ) {
 				return;
@@ -68,9 +76,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				) );
 			}
 
-			IMethodSymbol method = parameter.ContainingSymbol as IMethodSymbol;
-			BlockSyntax methodBody = ( method.DeclaringSyntaxReferences[0].GetSyntax( ctx.CancellationToken ) as BaseMethodDeclarationSyntax ).Body;
+			IMethodSymbol? method = parameter.ContainingSymbol as IMethodSymbol;
+			if( method == null ) {
+				return;
+			}
 
+			BaseMethodDeclarationSyntax? methodDeclaration = method.DeclaringSyntaxReferences[ 0 ].GetSyntax( ctx.CancellationToken ) as BaseMethodDeclarationSyntax;
+			if( methodDeclaration == null ) {
+				return;
+			}
+
+			BlockSyntax? methodBody = methodDeclaration.Body;
 			if( methodBody == null ) {
 				/**
 				 * Method declaration on an interface.
@@ -78,7 +94,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
-			DataFlowAnalysis dataflow = model.AnalyzeDataFlow( methodBody );
+			DataFlowAnalysis? dataflow = model.AnalyzeDataFlow( methodBody );
+			if( dataflow == null ) {
+				return;
+			}
+
 			if( dataflow.WrittenInside.Contains( parameter ) ) {
 				/**
 				 * public void Foo( [ReadOnly] int foo ) {
@@ -111,7 +131,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		private static bool IsReadOnlyAttribute(
 			INamedTypeSymbol readOnlyAttribute,
-			INamedTypeSymbol type
+			INamedTypeSymbol? type
 		) {
 			if( type == null ) {
 				return false;
@@ -122,6 +142,26 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			return IsReadOnlyAttribute( readOnlyAttribute, type.BaseType );
+		}
+
+		private static bool HasOnlyAttributeCandidates( ParameterSyntax parameter ) {
+
+			SyntaxList<AttributeListSyntax> attributeLists = parameter.AttributeLists;
+			if( attributeLists.Count == 0 ) {
+				return false;
+			}
+
+			foreach( AttributeListSyntax attributeList in attributeLists ) {
+				foreach( AttributeSyntax attribute in attributeList.Attributes ) {
+
+					string unqualifiedName = attribute.Name.GetUnqualifiedNameAsString();
+					if( UnqualifiedAttributeNames.Contains( unqualifiedName ) ) {
+						return true;
+					}
+				}
+			}
+
+			return false;
 		}
 	}
 }
