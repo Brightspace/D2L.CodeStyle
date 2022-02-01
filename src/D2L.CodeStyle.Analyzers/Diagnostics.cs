@@ -26,17 +26,8 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "Dependency-injected arguments in RPC methods must preceed other parameters (other than the first context argument)."
 		);
 
-		public static readonly DiagnosticDescriptor UnsafeSingletonRegistration = new DiagnosticDescriptor(
-			id: "D2L0006",
-			title: "Ensure that a singleton is safe in undifferentiated servers",
-			messageFormat: "The type '{0}' is not safe to register as a singleton, because it is not marked with [Immutable]",
-			category: "Safety",
-			defaultSeverity: DiagnosticSeverity.Info,
-			isEnabledByDefault: true,
-			description: "Singletons should be marked with the [Immutable] attribute."
-		);
-
 		// Retired:
+		// D2L0006 (UnsafeSingletonRegistration): "Ensure that a singleton is safe in undifferentiated servers"
 		// D2L0007 (UnnecessaryStaticAnnotation): "Unnecessary static annotations should be removed to keep the code base clean",
 		// D2L0008 (ConflictingStaticAnnotation): "Statics.Audited and Statics.Unaudited are mutually exclusive",
 
@@ -60,25 +51,9 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "The method being called has declared that this parameter cannot receive null, but a null value is being passed."
 		);
 
-		public static readonly DiagnosticDescriptor SingletonRegistrationTypeUnknown = new DiagnosticDescriptor(
-			id: "D2L0011",
-			title: "Unable to resolve the concrete or plugin type for this registration",
-			messageFormat: "Unable to determine the concrete or plugin type for this registration; please make sure to reference the type's assembly",
-			category: "Safety",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "Singleton registrations must be known at compile-time; please make sure to reference the type's assembly."
-		);
-
-		public static readonly DiagnosticDescriptor RegistrationKindUnknown = new DiagnosticDescriptor(
-			id: "D2L0012",
-			title: "Unable to determine the kind of dependency registration attempted",
-			messageFormat: "The attempted DI registration is not known to our analysis or there was an error analyzing it. This is mostly likely because the ObjectScope is being passed as a variable, or this is a new kind of registration and needs to be handled.",
-			category: "Safety",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "All DI registrations must be known to static analyzers, to allow for thorough analysis."
-		);
+		// Retired:
+		// D2L0011 (SingletonRegistrationTypeUnknown) "Unable to resolve the concrete or plugin type for this registration"
+		// D2L0012 (RegistrationKindUnknown): "Unable to determine the kind of dependency registration attempted"
 
 		public static readonly DiagnosticDescriptor ClassShouldBeSealed = new DiagnosticDescriptor(
 			id: "D2L0013",
@@ -113,15 +88,8 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "Avoid using of dangerous methods."
 		);
 
-		public static readonly DiagnosticDescriptor AttributeRegistrationMismatch = new DiagnosticDescriptor(
-			id: "D2L0019",
-			title: "Singleton attribute cannot appear on non-singleton object scopes",
-			messageFormat: "The type '{0}' is marked as [Singleton] but is registered with a conflicting object scope",
-			category: "Safety",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "Non-Singletons should not be marked with the [Singleton] attribute."
-		);
+		// Retired:
+		// D2L0019 (AttributeRegistrationMismatch): "Singleton attribute cannot appear on non-singleton object scopes"
 
 		public static readonly DiagnosticDescriptor InvalidLaunchDarklyFeatureDefinition = new DiagnosticDescriptor(
 			id: "D2L0021",
@@ -275,15 +243,8 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "We require that [Immutable] be explicity applied to all event types."
 		);
 
-    public static readonly DiagnosticDescriptor DependencyRegistraionMissingPublicConstructor = new DiagnosticDescriptor(
-			id: "D2L0046",
-			title: "Dependency Registration Missing Public Constructor",
-			messageFormat: "{0} must have a public constructor if it is to be registered for DI",
-			category: "Correctness",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "All injectable types need a public constructor in order to be activated."
-    );
+		// Retired:
+		// D2L0046 (DependencyRegistraionMissingPublicConstructor): "Dependency Registration Missing Public Constructor"
 
 		public static readonly DiagnosticDescriptor IncludeDefaultValueInOverrideForReadability = new DiagnosticDescriptor(
 			id: "D2L0047",
