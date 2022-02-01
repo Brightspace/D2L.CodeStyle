@@ -20,7 +20,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private static void RegisterAnalysis( CompilationStartAnalysisContext context ) {
 
 			Compilation compilation = context.Compilation;
-			INamedTypeSymbol? statelessFuncAttr = compilation.GetTypeByMetadataName( "D2L.CodeStyle.Annotations.Contract.StatelessFuncAttribute" );
+			ISymbol? statelessFuncAttr = compilation.GetTypeByMetadataName( "D2L.CodeStyle.Annotations.Contract.StatelessFuncAttribute" );
 
 			if( statelessFuncAttr == null ) {
 				return;
