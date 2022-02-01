@@ -19,6 +19,7 @@
     <IncludeSymbols>True</IncludeSymbols>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>Nullable</WarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="D2L.CodeStyle.Analyzers.Tests"/>
