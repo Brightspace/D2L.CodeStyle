@@ -89,5 +89,13 @@ namespace SingletonSpecTests {
 		public void UsesSingletonLocatorMarkedUnknownPlugins() {
 			IMarkedSingleton problem = /* SingletonLocatorMisuse(D2L.LP.Extensibility.Activation.Domain.IPlugins) */ SingletonLocator.Get<IPlugins<ISomeExtensionPoint, IInterface, IMarkedSingleton>>() /**/;
 		}
+
+		public void ReferencesSingletonLocatorMarked() {
+			Func<IMarkedSingleton> func = SingletonLocator.Get<IMarkedSingleton>;
+		}
+
+		public void ReferencesSingletonLocatorUnmarked() {
+			Func<INotMarkedSingleton> func = /* SingletonLocatorMisuse(SingletonSpecTests.INotMarkedSingleton) */ SingletonLocator.Get<INotMarkedSingleton> /**/;
+		}
 	}
 }

@@ -2,9 +2,8 @@ using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 
@@ -21,59 +20,44 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 		}
 
 		public void RegisterSingletonLocatorAnalyzer( CompilationStartAnalysisContext context ) {
-			// Cache some important type lookups
-			var locatorType = context.Compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.SingletonLocator" );
-
-			// If this type lookup failed then SingletonLocator cannot resolve
-			// and we don't need to register our analyzer.
-			if( locatorType.IsNullOrErrorType() ) {
+			IMethodSymbol? getMethodSymbol = GetSingletonLocatorGetMethod( context.Compilation );
+			if( getMethodSymbol == null ) {
 				return;
 			}
 
-			var containerTypeMappings = new (string typeName, int containedTypeIdx)[] {
-					new ( "D2L.LP.Extensibility.Activation.Domain.IPlugins`1", 0 ),
-					new ( "D2L.LP.Extensibility.Activation.Domain.IPlugins`2", 1 ),
-					new ( "D2L.LP.Extensibility.Plugins.IInstancePlugins`1",   0 ),
-					new ( "D2L.LP.Extensibility.Plugins.IInstancePlugins`2",   0 )
-				};
+			ImmutableDictionary<INamedTypeSymbol, int> containerTypes = GetContainerTypes( context.Compilation );
 
-			var containerTypesBuilder = ImmutableDictionary.CreateBuilder<INamedTypeSymbol, int>( SymbolEqualityComparer.Default );
-
-			foreach( (string typeName, int containedTypeIdx) in containerTypeMappings ) {
-
-				INamedTypeSymbol? type = context.Compilation.GetTypeByMetadataName( typeName );
-				if( !type.IsNullOrErrorType() ) {
-
-					containerTypesBuilder.Add( type, containedTypeIdx );
-				}
-			}
-
-			ImmutableDictionary<INamedTypeSymbol, int> containerTypes = containerTypesBuilder.ToImmutable();
-
-			context.RegisterSyntaxNodeAction(
+			context.RegisterOperationAction(
 				ctx => EnforceSingletonsOnly(
 					ctx,
-					IsSingletonLocator,
+					( (IInvocationOperation)ctx.Operation ).TargetMethod,
+					IsSingletonLocatorGet,
 					IsContainerType
 				),
-				SyntaxKind.SimpleMemberAccessExpression,
-				SyntaxKind.InvocationExpression
+				OperationKind.Invocation
 			);
 
-			bool IsSingletonLocator( INamedTypeSymbol other ) {
-				if( !locatorType.IsNullOrErrorType() && other.Equals( locatorType, SymbolEqualityComparer.Default ) ) {
-					return true;
-				}
+			context.RegisterOperationAction(
+				ctx => EnforceSingletonsOnly(
+					ctx,
+					( (IMethodReferenceOperation)ctx.Operation ).Method,
+					IsSingletonLocatorGet,
+					IsContainerType
+				),
+				OperationKind.MethodReference
+			);
 
-				return false;
-			}
+			bool IsSingletonLocatorGet( IMethodSymbol? methodSymbol ) => SymbolEqualityComparer.Default.Equals(
+				getMethodSymbol,
+				methodSymbol?.OriginalDefinition
+			);
 
 			bool IsContainerType(
 					ITypeSymbol type,
 					[NotNullWhen( true )] out ITypeSymbol? containedType
 				) {
 
-				if( !( type is INamedTypeSymbol namedType ) ) {
+				if( type is not INamedTypeSymbol namedType  ) {
 					containedType = null;
 					return false;
 				}
@@ -88,56 +72,27 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			}
 		}
 
+		private delegate bool IsSingletonLocatorGet(
+			IMethodSymbol? methodSymbol
+		);
+
 		private delegate bool IsContainerType(
-				ITypeSymbol type,
-				[NotNullWhen( true )] out ITypeSymbol? containedType
-			);
+			ITypeSymbol type,
+			[NotNullWhen( true )] out ITypeSymbol? containedType
+		);
 
 		// Enforce that SingletonLocator can only load actual [Singleton]s
 		private static void EnforceSingletonsOnly(
-			SyntaxNodeAnalysisContext context,
-			Func<INamedTypeSymbol, bool> isSingletonLocator,
+			OperationAnalysisContext context,
+			IMethodSymbol methodSymbol,
+			IsSingletonLocatorGet isSingletonLocatorGet,
 			IsContainerType isContainerType
 		) {
-			var root = GetRootNode( context );
-			if( root == null ) {
-				return;
-			}
-			var symbolinfo = context.SemanticModel.GetSymbolInfo( root, context.CancellationToken );
-
-			var method = symbolinfo.Symbol as IMethodSymbol;
-
-			if( method == null ) {
-				if( symbolinfo.CandidateSymbols == null ) {
-					return;
-				}
-
-				if( symbolinfo.CandidateSymbols.Length != 1 ) {
-					return;
-				}
-
-				//This happens on method groups, such as
-				//  Func<IFoo> fooFunc = OldAndBrokenServiceLocator.Get<IFoo>;
-				method = symbolinfo.CandidateSymbols.First() as IMethodSymbol;
-
-				if( method == null ) {
-					return;
-				}
-			}
-
-			// At this point method is a non-null IMethodSymbol
-			if( !isSingletonLocator( method.ContainingType ) ) {
-				return;
-
-			}
-
-			if( !IsSingletonGet( method ) ) {
+			if( !isSingletonLocatorGet( methodSymbol ) ) {
 				return;
 			}
 
-			//It's ok as long as the attribute is present, error otherwise
-			ITypeSymbol typeArg = method.TypeArguments.First();
-
+			ITypeSymbol typeArg = methodSymbol.TypeArguments.Single();
 			if( isContainerType( typeArg, out ITypeSymbol? containedType ) ) {
 				typeArg = containedType;
 			}
@@ -146,38 +101,50 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				return;
 			}
 
-			context.ReportDiagnostic(
-				Diagnostic.Create( Diagnostics.SingletonLocatorMisuse, context.Node.GetLocation(), typeArg.GetFullTypeName() )
-			);
+			context.ReportDiagnostic( Diagnostic.Create(
+				descriptor: Diagnostics.SingletonLocatorMisuse,
+				location: context.Operation.Syntax.GetLocation(),
+				typeArg.GetFullTypeName()
+			) );
 		}
 
-		private static ExpressionSyntax? GetRootNode( SyntaxNodeAnalysisContext context ) {
+		private static IMethodSymbol? GetSingletonLocatorGetMethod(
+			Compilation compilation
+		) {
+			INamedTypeSymbol? locatorType = compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.SingletonLocator" );
 
-			//It turns out that depending on how you call the locator, it might contain any of:
-			//* a SimpleMemberAccessExpression
-			//* an InvocationExpression
-			//* an InvocationExpression wrapped around a SimpleMemberAccessExpression
-			//We want to count each of these as a single error (avoid double counting the last case)
-			ExpressionSyntax? root = context.Node as InvocationExpressionSyntax;
-			if( root != null ) {
-				return root;
-			}
-
-			root = context.Node as MemberAccessExpressionSyntax;
-			if( root == null ) {
+			if( locatorType.IsNullOrErrorType() ) {
 				return null;
 			}
 
-			if( root.Parent.IsKind( SyntaxKind.InvocationExpression ) ) {
-				return null;
+			ImmutableArray<ISymbol> getMembers = locatorType.GetMembers( "Get" );
+			if( getMembers.Length != 1 ) {
+				throw new InvalidOperationException( "Unexpected result when locating SingletonLocator.Get<> method." );
 			}
-			return root;
+
+			return (IMethodSymbol)getMembers[ 0 ];
 		}
 
-		private static bool IsSingletonGet( IMethodSymbol method ) {
-			return "Get".Equals( method.Name )
-				&& method.IsGenericMethod
-				&& method.TypeArguments.Length == 1;
+		private static ImmutableDictionary<INamedTypeSymbol, int> GetContainerTypes( Compilation compilation ) {
+			var containerTypeMappings = new (string typeName, int containedTypeIdx)[] {
+				new ( "D2L.LP.Extensibility.Activation.Domain.IPlugins`1", 0 ),
+				new ( "D2L.LP.Extensibility.Activation.Domain.IPlugins`2", 1 ),
+				new ( "D2L.LP.Extensibility.Plugins.IInstancePlugins`1",   0 ),
+				new ( "D2L.LP.Extensibility.Plugins.IInstancePlugins`2",   0 )
+			};
+
+			var containerTypesBuilder = ImmutableDictionary.CreateBuilder<INamedTypeSymbol, int>( SymbolEqualityComparer.Default );
+
+			foreach( (string typeName, int containedTypeIdx) in containerTypeMappings ) {
+
+				INamedTypeSymbol? type = compilation.GetTypeByMetadataName( typeName );
+				if( !type.IsNullOrErrorType() ) {
+
+					containerTypesBuilder.Add( type, containedTypeIdx );
+				}
+			}
+
+			return containerTypesBuilder.ToImmutable();
 		}
 
 	}
