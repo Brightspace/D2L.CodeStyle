@@ -20,7 +20,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 		}
 
 		public void RegisterSingletonLocatorAnalyzer( CompilationStartAnalysisContext context ) {
-			if( !TryGetGetMethod( context.Compilation, out IMethodSymbol? getMethodSymbol ) ) {
+			IMethodSymbol? getMethodSymbol = GetSingletonLocatorGetMethod( context.Compilation );
+			if( getMethodSymbol == null ) {
 				return;
 			}
 
@@ -91,7 +92,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				return;
 			}
 
-			ITypeSymbol typeArg = methodSymbol.TypeArguments.First();
+			ITypeSymbol typeArg = methodSymbol.TypeArguments.Single();
 			if( isContainerType( typeArg, out ITypeSymbol? containedType ) ) {
 				typeArg = containedType;
 			}
@@ -107,38 +108,21 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			) );
 		}
 
-		private static bool TryGetGetMethod(
-			Compilation compilation,
-			[NotNullWhen( true )] out IMethodSymbol? methodSymbol
+		private static IMethodSymbol? GetSingletonLocatorGetMethod(
+			Compilation compilation
 		) {
 			INamedTypeSymbol? locatorType = compilation.GetTypeByMetadataName( "D2L.LP.Extensibility.Activation.Domain.SingletonLocator" );
 
 			if( locatorType.IsNullOrErrorType() ) {
-				methodSymbol = null;
-				return false;
+				return null;
 			}
 
-
-			ImmutableArray<ISymbol> getMemberSymbols = locatorType.GetMembers( "Get" );
-			if( getMemberSymbols.Length != 1 ) {
-				methodSymbol = null;
-				return false;
+			ImmutableArray<ISymbol> getMembers = locatorType.GetMembers( "Get" );
+			if( getMembers.Length != 1 ) {
+				throw new InvalidOperationException( "Unexpected result when locating SingletonLocator.Get<> method." );
 			}
 
-			ISymbol getMemberSymbol = getMemberSymbols[ 0 ];
-			if( getMemberSymbol.Kind != SymbolKind.Method ) {
-				methodSymbol = null;
-				return false;
-			}
-
-			IMethodSymbol getMethodSymbol = (IMethodSymbol)getMemberSymbol;
-			if( getMethodSymbol.TypeParameters.Length != 1 ) {
-				methodSymbol = null;
-				return false;
-			}
-
-			methodSymbol = getMethodSymbol;
-			return true;
+			return (IMethodSymbol)getMembers[ 0 ];
 		}
 
 		private static ImmutableDictionary<INamedTypeSymbol, int> GetContainerTypes( Compilation compilation ) {

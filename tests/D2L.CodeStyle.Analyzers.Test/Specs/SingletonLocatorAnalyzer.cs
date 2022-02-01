@@ -94,7 +94,7 @@ namespace SingletonSpecTests {
 			Func<IMarkedSingleton> func = SingletonLocator.Get<IMarkedSingleton>;
 		}
 
-		public void ReferencesSingletonLocatorUnarked() {
+		public void ReferencesSingletonLocatorUnmarked() {
 			Func<INotMarkedSingleton> func = /* SingletonLocatorMisuse(SingletonSpecTests.INotMarkedSingleton) */ SingletonLocator.Get<INotMarkedSingleton> /**/;
 		}
 	}
