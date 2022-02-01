@@ -107,8 +107,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				}
 
 				// ignore aliases that just import the class from the namespace
-				SimpleNameSyntax unqualifiedUsingName = usingDirective.Name.GetUnqualifiedName();
-				if( StringComparer.Ordinal.Equals( alias.Name.ToString(), unqualifiedUsingName.ToString() ) ) {
+				string unqualifiedUsingName = usingDirective.Name.GetUnqualifiedNameAsString();
+				if( StringComparer.Ordinal.Equals( alias.Name.ToString(), unqualifiedUsingName ) ) {
 					continue;
 				}
 

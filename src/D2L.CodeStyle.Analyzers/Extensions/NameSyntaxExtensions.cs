@@ -1,6 +1,4 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
-
-namespace D2L.CodeStyle.Analyzers.Extensions {
+﻿namespace Microsoft.CodeAnalysis.CSharp.Syntax {
 
 	internal static class NameSyntaxExtensions {
 
@@ -30,29 +28,33 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			///
 			/// https://docs.microsoft.com/en-us/dotnet/api/microsoft.codeanalysis.csharp.syntax.namesyntax?view=roslyn-dotnet-4.0.1
 			/// </remarks>
-			switch( name ) {
+			return name switch {
 
 				/// <remarks>
 				/// See https://github.com/dotnet/roslyn/blob/7f51127d775f9872103bc393d544b71e3e984890/src/Compilers/CSharp/Portable/Syntax/AliasedQualifiedNameSyntax.cs#L14
 				/// </remarks>
-				case AliasQualifiedNameSyntax aliasQualifiedName:
-					return aliasQualifiedName.Name;
+				AliasQualifiedNameSyntax aliasQualifiedName => aliasQualifiedName.Name,
 
 				/// <remarks>
 				/// See https://github.com/dotnet/roslyn/blob/7f51127d775f9872103bc393d544b71e3e984890/src/Compilers/CSharp/Portable/Syntax/QualifiedNameSyntax.cs#L19
 				/// </remarks>
-				case QualifiedNameSyntax qualifiedName:
-					return qualifiedName.Right;
+				QualifiedNameSyntax qualifiedName => qualifiedName.Right,
 
 				/// <remarks>
 				/// See https://github.com/dotnet/roslyn/blob/7f51127d775f9872103bc393d544b71e3e984890/src/Compilers/CSharp/Portable/Syntax/SimpleNameSyntax.cs#L19
 				/// </remarks>
-				case SimpleNameSyntax simpleName:
-					return simpleName;
+				SimpleNameSyntax simpleName => simpleName,
 
-				default:
-					throw new NotImplementedException( $"{ nameof( GetUnqualifiedName ) } not implemented for { name.GetType().FullName }" );
-			}
+				_ => throw new NotImplementedException( $"{ nameof( GetUnqualifiedName ) } not implemented for { name.GetType().FullName }" ),
+			};
+		}
+
+		/// <summary>
+		/// Returns the unqualified (right-most) part of a qualified or alias-qualified name, or the name itself if already unqualified.
+		/// </summary>
+		public static string GetUnqualifiedNameAsString( this NameSyntax name ) {
+			SimpleNameSyntax unqualifiedName = GetUnqualifiedName( name );
+			return unqualifiedName.ToString();
 		}
 	}
 }
