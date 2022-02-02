@@ -1,14 +1,10 @@
-#nullable disable
-
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace D2L.CodeStyle.Analyzers.Language {
 
@@ -44,58 +40,52 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
 			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.None );
+			context.RegisterCompilationStartAction( OnCompilationStart );
+		}
 
-			context.RegisterSyntaxNodeAction(
-				AnalyzeCallSyntax,
-				SyntaxKind.InvocationExpression
-			);
+		private static void OnCompilationStart( CompilationStartAnalysisContext context ) {
+			INamedTypeSymbol? requireNamedArgumentsAttribute = context.Compilation.GetTypeByMetadataName( RequireNamedArgumentsAttribute );
+			INamedTypeSymbol? linqEpressionType = context.Compilation. GetTypeByMetadataName( "System.Linq.Expressions.LambdaExpression" );
 
-			context.RegisterSyntaxNodeAction(
-				AnalyzeCallSyntax,
-				SyntaxKind.ObjectCreationExpression
-			);
-
-			context.RegisterSyntaxNodeAction(
-				AnalyzeCallSyntax,
-				SyntaxKind.ThisConstructorInitializer
-			);
-
-			context.RegisterSyntaxNodeAction(
-				AnalyzeCallSyntax,
-				SyntaxKind.BaseConstructorInitializer
+			context.RegisterOperationAction(
+				ctx => AnalyzeCallSyntax( ctx, requireNamedArgumentsAttribute, linqEpressionType ),
+				OperationKind.Invocation,
+				OperationKind.ObjectCreation
 			);
 		}
 
 		private static void AnalyzeCallSyntax(
-			SyntaxNodeAnalysisContext ctx
+			OperationAnalysisContext ctx,
+			INamedTypeSymbol? requireNamedArgumentsAttribute,
+			INamedTypeSymbol? linquLambdaExpressionType
 		) {
 
-			ArgumentListSyntax args = GetArgs( ctx.Node );
-			if( args == null ) {
+			(IMethodSymbol? method, ImmutableArray<IArgumentOperation> args) = GetMethodAndArgs( ctx.Operation );
+			if( method == null || args == default ) {
 				return;
 			}
 
 			// Don't complain about single argument functions because they're
 			// very likely to be understandable
-			if( args.Arguments.Count <= 1 ) {
+			if( args.Length <= 1 ) {
+				return;
+			}
+
+			ImmutableArray<ArgParamBinding> unnamedArgs = GetUnnamedArgs( args ).ToImmutableArray();
+			if( unnamedArgs.IsEmpty ) {
 				return;
 			}
 
 			// Don't complain about expression trees, since they aren't allowed
 			// to have named arguments
-			if( IsExpressionTree( ctx.Node, ctx.SemanticModel ) ) {
+			if( IsExpressionTree(
+				ctx.Operation,
+				linquLambdaExpressionType
+			) ) {
 				return;
 			}
 
-			ImmutableArray<ArgParamBinding> unnamedArgs =
-				GetUnnamedArgs( ctx.SemanticModel, args, ctx.CancellationToken )
-				.ToImmutableArray();
-
-			if( unnamedArgs.IsEmpty ) {
-				return;
-			}
-
-			bool requireNamedArguments = HasRequireNamedArgumentsAttribute( ctx.SemanticModel, args, ctx.CancellationToken );
+			bool requireNamedArguments = HasRequireNamedArgumentsAttribute( method, requireNamedArgumentsAttribute );
 			if( requireNamedArguments ) {
 
 				var fixerContext = CreateFixerContext( unnamedArgs );
@@ -103,7 +93,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				ctx.ReportDiagnostic(
 					Diagnostic.Create(
 						descriptor: Diagnostics.NamedArgumentsRequired,
-						location: ctx.Node.GetLocation(),
+						location: ctx.Operation.Syntax.GetLocation(),
 						properties: fixerContext
 					)
 				);
@@ -118,7 +108,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				ctx.ReportDiagnostic(
 					Diagnostic.Create(
 						descriptor: Diagnostics.TooManyUnnamedArgs,
-						location: ctx.Node.GetLocation(),
+						location: ctx.Operation.Syntax.GetLocation(),
 						properties: fixerContext,
 						messageArgs: TOO_MANY_UNNAMED_ARGS
 					)
@@ -150,11 +140,11 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			// all the args instead to avoid craziness with overloading.
 		}
 
-		private static ImmutableDictionary<string, string> CreateFixerContext( ImmutableArray<ArgParamBinding> unnamedArgs ) {
+		private static ImmutableDictionary<string, string?> CreateFixerContext( ImmutableArray<ArgParamBinding> unnamedArgs ) {
 
 			// Pass the names and positions for each unnamed arg to the codefix.
-			ImmutableDictionary<string, string> context = unnamedArgs
-				.ToImmutableDictionary(
+			ImmutableDictionary<string, string?> context = unnamedArgs
+				.ToImmutableDictionary<ArgParamBinding, string, string?>(
 					keySelector: binding => binding.Position.ToString(),
 					elementSelector: binding => binding.ParamName
 				);
@@ -162,34 +152,35 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			return context;
 		}
 
-		private static bool IsExpressionTree( SyntaxNode node, SemanticModel model ) {
+		private static bool IsExpressionTree(
+			IOperation operation,
+			INamedTypeSymbol? linqLambdaExpressionType
+		) {
 			// Expression trees aren't compatible with named arguments,
 			// so skip any expressions
 			// Only lambda type expressions have arguments,
 			// so this only applies to LambdaExpression
-			var expressionType = model.Compilation.
-				GetTypeByMetadataName( "System.Linq.Expressions.LambdaExpression" );
 
-			if( expressionType == null || expressionType.Kind == SymbolKind.ErrorType ) {
+			if( linqLambdaExpressionType.IsNullOrErrorType() ) {
 				return false;
 			}
 
+			linqLambdaExpressionType = linqLambdaExpressionType.OriginalDefinition;
+
+
 			// the current call could be nested inside an expression tree, so
 			// check every call we are nested inside
-			foreach( var syntax in node.AncestorsAndSelf() ) {
-				if( !( syntax is InvocationExpressionSyntax || syntax is ObjectCreationExpressionSyntax ) ) {
-					continue;
-				}
+			IOperation? current = operation;
+			do {
+				ITypeSymbol? type = current.Type?.BaseType;
 
-				var implicitType = model.GetTypeInfo( syntax.Parent ).ConvertedType;
-				if( implicitType != null && implicitType.Kind != SymbolKind.ErrorType ) {
-
-					var baseExprType = implicitType.BaseType;
-					if( expressionType.OriginalDefinition.Equals( baseExprType, SymbolEqualityComparer.Default ) ) {
-						return true;
-					}
+				if( SymbolEqualityComparer.Default.Equals(
+					type,
+					linqLambdaExpressionType
+				) ) {
+					return true;
 				}
-			}
+			} while( (current = current.Parent) != null );
 
 			return false;
 		}
@@ -198,36 +189,33 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		/// Get the arguments which are unnamed and not "params"
 		/// </summary>
 		private static IEnumerable<ArgParamBinding> GetUnnamedArgs(
-				SemanticModel model,
-				ArgumentListSyntax args,
-				CancellationToken cancellationToken
-			) {
+			ImmutableArray<IArgumentOperation> args
+		) {
 
-			for( int idx = 0; idx < args.Arguments.Count; idx++ ) {
-				ArgumentSyntax arg = args.Arguments[ idx ];
+			for( int idx = 0; idx < args.Length; idx++ ) {
+				IArgumentOperation argOperation = args[ idx ];
 
-				// Ignore args that already have names
-				if( arg.NameColon != null ) {
+				if( argOperation.ArgumentKind != ArgumentKind.Explicit ) {
 					continue;
 				}
 
-				IParameterSymbol param = arg.DetermineParameter(
-					model,
-
-					// Don't map params arguments. It's okay that they are
-					// unnamed. Some things like ImmutableArray.Create() could
-					// take a large number of args and we don't want anything to
-					// be named. Named params really suck so we may still
-					// encourage it but APIs that take params and many other
-					// args would suck anyway.
-					allowParams: false,
-
-					cancellationToken
-				);
-
+				IParameterSymbol? param = argOperation.Parameter;
 				// Not sure if this can happen but it'd be hard to name this
 				// param so ignore it.
 				if( param == null ) {
+					continue;
+				}
+
+				if( param.IsThis ) {
+					continue;
+				}
+
+				if( argOperation.Syntax is not ArgumentSyntax arg ) {
+					continue;
+				}
+
+				// Ignore args that already have names
+				if( arg.NameColon != null ) {
 					continue;
 				}
 
@@ -248,7 +236,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					paramName = param.Name;
 				}
 
-				string psuedoName = GetPsuedoName( arg );
+				string? psuedoName = GetPsuedoName( arg );
 				if( psuedoName != null ) {
 
 					bool matchesParamName = string.Equals(
@@ -270,9 +258,9 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			}
 		}
 
-		private static string GetPsuedoName( ArgumentSyntax arg ) {
+		private static string? GetPsuedoName( ArgumentSyntax arg ) {
 
-			string ident = arg.Expression.TryGetInferredMemberName();
+			string? ident = arg.Expression.TryGetInferredMemberName();
 			if( ident == null ) {
 				return null;
 			}
@@ -292,36 +280,26 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		// Not an extension method because there may be more cases (e.g. in the
 		// future) and if more than this fix + its analyzer used this logic
 		// there could be undesirable coupling if we handled more cases.
-		internal static ArgumentListSyntax GetArgs( SyntaxNode syntax ) {
-			switch( syntax ) {
-				case InvocationExpressionSyntax invocation:
-					return invocation.ArgumentList;
-				case ObjectCreationExpressionSyntax objectCreation:
-					return objectCreation.ArgumentList;
-				case ConstructorInitializerSyntax constructorInitializer:
-					return constructorInitializer.ArgumentList;
-				default:
-					if( syntax.Parent is ArgumentSyntax ) {
-						return (ArgumentListSyntax)syntax.Parent.Parent;
-					}
-					return null;
-			}
-		}
+		internal static (IMethodSymbol?, ImmutableArray<IArgumentOperation>) GetMethodAndArgs(
+			IOperation operation
+		) => operation switch {
+			IInvocationOperation invocation => (invocation.TargetMethod, invocation.Arguments),
+			IObjectCreationOperation objectCreation => (objectCreation.Constructor, objectCreation.Arguments),
+			_ => default
+		};
 
 		private static bool HasRequireNamedArgumentsAttribute(
-				SemanticModel model,
-				ArgumentListSyntax args,
-				CancellationToken cancellationToken
+				IMethodSymbol method,
+				INamedTypeSymbol? requireNamedArgumentsAttribute
 			) {
 
-			ISymbol symbol = model.GetSymbolInfo( args.Parent , cancellationToken ).Symbol;
-			if( symbol == null ) {
+			if( requireNamedArgumentsAttribute.IsNullOrErrorType() ) {
 				return false;
 			}
 
-			bool hasAttribute = symbol
+			bool hasAttribute = method
 				.GetAttributes()
-				.Any( x => x.AttributeClass.GetFullTypeName() == RequireNamedArgumentsAttribute );
+				.Any( x => SymbolEqualityComparer.Default.Equals( x.AttributeClass, requireNamedArgumentsAttribute ) );
 
 			return hasAttribute;
 		}
