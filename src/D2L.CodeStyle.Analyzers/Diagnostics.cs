@@ -705,5 +705,14 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor TypeArgumentLengthMismatch = new DiagnosticDescriptor(
+			id: "D2LXXXX",
+			title: "Type argument length should not mismatch",
+			messageFormat: "Type argument length should not mismatch",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }

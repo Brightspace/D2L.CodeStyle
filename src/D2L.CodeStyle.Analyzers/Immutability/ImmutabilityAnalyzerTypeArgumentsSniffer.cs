@@ -13,7 +13,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 	public sealed class ImmutabilityAnalyzerTypeArgumentsSniffer : DiagnosticAnalyzer {
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
-			=> ImmutableArray<DiagnosticDescriptor>.Empty;
+			=> ImmutableArray.Create(
+				Diagnostics.TypeArgumentLengthMismatch
+			);
 
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
@@ -139,7 +141,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			if( typeParameters.Length != typeArguments.Length ) {
-				throw new InvalidOperationException( "Type parameter & argument lengths should be the same" );
+
+				ctx.ReportDiagnostic( Diagnostic.Create(
+					Diagnostics.TypeArgumentLengthMismatch,
+					syntax.GetLocation()
+				) );
+
+				symbolKind = default;
+				return false;
 			}
 
 			symbolKind = symbol.Kind;
