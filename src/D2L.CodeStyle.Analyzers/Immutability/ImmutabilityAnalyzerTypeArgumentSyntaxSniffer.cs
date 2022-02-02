@@ -1,19 +1,19 @@
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
-using System.Text;
+using System.Reflection;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using static D2L.CodeStyle.Analyzers.Immutability.ImmutabilityAnalyzerTypeArgumentReport;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
 
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
-	public sealed class ImmutabilityAnalyzerTypeArgumentsSniffer : DiagnosticAnalyzer {
+	public sealed class ImmutabilityAnalyzerTypeArgumentSyntaxSniffer : DiagnosticAnalyzer {
 
-		private const string InstancePath = @"C:\D2L\instances\lms\";
-		private const string ReportOutputPath = @"C:\D2L\tmp\ImmutabilityAnalyzerTypeArgumentsSniffer";
+		private static readonly string ReportName = System.Reflection.MethodBase.GetCurrentMethod().DeclaringType.Name;
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 			=> ImmutableArray.Create(
@@ -26,24 +26,18 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			context.RegisterCompilationStartAction( CompilationStart );
 		}
 
-		private readonly record struct SimpleNameTuple( SimpleNameSyntax Name, SymbolKind SymbolKind ) {
-			public Location Location => Name.GetLocation();
-			public SyntaxTree SyntaxTree => Name.SyntaxTree;
-		};
-
 		public void CompilationStart(
 			CompilationStartAnalysisContext context
 		) {
 
-			ConcurrentBag<SimpleNameTuple> identifierNames = new();
-			ConcurrentBag<SimpleNameTuple> genericNames = new();
+			ConcurrentBag<SimpleNameTuple> simpleNames = new();
 
 			context.RegisterSyntaxNodeAction(
 				ctx => {
 					IdentifierNameSyntax identifierName = (IdentifierNameSyntax)ctx.Node;
 					bool anazlye = ShouldAnalyzeTypeArguments( ctx, identifierName, out SymbolKind symbolKind );
 					if( anazlye ) {
-						identifierNames.Add( new( identifierName, symbolKind ) );
+						simpleNames.Add( new( identifierName, symbolKind ) );
 					}
 				},
 				SyntaxKind.IdentifierName
@@ -54,7 +48,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					GenericNameSyntax genericName = (GenericNameSyntax)ctx.Node;
 					bool anazlye = ShouldAnalyzeTypeArguments( ctx, genericName, out SymbolKind symbolKind );
 					if( anazlye ) {
-						genericNames.Add( new( genericName, symbolKind ) );
+						simpleNames.Add( new( genericName, symbolKind ) );
 					}
 				},
 				SyntaxKind.GenericName
@@ -62,61 +56,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			context.RegisterCompilationEndAction(
 				ctx => {
-					Compilation compilation = ctx.Compilation;
-
-					WriteReports( identifierNames, ".identifierNames.txt" );
-					WriteReports( genericNames, ".genericNames.txt" );
+					WriteReports( ReportName, simpleNames );
 				}
 			);
 		}
-
-		private static void WriteReports(
-				IEnumerable<SimpleNameTuple> names,
-				string extension
-			) {
-
-			IEnumerable<IGrouping<SyntaxTree, SimpleNameTuple>> namesBySyntaxTree = names
-				.GroupBy( name => name.SyntaxTree );
-
-			foreach( IGrouping<SyntaxTree, SimpleNameTuple> namesInSyntaxTree in namesBySyntaxTree ) {
-				SyntaxTree syntaxTree = namesInSyntaxTree.Key;
-				string instanceRelativePath = GetInstanceRelativePath( syntaxTree );
-
-				string outputPath = Path.Combine(
-						ReportOutputPath,
-						Path.ChangeExtension( instanceRelativePath, extension )
-					);
-
-				string outputDirectory = Path.GetDirectoryName( outputPath );
-				Directory.CreateDirectory( outputDirectory );
-
-				using StreamWriter sw = new StreamWriter( outputPath, append: false, Encoding.UTF8 );
-				foreach( SimpleNameTuple tuple in namesInSyntaxTree.OrderBy( n => n.Location.SourceSpan ) ) {
-
-					sw.Write( tuple.Name );
-					sw.Write( ", " );
-					sw.Write( tuple.SymbolKind );
-					sw.Write( ", " );
-					sw.WriteLine( tuple.Location.SourceSpan );
-				}
-			}
-		}
-
-		private static string GetInstanceRelativePath( SyntaxTree syntaxTree ) {
-
-			string filePath = syntaxTree.FilePath;
-			if( !filePath.StartsWith( InstancePath, StringComparison.OrdinalIgnoreCase ) ) {
-				throw new Exception( $"Unxpected syntax tree file path: { syntaxTree.FilePath } " );
-			}
-
-			return syntaxTree.FilePath.Substring( InstancePath.Length );
-		}
-
-		private readonly record struct SimpleNameSyntaxInfo(
-				string Name,
-				SymbolKind SymbolKind,
-				Location Location
-			);
 
 		private static bool ShouldAnalyzeTypeArguments(
 			SyntaxNodeAnalysisContext ctx,
