@@ -82,13 +82,30 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 
 			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeTypeArguments(
-					ctx,
-					annotationsContext,
-					immutabilityContext,
-					(SimpleNameSyntax)ctx.Node
-				),
-				SyntaxKind.IdentifierName,
+				ctx => {
+					IdentifierNameSyntax identifierName = (IdentifierNameSyntax)ctx.Node;
+					AnalyzeTypeArguments(
+						ctx,
+						annotationsContext,
+						immutabilityContext,
+						identifierName,
+						getArgumentLocation: _ => identifierName.Identifier.GetLocation()
+					);
+				},
+				SyntaxKind.IdentifierName
+			);
+
+			context.RegisterSyntaxNodeAction(
+				ctx => {
+					GenericNameSyntax genericName = (GenericNameSyntax)ctx.Node;
+					AnalyzeTypeArguments(
+						ctx,
+						annotationsContext,
+						immutabilityContext,
+						genericName,
+						getArgumentLocation: position => genericName.TypeArgumentList.Arguments[ position ].GetLocation()
+					);
+				},
 				SyntaxKind.GenericName
 			);
 
@@ -229,7 +246,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			SyntaxNodeAnalysisContext ctx,
 			AnnotationsContext annotationsContext,
 			ImmutabilityContext immutabilityContext,
-			SimpleNameSyntax syntax
+			SimpleNameSyntax syntax,
+			Func<int,Location> getArgumentLocation
 		) {
 			if( syntax.IsFromDocComment() ) {
 				// ignore things in doccomments such as crefs
@@ -259,11 +277,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						ImmutableTypeKind.Total,
 						argument
 					),
-					// If the syntax is a GenericName (has explicit type arguments) then the error should be on the argument
-					// Otherwise, it should be on the identifier itself
-					getLocation: () => syntax is GenericNameSyntax genericSyntax
-						? genericSyntax.TypeArgumentList.Arguments[position].GetLocation()
-						: syntax.Identifier.GetLocation(),
+					getLocation: () => getArgumentLocation( position ),
 					out Diagnostic diagnostic
 				) ) {
 					// TODO: not necessarily a good diagnostic for this use-case
