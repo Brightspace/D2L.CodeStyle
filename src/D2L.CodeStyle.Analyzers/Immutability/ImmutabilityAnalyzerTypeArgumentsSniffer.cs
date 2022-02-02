@@ -12,6 +12,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class ImmutabilityAnalyzerTypeArgumentsSniffer : DiagnosticAnalyzer {
 
+		private const string InstancePath = @"C:\D2L\instances\lms\";
+		private const string ReportOutputPath = @"C:\D2L\tmp\ImmutabilityAnalyzerTypeArgumentsSniffer";
+
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 			=> ImmutableArray.Create(
 				Diagnostics.TypeArgumentLengthMismatch
@@ -61,21 +64,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				ctx => {
 					Compilation compilation = ctx.Compilation;
 
-					string assemblyOutputPath = Path.Combine(
-							@"C:\D2L\tmp\ImmutabilityAnalyzerTypeArgumentsSniffer",
-							compilation.AssemblyName
-						);
-
-					WriteReports( assemblyOutputPath, ".identifierNames.txt", identifierNames );
-					WriteReports( assemblyOutputPath, ".genericNames.txt", genericNames );
+					WriteReports( identifierNames, ".identifierNames.txt" );
+					WriteReports( genericNames, ".genericNames.txt" );
 				}
 			);
 		}
 
 		private static void WriteReports(
-				string assemblyOutputPath,
-				string extension,
-				IEnumerable<SimpleNameTuple> names
+				IEnumerable<SimpleNameTuple> names,
+				string extension
 			) {
 
 			IEnumerable<IGrouping<SyntaxTree, SimpleNameTuple>> namesBySyntaxTree = names
@@ -83,10 +80,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			foreach( IGrouping<SyntaxTree, SimpleNameTuple> namesInSyntaxTree in namesBySyntaxTree ) {
 				SyntaxTree syntaxTree = namesInSyntaxTree.Key;
+				string instanceRelativePath = GetInstanceRelativePath( syntaxTree );
 
 				string outputPath = Path.Combine(
-						assemblyOutputPath,
-						Path.ChangeExtension( syntaxTree.FilePath, extension )
+						ReportOutputPath,
+						Path.ChangeExtension( instanceRelativePath, extension )
 					);
 
 				string outputDirectory = Path.GetDirectoryName( outputPath );
@@ -99,9 +97,19 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					sw.Write( ", " );
 					sw.Write( tuple.SymbolKind );
 					sw.Write( ", " );
-					sw.WriteLine( tuple.Location );
+					sw.WriteLine( tuple.Location.SourceSpan );
 				}
 			}
+		}
+
+		private static string GetInstanceRelativePath( SyntaxTree syntaxTree ) {
+
+			string filePath = syntaxTree.FilePath;
+			if( !filePath.StartsWith( InstancePath, StringComparison.OrdinalIgnoreCase ) ) {
+				throw new Exception( $"Unxpected syntax tree file path: { syntaxTree.FilePath } " );
+			}
+
+			return syntaxTree.FilePath.Substring( InstancePath.Length );
 		}
 
 		private readonly record struct SimpleNameSyntaxInfo(
