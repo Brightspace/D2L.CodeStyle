@@ -84,7 +84,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 		private static readonly MetadataReference FactoryReference = MetadataReference.CreateFromFile( typeof( TestServiceLocatorFactory ).Assembly.Location );
 
 		protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer() {
-			return new CustomTestServiceLocatorAnalyzer( true );
+			return new CustomTestServiceLocatorAnalyzer();
 		}
 
 		protected override MetadataReference[] GetAdditionalReferences() {
