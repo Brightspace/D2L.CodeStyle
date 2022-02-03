@@ -45,7 +45,7 @@ internal partial class SyncGenerator {
 				SyntaxNode n => n.ToFullString(),
 				SyntaxToken t => t.ToFullString(),
 				SyntaxList<UsingDirectiveSyntax> nl => nl.ToFullString(),
-				_ => throw new Bug( "invalid piece of syntax " + Data.GetType().Name )
+				_ => throw new BugException( "invalid piece of syntax " + Data.GetType().Name )
 			};
 		}
 
@@ -86,11 +86,11 @@ internal partial class SyncGenerator {
 			WriteChildren( m_root );
 
 			if( m_preambles.Count != 0 ) {
-				throw new Bug( "left over preambles" );
+				throw new BugException( "left over preambles" );
 			}
 
 			if( m_methods.Count != 0 ) {
-				throw new Bug( "left over methods" );
+				throw new BugException( "left over methods" );
 			}
 
 			return m_out.ToString();
@@ -161,7 +161,7 @@ internal partial class SyncGenerator {
 					closeBrace = ns.CloseBraceToken;
 					break;
 				default:
-					throw new Bug( "unexpected namespace style: " + @namespace.Kind() );
+					throw new BugException( "unexpected namespace style: " + @namespace.Kind() );
 			}
 
 			bool wroteSomething = WriteChildren( @namespace );
@@ -283,18 +283,18 @@ internal partial class SyncGenerator {
 		// Inline assertions to catch some obvious bugs quickly
 		private void CheckPremableInvariant( bool wroteSomething, int countBefore ) {
 			if( wroteSomething && m_preambles.Count != 0 ) {
-				throw new Bug( "Left over preambles" );
+				throw new BugException( "Left over preambles" );
 			}
 
 			if( !wroteSomething && m_preambles.Count != countBefore ) {
-				throw new Bug( "Incorrect number of preambles" );
+				throw new BugException( "Incorrect number of preambles" );
 			}
 		}
 
-		public sealed class Bug : Exception {
+		public sealed class BugException : Exception {
 			private readonly string m_message;
 
-			public Bug( string message ) {
+			public BugException( string message ) {
 				m_message = message;
 			}
 
