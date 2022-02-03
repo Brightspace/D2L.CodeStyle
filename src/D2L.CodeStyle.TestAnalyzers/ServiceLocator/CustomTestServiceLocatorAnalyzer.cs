@@ -1,12 +1,10 @@
 ﻿using System.Collections.Immutable;
-using System.IO;
-using System.Linq;
 using D2L.CodeStyle.TestAnalyzers.Common;
+using D2L.CodeStyle.TestAnalyzers.Helpers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.Text;
 
 namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 
@@ -16,18 +14,8 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 		private const string TestServiceLocatorFactoryType
 			= "D2L.LP.Extensibility.Activation.Domain.TestServiceLocatorFactory";
 
-		private const string AllowedListFileName = "CustomTestServiceLocatorAllowedList.txt";
-
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
 			=> ImmutableArray.Create( Diagnostics.CustomServiceLocator, Diagnostics.UnnecessaryAllowedListEntry );
-
-		private readonly bool _excludeKnownProblems;
-
-		public CustomTestServiceLocatorAnalyzer() : this( true ) { }
-
-		public CustomTestServiceLocatorAnalyzer( bool excludeKnownProblemFixtures ) {
-			_excludeKnownProblems = excludeKnownProblemFixtures;
-		}
 
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
@@ -47,26 +35,27 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 				return;
 			}
 
-			ImmutableHashSet<string> allowedClasses = GetAllowedList(
-				context.Options.AdditionalFiles
+			AllowedTypeList allowedTypeList = AllowedTypeList.CreateFromAnalyzerOptions(
+				allowedListFileName: "CustomTestServiceLocatorAllowedList.txt",
+				analyzerOptions: context.Options
 			);
 
 			context.RegisterSyntaxNodeAction(
 				ctx => PreventCustomLocatorUsage(
 					ctx,
 					factoryType,
-					allowedClasses
+					allowedTypeList
 				),
 				SyntaxKind.InvocationExpression
 			);
 
 			context.RegisterSymbolAction(
-				ctx => PreventUnnecessaryAllowedListing(
-					ctx,
-					factoryType,
-					allowedClasses
-				),
+				allowedTypeList.CollectSymbolIfContained,
 				SymbolKind.NamedType
+			);
+
+			context.RegisterCompilationEndAction(
+				allowedTypeList.ReportUnnecessaryEntries
 			);
 		}
 
@@ -74,7 +63,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 		private void PreventCustomLocatorUsage(
 			SyntaxNodeAnalysisContext context,
 			INamedTypeSymbol disallowedType,
-			ImmutableHashSet<string> allowedClasses
+			AllowedTypeList allowedTypeList
 		) {
 			if( !( context.Node is InvocationExpressionSyntax invocationExpression ) ) {
 				return;
@@ -91,17 +80,13 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 
 			// Check whether any parent classes are on our allowed list. Checking
 			// all of the parents lets us handle partial classes more easily.
-			var parentClasses = context.Node.Ancestors().Where(
-				a => a.IsKind( SyntaxKind.ClassDeclaration )
-			);
+			var parentClasses = context.Node.Ancestors().OfType<ClassDeclarationSyntax>();
 
 			var parentSymbols = parentClasses.Select(
 				c => context.SemanticModel.GetDeclaredSymbol( c, context.CancellationToken )
 			);
 
-			bool isAllowed = parentSymbols.Any(
-				s => IsClassAllowed( allowedClasses, s )
-			);
+			bool isAllowed = parentSymbols.Any( allowedTypeList.Contains );
 
 			if( isAllowed ) {
 				return;
@@ -113,53 +98,6 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 					context.Node.GetLocation()
 				)
 			);
-		}
-
-		private void PreventUnnecessaryAllowedListing(
-			SymbolAnalysisContext context,
-			INamedTypeSymbol factoryType,
-			ImmutableHashSet<string> allowedClasses
-		) {
-			if( !( context.Symbol is INamedTypeSymbol namedType ) ) {
-				return;
-			}
-
-			if( !IsClassAllowed( allowedClasses, namedType ) ) {
-				return;
-			}
-
-			Location diagnosticLocation = null;
-			foreach( var syntaxRef in namedType.DeclaringSyntaxReferences ) {
-				var syntax = syntaxRef.GetSyntax( context.CancellationToken );
-
-				diagnosticLocation = diagnosticLocation ?? syntax.GetLocation();
-
-				SemanticModel model = context.Compilation.GetSemanticModel( syntax.SyntaxTree );
-
-				var testServiceLocatorFactoryCreates = syntax
-					.DescendantNodes()
-					.OfType<InvocationExpressionSyntax>()
-					.Where( i => IsTestServiceLocatorFactoryCreate(
-						model,
-						factoryType,
-						i,
-						context.CancellationToken
-					) );
-
-				if( testServiceLocatorFactoryCreates.Any() ) {
-					return;
-				}
-			}
-
-			if( diagnosticLocation != null ) {
-				context.ReportDiagnostic(
-					Diagnostic.Create(
-						Diagnostics.UnnecessaryAllowedListEntry,
-						diagnosticLocation,
-						GetAllowedListName( namedType ), AllowedListFileName
-					)
-				);
-			}
 		}
 
 		private static bool IsTestServiceLocatorFactoryCreate(
@@ -225,44 +163,6 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 		) {
 			return method.Name.Equals( "Create" )
 				&& method.Parameters.Length > 0;
-		}
-
-		private bool IsClassAllowed(
-			ImmutableHashSet<string> allowedClasses,
-			ISymbol classSymbol
-		) {
-			bool isAllowed = _excludeKnownProblems
-				&& allowedClasses.Contains( GetAllowedListName( classSymbol ) );
-
-			return isAllowed;
-		}
-
-		private static string GetAllowedListName( ISymbol classSymbol ) =>
-			classSymbol.ToString()
-			+ ", "
-			+ classSymbol.ContainingAssembly.ToDisplayString( SymbolDisplayFormat.MinimallyQualifiedFormat )
-		;
-
-		private static ImmutableHashSet<string> GetAllowedList(
-			ImmutableArray<AdditionalText> additionalFiles
-		) {
-			ImmutableHashSet<string>.Builder allowedClasses = ImmutableHashSet.CreateBuilder<string>();
-
-			AdditionalText allowedListFile = additionalFiles.FirstOrDefault(
-				file => Path.GetFileName( file.Path ) == AllowedListFileName
-			);
-
-			if( allowedListFile == null ) {
-				return allowedClasses.ToImmutableHashSet();
-			}
-
-			SourceText allowedListText = allowedListFile.GetText();
-
-			foreach( TextLine line in allowedListText.Lines ) {
-				allowedClasses.Add( line.ToString().Trim() );
-			}
-
-			return allowedClasses.ToImmutableHashSet();
 		}
 
 	}
