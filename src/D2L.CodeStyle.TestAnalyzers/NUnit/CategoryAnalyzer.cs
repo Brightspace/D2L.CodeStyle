@@ -39,7 +39,6 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 			context.EnableConcurrentExecution();
 			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics );
 			context.RegisterCompilationStartAction( OnCompilationStart );
-			context.RegisterCompilationAction( OnCompilation );
 		}
 
 		private static void OnCompilationStart( CompilationStartAnalysisContext context ) {
@@ -58,13 +57,13 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 				),
 				SyntaxKind.MethodDeclaration
 			);
+
+			context.RegisterCompilationEndAction(
+				ctx => OnCompilationEnd( ctx, types )
+			);
 		}
 
-		private static void OnCompilation( CompilationAnalysisContext context ) {
-			if( !TryLoadNUnitTypes( context.Compilation, out NUnitTypes types ) ) {
-				return;
-			}
-
+		private static void OnCompilationEnd( CompilationAnalysisContext context, NUnitTypes types ) {
 			VisitCategories( types, context.Compilation.Assembly, ( category, attribute ) => {
 				if( !ProhibitedAssemblyCategories.Contains( category ) ) {
 					return;
