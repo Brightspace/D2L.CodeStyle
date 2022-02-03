@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Text;
 using Microsoft.CodeAnalysis;
 
@@ -36,6 +37,25 @@ namespace D2L.CodeStyle.TestAnalyzers.Extensions {
 			}
 
 			return false;
+		}
+
+		public static ImmutableArray<INamedTypeSymbol> GetAllContainingTypes( this ISymbol symbol ) {
+
+			INamedTypeSymbol containingType = symbol.ContainingType;
+			if( containingType == null ) {
+				return ImmutableArray<INamedTypeSymbol>.Empty;
+			}
+
+			var builder = ImmutableArray.CreateBuilder<INamedTypeSymbol>();
+
+			while( containingType != null ) {
+
+				builder.Add( containingType );
+				containingType = containingType.ContainingType;
+			}
+
+			builder.Reverse();
+			return builder.ToImmutable();
 		}
 
 	}
