@@ -25,11 +25,35 @@ internal partial class SyncGenerator {
 		// and check that it is empty at the end, just to be safe.
 		private readonly Dictionary<SyntaxNode, IEnumerable<string>> m_methods;
 
+		/// <summary>
+		/// Wraps the sort of syntax that we will append as part of a preamble, to
+		/// defer calls to ToFullString()
+		/// </summary>
+		private readonly struct PieceOfSyntax {
+			public object Data { get; init; }
+
+			public static implicit operator PieceOfSyntax( SyntaxNode node)
+				=> new() { Data = node };
+
+			public static implicit operator PieceOfSyntax( SyntaxToken token )
+				=> new() { Data = token };
+
+			public static implicit operator PieceOfSyntax( SyntaxList<UsingDirectiveSyntax> list )
+				=> new() { Data = list };
+
+			public override string ToString() => Data switch {
+				SyntaxNode n => n.ToFullString(),
+				SyntaxToken t => t.ToFullString(),
+				SyntaxList<UsingDirectiveSyntax> nl => nl.ToFullString(),
+				_ => throw new Bug( "invalid piece of syntax " + Data.GetType().Name )
+			};
+		}
+
 		// When we recurse into a namespace or type, we're not sure if the
 		// preamble ("namespace foo {", "\t\tpartial class Bar<T> {", etc.) is
 		// necessary, because maybe there are no generated methods.
 		// Using a LinkedList<string> as a double-ended queue.
-		private readonly LinkedList<string> m_preambles = new();
+		private readonly LinkedList<PieceOfSyntax[]> m_preambles = new();
 
 		private readonly StringBuilder m_out = new();
 
@@ -115,19 +139,23 @@ internal partial class SyncGenerator {
 			switch( @namespace ) {
 				case FileScopedNamespaceDeclarationSyntax ns:
 					m_preambles.AddLast(
-						ns.NamespaceKeyword.ToFullString()
-						+ ns.Name.ToFullString()
-						+ ns.SemicolonToken.ToFullString()
+						new PieceOfSyntax[] {
+							ns.NamespaceKeyword,
+							ns.Name,
+							ns.SemicolonToken
+						}
 					);
 
 					closeBrace = null;
 					break;
 				case NamespaceDeclarationSyntax ns:
 					m_preambles.AddLast(
-						ns.NamespaceKeyword.ToFullString()
-						+ ns.Name.ToFullString()
-						+ ns.OpenBraceToken.ToFullString()
-						+ ns.Usings.ToFullString()
+						new PieceOfSyntax[] {
+							ns.NamespaceKeyword,
+							ns.Name,
+							ns.OpenBraceToken,
+							ns.Usings
+						}
 					);
 
 					closeBrace = ns.CloseBraceToken;
@@ -203,13 +231,14 @@ internal partial class SyncGenerator {
 			identifier = identifier.WithLeadingTrivia( EmptyTrivia );
 
 			m_preambles.AddLast(
-				partialKeyword.ToFullString()
-				+ keyword1.ToFullString()
-				+ keyword2.ToFullString()
-				+ identifier.ToFullString()
-				+ (typeParameterList?.ToFullString() ?? "")
-				+ constraintClauses.ToFullString()
-				+ openBrace.ToFullString()
+				new PieceOfSyntax[] {
+					partialKeyword,
+					keyword1,
+					keyword2,
+					identifier,
+					(typeParameterList != null ? typeParameterList : NoneToken ),
+					openBrace
+				}
 			);
 		}
 
@@ -238,7 +267,9 @@ internal partial class SyncGenerator {
 
 			// Flush any preambles in the queue
 			while( m_preambles.Count != 0 ) {
-				m_out.Append( m_preambles.First() );
+				foreach( var thing in m_preambles.First() ) {
+					m_out.Append( thing );
+				}
 				m_preambles.RemoveFirst();
 			}
 

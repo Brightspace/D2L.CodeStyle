@@ -62,6 +62,41 @@ partial class Y {
 		);
 	}
 
+	[Test]
+	public void Generics() {
+		var root = CSharpSyntaxTree.ParseText( @"
+using Foo;
+
+namespace X;
+
+public sealed class Y<T, U> where T : new where U : T {
+	internal class Z {}
+
+	void MyMethodBefore() {
+		Console.WriteLine( ""Hello"" );
+	}
+}" ).GetCompilationUnitRoot();
+
+		SyntaxNode myMethodBefore = root.DescendantNodes().OfType<MethodDeclarationSyntax>().Single();
+
+		var collector = FileCollector.Create(
+			root,
+			ImmutableArray.Create(
+				(myMethodBefore.Parent, "\tany text\r\n")
+			)
+		);
+
+		Assert.AreEqual( @"
+using Foo;
+
+namespace X;
+
+partial class Y<T, U> {
+	any text
+}",
+			collector.CollectSource()
+		);
+	}
 	[TestCase( "class" )] // static/selaed come before partial and don't need to show up in the other partials
 	[TestCase( "struct" )] // ditto for readonly
 	[TestCase( "record" )]
