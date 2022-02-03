@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -38,6 +37,22 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				SymbolKind.NamedType
 			);
 
+			context.RegisterSymbolAction(
+				ctx => {
+					IFieldSymbol field = (IFieldSymbol)ctx.Symbol;
+					AnalyzeField( ctx, field, simpleNames );
+				},
+				SymbolKind.Field
+			);
+
+			context.RegisterSymbolAction(
+				ctx => {
+					IMethodSymbol method = (IMethodSymbol)ctx.Symbol;
+					AnalyzeMethod( ctx, method, simpleNames );
+				},
+				SymbolKind.Method
+			);
+
 			context.RegisterCompilationEndAction(
 				ctx => {
 					WriteReports( ReportName, simpleNames );
@@ -45,23 +60,45 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 		}
 
-		private static void AnalyzeNamedType(
-			SymbolAnalysisContext ctx,
-			INamedTypeSymbol namedType,
-			ConcurrentBag<SimpleNameTuple> simpleNames
-		) {
+		private void AnalyzeField(
+				SymbolAnalysisContext ctx,
+				IFieldSymbol field,
+				ConcurrentBag<SimpleNameTuple> simpleNames
+			) {
 
-			ImmutableHashSet<ITypeSymbol> baseTypeSymbols =
-				GetBaseAndInterfaceTypes( namedType )
-				.Where( baseType => ShouldAnalyzeNamedTypeReference( ctx, baseType ) )
+			ImmutableHashSet<INamedTypeSymbol> namedFieldTypes = ExpandNamedTypes( field.Type )
+				.Where( HasTypeAguments )
+				.ToImmutableHashSet<INamedTypeSymbol>( SymbolEqualityComparer.Default );
+
+			if( namedFieldTypes.IsEmpty ) {
+				return;
+			}
+
+			foreach( SyntaxReference syntaxReference in field.DeclaringSyntaxReferences ) {
+
+				SyntaxNode syntax = syntaxReference.GetSyntax( ctx.CancellationToken );
+				if( syntax is not FieldDeclarationSyntax fieldDeclaration ) {
+					throw new InvalidOperationException( "IFieldSymbol should have been declared by FieldDeclarationSyntax" );
+				}
+			}
+		}
+
+		private static void AnalyzeNamedType(
+				SymbolAnalysisContext ctx,
+				INamedTypeSymbol namedType,
+				ConcurrentBag<SimpleNameTuple> simpleNames
+			) {
+
+			ImmutableHashSet<ITypeSymbol> baseTypeSymbols = GetBaseAndInterfaceTypes( namedType )
+				.SelectMany( ExpandNamedTypes )
+				.Where( HasTypeAguments )
 				.ToImmutableHashSet<ITypeSymbol>( SymbolEqualityComparer.Default );
 
 			if( baseTypeSymbols.Count == 0 ) {
 				return;
 			}
 
-			ImmutableArray<SyntaxReference> syntaxReferences = namedType.DeclaringSyntaxReferences;
-			foreach( SyntaxReference syntaxReference in syntaxReferences ) {
+			foreach( SyntaxReference syntaxReference in namedType.DeclaringSyntaxReferences ) {
 
 				SyntaxNode syntax = syntaxReference.GetSyntax( ctx.CancellationToken );
 				if( syntax is not TypeDeclarationSyntax typeDeclaration ) {
@@ -103,6 +140,75 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 		}
 
+		private void AnalyzeMethod(
+				SymbolAnalysisContext ctx,
+				IMethodSymbol method,
+				ConcurrentBag<SimpleNameTuple> simpleNames
+			) {
+
+			Lazy<ImmutableArray<MethodDeclarationSyntax>> methodDeclarations = new(
+				() => GetDeclaringMethodSyntax( method, ctx.CancellationToken )
+			);
+
+			ImmutableHashSet<INamedTypeSymbol> namedReturnTypes = ExpandNamedTypes( method.ReturnType )
+				.Where( HasTypeAguments )
+				.ToImmutableHashSet<INamedTypeSymbol>( SymbolEqualityComparer.Default );
+
+			if( !namedReturnTypes.IsEmpty ) {
+
+				foreach( MethodDeclarationSyntax methodDeclaration in methodDeclarations.Value ) {
+
+					TypeSyntax returnType = methodDeclaration.ReturnType;
+
+					if( returnType.IsKind( SyntaxKind.ErrorKeyword ) ) {
+						continue;
+					}
+
+					switch( returnType ) {
+
+						case NameSyntax returnTypeName:
+							SimpleNameSyntax returnTypeUnqualifiedName = returnTypeName.GetUnqualifiedName();
+							simpleNames.Add( new( returnTypeUnqualifiedName, method.ReturnType.Kind ) );
+							break;
+
+						default:
+							// TODO: Investigate
+							break;
+					}
+				}
+			}
+		}
+
+		private static ImmutableArray<MethodDeclarationSyntax> GetDeclaringMethodSyntax(
+				IMethodSymbol method,
+				CancellationToken cancellationToken
+			) {
+
+			ImmutableArray<SyntaxReference> syntaxReferences = method.DeclaringSyntaxReferences;
+			if( syntaxReferences.IsEmpty ) {
+				return ImmutableArray<MethodDeclarationSyntax>.Empty;
+			}
+
+			var builder = ImmutableArray.CreateBuilder<MethodDeclarationSyntax>( syntaxReferences.Length );
+
+			foreach( SyntaxReference syntaxReference in syntaxReferences ) {
+
+				SyntaxNode syntax = syntaxReference.GetSyntax( cancellationToken );
+				switch( syntax ) {
+
+					case MethodDeclarationSyntax methodDeclaration:
+						builder.Add( methodDeclaration );
+						break;
+
+					default:
+						// TODO: Investigate
+						break;
+				}
+			}
+
+			return builder.ToImmutableArray();
+		}
+
 		private static IEnumerable<INamedTypeSymbol> GetBaseAndInterfaceTypes( ITypeSymbol namedType ) {
 
 			INamedTypeSymbol? baseType = namedType.BaseType;
@@ -115,29 +221,47 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 		}
 
-		private static bool ShouldAnalyzeNamedTypeReference(
-				SymbolAnalysisContext ctx,
-				INamedTypeSymbol namedType
-			) {
+		private static IEnumerable<INamedTypeSymbol> ExpandNamedTypes( ITypeSymbol type ) {
 
-			ImmutableArray<ITypeParameterSymbol> typeParameters = namedType.TypeParameters;
-			ImmutableArray<ITypeSymbol> typeArguments = namedType.TypeArguments;
+			Stack<ITypeSymbol> stack = new Stack<ITypeSymbol>();
+			stack.Push( type );
 
-			if( typeParameters.IsEmpty && typeArguments.IsEmpty ) {
-				return false;
-			}
+			do {
+				ITypeSymbol current = stack.Pop();
+				switch( current ) {
 
-			if( typeParameters.Length != typeArguments.Length ) {
+					case IArrayTypeSymbol arrayType:
+						stack.Push( arrayType.ElementType );
+						break;
 
-				ctx.ReportDiagnostic( Diagnostic.Create(
-					Diagnostics.TypeArgumentLengthMismatch,
-					namedType.Locations[ 0 ]
-				) );
+					case INamedTypeSymbol namedType:
+						yield return namedType;
 
-				return false;
-			}
+						foreach( ITypeSymbol typeArgument in namedType.TypeArguments ) {
+							stack.Push( typeArgument );
+						}
 
-			return true;
+						break;
+
+					case IPointerTypeSymbol pointerType:
+						stack.Push( pointerType.PointedAtType );
+						break;
+
+					case IDynamicTypeSymbol _:
+					case IFunctionPointerTypeSymbol _:
+						break;
+
+					default:
+						// TODO
+						break;
+				}
+
+			} while( stack.Count > 0 );
 		}
+
+		private static bool HasTypeAguments( INamedTypeSymbol namedType ) {
+			return !namedType.TypeArguments.IsEmpty;
+		}
+
 	}
 }

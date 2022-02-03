@@ -22,11 +22,13 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <InternalsVisibleTo Include="D2L.CodeStyle.Analyzers.Tests"/>
+    <InternalsVisibleTo Include="D2L.CodeStyle.Analyzers.Tests" />
   </ItemGroup>
   <ItemGroup>
     <None Include="tools\*.ps1" Pack="true" PackagePath="tools" />
+    <Compile Remove="Immutability\ImmutabilityAnalyzerTypeArgumentSymbolSniffer.cs" />
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="Immutability\ImmutabilityAnalyzerTypeArgumentSymbolSniffer.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.3">
