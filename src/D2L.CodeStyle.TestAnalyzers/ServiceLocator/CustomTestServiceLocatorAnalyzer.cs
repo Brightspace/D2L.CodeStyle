@@ -1,10 +1,10 @@
 ﻿using System.Collections.Immutable;
 using D2L.CodeStyle.TestAnalyzers.Common;
+using D2L.CodeStyle.TestAnalyzers.Extensions;
 using D2L.CodeStyle.TestAnalyzers.Helpers;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 
@@ -31,7 +31,16 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 			INamedTypeSymbol factoryType = context.Compilation
 				.GetTypeByMetadataName( TestServiceLocatorFactoryType );
 
-			if( factoryType == null || factoryType.Kind == SymbolKind.ErrorType ) {
+			if( factoryType.IsNullOrErrorType() ) {
+				return;
+			}
+
+			ImmutableHashSet<IMethodSymbol> createMethods = factoryType
+				.GetMembers( "Create" )
+				.OfType<IMethodSymbol>()
+				.ToImmutableHashSet<IMethodSymbol>( SymbolEqualityComparer.Default );
+
+			if( createMethods.IsEmpty ) {
 				return;
 			}
 
@@ -40,13 +49,24 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 				analyzerOptions: context.Options
 			);
 
-			context.RegisterSyntaxNodeAction(
+			context.RegisterOperationAction(
 				ctx => PreventCustomLocatorUsage(
 					ctx,
-					factoryType,
-					allowedTypeList
+					( (IInvocationOperation)ctx.Operation ).TargetMethod,
+					allowedTypeList,
+					createMethods
 				),
-				SyntaxKind.InvocationExpression
+				OperationKind.Invocation
+			);
+
+			context.RegisterOperationAction(
+				ctx => PreventCustomLocatorUsage(
+					ctx,
+					( (IMethodReferenceOperation)ctx.Operation ).Method,
+					allowedTypeList,
+					createMethods
+				),
+				OperationKind.MethodReference
 			);
 
 			context.RegisterSymbolAction(
@@ -61,108 +81,27 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 
 		// Prevent static usage of TestServiceLocator.Create() methods.
 		private void PreventCustomLocatorUsage(
-			SyntaxNodeAnalysisContext context,
-			INamedTypeSymbol disallowedType,
-			AllowedTypeList allowedTypeList
+			OperationAnalysisContext context,
+			IMethodSymbol methodSymbol,
+			AllowedTypeList allowedTypeList,
+			ImmutableHashSet<IMethodSymbol> createMethods
 		) {
-			if( !( context.Node is InvocationExpressionSyntax invocationExpression ) ) {
+			if( !createMethods.Contains( methodSymbol ) ) {
 				return;
 			}
 
-			if( !IsTestServiceLocatorFactoryCreate(
-				context.SemanticModel,
-				disallowedType,
-				invocationExpression,
-				context.CancellationToken
-			) ) {
-				return;
-			}
+			ImmutableArray<INamedTypeSymbol> containingTypes = context.ContainingSymbol.GetAllContainingTypes();
 
-			// Check whether any parent classes are on our allowed list. Checking
-			// all of the parents lets us handle partial classes more easily.
-			var parentClasses = context.Node.Ancestors().OfType<ClassDeclarationSyntax>();
-
-			var parentSymbols = parentClasses.Select(
-				c => context.SemanticModel.GetDeclaredSymbol( c, context.CancellationToken )
-			);
-
-			bool isAllowed = parentSymbols.Any( allowedTypeList.Contains );
-
-			if( isAllowed ) {
+			if( containingTypes.Any( allowedTypeList.Contains ) ) {
 				return;
 			}
 
 			context.ReportDiagnostic(
 				Diagnostic.Create(
 					Diagnostics.CustomServiceLocator,
-					context.Node.GetLocation()
+					context.Operation.Syntax.GetLocation()
 				)
 			);
-		}
-
-		private static bool IsTestServiceLocatorFactoryCreate(
-			SemanticModel model,
-			INamedTypeSymbol factoryType,
-			InvocationExpressionSyntax invocationExpression,
-			CancellationToken cancellationToken
-		) {
-			SymbolInfo symbolInfo = model.GetSymbolInfo( invocationExpression, cancellationToken );
-
-			IMethodSymbol method = symbolInfo.Symbol as IMethodSymbol;
-
-			if( method == null ) {
-				if( symbolInfo.CandidateSymbols == null ) {
-					return false;
-				}
-
-				if( symbolInfo.CandidateSymbols.Length != 1 ) {
-					return false;
-				}
-
-				// This happens on method groups, such as
-				// Func<IServiceLocator> fooFunc = TestServiceLocatorFactory.Create( ... );
-				method = symbolInfo.CandidateSymbols.First() as IMethodSymbol;
-
-				if( method == null ) {
-					return false;
-				}
-			}
-
-			// If we're a Create method on a class that isn't
-			// TestServiceLocatorFactory, we're safe.
-			if( !IsTestServiceLocatorFactory(
-					actualType: method.ContainingType,
-					disallowedType: factoryType
-				)
-			) {
-				return false;
-			}
-
-			// If we're not a Create method, we're safe.
-			if( !IsCreateMethod( method ) ) {
-				return false;
-			}
-
-			return true;
-		}
-
-		private static bool IsTestServiceLocatorFactory(
-			INamedTypeSymbol actualType,
-			INamedTypeSymbol disallowedType
-		) {
-			if( actualType == null ) {
-				return false;
-			}
-
-			bool isLocatorFactory = actualType.Equals( disallowedType, SymbolEqualityComparer.Default );
-			return isLocatorFactory;
-		}
-
-		private static bool IsCreateMethod(
-			IMethodSymbol method
-		) {
-			return method.Name.Equals( "Create" )
-				&& method.Parameters.Length > 0;
 		}
 
 	}
