@@ -32,7 +32,7 @@ internal partial class SyncGenerator {
 		private readonly struct PieceOfSyntax {
 			public object Data { get; init; }
 
-			public static implicit operator PieceOfSyntax( SyntaxNode node)
+			public static implicit operator PieceOfSyntax( SyntaxNode node )
 				=> new() { Data = node };
 
 			public static implicit operator PieceOfSyntax( SyntaxToken token )
