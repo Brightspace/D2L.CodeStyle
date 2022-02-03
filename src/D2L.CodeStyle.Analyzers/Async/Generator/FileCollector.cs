@@ -23,7 +23,7 @@ internal partial class SyncGenerator {
 
 		// This is a mutable dictionary because we will remove from it as we go
 		// and check that it is empty at the end, just to be safe.
-		private readonly Dictionary<SyntaxNode, IEnumerable<string>> m_methods;
+		private readonly Dictionary<TypeDeclarationSyntax, IEnumerable<string>> m_methods;
 
 		/// <summary>
 		/// Wraps the sort of syntax that we will append as part of a preamble, to
@@ -59,7 +59,7 @@ internal partial class SyncGenerator {
 
 		private FileCollector(
 			CompilationUnitSyntax root,
-			Dictionary<SyntaxNode, IEnumerable<string>> methods
+			Dictionary<TypeDeclarationSyntax, IEnumerable<string>> methods
 		) {
 			m_root = root;
 			m_methods = methods;
@@ -67,7 +67,7 @@ internal partial class SyncGenerator {
 
 		public static FileCollector Create(
 			CompilationUnitSyntax root,
-			ImmutableArray<(SyntaxNode Parent, string Source)> methods
+			ImmutableArray<(TypeDeclarationSyntax Parent, string Source)> methods
 		) {
 			var groupedMethods = methods
 				.GroupBy( static m => m.Parent )
@@ -259,7 +259,7 @@ internal partial class SyncGenerator {
 			}
 		}
 
-		private bool WriteMethods( SyntaxNode parent ) {
+		private bool WriteMethods( TypeDeclarationSyntax parent ) {
 			if( !m_methods.TryGetValue( parent, out var methods ) ) {
 				return false;
 			}

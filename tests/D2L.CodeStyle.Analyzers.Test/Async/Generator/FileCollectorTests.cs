@@ -20,7 +20,7 @@ public sealed class Y {
 
 		var collector = FileCollector.Create(
 			root,
-			ImmutableArray<(SyntaxNode, string)>.Empty 
+			ImmutableArray<(TypeDeclarationSyntax, string)>.Empty 
 		);
 
 		Assert.AreEqual( "", collector.CollectSource() );
@@ -46,7 +46,7 @@ public sealed class Y {
 		var collector = FileCollector.Create(
 			root,
 			ImmutableArray.Create(
-				(myMethodBefore.Parent, "\tany text\r\n")
+				((TypeDeclarationSyntax)myMethodBefore.Parent, "\tany text\r\n")
 			)
 		);
 
@@ -82,7 +82,7 @@ public sealed class Y<T, U> where T : new where U : T {
 		var collector = FileCollector.Create(
 			root,
 			ImmutableArray.Create(
-				(myMethodBefore.Parent, "\tany text\r\n")
+				((TypeDeclarationSyntax)myMethodBefore.Parent, "\tany text\r\n")
 			)
 		);
 
@@ -116,7 +116,7 @@ public partial {kind} X {{
 		var collector = FileCollector.Create(
 			root,
 			ImmutableArray.Create(
-				(myMethodBefore.Parent, "\tany text\r\n")
+				((TypeDeclarationSyntax)myMethodBefore.Parent, "\tany text\r\n")
 			)
 		);
 
@@ -154,7 +154,7 @@ namespace A.B.C {
 		var collector = FileCollector.Create(
 			root,
 			ImmutableArray.Create(
-				(myMethodBefore.Parent, "\t\t\t\tany text\r\n")
+				((TypeDeclarationSyntax)myMethodBefore.Parent, "\t\t\t\tany text\r\n")
 			)
 		);
 
@@ -231,7 +231,7 @@ namespace Q {
 " ).GetCompilationUnitRoot();
 
 		var myMethodsBefore = root.DescendantNodes().OfType<MethodDeclarationSyntax>()
-			.Select( ( node, idx ) => (node.Parent, $"\t\t\t\tany text{idx}\r\n") );
+			.Select( ( node, idx ) => ((TypeDeclarationSyntax)node.Parent, $"\t\t\t\tany text{idx}\r\n") );
 
 		var collector = FileCollector.Create(
 			root,
