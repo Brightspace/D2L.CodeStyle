@@ -86,7 +86,7 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 		}
 
 		private static string FormatEntry( INamedTypeSymbol entry ) {
-			return $"{ entry.ToString() }, { entry.ContainingAssembly.ToDisplayString( SymbolDisplayFormat.MinimallyQualifiedFormat ) }";
+			return $"{ entry }, { entry.ContainingAssembly.ToDisplayString( SymbolDisplayFormat.MinimallyQualifiedFormat ) }";
 		}
 
 		private static ImmutableHashSet<string> LoadAllowedList(
@@ -102,7 +102,7 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 			);
 
 			if( allowedListFile == null ) {
-				return allowedList.ToImmutableHashSet();
+				return allowedList.ToImmutable();
 			}
 
 			SourceText allowedListText = allowedListFile.GetText();
@@ -111,7 +111,7 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 				allowedList.Add( line.ToString().Trim() );
 			}
 
-			return allowedList.ToImmutableHashSet();
+			return allowedList.ToImmutable();
 		}
 
 	}
