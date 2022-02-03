@@ -166,7 +166,7 @@ internal partial class SyncGenerator {
 
 			bool wroteSomething = WriteChildren( @namespace );
 
-			CloseBraceIfNecessary( wroteSomething, closeBrace );
+			FinishBlock( wroteSomething, closeBrace );
 
 			return wroteSomething;
 		}
@@ -200,7 +200,7 @@ internal partial class SyncGenerator {
 
 			var wroteSomething = wroteSomethingInChild || wroteMethodsForMe;
 
-			CloseBraceIfNecessary( wroteSomething, decl.CloseBraceToken );
+			FinishBlock( wroteSomething, decl.CloseBraceToken );
 
 			CheckPremableInvariant( wroteSomething, preambleCountBefore );
 
@@ -247,8 +247,9 @@ internal partial class SyncGenerator {
 				.WithLeadingTrivia( decl.GetLeadingTrivia() )
 				.WithTrailingTrivia( SyntaxFactory.Space );
 
-		private void CloseBraceIfNecessary( bool wroteSomething, SyntaxToken? closeBrace ) {
+		private void FinishBlock( bool wroteSomething, SyntaxToken? closeBrace ) {
 			if( wroteSomething ) {
+				// Add the closing } if it exists
 				if( closeBrace.HasValue ) {
 					m_out.Append( closeBrace.Value.ToFullString() );
 				}
