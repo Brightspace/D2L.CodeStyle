@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Diagnostics;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -48,12 +49,10 @@ namespace D2L.CodeStyle.Analyzers.Async {
 			) {
 
 			ImmutableArray<IArgumentOperation> arguments = invocation.Arguments;
+			foreach( IArgumentOperation argument in arguments ) {
 
-			ImmutableArray<IParameterSymbol> parameters = invocation.TargetMethod.Parameters;
-			for( int i = 0; i < parameters.Length; i++ ) {
-
-				IParameterSymbol parameter = parameters[ i ];
-				if( !SymbolEqualityComparer.Default.Equals( parameter.Type, cancellationTokenType ) ) {
+				IParameterSymbol? parameter = argument.Parameter;
+				if( parameter.IsNullOrErrorType() ) {
 					continue;
 				}
 
@@ -61,7 +60,11 @@ namespace D2L.CodeStyle.Analyzers.Async {
 					continue;
 				}
 
-				if( arguments[ i ].ArgumentKind != ArgumentKind.DefaultValue ) {
+				if( !SymbolEqualityComparer.Default.Equals( parameter.Type, cancellationTokenType ) ) {
+					continue;
+				}
+
+				if( argument.ArgumentKind != ArgumentKind.DefaultValue ) {
 					continue;
 				}
 
