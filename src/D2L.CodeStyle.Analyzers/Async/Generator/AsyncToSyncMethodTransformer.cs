@@ -5,7 +5,10 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace D2L.CodeStyle.Analyzers.Async.Generator;
 
 internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
-	public AsyncToSyncMethodTransformer( SemanticModel model ) : base( model ) { }
+	public AsyncToSyncMethodTransformer(
+		SemanticModel model,
+		CancellationToken token
+	) : base( model, token ) { }
 
 	public TransformResult<MethodDeclarationSyntax> Transform( MethodDeclarationSyntax decl ) {
 		// TODO: remove CancellationToken parameters
@@ -69,7 +72,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	}
 
 	private TypeSyntax TransformReturnType( TypeSyntax returnType ) {
-		var returnTypeInfo = m_model.GetTypeInfo( returnType );
+		var returnTypeInfo = m_model.GetTypeInfo( returnType, m_token );
 
 		if( returnTypeInfo.Type == null ) {
 			GeneratorError( returnType.GetLocation(), "Couldn't resolve type" );
@@ -134,7 +137,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	}
 
 	private bool IsGenerateSyncAttribute( AttributeSyntax attribute ) {
-		var attributeConstructorSymbol = m_model.GetSymbolInfo( attribute ).Symbol as IMethodSymbol;
+		var attributeConstructorSymbol = m_model.GetSymbolInfo( attribute, m_token ).Symbol as IMethodSymbol;
 
 		if( attributeConstructorSymbol == null ) {
 			return false;
