@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using System.Collections.Immutable;
-using System.IO;
-using System.Linq;
-using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -43,10 +37,6 @@ namespace D2L.CodeStyle.Analyzers {
 		private static readonly ImmutableDictionary<string, string> m_specSource;
 		private static readonly ImmutableDictionary<string, DiagnosticDescriptor> m_possibleDiagnostics;
 
-		private readonly ImmutableArray<Diagnostic> m_expectedDiagnostics;
-		private readonly ImmutableArray<Diagnostic> m_actualDiagnostics;
-		private readonly ImmutableHashSet<Diagnostic> m_matchedDiagnostics;
-
 		private static readonly MetadataReference CorlibReference = MetadataReference.CreateFromFile( typeof( object ).Assembly.Location );
 		private static readonly MetadataReference SystemReference = MetadataReference.CreateFromFile( typeof( System.Uri ).Assembly.Location );
 		private static readonly MetadataReference SystemCoreReference = MetadataReference.CreateFromFile( typeof( Enumerable ).Assembly.Location );
@@ -54,6 +44,19 @@ namespace D2L.CodeStyle.Analyzers {
 		private static readonly MetadataReference CodeAnalysisReference = MetadataReference.CreateFromFile( typeof( Compilation ).Assembly.Location );
 		private static readonly MetadataReference SystemRuntimeReference = MetadataReference.CreateFromFile( Assembly.Load( "System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" ).Location );
 		private static readonly MetadataReference AnnotationsReference = MetadataReference.CreateFromFile( typeof( Annotations.Because ).Assembly.Location );
+
+		private readonly record struct SpecResults(
+			ImmutableHashSet<Diagnostic> ExpectedDiagnostics,
+			ImmutableHashSet<Diagnostic> ActualDiagnostics
+		);
+		private static readonly ImmutableDictionary<string, SpecResults> m_specResults;
+
+		private static int CURRENT_SPEC_DANGEROUS_LOL = 0;
+		private static int CURRENT_SPEC_DANGEROUS2_LOL = 0;
+		private static readonly string[] SPEC_NAMES_LOL;
+
+		private readonly string m_specName;
+		public Spec( string spec ) => m_specName = spec;
 
 		/// <summary>
 		/// Loads all the source code to all the spec files.
@@ -64,11 +67,11 @@ namespace D2L.CodeStyle.Analyzers {
 		/// down all tests and better parallelizability.
 		/// </summary>
 		static Spec() {
-			var builder = ImmutableDictionary.CreateBuilder<string, string>();
+			var specBuilder = ImmutableDictionary.CreateBuilder<string, string>();
 
-			LoadAllSpecSourceCode( builder );
+			LoadAllSpecSourceCode( specBuilder );
 
-			m_specSource = builder.ToImmutable();
+			m_specSource = specBuilder.ToImmutable();
 
 			m_specNames = m_specSource.Keys;
 
@@ -83,57 +86,74 @@ namespace D2L.CodeStyle.Analyzers {
 			foreach( var diag in m_possibleDiagnostics ) {
 				Assert.NotNull( diag.Value, $"Common.Diagnostics.{diag.Key} must be of type DiagnosticDescriptor and not null" );
 			}
-		}
 
-		/// <summary>
-		/// Each spec causes a single compilation to happen. This constructor
-		/// extracts all the information needed for the assertions in the
-		/// other test cases. It is called by NUnit due to the
-		/// TestFixtureSource attribute.
-		/// </summary>
-		/// <param name="specName">
-		/// The name of the spec to run (its source code is in m_specSource.)
-		/// </param>
-		public Spec( string specName ) {
-			var source = m_specSource[ specName ];
+			var resultsBuilder = ImmutableDictionary.CreateBuilder<string, SpecResults>();
+			SPEC_NAMES_LOL = m_specSource.Keys.ToArray();
+			foreach( var specName in SPEC_NAMES_LOL ) {
+				var source = m_specSource[ specName ];
 
-			var analyzer = GetAnalyzerNameFromSpec( source );
+				var analyzer = GetAnalyzerNameFromSpec( source );
 
-			var compilation = GetCompilationForSource( specName, source );
+				var compilation = GetCompilationForSource( specName, source );
 
-			m_actualDiagnostics = GetActualDiagnostics( compilation, analyzer );
+				var actualDiagnostics = GetActualDiagnostics( compilation, analyzer )
+					.ToImmutableHashSet( DiagnosticComparer.Instance );
 
-			m_expectedDiagnostics = GetExpectedDiagnostics(
-				(CompilationUnitSyntax)compilation.SyntaxTrees.First().GetRoot()
-			).ToImmutableArray();
+				var expectedDiagnostics = GetExpectedDiagnostics(
+					(CompilationUnitSyntax)compilation.SyntaxTrees.First().GetRoot()
+				)
+					.ToImmutableHashSet( DiagnosticComparer.Instance );
 
-			m_matchedDiagnostics = m_actualDiagnostics
-				.Intersect(
-					m_expectedDiagnostics,
-					DiagnosticComparer.Instance
-				).ToImmutableHashSet( DiagnosticComparer.Instance );
+				resultsBuilder.Add( specName, new SpecResults(
+					ExpectedDiagnostics: expectedDiagnostics,
+					ActualDiagnostics: actualDiagnostics
+				) );
+			}
+			m_specResults = resultsBuilder.ToImmutableDictionary();
 		}
 
 		[Test]
-		public void NoUnexpectedDiagnostics() {
-			var unexpectedDiagnostics = m_actualDiagnostics
-				.Where( d => !m_matchedDiagnostics.Contains( d ) );
+		[TestCaseSource( nameof( GetExpectedDiagnosticsForCurrentSpec ) )]
+		public void ExpectedDiagnostic( Diagnostic diagnostic ) {
+			SpecResults specResults = m_specResults[ m_specName ];
 
-			CollectionAssert.IsEmpty( unexpectedDiagnostics );
+			Assert.IsTrue( specResults.ActualDiagnostics.Contains( diagnostic ), "Diagnostic was not produced." );
+		}
+		private static IEnumerable<TestCaseData> GetExpectedDiagnosticsForCurrentSpec() {
+			SpecResults specResults = m_specResults[ SPEC_NAMES_LOL[ CURRENT_SPEC_DANGEROUS_LOL ] ];
+
+			foreach( Diagnostic expected in specResults.ExpectedDiagnostics ) {
+				var linespan = expected.Location.GetLineSpan();
+
+				yield return new TestCaseData( expected ) {
+					TestName = $"Expected ({linespan.StartLinePosition.Line+1}, {linespan.StartLinePosition.Character}) {expected.Id}: {expected.GetMessage()}"
+				};
+			}
+
+			CURRENT_SPEC_DANGEROUS_LOL++;
 		}
 
-		// TODO: investigate: can/should this be TestCaseSource? Maybe it'd be
-		// cool, but there are some snags. Firstly, TestCaseSource needs to come
-		// from a static and we don't have context about what spec we're running
-		// in those. Additionally it's not obvious what to name each test case
-		// (line/column number?)
-
 		[Test]
-		public void ExpectedDiagnostics() {
-			var missingDiagnostics = m_expectedDiagnostics
-				.Where( d => !m_matchedDiagnostics.Contains( d ) );
+		[TestCaseSource( nameof( GetUnxpectedDiagnosticsForCurrentSpec ) )]
+		public void NoUnexpectedDiagnostics( Diagnostic diagnostic ) {
+			Assert.Fail( "Should not have produced diagnostic." );
+		}
+		private static IEnumerable<TestCaseData> GetUnxpectedDiagnosticsForCurrentSpec() {
+			SpecResults specResults = m_specResults[ SPEC_NAMES_LOL[ CURRENT_SPEC_DANGEROUS2_LOL ] ];
 
-			CollectionAssert.IsEmpty( missingDiagnostics );
+			var unexpectedDiagnostics = specResults
+				.ActualDiagnostics
+				.Except( specResults.ExpectedDiagnostics );
+
+			foreach( Diagnostic unexpected in unexpectedDiagnostics ) {
+				var linespan = unexpected.Location.GetLineSpan();
+
+				yield return new TestCaseData( unexpected ) {
+					TestName = $"Unexpected ({linespan.StartLinePosition.Line+1}, {linespan.StartLinePosition.Character}) {unexpected.Id}: {unexpected.GetMessage()}"
+				};
+			}
+
+			CURRENT_SPEC_DANGEROUS2_LOL++;
 		}
 
 		/// <summary>
@@ -169,7 +189,7 @@ namespace D2L.CodeStyle.Analyzers {
 			}
 		}
 
-		private DiagnosticAnalyzer GetAnalyzerNameFromSpec( string source ) {
+		private static DiagnosticAnalyzer GetAnalyzerNameFromSpec( string source ) {
 			var root = (CompilationUnitSyntax)CSharpSyntaxTree.ParseText( source ).GetRoot();
 
 			var header = root
