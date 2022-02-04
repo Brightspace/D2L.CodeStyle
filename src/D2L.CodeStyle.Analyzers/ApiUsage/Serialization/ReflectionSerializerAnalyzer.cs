@@ -147,12 +147,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 			TypeDeclarationSyntax typeDeclaration = GetTypeDeclaration( context, reflectionSerializerAttribute );
 
-			Diagnostic d = Diagnostic.Create(
+			context.ReportDiagnostic(
 					ReflectionSerializer_NoPublicConstructor,
 					typeDeclaration.Identifier.GetLocation()
 				);
-
-			context.ReportDiagnostic( d );
 		}
 
 		private static void ReportMultiplePublicConstructors(
@@ -162,12 +160,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 			ConstructorDeclarationSyntax declaration = GetFirstDeclaringSyntax<ConstructorDeclarationSyntax>( context, constructor );
 
-			Diagnostic diagnostic = Diagnostic.Create(
+			context.ReportDiagnostic(
 				descriptor: ReflectionSerializer_MultiplePublicConstructors,
 				location: declaration.Identifier.GetLocation()
 			);
-
-			context.ReportDiagnostic( diagnostic );
 		}
 
 		private static void ReportConstructorParameterCannotBeDeserialized(
@@ -177,13 +173,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 			ParameterSyntax declaration = GetFirstDeclaringSyntax<ParameterSyntax>( context, parameter );
 
-			Diagnostic diagnostic = Diagnostic.Create(
+			context.ReportDiagnostic(
 					descriptor: ReflectionSerializer_ConstructorParameter_CannotBeDeserialized,
 					location: declaration.Identifier.GetLocation(),
 					messageArgs: new[] { parameter.Name }
 				);
-
-			context.ReportDiagnostic( diagnostic );
 		}
 
 		private static void ReportConstructorParameterInvalidRefKind(
@@ -194,7 +188,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 			ParameterSyntax declaration = GetFirstDeclaringSyntax<ParameterSyntax>( context, parameter );
 
-			Diagnostic diagnostic = Diagnostic.Create(
+			context.ReportDiagnostic(
 					descriptor: ReflectionSerializer_ConstructorParameter_InvalidRefKind,
 					location: declaration.Identifier.GetLocation(),
 					messageArgs: new[] {
@@ -202,8 +196,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 						refKind.ToString().ToLowerInvariant()
 					}
 				);
-
-			context.ReportDiagnostic( diagnostic );
 		}
 
 		private static void AnalyzeProperties(
@@ -248,12 +240,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				AccessorDeclarationSyntax accessor = accessors.Accessors[i];
 				if( accessor.Kind() == SyntaxKind.InitAccessorDeclaration ) {
 
-					Diagnostic d = Diagnostic.Create(
+					context.ReportDiagnostic(
 							ReflectionSerializer_InitOnlySetter,
 							accessor.Keyword.GetLocation()
 						);
-
-					context.ReportDiagnostic( d );
 					return;
 				}
 			}
@@ -266,12 +256,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 			TypeDeclarationSyntax typeDeclaration = GetTypeDeclaration( context, reflectionSerializerAttribute );
 
-			Diagnostic d = Diagnostic.Create(
+			context.ReportDiagnostic(
 					ReflectionSerializer_StaticClass,
 					typeDeclaration.Identifier.GetLocation()
 				);
-
-			context.ReportDiagnostic( d );
 		}
 
 		private static TypeDeclarationSyntax GetTypeDeclaration(

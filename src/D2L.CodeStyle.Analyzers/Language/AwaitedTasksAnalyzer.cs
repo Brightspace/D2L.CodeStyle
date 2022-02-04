@@ -63,10 +63,10 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
-			context.ReportDiagnostic( Diagnostic.Create(
+			context.ReportDiagnostic(
 				Diagnostics.AwaitedTaskNotConfigured,
 				operation.Syntax.GetLocation()
-			) );
+			);
 		}
 	}
 }

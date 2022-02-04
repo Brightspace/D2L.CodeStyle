@@ -82,11 +82,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 
 			// The current parameter type cannot be marked as [Constant]
 			context.ReportDiagnostic(
-				Diagnostic.Create(
-					descriptor: Diagnostics.InvalidConstantType,
-					location: parameter.Locations.First(),
-					messageArgs: type.TypeKind
-				)
+				descriptor: Diagnostics.InvalidConstantType,
+				location: parameter.Locations.First(),
+				messageArgs: new object[] { type.TypeKind }
 			);
 		}
 
@@ -115,11 +113,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 
 			// Argument is not constant, so report it
 			context.ReportDiagnostic(
-				Diagnostic.Create(
-					descriptor: Diagnostics.NonConstantPassedToConstantParameter,
-					location: argument.Syntax.GetLocation(),
-					messageArgs: parameter.Name
-				)
+				descriptor: Diagnostics.NonConstantPassedToConstantParameter,
+				location: argument.Syntax.GetLocation(),
+				messageArgs: new[] { parameter.Name }
 			);
 		}
 

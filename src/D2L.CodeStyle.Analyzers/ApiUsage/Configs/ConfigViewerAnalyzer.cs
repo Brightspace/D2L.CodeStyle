@@ -127,12 +127,14 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 			string configName,
 			string deprecationMessage
 		) {
-			context.ReportDiagnostic( Diagnostic.Create(
+			context.ReportDiagnostic(
 				Diagnostics.BannedConfig,
 				configNameArg.Syntax.GetLocation(),
-				configName,
-				deprecationMessage
-			) );
+				messageArgs: new[] {
+					configName,
+					deprecationMessage
+				}
+			);
 		}
 
 		private IReadOnlyDictionary<IMethodSymbol, IReadOnlyDictionary<string, string>> GetBannedConfigs(

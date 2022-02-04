@@ -72,11 +72,11 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				.Identifier
 				.GetLocation();
 
-			context.ReportDiagnostic( Diagnostic.Create(
+			context.ReportDiagnostic(
 				Diagnostics.StructShouldBeReadonly,
 				location,
-				symbol.MetadataName
-			) );
+				messageArgs: new[] { symbol.MetadataName }
+			);
 		}
 
 		private static bool ShouldBeReadOnly( INamedTypeSymbol symbol ) {

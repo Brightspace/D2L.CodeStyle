@@ -137,13 +137,13 @@ namespace D2L.CodeStyle.Analyzers.Async {
 					var decl = methodSymbol.DeclaringSyntaxReferences.First().GetSyntax( ctx.CancellationToken ) as MethodDeclarationSyntax;
 
 					ctx.ReportDiagnostic(
-						Diagnostic.Create(
-							Diagnostics.NonBlockingImplementationOfBlockingThing,
-							decl.Identifier.GetLocation(),
-							properties: FixArgs,
+						Diagnostics.NonBlockingImplementationOfBlockingThing,
+						location: decl.Identifier.GetLocation(),
+						properties: FixArgs,
+						messageArgs: new[] {
 							$"{methodSymbol.ContainingType.Name}.{methodSymbol.Name}",
-							$"{implementedBlockingThings[0].ContainingType.Name}.{implementedBlockingThings[0].Name}"
-						)
+							$"{implementedBlockingThings[ 0 ].ContainingType.Name}.{implementedBlockingThings[ 0 ].Name}"
+						}
 					);
 					return;
 				}
@@ -155,11 +155,9 @@ namespace D2L.CodeStyle.Analyzers.Async {
 				// TODO: code fix to remove [Blocking]
 
 				ctx.ReportDiagnostic(
-					Diagnostic.Create(
-						Diagnostics.AsyncMethodCannotBeBlocking,
-						attrData.ApplicationSyntaxReference.GetSyntax( ctx.CancellationToken ).GetLocation(),
-						methodSymbol.Name
-					)
+					Diagnostics.AsyncMethodCannotBeBlocking,
+					attrData.ApplicationSyntaxReference.GetSyntax( ctx.CancellationToken ).GetLocation(),
+					messageArgs: new[] { methodSymbol.Name }
 				);
 				return;
 			}
@@ -176,13 +174,13 @@ namespace D2L.CodeStyle.Analyzers.Async {
 				// TODO: code fix to remove [Blocking]
 
 				ctx.ReportDiagnostic(
-					Diagnostic.Create(
-						Diagnostics.DontIntroduceBlockingInImplementation,
-						attrData.ApplicationSyntaxReference.GetSyntax( ctx.CancellationToken ).GetLocation(),
+					Diagnostics.DontIntroduceBlockingInImplementation,
+					attrData.ApplicationSyntaxReference.GetSyntax( ctx.CancellationToken ).GetLocation(),
+					messageArgs: new[] {
 						$"{methodSymbol.ContainingType.Name}.{methodSymbol.Name}",
 						// Just use the first one as an example:
 						$"{implementedNonBlockingThings[0].ContainingType.Name}.{implementedNonBlockingThings[0].Name}"
-					)
+					}
 				);
 				return;
 			}
@@ -233,11 +231,9 @@ namespace D2L.CodeStyle.Analyzers.Async {
 
 			if( ReturnsAwaitableValue( myMethodSymbol, asyncResultType ) ) {
 				ctx.ReportDiagnostic(
-					Diagnostic.Create(
-						Diagnostics.AsyncMethodCannotCallBlockingMethod,
-						invocation.GetLocation(),
-						invokedMethodSymbol.Name
-					)
+					Diagnostics.AsyncMethodCannotCallBlockingMethod,
+					invocation.GetLocation(),
+					messageArgs: new[] { invokedMethodSymbol.Name }
 				);
 
 				// TODO: code fix that looks for an async equivalent and suggests calling it instead.
@@ -252,14 +248,14 @@ namespace D2L.CodeStyle.Analyzers.Async {
 			}
 
 			ctx.ReportDiagnostic(
-				Diagnostic.Create(
-					Diagnostics.BlockingCallersMustBeBlocking,
-					location: invocation.GetLocation(),
-					additionalLocations: new[] { methodNameLocation },
-					properties: FixArgs,
+				Diagnostics.BlockingCallersMustBeBlocking,
+				location: invocation.GetLocation(),
+				additionalLocations: new[] { methodNameLocation },
+				properties: FixArgs,
+				messageArgs: new[] {
 					invokedMethodSymbol.Name,
 					myMethodSymbol.Name
-				)
+				}
 			);
 		}
 
@@ -285,11 +281,9 @@ namespace D2L.CodeStyle.Analyzers.Async {
 				var attr = GetAttribute( thing, blockingAttr );
 
 				ctx.ReportDiagnostic(
-					Diagnostic.Create(
-						Diagnostics.UnnecessaryBlocking,
-						attr.ApplicationSyntaxReference.GetSyntax( ctx.CancellationToken ).GetLocation(),
-						thing.Name
-					)
+					Diagnostics.UnnecessaryBlocking,
+					attr.ApplicationSyntaxReference.GetSyntax( ctx.CancellationToken ).GetLocation(),
+					messageArgs: new[] { thing.Name }
 				);
 
 				// TODO: code fix to remove blocking
@@ -356,12 +350,12 @@ namespace D2L.CodeStyle.Analyzers.Async {
 			}
 
 			ctx.ReportDiagnostic(
-				Diagnostic.Create(
-					Diagnostics.OnlyCallBlockingMethodsFromMethods,
-					invocation.GetLocation(),
+				Diagnostics.OnlyCallBlockingMethodsFromMethods,
+				invocation.GetLocation(),
+				messageArgs: new[] {
 					invokedMethodSymbol.Name,
 					place
-				)
+				}
 			);
 
 			identifierLocation = null;

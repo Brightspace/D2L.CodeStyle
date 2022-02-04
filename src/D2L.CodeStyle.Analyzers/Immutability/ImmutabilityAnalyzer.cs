@@ -247,7 +247,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			AnnotationsContext annotationsContext,
 			ImmutabilityContext immutabilityContext,
 			SimpleNameSyntax syntax,
-			Func<int,Location> getArgumentLocation
+			Func<int, Location> getArgumentLocation
 		) {
 			if( syntax.IsFromDocComment() ) {
 				// ignore things in doccomments such as crefs
@@ -302,10 +302,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				}
 
 				// Create the diagnostic on the parameter (including the attribute)
-				var diagnostic = Diagnostic.Create(
+				ctx.ReportDiagnostic(
 					Diagnostics.UnexpectedConditionalImmutability,
-					parameter.DeclaringSyntaxReferences[0].GetSyntax( ctx.CancellationToken ).GetLocation() );
-				ctx.ReportDiagnostic( diagnostic );
+					parameter.DeclaringSyntaxReferences[ 0 ].GetSyntax( ctx.CancellationToken ).GetLocation()
+				);
 			}
 		}
 
@@ -326,13 +326,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			// Create the diagnostic on the parameter (excluding the attribute)
-			var diagnostic = Diagnostic.Create(
+			ctx.ReportDiagnostic(
 				Diagnostics.ConflictingImmutability,
-				symbol.DeclaringSyntaxReferences[0].GetSyntax( ctx.CancellationToken ).GetLastToken().GetLocation(),
-				"Immutable",
-				"ConditionallyImmutable.OnlyIf",
-				symbol.Kind.ToString().ToLower() );
-			ctx.ReportDiagnostic( diagnostic );
+				symbol.DeclaringSyntaxReferences[ 0 ].GetSyntax( ctx.CancellationToken ).GetLastToken().GetLocation(),
+				messageArgs: new[] {
+					"Immutable",
+					"ConditionallyImmutable.OnlyIf",
+					symbol.Kind.ToString().ToLower()
+				}
+			);
 		}
 
 		private static void AnalyzeConflictingImmutabilityOnMember(
@@ -355,35 +357,41 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			if( hasImmutable && hasConditionallyImmutable ) {
 				// [Immutable] and [ConditionallyImmutable] both exist,
 				// so create a diagnostic
-				var diagnostic = Diagnostic.Create(
+				ctx.ReportDiagnostic(
 					Diagnostics.ConflictingImmutability,
 					syntax.Identifier.GetLocation(),
-					"Immutable",
-					"ConditionallyImmutable",
-					syntax.Keyword );
-				ctx.ReportDiagnostic( diagnostic );
+					messageArgs: new object[] {
+						"Immutable",
+						"ConditionallyImmutable",
+						syntax.Keyword
+					}
+				);
 			}
 			if( hasImmutable && hasImmutableBase ) {
 				// [Immutable] and [ImmutableBaseClassAttribute] both exist,
 				// so create a diagnostic
-				var diagnostic = Diagnostic.Create(
+				ctx.ReportDiagnostic(
 					Diagnostics.ConflictingImmutability,
 					syntax.Identifier.GetLocation(),
-					"Immutable",
-					"ImmutableBaseClassAttribute",
-					syntax.Keyword );
-				ctx.ReportDiagnostic( diagnostic );
+					messageArgs: new object[] {
+						"Immutable",
+						"ImmutableBaseClassAttribute",
+						syntax.Keyword
+					}
+				);
 			}
 			if( hasConditionallyImmutable && hasImmutableBase ) {
 				// [ConditionallyImmutable] and [ImmutableBaseClassAttribute] both exist,
 				// so create a diagnostic
-				var diagnostic = Diagnostic.Create(
+				ctx.ReportDiagnostic(
 					Diagnostics.ConflictingImmutability,
 					syntax.Identifier.GetLocation(),
-					"ConditionallyImmutable",
-					"ImmutableBaseClassAttribute",
-					syntax.Keyword );
-				ctx.ReportDiagnostic( diagnostic );
+					messageArgs: new object[] {
+						"ConditionallyImmutable",
+						"ImmutableBaseClassAttribute",
+						syntax.Keyword
+					}
+				 );
 			}
 		}
 

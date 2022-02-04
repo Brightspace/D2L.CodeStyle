@@ -154,10 +154,10 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		) {
 			foreach( var unsealed in privateOrInternalUnsealedClasses ) {
 				if( !privateOrInternalBaseClasses.ContainsKey( unsealed.Key ) ) {
-					context.ReportDiagnostic( Diagnostic.Create(
+					context.ReportDiagnostic(
 						Diagnostics.ClassShouldBeSealed,
 						unsealed.Value
-					) );
+					);
 				}
 			}
 		}

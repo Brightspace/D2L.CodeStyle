@@ -117,12 +117,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				return;
 			}
 
-			Diagnostic diagnostic = Diagnostic.Create(
+			context.ReportDiagnostic(
 				Diagnostics.OldAndBrokenLocatorIsObsolete,
 				context.Operation.Syntax.GetLocation()
 			);
-
-			context.ReportDiagnostic( diagnostic );
 		}
 
 		private void AnalyzeTypeUsage(
@@ -139,12 +137,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				return;
 			}
 
-			Diagnostic diagnostic = Diagnostic.Create(
+			context.ReportDiagnostic(
 				Diagnostics.OldAndBrokenLocatorIsObsolete,
 				context.Symbol.Locations[ 0 ]
 			);
-
-			context.ReportDiagnostic( diagnostic );
 		}
 
 		private bool HasExemption(

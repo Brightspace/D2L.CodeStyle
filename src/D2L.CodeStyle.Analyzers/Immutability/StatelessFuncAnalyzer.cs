@@ -98,7 +98,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
-			Diagnostic diag;
 			switch( operationToInspect ) {
 				// this is the case when a method reference is used
 				// eg Func<string, int> func = int.Parse
@@ -109,10 +108,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 					// non-static member access means that state could
 					// be used / held.
-					diag = Diagnostic.Create(
+					context.ReportDiagnostic(
 						Diagnostics.StatelessFuncIsnt,
 						argumentOperation.Syntax.GetLocation(),
-						$"{ argumentOperation.Syntax } is not static"
+						messageArgs: new[] { $"{ argumentOperation.Syntax } is not static" }
 					);
 					break;
 
@@ -124,10 +123,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						return;
 					}
 
-					diag = Diagnostic.Create(
+					context.ReportDiagnostic(
 						Diagnostics.StatelessFuncIsnt,
 						argumentOperation.Syntax.GetLocation(),
-						"Lambda is not static"
+						messageArgs: new[] { "Lambda is not static" }
 					);
 					break;
 
@@ -140,10 +139,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					// we are rejecting this because it is tricky to
 					// analyze properly, but also a bit ugly and should
 					// never really be necessary
-					diag = Diagnostic.Create(
+					context.ReportDiagnostic(
 						Diagnostics.StatelessFuncIsnt,
 						argumentOperation.Syntax.GetLocation(),
-						$"Invocations are not allowed: { argumentOperation.Syntax }"
+						messageArgs: new[] { $"Invocations are not allowed: { argumentOperation.Syntax }" }
 					);
 
 					break;
@@ -171,10 +170,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						return;
 					}
 
-					diag = Diagnostic.Create(
+					context.ReportDiagnostic(
 						Diagnostics.StatelessFuncIsnt,
 						argumentOperation.Syntax.GetLocation(),
-						$"Parameter { argumentOperation.Syntax } is not marked [StatelessFunc]."
+						messageArgs: new[] { $"Parameter { argumentOperation.Syntax } is not marked [StatelessFunc]." }
 					);
 					break;
 
@@ -186,10 +185,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				 * type check.
 				 */
 				case ILocalReferenceOperation:
-					diag = Diagnostic.Create(
+					context.ReportDiagnostic(
 						Diagnostics.StatelessFuncIsnt,
 						argumentOperation.Syntax.GetLocation(),
-						$"Unable to determine if { argumentOperation.Syntax } is stateless."
+						messageArgs: new[] { $"Unable to determine if { argumentOperation.Syntax } is stateless." }
 					);
 
 					break;
@@ -197,16 +196,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				default:
 					// we need StatelessFunc<T> to be ultra safe, so we'll
 					// reject usages we do not understand yet
-					diag = Diagnostic.Create(
+					context.ReportDiagnostic(
 						Diagnostics.StatelessFuncIsnt,
 						argumentOperation.Syntax.GetLocation(),
-						$"Unable to determine safety of { argumentOperation.Syntax }. This is an unexpectes usage of StatelessFunc<T>"
+						messageArgs: new[] { $"Unable to determine safety of { argumentOperation.Syntax }. This is an unexpectes usage of StatelessFunc<T>" }
 					);
 
 					break;
 			}
-
-			context.ReportDiagnostic( diag );
 		}
 
 		private static bool IsStatelessFunc(

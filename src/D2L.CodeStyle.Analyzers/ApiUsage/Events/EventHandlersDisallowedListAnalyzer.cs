@@ -60,7 +60,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				INamedTypeSymbol eventHandlerInterface
 			) {
 
-			Diagnostic diagnostic = Diagnostic.Create(
+			context.ReportDiagnostic(
 					descriptor: Diagnostics.EventHandlerDisallowed,
 					location: type.Locations[ 0 ],
 					additionalLocations: type.Locations.Skip( 1 ),
@@ -68,8 +68,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 						eventHandlerInterface.ToDisplayString()
 					}
 				);
-
-			context.ReportDiagnostic( diagnostic );
 		}
 
 		private static ImmutableHashSet<INamedTypeSymbol> GetDisallowedEventHandlerInterfaces( Compilation compilation ) {

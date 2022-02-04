@@ -1,188 +1,113 @@
 ﻿using System.Collections.Immutable;
 
+namespace Microsoft.CodeAnalysis {
+
+	internal static class ReportDiagnosticExtensions {
+
+		public static void ReportDiagnostic(
+				this SourceProductionContext context,
+				DiagnosticDescriptor descriptor,
+				Location? location = null,
+				IEnumerable<Location>? additionalLocations = null,
+				ImmutableDictionary<string, string?>? properties = null,
+				object?[]? messageArgs = null
+			) {
+
+			Diagnostic diagnostic = Diagnostic.Create(
+					descriptor: descriptor,
+					location: location,
+					additionalLocations: additionalLocations,
+					properties: properties,
+					messageArgs: messageArgs
+				);
+
+			context.ReportDiagnostic( diagnostic );
+		}
+	}
+}
+
 namespace Microsoft.CodeAnalysis.Diagnostics {
 
 	internal static class ReportDiagnosticExtensions {
 
-		#region CompilationAnalysisContext
-
 		public static void ReportDiagnostic(
 				this CompilationAnalysisContext context,
 				DiagnosticDescriptor descriptor,
-				Location? location,
-				params object?[]? messageArgs
+				Location? location = null,
+				IEnumerable<Location>? additionalLocations = null,
+				ImmutableDictionary<string, string?>? properties = null,
+				object?[]? messageArgs = null
 			) {
 
-			ReportDiagnostic(
-					context.ReportDiagnostic,
-					descriptor,
-					location,
-					messageArgs
+			Diagnostic diagnostic = Diagnostic.Create(
+					descriptor: descriptor,
+					location: location,
+					additionalLocations: additionalLocations,
+					properties: properties,
+					messageArgs: messageArgs
 				);
-		}
 
-		public static void ReportDiagnostic(
-				this CompilationAnalysisContext context,
-				DiagnosticDescriptor descriptor,
-				ImmutableArray<Location> locations,
-				params object?[]? messageArgs
-			) {
-
-			ReportDiagnostic(
-					context.ReportDiagnostic,
-					descriptor,
-					locations,
-					messageArgs
-				);
-		}
-
-		#endregion
-
-		#region OperationAnalysisContext
-
-		public static void ReportDiagnostic(
-				this OperationAnalysisContext context,
-				DiagnosticDescriptor descriptor,
-				Location? location,
-				params object?[]? messageArgs
-			) {
-
-			ReportDiagnostic(
-					context.ReportDiagnostic,
-					descriptor,
-					location,
-					messageArgs
-				);
+			context.ReportDiagnostic( diagnostic );
 		}
 
 		public static void ReportDiagnostic(
 				this OperationAnalysisContext context,
 				DiagnosticDescriptor descriptor,
-				ImmutableArray<Location> locations,
-				params object?[]? messageArgs
+				Location? location = null,
+				IEnumerable<Location>? additionalLocations = null,
+				ImmutableDictionary<string, string?>? properties = null,
+				object?[]? messageArgs = null
 			) {
 
-			ReportDiagnostic(
-					context.ReportDiagnostic,
-					descriptor,
-					locations,
-					messageArgs
+			Diagnostic diagnostic = Diagnostic.Create(
+					descriptor: descriptor,
+					location: location,
+					additionalLocations: additionalLocations,
+					properties: properties,
+					messageArgs: messageArgs
 				);
-		}
 
-		#endregion
-
-		#region SymbolAnalysisContext
-
-		public static void ReportDiagnostic(
-				this SymbolAnalysisContext context,
-				DiagnosticDescriptor descriptor,
-				Location? location,
-				params object?[]? messageArgs
-			) {
-
-			ReportDiagnostic(
-					context.ReportDiagnostic,
-					descriptor,
-					location,
-					messageArgs
-				);
+			context.ReportDiagnostic( diagnostic );
 		}
 
 		public static void ReportDiagnostic(
 				this SymbolAnalysisContext context,
 				DiagnosticDescriptor descriptor,
-				ImmutableArray<Location> locations,
-				params object?[]? messageArgs
+				Location? location = null,
+				IEnumerable<Location>? additionalLocations = null,
+				ImmutableDictionary<string, string?>? properties = null,
+				object?[]? messageArgs = null
 			) {
 
-			ReportDiagnostic(
-					context.ReportDiagnostic,
-					descriptor,
-					locations,
-					messageArgs
+			Diagnostic diagnostic = Diagnostic.Create(
+					descriptor: descriptor,
+					location: location,
+					additionalLocations: additionalLocations,
+					properties: properties,
+					messageArgs: messageArgs
 				);
-		}
 
-		#endregion
-
-		#region SyntaxNodeAnalysisContext
-
-		public static void ReportDiagnostic(
-				this SyntaxNodeAnalysisContext context,
-				DiagnosticDescriptor descriptor,
-				Location? location,
-				params object?[]? messageArgs
-			) {
-
-			ReportDiagnostic(
-					context.ReportDiagnostic,
-					descriptor,
-					location,
-					messageArgs
-				);
+			context.ReportDiagnostic( diagnostic );
 		}
 
 		public static void ReportDiagnostic(
 				this SyntaxNodeAnalysisContext context,
 				DiagnosticDescriptor descriptor,
-				ImmutableArray<Location> locations,
-				params object?[]? messageArgs
-			) {
-
-			ReportDiagnostic(
-					context.ReportDiagnostic,
-					descriptor,
-					locations,
-					messageArgs
-				);
-		}
-
-		#endregion
-
-		private static void ReportDiagnostic(
-				Action<Diagnostic> sink,
-				DiagnosticDescriptor descriptor,
-				Location? location,
-				object?[]? messageArgs
+				Location? location = null,
+				IEnumerable<Location>? additionalLocations = null,
+				ImmutableDictionary<string, string?>? properties = null,
+				object?[]? messageArgs = null
 			) {
 
 			Diagnostic diagnostic = Diagnostic.Create(
-					descriptor,
-					location,
-					messageArgs
+					descriptor: descriptor,
+					location: location,
+					additionalLocations: additionalLocations,
+					properties: properties,
+					messageArgs: messageArgs
 				);
 
-			sink( diagnostic );
-		}
-
-		private static void ReportDiagnostic(
-				Action<Diagnostic> sink,
-				DiagnosticDescriptor descriptor,
-				ImmutableArray<Location> locations,
-				object?[]? messageArgs
-			) {
-
-			Location? location;
-			IEnumerable<Location> additionalLocations;
-
-			if( locations.IsEmpty ) {
-				location = null;
-				additionalLocations = Enumerable.Empty<Location>();
-
-			} else {
-				location = locations[ 0 ];
-				additionalLocations = locations.Skip( 1 );
-			}
-
-			Diagnostic diagnostic = Diagnostic.Create(
-					descriptor,
-					location,
-					additionalLocations,
-					messageArgs
-				);
-
-			sink( diagnostic );
+			context.ReportDiagnostic( diagnostic );
 		}
 	}
 }

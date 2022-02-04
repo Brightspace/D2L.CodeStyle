@@ -44,12 +44,10 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					continue;
 				}
 
-				Diagnostic d = Diagnostic.Create(
+				context.ReportDiagnostic(
 						Diagnostics.AliasingAttributeNamesNotSupported,
 						attribute.GetLocation()
 					);
-
-				context.ReportDiagnostic( d );
 				return;
 			}
 		}

@@ -70,12 +70,14 @@ namespace D2L.CodeStyle.Analyzers.Helpers {
 					continue;
 				}
 
-				ctx.ReportDiagnostic( Diagnostic.Create(
+				ctx.ReportDiagnostic(
 					descriptor: Diagnostics.UnnecessaryAllowedListEntry,
 					location: entry.Locations[0],
-					FormatEntry( entry ),
-					m_allowedListFileName
-				) );
+					messageArgs: new[] {
+						FormatEntry( entry ),
+						m_allowedListFileName
+					}
+				);
 			}
 		}
 

@@ -124,13 +124,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ContentPhysicalPaths {
 
 			Location location = context.Node.GetLocation();
 			string memberName = memberSymbol.ToDisplayString( MemberDisplayFormat );
-			Diagnostic diagnostic = Diagnostic.Create(
+
+			context.ReportDiagnostic(
 					diagnosticDescriptor,
 					location,
-					memberName
+					messageArgs: new[] { memberName }
 				);
-
-			context.ReportDiagnostic( diagnostic );
 		}
 
 		private static readonly SymbolDisplayFormat MemberDisplayFormat = new SymbolDisplayFormat(

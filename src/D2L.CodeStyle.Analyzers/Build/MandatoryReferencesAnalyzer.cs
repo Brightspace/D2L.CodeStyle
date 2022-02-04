@@ -25,10 +25,8 @@ namespace D2L.CodeStyle.Analyzers.Build {
 
 			if ( !hasAnnotationsReference ) {
 				ctx.ReportDiagnostic(
-					Diagnostic.Create(
-						Diagnostics.MustReferenceAnnotations,
-						Location.None
-					)
+					Diagnostics.MustReferenceAnnotations,
+					Location.None
 				);
 			}
 

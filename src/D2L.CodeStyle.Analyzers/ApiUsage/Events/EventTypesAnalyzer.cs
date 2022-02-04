@@ -67,24 +67,20 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 			bool hasImmutableAttirbute = HasAttribute( declarationType, immutableAttributeType );
 			if( !hasImmutableAttirbute ) {
 
-				Diagnostic diagnostic = Diagnostic.Create(
+				context.ReportDiagnostic(
 					Diagnostics.EventTypeMissingImmutableAttribute,
 					declaration.Identifier.GetLocation(),
-					declarationType.ToDisplayString()
+					messageArgs: new[] { declarationType.ToDisplayString() }
 				);
-
-				context.ReportDiagnostic( diagnostic );
 			}
 
 			if( declaration.Modifiers.IndexOf( SyntaxKind.SealedKeyword ) < 0 ) {
 
-				Diagnostic diagnostic = Diagnostic.Create(
+				context.ReportDiagnostic(
 					Diagnostics.EventTypeNotSealed,
 					declaration.Identifier.GetLocation(),
-					declarationType.ToDisplayString()
+					messageArgs: new[] { declarationType.ToDisplayString() }
 				);
-
-				context.ReportDiagnostic( diagnostic );
 			}
 		}
 

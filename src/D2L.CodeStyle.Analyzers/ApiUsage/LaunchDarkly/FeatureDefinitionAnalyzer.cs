@@ -76,13 +76,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly {
 				return;
 			}
 
-			Diagnostic diagnostic = Diagnostic.Create(
+			context.ReportDiagnostic(
 					Diagnostics.InvalidLaunchDarklyFeatureDefinition,
 					baseTypeSyntax.GetLocation(),
-					valueType
+					messageArgs: new[] { valueType }
 				);
-
-			context.ReportDiagnostic( diagnostic );
 		}
 	}
 }
