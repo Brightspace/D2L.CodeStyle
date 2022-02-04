@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.Async.ExplicitCancellationTokenAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.Async.ExplicitCancellationTokenArgumentAnalyzer
 
 using System.Threading;
 using System.Threading.Tasks;
@@ -42,5 +42,10 @@ public static class Test {
 		await /* ExplicitCancellationTokenArgumentRequired */ SleepAsync /**/ ( 1 );
 		await SleepAsync( 2, CancellationToken.None );
 		await SleepAsync( 3, cts.Token );
+
+		async Task SkipAndSleepAsync( CancellationToken cancellationToken ) {
+			await SkipAsync( cancellationToken );
+			await SleepAsync( 5, cancellationToken );
+		}
 	}
 }
