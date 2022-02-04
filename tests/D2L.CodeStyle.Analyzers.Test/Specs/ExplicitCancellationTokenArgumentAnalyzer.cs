@@ -35,11 +35,11 @@ public static class Test {
 		await RunAsync( CancellationToken.None );
 		await RunAsync( cts.Token );
 
-		await /* ExplicitCancellationTokenArgumentRequired */ SkipAsync /**/ ();
+		await /* ExplicitCancellationTokenArgumentRequired */ SkipAsync() /**/;
 		await SkipAsync( CancellationToken.None );
 		await SkipAsync( cts.Token );
 
-		await /* ExplicitCancellationTokenArgumentRequired */ SleepAsync /**/ ( 1 );
+		await /* ExplicitCancellationTokenArgumentRequired */ SleepAsync( 1 ) /**/ ;
 		await SleepAsync( 2, CancellationToken.None );
 		await SleepAsync( 3, cts.Token );
 

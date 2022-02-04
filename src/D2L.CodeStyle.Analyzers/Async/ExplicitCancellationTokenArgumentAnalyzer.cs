@@ -35,46 +35,40 @@ namespace D2L.CodeStyle.Analyzers.Async {
 
 			context.RegisterOperationAction(
 					context => {
-						IInvocationOperation invocation = (IInvocationOperation)context.Operation;
-						AnalyzeInvocation( context, invocation, cancellationTokenType );
+						IArgumentOperation argument = (IArgumentOperation)context.Operation;
+						AnalyzeArgument( context, argument, cancellationTokenType );
 					},
-					OperationKind.Invocation
+					OperationKind.Argument
 				);
 		}
 
-		private static void AnalyzeInvocation(
+		private static void AnalyzeArgument(
 				OperationAnalysisContext context,
-				IInvocationOperation invocation,
+				IArgumentOperation argument,
 				INamedTypeSymbol cancellationTokenType
 			) {
 
-			ImmutableArray<IArgumentOperation> arguments = invocation.Arguments;
-			foreach( IArgumentOperation argument in arguments ) {
-
-				IParameterSymbol? parameter = argument.Parameter;
-				if( parameter.IsNullOrErrorType() ) {
-					continue;
-				}
-
-				if( !parameter.HasExplicitDefaultValue ) {
-					continue;
-				}
-
-				if( !SymbolEqualityComparer.Default.Equals( parameter.Type, cancellationTokenType ) ) {
-					continue;
-				}
-
-				if( argument.ArgumentKind != ArgumentKind.DefaultValue ) {
-					continue;
-				}
-
-				InvocationExpressionSyntax syntax = (InvocationExpressionSyntax)invocation.Syntax;
-
-				context.ReportDiagnostic(
-						Diagnostics.ExplicitCancellationTokenArgumentRequired,
-						syntax.Expression.GetLocation()
-					);
+			IParameterSymbol? parameter = argument.Parameter;
+			if( parameter.IsNullOrErrorType() ) {
+				return;
 			}
+
+			if( !parameter.HasExplicitDefaultValue ) {
+				return;
+			}
+
+			if( !SymbolEqualityComparer.Default.Equals( parameter.Type, cancellationTokenType ) ) {
+				return;
+			}
+
+			if( argument.ArgumentKind != ArgumentKind.DefaultValue ) {
+				return;
+			}
+
+			context.ReportDiagnostic(
+					Diagnostics.ExplicitCancellationTokenArgumentRequired,
+					argument.Syntax.GetLocation()
+				);
 		}
 	}
 }
