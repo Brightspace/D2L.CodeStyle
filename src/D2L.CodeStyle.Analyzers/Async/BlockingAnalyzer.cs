@@ -138,7 +138,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 
 					ctx.ReportDiagnostic(
 						Diagnostics.NonBlockingImplementationOfBlockingThing,
-						location: decl.Identifier.GetLocation(),
+						decl.Identifier.GetLocation(),
 						properties: FixArgs,
 						messageArgs: new[] {
 							$"{methodSymbol.ContainingType.Name}.{methodSymbol.Name}",
