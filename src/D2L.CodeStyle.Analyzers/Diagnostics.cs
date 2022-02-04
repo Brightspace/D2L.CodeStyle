@@ -705,5 +705,14 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor ExplicitCancellationTokenArgumentRequired = new DiagnosticDescriptor(
+			id: "D2LXXXX",
+			title: "CancellationToken arguments must be explicitly passed",
+			messageFormat: "CancellationToken arguments must be explicitly passed. CancellationToken.None is acceptable in some situations, but in most case should be passed through an entire async chain to ensure our applications are responsive.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }
