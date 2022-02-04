@@ -48,6 +48,10 @@ namespace D2L.CodeStyle.Analyzers.Async {
 				INamedTypeSymbol cancellationTokenType
 			) {
 
+			if( argument.ArgumentKind != ArgumentKind.DefaultValue ) {
+				return;
+			}
+
 			IParameterSymbol? parameter = argument.Parameter;
 			if( parameter.IsNullOrErrorType() ) {
 				return;
@@ -58,10 +62,6 @@ namespace D2L.CodeStyle.Analyzers.Async {
 			}
 
 			if( !SymbolEqualityComparer.Default.Equals( parameter.Type, cancellationTokenType ) ) {
-				return;
-			}
-
-			if( argument.ArgumentKind != ArgumentKind.DefaultValue ) {
 				return;
 			}
 
