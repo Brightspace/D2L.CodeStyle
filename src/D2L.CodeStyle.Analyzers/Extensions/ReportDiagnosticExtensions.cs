@@ -7,7 +7,7 @@ namespace Microsoft.CodeAnalysis {
 		public static void ReportDiagnostic(
 				this SourceProductionContext context,
 				DiagnosticDescriptor descriptor,
-				Location? location = null,
+				Location location,
 				IEnumerable<Location>? additionalLocations = null,
 				ImmutableDictionary<string, string?>? properties = null,
 				object?[]? messageArgs = null
@@ -33,7 +33,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics {
 		public static void ReportDiagnostic(
 				this CompilationAnalysisContext context,
 				DiagnosticDescriptor descriptor,
-				Location? location = null,
+				Location location,
 				IEnumerable<Location>? additionalLocations = null,
 				ImmutableDictionary<string, string?>? properties = null,
 				object?[]? messageArgs = null
@@ -53,7 +53,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics {
 		public static void ReportDiagnostic(
 				this OperationAnalysisContext context,
 				DiagnosticDescriptor descriptor,
-				Location? location = null,
+				Location location,
 				IEnumerable<Location>? additionalLocations = null,
 				ImmutableDictionary<string, string?>? properties = null,
 				object?[]? messageArgs = null
@@ -73,7 +73,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics {
 		public static void ReportDiagnostic(
 				this SymbolAnalysisContext context,
 				DiagnosticDescriptor descriptor,
-				Location? location = null,
+				Location location,
 				IEnumerable<Location>? additionalLocations = null,
 				ImmutableDictionary<string, string?>? properties = null,
 				object?[]? messageArgs = null
@@ -93,7 +93,7 @@ namespace Microsoft.CodeAnalysis.Diagnostics {
 		public static void ReportDiagnostic(
 				this SyntaxNodeAnalysisContext context,
 				DiagnosticDescriptor descriptor,
-				Location? location = null,
+				Location location,
 				IEnumerable<Location>? additionalLocations = null,
 				ImmutableDictionary<string, string?>? properties = null,
 				object?[]? messageArgs = null
