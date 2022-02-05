@@ -9,10 +9,12 @@ namespace D2L.CodeStyle.Annotations.Contract {
 	)]
 	public sealed class OnlyVisibleToAttribute : Attribute {
 
-		public OnlyVisibleToAttribute( string fullyQualifiedMetadataName ) {
-			FullyQualifiedMetadataName = fullyQualifiedMetadataName;
+		public OnlyVisibleToAttribute( string fullyQualifiedTypeName, string assemblyName ) {
+			FullyQualifiedTypeName = fullyQualifiedTypeName;
+			AssemblyName = assemblyName;
 		}
 
-		public string FullyQualifiedMetadataName { get; }
+		public string FullyQualifiedTypeName { get; }
+		public string AssemblyName { get; }
 	}
 }

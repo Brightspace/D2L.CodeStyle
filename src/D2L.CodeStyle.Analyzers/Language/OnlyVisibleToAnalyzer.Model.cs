@@ -37,6 +37,10 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			public bool IsVisibleTo( INamedTypeSymbol caller, ISymbol member ) {
 
+				if( SymbolEqualityComparer.Default.Equals( caller, member.ContainingType ) ) {
+					return true;
+				}
+
 				ImmutableHashSet<INamedTypeSymbol>? restrictions = m_visibilityCache
 					.GetOrAdd( member, GetVisibilityRestrictions );
 	
@@ -85,7 +89,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			private INamedTypeSymbol? TryGetCallerRestriction( AttributeData attribute ) {
 
-				if( attribute.ConstructorArguments.Length != 1 ) {
+				if( attribute.ConstructorArguments.Length != 2 ) {
 					return null;
 				}
 
@@ -94,7 +98,21 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					return null;
 				}
 
-				return m_compilation.GetTypeByMetadataName( metadataName );
+				TypedConstant assemblyNameAttribute = attribute.ConstructorArguments[ 1 ];
+				if( assemblyNameAttribute.Value is not string assemblyName ) {
+					return null;
+				}
+
+				INamedTypeSymbol? type = m_compilation.GetTypeByMetadataName( metadataName );
+				if( type == null ) {
+					return null;
+				}
+
+				if( !type.ContainingAssembly.Name.Equals( assemblyName, StringComparison.Ordinal ) ) {
+					return null;
+				}
+
+				return type;
 			}
 		}
 	}
