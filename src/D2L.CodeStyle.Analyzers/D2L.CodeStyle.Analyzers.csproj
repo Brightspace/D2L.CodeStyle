@@ -22,7 +22,7 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <InternalsVisibleTo Include="D2L.CodeStyle.Analyzers.Tests"/>
+    <InternalsVisibleTo Include="D2L.CodeStyle.Analyzers.Tests" />
   </ItemGroup>
   <ItemGroup>
     <None Include="tools\*.ps1" Pack="true" PackagePath="tools" />

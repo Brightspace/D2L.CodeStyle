@@ -705,5 +705,14 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor MemberNotVisibleToCaller = new DiagnosticDescriptor(
+			id: "D2L0097",
+			title: "Member is not visible to caller",
+			messageFormat: "The member '{0}' has restriced its visibility to an explicit set of callers",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }
