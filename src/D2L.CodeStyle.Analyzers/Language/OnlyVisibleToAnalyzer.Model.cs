@@ -37,10 +37,6 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			public bool IsVisibleTo( INamedTypeSymbol caller, ISymbol member ) {
 
-				if( SymbolEqualityComparer.Default.Equals( caller, member.ContainingType ) ) {
-					return true;
-				}
-
 				ImmutableHashSet<INamedTypeSymbol>? restrictions = m_visibilityCache
 					.GetOrAdd( member, GetVisibilityRestrictions );
 	
@@ -48,7 +44,15 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					return true;
 				}
 
-				return restrictions.Contains( caller );
+				if( restrictions.Contains( caller ) ) {
+					return true;
+				}
+
+				if( SymbolEqualityComparer.Default.Equals( caller, member.ContainingType ) ) {
+					return true;
+				}
+
+				return false;
 			}
 
 			private ImmutableHashSet<INamedTypeSymbol>? GetVisibilityRestrictions( ISymbol member ) {

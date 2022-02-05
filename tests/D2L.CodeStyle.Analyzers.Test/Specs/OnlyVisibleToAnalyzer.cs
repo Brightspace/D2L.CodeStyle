@@ -219,3 +219,18 @@ namespace TestCases {
 		}
 	}
 }
+
+// ===============================================================================
+
+namespace TestCases {
+
+	public static class AlwaysVisibleWithinSameContainer {
+
+		[OnlyVisibleTo( "PeterPan", "Neverland" )]
+		public static void Fly() { }
+
+		private static void InternalCaller() {
+			Fly();
+		}
+	}
+}
