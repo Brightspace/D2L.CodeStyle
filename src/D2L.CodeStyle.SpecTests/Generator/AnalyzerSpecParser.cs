@@ -14,6 +14,7 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 
 		public static AnalyzerSpec Parse( string path, CancellationToken cancellationToken ) {
 
+			string name = Path.GetFileNameWithoutExtension( path );
 			string source = File.ReadAllText( path );
 
 			SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(
@@ -27,9 +28,10 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 			ImmutableArray<ExpectedDiagnostic> expectedDiagnostics = GetExpectedDiagnostics( root );
 
 			return new AnalyzerSpec(
-				analyzerQualifiedTypeName,
-				expectedDiagnostics,
-				source
+				Name: name,
+				AnalyzerQualifiedTypeName: analyzerQualifiedTypeName,
+				ExpectedDiagnostics: expectedDiagnostics,
+				Source: source
 			);
 		}
 
@@ -69,8 +71,8 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 
 			foreach( (TriviaAndContent start, TriviaAndContent end) in commentPairs ) {
 
-				IEnumerable<NameAndMessageArgs> diagnostics = ParseDiagnosticNameAndMessageArgs( start.Content );
-				foreach( NameAndMessageArgs diagnostic in diagnostics ) {
+				IEnumerable<AliasAndMessageArgs> diagnostics = ParseDiagnosticNameAndMessageArgs( start.Content );
+				foreach( AliasAndMessageArgs diagnostic in diagnostics ) {
 
 					// The diagnostic must be between the two delimiting comments,
 					// with one leading and trailing space inside the delimiters.
@@ -89,7 +91,7 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 					TextSpan diagnosticSpan = TextSpan.FromBounds( diagnosticStart, diagnosticEnd );
 
 					ExpectedDiagnostic expectedDiagnostic = new(
-						Name: diagnostic.Name,
+						Alias: diagnostic.Alias,
 						Location: Location.Create( root.SyntaxTree, diagnosticSpan ),
 						MessageArguments: diagnostic.MessageArgs
 					);
@@ -164,12 +166,12 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 			return contents;
 		}
 
-		private readonly record struct NameAndMessageArgs(
-			string Name,
+		private readonly record struct AliasAndMessageArgs(
+			string Alias,
 			ImmutableArray<string> MessageArgs
 		);
 
-		private static IEnumerable<NameAndMessageArgs> ParseDiagnosticNameAndMessageArgs( string commentContent ) {
+		private static IEnumerable<AliasAndMessageArgs> ParseDiagnosticNameAndMessageArgs( string commentContent ) {
 
 			IEnumerable<string> expectations = commentContent.Split( '|' ).Select( s => s.Trim() );
 			foreach( string str in expectations ) {
@@ -177,7 +179,7 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 				int indexOfOpenParen = str.IndexOf( '(' );
 				if( indexOfOpenParen == -1 ) {
 
-					yield return new NameAndMessageArgs( str, ImmutableArray<string>.Empty );
+					yield return new AliasAndMessageArgs( str, ImmutableArray<string>.Empty );
 					continue;
 				}
 
@@ -185,7 +187,7 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 					throw new FormatException( "Diagnostic expectation did not end in ')'." );
 				}
 
-				string name = str.Substring( 0, indexOfOpenParen );
+				string alias = str.Substring( 0, indexOfOpenParen );
 
 				string arguments = str.Substring(
 					indexOfOpenParen + 1,
@@ -194,7 +196,7 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 
 				ImmutableArray<string> messageArgs = ParseMessageArgs( arguments );
 
-				yield return new NameAndMessageArgs( name, messageArgs );
+				yield return new AliasAndMessageArgs( alias, messageArgs );
 			}
 		}
 

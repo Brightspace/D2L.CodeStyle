@@ -9,7 +9,7 @@ using static D2L.CodeStyle.Analyzers.Spec;
 
 namespace D2L.CodeStyle.SpecTests.Framework {
 
-	public static class SpecTestRunner {
+	public static class AnalyzerDiagnosticsProvider {
 
 		private static readonly MetadataReference CorlibReference = MetadataReference.CreateFromFile( typeof( object ).Assembly.Location );
 		private static readonly MetadataReference SystemReference = MetadataReference.CreateFromFile( typeof( System.Uri ).Assembly.Location );
@@ -19,25 +19,26 @@ namespace D2L.CodeStyle.SpecTests.Framework {
 		private static readonly MetadataReference SystemRuntimeReference = MetadataReference.CreateFromFile( Assembly.Load( "System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" ).Location );
 		private static readonly MetadataReference AnnotationsReference = MetadataReference.CreateFromFile( typeof( Annotations.Because ).Assembly.Location );
 
-		public static async Task<ImmutableArray<Diagnostic>> RunAsync(
+		public static async Task<ImmutableArray<Diagnostic>> GetAnalyzerDiagnosticsAsync(
 				DiagnosticAnalyzer analyzer,
+				string debugName,
 				string source
 			) {
 
-			Compilation compilation = await GetCompilationForSourceAsync( specName: "foo", source );
+			Compilation compilation = await GetCompilationForSourceAsync( debugName, source );
 
-			ImmutableArray<Diagnostic> diagnostics = await GetActualDiagnosticsAsync( compilation, analyzer );
+			ImmutableArray<Diagnostic> diagnostics = await GetAnalyzerDiagnosticsAsync( compilation, analyzer );
 			return diagnostics;
 		}
 
-		private static Task<Compilation> GetCompilationForSourceAsync( string specName, string source ) {
+		private static Task<Compilation> GetCompilationForSourceAsync( string debugName, string source ) {
 
-			ProjectId projectId = ProjectId.CreateNewId( debugName: specName );
-			string filename = specName + ".cs";
-			DocumentId documentId = DocumentId.CreateNewId( projectId, debugName: filename );
+			ProjectId projectId = ProjectId.CreateNewId( debugName );
+			string filename = debugName + ".cs";
+			DocumentId documentId = DocumentId.CreateNewId( projectId, debugName: debugName );
 
 			Solution solution = new AdhocWorkspace().CurrentSolution
-				.AddProject( projectId, specName, specName, LanguageNames.CSharp )
+				.AddProject( projectId, debugName, debugName, LanguageNames.CSharp )
 
 				.AddMetadataReference( projectId, CorlibReference )
 				.AddMetadataReference( projectId, SystemReference )
@@ -68,10 +69,10 @@ namespace D2L.CodeStyle.SpecTests.Framework {
 			return solution.Projects.First().GetCompilationAsync();
 		}
 
-		private static async Task<ImmutableArray<Diagnostic>> GetActualDiagnosticsAsync(
+		private static async Task<ImmutableArray<Diagnostic>> GetAnalyzerDiagnosticsAsync(
 				Compilation compilation,
 				DiagnosticAnalyzer analyzer
-				) {
+			) {
 
 			ImmutableArray<AdditionalText> additionalFiles = await GetAditionalFilesAsync();
 

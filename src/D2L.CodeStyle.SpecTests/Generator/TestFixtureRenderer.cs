@@ -69,6 +69,8 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 			writer.WriteLine( " {" );
 			writer.IndentBlock( () => {
 
+				writer.WriteEmptyLine();
+				writer.WriteLine( "private DiagnosticsComparison m_comparison;" );
 
 				writer.WriteEmptyLine();
 				writer.WriteLine( "[OneTimeSetUp]" );
@@ -79,16 +81,27 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 					writer.Write( "DiagnosticAnalyzer analyzer = new global::" );
 					writer.Write( spec.AnalyzerQualifiedTypeName );
 					writer.WriteLine( "();" );
-					writer.WriteLine( "await SpecTestRunner.RunAsync( analyzer, Source );" );
+
+					writer.WriteEmptyLine();
+					writer.WriteLine( "ImmutableArray<Diagnostic> actualDiagnostics = await AnalyzerDiagnosticsProvider" );
+					writer.IndentBlock( () => {
+
+						writer.Write( ".GetAnalyzerDiagnosticsAsync( analyzer, debugName: " );
+						writer.WriteString( spec.Name );
+						writer.WriteLine( ", source: Source );" );
+					} );
+
+					writer.WriteEmptyLine();
+					writer.WriteLine( "m_comparison = AnalyzerDiagnosticsComparer.Compare( actualDiagnostics, GetExpectedDiagnostics() );" );
 
 				} );
 				writer.WriteLine( "}" );
 
 				writer.WriteEmptyLine();
 				writer.WriteLine( "[Test]" );
-				writer.WriteLine( "public void ExpectedDiagnostics() {" );
+				writer.WriteLine( "public void NoMissingDiagnostics() {" );
 				writer.IndentBlock( () => {
-
+					writer.WriteLine( "Assert.That( m_comparison.Missing, Is.Empty );" );
 				} );
 				writer.WriteLine( "}" );
 
@@ -96,12 +109,12 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 				writer.WriteLine( "[Test]" );
 				writer.WriteLine( "public void NoUnexpectedDiagnostics() {" );
 				writer.IndentBlock( () => {
-
+					writer.WriteLine( "Assert.That( m_comparison.Unexpected, Is.Empty );" );
 				} );
 				writer.WriteLine( "}" );
 
 				writer.WriteEmptyLine();
-				WriteDiagnosticExpectations( spec.ExpectedDiagnostics, writer );
+				WriteExpectedDiagnostics( spec.ExpectedDiagnostics, writer );
 
 				writer.WriteEmptyLine();
 				WriteSourceConstant( spec.Source, writer );
@@ -110,14 +123,14 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 			writer.WriteLine( '}' );
 		}
 
-		private static void WriteDiagnosticExpectations(
+		private static void WriteExpectedDiagnostics(
 				ImmutableArray<AnalyzerSpec.ExpectedDiagnostic> expectedDiagnostics,
 				CSharpTextWriter writer
 			) {
 
 			writer.WriteLine( "#region ExpectedDiagnostics" );
 			writer.WriteEmptyLine();
-			writer.WriteLine( "private static IEnumerable<DiagnosticExpectation> GetExpectedDiagnostics() {" );
+			writer.WriteLine( "private static IEnumerable<ExpectedDiagnostic> GetExpectedDiagnostics() {" );
 			writer.IndentBlock( () => {
 
 				if( expectedDiagnostics.IsEmpty ) {
@@ -127,15 +140,15 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 
 				foreach( AnalyzerSpec.ExpectedDiagnostic diagnostic in expectedDiagnostics ) {
 
-					writer.WriteLine( "yield return new DiagnosticExpectation(" );
+					writer.WriteLine( "yield return new ExpectedDiagnostic(" );
 					writer.IndentBlock( () => {
 
-						writer.Write( "Name: " );
-						writer.WriteString( diagnostic.Name );
+						writer.Write( "Alias: " );
+						writer.WriteString( diagnostic.Alias );
 						writer.WriteLine( "," );
 
-						writer.Write( "Location: " );
-						WriteLocation( diagnostic.Location, writer );
+						writer.Write( "LinePosition: " );
+						WriteLinePositionSpan( diagnostic.Location.GetLineSpan().Span, writer );
 						writer.WriteLine( "," );
 
 						writer.Write( "MessageArguments: " );
@@ -188,33 +201,6 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 				}
 			} );
 			writer.Write( ")" );
-		}
-
-		private static void WriteLocation( Location location, CSharpTextWriter writer ) {
-
-			writer.WriteLine( "Location.Create(" );
-			writer.IndentBlock( () => {
-
-				writer.WriteLine( "filePath: string.Empty," );
-
-				writer.Write( "textSpan: " );
-				WriteTextSpan( location.SourceSpan, writer );
-				writer.WriteLine( "," );
-
-				writer.Write( "lineSpan: " );
-				WriteLinePositionSpan( location.GetLineSpan().Span, writer );
-				writer.WriteLine();
-			} );
-			writer.Write( ")" );
-		}
-
-		private static void WriteTextSpan( TextSpan textSpan, CSharpTextWriter writer ) {
-
-			writer.Write( "new TextSpan( start: " );
-			writer.Write( textSpan.Start );
-			writer.Write( ", length: " );
-			writer.Write( textSpan.Length );
-			writer.Write( " )" );
 		}
 
 		private static void WriteLinePositionSpan( LinePositionSpan linePositionSpan, CSharpTextWriter writer ) {
