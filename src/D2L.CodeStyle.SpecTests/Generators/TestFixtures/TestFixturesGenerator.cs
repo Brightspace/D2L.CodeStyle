@@ -54,63 +54,69 @@ namespace D2L.CodeStyle.SpecTests.Generators.TestFixtures {
 
 		private static void GenerateTestFixture( SourceProductionContext context, TestFixtureArgs args ) {
 
-			CancellationToken cancellationToken = context.CancellationToken;
+			try {
 
-			if( args.Source == null ) {
+				CancellationToken cancellationToken = context.CancellationToken;
 
-				// TODO: emit diagnostic
-				return;
+				if( args.Source == null ) {
+
+					// TODO: emit diagnostic
+					return;
+				}
+
+				SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(
+						text: args.Source,
+						path: args.IncludePath,
+						cancellationToken: cancellationToken
+					);
+
+				AnalyzerSpec spec = AnalyzerSpecParser.Parse( syntaxTree, cancellationToken );
+
+				string projectRelativePath = ProjectPathUtility.GetProjectRelativePath(
+						args.ProjectDirectory,
+						args.IncludePath
+					);
+
+				string specName = Path.GetFileNameWithoutExtension( args.IncludePath );
+
+				string[] pathParts = projectRelativePath.Split( Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar );
+
+				string @namespace;
+				if( pathParts.Length == 1 ) {
+					@namespace = args.RootNamespace;
+				} else {
+					@namespace = string.Concat( args.RootNamespace, ".", string.Join( ".", pathParts, 0, pathParts.Length - 1 ) );
+				}
+
+				string[] classNames = Path
+					.GetFileNameWithoutExtension( pathParts[ pathParts.Length - 1 ] )
+					.Split( '.' );
+
+				ImmutableArray<string> containerClassNames;
+				if( classNames.Length == 1 ) {
+					containerClassNames = ImmutableArray<string>.Empty;
+				} else {
+					containerClassNames = ImmutableArray.Create( classNames, 0, classNames.Length - 2 );
+				}
+
+				string fixtureClassName = classNames[ classNames.Length - 1 ];
+
+				TestFixtureRenderer.Args renderArgs = new(
+						Namespace: @namespace,
+						ContainerClassNames: containerClassNames,
+						FixtureClassName: fixtureClassName,
+						Spec: spec,
+						SpecName: specName,
+						SpecSource: args.Source
+					);
+
+				string fixtureSource = TestFixtureRenderer.Render( renderArgs );
+				string hintPath = GetHintPath( projectRelativePath );
+				context.AddSource( hintPath, fixtureSource );
+
+			} catch( Exception ex ) {
+				context.ReportException( nameof( TestFixturesGenerator ), ex );
 			}
-
-			SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(
-					text: args.Source,
-					path: args.IncludePath,
-					cancellationToken: cancellationToken
-				);
-
-			AnalyzerSpec spec = AnalyzerSpecParser.Parse( syntaxTree, cancellationToken );
-
-			string projectRelativePath = ProjectPathUtility.GetProjectRelativePath(
-					args.ProjectDirectory,
-					args.IncludePath
-				);
-
-			string specName = Path.GetFileNameWithoutExtension( args.IncludePath );
-
-			string[] pathParts = projectRelativePath.Split( Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar );
-
-			string @namespace;
-			if( pathParts.Length == 1 ) {
-				@namespace = args.RootNamespace;
-			} else {
-				@namespace = string.Concat( args.RootNamespace, ".", string.Join( ".", pathParts, 0, pathParts.Length - 1 ) );
-			}
-
-			string[] classNames = Path
-				.GetFileNameWithoutExtension( pathParts[ pathParts.Length - 1 ] )
-				.Split( '.' );
-
-			ImmutableArray<string> containerClassNames;
-			if( classNames.Length == 1 ) {
-				containerClassNames = ImmutableArray<string>.Empty;
-			} else {
-				containerClassNames = ImmutableArray.Create( classNames, 0, classNames.Length - 2 );
-			}
-
-			string fixtureClassName = classNames[ classNames.Length - 1 ];
-
-			TestFixtureRenderer.Args renderArgs = new(
-					Namespace: @namespace,
-					ContainerClassNames: containerClassNames,
-					FixtureClassName: fixtureClassName,
-					Spec: spec,
-					SpecName: specName,
-					SpecSource: args.Source
-				);
-
-			string fixtureSource = TestFixtureRenderer.Render( renderArgs );
-			string hintPath = GetHintPath( projectRelativePath );
-			context.AddSource( hintPath, fixtureSource );
 		}
 
 		private static readonly Regex m_invalidHintPathCharacters = new(

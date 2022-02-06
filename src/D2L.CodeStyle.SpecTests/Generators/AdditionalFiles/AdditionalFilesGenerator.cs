@@ -56,24 +56,29 @@ namespace D2L.CodeStyle.SpecTests.Generators.AdditionalFiles {
 
 		private static void Generate( SourceProductionContext context, ImmutableArray<AdditionalFileArgs> additionalFileArgs ) {
 
-			var builder = ImmutableArray.CreateBuilder<AdditionalFilesRenderer.AdditionalFile>();
+			try {
+				var builder = ImmutableArray.CreateBuilder<AdditionalFilesRenderer.AdditionalFile>();
 
-			foreach( AdditionalFileArgs args in additionalFileArgs ) {
+				foreach( AdditionalFileArgs args in additionalFileArgs ) {
 
-				if( args.Text == null ) {
-					// TODO: emit diagnostic
-					continue;
+					if( args.Text == null ) {
+						// TODO: emit diagnostic
+						continue;
+					}
+
+					builder.Add( new(
+						IncludePath: args.IncludePath,
+						Text: args.Text,
+						VirtualPath: args.VirtualPath
+					) );
 				}
 
-				builder.Add( new(
-					IncludePath: args.IncludePath,
-					Text: args.Text,
-					VirtualPath: args.VirtualPath
-				) );
-			}
+				string source = AdditionalFilesRenderer.Render( builder.ToImmutable() );
+				context.AddSource( "GlobalAdditionalFiles.cs", source );
 
-			string source = AdditionalFilesRenderer.Render( builder.ToImmutable() );
-			context.AddSource( "GlobalAdditionalFiles.cs", source );
+			} catch( Exception ex ) {
+				context.ReportException( nameof( AdditionalFilesGenerator ), ex );
+			}
 		}
 	}
 }
