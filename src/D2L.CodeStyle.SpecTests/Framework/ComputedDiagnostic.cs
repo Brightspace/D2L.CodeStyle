@@ -16,8 +16,8 @@ namespace D2L.CodeStyle.SpecTests.Framework {
 		public override string ToString() {
 
 			using StringWriter sw = new StringWriter();
-			using( IndentedTextWriter writer = new IndentedTextWriter( sw, tabString: "  " ) ) {
-				writer.Indent = 3;
+			using( IndentedTextWriter writer = new IndentedTextWriter( sw, tabString: "\t" ) ) {
+				writer.Indent = 1;
 
 				writer.WriteLine( "{" );
 				writer.Indent++;
