@@ -7,14 +7,18 @@ namespace D2L.CodeStyle.SpecTests.Generators.TestFixtures {
 
 	internal static class TestFixtureRenderer {
 
-		public static string Render(
-				string @namespace,
-				ImmutableArray<string> containerClassNames,
-				string fixtureClassName,
-				AnalyzerSpec spec
-			) {
+		public sealed record class Args(
+			string Namespace,
+			ImmutableArray<string> ContainerClassNames,
+			string FixtureClassName,
+			AnalyzerSpec Spec,
+			string SpecName,
+			string SpecSource
+		);
 
-			StringBuilder buffer = new( spec.Source.Length * 2 );
+		public static string Render( Args args ) {
+
+			StringBuilder buffer = new( args.SpecSource.Length * 2 );
 
 			using( StringWriter stringWriter = new( buffer ) )
 			using( CSharpTextWriter writer = new( stringWriter ) ) {
@@ -30,42 +34,37 @@ namespace D2L.CodeStyle.SpecTests.Generators.TestFixtures {
 				writer.WriteLine();
 
 				writer.Write( "namespace " );
-				writer.Write( @namespace );
+				writer.Write( args.Namespace );
 				writer.WriteLine( " {" );
 				writer.IndentBlock( () => {
 
-					for( int i = 0; i < containerClassNames.Length - 1; i++ ) {
+					for( int i = 0; i < args.ContainerClassNames.Length - 1; i++ ) {
 						writer.Write( "public partial class " );
-						writer.Write( containerClassNames[ i ] );
+						writer.Write( args.ContainerClassNames[ i ] );
 						writer.WriteLine( " {" );
 						writer.Indent++;
 					}
 
-					WriteTestFixtureClass( fixtureClassName, spec, writer );
+					WriteTestFixtureClass( args, writer );
 
-					for( int i = 0; i < containerClassNames.Length - 1; i++ ) {
+					for( int i = 0; i < args.ContainerClassNames.Length - 1; i++ ) {
 						writer.Indent--;
 						writer.WriteLine( '}' );
 					}
 
 				} );
-				writer.Indent--;
 				writer.WriteLine( '}' );
 			}
 
 			return buffer.ToString();
 		}
 
-		private static void WriteTestFixtureClass(
-				string className,
-				AnalyzerSpec spec,
-				CSharpTextWriter writer
-			) {
+		private static void WriteTestFixtureClass( Args args, CSharpTextWriter writer ) {
 
 			writer.WriteLine();
 			writer.WriteLine( "[TestFixture( Category = \"Spec\" )]" );
 			writer.Write( "public partial class " );
-			writer.Write( className );
+			writer.Write( args.FixtureClassName );
 			writer.WriteLine( " {" );
 			writer.IndentBlock( () => {
 
@@ -79,7 +78,7 @@ namespace D2L.CodeStyle.SpecTests.Generators.TestFixtures {
 
 					writer.WriteEmptyLine();
 					writer.Write( "DiagnosticAnalyzer analyzer = new global::" );
-					writer.Write( spec.AnalyzerQualifiedTypeName );
+					writer.Write( args.Spec.AnalyzerQualifiedTypeName );
 					writer.WriteLine( "();" );
 
 					writer.WriteEmptyLine();
@@ -93,7 +92,7 @@ namespace D2L.CodeStyle.SpecTests.Generators.TestFixtures {
 							writer.WriteLine( "additionalFiles: D2L.CodeStyle.SpecTests._Generated_.GlobalAdditionalFiles.AdditionalFiles," );
 
 							writer.Write( "debugName: " );
-							writer.WriteString( spec.Name );
+							writer.WriteString( args.SpecName );
 							writer.WriteLine( "," );
 
 							writer.WriteLine( "source: Source" );
@@ -126,10 +125,10 @@ namespace D2L.CodeStyle.SpecTests.Generators.TestFixtures {
 				writer.WriteLine( "}" );
 
 				writer.WriteEmptyLine();
-				WriteExpectedDiagnostics( spec.ExpectedDiagnostics, writer );
+				WriteExpectedDiagnostics( args.Spec.ExpectedDiagnostics, writer );
 
 				writer.WriteEmptyLine();
-				WriteSourceConstant( spec.Source, writer );
+				WriteSourceConstant( args.SpecSource, writer );
 				writer.WriteEmptyLine();
 			} );
 			writer.WriteLine( '}' );

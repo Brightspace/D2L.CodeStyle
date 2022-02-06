@@ -12,15 +12,10 @@ namespace D2L.CodeStyle.SpecTests.Parser {
 
 		private static readonly Regex m_messageArgsRegex = new( @"(?<!\\),", RegexOptions.Compiled );
 
-		public static AnalyzerSpec Parse( string path, CancellationToken cancellationToken ) {
-
-			string name = Path.GetFileNameWithoutExtension( path );
-			string source = File.ReadAllText( path );
-
-			SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(
-				text: source,
-				path: path
-			);
+		public static AnalyzerSpec Parse(
+				SyntaxTree syntaxTree,
+				CancellationToken cancellationToken
+			) {
 
 			CompilationUnitSyntax root = syntaxTree.GetCompilationUnitRoot( cancellationToken );
 
@@ -28,10 +23,8 @@ namespace D2L.CodeStyle.SpecTests.Parser {
 			ImmutableArray<ExpectedDiagnostic> expectedDiagnostics = GetExpectedDiagnostics( root );
 
 			return new AnalyzerSpec(
-				Name: name,
 				AnalyzerQualifiedTypeName: analyzerQualifiedTypeName,
-				ExpectedDiagnostics: expectedDiagnostics,
-				Source: source
+				ExpectedDiagnostics: expectedDiagnostics
 			);
 		}
 

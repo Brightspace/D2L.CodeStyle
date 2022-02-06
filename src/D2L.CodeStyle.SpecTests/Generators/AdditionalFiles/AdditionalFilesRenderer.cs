@@ -1,10 +1,14 @@
-﻿using System.Collections.Immutable;
-
-namespace D2L.CodeStyle.SpecTests.Generators.AdditionalFiles {
+﻿namespace D2L.CodeStyle.SpecTests.Generators.AdditionalFiles {
 
 	internal static class AdditionalFilesRenderer {
 
-		public static string Render( ImmutableArray<AdditionalFile> additionalFiles ) {
+		public sealed record AdditionalFile(
+			string IncludePath,
+			string Text,
+			string VirtualPath
+		);
+
+		public static string Render( IEnumerable<AdditionalFile> additionalFiles ) {
 
 			using StringWriter stringWriter = new();
 			using( CSharpTextWriter writer = new( stringWriter ) ) {
@@ -33,8 +37,6 @@ namespace D2L.CodeStyle.SpecTests.Generators.AdditionalFiles {
 
 							foreach( AdditionalFile additionalFile in additionalFiles ) {
 
-								string text = File.ReadAllText( additionalFile.OriginalPath );
-
 								writer.WriteEmptyLine();
 								writer.WriteLine( "builder.Add( new AdditionalTextFile(" );
 								writer.IndentBlock( () => {
@@ -44,7 +46,7 @@ namespace D2L.CodeStyle.SpecTests.Generators.AdditionalFiles {
 									writer.WriteLine( "," );
 
 									writer.Write( "text: " );
-									writer.WriteMultiLineString( text );
+									writer.WriteMultiLineString( additionalFile.Text );
 									writer.WriteLine();
 
 								} );

@@ -4,10 +4,8 @@ using Microsoft.CodeAnalysis;
 namespace D2L.CodeStyle.SpecTests.Parser {
 
 	internal sealed record class AnalyzerSpec(
-		string Name,
 		string AnalyzerQualifiedTypeName,
-		ImmutableArray<AnalyzerSpec.ExpectedDiagnostic> ExpectedDiagnostics,
-		string Source
+		ImmutableArray<AnalyzerSpec.ExpectedDiagnostic> ExpectedDiagnostics
 	) {
 
 		internal sealed record class ExpectedDiagnostic(

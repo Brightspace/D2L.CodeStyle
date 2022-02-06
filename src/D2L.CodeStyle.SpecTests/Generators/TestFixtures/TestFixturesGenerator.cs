@@ -2,6 +2,7 @@
 using System.Text.RegularExpressions;
 using D2L.CodeStyle.SpecTests.Parser;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.SpecTests.Generators.TestFixtures {
@@ -9,14 +10,16 @@ namespace D2L.CodeStyle.SpecTests.Generators.TestFixtures {
 	[Generator]
 	public sealed class TestFixturesGenerator : IIncrementalGenerator {
 
-		private sealed record TestFixture(
-			string HintPath,
-			string Source
+		private sealed record class TestFixtureArgs(
+			string IncludePath,
+			string ProjectDirectory,
+			string RootNamespace,
+			string? Source
 		);
 
 		void IIncrementalGenerator.Initialize( IncrementalGeneratorInitializationContext context ) {
 
-			IncrementalValuesProvider<TestFixture> testFixtures = context
+			IncrementalValuesProvider<TestFixtureArgs> testFixtureArgs = context
 				.AdditionalTextsProvider
 				.Combine( context.AnalyzerConfigOptionsProvider )
 				.Select( static ( (AdditionalText AdditionalText, AnalyzerConfigOptionsProvider OptionsProvider) source, CancellationToken cancellationToken ) => {
@@ -26,42 +29,61 @@ namespace D2L.CodeStyle.SpecTests.Generators.TestFixtures {
 						return null;
 					}
 
+					string includePath = source.AdditionalText.Path;
 					string projectDirectory = options.GetRequiredOption( "build_property.projectdir" );
 					string rootNamespace = options.GetRequiredOption( "build_property.rootnamespace" );
 
-					string includePath = source.AdditionalText.Path;
-					string projectRelativePath = ProjectPathUtility.GetProjectRelativePath( projectDirectory, includePath );
-					AnalyzerSpec spec = AnalyzerSpecParser.Parse( includePath, cancellationToken );
+					string specSource;
+					try {
+						specSource = File.ReadAllText( includePath );
+					} catch {
+						return null;
+					}
 
-					TestFixture testFixture = RenderSpecTestFixture(
-							projectRelativePath,
-							rootNamespace,
-							spec
-						);
-
-					return testFixture;
-
+					return new TestFixtureArgs(
+						IncludePath: includePath,
+						ProjectDirectory: projectDirectory,
+						RootNamespace: rootNamespace,
+						Source: specSource
+					);
 				} )
 				.WhereNotNull();
 
-			context.RegisterSourceOutput( testFixtures, ( SourceProductionContext context, TestFixture testFixture ) => {
-				context.AddSource( testFixture.HintPath, testFixture.Source );
-			} );
+			context.RegisterSourceOutput( testFixtureArgs, GenerateTestFixture );
 		}
 
-		private static TestFixture RenderSpecTestFixture(
-				string projectRelativePath,
-				string rootNamespace,
-				AnalyzerSpec spec
-			) {
+		private static void GenerateTestFixture( SourceProductionContext context, TestFixtureArgs args ) {
+
+			CancellationToken cancellationToken = context.CancellationToken;
+
+			if( args.Source == null ) {
+
+				// TODO: emit diagnostic
+				return;
+			}
+
+			SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(
+					text: args.Source,
+					path: args.IncludePath,
+					cancellationToken: cancellationToken
+				);
+
+			AnalyzerSpec spec = AnalyzerSpecParser.Parse( syntaxTree, cancellationToken );
+
+			string projectRelativePath = ProjectPathUtility.GetProjectRelativePath(
+					args.ProjectDirectory,
+					args.IncludePath
+				);
+
+			string specName = Path.GetFileNameWithoutExtension( args.IncludePath );
 
 			string[] pathParts = projectRelativePath.Split( Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar );
 
 			string @namespace;
 			if( pathParts.Length == 1 ) {
-				@namespace = rootNamespace;
+				@namespace = args.RootNamespace;
 			} else {
-				@namespace = string.Concat( rootNamespace, ".", string.Join( ".", pathParts, 0, pathParts.Length - 1 ) );
+				@namespace = string.Concat( args.RootNamespace, ".", string.Join( ".", pathParts, 0, pathParts.Length - 1 ) );
 			}
 
 			string[] classNames = Path
@@ -77,20 +99,18 @@ namespace D2L.CodeStyle.SpecTests.Generators.TestFixtures {
 
 			string fixtureClassName = classNames[ classNames.Length - 1 ];
 
-
-			string fixtureSource = TestFixtureRenderer.Render(
-					@namespace,
-					containerClassNames,
-					fixtureClassName,
-					spec
+			TestFixtureRenderer.Args renderArgs = new(
+					Namespace: @namespace,
+					ContainerClassNames: containerClassNames,
+					FixtureClassName: fixtureClassName,
+					Spec: spec,
+					SpecName: specName,
+					SpecSource: args.Source
 				);
 
+			string fixtureSource = TestFixtureRenderer.Render( renderArgs );
 			string hintPath = GetHintPath( projectRelativePath );
-
-			return new TestFixture(
-				HintPath: hintPath,
-				Source: fixtureSource
-			);
+			context.AddSource( hintPath, fixtureSource );
 		}
 
 		private static readonly Regex m_invalidHintPathCharacters = new(
