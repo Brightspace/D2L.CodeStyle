@@ -1,6 +1,6 @@
 ﻿using System.CodeDom.Compiler;
 
-namespace D2L.CodeStyle.SpecTests.Generator {
+namespace D2L.CodeStyle.SpecTests.Generators {
 
 	internal sealed class CSharpTextWriter : IndentedTextWriter {
 
@@ -34,11 +34,25 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 			for( int i = 0; i < value.Length; i++ ) {
 
 				char c = value[ i ];
-				if( c == '"' ) {
-					Write( '\\' );
-				}
+				switch( c ) {
 
-				Write( c );
+					case '"':
+						Write( '\\' );
+						Write( c );
+						break;
+
+					case '\n':
+						Write( "\\n" );
+						break;
+
+					case '\r':
+						Write( "\\r" );
+						break;
+
+					default:
+						Write( c );
+						break;
+				}
 			}
 
 			Write( '"' );

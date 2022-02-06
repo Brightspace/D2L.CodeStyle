@@ -1,9 +1,9 @@
 ﻿using System.Collections.Immutable;
 using System.Text;
-using Microsoft.CodeAnalysis;
+using D2L.CodeStyle.SpecTests.Parser;
 using Microsoft.CodeAnalysis.Text;
 
-namespace D2L.CodeStyle.SpecTests.Generator {
+namespace D2L.CodeStyle.SpecTests.Generators.TestFixtures {
 
 	internal static class TestFixtureRenderer {
 
@@ -86,9 +86,21 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 					writer.WriteLine( "ImmutableArray<Diagnostic> actualDiagnostics = await AnalyzerDiagnosticsProvider" );
 					writer.IndentBlock( () => {
 
-						writer.Write( ".GetAnalyzerDiagnosticsAsync( analyzer, debugName: " );
-						writer.WriteString( spec.Name );
-						writer.WriteLine( ", source: Source );" );
+						writer.WriteLine( ".GetAnalyzerDiagnosticsAsync(" );
+						writer.IndentBlock( () => {
+
+							writer.WriteLine( "analyzer: analyzer," );
+							writer.WriteLine( "additionalFiles: D2L.CodeStyle.SpecTests._Generated_.GlobalAdditionalFiles.AdditionalFiles," );
+
+							writer.Write( "debugName: " );
+							writer.WriteString( spec.Name );
+							writer.WriteLine( "," );
+
+							writer.WriteLine( "source: Source" );
+
+						} );
+						writer.WriteLine( ");" );
+
 					} );
 
 					writer.WriteEmptyLine();

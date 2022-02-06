@@ -4,9 +4,9 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
-using static D2L.CodeStyle.SpecTests.Generator.AnalyzerSpec;
+using static D2L.CodeStyle.SpecTests.Parser.AnalyzerSpec;
 
-namespace D2L.CodeStyle.SpecTests.Generator {
+namespace D2L.CodeStyle.SpecTests.Parser {
 
 	internal static class AnalyzerSpecParser {
 

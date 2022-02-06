@@ -29,8 +29,19 @@
   </ItemGroup>
 
   <ItemGroup>
+    <TestAllowedLists Include="TestAllowedLists\*" />
+    <AdditionalFiles Include="@(TestAllowedLists)" Kind="D2L.CodeStyle.SpecTest.GlobalAdditionalFile">
+      <VirtualPath>@(TestAllowedLists -> '%(Filename)%(Extension)')</VirtualPath>
+    </AdditionalFiles>
+  </ItemGroup>
+
+  <ItemGroup>
     <AdditionalFiles Include="Specs\*" Kind="D2L.CodeStyle.SpecTest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Kind" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="VirtualPath" />
   </ItemGroup>
 
   <ItemGroup>

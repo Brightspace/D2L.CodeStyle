@@ -1,9 +1,9 @@
 ﻿using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 
-namespace D2L.CodeStyle.SpecTests.Generator {
+namespace D2L.CodeStyle.SpecTests.Parser {
 
-	internal sealed record AnalyzerSpec(
+	internal sealed record class AnalyzerSpec(
 		string Name,
 		string AnalyzerQualifiedTypeName,
 		ImmutableArray<AnalyzerSpec.ExpectedDiagnostic> ExpectedDiagnostics,

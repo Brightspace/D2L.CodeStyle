@@ -1,11 +1,9 @@
 ﻿using System.Collections.Immutable;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
-using static D2L.CodeStyle.Analyzers.Spec;
 
 namespace D2L.CodeStyle.SpecTests.Framework {
 
@@ -21,17 +19,27 @@ namespace D2L.CodeStyle.SpecTests.Framework {
 
 		public static async Task<ImmutableArray<Diagnostic>> GetAnalyzerDiagnosticsAsync(
 				DiagnosticAnalyzer analyzer,
+				ImmutableArray<AdditionalText> additionalFiles,
 				string debugName,
 				string source
 			) {
 
 			Compilation compilation = await GetCompilationForSourceAsync( debugName, source );
 
-			ImmutableArray<Diagnostic> diagnostics = await GetAnalyzerDiagnosticsAsync( compilation, analyzer );
+			ImmutableArray<Diagnostic> diagnostics = await compilation
+				.WithAnalyzers(
+					analyzers: ImmutableArray.Create( analyzer ),
+					options: new AnalyzerOptions( additionalFiles )
+				)
+				.GetAnalyzerDiagnosticsAsync();
+
 			return diagnostics;
 		}
 
-		private static Task<Compilation> GetCompilationForSourceAsync( string debugName, string source ) {
+		private static Task<Compilation> GetCompilationForSourceAsync(
+				string debugName,
+				string source
+			) {
 
 			ProjectId projectId = ProjectId.CreateNewId( debugName );
 			string filename = debugName + ".cs";
@@ -67,50 +75,6 @@ namespace D2L.CodeStyle.SpecTests.Framework {
 				.WithProjectParseOptions( projectId, parseOptions );
 
 			return solution.Projects.First().GetCompilationAsync();
-		}
-
-		private static async Task<ImmutableArray<Diagnostic>> GetAnalyzerDiagnosticsAsync(
-				Compilation compilation,
-				DiagnosticAnalyzer analyzer
-			) {
-
-			ImmutableArray<AdditionalText> additionalFiles = await GetAditionalFilesAsync();
-
-			return await compilation
-				.WithAnalyzers(
-					analyzers: ImmutableArray.Create( analyzer ),
-					options: new AnalyzerOptions( additionalFiles: additionalFiles )
-				)
-				.GetAnalyzerDiagnosticsAsync();
-		}
-
-		private static async Task<ImmutableArray<AdditionalText>> GetAditionalFilesAsync() {
-
-			var additionalFiles = ImmutableArray.CreateBuilder<AdditionalText>();
-
-			Assembly testAssembly = Assembly.GetExecutingAssembly();
-			foreach( string resourcePath in testAssembly.GetManifestResourceNames() ) {
-
-				if( !resourcePath.EndsWith( "AllowedList.txt" ) ) {
-					continue;
-				}
-
-				string allowedListName = Regex.Replace(
-					resourcePath,
-					@"^.*\.(?<allowedListName>[^\.]*)\.txt$",
-					@"${allowedListName}.txt"
-				);
-
-				using StreamReader reader = new( testAssembly.GetManifestResourceStream( resourcePath ) );
-				string text = await reader.ReadToEndAsync();
-
-				additionalFiles.Add( new AdditionalFile(
-					path: allowedListName,
-					text: text
-				) );
-			}
-
-			return additionalFiles.ToImmutable();
 		}
 	}
 }
