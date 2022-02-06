@@ -27,5 +27,17 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 			Indent = indent;
 		}
 
+		public void WriteEscapedString( string value ) {
+
+			for( int i = 0; i < value.Length; i++ ) {
+
+				char c = value[ i ];
+				if( c == '"' ) {
+					Write( '\\' );
+				}
+
+				Write( c );
+			}
+		}
 	}
 }

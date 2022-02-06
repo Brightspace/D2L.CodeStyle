@@ -1,4 +1,6 @@
 ﻿using System.Collections.Immutable;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
 
 namespace D2L.CodeStyle.SpecTests.Generator {
 
@@ -16,7 +18,11 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 			using( CSharpTextWriter writer = new CSharpTextWriter( buffer ) ) {
 
 				writer.WriteLine( "using System;" );
+				writer.WriteLine( "using System.Collections.Immutable;" );
+				writer.WriteLine( "using D2L.CodeStyle.SpecTests.Framework;" );
+				writer.WriteLine( "using Microsoft.CodeAnalysis;" );
 				writer.WriteLine( "using Microsoft.CodeAnalysis.Diagnostics;" );
+				writer.WriteLine( "using Microsoft.CodeAnalysis.Text;" );
 				writer.WriteLine( "using NUnit.Framework;" );
 				writer.WriteLine();
 
@@ -66,6 +72,40 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 				writer.WriteLine( "();" );
 
 				writer.WriteEmptyLine();
+				writer.WriteLine( "private readonly ImmutableArray<DiagnosticExpectation> m_expectedDiagnostics = ImmutableArray.Create(" );
+				writer.IndentBlock( () => {
+
+					int expectationCount = spec.ExpectedDiagnostics.Length;
+					for( int i = 0; i < expectationCount; i++ ) {
+						AnalyzerSpec.ExpectedDiagnostic expectation = spec.ExpectedDiagnostics[ i ];
+
+						writer.WriteLine( "new ExpectedDiagnostic(" );
+						writer.IndentBlock( () => {
+
+							writer.Write( "Name: \"" );
+							writer.WriteEscapedString( expectation.Name );
+							writer.WriteLine( "\"," );
+
+							writer.Write( "Location: " );
+							WriteLocation( expectation.Location, writer );
+							writer.WriteLine( "," );
+
+							writer.Write( "MessageArguments: " );
+							writer.WriteLine( "ImmutableArray<string>.Empty" );
+
+						} );
+						writer.Write( ")" );
+
+						if( i < expectationCount - 1 ) {
+							writer.Write( "," );
+						}
+
+						writer.WriteLine();
+					}
+				} );
+				writer.WriteLine( ");" );
+
+				writer.WriteEmptyLine();
 				writer.WriteLine( "[OneTimeSetUp]" );
 				writer.WriteLine( "public void OneTimeSetUp() {" );
 				writer.IndentBlock( () => {
@@ -94,6 +134,58 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 				writer.WriteEmptyLine();
 			} );
 			writer.WriteLine( '}' );
+		}
+
+		private static void WriteLocation( Location location, CSharpTextWriter writer ) {
+
+			writer.WriteLine( "Locatation.Create(" );
+			writer.IndentBlock( () => {
+
+				writer.WriteLine( "filePath: \"\"," );
+
+				writer.Write( "textSpan: " );
+				WriteTextSpan( location.SourceSpan, writer );
+				writer.WriteLine( "," );
+
+				writer.Write( "lineSpan: " );
+				WriteLinePositionSpan( location.GetLineSpan().Span, writer );
+				writer.WriteLine();
+			} );
+			writer.Write( ")" );
+		}
+
+		private static void WriteTextSpan( TextSpan textSpan, CSharpTextWriter writer ) {
+
+			writer.Write( "new TextSpan( start: " );
+			writer.Write( textSpan.Start );
+			writer.Write( ", length: " );
+			writer.Write( textSpan.Length );
+			writer.Write( " )" );
+		}
+
+		private static void WriteLinePositionSpan( LinePositionSpan linePositionSpan, CSharpTextWriter writer ) {
+
+			writer.WriteLine( "new LinePositionSpan(" );
+			writer.IndentBlock( () => {
+
+				writer.Write( "start: " );
+				WriteLinePosition( linePositionSpan.Start, writer );
+				writer.WriteLine( "," );
+
+				writer.Write( "end: " );
+				WriteLinePosition( linePositionSpan.End, writer );
+				writer.WriteLine();
+			} );
+			writer.Write( ")" );
+		}
+
+		private static void WriteLinePosition( LinePosition linePosition, CSharpTextWriter writer ) {
+
+			writer.Write( "new LinePosition( line: " );
+			writer.Write( linePosition.Line );
+			writer.Write( ", character: " );
+			writer.Write( linePosition.Character );
+			writer.Write( " )" );
 		}
 
 		private static void WriteSourceConstant(
