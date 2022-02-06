@@ -1,5 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <TargetFramework>net48</TargetFramework>
   </PropertyGroup>
 
@@ -15,11 +16,21 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\D2L.CodeStyle.Analyzers\D2L.CodeStyle.Analyzers.csproj" />
     <ProjectReference Include="..\..\src\D2L.CodeStyle.Annotations\D2L.CodeStyle.Annotations.csproj" />
+    <ProjectReference Include="..\..\src\D2L.CodeStyle.SpecTests\D2L.CodeStyle.SpecTests.csproj">
+      <OutputItemType>Analyzer</OutputItemType>
+      <PrivateAssets>all</PrivateAssets>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="Specs\*" />
     <EmbeddedResource Include="Specs\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="Specs\*" Kind="D2L.CodeStyle.SpecTest" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Kind" />
   </ItemGroup>
 
   <ItemGroup>
