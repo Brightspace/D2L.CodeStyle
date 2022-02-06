@@ -10,7 +10,7 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 
 	internal static class AnalyzerSpecParser {
 
-		private static readonly Regex m_messageArgsRegex = new Regex( @"(?<!\\),", RegexOptions.Compiled );
+		private static readonly Regex m_messageArgsRegex = new( @"(?<!\\),", RegexOptions.Compiled );
 
 		public static AnalyzerSpec Parse( string path, CancellationToken cancellationToken ) {
 
@@ -110,7 +110,7 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 				IEnumerable<SyntaxTrivia> trivia
 			) {
 
-			Stack<TriviaAndContent> stack = new Stack<TriviaAndContent>();
+			Stack<TriviaAndContent> stack = new();
 
 			using( IEnumerator<SyntaxTrivia> it = trivia.GetEnumerator() ) {
 				while( it.MoveNext() ) {
@@ -192,14 +192,25 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 					str.Length - 2 - indexOfOpenParen
 				);
 
-				ImmutableArray<string> messageArgs = m_messageArgsRegex
-					.Split( arguments )
-					.Select( arg => arg.Replace( "\\,", "," ) )
-					.Select( RemoveSingleLeadingSpace )
-					.ToImmutableArray();
+				ImmutableArray<string> messageArgs = ParseMessageArgs( arguments );
 
 				yield return new NameAndMessageArgs( name, messageArgs );
 			}
+		}
+
+		private static ImmutableArray<string> ParseMessageArgs( string arguments ) {
+
+			if( arguments.Length == 0 ) {
+				return ImmutableArray<string>.Empty;
+			}
+
+			ImmutableArray<string> messageArgs = m_messageArgsRegex
+				.Split( arguments )
+				.Select( arg => arg.Replace( "\\,", "," ) )
+				.Select( RemoveSingleLeadingSpace )
+				.ToImmutableArray();
+
+			return messageArgs;
 		}
 
 		private static string RemoveSingleLeadingSpace( string s ) {

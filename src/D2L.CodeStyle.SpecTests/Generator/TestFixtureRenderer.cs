@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -13,11 +14,13 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 				AnalyzerSpec spec
 			) {
 
-			StringWriter buffer = new StringWriter();
+			StringBuilder buffer = new( spec.Source.Length * 2 );
 
-			using( CSharpTextWriter writer = new CSharpTextWriter( buffer ) ) {
+			using( StringWriter stringWriter = new( buffer ) )
+			using( CSharpTextWriter writer = new( stringWriter ) ) {
 
 				writer.WriteLine( "using System;" );
+				writer.WriteLine( "using System.Collections.Generic;" );
 				writer.WriteLine( "using System.Collections.Immutable;" );
 				writer.WriteLine( "using D2L.CodeStyle.SpecTests.Framework;" );
 				writer.WriteLine( "using Microsoft.CodeAnalysis;" );
@@ -66,49 +69,17 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 			writer.WriteLine( " {" );
 			writer.IndentBlock( () => {
 
-				writer.WriteEmptyLine();
-				writer.Write( "private readonly DiagnosticAnalyzer m_analyzer = new global::" );
-				writer.Write( spec.AnalyzerQualifiedTypeName );
-				writer.WriteLine( "();" );
-
-				writer.WriteEmptyLine();
-				writer.WriteLine( "private readonly ImmutableArray<DiagnosticExpectation> m_expectedDiagnostics = ImmutableArray.Create(" );
-				writer.IndentBlock( () => {
-
-					int expectationCount = spec.ExpectedDiagnostics.Length;
-					for( int i = 0; i < expectationCount; i++ ) {
-						AnalyzerSpec.ExpectedDiagnostic expectation = spec.ExpectedDiagnostics[ i ];
-
-						writer.WriteLine( "new ExpectedDiagnostic(" );
-						writer.IndentBlock( () => {
-
-							writer.Write( "Name: \"" );
-							writer.WriteEscapedString( expectation.Name );
-							writer.WriteLine( "\"," );
-
-							writer.Write( "Location: " );
-							WriteLocation( expectation.Location, writer );
-							writer.WriteLine( "," );
-
-							writer.Write( "MessageArguments: " );
-							writer.WriteLine( "ImmutableArray<string>.Empty" );
-
-						} );
-						writer.Write( ")" );
-
-						if( i < expectationCount - 1 ) {
-							writer.Write( "," );
-						}
-
-						writer.WriteLine();
-					}
-				} );
-				writer.WriteLine( ");" );
 
 				writer.WriteEmptyLine();
 				writer.WriteLine( "[OneTimeSetUp]" );
-				writer.WriteLine( "public void OneTimeSetUp() {" );
+				writer.WriteLine( "public async Task OneTimeSetUp() {" );
 				writer.IndentBlock( () => {
+
+					writer.WriteEmptyLine();
+					writer.Write( "DiagnosticAnalyzer analyzer = new global::" );
+					writer.Write( spec.AnalyzerQualifiedTypeName );
+					writer.WriteLine( "();" );
+					writer.WriteLine( "await SpecTestRunner.RunAsync( analyzer, Source );" );
 
 				} );
 				writer.WriteLine( "}" );
@@ -130,18 +101,101 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 				writer.WriteLine( "}" );
 
 				writer.WriteEmptyLine();
+				WriteDiagnosticExpectations( spec.ExpectedDiagnostics, writer );
+
+				writer.WriteEmptyLine();
 				WriteSourceConstant( spec.Source, writer );
 				writer.WriteEmptyLine();
 			} );
 			writer.WriteLine( '}' );
 		}
 
-		private static void WriteLocation( Location location, CSharpTextWriter writer ) {
+		private static void WriteDiagnosticExpectations(
+				ImmutableArray<AnalyzerSpec.ExpectedDiagnostic> expectedDiagnostics,
+				CSharpTextWriter writer
+			) {
 
-			writer.WriteLine( "Locatation.Create(" );
+			writer.WriteLine( "#region ExpectedDiagnostics" );
+			writer.WriteEmptyLine();
+			writer.WriteLine( "private static IEnumerable<DiagnosticExpectation> GetExpectedDiagnostics() {" );
 			writer.IndentBlock( () => {
 
-				writer.WriteLine( "filePath: \"\"," );
+				if( expectedDiagnostics.IsEmpty ) {
+					writer.WriteLine( "yield break;" );
+					return;
+				}
+
+				foreach( AnalyzerSpec.ExpectedDiagnostic diagnostic in expectedDiagnostics ) {
+
+					writer.WriteLine( "yield return new DiagnosticExpectation(" );
+					writer.IndentBlock( () => {
+
+						writer.Write( "Name: " );
+						writer.WriteString( diagnostic.Name );
+						writer.WriteLine( "," );
+
+						writer.Write( "Location: " );
+						WriteLocation( diagnostic.Location, writer );
+						writer.WriteLine( "," );
+
+						writer.Write( "MessageArguments: " );
+						WriteImmutableArrayOfStrings( diagnostic.MessageArguments, writer );
+						writer.WriteLine();
+
+					} );
+					writer.WriteLine( ");" );
+				}
+			} );
+
+			writer.WriteLine( "}" );
+			writer.WriteEmptyLine();
+			writer.WriteLine( "#endregion" );
+		}
+
+		private static void WriteSourceConstant(
+				string source,
+				CSharpTextWriter writer
+			) {
+
+			writer.WriteLine( "#region Source" );
+			writer.WriteEmptyLine();
+			writer.Write( "private const string Source = " );
+			writer.WriteMultiLineString( source );
+			writer.WriteLine( ";" );
+			writer.WriteEmptyLine();
+			writer.WriteLine( "#endregion" );
+		}
+
+		private static void WriteImmutableArrayOfStrings( ImmutableArray<string> array, CSharpTextWriter writer ) {
+
+			if( array.IsEmpty ) {
+				writer.Write( "ImmutableArray<string>.Empty" );
+				return;
+			}
+
+			writer.WriteLine( "ImmutableArray.Create(" );
+			writer.IndentBlock( () => {
+
+				for( int i = 0; i < array.Length; i++ ) {
+
+					writer.WriteString( array[ i ] );
+
+					if( i < array.Length - 1 ) {
+						writer.Write( ',' );
+					}
+
+					writer.WriteEmptyLine();
+				}
+			} );
+			writer.Write( ")" );
+		}
+
+		private static void WriteLocation( Location location, CSharpTextWriter writer ) {
+
+			writer.WriteLine( "Location.Create(" );
+			writer.IndentBlock( () => {
+
+				writer.WriteLine( "filePath: string.Empty," );
 
 				writer.Write( "textSpan: " );
 				WriteTextSpan( location.SourceSpan, writer );
@@ -186,30 +240,6 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 			writer.Write( ", character: " );
 			writer.Write( linePosition.Character );
 			writer.Write( " )" );
-		}
-
-		private static void WriteSourceConstant(
-				string source,
-				CSharpTextWriter writer
-			) {
-
-			writer.WriteLine( "#region Source" );
-			writer.WriteEmptyLine();
-			writer.Write( "private const string Source = @\"" );
-
-			for( int i = 0; i < source.Length; i++ ) {
-
-				char character = source[ i ];
-				if( character == '"' ) {
-					writer.Write( '"' );
-				}
-
-				writer.Write( character );
-			}
-
-			writer.WriteLine( "\";" );
-			writer.WriteEmptyLine();
-			writer.WriteLine( "#endregion" );
 		}
 	}
 }

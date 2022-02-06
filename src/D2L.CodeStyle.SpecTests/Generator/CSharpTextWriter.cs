@@ -27,7 +27,9 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 			Indent = indent;
 		}
 
-		public void WriteEscapedString( string value ) {
+		public void WriteString( string value ) {
+
+			Write( '"' );
 
 			for( int i = 0; i < value.Length; i++ ) {
 
@@ -38,6 +40,25 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 
 				Write( c );
 			}
+
+			Write( '"' );
+		}
+
+		public void WriteMultiLineString( string value ) {
+
+			Write( "@\"" );
+
+			for( int i = 0; i < value.Length; i++ ) {
+
+				char c = value[ i ];
+				if( c == '"' ) {
+					Write( '"' );
+				}
+
+				Write( c );
+			}
+
+			Write( '"' );
 		}
 	}
 }

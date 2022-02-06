@@ -16,45 +16,51 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 
 		void IIncrementalGenerator.Initialize( IncrementalGeneratorInitializationContext context ) {
 
-			Debugger.Launch();
-
 			IncrementalValuesProvider<TestFixture> testFixtures = context
 				.AdditionalTextsProvider
 				.Combine( context.AnalyzerConfigOptionsProvider )
 				.Select( static ( (AdditionalText AdditionalText, AnalyzerConfigOptionsProvider OptionsProvider) source, CancellationToken cancellationToken ) => {
 
-					AnalyzerConfigOptions options = source.OptionsProvider.GetOptions( source.AdditionalText );
-					if( !options.TryGetValue( "build_metadata.AdditionalFiles.Kind", out string? kind ) ) {
-						return null;
-					}
+					try {
 
-					if( !kind.Equals( "D2L.CodeStyle.SpecTest" ) ) {
-						return null;
-					}
-
-					string GetRequiredOption( string key ) {
-
-						if( !options.TryGetValue( key, out string? value ) ) {
-							throw new InvalidOperationException( $"Could not get required '{ key }' option" );
+						AnalyzerConfigOptions options = source.OptionsProvider.GetOptions( source.AdditionalText );
+						if( !options.TryGetValue( "build_metadata.AdditionalFiles.Kind", out string? kind ) ) {
+							return null;
 						}
 
-						return value;
+						if( !kind.Equals( "D2L.CodeStyle.SpecTest" ) ) {
+							return null;
+						}
+
+						string GetRequiredOption( string key ) {
+
+							if( !options.TryGetValue( key, out string? value ) ) {
+								throw new InvalidOperationException( $"Could not get required '{ key }' option" );
+							}
+
+							return value;
+						}
+
+						string projectDirectory = GetRequiredOption( "build_property.projectdir" );
+						string rootNamespace = GetRequiredOption( "build_property.rootnamespace" );
+
+						string fullPath = source.AdditionalText.Path;
+						string projectRelativePath = GetProjectRelativePath( projectDirectory, fullPath );
+						AnalyzerSpec spec = AnalyzerSpecParser.Parse( fullPath, cancellationToken );
+
+						TestFixture testFixture = RenderSpecTestFixture(
+								projectRelativePath,
+								rootNamespace,
+								spec
+							);
+
+						return testFixture;
+
+					} catch( Exception ex ) {
+						Debugger.Launch();
+						Console.WriteLine( ex );
+						throw;
 					}
-
-					string projectDirectory = GetRequiredOption( "build_property.projectdir" );
-					string rootNamespace = GetRequiredOption( "build_property.rootnamespace" );
-
-					string fullPath = source.AdditionalText.Path;
-					string projectRelativePath = GetProjectRelativePath( projectDirectory, fullPath );
-					AnalyzerSpec spec = AnalyzerSpecParser.Parse( fullPath, cancellationToken );
-
-					TestFixture testFixture = RenderSpecTestFixture(
-							projectRelativePath,
-							rootNamespace,
-							spec
-						);
-
-					return testFixture;
 				} )
 				.WhereNotNull();
 
@@ -122,7 +128,7 @@ namespace D2L.CodeStyle.SpecTests.Generator {
 			return projectRelativePath;
 		}
 
-		private static readonly Regex m_invalidHintPathCharacters = new Regex(
+		private static readonly Regex m_invalidHintPathCharacters = new(
 				@"[^\w.,\-+`_ ()\[\]{}]",
 				RegexOptions.Compiled
 			);
