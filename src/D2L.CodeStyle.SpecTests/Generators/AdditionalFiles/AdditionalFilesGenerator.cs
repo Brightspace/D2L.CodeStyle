@@ -51,7 +51,7 @@ namespace D2L.CodeStyle.SpecTests.Generators.AdditionalFiles {
 				.WhereNotNull()
 				.Collect();
 
-			context.RegisterSourceOutput( additionalFileArgs, Generate );
+			context.RegisterImplementationSourceOutput( additionalFileArgs, Generate );
 		}
 
 		private static void Generate( SourceProductionContext context, ImmutableArray<AdditionalFileArgs> additionalFileArgs ) {

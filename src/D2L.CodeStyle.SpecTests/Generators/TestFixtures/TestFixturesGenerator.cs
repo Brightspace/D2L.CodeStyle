@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using D2L.CodeStyle.SpecTests.Parser;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.SpecTests.Generators.TestFixtures {
@@ -49,11 +50,10 @@ namespace D2L.CodeStyle.SpecTests.Generators.TestFixtures {
 				} )
 				.WhereNotNull();
 
-			context.RegisterSourceOutput( testFixtureArgs, GenerateTestFixture );
+			context.RegisterImplementationSourceOutput( testFixtureArgs, GenerateTestFixture );
 		}
 
 		private static void GenerateTestFixture( SourceProductionContext context, TestFixtureArgs args ) {
-
 			try {
 
 				CancellationToken cancellationToken = context.CancellationToken;

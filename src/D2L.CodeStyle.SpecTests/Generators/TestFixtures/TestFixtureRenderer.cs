@@ -110,9 +110,17 @@ namespace D2L.CodeStyle.SpecTests.Generators.TestFixtures {
 
 				writer.WriteEmptyLine();
 				writer.WriteLine( "[Test]" );
-				writer.WriteLine( "public void NoMissingDiagnostics() {" );
+				writer.WriteLine( "public void ExpectedDiagnostics() {" );
 				writer.IndentBlock( () => {
-					writer.WriteLine( "Assert.That( m_comparison.Missing, Is.Empty );" );
+					writer.WriteLine( "Assert.Multiple( () => {" );
+					writer.IndentBlock( () => {
+						writer.WriteLine( "foreach( ComputedDiagnostic diagnostic in m_comparison.Missing ) {" );
+						writer.IndentBlock( () => {
+							writer.WriteLine( "Assert.Fail( \"An expected diagnostic was not reported: {0}\", diagnostic );" );
+						} );
+						writer.WriteLine( "}" );
+					} );
+					writer.WriteLine( "} );" );
 				} );
 				writer.WriteLine( "}" );
 
@@ -120,7 +128,15 @@ namespace D2L.CodeStyle.SpecTests.Generators.TestFixtures {
 				writer.WriteLine( "[Test]" );
 				writer.WriteLine( "public void NoUnexpectedDiagnostics() {" );
 				writer.IndentBlock( () => {
-					writer.WriteLine( "Assert.That( m_comparison.Unexpected, Is.Empty );" );
+					writer.WriteLine( "Assert.Multiple( () => {" );
+					writer.IndentBlock( () => {
+						writer.WriteLine( "foreach( ComputedDiagnostic diagnostic in m_comparison.Unexpected ) {" );
+						writer.IndentBlock( () => {
+							writer.WriteLine( "Assert.Fail( \"An unexpected diagnostic was reported: {0}\", diagnostic );" );
+						} );
+						writer.WriteLine( "}" );
+					} );
+					writer.WriteLine( "} );" );
 				} );
 				writer.WriteLine( "}" );
 
