@@ -690,7 +690,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor GenericGeneratorError = new DiagnosticDescriptor(
 			id: "D2L0095",
-			title: "A source generator encountered an unexpected situation. This is a bug in D2L.CodeStyle.Analyzers",
+			title: "A source generator encountered an unexpected situation. This is a bug in D2L.CodeStyle.Analyzers.",
 			messageFormat: "The source generator {0} encountered an unexpected situation: {1}",
 			category: "Generators",
 			defaultSeverity: DiagnosticSeverity.Error,
