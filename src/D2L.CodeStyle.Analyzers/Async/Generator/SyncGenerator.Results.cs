@@ -7,7 +7,7 @@ namespace D2L.CodeStyle.Analyzers.Async.Generator;
 internal sealed partial class SyncGenerator {
 	// All of the intermediate results generated in the incremental pipeline.
 	// All of these should implement value-based equality. So use records and
-	// make sure the things they hold types we hold implement equality.
+	// make sure the things they hold implement equality.
 
 	/// <summary>
 	/// The generated syntax for a single method.
