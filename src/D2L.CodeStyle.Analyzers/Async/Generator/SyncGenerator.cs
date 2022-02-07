@@ -12,7 +12,7 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 		// individually (for better incremental builds)
 		IncrementalValuesProvider<(MethodDeclarationSyntax, Compilation)> methodsToGenerate =
 			context.SyntaxProvider
-			   .CreateSyntaxProvider( IsInterestingLookingMethod, ExtractSyntax )
+			   .CreateSyntaxProvider( predicate: IsInterestingLookingMethod, transform: ExtractSyntax )
 			   .Where( static m => m != null )
 			   .Combine( context.CompilationProvider )
 			   .WithComparerThatIgnoresCompilation()!;
