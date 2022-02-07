@@ -11,13 +11,16 @@ namespace D2L.CodeStyle.Analyzers.Async.Generator;
 /// </summary>
 public abstract class SyntaxTransformer {
 	protected readonly SemanticModel m_model;
+	protected readonly CancellationToken m_token;
+
 	private readonly ImmutableArray<Diagnostic>.Builder m_diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
 
 	/// <summary>
 	/// A name for the generator that will be shown to the user if we crash
 	/// </summary>
-	public SyntaxTransformer( SemanticModel model ) {
+	public SyntaxTransformer( SemanticModel model, CancellationToken token ) {
 		m_model = model;
+		m_token = token;
 	}
 
 	/// <summary>
@@ -97,15 +100,28 @@ public abstract class SyntaxTransformer {
 	/// </summary>
 	protected SyntaxTokenList TransformAll(
 		SyntaxTokenList input,
-		Func<SyntaxToken, SyntaxToken> transformer
-	) => SyntaxFactory.TokenList(
-		TransformAllCore( input, transformer )
-	);
+		Func<SyntaxToken, SyntaxToken?> transformer
+	) => SyntaxFactory.TokenList( TransformAllCore( input, transformer ) );
+
+	private static IEnumerable<SyntaxToken> TransformAllCore(
+		SyntaxTokenList input,
+		Func<SyntaxToken, SyntaxToken?> transformer
+	) {
+		foreach( var node in input ) {
+			var transformed = transformer( node );
+
+			if( transformed.HasValue ) {
+				yield return transformed.Value;
+			}
+		}
+	}
 
 	private static IEnumerable<U> TransformAllCore<T, U>(
 		IEnumerable<T> input,
 		Func<T, U?> transformer
-	) {
+	) where T : SyntaxNode
+	  where U : SyntaxNode
+	{
 		foreach( var node in input ) {
 			var transformed = transformer( node );
 

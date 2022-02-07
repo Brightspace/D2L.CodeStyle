@@ -706,8 +706,26 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true
 		);
 
-		public static readonly DiagnosticDescriptor MemberNotVisibleToCaller = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor ExpectedAsyncSuffix = new DiagnosticDescriptor(
 			id: "D2L0097",
+			title: "Expected method name to have an -Async suffix",
+			messageFormat: "The method {0} does not have an -Async suffix, so we can't generate an idiomatic sync alternative method.",
+			category: "Async",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor NonTaskReturnType = new DiagnosticDescriptor(
+			id: "D2L0098",
+			title: "Expected return type to be Task or Task<T>",
+			messageFormat: "We only know how to generate sync alternatives for methods that return Task or Task<T>",
+			category: "Async",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor MemberNotVisibleToCaller = new DiagnosticDescriptor(
+			id: "D2L0099",
 			title: "Member is not visible to caller",
 			messageFormat: "The member '{0}' has restricted its visibility to an explicit set of callers",
 			category: "Correctness",
