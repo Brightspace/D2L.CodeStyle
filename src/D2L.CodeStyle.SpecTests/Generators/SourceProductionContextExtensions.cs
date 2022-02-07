@@ -1,9 +1,30 @@
-﻿using System.Text;
+﻿using System.Collections.Immutable;
+using System.Text;
 using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.SpecTests.Generators {
 
 	internal static class SourceProductionContextExtensions {
+
+		public static void ReportDiagnostic(
+				this SourceProductionContext context,
+				DiagnosticDescriptor descriptor,
+				Location location,
+				IEnumerable<Location>? additionalLocations = null,
+				ImmutableDictionary<string, string?>? properties = null,
+				object?[]? messageArgs = null
+			) {
+
+			Diagnostic diagnostic = Diagnostic.Create(
+					descriptor: descriptor,
+					location: location,
+					additionalLocations: additionalLocations,
+					properties: properties,
+					messageArgs: messageArgs
+				);
+
+			context.ReportDiagnostic( diagnostic );
+		}
 
 		public static void ReportException(
 				this SourceProductionContext context,
@@ -13,7 +34,7 @@ namespace D2L.CodeStyle.SpecTests.Generators {
 
 			Type exceptionType = exception.GetType();
 
-			Diagnostic diagnostic = Diagnostic.Create(
+			context.ReportDiagnostic(
 					descriptor: Diagnostics.SourceGeneratorException,
 					location: Location.None,
 					messageArgs: new object[] {
@@ -22,8 +43,6 @@ namespace D2L.CodeStyle.SpecTests.Generators {
 						exception.Message
 					}
 				);
-
-			context.ReportDiagnostic( diagnostic );
 
 			StringBuilder dump = new StringBuilder();
 			dump.AppendLine( "/*" );

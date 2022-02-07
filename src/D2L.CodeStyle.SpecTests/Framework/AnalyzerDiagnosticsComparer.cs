@@ -4,15 +4,16 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace D2L.CodeStyle.SpecTests.Framework {
 
-	internal static class AnalyzerDiagnosticsComparer {
+	public static class AnalyzerDiagnosticsComparer {
 
 		public static DiagnosticsComparison Compare(
+				DiagnosticDescriptorCatalog descriptors,
 				IEnumerable<Diagnostic> actualDiagnostics,
 				IEnumerable<ExpectedDiagnostic> expectedDiagnostics
 			) {
 
-			ImmutableHashSet<ComputedDiagnostic> actual = GetComputedDiagnostics( actualDiagnostics );
-			ImmutableHashSet<ComputedDiagnostic> expected = GetComputedDiagnostics( expectedDiagnostics );
+			ImmutableHashSet<ComputedDiagnostic> actual = GetComputedDiagnostics( descriptors, actualDiagnostics );
+			ImmutableHashSet<ComputedDiagnostic> expected = GetComputedDiagnostics( descriptors, expectedDiagnostics );
 
 			ImmutableHashSet<ComputedDiagnostic> matched = actual.Intersect( expected );
 			ImmutableHashSet<ComputedDiagnostic> missing = expected.Except( matched );
@@ -26,6 +27,7 @@ namespace D2L.CodeStyle.SpecTests.Framework {
 		}
 
 		private static ImmutableHashSet<ComputedDiagnostic> GetComputedDiagnostics(
+				DiagnosticDescriptorCatalog descriptors,
 				IEnumerable<Diagnostic> actualDiagnostics
 			) {
 
@@ -33,7 +35,7 @@ namespace D2L.CodeStyle.SpecTests.Framework {
 
 			foreach( Diagnostic diagnostic in actualDiagnostics ) {
 
-				if( !DiagnosticDescriptorAliases.TryGetAlias( diagnostic.Id, out string alias ) ) {
+				if( !descriptors.TryGetAlias( diagnostic.Id, out string? alias ) ) {
 					alias = null;
 				}
 
@@ -53,6 +55,7 @@ namespace D2L.CodeStyle.SpecTests.Framework {
 		}
 
 		private static ImmutableHashSet<ComputedDiagnostic> GetComputedDiagnostics(
+				DiagnosticDescriptorCatalog descriptors,
 				IEnumerable<ExpectedDiagnostic> expectedDiagnostics
 			) {
 
@@ -60,7 +63,7 @@ namespace D2L.CodeStyle.SpecTests.Framework {
 
 			foreach( ExpectedDiagnostic expected in expectedDiagnostics ) {
 
-				if( !DiagnosticDescriptorAliases.TryGetDescriptor( expected.Alias, out DiagnosticDescriptor descriptor ) ) {
+				if( !descriptors.TryGetDescriptor( expected.Alias, out DiagnosticDescriptor? descriptor ) ) {
 					throw new Exception( $"Failed to map diagnostic descriptor from alias '{ expected.Alias }'." );
 				}
 

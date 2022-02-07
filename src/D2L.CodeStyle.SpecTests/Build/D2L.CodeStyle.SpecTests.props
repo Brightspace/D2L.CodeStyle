@@ -1,0 +1,6 @@
+﻿<Project>
+	<ItemGroup>
+		<CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Kind" />
+		<CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="VirtualPath" />
+	</ItemGroup>
+</Project>

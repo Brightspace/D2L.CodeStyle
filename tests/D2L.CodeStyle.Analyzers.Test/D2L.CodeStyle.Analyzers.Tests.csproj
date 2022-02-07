@@ -1,4 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\src\D2L.CodeStyle.SpecTests\build\D2L.CodeStyle.SpecTests.props" />
+
   <PropertyGroup>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <TargetFramework>net48</TargetFramework>
@@ -29,19 +32,19 @@
   </ItemGroup>
 
   <ItemGroup>
+
+    <!-- Global spec test configuration -->
+    <AdditionalFiles Include="SpecTest.config" Kind="D2L.CodeStyle.SpecTest.GlobalConfig" />
+
+    <!-- Pass the spec tests to the D2L.CodeStyle.SpecTest generator -->
+    <AdditionalFiles Include="Specs\*" Kind="D2L.CodeStyle.SpecTest" />
+
+    <!-- Include the TestAllowedLists files as additional files to the analyzers -->
     <TestAllowedLists Include="TestAllowedLists\*" />
     <AdditionalFiles Include="@(TestAllowedLists)" Kind="D2L.CodeStyle.SpecTest.GlobalAdditionalFile">
       <VirtualPath>@(TestAllowedLists -> '%(Filename)%(Extension)')</VirtualPath>
     </AdditionalFiles>
-  </ItemGroup>
 
-  <ItemGroup>
-    <AdditionalFiles Include="Specs\*" Kind="D2L.CodeStyle.SpecTest" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Kind" />
-    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="VirtualPath" />
   </ItemGroup>
 
   <ItemGroup>

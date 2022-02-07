@@ -57,7 +57,7 @@ namespace D2L.CodeStyle.SpecTests.Generators.AdditionalFiles {
 		private static void Generate( SourceProductionContext context, ImmutableArray<AdditionalFileArgs> additionalFileArgs ) {
 
 			try {
-				var builder = ImmutableArray.CreateBuilder<AdditionalFilesRenderer.AdditionalFile>();
+				var builder = ImmutableArray.CreateBuilder<AdditionalFileRenderer.AdditionalFile>();
 
 				foreach( AdditionalFileArgs args in additionalFileArgs ) {
 
@@ -73,7 +73,7 @@ namespace D2L.CodeStyle.SpecTests.Generators.AdditionalFiles {
 					) );
 				}
 
-				string source = AdditionalFilesRenderer.Render( builder.ToImmutable() );
+				string source = AdditionalFileRenderer.Render( builder.ToImmutable() );
 				context.AddSource( "GlobalAdditionalFiles.cs", source );
 
 			} catch( Exception ex ) {

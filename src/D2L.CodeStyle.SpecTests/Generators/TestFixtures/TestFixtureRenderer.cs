@@ -26,6 +26,7 @@ namespace D2L.CodeStyle.SpecTests.Generators.TestFixtures {
 				writer.WriteLine( "using System;" );
 				writer.WriteLine( "using System.Collections.Generic;" );
 				writer.WriteLine( "using System.Collections.Immutable;" );
+				writer.WriteLine( "using D2L.CodeStyle.SpecTests._Generated_;" );
 				writer.WriteLine( "using D2L.CodeStyle.SpecTests.Framework;" );
 				writer.WriteLine( "using Microsoft.CodeAnalysis;" );
 				writer.WriteLine( "using Microsoft.CodeAnalysis.Diagnostics;" );
@@ -89,12 +90,13 @@ namespace D2L.CodeStyle.SpecTests.Generators.TestFixtures {
 						writer.IndentBlock( () => {
 
 							writer.WriteLine( "analyzer: analyzer," );
-							writer.WriteLine( "additionalFiles: D2L.CodeStyle.SpecTests._Generated_.GlobalAdditionalFiles.AdditionalFiles," );
+							writer.WriteLine( "additionalFiles: GlobalAdditionalFiles.AdditionalFiles," );
 
 							writer.Write( "debugName: " );
 							writer.WriteString( args.SpecName );
 							writer.WriteLine( "," );
 
+							writer.WriteLine( "metadataReferences: GlobalConfig.MetadataReferences," );
 							writer.WriteLine( "source: Source" );
 
 						} );
@@ -103,7 +105,13 @@ namespace D2L.CodeStyle.SpecTests.Generators.TestFixtures {
 					} );
 
 					writer.WriteEmptyLine();
-					writer.WriteLine( "m_comparison = AnalyzerDiagnosticsComparer.Compare( actualDiagnostics, GetExpectedDiagnostics() );" );
+					writer.WriteLine( "m_comparison = AnalyzerDiagnosticsComparer.Compare(" );
+					writer.IndentBlock( () => {
+						writer.WriteLine( "GlobalConfig.DiagnosticDescriptors," );
+						writer.WriteLine( "actualDiagnostics," );
+						writer.WriteLine( "GetExpectedDiagnostics()" );
+					} );
+					writer.WriteLine( ");" );
 
 				} );
 				writer.WriteLine( "}" );

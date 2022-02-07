@@ -1,6 +1,6 @@
 ﻿namespace D2L.CodeStyle.SpecTests.Generators.AdditionalFiles {
 
-	internal static class AdditionalFilesRenderer {
+	internal static class AdditionalFileRenderer {
 
 		public sealed record AdditionalFile(
 			string IncludePath,
@@ -10,8 +10,8 @@
 
 		public static string Render( IEnumerable<AdditionalFile> additionalFiles ) {
 
-			using StringWriter stringWriter = new();
-			using( CSharpTextWriter writer = new( stringWriter ) ) {
+			using StringWriter buffer = new();
+			using( CSharpTextWriter writer = new( buffer ) ) {
 
 				writer.WriteLine( "using System.Collections.Immutable;" );
 				writer.WriteLine( "using D2L.CodeStyle.SpecTests.Framework;" );
@@ -67,7 +67,7 @@
 				writer.WriteLine( "}" );
 			}
 
-			return stringWriter.ToString();
+			return buffer.ToString();
 		}
 	}
 }
