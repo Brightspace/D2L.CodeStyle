@@ -15,10 +15,10 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
 			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics );
-			context.RegisterCompilationStartAction( RegisterServiceLocatorAnalyzer );
+			context.RegisterCompilationStartAction( OnCompilationStart );
 		}
 
-		public void RegisterServiceLocatorAnalyzer( CompilationStartAnalysisContext context ) {
+		public void OnCompilationStart( CompilationStartAnalysisContext context ) {
 
 			Model? nullableModel = Model.TryCreate( context.Compilation );
 			if( !nullableModel.HasValue ) {

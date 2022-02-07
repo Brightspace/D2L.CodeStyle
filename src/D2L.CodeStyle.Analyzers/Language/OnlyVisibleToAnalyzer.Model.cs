@@ -39,7 +39,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 				ImmutableHashSet<INamedTypeSymbol>? restrictions = m_visibilityCache
 					.GetOrAdd( member, GetTypeVisibilityRestrictions );
-	
+
 				if( restrictions == null ) {
 					return true;
 				}
@@ -58,22 +58,17 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			private ImmutableHashSet<INamedTypeSymbol>? GetTypeVisibilityRestrictions( ISymbol member ) {
 
 				ImmutableArray<AttributeData> attributes = member.GetAttributes();
-
-				int attributeCount = attributes.Length;
-				if( attributeCount == 0 ) {
+				if( attributes.IsEmpty ) {
 					return null;
 				}
 
 				ImmutableHashSet<INamedTypeSymbol>.Builder? restrictions = null;
 
-				for( int i = 0; i < attributeCount; i++ ) {
-					AttributeData attribute = attributes[ i ];
+				foreach( AttributeData attribute in attributes ) {
 
 					if( SymbolEqualityComparer.Default.Equals( attribute.AttributeClass, m_onlyVisibleToTypeAttribute ) ) {
 
-						if( restrictions == null ) {
-							restrictions = ImmutableHashSet.CreateBuilder<INamedTypeSymbol>( SymbolEqualityComparer.Default );
-						}
+						restrictions ??= ImmutableHashSet.CreateBuilder<INamedTypeSymbol>( SymbolEqualityComparer.Default );
 
 						INamedTypeSymbol? visibleToType = TryGetOnlyVisibleToType( attribute );
 						if( visibleToType != null ) {
@@ -87,7 +82,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					return null;
 				}
 
-				// could be empty in the case where we saw an [OnlyVisibleToType] attribute but the type is not in compilation
+				// could be empty in the case where we saw an [OnlyVisibleTo] attribute but none of the indicated types are in this compilation
 				return restrictions.ToImmutable();
 			}
 
