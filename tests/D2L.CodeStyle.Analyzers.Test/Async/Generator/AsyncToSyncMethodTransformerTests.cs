@@ -71,20 +71,23 @@ class TestType{{{methodSource}}}" );
 
 		var methodDecl = wrappedAndParsed.GetRoot().DescendantNodes().OfType<MethodDeclarationSyntax>().Single();
 
-		var compilation = CSharpCompilation.Create(
-			assemblyName: "test",
-			references: References.Value,
-			syntaxTrees: new[] { wrappedAndParsed },
-			options: new(
-				// Not actually going to write the output
-				outputKind: OutputKind.DynamicallyLinkedLibrary,
-				warningLevel: 0,
-				optimizationLevel: OptimizationLevel.Debug
-			)
-		);
+		var compilation = CreateSyncGeneratorTestCompilation( wrappedAndParsed );
 
 		return (compilation, methodDecl);
 	}
+
+	internal static Compilation CreateSyncGeneratorTestCompilation( params SyntaxTree[] trees )
+		=> CSharpCompilation.Create(
+		assemblyName: "test",
+		references: References.Value,
+		syntaxTrees: trees,
+		options: new(
+			// Not actually going to write the output
+			outputKind: OutputKind.DynamicallyLinkedLibrary,
+			warningLevel: 0,
+			optimizationLevel: OptimizationLevel.Debug
+		)
+	);
 
 	private static readonly Lazy<ImmutableArray<MetadataReference>> References = new(
 		() => new[] {
