@@ -95,13 +95,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 			Location location = context.ContainingSymbol.Locations[ 0 ];
 			string methodName = memberSymbol.ToDisplayString( MemberDisplayFormat );
 
-			var diagnostic = Diagnostic.Create(
+			context.ReportDiagnostic(
 					diagnosticDescriptor,
 					location,
-					methodName
+					messageArgs: new[] { methodName }
 				);
-
-			context.ReportDiagnostic( diagnostic );
 		}
 
 		private static readonly SymbolDisplayFormat MemberDisplayFormat = new SymbolDisplayFormat(

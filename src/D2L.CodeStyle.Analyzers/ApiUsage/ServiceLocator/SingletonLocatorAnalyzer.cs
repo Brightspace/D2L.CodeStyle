@@ -101,11 +101,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				return;
 			}
 
-			context.ReportDiagnostic( Diagnostic.Create(
+			context.ReportDiagnostic(
 				descriptor: Diagnostics.SingletonLocatorMisuse,
 				location: context.Operation.Syntax.GetLocation(),
-				typeArg.GetFullTypeName()
-			) );
+				messageArgs: new[] { typeArg.GetFullTypeName() }
+			);
 		}
 
 		private static IMethodSymbol? GetSingletonLocatorGetMethod(

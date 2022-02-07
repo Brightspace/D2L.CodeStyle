@@ -73,13 +73,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DataRecordConverters {
 				return;
 			}
 
-			Diagnostic diagnostic = Diagnostic.Create(
+			context.ReportDiagnostic(
 					InterfaceBinder_InterfacesOnly,
 					interfaceArgument.GetLocation(),
-					messageArgs: interfaceType.Name
+					messageArgs: new[] { interfaceType.Name }
 				);
-
-			context.ReportDiagnostic( diagnostic );
 		}
 	}
 }

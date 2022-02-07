@@ -130,21 +130,21 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		) {
 			if( rpcContext == default) {
 				context.ReportDiagnostic(
-					Diagnostic.Create( Diagnostics.RpcContextFirstArgument, method.ParameterList.GetLocation() )
+					Diagnostics.RpcContextFirstArgument, method.ParameterList.GetLocation()
 				);
 				return;
 			}
 
 			if( !rpcTypes.RpcContexts.Contains( rpcContext.Symbol.Type ) ) {
 				context.ReportDiagnostic(
-					Diagnostic.Create( Diagnostics.RpcContextFirstArgument, rpcContext.Syntax.GetLocation() )
+					Diagnostics.RpcContextFirstArgument, rpcContext.Syntax.GetLocation()
 				);
 				return;
 			}
 
 			if( IsMarkedAsDependency( rpcContext.Symbol, rpcTypes ) ) {
 				context.ReportDiagnostic(
-					Diagnostic.Create( Diagnostics.RpcContextMarkedDependency, rpcContext.Syntax.GetLocation() )
+					Diagnostics.RpcContextMarkedDependency, rpcContext.Syntax.GetLocation()
 				);
 			}
 		}
@@ -158,7 +158,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				bool isValidParameterType = IsValidParameterType( context, parameter.Symbol.Type, rpcTypes );
 				if( !isValidParameterType ) {
 					context.ReportDiagnostic(
-						Diagnostic.Create( Diagnostics.RpcInvalidParameterType, parameter.Syntax.Type.GetLocation() )
+						Diagnostics.RpcInvalidParameterType, parameter.Syntax.Type.GetLocation()
 					);
 				}
 			}
@@ -189,7 +189,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 
 				if( IsMarkedAsDependency( parameter, rpcTypes ) ) {
 					if( parametersBuilder.Count > 0 ) {
-						context.ReportDiagnostic( Diagnostic.Create( Diagnostics.RpcArgumentSortOrder, syntax.GetLocation() ) );
+						context.ReportDiagnostic( Diagnostics.RpcArgumentSortOrder, syntax.GetLocation() );
 					}
 
 					continue;

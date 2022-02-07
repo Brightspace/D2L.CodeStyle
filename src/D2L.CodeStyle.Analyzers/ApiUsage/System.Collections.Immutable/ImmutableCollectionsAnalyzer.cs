@@ -65,10 +65,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.SystemCollectionsImmutable {
 
 			// All usages are bad
 			context.ReportDiagnostic(
-				Diagnostic.Create(
-					Diagnostics.DontUseImmutableArrayConstructor,
-					node.GetLocation()
-				)
+				Diagnostics.DontUseImmutableArrayConstructor,
+				node.GetLocation()
 			);
 		}
 	}

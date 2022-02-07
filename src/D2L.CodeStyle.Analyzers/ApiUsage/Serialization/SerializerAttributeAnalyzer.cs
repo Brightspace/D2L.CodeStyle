@@ -117,13 +117,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				string messageArg
 			) {
 
-			Diagnostic diagnostic = Diagnostic.Create(
+			context.ReportDiagnostic(
 					descriptor: Diagnostics.InvalidSerializerType,
 					location: typeArgumentSyntax.GetLocation(),
-					messageArgs: messageArg
+					messageArgs: new[] { messageArg }
 				);
-
-			context.ReportDiagnostic( diagnostic );
 		}
 
 		private static bool DoesImplementOneOfSerializerInterfaces(

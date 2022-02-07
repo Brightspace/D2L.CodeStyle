@@ -216,10 +216,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Logging {
 				syntaxToLocate = memberAccessSyntax.Name;
 			}
 
-			context.ReportDiagnostic( Diagnostic.Create(
+			context.ReportDiagnostic(
 				Diagnostics.LoggingContextRunAwaitable,
 				syntaxToLocate.GetLocation()
-			) );
+			);
 		}
 
 	}

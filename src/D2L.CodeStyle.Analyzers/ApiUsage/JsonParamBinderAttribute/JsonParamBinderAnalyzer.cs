@@ -81,12 +81,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 			}
 
 			Location location = attribute.GetLocation();
-			Diagnostic diagnostic = Diagnostic.Create(
+
+			context.ReportDiagnostic(
 				Diagnostics.ObsoleteJsonParamBinder,
 				location
 			);
-
-			context.ReportDiagnostic( diagnostic );
 		}
 
 		private static bool AttributeIsOfDisallowedType(

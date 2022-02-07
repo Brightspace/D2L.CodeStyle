@@ -61,11 +61,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				 * public void Foo( [ReadOnly] ref int foo )
 				 * public void Foo( [ReadOnly] out int foo )
 				 */
-				ctx.ReportDiagnostic( Diagnostic.Create(
+				ctx.ReportDiagnostic(
 					Diagnostics.ReadOnlyParameterIsnt,
 					syntax.GetLocation(),
-					"is an in/ref/out parameter"
-				) );
+					messageArgs: new[] { "is an in/ref/out parameter" }
+				);
 			}
 
 			IMethodSymbol method = parameter.ContainingSymbol as IMethodSymbol;
@@ -88,11 +88,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				 *   SomeRefFunc( ref foo ); // pass by ref, potential for write
 				 * }
 				 */
-				ctx.ReportDiagnostic( Diagnostic.Create(
+				ctx.ReportDiagnostic(
 					Diagnostics.ReadOnlyParameterIsnt,
 					syntax.GetLocation(),
-					"is assigned to and/or passed by reference"
-				) );
+					messageArgs: new[] { "is assigned to and/or passed by reference" }
+				);
 			}
 		}
 

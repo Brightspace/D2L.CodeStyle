@@ -85,13 +85,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				return;
 			}
 
-			Diagnostic diagnostic = Diagnostic.Create(
+			context.ReportDiagnostic(
 					Diagnostics.EventTypeMissingEventAttribute,
 					invocation.Syntax.GetLocation(),
-					eventTypeSymbol.ToDisplayString()
+					messageArgs: new[] { eventTypeSymbol.ToDisplayString() }
 				);
-
-			context.ReportDiagnostic( diagnostic );
 		}
 
 		private static IEnumerable<ISymbol> GetGenericPublishMethods(
