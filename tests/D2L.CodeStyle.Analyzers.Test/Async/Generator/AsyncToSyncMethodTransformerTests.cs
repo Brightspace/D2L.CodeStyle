@@ -51,15 +51,12 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 		);
 	}
 
-	public static TransformResult<MethodDeclarationSyntax> Transform(
-		string methodSource,
-		CancellationToken? cancellationToken = null
-	) {
+	public static TransformResult<MethodDeclarationSyntax> Transform( string methodSource ) {
 		var (compilation, methodDecl) = ParseMethod( methodSource );
 
 		var transformer = new AsyncToSyncMethodTransformer(
 			compilation.GetSemanticModel( methodDecl.SyntaxTree ),
-			cancellationToken ?? CancellationToken.None
+			CancellationToken.None
 		);
 
 		return transformer.Transform( methodDecl );
