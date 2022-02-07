@@ -28,7 +28,6 @@
 
   <ItemGroup>
     <Compile Remove="Specs\*" />
-    <EmbeddedResource Include="Specs\*" />
   </ItemGroup>
 
   <ItemGroup>
@@ -45,10 +44,6 @@
       <VirtualPath>@(TestAllowedLists -> '%(Filename)%(Extension)')</VirtualPath>
     </AdditionalFiles>
 
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="TestAllowedLists\*" />
   </ItemGroup>
 
 </Project>
