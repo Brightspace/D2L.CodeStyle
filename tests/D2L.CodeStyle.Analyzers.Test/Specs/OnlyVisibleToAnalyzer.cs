@@ -13,8 +13,8 @@ namespace D2L.CodeStyle.Annotations.Contract {
 		AllowMultiple = true,
 		Inherited = false
 	)]
-	public sealed class OnlyVisibleToAttribute : Attribute {
-		public OnlyVisibleToAttribute( string fullyQualifiedTypeName, string assemblyName ) { }
+	public sealed class OnlyVisibleToTypeAttribute : Attribute {
+		public OnlyVisibleToTypeAttribute( string fullyQualifiedTypeName, string assemblyName ) { }
 	}
 }
 
@@ -32,13 +32,13 @@ namespace Targets {
 		int UnrestrictedPropertyGetter { get; }
 		int UnrestrictedPropertySetter { set; }
 
-		[OnlyVisibleTo( TestCases.AllowedCaller.MetadataName, "OnlyVisibleToAnalyzer" )]
+		[OnlyVisibleToType( TestCases.AllowedCaller.MetadataName, "OnlyVisibleToAnalyzer" )]
 		void RestrictedMethod();
 
-		[OnlyVisibleTo( TestCases.AllowedCaller.MetadataName, "OnlyVisibleToAnalyzer" )]
+		[OnlyVisibleToType( TestCases.AllowedCaller.MetadataName, "OnlyVisibleToAnalyzer" )]
 		int RestrictedPropertyGetter { get; }
 
-		[OnlyVisibleTo( TestCases.AllowedCaller.MetadataName, "OnlyVisibleToAnalyzer" )]
+		[OnlyVisibleToType( TestCases.AllowedCaller.MetadataName, "OnlyVisibleToAnalyzer" )]
 		int RestrictedPropertySetter { set; }
 	}
 
@@ -48,13 +48,13 @@ namespace Targets {
 		public int UnrestrictedPropertyGetter { get { return 1; } }
 		public int UnrestrictedPropertySetter { set { } }
 
-		[OnlyVisibleTo( TestCases.AllowedCaller.MetadataName, "OnlyVisibleToAnalyzer" )]
+		[OnlyVisibleToType( TestCases.AllowedCaller.MetadataName, "OnlyVisibleToAnalyzer" )]
 		public void RestrictedMethod() { }
 
-		[OnlyVisibleTo( TestCases.AllowedCaller.MetadataName, "OnlyVisibleToAnalyzer" )]
+		[OnlyVisibleToType( TestCases.AllowedCaller.MetadataName, "OnlyVisibleToAnalyzer" )]
 		public int RestrictedPropertyGetter { get { return 1; } }
 
-		[OnlyVisibleTo( TestCases.AllowedCaller.MetadataName, "OnlyVisibleToAnalyzer" )]
+		[OnlyVisibleToType( TestCases.AllowedCaller.MetadataName, "OnlyVisibleToAnalyzer" )]
 		public int RestrictedPropertySetter { set { } }
 	}
 
@@ -64,13 +64,13 @@ namespace Targets {
 		public static int UnrestrictedPropertyGetter { get { return 1; } }
 		public static int UnrestrictedPropertySetter { set { } }
 
-		[OnlyVisibleTo( TestCases.AllowedCaller.MetadataName, "OnlyVisibleToAnalyzer" )]
+		[OnlyVisibleToType( TestCases.AllowedCaller.MetadataName, "OnlyVisibleToAnalyzer" )]
 		public static void RestrictedMethod() { }
 
-		[OnlyVisibleTo( TestCases.AllowedCaller.MetadataName, "OnlyVisibleToAnalyzer" )]
+		[OnlyVisibleToType( TestCases.AllowedCaller.MetadataName, "OnlyVisibleToAnalyzer" )]
 		public static int RestrictedPropertyGetter { get { return 1; } }
 
-		[OnlyVisibleTo( TestCases.AllowedCaller.MetadataName, "OnlyVisibleToAnalyzer" )]
+		[OnlyVisibleToType( TestCases.AllowedCaller.MetadataName, "OnlyVisibleToAnalyzer" )]
 		public static int RestrictedPropertySetter { set { } }
 	}
 }
@@ -172,8 +172,8 @@ namespace Targets {
 
 	public static class MultipleTargets {
 
-		[OnlyVisibleTo( TestCases.AllowedCallerA.MetadataName, "OnlyVisibleToAnalyzer" )]
-		[OnlyVisibleTo( TestCases.AllowedCallerB.MetadataName, "OnlyVisibleToAnalyzer" )]
+		[OnlyVisibleToType( TestCases.AllowedCallerA.MetadataName, "OnlyVisibleToAnalyzer" )]
+		[OnlyVisibleToType( TestCases.AllowedCallerB.MetadataName, "OnlyVisibleToAnalyzer" )]
 		public static void Action() { }
 	}
 }
@@ -201,10 +201,10 @@ namespace Targets {
 
 	public static class UnknownTargetTypes {
 
-		[OnlyVisibleTo( "Unknown.Type", "OnlyVisibleToAnalyzer" )]
+		[OnlyVisibleToType( "Unknown.Type", "OnlyVisibleToAnalyzer" )]
 		public static void Foo() { }
 
-		[OnlyVisibleTo( "TestCases.DisallowedCaller", "Unknown.Assembly" )]
+		[OnlyVisibleToType( "TestCases.DisallowedCaller", "Unknown.Assembly" )]
 		public static void Bar() { }
 	}
 }
@@ -226,7 +226,7 @@ namespace TestCases {
 
 	public static class AlwaysVisibleWithinSameContainer {
 
-		[OnlyVisibleTo( "PeterPan", "Neverland" )]
+		[OnlyVisibleToType( "PeterPan", "Neverland" )]
 		public static void Fly() { }
 
 		private static void InternalCaller() {

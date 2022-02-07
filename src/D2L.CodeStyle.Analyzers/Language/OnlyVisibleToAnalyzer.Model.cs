@@ -8,37 +8,37 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 		internal readonly struct Model {
 
-			private const string OnlyVisibleToAttributeMetadataName = "D2L.CodeStyle.Annotations.Contract.OnlyVisibleToAttribute";
+			private const string OnlyVisibleToTypeAttributeMetadataName = "D2L.CodeStyle.Annotations.Contract.OnlyVisibleToTypeAttribute";
 
 			private readonly Compilation m_compilation;
-			private readonly INamedTypeSymbol m_onlyVisibleToAttribute;
+			private readonly INamedTypeSymbol m_onlyVisibleToTypeAttribute;
 
 			private readonly ConcurrentDictionary<ISymbol, ImmutableHashSet<INamedTypeSymbol>?> m_visibilityCache =
 				new ConcurrentDictionary<ISymbol, ImmutableHashSet<INamedTypeSymbol>?>( SymbolEqualityComparer.Default );
 
 			private Model(
 					Compilation compilation,
-					INamedTypeSymbol onlyVisibleToAttribute
+					INamedTypeSymbol onlyVisibleToTypeAttribute
 				) {
 
 				m_compilation = compilation;
-				m_onlyVisibleToAttribute = onlyVisibleToAttribute;
+				m_onlyVisibleToTypeAttribute = onlyVisibleToTypeAttribute;
 			}
 
 			public static Model? TryCreate( Compilation compilation ) {
 
-				INamedTypeSymbol? onlyVisibleToAttribute = compilation.GetTypeByMetadataName( OnlyVisibleToAttributeMetadataName );
-				if( onlyVisibleToAttribute == null ) {
+				INamedTypeSymbol? onlyVisibleToTypeAttribute = compilation.GetTypeByMetadataName( OnlyVisibleToTypeAttributeMetadataName );
+				if( onlyVisibleToTypeAttribute == null ) {
 					return null;
 				}
 
-				return new Model( compilation, onlyVisibleToAttribute );
+				return new Model( compilation, onlyVisibleToTypeAttribute );
 			}
 
 			public bool IsVisibleTo( INamedTypeSymbol caller, ISymbol member ) {
 
 				ImmutableHashSet<INamedTypeSymbol>? restrictions = m_visibilityCache
-					.GetOrAdd( member, GetVisibilityRestrictions );
+					.GetOrAdd( member, GetTypeVisibilityRestrictions );
 	
 				if( restrictions == null ) {
 					return true;
@@ -55,7 +55,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return false;
 			}
 
-			private ImmutableHashSet<INamedTypeSymbol>? GetVisibilityRestrictions( ISymbol member ) {
+			private ImmutableHashSet<INamedTypeSymbol>? GetTypeVisibilityRestrictions( ISymbol member ) {
 
 				ImmutableArray<AttributeData> attributes = member.GetAttributes();
 
@@ -69,29 +69,29 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				for( int i = 0; i < attributeCount; i++ ) {
 					AttributeData attribute = attributes[ i ];
 
-					if( SymbolEqualityComparer.Default.Equals( attribute.AttributeClass, m_onlyVisibleToAttribute ) ) {
+					if( SymbolEqualityComparer.Default.Equals( attribute.AttributeClass, m_onlyVisibleToTypeAttribute ) ) {
 
 						if( restrictions == null ) {
 							restrictions = ImmutableHashSet.CreateBuilder<INamedTypeSymbol>( SymbolEqualityComparer.Default );
 						}
 
-						INamedTypeSymbol? caller = TryGetCallerRestriction( attribute );
-						if( caller != null ) {
-							restrictions.Add( caller );
+						INamedTypeSymbol? visibleToType = TryGetOnlyVisibleToType( attribute );
+						if( visibleToType != null ) {
+							restrictions.Add( visibleToType );
 						}
 					}
 				}
 
-				// null implies that we never saw any [OnlyVisibleTo] attributes
+				// null implies that we never saw any [OnlyVisibleToType] attributes
 				if( restrictions == null ) {
 					return null;
 				}
 
-				// could be empty in the case where we saw an [OnlyVisibleTo] attribute but the type is not in compilation
+				// could be empty in the case where we saw an [OnlyVisibleToType] attribute but the type is not in compilation
 				return restrictions.ToImmutable();
 			}
 
-			private INamedTypeSymbol? TryGetCallerRestriction( AttributeData attribute ) {
+			private INamedTypeSymbol? TryGetOnlyVisibleToType( AttributeData attribute ) {
 
 				if( attribute.ConstructorArguments.Length != 2 ) {
 					return null;

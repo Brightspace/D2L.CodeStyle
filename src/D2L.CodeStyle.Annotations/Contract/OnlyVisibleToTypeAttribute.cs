@@ -7,9 +7,9 @@ namespace D2L.CodeStyle.Annotations.Contract {
 		AllowMultiple = true,
 		Inherited = false
 	)]
-	public sealed class OnlyVisibleToAttribute : Attribute {
+	public sealed class OnlyVisibleToTypeAttribute : Attribute {
 
-		public OnlyVisibleToAttribute( string fullyQualifiedTypeName, string assemblyName ) {
+		public OnlyVisibleToTypeAttribute( string fullyQualifiedTypeName, string assemblyName ) {
 			FullyQualifiedTypeName = fullyQualifiedTypeName;
 			AssemblyName = assemblyName;
 		}
