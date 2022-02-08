@@ -13,7 +13,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 			ImmutableArray<AdditionalText> additionalFiles = GetAdditionalFiles();
 			ImmutableDictionary<string, DiagnosticDescriptor> diagnosticDescriptors = GetDiagnosticDescriptors();
-			ImmutableArray<MetadataReference> metdataReferences = GetMetadataReferences().ToImmutableArray();
+			ImmutableArray<MetadataReference> metdataReferences = GetMetadataReferences();
 
 			foreach( (string name, string source) in GetEmbeddedSpecTests() ) {
 
