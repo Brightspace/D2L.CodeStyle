@@ -14,31 +14,32 @@ namespace D2L.CodeStyle.Analyzers {
 	[TestFixtureSource( typeof( SpecTestsProvider ), nameof( SpecTestsProvider.GetAll ) )]
 	internal sealed class Spec {
 
-		private readonly ImmutableArray<PrettyDiagnostic> m_expectedDiagnostics;
-		private readonly ImmutableArray<PrettyDiagnostic> m_actualDiagnostics;
-		private readonly ImmutableHashSet<PrettyDiagnostic> m_matchedDiagnostics;
+		private readonly SpecTest m_test;
+		private ImmutableArray<PrettyDiagnostic> m_expectedDiagnostics;
+		private ImmutableArray<PrettyDiagnostic> m_actualDiagnostics;
+		private ImmutableHashSet<PrettyDiagnostic> m_matchedDiagnostics;
 
 		/// <summary>
-		/// Each spec causes a single compilation to happen. This constructor
-		/// extracts all the information needed for the assertions in the
-		/// other test cases. It is called by NUnit due to the
-		/// TestFixtureSource attribute.
+		/// Parameterized test fixture
 		/// </summary>
-		/// <param name="specName">
-		/// The name of the spec to run (its source code is in m_specSource.)
-		/// </param>
+		/// <param name="test">Provided by the <see cref="TestFixtureSourceAttribute"/>.</param>
 		public Spec( SpecTest test ) {
+			m_test = test;
+		}
 
-			var analyzer = GetAnalyzerNameFromSpec( test.Source );
+		[OneTimeSetUp]
+		public async Task OneTimeSetUp() {
 
-			Compilation compilation = GetCompilationForSource( test.Name, test.Source, test.MetadataReferences );
+			var analyzer = GetAnalyzerNameFromSpec( m_test.Source );
+
+			Compilation compilation = await GetCompilationForSourceAsync( m_test.Name, m_test.Source, m_test.MetadataReferences );
 			CompilationUnitSyntax compilationUnit = (CompilationUnitSyntax)compilation.SyntaxTrees.First().GetRoot();
 
-			m_actualDiagnostics = GetActualDiagnostics( compilation, analyzer, test.AdditionalFiles )
+			m_actualDiagnostics = ( await GetActualDiagnosticsAsync( compilation, analyzer, m_test.AdditionalFiles ) )
 				.Select( PrettyDiagnostic.Create )
 				.ToImmutableArray();
 
-			m_expectedDiagnostics = GetExpectedDiagnostics( compilationUnit, test.DiagnosticDescriptors )
+			m_expectedDiagnostics = GetExpectedDiagnostics( compilationUnit, m_test.DiagnosticDescriptors )
 				.Select( PrettyDiagnostic.Create )
 				.ToImmutableArray();
 
@@ -107,7 +108,7 @@ namespace D2L.CodeStyle.Analyzers {
 			return analyzer;
 		}
 
-		private static ImmutableArray<Diagnostic> GetActualDiagnostics(
+		private static Task<ImmutableArray<Diagnostic>> GetActualDiagnosticsAsync(
 			Compilation compilation,
 			DiagnosticAnalyzer analyzer,
 			ImmutableArray<AdditionalText> additionalFiles
@@ -118,8 +119,7 @@ namespace D2L.CodeStyle.Analyzers {
 					analyzers: ImmutableArray.Create( analyzer ),
 					options: new AnalyzerOptions( additionalFiles )
 				)
-				.GetAnalyzerDiagnosticsAsync()
-				.Result;
+				.GetAnalyzerDiagnosticsAsync();
 		}
 
 		private static IEnumerable<((SyntaxTrivia Trivia, string Content) Start, (SyntaxTrivia Trivia, string Content) End)> GroupCommentsIntoAdjacentPairs(
@@ -281,7 +281,7 @@ namespace D2L.CodeStyle.Analyzers {
 			}
 		}
 
-		private static Compilation GetCompilationForSource(
+		private static Task<Compilation> GetCompilationForSourceAsync(
 			string specName,
 			string source,
 			ImmutableArray<MetadataReference> metadataReferences
@@ -311,8 +311,7 @@ namespace D2L.CodeStyle.Analyzers {
 				.WithProjectCompilationOptions( projectId, compilationOptions )
 				.WithProjectParseOptions( projectId, parseOptions );
 
-			return solution.Projects.First()
-				.GetCompilationAsync().Result;
+			return solution.Projects.First().GetCompilationAsync();
 		}
 
 		private sealed record PrettyDiagnostic(
