@@ -261,3 +261,65 @@ namespace TestCases {
 		}
 	}
 }
+
+// ===============================================================================
+
+namespace Targets {
+
+	public static class GenericCallerTypes {
+
+		[OnlyVisibleToType( typeof( TestCases.AllowedGenericCaller<> ) )]
+		public static void VisibleByTypeOf() { }
+
+		[OnlyVisibleToType( "TestCases.AllowedGenericCaller`1", "OnlyVisibleToAnalyzer" )]
+		public static void VisibleByQualifiedTypeName() { }
+	}
+}
+
+namespace TestCases {
+
+	public static class AllowedGenericCaller<T> {
+		public static void Test() {
+			GenericCallerTypes.VisibleByTypeOf();
+			GenericCallerTypes.VisibleByQualifiedTypeName();
+		}
+	}
+
+	public static class DisallowedGenericCaller<T> {
+		public static void Test() {
+			/* MemberNotVisibleToCaller(VisibleByTypeOf) */ GenericCallerTypes.VisibleByTypeOf() /**/;
+			/* MemberNotVisibleToCaller(VisibleByQualifiedTypeName) */ GenericCallerTypes.VisibleByQualifiedTypeName() /**/;
+		}
+	}
+}
+
+// ===============================================================================
+
+namespace Targets {
+
+	public static class GenericTargetTypes<T> {
+
+		[OnlyVisibleToType( typeof( TestCases.AllowedGenericTargetCaller ) )]
+		public static void VisibleByTypeOf() { }
+
+		[OnlyVisibleToType( "TestCases.AllowedGenericTargetCaller", "OnlyVisibleToAnalyzer" )]
+		public static void VisibleByQualifiedTypeName() { }
+	}
+}
+
+namespace TestCases {
+
+	public static class AllowedGenericTargetCaller {
+		public static void Test() {
+			GenericTargetTypes<int>.VisibleByTypeOf();
+			GenericTargetTypes<int>.VisibleByQualifiedTypeName();
+		}
+	}
+
+	public static class DisallowedGenericTargetCaller {
+		public static void Test() {
+			/* MemberNotVisibleToCaller(VisibleByTypeOf) */ GenericTargetTypes<int>.VisibleByTypeOf() /**/;
+			/* MemberNotVisibleToCaller(VisibleByQualifiedTypeName) */ GenericTargetTypes<int>.VisibleByQualifiedTypeName() /**/;
+		}
+	}
+}
