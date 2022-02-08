@@ -1,14 +1,5 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.IO;
-using System.Linq;
-using System.Net.NetworkInformation;
-using System.Reflection;
-using System.Text;
+﻿using System.Collections.Immutable;
 using System.Text.RegularExpressions;
-using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -17,8 +8,10 @@ using Microsoft.CodeAnalysis.Text;
 using NUnit.Framework;
 
 namespace D2L.CodeStyle.Analyzers {
-	[TestFixtureSource( nameof( m_specNames ) )]
+
+	[TestFixtureSource( typeof( SpecTestsProvider ), nameof( SpecTestsProvider.GetAll ) )]
 	internal sealed class Spec {
+
 		/// <summary>
 		/// Compares diagnostics based on their Id and location
 		/// </summary>
@@ -39,51 +32,9 @@ namespace D2L.CodeStyle.Analyzers {
 			}
 		}
 
-		private static readonly IEnumerable m_specNames;
-		private static readonly ImmutableDictionary<string, string> m_specSource;
-		private static readonly ImmutableDictionary<string, DiagnosticDescriptor> m_possibleDiagnostics;
-
 		private readonly ImmutableArray<Diagnostic> m_expectedDiagnostics;
 		private readonly ImmutableArray<Diagnostic> m_actualDiagnostics;
 		private readonly ImmutableHashSet<Diagnostic> m_matchedDiagnostics;
-
-		private static readonly MetadataReference CorlibReference = MetadataReference.CreateFromFile( typeof( object ).Assembly.Location );
-		private static readonly MetadataReference SystemReference = MetadataReference.CreateFromFile( typeof( System.Uri ).Assembly.Location );
-		private static readonly MetadataReference SystemCoreReference = MetadataReference.CreateFromFile( typeof( Enumerable ).Assembly.Location );
-		private static readonly MetadataReference CSharpSymbolsReference = MetadataReference.CreateFromFile( typeof( CSharpCompilation ).Assembly.Location );
-		private static readonly MetadataReference CodeAnalysisReference = MetadataReference.CreateFromFile( typeof( Compilation ).Assembly.Location );
-		private static readonly MetadataReference SystemRuntimeReference = MetadataReference.CreateFromFile( Assembly.Load( "System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" ).Location );
-		private static readonly MetadataReference AnnotationsReference = MetadataReference.CreateFromFile( typeof( Annotations.Because ).Assembly.Location );
-
-		/// <summary>
-		/// Loads all the source code to all the spec files.
-		/// We need this to happen in the static constructor because
-		/// TestFixtureSource needs this data to be available prior to fixture
-		/// instantiation.
-		/// Compilation doesn't happen here to avoid unexpected errors taking
-		/// down all tests and better parallelizability.
-		/// </summary>
-		static Spec() {
-			var builder = ImmutableDictionary.CreateBuilder<string, string>();
-
-			LoadAllSpecSourceCode( builder );
-
-			m_specSource = builder.ToImmutable();
-
-			m_specNames = m_specSource.Keys;
-
-			m_possibleDiagnostics = typeof( Diagnostics )
-				.GetFields()
-				.Select( f => new {
-					f.Name,
-					Value = f.GetValue( null ) as DiagnosticDescriptor
-				} )
-				.ToImmutableDictionary( nv => nv.Name, nv => nv.Value );
-
-			foreach( var diag in m_possibleDiagnostics ) {
-				Assert.NotNull( diag.Value, $"Common.Diagnostics.{diag.Key} must be of type DiagnosticDescriptor and not null" );
-			}
-		}
 
 		/// <summary>
 		/// Each spec causes a single compilation to happen. This constructor
@@ -94,17 +45,17 @@ namespace D2L.CodeStyle.Analyzers {
 		/// <param name="specName">
 		/// The name of the spec to run (its source code is in m_specSource.)
 		/// </param>
-		public Spec( string specName ) {
-			var source = m_specSource[ specName ];
+		public Spec( SpecTest test ) {
 
-			var analyzer = GetAnalyzerNameFromSpec( source );
+			var analyzer = GetAnalyzerNameFromSpec( test.Source );
 
-			var compilation = GetCompilationForSource( specName, source );
+			var compilation = GetCompilationForSource( test.Name, test.Source, test.MetadataReferences );
 
-			m_actualDiagnostics = GetActualDiagnostics( compilation, analyzer );
+			m_actualDiagnostics = GetActualDiagnostics( compilation, analyzer, test.AdditionalFiles );
 
 			m_expectedDiagnostics = GetExpectedDiagnostics(
-				(CompilationUnitSyntax)compilation.SyntaxTrees.First().GetRoot()
+				(CompilationUnitSyntax)compilation.SyntaxTrees.First().GetRoot(),
+				test.DiagnosticDescriptors
 			).ToImmutableArray();
 
 			m_matchedDiagnostics = m_actualDiagnostics
@@ -136,39 +87,6 @@ namespace D2L.CodeStyle.Analyzers {
 			CollectionAssert.IsEmpty( missingDiagnostics );
 		}
 
-		/// <summary>
-		/// Loads the source to all specs stored in resources into an IDictionary
-		/// </summary>
-		/// <param name="specNameToSourceCode">
-		/// Dictionary to cache source in
-		/// </param>
-		private static void LoadAllSpecSourceCode(
-			IDictionary<string, string> specNameToSourceCode
-		) {
-			var assembly = Assembly.GetExecutingAssembly();
-
-			foreach( var specFilePath in assembly.GetManifestResourceNames() ) {
-				if( !specFilePath.EndsWith( ".cs" ) ) {
-					continue;
-				}
-
-				// The file foo/bar.baz.cs has specName bar.baz
-				string specName = Regex.Replace(
-					specFilePath,
-					@"^.*\.(?<specName>[^\.]*)\.cs$",
-					@"${specName}"
-				);
-
-				string source;
-				using( var stream = assembly.GetManifestResourceStream( specFilePath ) )
-				using( var specStream = new StreamReader( stream ) ) {
-					source = specStream.ReadToEnd();
-				}
-
-				specNameToSourceCode[ specName ] = source;
-			}
-		}
-
 		private DiagnosticAnalyzer GetAnalyzerNameFromSpec( string source ) {
 			var root = (CompilationUnitSyntax)CSharpSyntaxTree.ParseText( source ).GetRoot();
 
@@ -195,51 +113,19 @@ namespace D2L.CodeStyle.Analyzers {
 			return analyzer;
 		}
 
-		private static ImmutableArray<Diagnostic> GetActualDiagnostics( Compilation compilation, DiagnosticAnalyzer analyzer ) {
-			var additionalFiles = ImmutableArray.CreateBuilder<AdditionalText>();
-			Assembly testAssembly = Assembly.GetExecutingAssembly();
-			foreach( var resourcePath in testAssembly.GetManifestResourceNames() ) {
-				if( !resourcePath.EndsWith( "AllowedList.txt" ) ) {
-					continue;
-				}
-
-				string allowedListName = Regex.Replace(
-					resourcePath,
-					@"^.*\.(?<allowedListName>[^\.]*)\.txt$",
-					@"${allowedListName}.txt"
-				);
-
-				using( var reader = new StreamReader( testAssembly.GetManifestResourceStream( resourcePath ) ) ) {
-					additionalFiles.Add( new AdditionalFile(
-						path: allowedListName,
-						text: reader.ReadToEnd()
-					) );
-				}
-			}
+		private static ImmutableArray<Diagnostic> GetActualDiagnostics(
+			Compilation compilation,
+			DiagnosticAnalyzer analyzer,
+			ImmutableArray<AdditionalText> additionalFiles
+		) {
 
 			return compilation
 				.WithAnalyzers(
 					analyzers: ImmutableArray.Create( analyzer ),
-					options: new AnalyzerOptions( additionalFiles: additionalFiles.ToImmutable() )
+					options: new AnalyzerOptions( additionalFiles )
 				)
 				.GetAnalyzerDiagnosticsAsync().Result
 				.ToImmutableArray();
-		}
-
-		internal sealed class AdditionalFile : AdditionalText {
-
-			private readonly string m_text;
-
-			public AdditionalFile(
-				string path,
-				string text
-			) {
-				Path = path;
-				m_text = text;
-			}
-
-			public override string Path { get; }
-			public override SourceText GetText( CancellationToken cancellationToken = default ) => SourceText.From( m_text, Encoding.UTF8 );
 		}
 
 		private static IEnumerable<((SyntaxTrivia Trivia, string Content) Start, (SyntaxTrivia Trivia, string Content) End)> GroupCommentsIntoAdjacentPairs(
@@ -351,7 +237,11 @@ namespace D2L.CodeStyle.Analyzers {
 			public ImmutableArray<string> Arguments { get; }
 		}
 
-		private static IEnumerable<Diagnostic> GetExpectedDiagnostics( CompilationUnitSyntax root ) {
+		private static IEnumerable<Diagnostic> GetExpectedDiagnostics(
+			CompilationUnitSyntax root,
+			ImmutableDictionary<string, DiagnosticDescriptor> diagnosticDescriptors
+		) {
+
 			var multilineComments = root
 				.DescendantTrivia()
 				.Where( c => c.Kind() == SyntaxKind.MultiLineCommentTrivia );
@@ -370,7 +260,7 @@ namespace D2L.CodeStyle.Analyzers {
 					// Every assertion's start comment must map to a diagnostic
 					// defined in Common.Diagnostics
 					DiagnosticDescriptor descriptor;
-					if( !m_possibleDiagnostics.TryGetValue( diagnosticExpectation.Name, out descriptor ) ) {
+					if( !diagnosticDescriptors.TryGetValue( diagnosticExpectation.Name, out descriptor ) ) {
 						Assert.Fail( $"Comment on line {start.Trivia.GetLocation().GetLineSpan().StartLinePosition.Line + 1} with {diagnosticExpectation.Name} doesn't map to a diagnostic defined in Common.Diagnostic" );
 
 					}
@@ -397,22 +287,18 @@ namespace D2L.CodeStyle.Analyzers {
 			}
 		}
 
-		private static Compilation GetCompilationForSource( string specName, string source ) {
+		private static Compilation GetCompilationForSource(
+			string specName,
+			string source,
+			ImmutableArray<MetadataReference> metadataReferences
+		) {
 			var projectId = ProjectId.CreateNewId( debugName: specName );
 			var filename = specName + ".cs";
 			var documentId = DocumentId.CreateNewId( projectId, debugName: filename );
 
 			var solution = new AdhocWorkspace().CurrentSolution
 				.AddProject( projectId, specName, specName, LanguageNames.CSharp )
-
-				.AddMetadataReference( projectId, CorlibReference )
-				.AddMetadataReference( projectId, SystemReference )
-				.AddMetadataReference( projectId, SystemCoreReference )
-				.AddMetadataReference( projectId, CSharpSymbolsReference )
-				.AddMetadataReference( projectId, CodeAnalysisReference )
-				.AddMetadataReference( projectId, SystemRuntimeReference )
-				.AddMetadataReference( projectId, AnnotationsReference )
-
+				.AddMetadataReferences( projectId, metadataReferences )
 				.AddDocument( documentId, filename, SourceText.From( source ) );
 
 			var compilationOptions = solution
