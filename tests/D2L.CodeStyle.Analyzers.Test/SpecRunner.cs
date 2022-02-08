@@ -1,4 +1,6 @@
-﻿using System.Collections.Immutable;
+﻿using System.CodeDom.Compiler;
+using System.Collections.Immutable;
+using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -12,29 +14,9 @@ namespace D2L.CodeStyle.Analyzers {
 	[TestFixtureSource( typeof( SpecTestsProvider ), nameof( SpecTestsProvider.GetAll ) )]
 	internal sealed class Spec {
 
-		/// <summary>
-		/// Compares diagnostics based on their Id and location
-		/// </summary>
-		private sealed class DiagnosticComparer : IEqualityComparer<Diagnostic> {
-			public static readonly DiagnosticComparer Instance = new DiagnosticComparer();
-
-			bool IEqualityComparer<Diagnostic>.Equals( Diagnostic x, Diagnostic y ) {
-				return x.Id == y.Id
-					&& x.Location == y.Location
-					&& x.GetMessage() == y.GetMessage();
-			}
-
-			int IEqualityComparer<Diagnostic>.GetHashCode( Diagnostic diag ) {
-				var hashCode = diag.Id.GetHashCode();
-				hashCode = ( hashCode * 397 ) ^ diag.Location.GetHashCode();
-				hashCode = ( hashCode * 397 ) ^ diag.GetMessage().GetHashCode();
-				return hashCode;
-			}
-		}
-
-		private readonly ImmutableArray<Diagnostic> m_expectedDiagnostics;
-		private readonly ImmutableArray<Diagnostic> m_actualDiagnostics;
-		private readonly ImmutableHashSet<Diagnostic> m_matchedDiagnostics;
+		private readonly ImmutableArray<PrettyDiagnostic> m_expectedDiagnostics;
+		private readonly ImmutableArray<PrettyDiagnostic> m_actualDiagnostics;
+		private readonly ImmutableHashSet<PrettyDiagnostic> m_matchedDiagnostics;
 
 		/// <summary>
 		/// Each spec causes a single compilation to happen. This constructor
@@ -49,26 +31,33 @@ namespace D2L.CodeStyle.Analyzers {
 
 			var analyzer = GetAnalyzerNameFromSpec( test.Source );
 
-			var compilation = GetCompilationForSource( test.Name, test.Source, test.MetadataReferences );
+			Compilation compilation = GetCompilationForSource( test.Name, test.Source, test.MetadataReferences );
+			CompilationUnitSyntax compilationUnit = (CompilationUnitSyntax)compilation.SyntaxTrees.First().GetRoot();
 
-			m_actualDiagnostics = GetActualDiagnostics( compilation, analyzer, test.AdditionalFiles );
+			m_actualDiagnostics = GetActualDiagnostics( compilation, analyzer, test.AdditionalFiles )
+				.Select( PrettyDiagnostic.Create )
+				.ToImmutableArray();
 
-			m_expectedDiagnostics = GetExpectedDiagnostics(
-				(CompilationUnitSyntax)compilation.SyntaxTrees.First().GetRoot(),
-				test.DiagnosticDescriptors
-			).ToImmutableArray();
+			m_expectedDiagnostics = GetExpectedDiagnostics( compilationUnit, test.DiagnosticDescriptors )
+				.Select( PrettyDiagnostic.Create )
+				.ToImmutableArray();
 
 			m_matchedDiagnostics = m_actualDiagnostics
-				.Intersect(
-					m_expectedDiagnostics,
-					DiagnosticComparer.Instance
-				).ToImmutableHashSet( DiagnosticComparer.Instance );
+				.Intersect( m_expectedDiagnostics )
+				.ToImmutableHashSet();
 		}
 
 		[Test]
 		public void NoUnexpectedDiagnostics() {
-			var unexpectedDiagnostics = m_actualDiagnostics
+
+			IEnumerable<PrettyDiagnostic> unexpectedDiagnostics = m_actualDiagnostics
 				.Where( d => !m_matchedDiagnostics.Contains( d ) );
+
+			Assert.Multiple( () => {
+				foreach( PrettyDiagnostic diagnostic in unexpectedDiagnostics ) {
+					Assert.Fail( "An unexpected diagnostic was reported: {0}", diagnostic );
+				}
+			} );
 
 			CollectionAssert.IsEmpty( unexpectedDiagnostics );
 		}
@@ -81,10 +70,15 @@ namespace D2L.CodeStyle.Analyzers {
 
 		[Test]
 		public void ExpectedDiagnostics() {
-			var missingDiagnostics = m_expectedDiagnostics
+
+			IEnumerable<PrettyDiagnostic> missingDiagnostics = m_expectedDiagnostics
 				.Where( d => !m_matchedDiagnostics.Contains( d ) );
 
-			CollectionAssert.IsEmpty( missingDiagnostics );
+			Assert.Multiple( () => {
+				foreach( PrettyDiagnostic diagnostic in missingDiagnostics ) {
+					Assert.Fail( "An expected diagnostic was not reported: {0}", diagnostic );
+				}
+			} );
 		}
 
 		private DiagnosticAnalyzer GetAnalyzerNameFromSpec( string source ) {
@@ -124,8 +118,8 @@ namespace D2L.CodeStyle.Analyzers {
 					analyzers: ImmutableArray.Create( analyzer ),
 					options: new AnalyzerOptions( additionalFiles )
 				)
-				.GetAnalyzerDiagnosticsAsync().Result
-				.ToImmutableArray();
+				.GetAnalyzerDiagnosticsAsync()
+				.Result;
 		}
 
 		private static IEnumerable<((SyntaxTrivia Trivia, string Content) Start, (SyntaxTrivia Trivia, string Content) End)> GroupCommentsIntoAdjacentPairs(
@@ -319,6 +313,46 @@ namespace D2L.CodeStyle.Analyzers {
 
 			return solution.Projects.First()
 				.GetCompilationAsync().Result;
+		}
+
+		private sealed record PrettyDiagnostic(
+			string Id,
+			LinePositionSpan LinePosition,
+			string Message
+		) {
+
+			/// <remarks>
+			/// Formatting output for Visual Studio Test Explorer
+			/// </remarks>
+			public override string ToString() {
+
+				StringBuilder sb = new StringBuilder();
+				const string indent = "\t\t";
+
+				void WriteProperty( string name, object value, string seperator = "," ) {
+					sb.Append( indent );
+					sb.Append( name );
+					sb.Append( " = " );
+					sb.Append( value );
+					sb.AppendLine( seperator );
+				}
+
+				sb.AppendLine( "{" );
+				WriteProperty( nameof( Id ), Id );
+				WriteProperty( nameof( LinePosition ), LinePosition );
+				WriteProperty( nameof( Message ), Message, seperator: string.Empty );
+				sb.AppendLine( "}" );
+
+				return sb.ToString();
+			}
+
+			public static PrettyDiagnostic Create( Diagnostic diagnostic ) {
+				return new(
+					Id: diagnostic.Id,
+					LinePosition: diagnostic.Location.GetLineSpan().Span,
+					Message: diagnostic.GetMessage()
+				);
+			}
 		}
 	}
 }
