@@ -44,9 +44,6 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					return true;
 				}
 
-				// strip out the <T> for generic types
-				caller = GetTypeOrUnboundGenericType( caller );
-
 				if( restrictions.Contains( caller ) ) {
 					return true;
 				}
@@ -75,9 +72,6 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 						INamedTypeSymbol? visibleToType = TryGetOnlyVisibleToType( attribute );
 						if( visibleToType != null ) {
-
-							// strip out the <T> for generic types
-							visibleToType = GetTypeOrUnboundGenericType( visibleToType );
 
 							restrictions.Add( visibleToType );
 						}
@@ -118,6 +112,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 						return null;
 					}
 
+
 					return type;
 				}
 
@@ -128,25 +123,14 @@ namespace D2L.CodeStyle.Analyzers.Language {
 						return null;
 					}
 
+					if( type.IsUnboundGenericType ) {
+						return type.OriginalDefinition;
+					}
+
 					return type;
 				}
 
 				return null;
-			}
-
-			private static INamedTypeSymbol GetTypeOrUnboundGenericType( INamedTypeSymbol type ) {
-
-				if( !type.IsGenericType ) {
-					return type;
-				}
-
-				// typeof maps to an unbound generic type
-				if( type.IsUnboundGenericType ) {
-					return type;
-				}
-
-				// GetTypeByMetadataName maps to a bound generic type of T
-				return type.ConstructUnboundGenericType();
 			}
 		}
 	}
