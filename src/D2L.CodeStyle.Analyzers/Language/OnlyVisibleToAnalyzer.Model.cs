@@ -88,30 +88,43 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			private INamedTypeSymbol? TryGetOnlyVisibleToType( AttributeData attribute ) {
 
-				if( attribute.ConstructorArguments.Length != 2 ) {
-					return null;
+				ImmutableArray<TypedConstant> arguments = attribute.ConstructorArguments;
+
+				if( arguments.Length == 2 ) {
+
+					TypedConstant metadataNameArgument = arguments[ 0 ];
+					if( metadataNameArgument.Value is not string metadataName ) {
+						return null;
+					}
+
+					TypedConstant assemblyNameAttribute = arguments[ 1 ];
+					if( assemblyNameAttribute.Value is not string assemblyName ) {
+						return null;
+					}
+
+					INamedTypeSymbol? type = m_compilation.GetTypeByMetadataName( metadataName );
+					if( type == null ) {
+						return null;
+					}
+
+					if( !type.ContainingAssembly.Name.Equals( assemblyName, StringComparison.Ordinal ) ) {
+						return null;
+					}
+
+					return type;
 				}
 
-				TypedConstant metadataNameArgument = attribute.ConstructorArguments[ 0 ];
-				if( metadataNameArgument.Value is not string metadataName ) {
-					return null;
+				if( arguments.Length == 1 ) {
+
+					TypedConstant typeArgument = arguments[ 0 ];
+					if( typeArgument.Value is not INamedTypeSymbol type ) {
+						return null;
+					}
+
+					return type;
 				}
 
-				TypedConstant assemblyNameAttribute = attribute.ConstructorArguments[ 1 ];
-				if( assemblyNameAttribute.Value is not string assemblyName ) {
-					return null;
-				}
-
-				INamedTypeSymbol? type = m_compilation.GetTypeByMetadataName( metadataName );
-				if( type == null ) {
-					return null;
-				}
-
-				if( !type.ContainingAssembly.Name.Equals( assemblyName, StringComparison.Ordinal ) ) {
-					return null;
-				}
-
-				return type;
+				return null;
 			}
 		}
 	}

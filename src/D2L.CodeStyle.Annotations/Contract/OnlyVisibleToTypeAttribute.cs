@@ -9,6 +9,10 @@ namespace D2L.CodeStyle.Annotations.Contract {
 	)]
 	public sealed class OnlyVisibleToTypeAttribute : Attribute {
 
+		public OnlyVisibleToTypeAttribute( Type type )
+			: this( type.FullName, type.Assembly.GetName().Name ) {
+		}
+
 		public OnlyVisibleToTypeAttribute( string fullyQualifiedTypeName, string assemblyName ) {
 			FullyQualifiedTypeName = fullyQualifiedTypeName;
 			AssemblyName = assemblyName;

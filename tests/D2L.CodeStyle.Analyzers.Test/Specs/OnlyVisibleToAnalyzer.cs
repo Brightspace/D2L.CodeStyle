@@ -14,6 +14,7 @@ namespace D2L.CodeStyle.Annotations.Contract {
 		Inherited = false
 	)]
 	public sealed class OnlyVisibleToTypeAttribute : Attribute {
+		public OnlyVisibleToTypeAttribute( Type type ) { }
 		public OnlyVisibleToTypeAttribute( string fullyQualifiedTypeName, string assemblyName ) { }
 	}
 }
@@ -231,6 +232,32 @@ namespace TestCases {
 
 		private static void InternalCaller() {
 			Fly();
+		}
+	}
+}
+
+// ===============================================================================
+
+namespace Targets {
+
+	public static class TypeOfTargets {
+
+		[OnlyVisibleToType( typeof( TestCases.AllowedTypeOfCaller ) )]
+		public static void Action() { }
+	}
+}
+
+namespace TestCases {
+
+	public static class AllowedTypeOfCaller {
+		public static void Test() {
+			TypeOfTargets.Action();
+		}
+	}
+
+	public static class DisallowedTypeOfCaller {
+		public static void Test() {
+			/* MemberNotVisibleToCaller(Action) */ TypeOfTargets.Action() /**/;
 		}
 	}
 }
