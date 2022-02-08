@@ -109,12 +109,30 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				SyntaxKind.GenericName
 			);
 
-			context.RegisterSyntaxNodeAction(
+			context.RegisterSymbolAction(
 				ctx => AnalyzeConditionalImmutabilityOnMethodDeclarations(
-					ctx,
-					annotationsContext
+					(IMethodSymbol)ctx.Symbol,
+					annotationsContext,
+					ctx.ReportDiagnostic,
+					ctx.CancellationToken
 				),
-				SyntaxKind.MethodDeclaration,
+				SymbolKind.Method
+			);
+
+			context.RegisterSyntaxNodeAction(
+				ctx => {
+					IMethodSymbol method = (IMethodSymbol)ctx.SemanticModel.GetDeclaredSymbol(
+						(LocalFunctionStatementSyntax)ctx.Node,
+						ctx.CancellationToken
+					);
+
+					AnalyzeConditionalImmutabilityOnMethodDeclarations(
+						method,
+						annotationsContext,
+						ctx.ReportDiagnostic,
+						ctx.CancellationToken
+					);
+				},
 				SyntaxKind.LocalFunctionStatement
 			);
 
@@ -287,25 +305,22 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		private static void AnalyzeConditionalImmutabilityOnMethodDeclarations(
-			SyntaxNodeAnalysisContext ctx,
-			AnnotationsContext annotationsContext
+			IMethodSymbol method,
+			AnnotationsContext annotationsContext,
+			Action<Diagnostic> diagnosticSink,
+			CancellationToken cancellationToken
 		) {
-			// Get the symbol for the method
-			if( ctx.SemanticModel.GetDeclaredSymbol( ctx.Node, ctx.CancellationToken ) is not IMethodSymbol symbol ) {
-				return;
-			}
-
-			foreach( var parameter in symbol.TypeParameters ) {
+			foreach( var parameter in method.TypeParameters ) {
 				// Check if the parameter has the [OnlyIf] attribute
 				if( !annotationsContext.Objects.OnlyIf.IsDefined( parameter ) ) {
 					continue;
 				}
 
 				// Create the diagnostic on the parameter (including the attribute)
-				ctx.ReportDiagnostic(
+				diagnosticSink( Diagnostic.Create(
 					Diagnostics.UnexpectedConditionalImmutability,
-					parameter.DeclaringSyntaxReferences[ 0 ].GetSyntax( ctx.CancellationToken ).GetLocation()
-				);
+					parameter.DeclaringSyntaxReferences[ 0 ].GetSyntax( cancellationToken ).GetLocation()
+				) );
 			}
 		}
 

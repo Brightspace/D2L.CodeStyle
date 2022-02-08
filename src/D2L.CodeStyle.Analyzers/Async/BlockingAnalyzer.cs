@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Operations;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System;
@@ -76,14 +77,14 @@ namespace D2L.CodeStyle.Analyzers.Async {
 				SymbolEqualityComparer.Default
 			);
 
-			ctx.RegisterSyntaxNodeAction(
+			ctx.RegisterOperationAction(
 				ctx => InspectMethodCall(
 					ctx,
 					blockingAttr: blockingAttr,
 					asyncResultType: asyncResultType,
 					noteMethodHasBlockingCall: m => haveCallsToSomethingBlocking[m] = true
 				),
-				SyntaxKind.InvocationExpression
+				OperationKind.Invocation
 			);
 
 			// After the rest of analysis report about potentially unnecessary [Blocking]s
@@ -194,24 +195,16 @@ namespace D2L.CodeStyle.Analyzers.Async {
 		}
 
 		private static void InspectMethodCall(
-			SyntaxNodeAnalysisContext ctx,
+			OperationAnalysisContext ctx,
 			INamedTypeSymbol blockingAttr,
 			INamedTypeSymbol asyncResultType,
 			Action<IMethodSymbol> noteMethodHasBlockingCall
 		) {
 			// Goal: find calls to blocking methods inside non-blocking methods, or in properties.
 
-			var invocation = (InvocationExpressionSyntax)ctx.Node;
+			var operation = (IInvocationOperation)ctx.Operation;
 
-			var invokedSymbolInfo = ctx.SemanticModel.GetSymbolInfo( invocation.Expression, ctx.CancellationToken );
-
-			// Unfortunately there are ways to use this to dodge analysis, but
-			// there is only so much we can do.
-			if( invokedSymbolInfo.Symbol?.Kind != SymbolKind.Method ) {
-				return;
-			}
-
-			var invokedMethodSymbol = (IMethodSymbol)invokedSymbolInfo.Symbol;
+			var invokedMethodSymbol = operation.TargetMethod;
 
 			// If the thing we're calling isn't [Blocking] then OK.
 			// TODO: support other means of inferring blockingness for 3rd party libraries.
@@ -219,11 +212,13 @@ namespace D2L.CodeStyle.Analyzers.Async {
 				return;
 			}
 
+			var invocation = (InvocationExpressionSyntax)operation.Syntax;
+
 			if( !TryGetContainingMethod( ctx, invocation, invokedMethodSymbol, out var myMethodDeclaration, out var methodNameLocation ) ) {
 				return;
 			}
 
-			var myMethodSymbol = (IMethodSymbol)ctx.SemanticModel.GetDeclaredSymbol( myMethodDeclaration , ctx.CancellationToken );
+			var myMethodSymbol = (IMethodSymbol)operation.SemanticModel.GetDeclaredSymbol( myMethodDeclaration , ctx.CancellationToken );
 
 			if( myMethodSymbol == null ) {
 				return;
@@ -291,7 +286,7 @@ namespace D2L.CodeStyle.Analyzers.Async {
 		}
 
 		private static bool TryGetContainingMethod(
-			SyntaxNodeAnalysisContext ctx,
+			OperationAnalysisContext ctx,
 			InvocationExpressionSyntax invocation,
 			IMethodSymbol invokedMethodSymbol,
 			out SyntaxNode decl,
