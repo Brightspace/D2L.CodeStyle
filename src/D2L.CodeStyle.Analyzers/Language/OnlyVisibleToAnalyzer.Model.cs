@@ -17,10 +17,9 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				new ConcurrentDictionary<ISymbol, ImmutableHashSet<INamedTypeSymbol>?>( SymbolEqualityComparer.Default );
 
 			private Model(
-					Compilation compilation,
-					INamedTypeSymbol onlyVisibleToTypeAttribute
-				) {
-
+				Compilation compilation,
+				INamedTypeSymbol onlyVisibleToTypeAttribute
+			) {
 				m_compilation = compilation;
 				m_onlyVisibleToTypeAttribute = onlyVisibleToTypeAttribute;
 			}
@@ -111,7 +110,6 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					if( !type.ContainingAssembly.Name.Equals( assemblyName, StringComparison.Ordinal ) ) {
 						return null;
 					}
-
 
 					return type;
 				}
