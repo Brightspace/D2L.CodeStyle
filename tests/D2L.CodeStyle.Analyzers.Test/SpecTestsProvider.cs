@@ -1,10 +1,8 @@
 ﻿using System.Collections.Immutable;
 using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
 using D2L.CodeStyle.SpecTests;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Text;
 
 namespace D2L.CodeStyle.Analyzers {
 
@@ -51,15 +49,9 @@ namespace D2L.CodeStyle.Analyzers {
 			builder.AddAssemblyOf( typeof( Enumerable ) );              // System.Core
 			builder.AddAssemblyOf( typeof( Annotations.Because ) );     // D2L.CodeStyle.Annotations
 
-			Assembly systemRuntime = Assembly.Load( "System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" );
-			builder.Add( MetadataReference.CreateFromFile( systemRuntime.Location ) );
+			builder.AddAssembly( "System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" );
 
 			return builder.ToImmutable();
-		}
-
-		private static void AddAssemblyOf( this ImmutableArray<MetadataReference>.Builder builder, Type type ) {
-			MetadataReference reference = MetadataReference.CreateFromFile( type.Assembly.Location );
-			builder.Add( reference );
 		}
 
 		private static ImmutableArray<AdditionalText> GetAdditionalFiles() {
@@ -79,7 +71,7 @@ namespace D2L.CodeStyle.Analyzers {
 					@"${allowedListName}.txt"
 				);
 
-				string text = ReadEmbeddedResourceAsString( testAssembly, resourcePath );
+				string text = testAssembly.ReadEmbeddedResourceAsString( resourcePath );
 
 				builder.Add( new AdditionalFile( virtualPath, text ) );
 			}
@@ -104,33 +96,10 @@ namespace D2L.CodeStyle.Analyzers {
 					@"${specName}"
 				);
 
-				string source = ReadEmbeddedResourceAsString( assembly, specFilePath );
+				string source = assembly.ReadEmbeddedResourceAsString( specFilePath );
 
 				yield return (specName, source);
 			}
-		}
-
-		private sealed class AdditionalFile : AdditionalText {
-
-			private readonly string m_text;
-
-			public AdditionalFile(
-				string path,
-				string text
-			) {
-				Path = path;
-				m_text = text;
-			}
-
-			public override string Path { get; }
-			public override SourceText GetText( CancellationToken cancellationToken = default ) => SourceText.From( m_text, Encoding.UTF8 );
-		}
-
-		private static string ReadEmbeddedResourceAsString( Assembly assembly, string name ) {
-
-			using Stream stream = assembly.GetManifestResourceStream( name );
-			using StreamReader reader = new( stream );
-			return reader.ReadToEnd();
 		}
 	}
 }
