@@ -329,23 +329,18 @@ namespace D2L.CodeStyle.Analyzers {
 				StringBuilder sb = new StringBuilder();
 				const string indent = "\t\t";
 
+				void WriteProperty( string name, object value, string seperator = "," ) {
+					sb.Append( indent );
+					sb.Append( name );
+					sb.Append( " = " );
+					sb.Append( value );
+					sb.AppendLine( seperator );
+				}
+
 				sb.AppendLine( "{" );
-
-				sb.Append( indent );
-				sb.Append( "Id = " );
-				sb.Append( Id );
-				sb.AppendLine( "," );
-
-				sb.Append( indent );
-				sb.Append( "LinePosition = " );
-				sb.Append( LinePosition );
-				sb.AppendLine( "," );
-
-				sb.Append( indent );
-				sb.Append( "Message = " );
-				sb.Append( Message );
-				sb.AppendLine( "," );
-
+				WriteProperty( nameof( Id ), Id );
+				WriteProperty( nameof( LinePosition ), LinePosition );
+				WriteProperty( nameof( Message ), Message, seperator: string.Empty );
 				sb.AppendLine( "}" );
 
 				return sb.ToString();
