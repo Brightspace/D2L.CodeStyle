@@ -1,9 +1,9 @@
 ﻿using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 
-namespace D2L.CodeStyle.Analyzers {
+namespace D2L.CodeStyle.SpecTests {
 
-	internal sealed record SpecTest(
+	public sealed record SpecTest(
 		string Name,
 		string Source,
 		ImmutableArray<AdditionalText> AdditionalFiles,
