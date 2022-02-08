@@ -273,6 +273,12 @@ namespace Targets {
 
 		[OnlyVisibleToType( "TestCases.AllowedGenericCaller`1", "OnlyVisibleToAnalyzer" )]
 		public static void VisibleByQualifiedTypeName() { }
+
+		/// <summary>
+		/// You can only make yourself visible to the generic type definition.
+		/// </summary>
+		[OnlyVisibleToType( typeof( TestCases.AllowedGenericCaller<int> ) )]
+		public static void VisibleButWithGenericTypeArguments() { }
 	}
 }
 
@@ -282,6 +288,7 @@ namespace TestCases {
 		public static void Test() {
 			GenericCallerTypes.VisibleByTypeOf();
 			GenericCallerTypes.VisibleByQualifiedTypeName();
+			/* MemberNotVisibleToCaller(VisibleButWithGenericTypeArguments) */ GenericCallerTypes.VisibleButWithGenericTypeArguments() /**/;
 		}
 	}
 
@@ -289,6 +296,7 @@ namespace TestCases {
 		public static void Test() {
 			/* MemberNotVisibleToCaller(VisibleByTypeOf) */ GenericCallerTypes.VisibleByTypeOf() /**/;
 			/* MemberNotVisibleToCaller(VisibleByQualifiedTypeName) */ GenericCallerTypes.VisibleByQualifiedTypeName() /**/;
+			/* MemberNotVisibleToCaller(VisibleButWithGenericTypeArguments) */ GenericCallerTypes.VisibleButWithGenericTypeArguments() /**/;
 		}
 	}
 }
