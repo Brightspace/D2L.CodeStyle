@@ -49,8 +49,15 @@ namespace D2L.CodeStyle.Analyzers {
 
 		[Test]
 		public void NoUnexpectedDiagnostics() {
-			var unexpectedDiagnostics = m_actualDiagnostics
+
+			IEnumerable<PrettyDiagnostic> unexpectedDiagnostics = m_actualDiagnostics
 				.Where( d => !m_matchedDiagnostics.Contains( d ) );
+
+			Assert.Multiple( () => {
+				foreach( PrettyDiagnostic diagnostic in unexpectedDiagnostics ) {
+					Assert.Fail( "An unexpected diagnostic was reported: {0}", diagnostic );
+				}
+			} );
 
 			CollectionAssert.IsEmpty( unexpectedDiagnostics );
 		}
@@ -63,10 +70,15 @@ namespace D2L.CodeStyle.Analyzers {
 
 		[Test]
 		public void ExpectedDiagnostics() {
-			var missingDiagnostics = m_expectedDiagnostics
+
+			IEnumerable<PrettyDiagnostic> missingDiagnostics = m_expectedDiagnostics
 				.Where( d => !m_matchedDiagnostics.Contains( d ) );
 
-			CollectionAssert.IsEmpty( missingDiagnostics );
+			Assert.Multiple( () => {
+				foreach( PrettyDiagnostic diagnostic in missingDiagnostics ) {
+					Assert.Fail( "An expected diagnostic was not reported: {0}", diagnostic );
+				}
+			} );
 		}
 
 		private DiagnosticAnalyzer GetAnalyzerNameFromSpec( string source ) {
