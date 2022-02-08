@@ -1,5 +1,4 @@
-﻿using System.CodeDom.Compiler;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
@@ -9,10 +8,9 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 using NUnit.Framework;
 
-namespace D2L.CodeStyle.Analyzers {
+namespace D2L.CodeStyle.SpecTests {
 
-	[TestFixtureSource( typeof( SpecTestsProvider ), nameof( SpecTestsProvider.GetAll ) )]
-	internal sealed class Spec {
+	public abstract class SpecTestFixtureBase {
 
 		private readonly SpecTest m_test;
 		private ImmutableArray<PrettyDiagnostic> m_expectedDiagnostics;
@@ -23,7 +21,7 @@ namespace D2L.CodeStyle.Analyzers {
 		/// Parameterized test fixture
 		/// </summary>
 		/// <param name="test">Provided by the <see cref="TestFixtureSourceAttribute"/>.</param>
-		public Spec( SpecTest test ) {
+		public SpecTestFixtureBase( SpecTest test ) {
 			m_test = test;
 		}
 

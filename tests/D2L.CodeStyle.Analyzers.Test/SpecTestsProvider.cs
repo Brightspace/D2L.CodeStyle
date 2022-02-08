@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using D2L.CodeStyle.SpecTests;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
