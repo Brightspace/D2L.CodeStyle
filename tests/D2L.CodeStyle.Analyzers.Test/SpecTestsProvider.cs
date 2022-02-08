@@ -127,10 +127,9 @@ namespace D2L.CodeStyle.Analyzers {
 
 		private static string ReadEmbeddedResourceAsString( Assembly assembly, string name ) {
 
-			using( Stream stream = assembly.GetManifestResourceStream( name ) )
-			using( StreamReader specStream = new( stream ) ) {
-				return specStream.ReadToEnd();
-			}
+			using Stream stream = assembly.GetManifestResourceStream( name );
+			using StreamReader reader = new( stream );
+			return reader.ReadToEnd();
 		}
 	}
 }
