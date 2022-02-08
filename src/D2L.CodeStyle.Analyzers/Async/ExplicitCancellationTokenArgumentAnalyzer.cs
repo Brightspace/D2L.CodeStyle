@@ -24,27 +24,24 @@ namespace D2L.CodeStyle.Analyzers.Async {
 
 			Compilation compilation = context.Compilation;
 
-			if( !compilation.TryGetTypeByMetadataName(
-					"System.Threading.CancellationToken",
-					out INamedTypeSymbol? cancellationTokenType
-				) ) {
+			if( !compilation.TryGetTypeByMetadataName( "System.Threading.CancellationToken", out INamedTypeSymbol? cancellationTokenType ) ) {
 				return;
 			}
 
 			context.RegisterOperationAction(
-					context => {
-						IArgumentOperation argument = (IArgumentOperation)context.Operation;
-						AnalyzeArgument( context, argument, cancellationTokenType );
-					},
-					OperationKind.Argument
-				);
+				context => {
+					IArgumentOperation argument = (IArgumentOperation)context.Operation;
+					AnalyzeArgument( context, argument, cancellationTokenType );
+				},
+				OperationKind.Argument
+			);
 		}
 
 		private static void AnalyzeArgument(
-				OperationAnalysisContext context,
-				IArgumentOperation argument,
-				INamedTypeSymbol cancellationTokenType
-			) {
+			OperationAnalysisContext context,
+			IArgumentOperation argument,
+			INamedTypeSymbol cancellationTokenType
+		) {
 
 			if( argument.ArgumentKind != ArgumentKind.DefaultValue ) {
 				return;
@@ -64,9 +61,9 @@ namespace D2L.CodeStyle.Analyzers.Async {
 			}
 
 			context.ReportDiagnostic(
-					Diagnostics.ExplicitCancellationTokenArgumentRequired,
-					argument.Syntax.GetLocation()
-				);
+				Diagnostics.ExplicitCancellationTokenArgumentRequired,
+				argument.Syntax.GetLocation()
+			);
 		}
 	}
 }
