@@ -25,7 +25,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 			);
 		}
 
-		public void RegisterServiceLocatorAnalyzer(
+		public static void RegisterServiceLocatorAnalyzer(
 			CompilationStartAnalysisContext context
 		) {
 			INamedTypeSymbol factoryType = context.Compilation
@@ -80,7 +80,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 		}
 
 		// Prevent static usage of TestServiceLocator.Create() methods.
-		private void PreventCustomLocatorUsage(
+		private static void PreventCustomLocatorUsage(
 			OperationAnalysisContext context,
 			IMethodSymbol methodSymbol,
 			AllowedTypeList allowedTypeList,
