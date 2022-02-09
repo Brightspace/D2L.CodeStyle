@@ -139,9 +139,7 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 		);
 
 		foreach( var file in files ) {
-			if( cancellationToken.IsCancellationRequested ) {
-				yield break;
-			}
+			cancellationToken.ThrowIfCancellationRequested();
 
 			var generatedMethods = ImmutableArray.CreateBuilder<(TypeDeclarationSyntax, string)>();
 			var diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
