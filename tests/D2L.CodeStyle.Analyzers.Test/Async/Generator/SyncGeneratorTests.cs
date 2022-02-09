@@ -51,7 +51,7 @@ sealed class Bar {
 	public void Baz() => Console.WriteLine( ""hello"" );
 
 	[GenerateSync]
-	public async Task BazAsync( StreamWriter x ) { await x.WriteAsync( ""hello"" ); }
+	public async Task BazAsync( StreamWriter x ) { return; }
 
 	public int Add( int x, int y ) => x + y;
 }"
@@ -68,7 +68,7 @@ namespace Foo;
 partial class Bar {
 
 	[Blocking]
-	public void Baz( StreamWriter x ) {throw null;}
+	public void Baz( StreamWriter x ) { return; }
 }"
 		);
 	}
@@ -87,7 +87,7 @@ sealed partial class Bar {
 	public void Baz() => Console.WriteLine( ""hello"" );
 
 	[GenerateSync]
-	public async Task BazAsync( StreamWriter x ) { await x.WriteAsync( ""hello"" ); }
+	public async Task BazAsync( StreamWriter x ) { return; }
 
 	public int Add( int x, int y ) => x + y;
 }", @"
@@ -100,10 +100,10 @@ namespace Foo;
 
 public sealed partial class Abcdefg {
 	[GenerateSync]
-	public async Task<int> FooAsync() { await Task.Delay( 3 ); return 7; }
+	public async Task<int> FooAsync() => 7;
 
 	[GenerateSync]
-	public async Task BarAsync() { await FooAsync(); }
+	public async Task BarAsync() {}
 }"
 		);
 
@@ -118,7 +118,7 @@ namespace Foo;
 partial class Bar {
 
 	[Blocking]
-	public void Baz( StreamWriter x ) {throw null;}
+	public void Baz( StreamWriter x ) { return; }
 }", @"
 using System;
 using System.IO;
@@ -129,10 +129,10 @@ namespace Foo;
 
 partial class Abcdefg {
 	[Blocking]
-	public int Foo() {throw null;}
+	public int Foo() => 7;
 
 	[Blocking]
-	public void Bar() {throw null;}
+	public void Bar() {}
 }"
 		);
 	}

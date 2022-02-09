@@ -13,20 +13,29 @@ namespace D2L.CodeStyle.Analyzers.Tests.Async.Generator;
 internal sealed class AsyncToSyncMethodTransformerTests {
 	[Test]
 	public void BasicTask() {
-		var actual = Transform( @"[GenerateSync] async Task HelloAsync( int abc, string def ) { await Task.Delay( 3 ); }" );
+		var actual = Transform( @"[GenerateSync] async Task HelloAsync( int abc, string def ) { return; }" );
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
-		Assert.AreEqual( "[Blocking] void Hello( int abc, string def ) {throw null;}", actual.Value.ToFullString() );
+		Assert.AreEqual( "[Blocking] void Hello( int abc, string def ) { return; }", actual.Value.ToFullString() );
 	}
 
 	[Test]
 	public void BasicTaskT() {
-		var actual = Transform( @"[GenerateSync] async Task<int> HelloAsync() { await Task.Delay( 3 ); return 4; }" );
+		var actual = Transform( @"[GenerateSync] async Task<int> HelloAsync() { return 4; }" );
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
-		Assert.AreEqual( "[Blocking] int Hello() {throw null;}", actual.Value.ToFullString() );
+		Assert.AreEqual( "[Blocking] int Hello() { return 4; }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void BasicTaskArrow() {
+		var actual = Transform( @"[GenerateSync] async Task<int> HelloAsync() => 4;" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] int Hello() => 4;", actual.Value.ToFullString() );
 	}
 
 	[Test]
