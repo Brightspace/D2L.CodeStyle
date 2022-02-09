@@ -74,6 +74,36 @@ partial class Bar {
 	}
 
 	[Test]
+	public void InterfaceMethod() {
+		var result = RunGenerator( @"
+using System;
+using System.Threading.Tasks;
+using D2L.CodeStyle.Annotations;
+
+partial interface IFoo {
+	[GenerateSync]
+	public Task XAsync();
+
+	[GenerateSync]
+	public Task<string> YAsync();
+}"
+		);
+
+		AssertNewTrees( result, @"
+using System;
+using System.Threading.Tasks;
+using D2L.CodeStyle.Annotations;
+
+partial interface IFoo {
+	[Blocking]
+	public void X();
+
+	[Blocking]
+	public string Y();
+}"
+		);
+	}
+	[Test]
 	public void Complicated() {
 		var result = RunGenerator( @"
 using System;

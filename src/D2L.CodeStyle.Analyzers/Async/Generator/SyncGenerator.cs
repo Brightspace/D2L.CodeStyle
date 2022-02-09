@@ -46,8 +46,17 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 			return false;
 		}
 
-		// We only care about async methods
-		if( !method.Modifiers.Any( t => t.IsKind( SyntaxKind.AsyncKeyword ) ) ) {
+		// Must have Async suffix.
+		// TODO: add an analyzer to alert about uses of [GenerateSync] that this would filter out
+		if( !method.Identifier.ValueText.EndsWith( "Async", StringComparison.Ordinal ) ) {
+			return false;
+		}
+
+		// Require the async keyword if applicable.
+		// Interface and abstract methods won't have bodies and thus won't have the
+		// keyword but we still want to translate their signatures.
+		// TODO: we could probably relax this, or we should have an error.
+		if( method.Body is not null && !method.Modifiers.Any( t => t.IsKind( SyntaxKind.AsyncKeyword ) ) ) {
 			return false;
 		}
 
