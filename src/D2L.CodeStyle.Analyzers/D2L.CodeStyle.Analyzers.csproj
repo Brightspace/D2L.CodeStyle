@@ -12,17 +12,17 @@
     <Authors>D2L</Authors>
     <Company>D2L Corporation</Company>
     <Copyright>Copyright © D2L Corporation 2019</Copyright>
+    <AnalysisLevel>latest-Recommended</AnalysisLevel>
     <DevelopmentDependency>true</DevelopmentDependency>
-
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <IncludeBuildOutput>False</IncludeBuildOutput>
     <IncludeSymbols>True</IncludeSymbols>
     <Nullable>enable</Nullable>
-    <WarningsAsErrors>Nullable</WarningsAsErrors>
+    <WarningsAsErrors>CA2016,Nullable</WarningsAsErrors>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <InternalsVisibleTo Include="D2L.CodeStyle.Analyzers.Tests"/>
+    <InternalsVisibleTo Include="D2L.CodeStyle.Analyzers.Tests" />
   </ItemGroup>
   <ItemGroup>
     <None Include="tools\*.ps1" Pack="true" PackagePath="tools" />
@@ -34,6 +34,10 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.0.1" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="6.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Nullable" Version="1.3.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
