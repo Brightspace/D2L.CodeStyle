@@ -16,8 +16,8 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			.WithModifiers( RemoveAsyncModifier( decl.Modifiers ) )
 			.WithIdentifier( RemoveAsyncSuffix( decl.Identifier ) )
 			.WithReturnType( TransformReturnType( decl.ReturnType ) )
-			.WithExpressionBody( Transform( decl.ExpressionBody ) )
-			.WithBody( Transform( decl.Body ) );
+			.WithExpressionBody( MaybeTransform( decl.ExpressionBody, Transform ) )
+			.WithBody( MaybeTransform( decl.Body, Transform ) );
 
 		return GetResult( decl );
 	}
@@ -102,45 +102,98 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		return returnType;
 	}
 
-	private ArrowExpressionClauseSyntax? Transform(
-		ArrowExpressionClauseSyntax? body
-	) {
-		if( body is null ) {
-			return null;
-		}
+	private ArrowExpressionClauseSyntax Transform( ArrowExpressionClauseSyntax body )
+		=> body.WithExpression( Transform( body.Expression ) );
 
-		return body.WithExpression( Transform( body.Expression ) );
-	}
-
-	private BlockSyntax? Transform( BlockSyntax? block ) {
-		if( block is null ) {
-			return null;
-		}
-
-		var transformed = TransformAll( block.Statements, Transform );
-
-		return block.WithStatements( transformed );
-	}
+	private BlockSyntax Transform( BlockSyntax block )
+		=> block.WithStatements( TransformAll( block.Statements, Transform ) );
 
 	private StatementSyntax Transform( StatementSyntax stmt )
 		=> stmt switch {
-			ExpressionStatementSyntax exprStmt =>
-				exprStmt.WithExpression( Transform( exprStmt.Expression) ),
+			BreakStatementSyntax => stmt,
 
-			ReturnStatementSyntax returnStmt =>
-				returnStmt.Expression is null
-				? returnStmt
-				: returnStmt.WithExpression( Transform( returnStmt.Expression ) ),
+			BlockSyntax blockStmt => Transform( blockStmt ),
+
+			ContinueStatementSyntax => stmt,
+
+			EmptyStatementSyntax => stmt,
+
+			ExpressionStatementSyntax exprStmt => exprStmt
+				.WithExpression( Transform( exprStmt.Expression) ),
+
+			GotoStatementSyntax => stmt,
+
+			IfStatementSyntax ifStmt => ifStmt
+				.WithCondition( Transform( ifStmt.Condition) )
+				.WithStatement( ifStmt.Statement )
+				.WithElse( MaybeTransform( ifStmt.Else, Transform ) ),
+
+			LabeledStatementSyntax labeledStmt => labeledStmt
+				.WithStatement( Transform( labeledStmt.Statement ) ),
+
+			ThrowStatementSyntax throwStmt => throwStmt
+				.WithExpression( MaybeTransform( throwStmt.Expression, Transform ) ),
+
+			ReturnStatementSyntax returnStmt => returnStmt
+				.WithExpression( MaybeTransform( returnStmt.Expression, Transform ) ),
 
 			_ => UnhandledSyntax( stmt )
 		};
 
 	private ExpressionSyntax Transform( ExpressionSyntax expr )
 		=> expr switch {
+			BinaryExpressionSyntax binExpr => binExpr
+				.WithLeft( Transform( binExpr.Left ) )
+				.WithRight( Transform( binExpr.Right) ),
+
+			AssignmentExpressionSyntax asgnExpr => asgnExpr
+				.WithLeft( Transform( asgnExpr.Left ) )
+				.WithRight( Transform( asgnExpr.Right ) ),
+
+			ConditionalExpressionSyntax condExpr => condExpr
+				.WithCondition( Transform( condExpr.Condition ) )
+				.WithWhenTrue( Transform( condExpr.WhenTrue ) )
+				.WithWhenFalse( Transform( condExpr.WhenFalse ) ),
+
+			DefaultExpressionSyntax => expr,
+
+			ElementAccessExpressionSyntax eaExpr => eaExpr
+				.WithExpression( Transform( eaExpr.Expression) )
+				.WithArgumentList( TransformAll( eaExpr.ArgumentList, Transform ) ),
+
+			ObjectCreationExpressionSyntax newExpr => newExpr
+				.WithArgumentList( MaybeTransform( newExpr.ArgumentList, Transform ) )
+				.WithInitializer( MaybeTransform( newExpr.Initializer, Transform ) ),
+
+			ParenthesizedExpressionSyntax pExpr => pExpr
+				.WithExpression( Transform( pExpr.Expression ) ),
+
+			PostfixUnaryExpressionSyntax postfixExpr => postfixExpr
+				.WithOperand( Transform( postfixExpr.Operand ) ),
+
+			PrefixUnaryExpressionSyntax prefixExpr => prefixExpr
+				.WithOperand( Transform( prefixExpr.Operand ) ),
+
+			SizeOfExpressionSyntax => expr,
+
+			ThisExpressionSyntax => expr,
+
 			LiteralExpressionSyntax => expr,
 
 			_ => UnhandledSyntax( expr )
 		};
+
+	private ElseClauseSyntax Transform( ElseClauseSyntax clause )
+		=> clause.WithStatement( clause.Statement );
+
+	private ArgumentListSyntax Transform( ArgumentListSyntax argList )
+		=> argList.WithArguments( TransformAll( argList.Arguments, Transform ) );
+
+	private ArgumentSyntax Transform( ArgumentSyntax argument )
+		=> argument.WithExpression( Transform( argument.Expression ) );
+
+	private InitializerExpressionSyntax Transform( InitializerExpressionSyntax initializer )
+		=> initializer.WithExpressions( TransformAll( initializer.Expressions, Transform ) );
 
 	private bool IsGenerateSyncAttribute( AttributeSyntax attribute ) {
 		var attributeConstructorSymbol = m_model.GetSymbolInfo( attribute, m_token ).Symbol as IMethodSymbol;
