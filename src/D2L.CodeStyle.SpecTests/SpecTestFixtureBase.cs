@@ -336,7 +336,7 @@ namespace D2L.CodeStyle.SpecTests {
 
 				sb.AppendLine( "{" );
 				WriteProperty( nameof( Id ), Id );
-				WriteProperty( nameof( LinePosition ), LinePosition );
+				WriteProperty( nameof( LinePosition ), $"({LinePosition.Start.Line + 1},{LinePosition.Start.Character})-({LinePosition.End.Line + 1},{LinePosition.End.Character})" );
 				WriteProperty( nameof( Message ), Message, seperator: string.Empty );
 				sb.AppendLine( "}" );
 
