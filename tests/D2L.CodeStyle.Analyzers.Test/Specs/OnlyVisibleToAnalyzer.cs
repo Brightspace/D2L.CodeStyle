@@ -234,6 +234,28 @@ namespace TestCases {
 			Fly();
 		}
 	}
+
+	public interface IRestrictedInterface {
+
+		[OnlyVisibleToType( typeof( string ) )]
+		void RestrictedMethod();
+	}
+
+	public class RestrictedMembersOnSelf : IRestrictedInterface {
+
+		[OnlyVisibleToType( typeof( string ) )]
+		public void RestrictedMethod() {}
+
+		public void Caller() {
+
+			// Ok when called on this
+			this.RestrictedMethod();
+
+			// Violation when called via interface, since not in set
+			IRestrictedInterface @interface = this;
+			/* MemberNotVisibleToCaller(RestrictedMethod) */ @interface.RestrictedMethod() /**/;
+		}
+	}
 }
 
 // ===============================================================================
