@@ -14,10 +14,12 @@
     <Copyright>Copyright © D2L Corporation 2018</Copyright>
     <DevelopmentDependency>true</DevelopmentDependency>
 
+    <AnalysisLevel>latest-Recommended</AnalysisLevel>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <IncludeBuildOutput>False</IncludeBuildOutput>
     <IncludeSymbols>True</IncludeSymbols>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <SuppressDependenciesWhenPacking>True</SuppressDependenciesWhenPacking>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,7 +28,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.0.1" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="6.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="System.Collections.Immutable" Version="5.0.0" PrivateAssets="All" />
   </ItemGroup>
 

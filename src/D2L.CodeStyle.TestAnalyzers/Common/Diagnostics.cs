@@ -9,7 +9,7 @@ namespace D2L.CodeStyle.TestAnalyzers.Common {
 
 		public static readonly DiagnosticDescriptor ConfigTestSetupStrings = new DiagnosticDescriptor(
 			id: "D2LTESTS003",
-			title: "Use nameof in ConfigTestSetup attributes.",
+			title: "Use nameof in ConfigTestSetup attributes",
 			messageFormat: "String arguments in ConfigTestSetup are not allowed. Use nameof({0}) instead.",
 			category: "Cleanliness",
 			defaultSeverity: DiagnosticSeverity.Error,
@@ -29,7 +29,7 @@ namespace D2L.CodeStyle.TestAnalyzers.Common {
 
 		public static readonly DiagnosticDescriptor CustomServiceLocator = new DiagnosticDescriptor(
 			id: "D2LTESTS005",
-			title: "Use the default test service locator.",
+			title: "Use the default test service locator",
 			messageFormat: "Custom service locators should not be used. Use static TestServiceLocator.Get<T>() or TestServiceLocatorFactory.Default instead.",
 			category: "Cleanliness",
 			defaultSeverity: DiagnosticSeverity.Error,
@@ -43,7 +43,7 @@ namespace D2L.CodeStyle.TestAnalyzers.Common {
         public static readonly DiagnosticDescriptor UnnecessaryAllowedListEntry = new DiagnosticDescriptor(
             id: "D2LTESTS007",
             title: "Unnecessarily listed in an analyzer allowed list",
-            messageFormat: "The entry for {0} in {1} is unnecessary.",
+            messageFormat: "The entry for {0} in {1} is unnecessary",
             category: "Cleanliness",
             defaultSeverity: DiagnosticSeverity.Error,
             isEnabledByDefault: true,
