@@ -724,8 +724,17 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true
 		);
 
-		public static readonly DiagnosticDescriptor ExplicitCancellationTokenArgumentRequired = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor MemberNotVisibleToCaller = new DiagnosticDescriptor(
 			id: "D2L0099",
+			title: "Member is not visible to caller",
+			messageFormat: "The member '{0}' has restricted its visibility to an explicit set of callers",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor ExplicitCancellationTokenArgumentRequired = new DiagnosticDescriptor(
+			id: "D2L0100",
 			title: "CancellationToken arguments must be explicitly passed",
 			messageFormat: "CancellationToken arguments must be explicitly passed. CancellationToken.None is acceptable in some situations, but in most case should be passed through an entire async chain to ensure our applications are responsive.",
 			category: "Correctness",
