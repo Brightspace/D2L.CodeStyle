@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
@@ -106,18 +107,23 @@ namespace D2L.CodeStyle.SpecTests {
 			return analyzer;
 		}
 
-		private static Task<ImmutableArray<Diagnostic>> GetActualDiagnosticsAsync(
+		private async static Task<ImmutableArray<Diagnostic>> GetActualDiagnosticsAsync(
 			Compilation compilation,
 			DiagnosticAnalyzer analyzer,
 			ImmutableArray<AdditionalText> additionalFiles
 		) {
 
-			return compilation
+			ImmutableArray<Diagnostic> diagnostics = await compilation
 				.WithAnalyzers(
 					analyzers: ImmutableArray.Create( analyzer ),
 					options: new AnalyzerOptions( additionalFiles )
 				)
 				.GetAnalyzerDiagnosticsAsync();
+
+			return diagnostics
+				.OrderBy( d => d.Location.SourceSpan )
+				.ThenBy( d => d.Id )
+				.ToImmutableArray();
 		}
 
 		private static IEnumerable<((SyntaxTrivia Trivia, string Content) Start, (SyntaxTrivia Trivia, string Content) End)> GroupCommentsIntoAdjacentPairs(
