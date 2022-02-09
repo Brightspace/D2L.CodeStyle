@@ -154,7 +154,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				foreach( var baseTypeSyntax in baseTypes ) {
 					TypeSyntax typeSyntax = baseTypeSyntax.Type;
 
-					ITypeSymbol thisTypeSymbol = model.GetTypeInfo( typeSyntax ).Type;
+					ITypeSymbol thisTypeSymbol = model.GetTypeInfo( typeSyntax, cancellationToken ).Type;
 
 					if( baseTypeSymbol.Equals( thisTypeSymbol, SymbolEqualityComparer.Default ) ) {
 						return syntax;
