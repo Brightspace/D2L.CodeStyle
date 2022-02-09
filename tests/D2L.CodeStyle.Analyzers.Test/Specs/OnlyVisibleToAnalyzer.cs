@@ -241,12 +241,12 @@ namespace TestCases {
 		void RestrictedMethod();
 	}
 
-	public static class RestrictedMembersOnSelf : IRestrictedInterface {
+	public class RestrictedMembersOnSelf : IRestrictedInterface {
 
 		[OnlyVisibleToType( typeof( string ) )]
-		public static void RestrictedMethod() {}
+		public void RestrictedMethod() {}
 
-		public static void Caller() {
+		public void Caller() {
 
 			// Ok when called on this
 			this.RestrictedMethod();
