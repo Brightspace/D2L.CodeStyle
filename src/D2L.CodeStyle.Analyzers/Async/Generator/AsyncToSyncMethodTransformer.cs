@@ -110,21 +110,99 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 	private StatementSyntax Transform( StatementSyntax stmt )
 		=> stmt switch {
+			BlockSyntax blockStmt => Transform( blockStmt ),
+
+			BreakStatementSyntax => stmt,
+
+			ContinueStatementSyntax => stmt,
+
+			DoStatementSyntax doStmt => doStmt
+				.WithStatement( Transform( doStmt.Statement ) )
+				.WithCondition( Transform( doStmt.Condition ) ),
+
+			EmptyStatementSyntax => stmt,
+
 			ExpressionStatementSyntax exprStmt => exprStmt
 				.WithExpression( Transform( exprStmt.Expression) ),
 
+			GotoStatementSyntax => stmt,
+
+			IfStatementSyntax ifStmt => ifStmt
+				.WithCondition( Transform( ifStmt.Condition) )
+				.WithStatement( ifStmt.Statement )
+				.WithElse( MaybeTransform( ifStmt.Else, Transform ) ),
+
+			LabeledStatementSyntax labeledStmt => labeledStmt
+				.WithStatement( Transform( labeledStmt.Statement ) ),
+
+			ThrowStatementSyntax throwStmt => throwStmt
+				.WithExpression( MaybeTransform( throwStmt.Expression, Transform ) ),
+
 			ReturnStatementSyntax returnStmt => returnStmt
 				.WithExpression( MaybeTransform( returnStmt.Expression, Transform ) ),
+
+			WhileStatementSyntax whileStmt => whileStmt
+				.WithCondition( Transform( whileStmt.Condition ) )
+				.WithStatement( Transform( whileStmt.Statement ) ),
 
 			_ => UnhandledSyntax( stmt )
 		};
 
 	private ExpressionSyntax Transform( ExpressionSyntax expr )
 		=> expr switch {
+			AssignmentExpressionSyntax asgnExpr => asgnExpr
+				.WithLeft( Transform( asgnExpr.Left ) )
+				.WithRight( Transform( asgnExpr.Right ) ),
+
+			BinaryExpressionSyntax binExpr => binExpr
+				.WithLeft( Transform( binExpr.Left ) )
+				.WithRight( Transform( binExpr.Right) ),
+
+			ConditionalExpressionSyntax condExpr => condExpr
+				.WithCondition( Transform( condExpr.Condition ) )
+				.WithWhenTrue( Transform( condExpr.WhenTrue ) )
+				.WithWhenFalse( Transform( condExpr.WhenFalse ) ),
+
+			DefaultExpressionSyntax => expr,
+
+			ElementAccessExpressionSyntax eaExpr => eaExpr
+				.WithExpression( Transform( eaExpr.Expression) )
+				.WithArgumentList( TransformAll( eaExpr.ArgumentList, Transform ) ),
+
 			LiteralExpressionSyntax => expr,
+
+			ObjectCreationExpressionSyntax newExpr => newExpr
+				.WithArgumentList( MaybeTransform( newExpr.ArgumentList, Transform ) )
+				.WithInitializer( MaybeTransform( newExpr.Initializer, Transform ) ),
+
+			ParenthesizedExpressionSyntax pExpr => pExpr
+				.WithExpression( Transform( pExpr.Expression ) ),
+
+			PostfixUnaryExpressionSyntax postfixExpr => postfixExpr
+				.WithOperand( Transform( postfixExpr.Operand ) ),
+
+			PrefixUnaryExpressionSyntax prefixExpr => prefixExpr
+				.WithOperand( Transform( prefixExpr.Operand ) ),
+
+			SizeOfExpressionSyntax => expr,
+
+			ThisExpressionSyntax => expr,
+
 
 			_ => UnhandledSyntax( expr )
 		};
+
+	private ElseClauseSyntax Transform( ElseClauseSyntax clause )
+		=> clause.WithStatement( clause.Statement );
+
+	private ArgumentListSyntax Transform( ArgumentListSyntax argList )
+		=> argList.WithArguments( TransformAll( argList.Arguments, Transform ) );
+
+	private ArgumentSyntax Transform( ArgumentSyntax argument )
+		=> argument.WithExpression( Transform( argument.Expression ) );
+
+	private InitializerExpressionSyntax Transform( InitializerExpressionSyntax initializer )
+		=> initializer.WithExpressions( TransformAll( initializer.Expressions, Transform ) );
 
 	private bool IsGenerateSyncAttribute( AttributeSyntax attribute ) {
 		var attributeConstructorSymbol = m_model.GetSymbolInfo( attribute, m_token ).Symbol as IMethodSymbol;

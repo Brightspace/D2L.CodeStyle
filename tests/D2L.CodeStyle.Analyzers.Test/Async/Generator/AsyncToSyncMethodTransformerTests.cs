@@ -39,6 +39,70 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 	}
 
 	[Test]
+	public void Silly() {
+		var actual = Transform( @"[GenerateSync]
+async Task<int> HelloAsync( int[] q ) {
+	if( 6 == (7 - 1)*2 ) {
+		return sizeof( ""hello"" );
+	} else if( q[0]++ == ++q[1] ) {
+		throw new NotImplementedException( ""foo"" );
+	} else return 8;
+
+	{
+		{
+			{ ;;; }
+		}
+	}
+
+	goto lol;
+
+	do {
+		while( true ) {
+			continue;
+			lol: break;
+		}
+	} while( false );
+
+	this = this;
+
+	return 123;
+}" );
+
+		var expected = @"[Blocking]
+int Hello( int[] q ) {
+	if( 6 == (7 - 1)*2 ) {
+		return sizeof( ""hello"" );
+	} else if( q[0]++ == ++q[1] ) {
+		throw new NotImplementedException( ""foo"" );
+	} else return 8;
+
+	{
+		{
+			{ ;;; }
+		}
+	}
+
+	goto lol;
+
+	do {
+		while( true ) {
+			continue;
+			lol: break;
+		}
+	} while( false );
+
+	this = this;
+
+	return 123;
+}";
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( expected, actual.Value.ToFullString() );
+	}
+
+
+	[Test]
 	public void GenerateSyncOnNonAsyncThingFails() {
 		var actual = Transform( @"[GenerateSync] void Hello() {}" );
 
