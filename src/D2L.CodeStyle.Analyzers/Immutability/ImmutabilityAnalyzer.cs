@@ -360,22 +360,17 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			bool hasConditionallyImmutable = annotationsContext.Objects.ConditionallyImmutable.IsDefined( symbol );
 			bool hasImmutableBase = annotationsContext.Objects.ImmutableBaseClass.IsDefined( symbol );
 
-			TypeDeclarationSyntax syntax = null;
-			TypeDeclarationSyntax GetSyntax() {
-				return syntax ??= (TypeDeclarationSyntax)symbol.DeclaringSyntaxReferences[ 0 ].GetSyntax( ctx.CancellationToken );
-			}
-
 			// Check if there are conflicting immutability attributes
 			if( hasImmutable && hasConditionallyImmutable ) {
 				// [Immutable] and [ConditionallyImmutable] both exist,
 				// so create a diagnostic
 				ctx.ReportDiagnostic(
 					Diagnostics.ConflictingImmutability,
-					GetSyntax().Identifier.GetLocation(),
+					symbol.Locations[ 0 ],
 					messageArgs: new object[] {
 						"Immutable",
 						"ConditionallyImmutable",
-						GetSyntax().Keyword
+						KindName( symbol )
 					}
 				);
 			}
@@ -384,11 +379,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// so create a diagnostic
 				ctx.ReportDiagnostic(
 					Diagnostics.ConflictingImmutability,
-					GetSyntax().Identifier.GetLocation(),
+					symbol.Locations[ 0 ],
 					messageArgs: new object[] {
 						"Immutable",
 						"ImmutableBaseClassAttribute",
-						GetSyntax().Keyword
+						KindName( symbol )
 					}
 				);
 			}
@@ -397,14 +392,21 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// so create a diagnostic
 				ctx.ReportDiagnostic(
 					Diagnostics.ConflictingImmutability,
-					GetSyntax().Identifier.GetLocation(),
+					symbol.Locations[ 0 ],
 					messageArgs: new object[] {
 						"ConditionallyImmutable",
 						"ImmutableBaseClassAttribute",
-						GetSyntax().Keyword
+						KindName( symbol )
 					}
 				 );
 			}
+
+			static string KindName( INamedTypeSymbol symbol ) => symbol.TypeKind switch {
+				TypeKind.Class => "class",
+				TypeKind.Interface => "interface",
+				TypeKind.Struct => "struct",
+				_ => symbol.TypeKind.ToString()
+			};
 		}
 
 		private static bool GetTypeParamsAndArgs( ISymbol type, out ImmutableArray<ITypeParameterSymbol> typeParameters, out ImmutableArray<ITypeSymbol> typeArguments ) {
