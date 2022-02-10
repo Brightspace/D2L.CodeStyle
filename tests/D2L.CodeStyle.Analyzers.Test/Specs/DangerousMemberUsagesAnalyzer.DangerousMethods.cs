@@ -30,17 +30,17 @@ namespace SpecTests {
 
 	internal sealed class UnmarkedUsages {
 
-		public /* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ UnmarkedUsages(/**/) {
+		public /* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ UnmarkedUsages /**/ () {
 			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 			p.SetValue( "str", 7, null );
 		}
 
-		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ Method(/**/) {
+		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ Method /**/ () {
 			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 			p.SetValue( "str", 7, null );
 		}
 
-		public void/* DangerousMethodsShouldBeAvoided(System.Threading.Tasks.Task.Run) */ AsyncMethod(/**/) {
+		public void/* DangerousMethodsShouldBeAvoided(System.Threading.Tasks.Task.Run) */ AsyncMethod /**/ () {
 			Task.Run<int>( () => Task.FromResult( 7 ) );
 		}
 
@@ -59,7 +59,7 @@ namespace SpecTests {
 			}
 		}
 
-		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ DelegateInsideMethod(/**/) {
+		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ DelegateInsideMethod /**/ () {
 
 			Action hacker = () => {
 				PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
@@ -67,32 +67,32 @@ namespace SpecTests {
 			};
 		}
 
-		public void/* DangerousMethodsShouldBeAvoided(System.Web.Hosting.HostingEnvironment.MapPath) */ MethodWithMapPath(/**/) {
+		public void/* DangerousMethodsShouldBeAvoided(System.Web.Hosting.HostingEnvironment.MapPath) */ MethodWithMapPath /**/ () {
 			System.Web.Hosting.HostingEnvironment.MapPath( "/d2l" );
 		}
 
-		public void/* DangerousMethodsShouldBeAvoided(System.Web.HttpServerUtility.Transfer) */ MethodWithTransfer(/**/) {
+		public void/* DangerousMethodsShouldBeAvoided(System.Web.HttpServerUtility.Transfer) */ MethodWithTransfer /**/ () {
 			HttpServerUtility obj = new HttpServerUtility();
 			obj.Transfer( "/new/path" );
 		}
 
-		public void/* DangerousMethodsShouldBeAvoided(System.Threading.Tasks.TaskFactory.StartNew) */ MethodWithTaskFactoryStartNew(/**/) {
+		public void/* DangerousMethodsShouldBeAvoided(System.Threading.Tasks.TaskFactory.StartNew) */ MethodWithTaskFactoryStartNew /**/ () {
 			System.Threading.Tasks.Task.Factory.StartNew( () => { } );
 		}
 
-		public void/* DangerousMethodsShouldBeAvoided(System.Threading.Tasks.TaskFactory.StartNew) */ MethodWithGenericTaskFactoryStartNew(/**/) {
+		public void/* DangerousMethodsShouldBeAvoided(System.Threading.Tasks.TaskFactory.StartNew) */ MethodWithGenericTaskFactoryStartNew /**/ () {
 			System.Threading.Tasks.Task<int>.Factory.StartNew( () => 1 );
 		}
 
-		public void/* DangerousMethodsShouldBeAvoided(System.Threading.Thread.Sleep) */ MethodWithThreadSleepInt(/**/) {
+		public void/* DangerousMethodsShouldBeAvoided(System.Threading.Thread.Sleep) */ MethodWithThreadSleepInt /**/ () {
 			System.Threading.Thread.Sleep( 1 );
 		}
 
-		public void/* DangerousMethodsShouldBeAvoided(System.Threading.Thread.Sleep) */ MethodWithThreadSleepTimeSpan(/**/) {
+		public void/* DangerousMethodsShouldBeAvoided(System.Threading.Thread.Sleep) */ MethodWithThreadSleepTimeSpan /**/ () {
 			System.Threading.Thread.Sleep( TimeSpan.FromMilliseconds( 1 ) );
 		}
 
-		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ MethodReference(/**/) {
+		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ MethodReference /**/ () {
 			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 			Action<object, object, object[]> setter = p.SetValue;
 		}
@@ -219,42 +219,42 @@ namespace SpecTests {
 	internal sealed class MismatchedAuditedUsages {
 
 		[DangerousMethodUsage.Audited( null, "SetValue" )]
-		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ NullDeclaringType(/**/) {
+		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ NullDeclaringType /**/ () {
 			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 			p.SetValue( "str", 7, null );
 		}
 
 		[DangerousMethodUsage.Audited( typeof( FieldInfo ), "SetValue" )]
-		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ DifferentDeclaringType(/**/) {
+		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ DifferentDeclaringType /**/ () {
 			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 			p.SetValue( "str", 7, null );
 		}
 
 		[DangerousMethodUsage.Audited( typeof( PropertyInfo ), null )]
-		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ NullMethodName(/**/) {
+		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ NullMethodName /**/ () {
 			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 			p.SetValue( "str", 7, null );
 		}
 
 		[DangerousMethodUsage.Audited( typeof( PropertyInfo ), "GetValue" )]
-		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ DifferentMethodName(/**/) {
+		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ DifferentMethodName /**/ () {
 			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 			p.SetValue( "str", 7, null );
 		}
 
 		[DangerousMethodUsage.Audited]
-		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ MissingParameters(/**/) {
+		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ MissingParameters /**/ () {
 			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 			p.SetValue( "str", 7, null );
 		}
 
 		[DangerousMethodUsage.Unaudited( null, "MapPath" )]
-		public void/* DangerousMethodsShouldBeAvoided(System.Web.Hosting.HostingEnvironment.MapPath) */ MethodWithMapPath(/**/) {
+		public void/* DangerousMethodsShouldBeAvoided(System.Web.Hosting.HostingEnvironment.MapPath) */ MethodWithMapPath /**/ () {
 			HostingEnvironment.MapPath( "/d2l" );
 		}
 
 		[DangerousMethodUsage.Unaudited( null, "Transfer" )]
-		public void/* DangerousMethodsShouldBeAvoided(System.Web.HttpServerUtility.Transfer) */ MethodWithTransfer(/**/) {
+		public void/* DangerousMethodsShouldBeAvoided(System.Web.HttpServerUtility.Transfer) */ MethodWithTransfer /**/ () {
 			System.Web.HttpServerUtility obj = new System.Web.HttpServerUtility();
 			obj.Transfer( "/new/path" );
 		}
@@ -263,7 +263,7 @@ namespace SpecTests {
 	internal sealed class UnrelatedAttributes {
 
 		[Objects.Immutable]
-		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ Method(/**/) {
+		public void/* DangerousMethodsShouldBeAvoided(System.Reflection.PropertyInfo.SetValue) */ Method /**/ () {
 			PropertyInfo p = typeof( string ).GetProperty( nameof( string.Length ) );
 			p.SetValue( "str", 7, null );
 		}
