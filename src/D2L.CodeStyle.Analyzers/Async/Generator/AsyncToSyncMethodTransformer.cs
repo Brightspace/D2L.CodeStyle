@@ -105,36 +105,42 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	private ArrowExpressionClauseSyntax? Transform(
 		ArrowExpressionClauseSyntax? body
 	) {
-		if( body == null ) {
+		if( body is null ) {
 			return null;
 		}
 
-		GeneratorError(
-			body.GetLocation(),
-			"ArrowExpressionClauseSyntax is not supported"
-		);
-
-		return body;
+		return body.WithExpression( Transform( body.Expression ) );
 	}
 
 	private BlockSyntax? Transform( BlockSyntax? block ) {
-		if( block == null ) {
+		if( block is null ) {
 			return null;
 		}
 
-		// { throw null; }
-		return SyntaxFactory.Block(
-			SyntaxFactory.ThrowStatement(
-				SyntaxFactory.Token( SyntaxKind.ThrowKeyword )
-					.WithTrailingTrivia( SyntaxFactory.Space ),
-				SyntaxFactory.LiteralExpression(
-					SyntaxKind.NullLiteralExpression,
-					SyntaxFactory.Token( SyntaxKind.NullKeyword )
-				),
-				SyntaxFactory.Token( SyntaxKind.SemicolonToken )
-			)
-		).WithTriviaFrom( block );
+		var transformed = TransformAll( block.Statements, Transform );
+
+		return block.WithStatements( transformed );
 	}
+
+	private StatementSyntax Transform( StatementSyntax stmt )
+		=> stmt switch {
+			ExpressionStatementSyntax exprStmt =>
+				exprStmt.WithExpression( Transform( exprStmt.Expression ) ),
+
+			ReturnStatementSyntax returnStmt =>
+				returnStmt.Expression is null
+				? returnStmt
+				: returnStmt.WithExpression( Transform( returnStmt.Expression ) ),
+
+			_ => UnhandledSyntax( stmt )
+		};
+
+	private ExpressionSyntax Transform( ExpressionSyntax expr )
+		=> expr switch {
+			LiteralExpressionSyntax => expr,
+
+			_ => UnhandledSyntax( expr )
+		};
 
 	private bool IsGenerateSyncAttribute( AttributeSyntax attribute ) {
 		var attributeConstructorSymbol = m_model.GetSymbolInfo( attribute, m_token ).Symbol as IMethodSymbol;
@@ -146,4 +152,14 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		return attributeConstructorSymbol.ContainingType.ToDisplayString()
 			== "D2L.CodeStyle.Annotations.GenerateSyncAttribute";
 	}
+
+	public T UnhandledSyntax<T>( T node ) where T : SyntaxNode {
+		GeneratorError(
+			node.GetLocation(),
+			$"unhandled syntax kind: {node.Kind()}"
+		);
+
+		return node;
+	}
+
 }
