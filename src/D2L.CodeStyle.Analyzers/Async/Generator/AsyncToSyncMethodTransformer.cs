@@ -156,7 +156,8 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 			BinaryExpressionSyntax binExpr => binExpr
 				.WithLeft( Transform( binExpr.Left ) )
-				.WithRight( Transform( binExpr.Right) ),
+				.WithRight( Transform( binExpr.Right ) ),
+
 
 			ConditionalExpressionSyntax condExpr => condExpr
 				.WithCondition( Transform( condExpr.Condition ) )
@@ -166,7 +167,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			DefaultExpressionSyntax => expr,
 
 			ElementAccessExpressionSyntax eaExpr => eaExpr
-				.WithExpression( Transform( eaExpr.Expression) )
+				.WithExpression( Transform( eaExpr.Expression ) )
 				.WithArgumentList( TransformAll( eaExpr.ArgumentList, Transform ) ),
 
 			LiteralExpressionSyntax => expr,
