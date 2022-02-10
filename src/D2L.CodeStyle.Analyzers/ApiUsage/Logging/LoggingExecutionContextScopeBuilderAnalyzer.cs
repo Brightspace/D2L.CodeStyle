@@ -71,7 +71,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Logging {
 			);
 		}
 
-		private void RunInvocationAnalysis(
+		private static void RunInvocationAnalysis(
 			SyntaxNodeAnalysisContext context,
 			IImmutableSet<ISymbol> ILoggingExecutionContextScopeBuilderRunSymbols,
 			INamedTypeSymbol AsyncMethodBuilderAttribute,

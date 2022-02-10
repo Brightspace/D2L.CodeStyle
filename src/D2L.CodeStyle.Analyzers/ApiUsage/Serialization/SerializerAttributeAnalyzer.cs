@@ -60,7 +60,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				);
 		}
 
-		private void AnalyzeAttributeSyntax(
+		private static void AnalyzeAttributeSyntax(
 				SyntaxNodeAnalysisContext context,
 				AttributeSyntax attributeSyntax,
 				INamedTypeSymbol serializerAttributeType,
@@ -111,7 +111,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				);
 		}
 
-		private void ReportInvalidSerializerType(
+		private static void ReportInvalidSerializerType(
 				SyntaxNodeAnalysisContext context,
 				AttributeArgumentSyntax typeArgumentSyntax,
 				string messageArg

@@ -31,7 +31,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			context.RegisterCompilationStartAction( RegisterServiceLocatorAnalyzer );
 		}
 
-		public void RegisterServiceLocatorAnalyzer( CompilationStartAnalysisContext context ) {
+		public static void RegisterServiceLocatorAnalyzer( CompilationStartAnalysisContext context ) {
 
 			ImmutableHashSet<ITypeSymbol> disallowedTypes = GetDisallowedTypes( context.Compilation );
 			if( disallowedTypes.IsEmpty ) {
@@ -103,7 +103,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			);
 		}
 
-		private void AnalyzeMemberUsage(
+		private static void AnalyzeMemberUsage(
 			OperationAnalysisContext context,
 			ISymbol member,
 			TypeRuleSets typeRules
@@ -123,7 +123,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			);
 		}
 
-		private void AnalyzeTypeUsage(
+		private static void AnalyzeTypeUsage(
 			SymbolAnalysisContext context,
 			ITypeSymbol type,
 			TypeRuleSets typeRules
@@ -143,7 +143,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			);
 		}
 
-		private bool HasExemption(
+		private static bool HasExemption(
 				ISymbol symbol,
 				TypeRuleSets typeRules
 			) {
@@ -163,7 +163,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			return false;
 		}
 
-		private ImmutableHashSet<ITypeSymbol> GetDisallowedTypes( Compilation compilation ) {
+		private static ImmutableHashSet<ITypeSymbol> GetDisallowedTypes( Compilation compilation ) {
 
 			var builder = ImmutableHashSet.CreateBuilder<ITypeSymbol>( SymbolEqualityComparer.Default );
 

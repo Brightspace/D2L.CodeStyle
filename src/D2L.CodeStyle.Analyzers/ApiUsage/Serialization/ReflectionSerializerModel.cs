@@ -18,7 +18,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			m_reflectionSerializerAttributeType = reflectionSerializerAttributeType;
 		}
 
-		public ImmutableArray<IMethodSymbol> GetOrderedPublicInstanceConstructors( INamedTypeSymbol type ) {
+		public static ImmutableArray<IMethodSymbol> GetOrderedPublicInstanceConstructors( INamedTypeSymbol type ) {
 
 			var builder = ImmutableArray.CreateBuilder<IMethodSymbol>();
 
@@ -105,7 +105,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			return HasAttributeOfType( symbol, m_reflectionSerializerAttributeType, out attribute );
 		}
 
-		private bool HasAttributeOfType(
+		private static bool HasAttributeOfType(
 				ISymbol symbol,
 				INamedTypeSymbol type,
 				[NotNullWhen( true )] out AttributeData? attributeData

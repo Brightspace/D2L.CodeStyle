@@ -36,7 +36,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DataRecordConverters {
 				);
 		}
 
-		private void AnalyzeGenericName(
+		private static void AnalyzeGenericName(
 				SyntaxNodeAnalysisContext context,
 				INamedTypeSymbol interfaceBinderType,
 				GenericNameSyntax genericName

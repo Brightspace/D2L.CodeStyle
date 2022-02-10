@@ -420,6 +420,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					typeArguments = namedType.TypeArguments;
 					return true;
 				default:
+					typeParameters = default;
+					typeArguments = default;
 					return false;
 			}
 		}

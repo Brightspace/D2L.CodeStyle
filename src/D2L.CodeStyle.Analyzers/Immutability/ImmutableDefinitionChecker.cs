@@ -594,7 +594,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		/// Return info about a property, wether its the classic kind or one
 		/// from a concise record declaration.
 		/// </summary>
-		private (
+		private static (
 			TypeSyntax TypeSyntax,
 			SyntaxToken Identifier,
 			ExpressionSyntax Initializer,

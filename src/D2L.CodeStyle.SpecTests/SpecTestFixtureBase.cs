@@ -88,7 +88,7 @@ namespace D2L.CodeStyle.SpecTests {
 
 			var header = root
 				.GetLeadingTrivia()
-				.First( t => t.Kind() == SyntaxKind.SingleLineCommentTrivia );
+				.First( t => t.IsKind( SyntaxKind.SingleLineCommentTrivia ) );
 
 			Assert.NotNull( header, "There must be a single-line comment at the start of the file of the form \"analyzer: <type of analyzer to use in this spec>\"." );
 
@@ -245,7 +245,7 @@ namespace D2L.CodeStyle.SpecTests {
 
 			var multilineComments = root
 				.DescendantTrivia()
-				.Where( c => c.Kind() == SyntaxKind.MultiLineCommentTrivia );
+				.Where( c => c.IsKind( SyntaxKind.MultiLineCommentTrivia ) );
 
 			var commentPairs = GroupCommentsIntoAdjacentPairs(
 				multilineComments

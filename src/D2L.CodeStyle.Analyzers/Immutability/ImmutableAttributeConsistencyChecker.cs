@@ -14,9 +14,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		internal delegate void DiagnosticSink( Diagnostic diagnostic );
 
 		private static readonly ImmutableDictionary<string, string> FixArgs = new Dictionary<string, string> {
-			{ AddAttributeCodeFix.USING_STATIC_ARG, "true" },
-			{ AddAttributeCodeFix.USING_NAMESPACE_ARG, "D2L.CodeStyle.Annotations.Objects" },
-			{ AddAttributeCodeFix.ATTRIBUTE_NAME_ARG, "Immutable" }
+			{ AddAttributeCodeFixArgs.UsingStatic, "true" },
+			{ AddAttributeCodeFixArgs.UsingNamespace, "D2L.CodeStyle.Annotations.Objects" },
+			{ AddAttributeCodeFixArgs.AttributeName, "Immutable" }
 		}.ToImmutableDictionary();
 
 		private readonly Compilation m_compilation;

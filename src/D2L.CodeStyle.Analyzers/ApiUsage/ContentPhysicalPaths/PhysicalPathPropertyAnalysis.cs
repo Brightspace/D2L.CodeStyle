@@ -80,7 +80,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ContentPhysicalPaths {
 			ReportDiagnostic( context, propertySymbol, DiagnosticDescriptor );
 		}
 
-		private bool IsDangerousMemberSymbol(
+		private static bool IsDangerousMemberSymbol(
 				ISymbol memberSymbol,
 				IImmutableSet<ISymbol> dangerousMembers
 			) {
@@ -116,7 +116,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ContentPhysicalPaths {
 			return false;
 		}
 
-		private void ReportDiagnostic(
+		private static void ReportDiagnostic(
 				SyntaxNodeAnalysisContext context,
 				ISymbol memberSymbol,
 				DiagnosticDescriptor diagnosticDescriptor

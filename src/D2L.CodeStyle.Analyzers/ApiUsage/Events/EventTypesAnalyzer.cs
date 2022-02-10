@@ -50,7 +50,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				);
 		}
 
-		private void AnalyzeClassDeclaration(
+		private static void AnalyzeClassDeclaration(
 				SyntaxNodeAnalysisContext context,
 				ClassDeclarationSyntax declaration,
 				INamedTypeSymbol eventAttributeType,
