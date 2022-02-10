@@ -31,14 +31,14 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 
 		public override async Task RegisterCodeFixesAsync(
-			CodeFixContext ctx
+			CodeFixContext context
 		) {
-			var root = await ctx.Document
-				.GetSyntaxRootAsync( ctx.CancellationToken )
+			var root = await context.Document
+				.GetSyntaxRootAsync( context.CancellationToken )
 				.ConfigureAwait( false );
 
-			foreach( var diagnostic in ctx.Diagnostics ) {
-				var args = GetArgs( root, ctx.Span );
+			foreach( var diagnostic in context.Diagnostics ) {
+				var args = GetArgs( root, context.Span );
 
 				// The analyzer stored the names to add to arguments in the
 				// diagnostic.
@@ -48,12 +48,12 @@ namespace D2L.CodeStyle.Analyzers.Language {
 						kvp => kvp.Value
 					);
 
-				ctx.RegisterCodeFix(
+				context.RegisterCodeFix(
 					CodeAction.Create(
 						title: "Use named arguments",
 						createChangedDocument: ct =>
 							UseNamedArgs(
-								ctx.Document,
+								context.Document,
 								root,
 								args,
 								paramNames,

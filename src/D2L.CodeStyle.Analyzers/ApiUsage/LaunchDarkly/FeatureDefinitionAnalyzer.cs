@@ -44,7 +44,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly {
 				);
 		}
 
-		private void AnalyzeSimpleBaseType(
+		private static void AnalyzeSimpleBaseType(
 				SyntaxNodeAnalysisContext context,
 				INamedTypeSymbol featureDefinitionType
 			) {

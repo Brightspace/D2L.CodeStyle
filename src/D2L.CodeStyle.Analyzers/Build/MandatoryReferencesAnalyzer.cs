@@ -12,10 +12,10 @@ namespace D2L.CodeStyle.Analyzers.Build {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
 			ImmutableArray.Create( Diagnostics.MustReferenceAnnotations );
 
-		public override void Initialize( AnalysisContext ctx ) {
-			ctx.EnableConcurrentExecution();
-			ctx.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics );
-			ctx.RegisterCompilationAction( AnalyzeCompilation );
+		public override void Initialize( AnalysisContext context ) {
+			context.EnableConcurrentExecution();
+			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics );
+			context.RegisterCompilationAction( AnalyzeCompilation );
 		}
 
 		public static void AnalyzeCompilation(

@@ -50,7 +50,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 			);
 		}
 
-		private void AnalyzeAttribute(
+		private static void AnalyzeAttribute(
 			SyntaxNodeAnalysisContext context,
 			INamedTypeSymbol jsonParamBinderT,
 			AllowedTypeList allowedList

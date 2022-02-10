@@ -43,7 +43,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 			);
 		}
 
-		private void ConfigViewerInvocationAnalysis(
+		private static void ConfigViewerInvocationAnalysis(
 			OperationAnalysisContext context,
 			IReadOnlyDictionary<IMethodSymbol, IReadOnlyDictionary<string, string>> bannedConfigs,
 			IInvocationOperation invocationOperation
@@ -83,7 +83,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 			);
 		}
 
-		private bool TryGetConfigNameArgumentFromInvocation(
+		private static bool TryGetConfigNameArgumentFromInvocation(
 			IInvocationOperation invocationSyntax,
 			[NotNullWhen( true )] out IOperation? configNameArg
 		) {
@@ -101,7 +101,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 			return false;
 		}
 
-		private bool TryGetConfigNameFromInvocation(
+		private static bool TryGetConfigNameFromInvocation(
 			IOperation configNameArg,
 			[NotNullWhen( true )] out string? configName
 		) {
@@ -121,7 +121,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 			return true;
 		}
 
-		private void ReportDiagnostic(
+		private static void ReportDiagnostic(
 			OperationAnalysisContext context,
 			IOperation configNameArg,
 			string configName,
@@ -137,7 +137,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Configs {
 			);
 		}
 
-		private IReadOnlyDictionary<IMethodSymbol, IReadOnlyDictionary<string, string>> GetBannedConfigs(
+		private static IReadOnlyDictionary<IMethodSymbol, IReadOnlyDictionary<string, string>> GetBannedConfigs(
 			INamedTypeSymbol IConfigViewer
 		) {
 			var builder = ImmutableDictionary.CreateBuilder<

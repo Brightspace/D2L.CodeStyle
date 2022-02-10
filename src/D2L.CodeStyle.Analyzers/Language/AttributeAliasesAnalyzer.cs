@@ -27,7 +27,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				);
 		}
 
-		private void AnalyzeAttribute(
+		private static void AnalyzeAttribute(
 				SyntaxNodeAnalysisContext context,
 				AttributeSyntax attribute
 			) {
@@ -78,7 +78,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			return equivalent;
 		}
 
-		private IEnumerable<IdentifierNameSyntax> GetUsingAliases(
+		private static IEnumerable<IdentifierNameSyntax> GetUsingAliases(
 				AttributeSyntax attribute,
 				CancellationToken cancellationToken
 			) {

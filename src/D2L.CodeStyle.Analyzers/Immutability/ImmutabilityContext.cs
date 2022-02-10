@@ -96,7 +96,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			if ( query.Kind == ImmutableTypeKind.None ) {
 				throw new ArgumentException(
 					"ImmutabilityKind.None is not a valid question to ask this function",
-					nameof( query.Kind )
+					nameof( query )
 				);
 			}
 

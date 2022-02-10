@@ -28,8 +28,8 @@ namespace D2L.CodeStyle.Analyzers.Async {
 		);
 
 		private static readonly ImmutableDictionary<string, string> FixArgs = new Dictionary<string, string>() {
-			{ AddAttributeCodeFix.USING_NAMESPACE_ARG, "D2L.CodeStyle.Annotations" },
-			{ AddAttributeCodeFix.ATTRIBUTE_NAME_ARG, "Blocking" }
+			{ AddAttributeCodeFixArgs.UsingNamespace, "D2L.CodeStyle.Annotations" },
+			{ AddAttributeCodeFixArgs.AttributeName, "Blocking" }
 		}.ToImmutableDictionary();
 
 		public override void Initialize( AnalysisContext context ) {

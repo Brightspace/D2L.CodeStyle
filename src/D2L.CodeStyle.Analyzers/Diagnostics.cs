@@ -1,6 +1,13 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers {
+
+	[SuppressMessage(
+		category: "Naming",
+		checkId: "CA1707",
+		Justification = "Happy to have underscores here for ease of understanding."
+	)]
 	public static class Diagnostics {
 		// Retired:
 		// D2L0002 (UnsafeStatic): "Ensure that static field is safe in undifferentiated servers."
@@ -239,7 +246,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor IncludeDefaultValueInOverrideForReadability = new DiagnosticDescriptor(
 			id: "D2L0047",
-			title: "The parameter {0} has a default value in {1}, but not here. This causes inconsistent behaviour and reduces readability. Please repeat the default value here explicitly",
+			title: "The parameter {0} has a default value in {1}, but not here",
 			messageFormat: "The parameter {0} has a default value in {1}, but not here. This causes inconsistent behaviour and reduces readability. Please repeat the default value here explicitly.",
 			category: "Language",
 			defaultSeverity: DiagnosticSeverity.Error,
@@ -249,8 +256,8 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor DontIntroduceNewDefaultValuesInOverrides = new DiagnosticDescriptor(
 			id: "D2L0048",
-			title: "The parameter {0} does not have a default value in the original version of this method in {1}, but does here. This causes inconsistent behaviour. Please remove the default (or add it everywhere.)",
-			messageFormat: "The parameter {0} does not have a default value in the original version of this method in {1}, but does here. This causes inconsistent behaviour. Please remove the default (or add it everywhere.)",
+			title: "The parameter {0} does not have a default value in the original version of this method in {1}, but does here",
+			messageFormat: "The parameter {0} does not have a default value in the original version of this method in {1}, but does here. This causes inconsistent behaviour. Please remove the default (or add it everywhere).",
 			category: "Language",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
@@ -259,7 +266,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor DefaultValuesInOverridesShouldBeConsistent = new DiagnosticDescriptor(
 			id: "D2L0049",
-			title: "The parameter {0} has a default value of {1} here, but {2} in its original definition in {3}. This causes inconsistent behaviour. Please use the same defualt value everywhere.",
+			title: "The parameter {0} has a default value of {1} here, but {2} in its original definition in {3}",
 			messageFormat: "The parameter {0} has a default value of {1} here, but {2} in its original definition in {3}. This causes inconsistent behaviour. Please use the same defualt value everywhere.",
 			category: "Language",
 			defaultSeverity: DiagnosticSeverity.Error,
@@ -279,12 +286,12 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor BannedConfig = new DiagnosticDescriptor(
 			id: "D2L0051",
-			title: "Fetching the config variable \"{0}\" has been deprecated. {1}",
-			messageFormat: "Fetching the config variable \"{0}\" has been deprecated. {1}",
+			title: "Fetching the config variable \"{0}\" has been deprecated",
+			messageFormat: "Fetching the config variable \"{0}\" has been deprecated. {1}.",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
-			description: "Fetching the config variable \"{0}\" has been deprecated. {1}"
+			description: "Fetching the config variable \"{0}\" has been deprecated. {1}."
 		);
 
 		public static readonly DiagnosticDescriptor ContentPhysicalPathUsages = new DiagnosticDescriptor(
@@ -690,8 +697,8 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor GenericGeneratorError = new DiagnosticDescriptor(
 			id: "D2L0095",
-			title: "A source generator encountered an unexpected situation. This is a bug in D2L.CodeStyle.Analyzers.",
-			messageFormat: "The source generator {0} encountered an unexpected situation: {1}",
+			title: "A source generator encountered an unexpected situation",
+			messageFormat: "The source generator {0} encountered an unexpected situation. This is a bug in D2L.CodeStyle.Analyzers: {1}.",
 			category: "Generators",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
@@ -709,7 +716,7 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor ExpectedAsyncSuffix = new DiagnosticDescriptor(
 			id: "D2L0097",
 			title: "Expected method name to have an -Async suffix",
-			messageFormat: "The method {0} does not have an -Async suffix, so we can't generate an idiomatic sync alternative method.",
+			messageFormat: "The method {0} does not have an -Async suffix, so we can't generate an idiomatic sync alternative method",
 			category: "Async",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true

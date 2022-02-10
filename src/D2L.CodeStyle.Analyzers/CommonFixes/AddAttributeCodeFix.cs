@@ -27,9 +27,6 @@ namespace D2L.CodeStyle.Analyzers.CommonFixes {
 		Name = nameof( AddAttributeCodeFix )
 	)]
 	public sealed class AddAttributeCodeFix : CodeFixProvider {
-		public const string USING_STATIC_ARG = "UsingStatic";
-		public const string USING_NAMESPACE_ARG = "Using";
-		public const string ATTRIBUTE_NAME_ARG = "Attr";
 
 		public override ImmutableArray<string> FixableDiagnosticIds
 			=> ImmutableArray.Create(
@@ -206,12 +203,12 @@ namespace D2L.CodeStyle.Analyzers.CommonFixes {
 		) {
 			bool usingStatic = false;
 
-			if ( properties.ContainsKey( USING_STATIC_ARG ) ) {
-				usingStatic = bool.Parse( properties[USING_STATIC_ARG] );
+			if ( properties.ContainsKey( AddAttributeCodeFixArgs.UsingStatic ) ) {
+				usingStatic = bool.Parse( properties[ AddAttributeCodeFixArgs.UsingStatic ] );
 			}
 
-			string usingNs = properties[USING_NAMESPACE_ARG];
-			string attrName = properties[ATTRIBUTE_NAME_ARG];
+			string usingNs = properties[ AddAttributeCodeFixArgs.UsingNamespace ];
+			string attrName = properties[ AddAttributeCodeFixArgs.AttributeName ];
 
 			return (usingStatic, usingNs, attrName);
 		}
