@@ -27,20 +27,20 @@ namespace SpecTests {
 
 	internal sealed class UnmarkedUsages {
 
-		public int /* DangerousPropertiesShouldBeAvoided(System.Net.ServicePointManager.DefaultConnectionLimit) */ UnmarkedStaticGetUsage(/**/) {
+		public int /* DangerousPropertiesShouldBeAvoided(System.Net.ServicePointManager.DefaultConnectionLimit) */ UnmarkedStaticGetUsage /**/ () {
 			return ServicePointManager.DefaultConnectionLimit;
 		}
 
-		public void /* DangerousPropertiesShouldBeAvoided(System.Net.ServicePointManager.DefaultConnectionLimit) */ UnmarkedStaticSetUsage(/**/) {
+		public void /* DangerousPropertiesShouldBeAvoided(System.Net.ServicePointManager.DefaultConnectionLimit) */ UnmarkedStaticSetUsage /**/ () {
 			ServicePointManager.DefaultConnectionLimit = 7;
 		}
 
-		public IHttpHandler /* DangerousPropertiesShouldBeAvoided(System.Web.HttpContext.Handler) */ UnmarkedInstanceGetUsage(/**/) {
+		public IHttpHandler /* DangerousPropertiesShouldBeAvoided(System.Web.HttpContext.Handler) */ UnmarkedInstanceGetUsage /**/ () {
 			HttpContext context = new HttpContext();
 			return context.Handler;
 		}
 
-		public void /* DangerousPropertiesShouldBeAvoided(System.Web.HttpContext.Handler) */ UnmarkedInstanceSetUsage(/**/) {
+		public void /* DangerousPropertiesShouldBeAvoided(System.Web.HttpContext.Handler) */ UnmarkedInstanceSetUsage /**/ () {
 			HttpContext context = new HttpContext();
 			context.Handler = null;
 		}
@@ -99,27 +99,27 @@ namespace SpecTests {
 	internal sealed class MismatchedAuditedUsages {
 
 		[DangerousPropertyUsage.Audited( null, "DefaultConnectionLimit" )]
-		public int /* DangerousPropertiesShouldBeAvoided(System.Net.ServicePointManager.DefaultConnectionLimit) */ NullDeclaringType(/**/) {
+		public int /* DangerousPropertiesShouldBeAvoided(System.Net.ServicePointManager.DefaultConnectionLimit) */ NullDeclaringType /**/ () {
 			return ServicePointManager.DefaultConnectionLimit;
 		}
 
 		[DangerousPropertyUsage.Audited( typeof( string ), "DefaultConnectionLimit" )]
-		public int /* DangerousPropertiesShouldBeAvoided(System.Net.ServicePointManager.DefaultConnectionLimit) */ DifferentDeclaringType(/**/) {
+		public int /* DangerousPropertiesShouldBeAvoided(System.Net.ServicePointManager.DefaultConnectionLimit) */ DifferentDeclaringType /**/ () {
 			return ServicePointManager.DefaultConnectionLimit;
 		}
 
 		[DangerousPropertyUsage.Audited( typeof( ServicePointManager ), null )]
-		public int /* DangerousPropertiesShouldBeAvoided(System.Net.ServicePointManager.DefaultConnectionLimit) */ NullPropertyName(/**/) {
+		public int /* DangerousPropertiesShouldBeAvoided(System.Net.ServicePointManager.DefaultConnectionLimit) */ NullPropertyName /**/ () {
 			return ServicePointManager.DefaultConnectionLimit;
 		}
 
 		[DangerousPropertyUsage.Audited( typeof( ServicePointManager ), "Wacky" )]
-		public int /* DangerousPropertiesShouldBeAvoided(System.Net.ServicePointManager.DefaultConnectionLimit) */ DifferentPropertyName(/**/) {
+		public int /* DangerousPropertiesShouldBeAvoided(System.Net.ServicePointManager.DefaultConnectionLimit) */ DifferentPropertyName /**/ () {
 			return ServicePointManager.DefaultConnectionLimit;
 		}
 
 		[DangerousPropertyUsage.Audited]
-		public int /* DangerousPropertiesShouldBeAvoided(System.Net.ServicePointManager.DefaultConnectionLimit) */ MissingParameters(/**/) {
+		public int /* DangerousPropertiesShouldBeAvoided(System.Net.ServicePointManager.DefaultConnectionLimit) */ MissingParameters /**/ () {
 			return ServicePointManager.DefaultConnectionLimit;
 		}
 	}
@@ -127,7 +127,7 @@ namespace SpecTests {
 	internal sealed class UnrelatedAttributes {
 
 		[ImmutableAttribute]
-		public int /* DangerousPropertiesShouldBeAvoided(System.Net.ServicePointManager.DefaultConnectionLimit) */ Method(/**/) {
+		public int /* DangerousPropertiesShouldBeAvoided(System.Net.ServicePointManager.DefaultConnectionLimit) */ Method /**/ () {
 			return ServicePointManager.DefaultConnectionLimit;
 		}
 	}

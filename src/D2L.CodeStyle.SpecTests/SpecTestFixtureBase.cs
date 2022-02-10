@@ -31,14 +31,15 @@ namespace D2L.CodeStyle.SpecTests {
 
 			var analyzer = GetAnalyzerNameFromSpec( m_test.Source );
 
-			Compilation compilation = await GetCompilationForSourceAsync( m_test.Name, m_test.Source, m_test.MetadataReferences );
+			SourceText sourceText = SourceText.From( m_test.Source, Encoding.UTF8 );
+			Compilation compilation = await GetCompilationForSourceAsync( m_test.Name, sourceText, m_test.MetadataReferences );
 			CompilationUnitSyntax compilationUnit = (CompilationUnitSyntax)compilation.SyntaxTrees.First().GetRoot();
 
 			m_actualDiagnostics = ( await GetActualDiagnosticsAsync( compilation, analyzer, m_test.AdditionalFiles ) )
 				.Select( PrettyDiagnostic.Create )
 				.ToImmutableArray();
 
-			m_expectedDiagnostics = GetExpectedDiagnostics( compilationUnit, m_test.DiagnosticDescriptors )
+			m_expectedDiagnostics = GetExpectedDiagnostics( compilationUnit, m_test.DiagnosticDescriptors, sourceText )
 				.Select( PrettyDiagnostic.Create )
 				.ToImmutableArray();
 
@@ -237,7 +238,8 @@ namespace D2L.CodeStyle.SpecTests {
 
 		private static IEnumerable<Diagnostic> GetExpectedDiagnostics(
 			CompilationUnitSyntax root,
-			ImmutableDictionary<string, DiagnosticDescriptor> diagnosticDescriptors
+			ImmutableDictionary<string, DiagnosticDescriptor> diagnosticDescriptors,
+			SourceText sourceText
 		) {
 
 			var multilineComments = root
@@ -263,22 +265,29 @@ namespace D2L.CodeStyle.SpecTests {
 
 					}
 
-					// The diagnostic must be between the two delimiting comments,
-					// with one leading and trailing space inside the delimiters.
+					// The diagnostic must be between the two delimiting comments.
 					// i.e.    /* Foo */ abcdef hijklmno pqr /**/
 					//                   -------------------
 					//                      ^ expected Foo diagnostic
-					//
-					// TODO: it would be nice to do fuzzier matching (e.g. ignore
-					// leading and trailing whitespace inside delimiters.) 
-					var diagStart = start.Trivia.GetLocation().SourceSpan.End + 1;
-					var diagEnd = end.Trivia.GetLocation().SourceSpan.Start - 1;
-					Assert.Less( diagStart, diagEnd );
-					var diagSpan = TextSpan.FromBounds( diagStart, diagEnd );
+					var searchStart = start.Trivia.Span.End;
+					var searchEnd = end.Trivia.Span.Start;
+					Assert.Less( searchStart, searchEnd );
+
+					string source = sourceText.GetSubText(
+						TextSpan.FromBounds( searchStart, searchEnd )
+					).ToString();
+
+					int leadingPadding = source.TakeWhile( char.IsWhiteSpace ).Count();
+					int trailingPadding = source.Reverse().TakeWhile( char.IsWhiteSpace ).Count();
+
+					TextSpan finalSpan = TextSpan.FromBounds(
+						searchStart + leadingPadding,
+						searchEnd - trailingPadding
+					);
 
 					yield return Diagnostic.Create(
 						descriptor: descriptor,
-						location: Location.Create( root.SyntaxTree, diagSpan ),
+						location: Location.Create( root.SyntaxTree, finalSpan ),
 						messageArgs: diagnosticExpectation.Arguments.ToArray()
 					);
 				}
@@ -287,7 +296,7 @@ namespace D2L.CodeStyle.SpecTests {
 
 		private static Task<Compilation> GetCompilationForSourceAsync(
 			string specName,
-			string source,
+			SourceText source,
 			ImmutableArray<MetadataReference> metadataReferences
 		) {
 			var projectId = ProjectId.CreateNewId( debugName: specName );
@@ -297,7 +306,7 @@ namespace D2L.CodeStyle.SpecTests {
 			var solution = new AdhocWorkspace().CurrentSolution
 				.AddProject( projectId, specName, specName, LanguageNames.CSharp )
 				.AddMetadataReferences( projectId, metadataReferences )
-				.AddDocument( documentId, filename, SourceText.From( source ) );
+				.AddDocument( documentId, filename, source );
 
 			var compilationOptions = solution
 				.GetProject( projectId )
