@@ -39,59 +39,83 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 	}
 
 	[Test]
-	public void Silly() {
+	public void Await() {
+		var actual = Transform( @"[GenerateSync] async Task<int> HelloAsync() { return await q; }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] int Hello() { return q; }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void AwaitIdentifier() {
+		var actual = Transform( @"[GenerateSync] async Task HelloAsync() { await q; }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Hello() { ; }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+		public void Silly() {
 		var actual = Transform( @"[GenerateSync]
-async Task<int> HelloAsync( int[] q ) {
-	if( 6 == (7 - 1)*2 ) {
-		return sizeof( ""hello"" );
-	} else if( this[0]++ == ++this[1] ) {
-		throw new NotImplementedException( ""foo"" );
-	} else return 8;
+async Task<int> HelloAsync() {
+	if( (await q) == (7 - (await q))*2 ) {
+		return sizeof( int );
+	} else if( this[0]++ == ++this[await q] ) {
+		throw new NotImplementedException( await q );
+		throw new X{ Y = await q };
+	} else return await q;
 
 	{
 		{
-			{ ;;; }
+			{ ;;; q; }
 		}
 	}
 
 	goto lol;
 
 	do {
-		while( true ) {
+		while( await q ) {
 			continue;
 			lol: break;
 		}
-	} while( false );
+	} while( await q );
 
-	this = this;
+	this = await q;
+
+	await q;
 
 	return 123;
 }" );
 
 		var expected = @"[Blocking]
-int Hello( int[] q ) {
-	if( 6 == (7 - 1)*2 ) {
-		return sizeof( ""hello"" );
-	} else if( this[0]++ == ++this[1] ) {
-		throw new NotImplementedException( ""foo"" );
-	} else return 8;
+int Hello() {
+	if( (q) == (7 - (q))*2 ) {
+		return sizeof( int );
+	} else if( this[0]++ == ++this[q] ) {
+		throw new NotImplementedException( q );
+		throw new X{ Y = q };
+	} else return q;
 
 	{
 		{
-			{ ;;; }
+			{ ;;; q; }
 		}
 	}
 
 	goto lol;
 
 	do {
-		while( true ) {
+		while( q ) {
 			continue;
 			lol: break;
 		}
-	} while( false );
+	} while( q );
 
-	this = this;
+	this = q;
+
+	;
 
 	return 123;
 }";
