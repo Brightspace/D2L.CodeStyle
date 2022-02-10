@@ -468,14 +468,12 @@ namespace D2L.CodeStyle.SpecTests {
 
 				// Draw indicator(s) below source lines
 				WriteLineNumberPadding();
-
-				int[] lastLineIndicatorPositions = Lines.Length > 1
-					? new[] { LinePosition.End.Character - 1 }
-					: new[] { LinePosition.Start.Character, LinePosition.End.Character - 1 };
 				WriteBlankLineWithIndicatorsInPosition(
 					Lines.Last(),
 					'↑',
-					lastLineIndicatorPositions
+					Lines.Length > 1
+						? new[] { LinePosition.End.Character - 1 }
+						: new[] { LinePosition.Start.Character, LinePosition.End.Character - 1 }
 				);
 			}
 
