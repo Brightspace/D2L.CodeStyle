@@ -125,7 +125,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	private StatementSyntax Transform( StatementSyntax stmt )
 		=> stmt switch {
 			ExpressionStatementSyntax exprStmt =>
-				exprStmt.WithExpression( Transform( exprStmt.Expression) ),
+				exprStmt.WithExpression( Transform( exprStmt.Expression ) ),
 
 			ReturnStatementSyntax returnStmt =>
 				returnStmt.Expression is null
