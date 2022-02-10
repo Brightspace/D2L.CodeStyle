@@ -136,22 +136,22 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				SyntaxKind.LocalFunctionStatement
 			);
 
-			context.RegisterSyntaxNodeAction(
+			context.RegisterSymbolAction(
 				ctx => AnalyzeConflictingImmutabilityOnTypeParameters(
 					ctx,
+					(INamedTypeSymbol)ctx.Symbol,
 					annotationsContext
 				),
-				SyntaxKind.TypeParameter
+				SymbolKind.NamedType
 			);
 
-			context.RegisterSyntaxNodeAction(
+			context.RegisterSymbolAction(
 				ctx => AnalyzeConflictingImmutabilityOnMember(
 					ctx,
+					(INamedTypeSymbol)ctx.Symbol,
 					annotationsContext
 				),
-				SyntaxKind.ClassDeclaration,
-				SyntaxKind.InterfaceDeclaration,
-				SyntaxKind.StructDeclaration
+				SymbolKind.NamedType
 			);
 		}
 
@@ -325,48 +325,45 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		}
 
 		private static void AnalyzeConflictingImmutabilityOnTypeParameters(
-			SyntaxNodeAnalysisContext ctx,
+			SymbolAnalysisContext ctx,
+			INamedTypeSymbol namedTypeSymbol,
 			AnnotationsContext annotationsContext
 		) {
-			// Get the symbol for the parameter
-			if( ctx.SemanticModel.GetDeclaredSymbol( ctx.Node, ctx.CancellationToken ) is not ITypeParameterSymbol symbol ) {
-				return;
-			}
-
-			// Check if the parameter has both the [Immutable] and the [OnlyIf] attributes
-			if( !annotationsContext.Objects.Immutable.IsDefined( symbol )
-				|| !annotationsContext.Objects.OnlyIf.IsDefined( symbol )
-			) {
-				return;
-			}
-
-			// Create the diagnostic on the parameter (excluding the attribute)
-			ctx.ReportDiagnostic(
-				Diagnostics.ConflictingImmutability,
-				symbol.DeclaringSyntaxReferences[ 0 ].GetSyntax( ctx.CancellationToken ).GetLastToken().GetLocation(),
-				messageArgs: new[] {
-					"Immutable",
-					"ConditionallyImmutable.OnlyIf",
-					symbol.Kind.ToString().ToLower()
+			foreach( var parameter in namedTypeSymbol.TypeParameters ) {
+				// Check if the parameter has both the [Immutable] and the [OnlyIf] attributes
+				if( !annotationsContext.Objects.Immutable.IsDefined( parameter )
+					|| !annotationsContext.Objects.OnlyIf.IsDefined( parameter )
+				) {
+					return;
 				}
-			);
+
+				// Create the diagnostic on the parameter (excluding the attribute)
+				ctx.ReportDiagnostic(
+					Diagnostics.ConflictingImmutability,
+					parameter.Locations[0],
+					messageArgs: new[] {
+						"Immutable",
+						"ConditionallyImmutable.OnlyIf",
+						"typeparameter"
+					}
+				);
+			}
 		}
 
 		private static void AnalyzeConflictingImmutabilityOnMember(
-			SyntaxNodeAnalysisContext ctx,
+			SymbolAnalysisContext ctx,
+			INamedTypeSymbol symbol,
 			AnnotationsContext annotationsContext
 		) {
-
-			// Ensure syntax is expected and get the symbol
-			if( ctx.Node is not TypeDeclarationSyntax syntax ) {
-				return;
-			}
-			var symbol = ctx.SemanticModel.GetDeclaredSymbol( syntax, ctx.CancellationToken );
-
 			// Get information about immutability
 			bool hasImmutable = annotationsContext.Objects.Immutable.IsDefined( symbol );
 			bool hasConditionallyImmutable = annotationsContext.Objects.ConditionallyImmutable.IsDefined( symbol );
 			bool hasImmutableBase = annotationsContext.Objects.ImmutableBaseClass.IsDefined( symbol );
+
+			TypeDeclarationSyntax syntax = null;
+			TypeDeclarationSyntax GetSyntax() {
+				return syntax ??= (TypeDeclarationSyntax)symbol.DeclaringSyntaxReferences[ 0 ].GetSyntax( ctx.CancellationToken );
+			}
 
 			// Check if there are conflicting immutability attributes
 			if( hasImmutable && hasConditionallyImmutable ) {
@@ -374,11 +371,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// so create a diagnostic
 				ctx.ReportDiagnostic(
 					Diagnostics.ConflictingImmutability,
-					syntax.Identifier.GetLocation(),
+					GetSyntax().Identifier.GetLocation(),
 					messageArgs: new object[] {
 						"Immutable",
 						"ConditionallyImmutable",
-						syntax.Keyword
+						GetSyntax().Keyword
 					}
 				);
 			}
@@ -387,11 +384,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// so create a diagnostic
 				ctx.ReportDiagnostic(
 					Diagnostics.ConflictingImmutability,
-					syntax.Identifier.GetLocation(),
+					GetSyntax().Identifier.GetLocation(),
 					messageArgs: new object[] {
 						"Immutable",
 						"ImmutableBaseClassAttribute",
-						syntax.Keyword
+						GetSyntax().Keyword
 					}
 				);
 			}
@@ -400,11 +397,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// so create a diagnostic
 				ctx.ReportDiagnostic(
 					Diagnostics.ConflictingImmutability,
-					syntax.Identifier.GetLocation(),
+					GetSyntax().Identifier.GetLocation(),
 					messageArgs: new object[] {
 						"ConditionallyImmutable",
 						"ImmutableBaseClassAttribute",
-						syntax.Keyword
+						GetSyntax().Keyword
 					}
 				 );
 			}
