@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -36,11 +37,11 @@ namespace D2L.CodeStyle.SpecTests {
 			CompilationUnitSyntax compilationUnit = (CompilationUnitSyntax)compilation.SyntaxTrees.First().GetRoot();
 
 			m_actualDiagnostics = ( await GetActualDiagnosticsAsync( compilation, analyzer, m_test.AdditionalFiles ) )
-				.Select( PrettyDiagnostic.Create )
+				.Select( d => PrettyDiagnostic.Create( d, sourceText )  )
 				.ToImmutableArray();
 
 			m_expectedDiagnostics = GetExpectedDiagnostics( compilationUnit, m_test.DiagnosticDescriptors, sourceText )
-				.Select( PrettyDiagnostic.Create )
+				.Select( d => PrettyDiagnostic.Create( d, sourceText ) )
 				.ToImmutableArray();
 
 			m_matchedDiagnostics = m_actualDiagnostics
@@ -327,11 +328,49 @@ namespace D2L.CodeStyle.SpecTests {
 			return solution.Projects.First().GetCompilationAsync();
 		}
 
-		private sealed record PrettyDiagnostic(
-			string Id,
-			LinePositionSpan LinePosition,
-			string Message
-		) {
+		private sealed class PrettyDiagnostic {
+
+			internal readonly record struct Line(
+				int LineNumber,
+				string Text
+			);
+
+			private PrettyDiagnostic(
+				string id,
+				LinePositionSpan linePosition,
+				string message,
+				ImmutableArray<Line> lines
+			) {
+				Id = id;
+				LinePosition = linePosition;
+				Message = message;
+				Lines = lines;
+			}
+
+			public string Id { get; }
+			public LinePositionSpan LinePosition { get; }
+			public string Message { get; }
+			public ImmutableArray<Line> Lines { get; }
+
+			public override bool Equals( object obj ) {
+				if( this is null ) {
+					return obj is null;
+				}
+
+				if( obj is not PrettyDiagnostic other ) {
+					return false;
+				}
+
+				return Id.Equals( other.Id )
+					&& LinePosition.Equals( other.LinePosition )
+					&& Message.Equals( other.Message, StringComparison.Ordinal );
+			}
+
+			public override int GetHashCode() => HashCode.Combine(
+				Id,
+				LinePosition,
+				Message
+			);
 
 			/// <remarks>
 			/// Formatting output for Visual Studio Test Explorer
@@ -353,18 +392,138 @@ namespace D2L.CodeStyle.SpecTests {
 				WriteProperty( nameof( Id ), Id );
 				WriteProperty( nameof( LinePosition ), $"({LinePosition.Start.Line + 1},{LinePosition.Start.Character})-({LinePosition.End.Line + 1},{LinePosition.End.Character})" );
 				WriteProperty( nameof( Message ), Message, seperator: string.Empty );
+
+				sb.AppendLine();
+
+				WriteSourceReference( sb );
+
 				sb.AppendLine( "}" );
 
 				return sb.ToString();
 			}
 
-			public static PrettyDiagnostic Create( Diagnostic diagnostic ) {
-				return new(
-					Id: diagnostic.Id,
-					LinePosition: diagnostic.Location.GetLineSpan().Span,
-					Message: diagnostic.GetMessage()
+			private void WriteSourceReference( StringBuilder sb ) {
+				int lineNumberWidth = CalculateLineNumberWidth( LinePosition );
+				void WriteLineNumberPadding()
+					=> sb.Append( ' ', repeatCount: lineNumberWidth + 2 );
+
+				void WriteLineNumber( Line line ) {
+					sb.AppendFormat( $"{{0,{lineNumberWidth}}}", line.LineNumber );
+					sb.Append( ':' );
+					sb.Append( ' ' );
+				}
+
+				int greatestCommonWhitespace = FindGreatestCommonWhitespaceCount( Lines );
+				string GetTextIgnoringCommonWhitespace( Line line )
+					=> greatestCommonWhitespace switch {
+						0 => line.Text,
+						_ => line.Text.Substring( greatestCommonWhitespace )
+					};
+
+				void WriteEqualWidthWhitespace( char source ) {
+					char toAppend = source switch {
+						'\t' => '\t',
+						_ => ' '
+					};
+					sb.Append( toAppend );
+				}
+
+				void WriteBlankLineWithIndicatorsInPosition(
+					Line line,
+					char indicator,
+					params int[] positions
+				) {
+					string referenceLine = GetTextIgnoringCommonWhitespace( line );
+
+					// adjust positions to account for whitespace removal
+					positions = positions.Select( p => p - greatestCommonWhitespace ).ToArray();
+
+					for( int i = 0; i <= positions.Last(); ++i ) {
+						if( positions.Contains( i ) ) {
+							sb.Append( indicator );
+							continue;
+						}
+
+						WriteEqualWidthWhitespace( referenceLine[ i ] );
+					}
+
+					sb.AppendLine();
+				}
+
+				// Multi-line diagnostic, draw leading indicator above source lines
+				if( Lines.Length > 1 ) {
+					WriteLineNumberPadding();
+					WriteBlankLineWithIndicatorsInPosition(
+						Lines[ 0 ],
+						'↓',
+						LinePosition.Start.Character
+					);
+				}
+
+				// Write the actual source lines
+				foreach( Line line in Lines ) {
+					WriteLineNumber( line );
+					sb.AppendLine( GetTextIgnoringCommonWhitespace( line ) );
+				}
+
+				// Draw indicator(s) below source lines
+				WriteLineNumberPadding();
+
+				int[] lastLineIndicatorPositions = Lines.Length > 1
+					? new[] { LinePosition.End.Character - 1 }
+					: new[] { LinePosition.Start.Character, LinePosition.End.Character - 1 };
+				WriteBlankLineWithIndicatorsInPosition(
+					Lines.Last(),
+					'↑',
+					lastLineIndicatorPositions
 				);
 			}
+
+			public static PrettyDiagnostic Create( Diagnostic diagnostic, SourceText source ) {
+				LinePositionSpan linePosition = diagnostic.Location.GetLineSpan().Span;
+				ImmutableArray<Line> lines = source
+					.Lines
+					.Skip( linePosition.Start.Line )
+					.Take( linePosition.End.Line - linePosition.Start.Line + 1 )
+					.Select( l => new Line(
+						LineNumber: l.LineNumber + 1,
+						Text: source.GetSubText( l.Span ).ToString()
+					) )
+					.ToImmutableArray();
+
+				return new(
+					id: diagnostic.Id,
+					linePosition: linePosition,
+					message: diagnostic.GetMessage(),
+					lines: lines
+				);
+			}
+
+			private static int FindGreatestCommonWhitespaceCount(
+				ImmutableArray<Line> lines
+			) {
+				int gcw = 0;
+
+				Line referenceLine = lines[ 0 ];
+				for( ; gcw < referenceLine.Text.Length; ++gcw ) {
+					char c = referenceLine.Text[ gcw ];
+
+					if( !char.IsWhiteSpace( c ) ) {
+						return gcw;
+					}
+
+					foreach( Line line in lines.Skip( 1 ) ) {
+						if( line.Text[ gcw ] != c ) {
+							return gcw;
+						}
+					}
+				}
+
+				return gcw;
+			}
+
+			private static int CalculateLineNumberWidth( LinePositionSpan span )
+				=> (int)Math.Floor( Math.Log10( span.End.Line + 1 ) + 1 );
 		}
 	}
 }
