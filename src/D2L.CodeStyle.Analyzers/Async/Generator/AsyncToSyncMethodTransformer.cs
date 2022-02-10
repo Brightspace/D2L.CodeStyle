@@ -128,7 +128,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			GotoStatementSyntax => stmt,
 
 			IfStatementSyntax ifStmt => ifStmt
-				.WithCondition( Transform( ifStmt.Condition) )
+				.WithCondition( Transform( ifStmt.Condition ) )
 				.WithStatement( ifStmt.Statement )
 				.WithElse( MaybeTransform( ifStmt.Else, Transform ) ),
 
