@@ -47,14 +47,14 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		);
 	}
 
-	private SyntaxTokenList RemoveAsyncModifier( SyntaxTokenList modifiers ) =>
+	private static SyntaxTokenList RemoveAsyncModifier( SyntaxTokenList modifiers ) =>
 		TransformAll(
 			modifiers,
 			static token => token.IsKind( SyntaxKind.AsyncKeyword ) ? null : token
 		);
 
 	private SyntaxToken RemoveAsyncSuffix( SyntaxToken ident ) {
-		if( !ident.ValueText.EndsWith( "Async" ) || ident.ValueText == "Async" ) {
+		if( !ident.ValueText.EndsWith( "Async", StringComparison.Ordinal ) || ident.ValueText == "Async" ) {
 			ReportDiagnostic(
 				Diagnostics.ExpectedAsyncSuffix,
 				ident.GetLocation(),
