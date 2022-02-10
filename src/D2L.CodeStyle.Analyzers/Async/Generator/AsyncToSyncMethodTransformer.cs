@@ -194,7 +194,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		};
 
 	private ElseClauseSyntax Transform( ElseClauseSyntax clause )
-		=> clause.WithStatement( clause.Statement );
+		=> clause.WithStatement( Transform( clause.Statement ) );
 
 	private ArgumentListSyntax Transform( ArgumentListSyntax argList )
 		=> TransformAll( argList, Transform );

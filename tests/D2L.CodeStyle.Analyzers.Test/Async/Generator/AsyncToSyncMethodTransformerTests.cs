@@ -44,7 +44,7 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 async Task<int> HelloAsync( int[] q ) {
 	if( 6 == (7 - 1)*2 ) {
 		return sizeof( ""hello"" );
-	} else if( q[0]++ == ++q[1] ) {
+	} else if( this[0]++ == ++this[1] ) {
 		throw new NotImplementedException( ""foo"" );
 	} else return 8;
 
@@ -72,7 +72,7 @@ async Task<int> HelloAsync( int[] q ) {
 int Hello( int[] q ) {
 	if( 6 == (7 - 1)*2 ) {
 		return sizeof( ""hello"" );
-	} else if( q[0]++ == ++q[1] ) {
+	} else if( this[0]++ == ++this[1] ) {
 		throw new NotImplementedException( ""foo"" );
 	} else return 8;
 
