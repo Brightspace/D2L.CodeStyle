@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace D2L.CodeStyle.Analyzers.Async.Generator;
 
@@ -78,27 +79,27 @@ public abstract class SyntaxTransformer {
 	/// <summary>
 	/// Transform every element of a SyntaxList and filter out nulls.
 	/// </summary>
-	protected SyntaxList<U> TransformAll<T, U>(
+	protected static SyntaxList<U> TransformAll<T, U>(
 		SyntaxList<T> input,
 		Func<T, U?> transformer
 	) where T : SyntaxNode
 	  where U : SyntaxNode
-	=> SyntaxFactory.List( TransformAllCore( input, transformer ) );
+		=> SyntaxFactory.List( TransformAllCore( input, transformer ) );
 
 	/// <summary>
 	/// Transform every element of a SeparatedSyntaxList and filter out nulls.
 	/// </summary>
-	protected SeparatedSyntaxList<U> TransformAll<T, U>(
+	protected static SeparatedSyntaxList<U> TransformAll<T, U>(
 		SeparatedSyntaxList<T> input,
 		Func<T, U?> transformer
 	) where T : SyntaxNode
 	  where U : SyntaxNode
-	=> SyntaxFactory.SeparatedList( TransformAllCore( input, transformer ) );
+		=> SyntaxFactory.SeparatedList( TransformAllCore( input, transformer ) );
 
 	/// <summary>
 	/// Transform every element of a SyntaxTokenList and filter out default tokens.
 	/// </summary>
-	protected SyntaxTokenList TransformAll(
+	protected static SyntaxTokenList TransformAll(
 		SyntaxTokenList input,
 		Func<SyntaxToken, SyntaxToken?> transformer
 	) => SyntaxFactory.TokenList( TransformAllCore( input, transformer ) );
@@ -129,6 +130,16 @@ public abstract class SyntaxTransformer {
 				yield return transformed;
 			}
 		}
+	}
+
+	protected static T? MaybeTransform<T>( T? input, Func<T, T> transform )
+		where T : SyntaxNode
+	{
+		if( input is null ) {
+			return null;
+		}
+
+		return transform( input );
 	}
 }
 

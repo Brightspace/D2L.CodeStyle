@@ -16,8 +16,8 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			.WithModifiers( RemoveAsyncModifier( decl.Modifiers ) )
 			.WithIdentifier( RemoveAsyncSuffix( decl.Identifier ) )
 			.WithReturnType( TransformReturnType( decl.ReturnType ) )
-			.WithExpressionBody( Transform( decl.ExpressionBody ) )
-			.WithBody( Transform( decl.Body ) );
+			.WithExpressionBody( MaybeTransform( decl.ExpressionBody, Transform ) )
+			.WithBody( MaybeTransform( decl.Body, Transform ) );
 
 		return GetResult( decl );
 	}
@@ -102,35 +102,19 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		return returnType;
 	}
 
-	private ArrowExpressionClauseSyntax? Transform(
-		ArrowExpressionClauseSyntax? body
-	) {
-		if( body is null ) {
-			return null;
-		}
+	private ArrowExpressionClauseSyntax Transform( ArrowExpressionClauseSyntax body )
+		=> body.WithExpression( Transform( body.Expression ) );
 
-		return body.WithExpression( Transform( body.Expression ) );
-	}
-
-	private BlockSyntax? Transform( BlockSyntax? block ) {
-		if( block is null ) {
-			return null;
-		}
-
-		var transformed = TransformAll( block.Statements, Transform );
-
-		return block.WithStatements( transformed );
-	}
+	private BlockSyntax Transform( BlockSyntax block )
+		=> block.WithStatements( TransformAll( block.Statements, Transform ) );
 
 	private StatementSyntax Transform( StatementSyntax stmt )
 		=> stmt switch {
-			ExpressionStatementSyntax exprStmt =>
-				exprStmt.WithExpression( Transform( exprStmt.Expression ) ),
+			ExpressionStatementSyntax exprStmt => exprStmt
+				.WithExpression( Transform( exprStmt.Expression) ),
 
-			ReturnStatementSyntax returnStmt =>
-				returnStmt.Expression is null
-				? returnStmt
-				: returnStmt.WithExpression( Transform( returnStmt.Expression ) ),
+			ReturnStatementSyntax returnStmt => returnStmt
+				.WithExpression( MaybeTransform( returnStmt.Expression, Transform ) ),
 
 			_ => UnhandledSyntax( stmt )
 		};
