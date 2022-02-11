@@ -97,6 +97,12 @@ public abstract class SyntaxTransformer {
 	  where TItemOut : SyntaxNode
 		=> SyntaxFactory.SeparatedList( TransformAllCore( input, transformer ) );
 
+	protected static TArgList TransformAll<TArgList>(
+		TArgList input,
+		Func<ArgumentSyntax, ArgumentSyntax?> transformer
+	) where TArgList : BaseArgumentListSyntax
+		=> (TArgList)input.WithArguments( TransformAll( input.Arguments, transformer ) );
+
 	/// <summary>
 	/// Transform every element of a SyntaxTokenList and filter out default tokens.
 	/// </summary>
