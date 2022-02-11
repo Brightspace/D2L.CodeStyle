@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -31,15 +32,16 @@ namespace D2L.CodeStyle.SpecTests {
 
 			var analyzer = GetAnalyzerNameFromSpec( m_test.Source );
 
-			Compilation compilation = await GetCompilationForSourceAsync( m_test.Name, m_test.Source, m_test.MetadataReferences );
+			SourceText sourceText = SourceText.From( m_test.Source, Encoding.UTF8 );
+			Compilation compilation = await GetCompilationForSourceAsync( m_test.Name, sourceText, m_test.MetadataReferences );
 			CompilationUnitSyntax compilationUnit = (CompilationUnitSyntax)compilation.SyntaxTrees.First().GetRoot();
 
 			m_actualDiagnostics = ( await GetActualDiagnosticsAsync( compilation, analyzer, m_test.AdditionalFiles ) )
-				.Select( PrettyDiagnostic.Create )
+				.Select( d => PrettyDiagnostic.Create( d, sourceText )  )
 				.ToImmutableArray();
 
-			m_expectedDiagnostics = GetExpectedDiagnostics( compilationUnit, m_test.DiagnosticDescriptors )
-				.Select( PrettyDiagnostic.Create )
+			m_expectedDiagnostics = GetExpectedDiagnostics( compilationUnit, m_test.DiagnosticDescriptors, sourceText )
+				.Select( d => PrettyDiagnostic.Create( d, sourceText ) )
 				.ToImmutableArray();
 
 			m_matchedDiagnostics = m_actualDiagnostics
@@ -86,7 +88,7 @@ namespace D2L.CodeStyle.SpecTests {
 
 			var header = root
 				.GetLeadingTrivia()
-				.First( t => t.Kind() == SyntaxKind.SingleLineCommentTrivia );
+				.First( t => t.IsKind( SyntaxKind.SingleLineCommentTrivia ) );
 
 			Assert.NotNull( header, "There must be a single-line comment at the start of the file of the form \"analyzer: <type of analyzer to use in this spec>\"." );
 
@@ -237,12 +239,13 @@ namespace D2L.CodeStyle.SpecTests {
 
 		private static IEnumerable<Diagnostic> GetExpectedDiagnostics(
 			CompilationUnitSyntax root,
-			ImmutableDictionary<string, DiagnosticDescriptor> diagnosticDescriptors
+			ImmutableDictionary<string, DiagnosticDescriptor> diagnosticDescriptors,
+			SourceText sourceText
 		) {
 
 			var multilineComments = root
 				.DescendantTrivia()
-				.Where( c => c.Kind() == SyntaxKind.MultiLineCommentTrivia );
+				.Where( c => c.IsKind( SyntaxKind.MultiLineCommentTrivia ) );
 
 			var commentPairs = GroupCommentsIntoAdjacentPairs(
 				multilineComments
@@ -263,22 +266,29 @@ namespace D2L.CodeStyle.SpecTests {
 
 					}
 
-					// The diagnostic must be between the two delimiting comments,
-					// with one leading and trailing space inside the delimiters.
+					// The diagnostic must be between the two delimiting comments.
 					// i.e.    /* Foo */ abcdef hijklmno pqr /**/
 					//                   -------------------
 					//                      ^ expected Foo diagnostic
-					//
-					// TODO: it would be nice to do fuzzier matching (e.g. ignore
-					// leading and trailing whitespace inside delimiters.) 
-					var diagStart = start.Trivia.GetLocation().SourceSpan.End + 1;
-					var diagEnd = end.Trivia.GetLocation().SourceSpan.Start - 1;
-					Assert.Less( diagStart, diagEnd );
-					var diagSpan = TextSpan.FromBounds( diagStart, diagEnd );
+					var searchStart = start.Trivia.Span.End;
+					var searchEnd = end.Trivia.Span.Start;
+					Assert.Less( searchStart, searchEnd );
+
+					string source = sourceText.GetSubText(
+						TextSpan.FromBounds( searchStart, searchEnd )
+					).ToString();
+
+					int leadingPadding = source.TakeWhile( char.IsWhiteSpace ).Count();
+					int trailingPadding = source.Reverse().TakeWhile( char.IsWhiteSpace ).Count();
+
+					TextSpan finalSpan = TextSpan.FromBounds(
+						searchStart + leadingPadding,
+						searchEnd - trailingPadding
+					);
 
 					yield return Diagnostic.Create(
 						descriptor: descriptor,
-						location: Location.Create( root.SyntaxTree, diagSpan ),
+						location: Location.Create( root.SyntaxTree, finalSpan ),
 						messageArgs: diagnosticExpectation.Arguments.ToArray()
 					);
 				}
@@ -287,7 +297,7 @@ namespace D2L.CodeStyle.SpecTests {
 
 		private static Task<Compilation> GetCompilationForSourceAsync(
 			string specName,
-			string source,
+			SourceText source,
 			ImmutableArray<MetadataReference> metadataReferences
 		) {
 			var projectId = ProjectId.CreateNewId( debugName: specName );
@@ -297,7 +307,7 @@ namespace D2L.CodeStyle.SpecTests {
 			var solution = new AdhocWorkspace().CurrentSolution
 				.AddProject( projectId, specName, specName, LanguageNames.CSharp )
 				.AddMetadataReferences( projectId, metadataReferences )
-				.AddDocument( documentId, filename, SourceText.From( source ) );
+				.AddDocument( documentId, filename, source );
 
 			var compilationOptions = solution
 				.GetProject( projectId )
@@ -318,11 +328,49 @@ namespace D2L.CodeStyle.SpecTests {
 			return solution.Projects.First().GetCompilationAsync();
 		}
 
-		private sealed record PrettyDiagnostic(
-			string Id,
-			LinePositionSpan LinePosition,
-			string Message
-		) {
+		private sealed class PrettyDiagnostic {
+
+			internal readonly record struct Line(
+				int LineNumber,
+				string Text
+			);
+
+			private PrettyDiagnostic(
+				string id,
+				LinePositionSpan linePosition,
+				string message,
+				ImmutableArray<Line> lines
+			) {
+				Id = id;
+				LinePosition = linePosition;
+				Message = message;
+				Lines = lines;
+			}
+
+			public string Id { get; }
+			public LinePositionSpan LinePosition { get; }
+			public string Message { get; }
+			public ImmutableArray<Line> Lines { get; }
+
+			public override bool Equals( object obj ) {
+				if( this is null ) {
+					return obj is null;
+				}
+
+				if( obj is not PrettyDiagnostic other ) {
+					return false;
+				}
+
+				return Id.Equals( other.Id )
+					&& LinePosition.Equals( other.LinePosition )
+					&& Message.Equals( other.Message, StringComparison.Ordinal );
+			}
+
+			public override int GetHashCode() => HashCode.Combine(
+				Id,
+				LinePosition,
+				Message
+			);
 
 			/// <remarks>
 			/// Formatting output for Visual Studio Test Explorer
@@ -344,18 +392,136 @@ namespace D2L.CodeStyle.SpecTests {
 				WriteProperty( nameof( Id ), Id );
 				WriteProperty( nameof( LinePosition ), $"({LinePosition.Start.Line + 1},{LinePosition.Start.Character})-({LinePosition.End.Line + 1},{LinePosition.End.Character})" );
 				WriteProperty( nameof( Message ), Message, seperator: string.Empty );
+
+				sb.AppendLine();
+
+				WriteSourceReference( sb );
+
 				sb.AppendLine( "}" );
 
 				return sb.ToString();
 			}
 
-			public static PrettyDiagnostic Create( Diagnostic diagnostic ) {
-				return new(
-					Id: diagnostic.Id,
-					LinePosition: diagnostic.Location.GetLineSpan().Span,
-					Message: diagnostic.GetMessage()
+			private void WriteSourceReference( StringBuilder sb ) {
+				int lineNumberWidth = CalculateLineNumberWidth( LinePosition );
+				void WriteLineNumberPadding()
+					=> sb.Append( ' ', repeatCount: lineNumberWidth + 2 );
+
+				void WriteLineNumber( Line line ) {
+					sb.AppendFormat( $"{{0,{lineNumberWidth}}}", line.LineNumber );
+					sb.Append( ':' );
+					sb.Append( ' ' );
+				}
+
+				int greatestCommonWhitespace = FindGreatestCommonWhitespaceCount( Lines );
+				string GetTextIgnoringCommonWhitespace( Line line )
+					=> greatestCommonWhitespace switch {
+						0 => line.Text,
+						_ => line.Text.Substring( greatestCommonWhitespace )
+					};
+
+				void WriteEqualWidthWhitespace( char source ) {
+					char toAppend = source switch {
+						'\t' => '\t',
+						_ => ' '
+					};
+					sb.Append( toAppend );
+				}
+
+				void WriteBlankLineWithIndicatorsInPosition(
+					Line line,
+					char indicator,
+					params int[] positions
+				) {
+					string referenceLine = GetTextIgnoringCommonWhitespace( line );
+
+					// adjust positions to account for whitespace removal
+					positions = positions.Select( p => p - greatestCommonWhitespace ).ToArray();
+
+					for( int i = 0; i <= positions.Last(); ++i ) {
+						if( positions.Contains( i ) ) {
+							sb.Append( indicator );
+							continue;
+						}
+
+						WriteEqualWidthWhitespace( referenceLine[ i ] );
+					}
+
+					sb.AppendLine();
+				}
+
+				// Multi-line diagnostic, draw leading indicator above source lines
+				if( Lines.Length > 1 ) {
+					WriteLineNumberPadding();
+					WriteBlankLineWithIndicatorsInPosition(
+						Lines[ 0 ],
+						'↓',
+						LinePosition.Start.Character
+					);
+				}
+
+				// Write the actual source lines
+				foreach( Line line in Lines ) {
+					WriteLineNumber( line );
+					sb.AppendLine( GetTextIgnoringCommonWhitespace( line ) );
+				}
+
+				// Draw indicator(s) below source lines
+				WriteLineNumberPadding();
+				WriteBlankLineWithIndicatorsInPosition(
+					Lines.Last(),
+					'↑',
+					Lines.Length > 1
+						? new[] { LinePosition.End.Character - 1 }
+						: new[] { LinePosition.Start.Character, LinePosition.End.Character - 1 }
 				);
 			}
+
+			public static PrettyDiagnostic Create( Diagnostic diagnostic, SourceText source ) {
+				LinePositionSpan linePosition = diagnostic.Location.GetLineSpan().Span;
+				ImmutableArray<Line> lines = source
+					.Lines
+					.Skip( linePosition.Start.Line )
+					.Take( linePosition.End.Line - linePosition.Start.Line + 1 )
+					.Select( l => new Line(
+						LineNumber: l.LineNumber + 1,
+						Text: source.GetSubText( l.Span ).ToString()
+					) )
+					.ToImmutableArray();
+
+				return new(
+					id: diagnostic.Id,
+					linePosition: linePosition,
+					message: diagnostic.GetMessage(),
+					lines: lines
+				);
+			}
+
+			private static int FindGreatestCommonWhitespaceCount(
+				ImmutableArray<Line> lines
+			) {
+				int gcw = 0;
+
+				Line referenceLine = lines[ 0 ];
+				for( ; gcw < referenceLine.Text.Length; ++gcw ) {
+					char c = referenceLine.Text[ gcw ];
+
+					if( !char.IsWhiteSpace( c ) ) {
+						return gcw;
+					}
+
+					foreach( Line line in lines.Skip( 1 ) ) {
+						if( line.Text[ gcw ] != c ) {
+							return gcw;
+						}
+					}
+				}
+
+				return gcw;
+			}
+
+			private static int CalculateLineNumberWidth( LinePositionSpan span )
+				=> (int)Math.Floor( Math.Log10( span.End.Line + 1 ) + 1 );
 		}
 	}
 }

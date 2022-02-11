@@ -52,7 +52,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Events {
 				);
 		}
 
-		private void AnalyzeMethodInvocation(
+		private static void AnalyzeMethodInvocation(
 				OperationAnalysisContext context,
 				IInvocationOperation invocation,
 				INamedTypeSymbol eventAttributeType,

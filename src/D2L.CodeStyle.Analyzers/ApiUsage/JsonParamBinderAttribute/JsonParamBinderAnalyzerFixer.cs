@@ -40,7 +40,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 			);
 		}
 
-		private async Task<Document> SwapAttributes( 
+		private static async Task<Document> SwapAttributes( 
 			Document document, 
 			AttributeSyntax oldAttribute, 
 			CancellationToken ct 

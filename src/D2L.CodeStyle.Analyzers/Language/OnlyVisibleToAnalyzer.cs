@@ -18,7 +18,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			context.RegisterCompilationStartAction( OnCompilationStart );
 		}
 
-		public void OnCompilationStart( CompilationStartAnalysisContext context ) {
+		public static void OnCompilationStart( CompilationStartAnalysisContext context ) {
 
 			Model? nullableModel = Model.TryCreate( context.Compilation );
 			if( !nullableModel.HasValue ) {
@@ -52,7 +52,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			);
 		}
 
-		private void AnalyzeMemberUsage(
+		private static void AnalyzeMemberUsage(
 			OperationAnalysisContext context,
 			ISymbol member,
 			in Model model

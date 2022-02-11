@@ -11,8 +11,9 @@ namespace D2L.CodeStyle.Analyzers.Async.Generator;
 /// with only light modifications.
 /// </summary>
 public abstract class SyntaxTransformer {
-	protected readonly SemanticModel m_model;
-	protected readonly CancellationToken m_token;
+
+	protected SemanticModel Model { get; }
+	protected CancellationToken Token { get; }
 
 	private readonly ImmutableArray<Diagnostic>.Builder m_diagnostics = ImmutableArray.CreateBuilder<Diagnostic>();
 
@@ -20,8 +21,8 @@ public abstract class SyntaxTransformer {
 	/// A name for the generator that will be shown to the user if we crash
 	/// </summary>
 	public SyntaxTransformer( SemanticModel model, CancellationToken token ) {
-		m_model = model;
-		m_token = token;
+		Model = model;
+		Token = token;
 	}
 
 	/// <summary>
@@ -79,21 +80,21 @@ public abstract class SyntaxTransformer {
 	/// <summary>
 	/// Transform every element of a SyntaxList and filter out nulls.
 	/// </summary>
-	protected static SyntaxList<U> TransformAll<T, U>(
-		SyntaxList<T> input,
-		Func<T, U?> transformer
-	) where T : SyntaxNode
-	  where U : SyntaxNode
+	protected static SyntaxList<TItemOut> TransformAll<TItemIn, TItemOut>(
+		SyntaxList<TItemIn> input,
+		Func<TItemIn, TItemOut?> transformer
+	) where TItemIn : SyntaxNode
+	  where TItemOut : SyntaxNode
 		=> SyntaxFactory.List( TransformAllCore( input, transformer ) );
 
 	/// <summary>
 	/// Transform every element of a SeparatedSyntaxList and filter out nulls.
 	/// </summary>
-	protected static SeparatedSyntaxList<U> TransformAll<T, U>(
-		SeparatedSyntaxList<T> input,
-		Func<T, U?> transformer
-	) where T : SyntaxNode
-	  where U : SyntaxNode
+	protected static SeparatedSyntaxList<TItemOut> TransformAll<TItemIn, TItemOut>(
+		SeparatedSyntaxList<TItemIn> input,
+		Func<TItemIn, TItemOut?> transformer
+	) where TItemIn : SyntaxNode
+	  where TItemOut : SyntaxNode
 		=> SyntaxFactory.SeparatedList( TransformAllCore( input, transformer ) );
 
 	protected static TArgList TransformAll<TArgList>(

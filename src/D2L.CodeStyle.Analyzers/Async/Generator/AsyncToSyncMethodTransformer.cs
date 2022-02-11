@@ -77,7 +77,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	}
 
 	private TypeSyntax TransformReturnType( TypeSyntax returnType ) {
-		var returnTypeInfo = m_model.GetTypeInfo( returnType, m_token );
+		var returnTypeInfo = Model.GetTypeInfo( returnType, Token );
 
 		if( returnTypeInfo.Type == null ) {
 			GeneratorError( returnType.GetLocation(), "Couldn't resolve type" );
@@ -228,7 +228,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		=> initializer.WithExpressions( TransformAll( initializer.Expressions, Transform ) );
 
 	private bool IsGenerateSyncAttribute( AttributeSyntax attribute ) {
-		var attributeConstructorSymbol = m_model.GetSymbolInfo( attribute, m_token ).Symbol as IMethodSymbol;
+		var attributeConstructorSymbol = Model.GetSymbolInfo( attribute, Token ).Symbol as IMethodSymbol;
 
 		if( attributeConstructorSymbol == null ) {
 			return false;

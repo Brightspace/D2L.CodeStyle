@@ -39,7 +39,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			Diagnostics.NamedArgumentsRequired
 		);
 
-		public const int TOO_MANY_UNNAMED_ARGS = 5;
+		public const int TooManyUnnamedArgs = 5;
 
 		public override void Initialize( AnalysisContext context ) {
 			context.EnableConcurrentExecution();
@@ -111,7 +111,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
-			if( unnamedArgs.Length >= TOO_MANY_UNNAMED_ARGS ) {
+			if( unnamedArgs.Length >= TooManyUnnamedArgs ) {
 
 				var fixerContext = CreateFixerContext( unnamedArgs );
 
@@ -120,7 +120,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 						descriptor: Diagnostics.TooManyUnnamedArgs,
 						location: ctx.Node.GetLocation(),
 						properties: fixerContext,
-						messageArgs: TOO_MANY_UNNAMED_ARGS
+						messageArgs: TooManyUnnamedArgs
 					)
 				);
 
