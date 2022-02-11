@@ -206,5 +206,13 @@ namespace D2L.CodeStyle.Analyzers.Extensions {
 			builder.Reverse();
 			return builder.ToImmutable();
 		}
+
+		public static TSyntax ConcatLeadingTriviaFrom<TSyntax>(
+			this TSyntax syntax,
+			SyntaxNode other
+		) where TSyntax : SyntaxNode =>
+			syntax.WithLeadingTrivia(
+				other.GetLeadingTrivia().Concat( syntax.GetLeadingTrivia() )
+			);
 	}
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using D2L.CodeStyle.Analyzers.Extensions;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -53,8 +54,12 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			static token => token.IsKind( SyntaxKind.AsyncKeyword ) ? null : token
 		);
 
-	private SyntaxToken RemoveAsyncSuffix( SyntaxToken ident ) {
-		if( !ident.ValueText.EndsWith( "Async", StringComparison.Ordinal ) || ident.ValueText == "Async" ) {
+	private SyntaxToken RemoveAsyncSuffix( SyntaxToken ident, bool optional = false ) {
+		if( !ident.ValueText.EndsWith( "Async", StringComparison.Ordinal ) || ident.ValueText == "Async") {
+			if( optional ) {
+				return ident;
+			}
+
 			ReportDiagnostic(
 				Diagnostics.ExpectedAsyncSuffix,
 				ident.GetLocation(),
@@ -122,8 +127,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 			EmptyStatementSyntax => stmt,
 
-			ExpressionStatementSyntax exprStmt => exprStmt
-				.WithExpression( Transform( exprStmt.Expression) ),
+			ExpressionStatementSyntax exprStmt => Transform( exprStmt ),
 
 			GotoStatementSyntax => stmt,
 
@@ -154,10 +158,13 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				.WithLeft( Transform( asgnExpr.Left ) )
 				.WithRight( Transform( asgnExpr.Right ) ),
 
+			AwaitExpressionSyntax awaitExpr =>
+				// Extract the inner expression, removing the "await"
+				Transform( awaitExpr.Expression ).ConcatLeadingTriviaFrom( awaitExpr ),
+
 			BinaryExpressionSyntax binExpr => binExpr
 				.WithLeft( Transform( binExpr.Left ) )
 				.WithRight( Transform( binExpr.Right ) ),
-
 
 			ConditionalExpressionSyntax condExpr => condExpr
 				.WithCondition( Transform( condExpr.Condition ) )
@@ -169,6 +176,9 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			ElementAccessExpressionSyntax eaExpr => eaExpr
 				.WithExpression( Transform( eaExpr.Expression ) )
 				.WithArgumentList( TransformAll( eaExpr.ArgumentList, Transform ) ),
+
+			IdentifierNameSyntax identExpr => identExpr
+				.WithIdentifier( RemoveAsyncSuffix( identExpr.Identifier, optional: true ) ),
 
 			LiteralExpressionSyntax => expr,
 
@@ -192,6 +202,18 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 			_ => UnhandledSyntax( expr )
 		};
+
+	private StatementSyntax Transform( ExpressionStatementSyntax exprStmt ) {
+		var result = Transform( exprStmt.Expression );
+
+		// "await foo;" is redundant in sync land, so turn it into an
+		// EmptyStatementSyntax (just a bare ";".)
+		if( exprStmt.Expression is AwaitExpressionSyntax && result is IdentifierNameSyntax ) {
+			return SyntaxFactory.EmptyStatement().WithTriviaFrom( exprStmt );
+		}
+
+		return exprStmt.WithExpression( result );
+	}
 
 	private ElseClauseSyntax Transform( ElseClauseSyntax clause )
 		=> clause.WithStatement( Transform( clause.Statement ) );
