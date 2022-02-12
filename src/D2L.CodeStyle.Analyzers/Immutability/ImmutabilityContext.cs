@@ -123,6 +123,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					return info.IsImmutableDefinition(
 						context: this,
 						definition: namedType,
+						enforceImmutableTypeParams: query.EnforceImmutableTypeParams,
 						getLocation: getLocation,
 						out diagnostic
 					);

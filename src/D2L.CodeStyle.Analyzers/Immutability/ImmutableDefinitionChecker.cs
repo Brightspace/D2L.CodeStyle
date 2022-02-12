@@ -523,13 +523,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				// being anything other than an instance of T.
 				query = new ImmutabilityQuery(
 					ImmutableTypeKind.Instance,
-					type: assignment.AssignedType
+					Type: assignment.AssignedType
 				);
 			} else {
 				// In general we need to handle subtypes.
 				query = new ImmutabilityQuery(
 					ImmutableTypeKind.Total,
-					type: assignment.AssignedType
+					Type: assignment.AssignedType
 				);
 			}
 

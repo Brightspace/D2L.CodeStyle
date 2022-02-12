@@ -11,29 +11,28 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 	/// </summary>
 	internal readonly struct ImmutableTypeInfo {
 
-		// a mapping of which type parameters considered necessarily immutable for the
-		// conditionally immutable type to be immutable
-		private readonly ImmutableArray<bool> m_conditionalTypeParameters;
+		private readonly ImmutableArray<(bool RequiresImmutability, bool IsImmutableCondition)> m_typeParameterInfo;
 
 		private ImmutableTypeInfo(
 			ImmutableTypeKind kind,
 			INamedTypeSymbol type,
-			ImmutableArray<bool> conditionalTypeParameters
+			ImmutableArray<(bool RequiresImmutability, bool IsImmutableCondition)> typeParameterInfo
 		) {
 			Kind = kind;
 			Type = type;
-			m_conditionalTypeParameters = conditionalTypeParameters;
+			m_typeParameterInfo = typeParameterInfo;
 		}
 
 		public ImmutableTypeKind Kind { get; }
 
 		public INamedTypeSymbol Type { get; }
 
-		public bool IsConditional => m_conditionalTypeParameters.Length > 0;
+		public bool IsConditional => m_typeParameterInfo.Any( p => p.IsImmutableCondition );
 
 		public bool IsImmutableDefinition(
 			ImmutabilityContext context,
 			INamedTypeSymbol definition,
+			bool enforceImmutableTypeParams,
 			Func<Location> getLocation,
 			out Diagnostic diagnostic
 		) {
@@ -45,9 +44,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 			var argRelevance = definition
 				.TypeArguments
-				.Zip( m_conditionalTypeParameters, ( a, relevant ) => (a, relevant) );
-			foreach( (ITypeSymbol argument, bool isRelevant) in argRelevance ) {
-				if( !isRelevant ) {
+				.Zip( m_typeParameterInfo, ( a, info ) => (a, info) );
+			foreach( (ITypeSymbol argument, (bool requiresImmutability, bool isImmutableCondition)) in argRelevance ) {
+				bool relevant = isImmutableCondition || ( requiresImmutability && enforceImmutableTypeParams );
+				if( !relevant ) {
 					continue;
 				}
 
@@ -72,15 +72,18 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ImmutableTypeKind kind,
 			INamedTypeSymbol type
 		) {
-			ImmutableArray<bool> immutableTypeParameters = type
+			ImmutableArray<(bool RequiresImmutability, bool IsImmutableCondition)> typeParameterInfo = type
 				.TypeParameters
-				.Select( p => annotationsContext.Objects.OnlyIf.IsDefined( p ) )
+				.Select( p => (
+					annotationsContext.Objects.Immutable.IsDefined( p ),
+					annotationsContext.Objects.OnlyIf.IsDefined( p )
+				) )
 				.ToImmutableArray();
 
 			return new ImmutableTypeInfo(
 				kind: kind,
 				type: type,
-				conditionalTypeParameters: immutableTypeParameters
+				typeParameterInfo: typeParameterInfo
 			);
 		}
 
@@ -88,15 +91,18 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ImmutableTypeKind kind,
 			INamedTypeSymbol type
 		) {
-			ImmutableArray<bool> immutableTypeParameters = type
+			ImmutableArray<(bool RequiresImmutability, bool IsImmutableCondition)> typeParameterInfo = type
 				.TypeParameters
-				.Select( p => true )
+				.Select( p => (
+					false,
+					true
+				) )
 				.ToImmutableArray();
 
 			return new ImmutableTypeInfo(
 				kind: kind,
 				type: type,
-				conditionalTypeParameters: immutableTypeParameters
+				typeParameterInfo: typeParameterInfo
 			);
 		}
 	}
