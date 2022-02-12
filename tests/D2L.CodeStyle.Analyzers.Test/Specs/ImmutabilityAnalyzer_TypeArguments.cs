@@ -94,6 +94,14 @@ public class Tester<[Immutable] T, U> {
 
 		Holder.Receiver_MyMutable.Invoke( Holder.MyMutable );
 
+		TestImmutableT<
+			/* ArraysAreMutable(MyImmutable) */
+			MyImmutable<
+				/* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/
+			>[]
+			/**/
+		> _;
+
 
 		// OperationKind.MethodReference
 		var _ = Receiver.StaticInvoke</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/>;

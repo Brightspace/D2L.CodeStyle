@@ -365,6 +365,7 @@ public sealed partial class ImmutabilityAnalyzer {
 				GenericNameSyntax genericName => genericName,
 				QualifiedNameSyntax qualifiedName => SelectRightSyntaxRecursive( qualifiedName.Right ),
 				MemberAccessExpressionSyntax memberAccess => SelectRightSyntaxRecursive( memberAccess.Name ),
+				ArrayTypeSyntax arrayType => arrayType.ElementType,
 				_ => syntax,
 			};
 		}
