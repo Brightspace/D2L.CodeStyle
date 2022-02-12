@@ -231,10 +231,19 @@ public class Tester<[Immutable] T, U> {
 	public class ImplementerD : TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> { }
 
 	// SymbolKind.Method
-	TestImmutableT<MyImmutable> MethodDeclaration() => throw null;
-	TestImmutableT<T> MethodDeclarationT() => throw null;
-	TestImmutableT<R> MethodDeclarationR<[Immutable] R>() => throw null;
-	TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> MethodDeclarationMutable() => throw null;
-	TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> MethodDeclarationU() => throw null;
-	TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(S) */ S /**/> MethodDeclarationS<S>() => throw null;
+	TestImmutableT<MyImmutable> MethodDeclaration( TestImmutableT<MyImmutable> a, out TestImmutableT<MyImmutable> b ) => throw null;
+	TestImmutableT<T> MethodDeclarationT( TestImmutableT<T> a, out TestImmutableT<T> b ) => throw null;
+	TestImmutableT<R> MethodDeclarationR<[Immutable] R>( TestImmutableT<R> a, out TestImmutableT<R> b ) => throw null;
+	TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> MethodDeclarationMutable(
+		TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> a,
+		out TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> b
+	) => throw null;
+	TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> MethodDeclarationU(
+		TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> a,
+		out TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> b
+	) => throw null;
+	TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(S) */ S /**/> MethodDeclarationS<S>(
+		TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(S) */ S /**/> a,
+		out TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(S) */ S /**/> b
+	) => throw null;
 }

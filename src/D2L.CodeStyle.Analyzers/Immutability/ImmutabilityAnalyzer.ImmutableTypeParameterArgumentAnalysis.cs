@@ -241,22 +241,44 @@ public sealed partial class ImmutabilityAnalyzer {
 							return;
 					}
 
-					SyntaxNodeOrToken getSyntax() {
-						SyntaxNode syntaxNode = symbol.DeclaringSyntaxReferences[ 0 ].GetSyntax( ctx.CancellationToken );
-
-						return syntaxNode switch {
-							MethodDeclarationSyntax methodDeclaration => methodDeclaration.ReturnType,
-							_ => syntaxNode,
-						};
-					}
+					SyntaxNode getBaseSyntax() => symbol.DeclaringSyntaxReferences[ 0 ].GetSyntax( ctx.CancellationToken );
 
 					AnalyzeTypeRecursive(
 						ctx.ReportDiagnostic,
 						annotationsContext,
 						immutabilityContext,
 						symbol.ReturnType,
-						getSyntax
+						() => {
+							SyntaxNode syntax = getBaseSyntax();
+							return getBaseSyntax() switch {
+								MethodDeclarationSyntax methodDeclaration => methodDeclaration.ReturnType,
+								_ => syntax,
+							};
+						}
 					);
+
+					for( int i = 0; i < symbol.Parameters.Length; ++i ) {
+						IParameterSymbol parameter = symbol.Parameters[ i ];
+
+						AnalyzeTypeRecursive(
+							ctx.ReportDiagnostic,
+							annotationsContext,
+							immutabilityContext,
+							parameter.Type,
+							() => {
+								SyntaxNode syntax = getBaseSyntax();
+
+								if( syntax is not MethodDeclarationSyntax methodDeclaration ) {
+									return syntax;
+								}
+
+								return methodDeclaration
+									.ParameterList
+									.Parameters[ i ]
+									.Type;
+							}
+						);
+					}
 				},
 				SymbolKind.Method
 			);
