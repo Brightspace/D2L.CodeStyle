@@ -10,7 +10,8 @@ using static D2L.CodeStyle.Annotations.Objects;
 
 namespace Z;
 
-#pragma warning disable D2L0066
+#region Types / Members used for exercising tests. Diagnostics disabled.
+#pragma warning disable
 
 public class TestImmutableT<[Immutable] T> { }
 public class TestImmutableU<T, [Immutable] U> { }
@@ -52,7 +53,8 @@ public class Receiver<[Immutable] T> {
 	}
 }
 
-#pragma warning restore D2L0066
+#pragma warning restore
+#endregion
 
 public class Tester<[Immutable] T, U> {
 
