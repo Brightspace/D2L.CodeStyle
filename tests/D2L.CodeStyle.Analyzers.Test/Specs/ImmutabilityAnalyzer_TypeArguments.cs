@@ -75,6 +75,13 @@ public class Tester<[Immutable] T, U> {
 		TestImmutableT<MyImmutable<MyImmutable>> test_myImmutable_myImmutable;
 		TestImmutableT<MyImmutable</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/>> test_myImmutable_myMutable;
 		TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> multiVarA, multiVarB;
+		TestImmutableT<
+			/* ArraysAreMutable(MyImmutable) */
+			MyImmutable<
+				/* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/
+			>[]
+		/**/
+		> _;
 
 
 		// OperationKind.DeclarationExpression & OperationKind.Discard
@@ -132,14 +139,6 @@ public class Tester<[Immutable] T, U> {
 			.StaticInvoke( Holder.MyMutable );
 
 		Holder.Receiver_MyMutable.Invoke( Holder.MyMutable );
-
-		TestImmutableT<
-			/* ArraysAreMutable(MyImmutable) */
-			MyImmutable<
-				/* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/
-			>[]
-			/**/
-		> _;
 
 
 		// OperationKind.MethodReference
