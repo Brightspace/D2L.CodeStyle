@@ -109,8 +109,8 @@ public sealed partial class ImmutabilityAnalyzer {
 					var operation = (IObjectCreationOperation)ctx.Operation;
 
 					SyntaxNodeOrToken getSyntax() => operation.Syntax switch {
-						ObjectCreationExpressionSyntax objectCreation => objectCreation.Type,
 						ImplicitObjectCreationExpressionSyntax implicitObjectCreation => implicitObjectCreation.NewKeyword,
+						ObjectCreationExpressionSyntax objectCreation => objectCreation.Type,
 						_ => operation.Syntax
 					};
 
@@ -189,9 +189,9 @@ public sealed partial class ImmutabilityAnalyzer {
 						SyntaxNode syntaxNode = symbol.DeclaringSyntaxReferences[ 0 ].GetSyntax( ctx.CancellationToken );
 
 						return syntaxNode switch {
-							PropertyDeclarationSyntax propertyDeclaration => propertyDeclaration.Type,
 							IndexerDeclarationSyntax indexer => indexer.Type,
 							ParameterSyntax parameter => ( parameter.Type ?? (SyntaxNode)parameter ),
+							PropertyDeclarationSyntax propertyDeclaration => propertyDeclaration.Type,
 							_ => throw new Exception( $"{syntaxNode.GetLocation().GetLineSpan().StartLinePosition.Line + 1} {syntaxNode.ToFullString()}" ),
 						};
 					}
@@ -342,8 +342,8 @@ public sealed partial class ImmutabilityAnalyzer {
 					}
 
 					SyntaxNodeOrToken getSyntax() => operation.Syntax switch {
-						CastExpressionSyntax castExpression => castExpression.Type,
 						BinaryExpressionSyntax binaryExpression => binaryExpression.Right,
+						CastExpressionSyntax castExpression => castExpression.Type,
 						_ => operation.Syntax
 					};
 
@@ -406,8 +406,8 @@ public sealed partial class ImmutabilityAnalyzer {
 			}
 
 			return syntax.AsNode() switch {
-				QualifiedNameSyntax qualifiedName => qualifiedName.Left,
 				MemberAccessExpressionSyntax memberAccess => memberAccess.Expression,
+				QualifiedNameSyntax qualifiedName => qualifiedName.Left,
 				_ => syntax,
 			};
 		}
@@ -467,9 +467,9 @@ public sealed partial class ImmutabilityAnalyzer {
 			}
 
 			return syntax.AsNode() switch {
-				QualifiedNameSyntax qualifiedName => SelectRightSyntaxRecursive( qualifiedName.Right ),
-				MemberAccessExpressionSyntax memberAccess => SelectRightSyntaxRecursive( memberAccess.Name ),
 				ArrayTypeSyntax arrayType => arrayType.ElementType,
+				MemberAccessExpressionSyntax memberAccess => SelectRightSyntaxRecursive( memberAccess.Name ),
+				QualifiedNameSyntax qualifiedName => SelectRightSyntaxRecursive( qualifiedName.Right ),
 				_ => syntax,
 			};
 		}
