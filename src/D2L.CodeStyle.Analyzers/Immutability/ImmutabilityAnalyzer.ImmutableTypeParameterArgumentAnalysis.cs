@@ -14,6 +14,31 @@ public sealed partial class ImmutabilityAnalyzer {
 			AnnotationsContext annotationsContext,
 			ImmutabilityContext immutabilityContext
 		) {
+			void AnalyzeMethod(
+				OperationAnalysisContext ctx,
+				IMethodSymbol method,
+				Func<SyntaxNodeOrToken> getAnalyzedSyntax
+			) {
+				AnalyzeTypeArgumentsRecursive(
+						ctx.ReportDiagnostic,
+						annotationsContext,
+						immutabilityContext,
+						method.TypeArguments,
+						method.TypeParameters,
+						getAnalyzedSyntax
+					);
+
+				if( method.IsStatic ) {
+					AnalyzeTypeRecursive(
+						ctx.ReportDiagnostic,
+						annotationsContext,
+						immutabilityContext,
+						method.ContainingType,
+						SelectLeftSyntax( getAnalyzedSyntax )
+					);
+				}
+			}
+
 			// Type Argument on Methods
 			context.RegisterOperationAction(
 				ctx => {
@@ -24,24 +49,11 @@ public sealed partial class ImmutabilityAnalyzer {
 						_ => operation.Syntax
 					};
 
-					AnalyzeTypeArgumentsRecursive(
-						ctx.ReportDiagnostic,
-						annotationsContext,
-						immutabilityContext,
-						operation.TargetMethod.TypeArguments,
-						operation.TargetMethod.TypeParameters,
+					AnalyzeMethod(
+						ctx,
+						operation.TargetMethod,
 						getSyntax
 					);
-
-					if( operation.TargetMethod.IsStatic ) {
-						AnalyzeTypeRecursive(
-							ctx.ReportDiagnostic,
-							annotationsContext,
-							immutabilityContext,
-							operation.TargetMethod.ContainingType,
-							SelectLeftSyntax( getSyntax )
-						);
-					}
 				},
 				OperationKind.Invocation
 			);
@@ -49,24 +61,11 @@ public sealed partial class ImmutabilityAnalyzer {
 				ctx => {
 					var operation = (IMethodReferenceOperation)ctx.Operation;
 
-					AnalyzeTypeArgumentsRecursive(
-						ctx.ReportDiagnostic,
-						annotationsContext,
-						immutabilityContext,
-						operation.Method.TypeArguments,
-						operation.Method.TypeParameters,
+					AnalyzeMethod(
+						ctx,
+						operation.Method,
 						() => operation.Syntax
 					);
-
-					if( operation.Method.IsStatic ) {
-						AnalyzeTypeRecursive(
-							ctx.ReportDiagnostic,
-							annotationsContext,
-							immutabilityContext,
-							operation.Method.ContainingType,
-							() => SelectLeftSyntax( operation.Syntax )
-						);
-					}
 				},
 				OperationKind.MethodReference
 			);
