@@ -14,7 +14,7 @@ namespace Z;
 #pragma warning disable
 
 public class TestImmutableT<[Immutable] T> { }
-public class TestImmutableU<T, [Immutable] U> { }
+public interface ITestImmutableU<T, [Immutable] U> { }
 
 [Immutable] public class MyImmutable { }
 public class MyMutable { }
@@ -235,10 +235,14 @@ public class Tester<[Immutable] T, U> {
 	}
 
 	// SymbolKind.NamedType
-	public class ImplementerA : TestImmutableT<MyImmutable> { }
-	public class ImplementerB : TestImmutableT<T> { }
-	public class ImplementerC : TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> { }
-	public class ImplementerD : TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> { }
+	public class ImplementerA : TestImmutableT<MyImmutable>, ITestImmutableT<MyImmutable> { }
+	public class ImplementerB : TestImmutableT<T>, ITestImmutableT<MyImmutable> { }
+	public class ImplementerC :
+		TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/>,
+		ITestImmutableU<T, /* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> { }
+	public class ImplementerD :
+		TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/>,
+		ITestImmutableU<T, /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> { }
 
 	// SymbolKind.Method
 	TestImmutableT<MyImmutable> MethodDeclaration( TestImmutableT<MyImmutable> a, out TestImmutableT<MyImmutable> b ) => throw null;
