@@ -67,6 +67,7 @@ public class Tester<[Immutable] T, U> {
 		TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(S) */ S /**/> test_mutableMethodTP;
 		TestImmutableT<MyImmutable<MyImmutable>> test_myImmutable_myImmutable;
 		TestImmutableT<MyImmutable</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/>> test_myImmutable_myMutable;
+		TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> multiVarA, multiVarB;
 
 
 		// OperationKind.ObjectCreation
