@@ -30,7 +30,7 @@ public sealed partial class ImmutabilityAnalyzer {
 						immutabilityContext,
 						operation.TargetMethod.TypeArguments,
 						operation.TargetMethod.TypeParameters,
-						SelectRightSyntaxRecursive( getSyntax )
+						getSyntax
 					);
 
 					if( operation.TargetMethod.IsStatic ) {
@@ -55,7 +55,7 @@ public sealed partial class ImmutabilityAnalyzer {
 						immutabilityContext,
 						operation.Method.TypeArguments,
 						operation.Method.TypeParameters,
-						() => SelectRightSyntaxRecursive( operation.Syntax )
+						() => operation.Syntax
 					);
 
 					if( operation.Method.IsStatic ) {
@@ -119,7 +119,7 @@ public sealed partial class ImmutabilityAnalyzer {
 						annotationsContext,
 						immutabilityContext,
 						operation.Type!,
-						SelectRightSyntaxRecursive( getSyntax )
+						getSyntax
 					);
 				},
 				OperationKind.ObjectCreation
@@ -140,7 +140,7 @@ public sealed partial class ImmutabilityAnalyzer {
 						annotationsContext,
 						immutabilityContext,
 						operation.GetDeclaredVariables()[ 0 ].Type,
-						SelectRightSyntaxRecursive( getSyntax )
+						getSyntax
 					);
 				},
 				OperationKind.VariableDeclaration
@@ -170,7 +170,7 @@ public sealed partial class ImmutabilityAnalyzer {
 						annotationsContext,
 						immutabilityContext,
 						type,
-						SelectRightSyntaxRecursive( getSyntax )
+						getSyntax
 					);
 				},
 				SymbolKind.Field
@@ -201,7 +201,7 @@ public sealed partial class ImmutabilityAnalyzer {
 						annotationsContext,
 						immutabilityContext,
 						type,
-						SelectRightSyntaxRecursive( getSyntax )
+						getSyntax
 					);
 				},
 				SymbolKind.Property
@@ -408,8 +408,6 @@ public sealed partial class ImmutabilityAnalyzer {
 				return;
 			}
 
-			getAnalyzedSyntax = SelectRightSyntaxRecursive( getAnalyzedSyntax );
-
 			if( namedType.ContainingType != null ) {
 				AnalyzeTypeRecursive(
 					reportDiagnostic,
@@ -426,7 +424,7 @@ public sealed partial class ImmutabilityAnalyzer {
 				immutabilityContext,
 				namedType.TypeArguments,
 				namedType.TypeParameters,
-				getAnalyzedSyntax
+				SelectRightSyntaxRecursive( getAnalyzedSyntax )
 			);
 
 			static INamedTypeSymbol? GetNamedTypeRecursive( ITypeSymbol type ) => type switch {
@@ -444,6 +442,8 @@ public sealed partial class ImmutabilityAnalyzer {
 			ImmutableArray<ITypeParameterSymbol> typeParameters,
 			Func<SyntaxNodeOrToken> getAnalyzedSyntax
 		) {
+			getAnalyzedSyntax = SelectRightSyntaxRecursive( getAnalyzedSyntax );
+
 			for( var i = 0; i < typeArguments.Length; ++i ) {
 				ITypeSymbol argument = typeArguments[ i ];
 				ITypeParameterSymbol typeParameter = typeParameters[ i ];

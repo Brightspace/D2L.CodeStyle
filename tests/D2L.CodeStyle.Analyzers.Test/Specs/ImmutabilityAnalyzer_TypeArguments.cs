@@ -41,6 +41,10 @@ public class Receiver<[Immutable] T> {
 
 	public Receiver<T> Invoke( T _ ) { }
 	public static Receiver<T> StaticInvoke( T _ ) { }
+
+	public class NestedReceiver<[Immutable] U> {
+		public static readonly NestedReceiver<U> Instance;
+	}
 }
 
 #pragma warning restore D2L0066
@@ -114,6 +118,9 @@ public class Tester<[Immutable] T, U> {
 
 		// OperationKind.FieldReference
 		Receiver</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/>.Instance;
+		Receiver</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/>
+			.NestedReceiver</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/>
+			.Instance;
 
 		(TestImmutableT<MyImmutable>)null;
 		(TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/>)null;
