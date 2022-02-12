@@ -467,7 +467,6 @@ public sealed partial class ImmutabilityAnalyzer {
 			}
 
 			return syntax.AsNode() switch {
-				GenericNameSyntax genericName => genericName,
 				QualifiedNameSyntax qualifiedName => SelectRightSyntaxRecursive( qualifiedName.Right ),
 				MemberAccessExpressionSyntax memberAccess => SelectRightSyntaxRecursive( memberAccess.Name ),
 				ArrayTypeSyntax arrayType => arrayType.ElementType,
