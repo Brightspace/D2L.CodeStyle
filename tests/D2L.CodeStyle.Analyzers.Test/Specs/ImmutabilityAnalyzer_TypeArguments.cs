@@ -177,6 +177,14 @@ public class Tester<[Immutable] T, U> {
 
 			_ => null
 		};
+
+		// SyntaxKind.LocalFunctionStatement
+		TestImmutableT<MyImmutable> LocalMethodDeclaration() => throw null;
+		TestImmutableT<T> LocalMethodDeclarationT() => throw null;
+		TestImmutableT<R> LocalMethodDeclarationR() => throw null;
+		TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> LocalMethodDeclarationMutable() => throw null;
+		TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> LocalMethodDeclarationU() => throw null;
+		TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(S) */ S /**/> LocalMethodDeclarationS() => throw null;
 	}
 
 	// SymbolKind.NamedType
@@ -184,4 +192,12 @@ public class Tester<[Immutable] T, U> {
 	public class ImplementerB : TestImmutableT<T> { }
 	public class ImplementerC : TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> { }
 	public class ImplementerD : TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> { }
+
+	// SymbolKind.Method
+	TestImmutableT<MyImmutable> MethodDeclaration() => throw null;
+	TestImmutableT<T> MethodDeclarationT() => throw null;
+	TestImmutableT<R> MethodDeclarationR<[Immutable] R>() => throw null;
+	TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> MethodDeclarationMutable() => throw null;
+	TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> MethodDeclarationU() => throw null;
+	TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(S) */ S /**/> MethodDeclarationS<S>() => throw null;
 }

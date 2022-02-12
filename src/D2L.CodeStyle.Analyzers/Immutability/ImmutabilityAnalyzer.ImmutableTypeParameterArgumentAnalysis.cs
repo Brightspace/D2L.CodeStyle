@@ -1,5 +1,6 @@
 ﻿using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
@@ -210,6 +211,61 @@ public sealed partial class ImmutabilityAnalyzer {
 					);
 				},
 				SymbolKind.Property
+			);
+
+			// Type arguments of method return types
+			context.RegisterSymbolAction(
+				ctx => {
+					var symbol = (IMethodSymbol)ctx.Symbol;
+
+					switch( symbol.MethodKind ) {
+						case MethodKind.PropertyGet:
+						case MethodKind.PropertySet:
+							return;
+					}
+
+					SyntaxNodeOrToken getSyntax() {
+						SyntaxNode syntaxNode = symbol.DeclaringSyntaxReferences[ 0 ].GetSyntax( ctx.CancellationToken );
+
+						return syntaxNode switch {
+							MethodDeclarationSyntax methodDeclaration => methodDeclaration.ReturnType,
+							_ => syntaxNode,
+						};
+					}
+
+					AnalyzeTypeRecursive(
+						ctx.ReportDiagnostic,
+						annotationsContext,
+						immutabilityContext,
+						symbol.ReturnType,
+						getSyntax
+					);
+				},
+				SymbolKind.Method
+			);
+
+			context.RegisterSyntaxNodeAction(
+				ctx => {
+					var syntax = (LocalFunctionStatementSyntax)ctx.Node;
+
+					ISymbol? maybeSymbol = ctx.SemanticModel.GetDeclaredSymbol(
+						syntax,
+						ctx.CancellationToken
+					);
+
+					if( maybeSymbol is not IMethodSymbol symbol ) {
+						return;
+					}
+
+					AnalyzeTypeRecursive(
+						ctx.ReportDiagnostic,
+						annotationsContext,
+						immutabilityContext,
+						symbol.ReturnType,
+						() => syntax.ReturnType
+					);
+				},
+				SyntaxKind.LocalFunctionStatement
 			);
 
 			// Type arguments on implemented types
