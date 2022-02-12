@@ -20,23 +20,37 @@ public sealed partial class ImmutabilityAnalyzer {
 				Func<SyntaxNodeOrToken> getAnalyzedSyntax
 			) {
 				AnalyzeTypeArgumentsRecursive(
-						ctx.ReportDiagnostic,
-						annotationsContext,
-						immutabilityContext,
-						method.TypeArguments,
-						method.TypeParameters,
-						getAnalyzedSyntax
-					);
+					ctx.ReportDiagnostic,
+					annotationsContext,
+					immutabilityContext,
+					method.TypeArguments,
+					method.TypeParameters,
+					getAnalyzedSyntax
+				);
 
-				if( method.IsStatic ) {
-					AnalyzeTypeRecursive(
-						ctx.ReportDiagnostic,
-						annotationsContext,
-						immutabilityContext,
-						method.ContainingType,
-						SelectLeftSyntax( getAnalyzedSyntax )
-					);
+				AnalyzeMemberAccess(
+					ctx,
+					method,
+					getAnalyzedSyntax
+				);
+			}
+
+			void AnalyzeMemberAccess(
+				OperationAnalysisContext ctx,
+				ISymbol member,
+				Func<SyntaxNodeOrToken> getAnalyzedSyntax
+			) {
+				if( !member.IsStatic ) {
+					return;
 				}
+
+				AnalyzeTypeRecursive(
+					ctx.ReportDiagnostic,
+					annotationsContext,
+					immutabilityContext,
+					member.ContainingType,
+					SelectLeftSyntax( getAnalyzedSyntax )
+				);
 			}
 
 			// Type Argument on Methods
@@ -73,15 +87,11 @@ public sealed partial class ImmutabilityAnalyzer {
 				ctx => {
 					var operation = (IPropertyReferenceOperation)ctx.Operation;
 
-					if( operation.Property.IsStatic ) {
-						AnalyzeTypeRecursive(
-							ctx.ReportDiagnostic,
-							annotationsContext,
-							immutabilityContext,
-							operation.Property.ContainingType,
-							() => SelectLeftSyntax( operation.Syntax )
-						);
-					}
+					AnalyzeMemberAccess(
+						ctx,
+						operation.Property,
+						() => operation.Syntax
+					);
 				},
 				OperationKind.PropertyReference
 			);
@@ -89,15 +99,11 @@ public sealed partial class ImmutabilityAnalyzer {
 				ctx => {
 					var operation = (IFieldReferenceOperation)ctx.Operation;
 
-					if( operation.Field.IsStatic ) {
-						AnalyzeTypeRecursive(
-							ctx.ReportDiagnostic,
-							annotationsContext,
-							immutabilityContext,
-							operation.Field.ContainingType,
-							() => SelectLeftSyntax( operation.Syntax )
-						);
-					}
+					AnalyzeMemberAccess(
+						ctx,
+						operation.Field,
+						() => operation.Syntax
+					);
 				},
 				OperationKind.FieldReference
 			);
