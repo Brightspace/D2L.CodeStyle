@@ -58,17 +58,16 @@ public class Tester<[Immutable] T, U> {
 	TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> MutableProp { get; }
 
 	void Statements<[Immutable] R, S>( U _ ) {
-		// Variable Declaration
+		// OperationKind.VariableDeclaration
 		TestImmutableT<MyImmutable> test_myImmutable;
 		TestImmutableT<T> test_immutableClassTP;
 		TestImmutableT<R> test_immutableMethodTP;
 		TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> test_myMutable;
 		TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> test_mutableClassTP;
 		TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(S) */ S /**/> test_mutableMethodTP;
-
-		// Variable Declaration, nested immutable
 		TestImmutableT<MyImmutable<MyImmutable>> test_myImmutable_myImmutable;
 		TestImmutableT<MyImmutable</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/>> test_myImmutable_myMutable;
+
 
 		// OperationKind.ObjectCreation
 		test_myImmutable = new();
@@ -83,6 +82,7 @@ public class Tester<[Immutable] T, U> {
 		new TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/>();
 		new TestImmutableT<MyImmutable<MyImmutable>>();
 		new TestImmutableT<MyImmutable</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/>>();
+
 
 		// OperationKind.Invocation
 		Receiver
@@ -122,11 +122,14 @@ public class Tester<[Immutable] T, U> {
 			.NestedReceiver</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/>
 			.Instance;
 
+
+		// OperationKind.Conversion
 		(TestImmutableT<MyImmutable>)null;
 		(TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/>)null;
 
 		null as TestImmutableT<MyImmutable>;
 		null as TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/>;
+
 
 		// OperationKind.TypeOf
 		Type _ = typeof( TestImmutableT<MyImmutable> );
@@ -177,6 +180,7 @@ public class Tester<[Immutable] T, U> {
 
 			_ => null
 		};
+
 
 		// SyntaxKind.LocalFunctionStatement
 		TestImmutableT<MyImmutable> LocalMethodDeclaration() => throw null;
