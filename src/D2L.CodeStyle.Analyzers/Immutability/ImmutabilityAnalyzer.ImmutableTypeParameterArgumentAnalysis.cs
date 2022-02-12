@@ -161,7 +161,7 @@ public sealed partial class ImmutabilityAnalyzer {
 						return syntaxNode switch {
 							FieldDeclarationSyntax fieldDeclaration => fieldDeclaration.Declaration.Type,
 							VariableDeclaratorSyntax variableDeclarator => ( (VariableDeclarationSyntax)variableDeclarator.Parent! ).Type,
-							_ => throw new Exception( $"{syntaxNode.GetLocation().GetLineSpan().StartLinePosition.Line + 1} {syntaxNode.ToFullString()}" ),
+							_ => syntaxNode,
 						};
 					}
 
@@ -218,7 +218,7 @@ public sealed partial class ImmutabilityAnalyzer {
 							annotationsContext,
 							immutabilityContext,
 							@interface,
-							() => FindBaseTypeSyntax( symbol, @interface, ctx.CancellationToken ).Type
+							() => getSyntax( symbol, @interface, ctx.CancellationToken )
 						);
 					}
 
@@ -228,17 +228,19 @@ public sealed partial class ImmutabilityAnalyzer {
 							annotationsContext,
 							immutabilityContext,
 							symbol.BaseType,
-							() => FindBaseTypeSyntax( symbol, symbol.BaseType, ctx.CancellationToken ).Type
+							() => getSyntax( symbol, symbol.BaseType, ctx.CancellationToken )
 						);
 					}
 
-					BaseTypeSyntax FindBaseTypeSyntax(
+					SyntaxNodeOrToken getSyntax(
 						INamedTypeSymbol typeSymbol,
 						INamedTypeSymbol baseTypeSymbol,
 						CancellationToken cancellationToken
 					) {
+						SyntaxNodeOrToken? anySyntax = null;
 						foreach( var reference in typeSymbol.DeclaringSyntaxReferences ) {
 							var syntax = (TypeDeclarationSyntax)reference.GetSyntax( cancellationToken );
+							anySyntax = syntax.Identifier;
 
 							var baseTypes = syntax.BaseList?.Types;
 							if( baseTypes == null ) {
@@ -252,12 +254,16 @@ public sealed partial class ImmutabilityAnalyzer {
 								ITypeSymbol? thisTypeSymbol = model.GetTypeInfo( typeSyntax, cancellationToken ).Type;
 
 								if( baseTypeSymbol.Equals( thisTypeSymbol, SymbolEqualityComparer.Default ) ) {
-									return baseTypeSyntax;
+									return baseTypeSyntax.Type;
 								}
 							}
 						}
 
-						throw new Exception();
+						if( !anySyntax.HasValue ) {
+							throw new InvalidOperationException();
+						}
+
+						return anySyntax.Value;
 					}
 				},
 				SymbolKind.NamedType
@@ -353,49 +359,6 @@ public sealed partial class ImmutabilityAnalyzer {
 			);
 		}
 
-		private static Func<SyntaxNodeOrToken> SelectRightSyntaxRecursive( Func<SyntaxNodeOrToken> getSyntax ) =>
-			() => SelectRightSyntaxRecursive( getSyntax() );
-
-		private static SyntaxNodeOrToken SelectRightSyntaxRecursive( SyntaxNodeOrToken syntax ) {
-			if( syntax.IsToken ) {
-				return syntax;
-			}
-
-			return syntax.AsNode() switch {
-				GenericNameSyntax genericName => genericName,
-				QualifiedNameSyntax qualifiedName => SelectRightSyntaxRecursive( qualifiedName.Right ),
-				MemberAccessExpressionSyntax memberAccess => SelectRightSyntaxRecursive( memberAccess.Name ),
-				ArrayTypeSyntax arrayType => arrayType.ElementType,
-				_ => syntax,
-			};
-		}
-
-		private static Func<SyntaxNodeOrToken> SelectLeftSyntax( Func<SyntaxNodeOrToken> getSyntax ) =>
-			() => SelectLeftSyntax( getSyntax() );
-
-		private static SyntaxNodeOrToken SelectLeftSyntax( SyntaxNodeOrToken syntax ) {
-			if( syntax.IsToken ) {
-				return syntax;
-			}
-
-			return syntax.AsNode() switch {
-				QualifiedNameSyntax qualifiedName => qualifiedName.Left,
-				MemberAccessExpressionSyntax memberAccess => memberAccess.Expression,
-				_ => syntax,
-			};
-		}
-
-		private static SyntaxNodeOrToken GetTypeArgumentSyntax( SyntaxNodeOrToken syntax, int n ) {
-			if( syntax.IsToken ) {
-				return syntax;
-			}
-
-			return syntax.AsNode() switch {
-				GenericNameSyntax genericName => genericName.TypeArgumentList.Arguments[ n ],
-				_ => syntax,
-			};
-		}
-
 		private static void AnalyzeTypeRecursive(
 			Action<Diagnostic> reportDiagnostic,
 			AnnotationsContext annotationsContext,
@@ -431,6 +394,21 @@ public sealed partial class ImmutabilityAnalyzer {
 				INamedTypeSymbol namedType => namedType,
 				IArrayTypeSymbol arrayType => GetNamedTypeRecursive( arrayType.ElementType ),
 				_ => null
+			};
+		}
+
+		private static Func<SyntaxNodeOrToken> SelectLeftSyntax( Func<SyntaxNodeOrToken> getSyntax ) =>
+			() => SelectLeftSyntax( getSyntax() );
+
+		private static SyntaxNodeOrToken SelectLeftSyntax( SyntaxNodeOrToken syntax ) {
+			if( syntax.IsToken ) {
+				return syntax;
+			}
+
+			return syntax.AsNode() switch {
+				QualifiedNameSyntax qualifiedName => qualifiedName.Left,
+				MemberAccessExpressionSyntax memberAccess => memberAccess.Expression,
+				_ => syntax,
 			};
 		}
 
@@ -478,6 +456,34 @@ public sealed partial class ImmutabilityAnalyzer {
 					reportDiagnostic( diagnostic );
 				}
 			}
+		}
+
+		private static Func<SyntaxNodeOrToken> SelectRightSyntaxRecursive( Func<SyntaxNodeOrToken> getSyntax )
+			=> () => SelectRightSyntaxRecursive( getSyntax() );
+
+		private static SyntaxNodeOrToken SelectRightSyntaxRecursive( SyntaxNodeOrToken syntax ) {
+			if( syntax.IsToken ) {
+				return syntax;
+			}
+
+			return syntax.AsNode() switch {
+				GenericNameSyntax genericName => genericName,
+				QualifiedNameSyntax qualifiedName => SelectRightSyntaxRecursive( qualifiedName.Right ),
+				MemberAccessExpressionSyntax memberAccess => SelectRightSyntaxRecursive( memberAccess.Name ),
+				ArrayTypeSyntax arrayType => arrayType.ElementType,
+				_ => syntax,
+			};
+		}
+
+		private static SyntaxNodeOrToken GetTypeArgumentSyntax( SyntaxNodeOrToken syntax, int n ) {
+			if( syntax.IsToken ) {
+				return syntax;
+			}
+
+			return syntax.AsNode() switch {
+				GenericNameSyntax genericName => genericName.TypeArgumentList.Arguments[ n ],
+				_ => syntax,
+			};
 		}
 
 	}
