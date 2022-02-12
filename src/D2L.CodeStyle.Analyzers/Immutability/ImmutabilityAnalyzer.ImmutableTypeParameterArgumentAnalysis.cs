@@ -424,7 +424,7 @@ public sealed partial class ImmutabilityAnalyzer {
 				immutabilityContext,
 				namedType.TypeArguments,
 				namedType.TypeParameters,
-				SelectRightSyntaxRecursive( getAnalyzedSyntax )
+				getAnalyzedSyntax
 			);
 
 			static INamedTypeSymbol? GetNamedTypeRecursive( ITypeSymbol type ) => type switch {
