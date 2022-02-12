@@ -152,6 +152,23 @@ public sealed partial class ImmutabilityAnalyzer {
 				OperationKind.VariableDeclaration
 			);
 
+			// Type arguments when defining variables
+			context.RegisterOperationAction(
+				ctx => {
+					SyntaxNodeOrToken syntax = ctx.Operation.Syntax;
+
+					AnalyzeTypeRecursive(
+						ctx.ReportDiagnostic,
+						annotationsContext,
+						immutabilityContext,
+						ctx.Operation.Type!,
+						() => syntax
+					);
+				},
+				OperationKind.DeclarationExpression,
+				OperationKind.Discard
+			);
+
 			// Type arguments of field types
 			context.RegisterSymbolAction(
 				ctx => {
@@ -529,6 +546,10 @@ public sealed partial class ImmutabilityAnalyzer {
 
 			return syntax.AsNode() switch {
 				ArrayTypeSyntax arrayType => arrayType.ElementType,
+				DeclarationExpressionSyntax declarationExpression =>
+					declarationExpression.Designation is ParenthesizedVariableDesignationSyntax parenthesizedDesignation
+						? parenthesizedDesignation
+						: declarationExpression.Type,
 				MemberAccessExpressionSyntax memberAccess => SelectRightSyntaxRecursive( memberAccess.Name ),
 				QualifiedNameSyntax qualifiedName => SelectRightSyntaxRecursive( qualifiedName.Right ),
 				_ => syntax,
@@ -542,6 +563,7 @@ public sealed partial class ImmutabilityAnalyzer {
 
 			return syntax.AsNode() switch {
 				GenericNameSyntax genericName => genericName.TypeArgumentList.Arguments[ n ],
+				ParenthesizedVariableDesignationSyntax parenthesizedVariableDesignation => parenthesizedVariableDesignation.Variables[ n ],
 				_ => syntax,
 			};
 		}

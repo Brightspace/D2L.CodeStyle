@@ -28,11 +28,16 @@ public static class Holder {
 	public static MyMutable MyMutable { get; }
 
 	public static Receiver<MyMutable> Receiver_MyMutable { get; }
+
+	public static (TestImmutableT<MyImmutable>, TestImmutableT<MyMutable>) Tuple_MyImmutable_MyMutable { get; }
 }
 
 public class Receiver {
 	public Receiver Invoke<[Immutable] T>( T _ ) { }
 	public static Receiver StaticInvoke<[Immutable] T>( T _ ) { }
+
+	public static void ImmutableOut( out TestImmutableT<MyImmutable> foo );
+	public static void MutableOut( out TestImmutableT<MyMutable> foo );
 }
 
 public class Receiver<[Immutable] T> {
@@ -68,6 +73,33 @@ public class Tester<[Immutable] T, U> {
 		TestImmutableT<MyImmutable<MyImmutable>> test_myImmutable_myImmutable;
 		TestImmutableT<MyImmutable</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/>> test_myImmutable_myMutable;
 		TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> multiVarA, multiVarB;
+
+
+		// OperationKind.DeclarationExpression & OperationKind.Discard
+		var (
+			_,
+			/* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ _ /**/
+		) = Holder.Tuple_MyImmutable_MyMutable;
+		var (
+			_,
+			/* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ expression_test_myMutableA /**/
+		) = Holder.Tuple_MyImmutable_MyMutable;
+		(
+			TestImmutableT<MyImmutable> _,
+			TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> _
+		) = Holder.Tuple_MyImmutable_MyMutable;
+		(
+			TestImmutableT<MyImmutable> _,
+			TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> expression_test_myMutableB
+		) = Holder.Tuple_MyImmutable_MyMutable;
+		Receiver.ImmutableOut( out var _ );
+		Receiver.ImmutableOut( out TestImmutableT<MyImmutable> _ );
+		Receiver.ImmutableOut( out var out_test_immutableA );
+		Receiver.ImmutableOut( out TestImmutableT<MyImmutable> out_test_immutableB );
+		Receiver.MutableOut( out /* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ var /**/ _ );
+		Receiver.MutableOut( out TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> _ );
+		Receiver.MutableOut( out /* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ var /**/ out_test_mutableA );
+		Receiver.MutableOut( out TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> out_test_mutableB );
 
 
 		// OperationKind.ObjectCreation
