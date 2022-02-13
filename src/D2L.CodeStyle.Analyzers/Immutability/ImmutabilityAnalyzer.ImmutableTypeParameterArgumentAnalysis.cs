@@ -572,7 +572,7 @@ public sealed partial class ImmutabilityAnalyzer {
 			ImmutableArray<ITypeParameterSymbol> typeParameters,
 			Func<SyntaxNodeOrToken> getAnalyzedSyntax
 		) {
-			getAnalyzedSyntax = SelectRightSyntaxRecursive( getAnalyzedSyntax );
+			getAnalyzedSyntax = SelectRightSyntax( getAnalyzedSyntax );
 
 			for( var i = 0; i < typeArguments.Length; ++i ) {
 				ITypeSymbol argument = typeArguments[ i ];
@@ -610,10 +610,10 @@ public sealed partial class ImmutabilityAnalyzer {
 			}
 		}
 
-		private static Func<SyntaxNodeOrToken> SelectRightSyntaxRecursive( Func<SyntaxNodeOrToken> getSyntax )
-			=> () => SelectRightSyntaxRecursive( getSyntax() );
+		private static Func<SyntaxNodeOrToken> SelectRightSyntax( Func<SyntaxNodeOrToken> getSyntax )
+			=> () => SelectRightSyntax( getSyntax() );
 
-		private static SyntaxNodeOrToken SelectRightSyntaxRecursive( SyntaxNodeOrToken syntax ) {
+		private static SyntaxNodeOrToken SelectRightSyntax( SyntaxNodeOrToken syntax ) {
 			if( syntax.IsToken ) {
 				return syntax;
 			}
@@ -624,8 +624,8 @@ public sealed partial class ImmutabilityAnalyzer {
 					declarationExpression.Designation is ParenthesizedVariableDesignationSyntax parenthesizedDesignation
 						? parenthesizedDesignation
 						: declarationExpression.Type,
-				MemberAccessExpressionSyntax memberAccess => SelectRightSyntaxRecursive( memberAccess.Name ),
-				QualifiedNameSyntax qualifiedName => SelectRightSyntaxRecursive( qualifiedName.Right ),
+				MemberAccessExpressionSyntax memberAccess => memberAccess.Name,
+				QualifiedNameSyntax qualifiedName => qualifiedName.Right,
 				_ => syntax,
 			};
 		}
