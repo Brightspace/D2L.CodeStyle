@@ -315,7 +315,7 @@ public sealed partial class ImmutabilityAnalyzer {
 						);
 					}
 
-					if( symbol.BaseType != null ) {
+					if( symbol.BaseType is not null ) {
 						AnalyzeTypeRecursive(
 							ctx.ReportDiagnostic,
 							annotationsContext,
@@ -336,7 +336,7 @@ public sealed partial class ImmutabilityAnalyzer {
 							anySyntax = syntax.Identifier;
 
 							var baseTypes = syntax.BaseList?.Types;
-							if( baseTypes == null ) {
+							if( baseTypes is null ) {
 								continue;
 							}
 
@@ -522,7 +522,7 @@ public sealed partial class ImmutabilityAnalyzer {
 				return;
 			}
 
-			if( namedType.ContainingType != null ) {
+			if( namedType.ContainingType is not null ) {
 				AnalyzeTypeRecursive(
 					reportDiagnostic,
 					annotationsContext,
