@@ -588,10 +588,6 @@ public sealed partial class ImmutabilityAnalyzer {
 					getThisArgument
 				);
 
-				// TODO: this should eventually use information from ImmutableTypeInfo
-				// however the current information about immutable type parameters
-				// includes [Immutable] filling for what will instead be the upcoming
-				// [OnlyIf] (e.g. it would be broken for IEnumerable<>)
 				if( !annotationsContext.Objects.Immutable.IsDefined( typeParameter ) ) {
 					continue;
 				}
