@@ -590,8 +590,8 @@ public sealed partial class ImmutabilityAnalyzer {
 			}
 		}
 
-		private static Func<SyntaxNodeOrToken> SelectLeftSyntax( Func<SyntaxNodeOrToken> getSyntax ) =>
-	() => SelectLeftSyntax( getSyntax() );
+		private static Func<SyntaxNodeOrToken> SelectLeftSyntax( Func<SyntaxNodeOrToken> getSyntax )
+			=> () => SelectLeftSyntax( getSyntax() );
 
 		private static SyntaxNodeOrToken SelectLeftSyntax( SyntaxNodeOrToken syntax ) {
 			if( syntax.IsToken ) {
