@@ -638,6 +638,7 @@ public sealed partial class ImmutabilityAnalyzer {
 			return syntax.AsNode() switch {
 				GenericNameSyntax genericName => genericName.TypeArgumentList.Arguments[ n ],
 				ParenthesizedVariableDesignationSyntax parenthesizedVariableDesignation => parenthesizedVariableDesignation.Variables[ n ],
+				TupleTypeSyntax tupleType => tupleType.Elements[ n ].Type,
 				_ => syntax,
 			};
 		}

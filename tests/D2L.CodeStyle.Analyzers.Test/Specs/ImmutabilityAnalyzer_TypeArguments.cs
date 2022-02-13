@@ -83,6 +83,16 @@ public class Tester<[Immutable] T, U> {
 		/**/
 		> _;
 		TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/>[][] _;
+		TestImmutableT<(
+			MyImmutable<T>,
+			MyImmutable</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/>,
+			MyImmutable</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/>
+		)> _;
+		TestImmutableT<(
+			MyImmutable<T> A,
+			MyImmutable</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> B,
+			MyImmutable</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> C
+		)> _;
 
 
 		// OperationKind.DeclarationExpression & OperationKind.Discard
