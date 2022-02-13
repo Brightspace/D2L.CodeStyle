@@ -62,7 +62,10 @@ public class Tester<[Immutable] T, U> {
 	TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> mutableField;
 
 	// SymbolKind.Property
+	TestImmutableT<T> ImmutableProp { get; }
 	TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> MutableProp { get; }
+	TestImmutableT<T> this[ int i ] { get => throw null, set; }
+	TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> this[ string s ] { get => throw null, set; }
 
 	void Statements<[Immutable] R, S>( U _ ) {
 		// OperationKind.VariableDeclaration
