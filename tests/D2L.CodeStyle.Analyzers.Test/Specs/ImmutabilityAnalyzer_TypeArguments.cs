@@ -82,6 +82,7 @@ public class Tester<[Immutable] T, U> {
 			>[]
 		/**/
 		> _;
+		TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/>[][] _;
 
 
 		// OperationKind.DeclarationExpression & OperationKind.Discard
