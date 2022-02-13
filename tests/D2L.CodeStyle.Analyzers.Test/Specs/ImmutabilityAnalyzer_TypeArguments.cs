@@ -66,6 +66,14 @@ public class Tester<[Immutable] T, U> {
 	TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> MutableProp { get; }
 	TestImmutableT<T> this[ int i ] { get => throw null, set; }
 	TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> this[ string s ] { get => throw null, set; }
+	record RecordProps<[Immutable] R, S>(
+		TestImmutableT<MyImmutable> TestImmutableT
+		TestImmutableT<T> TestImmutableT1,
+		TestImmutableT<R> TestImmutableT2,
+		TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> TestImmutableT3,
+		TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/> TestImmutableT4,
+		TestImmutableT</* TypeParameterIsNotKnownToBeImmutable(S) */ S /**/> TestImmutableT5
+	);
 
 	void Statements<[Immutable] R, S>( U _ ) {
 		// OperationKind.VariableDeclaration

@@ -30,19 +30,21 @@ public sealed partial class ImmutabilityAnalyzer {
 
 					SyntaxNode getBaseSyntax() => symbol.DeclaringSyntaxReferences[ 0 ].GetSyntax( ctx.CancellationToken );
 
-					AnalyzeTypeRecursive(
-						ctx.ReportDiagnostic,
-						annotationsContext,
-						immutabilityContext,
-						symbol.ReturnType,
-						() => {
-							SyntaxNode syntax = getBaseSyntax();
-							return getBaseSyntax() switch {
-								MethodDeclarationSyntax methodDeclaration => methodDeclaration.ReturnType,
-								_ => syntax,
-							};
-						}
-					);
+					if( symbol.MethodKind != MethodKind.Constructor ) {
+						AnalyzeTypeRecursive(
+							ctx.ReportDiagnostic,
+							annotationsContext,
+							immutabilityContext,
+							symbol.ReturnType,
+							() => {
+								SyntaxNode syntax = getBaseSyntax();
+								return getBaseSyntax() switch {
+									MethodDeclarationSyntax methodDeclaration => methodDeclaration.ReturnType,
+									_ => syntax,
+								};
+							}
+						);
+					}
 
 					for( int i = 0; i < symbol.Parameters.Length; ++i ) {
 						IParameterSymbol parameter = symbol.Parameters[ i ];
@@ -55,14 +57,11 @@ public sealed partial class ImmutabilityAnalyzer {
 							() => {
 								SyntaxNode syntax = getBaseSyntax();
 
-								if( syntax is not MethodDeclarationSyntax methodDeclaration ) {
-									return syntax;
-								}
-
-								return methodDeclaration
-									.ParameterList
-									.Parameters[ i ]
-									.Type;
+								return syntax switch {
+									MethodDeclarationSyntax methodDeclaration => methodDeclaration.ParameterList.Parameters[ i ].Type,
+									RecordDeclarationSyntax recordDeclaration => recordDeclaration.ParameterList!.Parameters[ i ].Type,
+									_ => syntax,
+								};
 							}
 						);
 					}
