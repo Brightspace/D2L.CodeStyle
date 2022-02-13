@@ -548,21 +548,6 @@ public sealed partial class ImmutabilityAnalyzer {
 			};
 		}
 
-		private static Func<SyntaxNodeOrToken> SelectLeftSyntax( Func<SyntaxNodeOrToken> getSyntax ) =>
-			() => SelectLeftSyntax( getSyntax() );
-
-		private static SyntaxNodeOrToken SelectLeftSyntax( SyntaxNodeOrToken syntax ) {
-			if( syntax.IsToken ) {
-				return syntax;
-			}
-
-			return syntax.AsNode() switch {
-				MemberAccessExpressionSyntax memberAccess => memberAccess.Expression,
-				QualifiedNameSyntax qualifiedName => qualifiedName.Left,
-				_ => syntax,
-			};
-		}
-
 		private static void AnalyzeTypeArgumentsRecursive(
 			Action<Diagnostic> reportDiagnostic,
 			AnnotationsContext annotationsContext,
@@ -603,6 +588,21 @@ public sealed partial class ImmutabilityAnalyzer {
 					reportDiagnostic( diagnostic );
 				}
 			}
+		}
+
+		private static Func<SyntaxNodeOrToken> SelectLeftSyntax( Func<SyntaxNodeOrToken> getSyntax ) =>
+	() => SelectLeftSyntax( getSyntax() );
+
+		private static SyntaxNodeOrToken SelectLeftSyntax( SyntaxNodeOrToken syntax ) {
+			if( syntax.IsToken ) {
+				return syntax;
+			}
+
+			return syntax.AsNode() switch {
+				MemberAccessExpressionSyntax memberAccess => memberAccess.Expression,
+				QualifiedNameSyntax qualifiedName => qualifiedName.Left,
+				_ => syntax,
+			};
 		}
 
 		private static Func<SyntaxNodeOrToken> SelectRightSyntax( Func<SyntaxNodeOrToken> getSyntax )
