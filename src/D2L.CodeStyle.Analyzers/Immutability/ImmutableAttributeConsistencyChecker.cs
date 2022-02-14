@@ -110,9 +110,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						&& baseTypeInfo.Type.SpecialType != SpecialType.System_ValueType
 						&& baseTypeInfo.Type.Kind != SymbolKind.PointerType;
 
-					TypeDeclarationSyntax syntax = FindDeclarationImplementingType(
-						typeSymbol: typeInfo.Type,
-						baseTypeSymbol: baseTypeInfo.Type,
+					(TypeDeclarationSyntax syntax, _) = typeInfo.Type.ExpensiveGetSyntaxImplementingType(
+						baseTypeOrInterface: baseTypeInfo.Type,
+						compilation: m_compilation,
 						cancellationToken
 					);
 
@@ -133,36 +133,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				default:
 					throw new NotImplementedException();
 			}
-		}
-
-		private TypeDeclarationSyntax FindDeclarationImplementingType(
-			INamedTypeSymbol typeSymbol,
-			INamedTypeSymbol baseTypeSymbol,
-			CancellationToken cancellationToken
-		) {
-			TypeDeclarationSyntax anySyntax = null;
-			foreach( var reference in typeSymbol.DeclaringSyntaxReferences ) {
-				var syntax = reference.GetSyntax( cancellationToken ) as TypeDeclarationSyntax;
-				anySyntax = syntax;
-
-				var baseTypes = syntax.BaseList?.Types;
-				if( baseTypes == null ) {
-					continue;
-				}
-
-				SemanticModel model = m_compilation.GetSemanticModel( syntax.SyntaxTree );
-				foreach( var baseTypeSyntax in baseTypes ) {
-					TypeSyntax typeSyntax = baseTypeSyntax.Type;
-
-					ITypeSymbol thisTypeSymbol = model.GetTypeInfo( typeSyntax, cancellationToken ).Type;
-
-					if( baseTypeSymbol.Equals( thisTypeSymbol, SymbolEqualityComparer.Default ) ) {
-						return syntax;
-					}
-				}
-			}
-
-			return anySyntax;
 		}
 
 		private static Location GetLocationOfNthTypeParameter(
