@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -315,7 +316,7 @@ public sealed partial class ImmutabilityAnalyzer {
 							annotationsContext,
 							immutabilityContext,
 							@interface,
-							() => getSyntax( symbol, @interface, ctx.CancellationToken )
+							() => getSyntax( @interface )
 						);
 					}
 
@@ -325,42 +326,28 @@ public sealed partial class ImmutabilityAnalyzer {
 							annotationsContext,
 							immutabilityContext,
 							symbol.BaseType,
-							() => getSyntax( symbol, symbol.BaseType, ctx.CancellationToken )
+							() => getSyntax( symbol.BaseType )
 						);
 					}
 
 					SyntaxNodeOrToken getSyntax(
-						INamedTypeSymbol typeSymbol,
-						INamedTypeSymbol baseTypeSymbol,
-						CancellationToken cancellationToken
+						INamedTypeSymbol baseTypeOrInterface
 					) {
-						SyntaxNodeOrToken? anySyntax = null;
-						foreach( var reference in typeSymbol.DeclaringSyntaxReferences ) {
-							var syntax = (TypeDeclarationSyntax)reference.GetSyntax( cancellationToken );
-							anySyntax = syntax.Identifier;
+						var (Declaration, BaseType) = symbol.ExpensiveGetSyntaxImplementingType(
+							baseTypeOrInterface,
+							ctx.Compilation,
+							ctx.CancellationToken
+						);
 
-							var baseTypes = syntax.BaseList?.Types;
-							if( baseTypes is null ) {
-								continue;
-							}
-
-							SemanticModel model = ctx.Compilation.GetSemanticModel( syntax.SyntaxTree );
-							foreach( var baseTypeSyntax in baseTypes ) {
-								TypeSyntax typeSyntax = baseTypeSyntax.Type;
-
-								ITypeSymbol? thisTypeSymbol = model.GetTypeInfo( typeSyntax, cancellationToken ).Type;
-
-								if( baseTypeSymbol.Equals( thisTypeSymbol, SymbolEqualityComparer.Default ) ) {
-									return baseTypeSyntax.Type;
-								}
-							}
+						if( BaseType is not null ) {
+							return BaseType.Type;
 						}
 
-						if( !anySyntax.HasValue ) {
-							throw new InvalidOperationException();
+						if( Declaration is not null ) {
+							return Declaration.Identifier;
 						}
 
-						return anySyntax.Value;
+						return default;
 					}
 				},
 				SymbolKind.NamedType
