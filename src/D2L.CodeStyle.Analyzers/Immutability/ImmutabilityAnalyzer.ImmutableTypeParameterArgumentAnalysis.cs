@@ -38,7 +38,7 @@ public sealed partial class ImmutabilityAnalyzer {
 							symbol.ReturnType,
 							() => {
 								SyntaxNode syntax = getBaseSyntax();
-								return getBaseSyntax() switch {
+								return syntax switch {
 									MethodDeclarationSyntax methodDeclaration => methodDeclaration.ReturnType,
 									_ => syntax,
 								};
