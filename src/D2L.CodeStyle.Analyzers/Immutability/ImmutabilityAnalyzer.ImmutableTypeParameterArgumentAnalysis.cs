@@ -584,11 +584,10 @@ public sealed partial class ImmutabilityAnalyzer {
 		) {
 			getAnalyzedSyntax = SelectRightSyntax( getAnalyzedSyntax );
 
-			for( var i = 0; i < typeArguments.Length; i++ ) {
-				ITypeSymbol argument = typeArguments[ i ];
-				ITypeParameterSymbol typeParameter = typeParameters[ i ];
+			foreach( ITypeParameterSymbol typeParameter in typeParameters ) {
+				ITypeSymbol argument = typeArguments[ typeParameter.Ordinal ];
 
-				SyntaxNodeOrToken getThisArgument() => GetTypeArgumentSyntax( getAnalyzedSyntax(), i );
+				SyntaxNodeOrToken getThisArgument() => GetTypeArgumentSyntax( getAnalyzedSyntax(), typeParameter.Ordinal );
 
 				AnalyzeTypeRecursive(
 					reportDiagnostic,
