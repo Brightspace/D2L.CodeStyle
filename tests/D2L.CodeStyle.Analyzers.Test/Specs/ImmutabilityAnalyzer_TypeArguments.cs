@@ -66,6 +66,7 @@ public class Tester<[Immutable] T, U> {
 	TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> MutableProp { get; }
 	TestImmutableT<T> this[ int i ] { get => throw null, set; }
 	TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> this[ string s ] { get => throw null, set; }
+	string this[ TestImmutableT</* NonImmutableTypeHeldByImmutable(class, Z.MyMutable, ) */ MyMutable /**/> t ] { get => throw null, set; }
 	record RecordProps<[Immutable] R, S>(
 		TestImmutableT<MyImmutable> TestImmutableT
 		TestImmutableT<T> TestImmutableT1,

@@ -21,7 +21,7 @@ public sealed partial class ImmutabilityAnalyzer {
 				ctx => {
 					var symbol = (IMethodSymbol)ctx.Symbol;
 
-					// Ignore auto-implemened property methods
+					// Ignore property methods as they're analyzed via properties
 					switch( symbol.MethodKind ) {
 						case MethodKind.PropertyGet:
 						case MethodKind.PropertySet:
@@ -46,25 +46,21 @@ public sealed partial class ImmutabilityAnalyzer {
 						);
 					}
 
-					for( int i = 0; i < symbol.Parameters.Length; ++i ) {
-						IParameterSymbol parameter = symbol.Parameters[ i ];
+					AnalyzeMethodParameters(
+						ctx.ReportDiagnostic,
+						annotationsContext,
+						immutabilityContext,
+						symbol.Parameters,
+						n => {
+							SyntaxNode syntax = getBaseSyntax();
 
-						AnalyzeTypeRecursive(
-							ctx.ReportDiagnostic,
-							annotationsContext,
-							immutabilityContext,
-							parameter.Type,
-							() => {
-								SyntaxNode syntax = getBaseSyntax();
-
-								return syntax switch {
-									MethodDeclarationSyntax methodDeclaration => methodDeclaration.ParameterList.Parameters[ i ].Type,
-									RecordDeclarationSyntax recordDeclaration => recordDeclaration.ParameterList!.Parameters[ i ].Type,
-									_ => syntax,
-								};
-							}
-						);
-					}
+							return syntax switch {
+								MethodDeclarationSyntax methodDeclaration => methodDeclaration.ParameterList.Parameters[ n ].Type,
+								RecordDeclarationSyntax recordDeclaration => recordDeclaration.ParameterList!.Parameters[ n ].Type,
+								_ => syntax,
+							};
+						}
+					);
 				},
 				SymbolKind.Method
 			);
@@ -92,22 +88,13 @@ public sealed partial class ImmutabilityAnalyzer {
 						() => syntax.ReturnType
 					);
 
-					for( int i = 0; i < symbol.Parameters.Length; ++i ) {
-						IParameterSymbol parameter = symbol.Parameters[ i ];
-
-						AnalyzeTypeRecursive(
-							ctx.ReportDiagnostic,
-							annotationsContext,
-							immutabilityContext,
-							parameter.Type,
-							() => {
-								return syntax
-									.ParameterList
-									.Parameters[ i ]
-									.Type;
-							}
-						);
-					}
+					AnalyzeMethodParameters(
+						ctx.ReportDiagnostic,
+						annotationsContext,
+						immutabilityContext,
+						symbol.Parameters,
+						n => syntax.ParameterList.Parameters[ n ].Type
+					);
 				},
 				SyntaxKind.LocalFunctionStatement
 			);
@@ -202,24 +189,41 @@ public sealed partial class ImmutabilityAnalyzer {
 						return;
 					}
 
-					SyntaxNodeOrToken getSyntax() {
-						SyntaxNode syntaxNode = symbol.DeclaringSyntaxReferences[ 0 ].GetSyntax( ctx.CancellationToken );
-
-						return syntaxNode switch {
-							IndexerDeclarationSyntax indexer => indexer.Type,
-							ParameterSyntax parameter => ( parameter.Type ?? (SyntaxNode)parameter ),
-							PropertyDeclarationSyntax propertyDeclaration => propertyDeclaration.Type,
-							_ => syntaxNode,
-						};
-					}
+					SyntaxNode getBaseSyntax() => symbol.DeclaringSyntaxReferences[ 0 ].GetSyntax( ctx.CancellationToken );
 
 					AnalyzeTypeRecursive(
 						ctx.ReportDiagnostic,
 						annotationsContext,
 						immutabilityContext,
 						type,
-						getSyntax
+						() => {
+							SyntaxNode syntax = getBaseSyntax();
+
+							return syntax switch {
+								IndexerDeclarationSyntax indexer => indexer.Type,
+								ParameterSyntax parameter => ( parameter.Type ?? (SyntaxNode)parameter ),
+								PropertyDeclarationSyntax propertyDeclaration => propertyDeclaration.Type,
+								_ => syntax,
+							};
+						}
 					);
+
+					if( symbol.IsIndexer ) {
+						AnalyzeMethodParameters(
+							ctx.ReportDiagnostic,
+							annotationsContext,
+							immutabilityContext,
+							symbol.Parameters,
+							n => {
+								SyntaxNode syntax = getBaseSyntax();
+
+								return syntax switch {
+									IndexerDeclarationSyntax indexer => indexer.ParameterList.Parameters[ n ].Type,
+									_ => syntax,
+								};
+							}
+						);
+					}
 				},
 				SymbolKind.Property
 			);
@@ -463,6 +467,28 @@ public sealed partial class ImmutabilityAnalyzer {
 				},
 				OperationKind.Conversion
 			);
+		}
+
+		private static void AnalyzeMethodParameters(
+			Action<Diagnostic> reportDiagnostic,
+			AnnotationsContext annotationsContext,
+			ImmutabilityContext immutabilityContext,
+			ImmutableArray<IParameterSymbol> parameters,
+			Func<int, SyntaxNodeOrToken> getParameterSyntax
+		) {
+			foreach( var parameter in parameters ) {
+				if( parameter.IsThis ) {
+					continue;
+				}
+
+				AnalyzeTypeRecursive(
+					reportDiagnostic,
+					annotationsContext,
+					immutabilityContext,
+					parameter.Type,
+					() => getParameterSyntax( parameter.Ordinal )
+				);
+			}
 		}
 
 		private static void AnalyzeMethodUsage(
