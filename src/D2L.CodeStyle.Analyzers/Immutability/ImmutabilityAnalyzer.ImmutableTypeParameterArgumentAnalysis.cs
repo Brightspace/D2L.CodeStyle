@@ -584,7 +584,7 @@ public sealed partial class ImmutabilityAnalyzer {
 		) {
 			getAnalyzedSyntax = SelectRightSyntax( getAnalyzedSyntax );
 
-			for( var i = 0; i < typeArguments.Length; ++i ) {
+			for( var i = 0; i < typeArguments.Length; i++ ) {
 				ITypeSymbol argument = typeArguments[ i ];
 				ITypeParameterSymbol typeParameter = typeParameters[ i ];
 
