@@ -180,6 +180,10 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			IdentifierNameSyntax identExpr => identExpr
 				.WithIdentifier( RemoveAsyncSuffix( identExpr.Identifier, optional: true ) ),
 
+			InvocationExpressionSyntax invocationExpr => invocationExpr
+				.WithExpression( Transform( invocationExpr.Expression ) )
+				.WithArgumentList( TransformAll( invocationExpr.ArgumentList, Transform ) ),
+
 			LiteralExpressionSyntax => expr,
 
 			ObjectCreationExpressionSyntax newExpr => newExpr
