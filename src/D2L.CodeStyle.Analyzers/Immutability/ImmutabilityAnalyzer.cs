@@ -294,7 +294,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					new ImmutabilityQuery(
 						ImmutableTypeKind.Total,
 						argument
-					),
+					) { EnforceImmutableTypeParams = false },
 					getLocation: () => getArgumentLocation( position ),
 					out Diagnostic diagnostic
 				) ) {
