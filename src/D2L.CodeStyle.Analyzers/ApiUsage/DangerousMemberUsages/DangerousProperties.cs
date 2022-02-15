@@ -38,7 +38,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 				ImmutableArray.Create(
 					"Current",
 					"CurrentHandler",
-					"Handler"
+					"Handler",
+					"Items"
+				)
+			).Add(
+				"System.Web.HttpContextBase",
+				ImmutableArray.Create(
+					"Items"
 				)
 			);
 
