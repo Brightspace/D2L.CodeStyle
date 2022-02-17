@@ -49,6 +49,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 			SemanticModel model = ctx.SemanticModel;
 
+			if( syntax.AttributeLists.Count == 0 ) {
+				return;
+			}
+
 			IParameterSymbol parameter = model.GetDeclaredSymbol( syntax, ctx.CancellationToken );
 
 			if( !IsMarkedReadOnly( readOnlyAttribute, parameter ) ) {
