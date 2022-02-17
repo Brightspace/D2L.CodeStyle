@@ -7,10 +7,11 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
-	public sealed class ImmutabilityAnalyzer : DiagnosticAnalyzer {
+	public sealed partial class ImmutabilityAnalyzer : DiagnosticAnalyzer {
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.ArraysAreMutable,
@@ -55,6 +56,12 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 			ImmutabilityContext immutabilityContext = ImmutabilityContext.Create( context.Compilation, annotationsContext, m_additionalImmutableTypes );
 
+			ImmutableTypeParameterArgumentAnalysis.Register(
+				context,
+				annotationsContext,
+				immutabilityContext
+			);
+
 			context.RegisterSymbolAction(
 				ctx => AnalyzeTypeDeclaration(
 					ctx,
@@ -79,34 +86,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				ctx => AnalyzeMember( ctx, annotationsContext, immutabilityContext ),
 				SymbolKind.Field,
 				SymbolKind.Property
-			);
-
-			context.RegisterSyntaxNodeAction(
-				ctx => {
-					IdentifierNameSyntax identifierName = (IdentifierNameSyntax)ctx.Node;
-					AnalyzeTypeArguments(
-						ctx,
-						annotationsContext,
-						immutabilityContext,
-						identifierName,
-						getArgumentLocation: _ => identifierName.Identifier.GetLocation()
-					);
-				},
-				SyntaxKind.IdentifierName
-			);
-
-			context.RegisterSyntaxNodeAction(
-				ctx => {
-					GenericNameSyntax genericName = (GenericNameSyntax)ctx.Node;
-					AnalyzeTypeArguments(
-						ctx,
-						annotationsContext,
-						immutabilityContext,
-						genericName,
-						getArgumentLocation: position => genericName.TypeArgumentList.Arguments[ position ].GetLocation()
-					);
-				},
-				SyntaxKind.GenericName
 			);
 
 			context.RegisterSymbolAction(
@@ -153,6 +132,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				),
 				SymbolKind.NamedType
 			);
+
 		}
 
 		private static void AnalyzeMember(
@@ -260,50 +240,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			checker.CheckDeclaration( typeSymbol );
 		}
 
-		private static void AnalyzeTypeArguments(
-			SyntaxNodeAnalysisContext ctx,
-			AnnotationsContext annotationsContext,
-			ImmutabilityContext immutabilityContext,
-			SimpleNameSyntax syntax,
-			Func<int, Location> getArgumentLocation
-		) {
-			if( syntax.IsFromDocComment() ) {
-				// ignore things in doccomments such as crefs
-				return;
-			}
-
-			SymbolInfo info = ctx.SemanticModel.GetSymbolInfo( syntax, ctx.CancellationToken );
-
-			// Ignore anything that cannot have type arguments/parameters
-			if( !GetTypeParamsAndArgs( info.Symbol, out var typeParameters, out var typeArguments ) ) {
-				return;
-			}
-
-			int i = 0;
-			var paramArgPairs = typeParameters.Zip( typeArguments, ( p, a ) => (p, a, i++) );
-			foreach( var (parameter, argument, position) in paramArgPairs ) {
-				// TODO: this should eventually use information from ImmutableTypeInfo
-				// however the current information about immutable type parameters
-				// includes [Immutable] filling for what will instead be the upcoming
-				// [OnlyIf] (e.g. it would be broken for IEnumerable<>)
-				if( !annotationsContext.Objects.Immutable.IsDefined( parameter ) ) {
-					continue;
-				}
-
-				if( !immutabilityContext.IsImmutable(
-					new ImmutabilityQuery(
-						ImmutableTypeKind.Total,
-						argument
-					),
-					getLocation: () => getArgumentLocation( position ),
-					out Diagnostic diagnostic
-				) ) {
-					// TODO: not necessarily a good diagnostic for this use-case
-					ctx.ReportDiagnostic( diagnostic );
-				}
-			}
-		}
-
 		private static void AnalyzeConditionalImmutabilityOnMethodDeclarations(
 			IMethodSymbol method,
 			AnnotationsContext annotationsContext,
@@ -407,23 +343,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				TypeKind.Struct => "struct",
 				_ => symbol.TypeKind.ToString()
 			};
-		}
-
-		private static bool GetTypeParamsAndArgs( ISymbol type, out ImmutableArray<ITypeParameterSymbol> typeParameters, out ImmutableArray<ITypeSymbol> typeArguments ) {
-			switch( type ) {
-				case IMethodSymbol method:
-					typeParameters = method.TypeParameters;
-					typeArguments = method.TypeArguments;
-					return true;
-				case INamedTypeSymbol namedType:
-					typeParameters = namedType.TypeParameters;
-					typeArguments = namedType.TypeArguments;
-					return true;
-				default:
-					typeParameters = default;
-					typeArguments = default;
-					return false;
-			}
 		}
 	}
 }
