@@ -72,7 +72,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			("count4net.Writers.DurationCounter", default),
 
 			// 3rd-Party Types
-			("Amazon.DynamoDBv2.IAmazonDynamoDB", default)
+			("Amazon.DynamoDBv2.IAmazonDynamoDB", default),
 			("Amazon.RegionEndpoint", default),
 			("Amazon.S3.IAmazonS3", default),
 			("log4net.ILog", default),
