@@ -3,7 +3,7 @@
 namespace D2L.CodeStyle.Annotations.Contract {
 
 	[AttributeUsage(
-		validOn: AttributeTargets.Method | AttributeTargets.Property,
+		validOn: AttributeTargets.Constructor | AttributeTargets.Method | AttributeTargets.Property,
 		AllowMultiple = true,
 		Inherited = false
 	)]

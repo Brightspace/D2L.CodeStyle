@@ -45,6 +45,12 @@ namespace Targets {
 
 	public sealed class InstanceMembers {
 
+		public InstanceMembers() { }
+		public InstanceMembers( int value ) { }
+
+		[OnlyVisibleToType( TestCases.AllowedCaller.MetadataName, "OnlyVisibleToAnalyzer" )]
+		public InstanceMembers( int value, int value2 ) { }
+
 		public void UnrestrictedMethod() { }
 		public int UnrestrictedPropertyGetter { get { return 1; } }
 		public int UnrestrictedPropertySetter { set { } }
@@ -90,7 +96,8 @@ namespace TestCases {
 			GetProperty( @interface.UnrestrictedPropertyGetter );
 			@interface.UnrestrictedPropertySetter = 7;
 
-			InstanceMembers instance = null;
+			InstanceMembers instance = new InstanceMembers();
+			instance = new InstanceMembers( value: 1 );
 			Action instanceMethodReference = instance.UnrestrictedMethod;
 			instance.UnrestrictedMethod();
 			GetProperty( instance.UnrestrictedPropertyGetter );
@@ -110,7 +117,7 @@ namespace TestCases {
 			GetProperty( @interface.RestrictedPropertyGetter );
 			@interface.RestrictedPropertySetter = 7;
 
-			InstanceMembers instance = null;
+			InstanceMembers instance = new InstanceMembers( value: 1, value2: 2 );
 			instance.RestrictedMethod();
 			Action instanceMethodReference = instance.RestrictedMethod;
 			GetProperty( instance.RestrictedPropertyGetter );
@@ -133,7 +140,8 @@ namespace TestCases {
 			GetProperty( @interface.UnrestrictedPropertyGetter );
 			@interface.UnrestrictedPropertySetter = 7;
 
-			InstanceMembers instance = null;
+			InstanceMembers instance = new InstanceMembers();
+			instance = new InstanceMembers( value: 1 );
 			Action instanceMethodReference = instance.UnrestrictedMethod;
 			instance.UnrestrictedMethod();
 			GetProperty( instance.UnrestrictedPropertyGetter );
@@ -153,7 +161,7 @@ namespace TestCases {
 			GetProperty( /* MemberNotVisibleToCaller(RestrictedPropertyGetter) */ @interface.RestrictedPropertyGetter /**/ );
 			/* MemberNotVisibleToCaller(RestrictedPropertySetter) */ @interface.RestrictedPropertySetter /**/ = 7;
 
-			InstanceMembers instance = null;
+			InstanceMembers instance = /* MemberNotVisibleToCaller(.ctor) */ new InstanceMembers( value: 1, value2: 2 ) /**/;
 			/* MemberNotVisibleToCaller(RestrictedMethod) */ instance.RestrictedMethod() /**/;
 			Action instanceMethodReference = /* MemberNotVisibleToCaller(RestrictedMethod) */ instance.RestrictedMethod /**/;
 			GetProperty( /* MemberNotVisibleToCaller(RestrictedPropertyGetter) */ instance.RestrictedPropertyGetter /**/ );
