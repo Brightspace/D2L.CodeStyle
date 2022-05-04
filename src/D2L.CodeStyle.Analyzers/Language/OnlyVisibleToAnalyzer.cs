@@ -29,6 +29,16 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			context.RegisterOperationAction(
 				context => {
+					IObjectCreationOperation creation = (IObjectCreationOperation)context.Operation;
+					if( creation.Constructor != null ) {
+						AnalyzeMemberUsage( context, creation.Constructor, model );
+					}
+				},
+				OperationKind.ObjectCreation
+			);
+
+			context.RegisterOperationAction(
+				context => {
 					IInvocationOperation invocation = (IInvocationOperation)context.Operation;
 					AnalyzeMemberUsage( context, invocation.TargetMethod, model );
 				},
