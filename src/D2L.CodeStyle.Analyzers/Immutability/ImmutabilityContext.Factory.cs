@@ -98,13 +98,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				additionalImmutableTypes = ImmutableHashSet<string>.Empty;
 			}
 
-			ImmutableDictionary<string, IAssemblySymbol> compilationAssemblies = GetCompilationAssemblies( compilation );
-
 			// Generate a dictionary of types that we have specifically determined
 			// should be considered Immutable by the Analyzer.
 			var extraImmutableTypesBuilder = ImmutableDictionary.CreateBuilder<INamedTypeSymbol, ImmutableTypeInfo>( SymbolEqualityComparer.Default );
 			foreach( ( string typeName, string qualifiedAssembly ) in DefaultExtraTypes ) {
-				INamedTypeSymbol type = GetTypeSymbol( compilationAssemblies, compilation, qualifiedAssembly, typeName );
+				INamedTypeSymbol type = GetTypeSymbol( compilation, qualifiedAssembly, typeName );
 
 				if( type == null ) {
 					continue;
@@ -119,7 +117,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			foreach( string typeName in additionalImmutableTypes ) {
-				INamedTypeSymbol type = GetTypeSymbol( compilationAssemblies, compilation, qualifiedAssembly: default, typeName );
+				INamedTypeSymbol type = GetTypeSymbol( compilation, qualifiedAssembly: default, typeName );
 
 				if( type == null ) {
 					continue;
@@ -141,7 +139,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			// have a return value which should be considered Immutable by the Analyzer.
 			var knownImmutableReturnsBuilder = ImmutableHashSet.CreateBuilder<IMethodSymbol>( SymbolEqualityComparer.Default );
 			foreach( ( string typeName, string methodName, string qualifiedAssembly ) in KnownImmutableReturningMethods ) {
-				INamedTypeSymbol type = GetTypeSymbol( compilationAssemblies, compilation, qualifiedAssembly, typeName );
+				INamedTypeSymbol type = GetTypeSymbol( compilation, qualifiedAssembly, typeName );
 
 				if( type == null ) {
 					continue;
@@ -168,45 +166,35 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			);
 		}
 
-		private static ImmutableDictionary<string, IAssemblySymbol> GetCompilationAssemblies( Compilation compilation ) {
-			var builder = ImmutableDictionary.CreateBuilder<string, IAssemblySymbol>();
-
-			IAssemblySymbol compilationAssmebly = compilation.Assembly;
-
-			builder.Add( compilationAssmebly.Name, compilationAssmebly );
-
-			foreach( IModuleSymbol module in compilationAssmebly.Modules ) {
-				foreach( IAssemblySymbol assembly in module.ReferencedAssemblySymbols ) {
-					builder.Add( assembly.Name, assembly );
-				}
-			}
-
-			return builder.ToImmutable();
-		}
-
 		private static INamedTypeSymbol GetTypeSymbol(
-			ImmutableDictionary<string, IAssemblySymbol> compilationAssemblies,
 			Compilation compilation,
 			string qualifiedAssembly,
 			string typeName
 		) {
-			INamedTypeSymbol type;
 
-			if( string.IsNullOrEmpty( qualifiedAssembly ) ) {
-				type = compilation.GetTypeByMetadataName( typeName );
-			} else {
-				if( !compilationAssemblies.TryGetValue( qualifiedAssembly, out IAssemblySymbol assembly ) ) {
-					return null;
-				}
+			ImmutableArray<INamedTypeSymbol> types = compilation.GetTypesByMetadataName( typeName );
 
-				type = assembly.GetTypeByMetadataName( typeName );
-			}
-
-			if( type == null || type.Kind == SymbolKind.ErrorType ) {
+			if( types.IsEmpty ) {
 				return null;
 			}
 
-			return type;
+			if( qualifiedAssembly == default ) {
+				if( types.Length > 1 ) {
+					throw new InvalidOperationException(
+						$"Found multiple {typeName} with no {nameof( qualifiedAssembly )} specified when building ImmutabilityContext."
+					);
+				}
+
+				return types[ 0 ];
+			}
+
+			foreach( INamedTypeSymbol type in types ) {
+				if( type.ContainingAssembly.Name.Equals( qualifiedAssembly, StringComparison.Ordinal ) ) {
+					return type;
+				}
+			}
+
+			return null;
 		}
 
 	}
