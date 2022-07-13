@@ -129,8 +129,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			var containerTypeMappings = new (string typeName, int containedTypeIdx)[] {
 				new ( "D2L.LP.Extensibility.Activation.Domain.IPlugins`1", 0 ),
 				new ( "D2L.LP.Extensibility.Activation.Domain.IPlugins`2", 1 ),
-				new ( "D2L.LP.Extensibility.Plugins.IInstancePlugins`1",   0 ),
-				new ( "D2L.LP.Extensibility.Plugins.IInstancePlugins`2",   0 )
 			};
 
 			var containerTypesBuilder = ImmutableDictionary.CreateBuilder<INamedTypeSymbol, int>( SymbolEqualityComparer.Default );
