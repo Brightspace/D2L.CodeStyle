@@ -164,7 +164,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				annotationsContext: annotationsContext,
 				extraImmutableTypes: extraImmutableTypesBuilder.ToImmutable(),
 				knownImmutableReturns: knownImmutableReturnsBuilder.ToImmutable(),
-				conditionalTypeParamemters: ImmutableHashSet<ITypeParameterSymbol>.Empty
+				conditionalTypeParamemters: ImmutableHashSet<ITypeParameterSymbol>.Empty,
+				regexInfo: (
+					GetTypeSymbol( compilationAssemblies, compilation, default, "System.Text.RegularExpressions.Regex" ),
+					GetTypeSymbol( compilationAssemblies, compilation, default, "System.CodeDom.Compiler.GeneratedCodeAttribute" )
+				)
 			);
 		}
 
