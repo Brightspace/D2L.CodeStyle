@@ -28,5 +28,5 @@ jobs:
       - name: Archive
         uses: Brightspace/third-party-actions@actions/upload-artifact
         with:
-          name: packages
+          name: D2L.CodeStyle.${{ github.sha }}
           path: src/**/*.symbols.nupkg
