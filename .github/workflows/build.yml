@@ -1,0 +1,35 @@
+name: Build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+
+      - uses: Brightspace/third-party-actions@actions/checkout
+      - uses: Brightspace/third-party-actions@actions/setup-dotnet
+        with:
+          dotnet-version: |
+            7.0.x
+
+      - name: dotnet build
+        run: dotnet build -c Release
+
+      - name: dotnet test
+        run: dotnet test -c Release --no-build
+
+      - name: dotnet pack
+        run: dotnet pack -c Release --no-build
+
+      - name: Archive nupkg
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages
+          path: 'src/**.symbols.nupkg'
