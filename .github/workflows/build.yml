@@ -7,7 +7,7 @@ on:
       - main
 
 jobs:
-  publish:
+  all:
     runs-on: windows-latest
     timeout-minutes: 10
 
@@ -19,17 +19,14 @@ jobs:
           dotnet-version: |
             7.0.x
 
-      - name: dotnet build
+      - name: Build
         run: dotnet build -c Release
 
-      - name: dotnet test
+      - name: Test
         run: dotnet test -c Release --no-build
 
-      - name: dotnet pack
-        run: dotnet pack -c Release --no-build
-
-      - name: Archive nupkg
+      - name: Archive
         uses: actions/upload-artifact@v3
         with:
           name: packages
-          path: 'src/**.symbols.nupkg'
+          path: src\**.symbols.nupkg
