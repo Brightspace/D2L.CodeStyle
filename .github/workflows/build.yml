@@ -1,0 +1,32 @@
+name: Build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  all:
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    steps:
+
+      - uses: Brightspace/third-party-actions@actions/checkout
+      - uses: Brightspace/third-party-actions@actions/setup-dotnet
+        with:
+          dotnet-version: |
+            7.0.x
+
+      - name: Build
+        run: dotnet build -c Release
+
+      - name: Test
+        run: dotnet test -c Release --no-build
+
+      - name: Archive
+        uses: Brightspace/third-party-actions@actions/upload-artifact
+        with:
+          name: D2L.CodeStyle.${{ github.sha }}
+          path: src/**/*.symbols.nupkg
