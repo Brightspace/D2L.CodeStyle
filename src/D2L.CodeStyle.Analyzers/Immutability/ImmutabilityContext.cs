@@ -23,6 +23,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		private readonly ImmutableDictionary<INamedTypeSymbol, ImmutableTypeInfo> m_extraImmutableTypes;
 		private readonly ImmutableHashSet<IMethodSymbol> m_knownImmutableReturns;
 		private readonly ImmutableHashSet<ITypeParameterSymbol> m_conditionalTypeParameters;
+		private readonly (INamedTypeSymbol RegexType, INamedTypeSymbol GeneratedCodeAttributeType) m_regexInfo;
 
 		// Hard code this to avoid looking up the ITypeSymbol to include it in m_extraImmutableTypes
 		private static readonly ImmutableHashSet<SpecialType> m_totallyImmutableSpecialTypes = ImmutableHashSet.Create(
@@ -50,12 +51,14 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			AnnotationsContext annotationsContext,
 			ImmutableDictionary<INamedTypeSymbol, ImmutableTypeInfo> extraImmutableTypes,
 			ImmutableHashSet<IMethodSymbol> knownImmutableReturns,
-			ImmutableHashSet<ITypeParameterSymbol> conditionalTypeParamemters
+			ImmutableHashSet<ITypeParameterSymbol> conditionalTypeParamemters,
+			(INamedTypeSymbol RegexType, INamedTypeSymbol GeneratedCodeAttributeType) regexInfo
 		) {
 			m_annotationsContext = annotationsContext;
 			m_extraImmutableTypes = extraImmutableTypes;
 			m_knownImmutableReturns = knownImmutableReturns;
 			m_conditionalTypeParameters = conditionalTypeParamemters;
+			m_regexInfo = regexInfo;
 		}
 
 		/// <summary>
@@ -78,7 +81,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				annotationsContext: m_annotationsContext,
 				extraImmutableTypes: m_extraImmutableTypes,
 				knownImmutableReturns: m_knownImmutableReturns,
-				conditionalTypeParamemters: m_conditionalTypeParameters.Union( conditionalTypeParameters )
+				conditionalTypeParamemters: m_conditionalTypeParameters.Union( conditionalTypeParameters ),
+				regexInfo: m_regexInfo
 			);
 		}
 
@@ -250,6 +254,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return info;
 			}
 
+			// Special-case for compile-time generated regexes
+			if( IsGeneratedRegex( type ) ) {
+				return ImmutableTypeInfo.Create(
+					annotationsContext: m_annotationsContext,
+					kind: ImmutableTypeKind.Total,
+					type: type
+				);
+			}
+
 			return ImmutableTypeInfo.Create(
 				annotationsContext: m_annotationsContext,
 				kind: ImmutableTypeKind.None,
@@ -273,6 +286,24 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			return ImmutableTypeKind.None;
+		}
+
+		private bool IsGeneratedRegex( INamedTypeSymbol type ) {
+			if( !m_regexInfo.RegexType.Equals( type.BaseType, SymbolEqualityComparer.Default ) ) {
+				return false;
+			}
+
+			AttributeData a = type.GetAttributes().FirstOrDefault( a => m_regexInfo.GeneratedCodeAttributeType.Equals( a.AttributeClass, SymbolEqualityComparer.Default ) );
+			if( a == null ) {
+				return false;
+			}
+
+			string tool = (string)a.ConstructorArguments[ 0 ].Value;
+			if( tool != "System.Text.RegularExpressions.Generator" ) {
+				return false;
+			}
+
+			return true;
 		}
 	}
 }
