@@ -748,5 +748,14 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor D2LPageDerivedMustBePartial = new DiagnosticDescriptor(
+			id: "D2L0101",
+			title: "Classes derived from D2LPage must be partial",
+			messageFormat: "Partial page objects can support dependency injection rather than having to rely on locators",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }
