@@ -259,7 +259,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		if (memberAccessExpr.IsKind(SyntaxKind.SimpleMemberAccessExpression )) {
 			return memberAccessExpr
 				.WithExpression( Transform( memberAccessExpr.Expression ) )
-				.WithExpression( Transform( memberAccessExpr.Name ) );
+				.WithName(  memberAccessExpr.Name );
 		}
 
 		return UnhandledSyntax( memberAccessExpr );
