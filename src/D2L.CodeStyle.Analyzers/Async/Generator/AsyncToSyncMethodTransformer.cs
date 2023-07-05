@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using D2L.CodeStyle.Analyzers.Extensions;
+﻿using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -317,7 +316,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	public T UnhandledSyntax<T>( T node ) where T : SyntaxNode {
 		GeneratorError(
 			node.GetLocation(),
-			$"unhandled syntax kind: {node.Kind()} and {node.GetType()}"
+			$"unhandled syntax kind: {node.Kind()}"
 		);
 
 		return node;
