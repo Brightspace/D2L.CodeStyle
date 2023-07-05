@@ -260,6 +260,10 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 			PredefinedTypeSyntax => expr,
 
+			IsPatternExpressionSyntax pattExpr => pattExpr
+				.WithExpression( Transform( pattExpr.Expression ) )
+				.WithPattern( Transform( pattExpr.Pattern ) ),
+
 			_ => UnhandledSyntax( expr )
 		};
 
@@ -340,6 +344,9 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 	private InitializerExpressionSyntax Transform( InitializerExpressionSyntax initializer )
 		=> initializer.WithExpressions( TransformAll( initializer.Expressions, Transform ) );
+
+	private PatternSyntax Transform( PatternSyntax pattern )
+		=> pattern;
 
 	private bool IsGenerateSyncAttribute( AttributeSyntax attribute ) {
 		var attributeConstructorSymbol = Model.GetSymbolInfo( attribute, Token ).Symbol as IMethodSymbol;
