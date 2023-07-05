@@ -1,4 +1,5 @@
-﻿using D2L.CodeStyle.Analyzers.Extensions;
+﻿using System.Diagnostics;
+using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -19,7 +20,6 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			.WithReturnType( TransformReturnType( decl.ReturnType ) )
 			.WithExpressionBody( MaybeTransform( decl.ExpressionBody, Transform ) )
 			.WithBody( MaybeTransform( decl.Body, Transform ) );
-
 		return GetResult( decl );
 	}
 
@@ -55,7 +55,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		);
 
 	private SyntaxToken RemoveAsyncSuffix( SyntaxToken ident, bool optional = false ) {
-		if( !ident.ValueText.EndsWith( "Async", StringComparison.Ordinal ) || ident.ValueText == "Async") {
+		if( !ident.ValueText.EndsWith( "Async", StringComparison.Ordinal ) || ident.ValueText == "Async" ) {
 			if( optional ) {
 				return ident;
 			}
@@ -142,6 +142,9 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 	private BlockSyntax Transform( BlockSyntax block )
 		=> block.WithStatements( TransformAll( block.Statements, Transform ) );
+
+	private SimpleNameSyntax Transform( SimpleNameSyntax simpleExpr )
+		=> simpleExpr.WithIdentifier(RemoveAsyncSuffix(simpleExpr.Identifier, optional: true ) );
 
 	private StatementSyntax Transform( StatementSyntax stmt )
 		=> stmt switch {
@@ -259,7 +262,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		if (memberAccessExpr.IsKind(SyntaxKind.SimpleMemberAccessExpression )) {
 			return memberAccessExpr
 				.WithExpression( Transform( memberAccessExpr.Expression ) )
-				.WithName(  memberAccessExpr.Name );
+				.WithName(  Transform(memberAccessExpr.Name) );
 		}
 
 		return UnhandledSyntax( memberAccessExpr );
