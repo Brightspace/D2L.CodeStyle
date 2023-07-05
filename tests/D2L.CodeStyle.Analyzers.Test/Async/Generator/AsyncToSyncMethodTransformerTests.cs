@@ -93,6 +93,51 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 	}
 
 	[Test]
+	public void Cast() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { var baz = await ( Task<int> )fooHandler.ReadFooAsync( ""foo"" ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Bar() { var baz = ( int )fooHandler.ReadFoo( \"foo\" ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void TryCatch() {
+		var actual = Transform( @"[GenerateSync]
+			async Task BarAsync() {
+				try {
+					baz = await BazAsync();
+				} catch( BarException e ) {
+					throw new BarException( e );
+				} catch ( QuxException e ) {
+					throw new QuxException( e );
+				}
+			}" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( @"[Blocking]
+void Bar() {
+				try {
+					baz = Baz();
+				} catch( BarException e ) {
+					throw new BarException( e );
+				} catch ( QuxException e ) {
+					throw new QuxException( e );
+				}
+			}", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void DeclarationExpression() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { await TryBazAsync( input, out Task<int> result ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Bar() { TryBaz( input,out int result ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 		public void Silly() {
 		var actual = Transform( @"[GenerateSync]
 async Task<int> HelloAsync() {
