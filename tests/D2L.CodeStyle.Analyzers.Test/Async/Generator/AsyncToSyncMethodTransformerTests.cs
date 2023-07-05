@@ -84,6 +84,15 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 	}
 
 	[Test]
+	public void PredefinedType() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { string.IsNullOrEmpty(""""); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Bar() { string.IsNullOrEmpty(\"\"); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 		public void Silly() {
 		var actual = Transform( @"[GenerateSync]
 async Task<int> HelloAsync() {
