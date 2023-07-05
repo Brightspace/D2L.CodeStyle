@@ -143,7 +143,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		=> block.WithStatements( TransformAll( block.Statements, Transform ) );
 
 	private SimpleNameSyntax Transform( SimpleNameSyntax simpleExpr )
-		=> simpleExpr.WithIdentifier(RemoveAsyncSuffix(simpleExpr.Identifier, optional: true ) );
+		=> simpleExpr.WithIdentifier( RemoveAsyncSuffix( simpleExpr.Identifier, optional: true ) );
 
 	private StatementSyntax Transform( StatementSyntax stmt )
 		=> stmt switch {
@@ -182,7 +182,11 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				.WithStatement( Transform( whileStmt.Statement ) ),
 
 			LocalDeclarationStatementSyntax localDeclStmt => localDeclStmt
-				.WithDeclaration( Transform(localDeclStmt.Declaration) ),
+				.WithDeclaration( Transform( localDeclStmt.Declaration ) ),
+
+			TryStatementSyntax tryStmt => tryStmt
+				.WithBlock( Transform( tryStmt.Block ) )
+				.WithCatches( TransformAll( tryStmt.Catches, Transform ) ),
 
 			_ => UnhandledSyntax( stmt )
 		};
@@ -219,6 +223,10 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				.WithExpression( Transform( invocationExpr.Expression ) )
 				.WithArgumentList( TransformAll( invocationExpr.ArgumentList, Transform ) ),
 
+			CastExpressionSyntax castExpr => castExpr
+				.WithType( TransformType( castExpr.Type ) )
+				.WithExpression( Transform( castExpr.Expression ) ),
+
 			LiteralExpressionSyntax => expr,
 
 			ObjectCreationExpressionSyntax newExpr => newExpr
@@ -240,9 +248,21 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 			MemberAccessExpressionSyntax memberAccessExpr => Transform( memberAccessExpr ),
 
+			DeclarationExpressionSyntax declExpr => declExpr
+				.WithType( TransformType( declExpr.Type ) )
+				.WithDesignation( Transform( declExpr.Designation ) ),
+
 			PredefinedTypeSyntax => expr,
 
 			_ => UnhandledSyntax( expr )
+		};
+
+	private VariableDesignationSyntax Transform( VariableDesignationSyntax des )
+		=> des switch {
+			SingleVariableDesignationSyntax varDes => varDes
+				.WithIdentifier( RemoveAsyncSuffix( varDes.Identifier, optional: true ) ),
+
+			_ => UnhandledSyntax( des )
 		};
 
 	private StatementSyntax Transform( ExpressionStatementSyntax exprStmt ) {
@@ -258,10 +278,10 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	}
 
 	private MemberAccessExpressionSyntax Transform( MemberAccessExpressionSyntax memberAccessExpr ) {
-		if (memberAccessExpr.IsKind(SyntaxKind.SimpleMemberAccessExpression )) {
+		if( memberAccessExpr.IsKind( SyntaxKind.SimpleMemberAccessExpression ) ) {
 			return memberAccessExpr
 				.WithExpression( Transform( memberAccessExpr.Expression ) )
-				.WithName(  Transform(memberAccessExpr.Name) );
+				.WithName( Transform( memberAccessExpr.Name ) );
 		}
 
 		return UnhandledSyntax( memberAccessExpr );
@@ -286,9 +306,9 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	}
 
 	private EqualsValueClauseSyntax Transform( EqualsValueClauseSyntax arg )
-		=> arg.WithValue(Transform( arg.Value));
+		=> arg.WithValue( Transform( arg.Value ) );
 
-	private BracketedArgumentListSyntax Transform( BracketedArgumentListSyntax argList ) 
+	private BracketedArgumentListSyntax Transform( BracketedArgumentListSyntax argList )
 		=> TransformAll( argList, Transform );
 
 	private ElseClauseSyntax Transform( ElseClauseSyntax clause )
@@ -299,6 +319,18 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 	private ArgumentSyntax Transform( ArgumentSyntax argument )
 		=> argument.WithExpression( Transform( argument.Expression ) );
+
+	private CatchClauseSyntax Transform( CatchClauseSyntax catchClause ) {
+		return catchClause
+			.WithDeclaration( catchClause.Declaration != null ? Transform( catchClause.Declaration ) : null )
+			.WithBlock( Transform( catchClause.Block ) );
+	}
+
+	private CatchDeclarationSyntax Transform( CatchDeclarationSyntax catchDecl ) {
+		return catchDecl
+			.WithType( TransformType( catchDecl.Type ) )
+			.WithIdentifier( RemoveAsyncSuffix( catchDecl.Identifier, optional: true ) );
+	}
 
 	private InitializerExpressionSyntax Transform( InitializerExpressionSyntax initializer )
 		=> initializer.WithExpressions( TransformAll( initializer.Expressions, Transform ) );
