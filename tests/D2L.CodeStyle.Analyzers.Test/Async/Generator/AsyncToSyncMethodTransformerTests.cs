@@ -102,6 +102,15 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 	}
 
 	[Test]
+	public void ForEach() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { foreach( Task<int> fooAsync in foosAsync ) { bar += await fooAsync; } }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Bar() { foreach( int foo in foos ) { bar += foo; } }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 	public void TryCatch() {
 		var actual = Transform( @"[GenerateSync]
 			async Task BarAsync() {

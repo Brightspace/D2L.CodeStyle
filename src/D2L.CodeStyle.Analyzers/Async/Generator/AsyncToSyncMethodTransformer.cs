@@ -188,6 +188,12 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				.WithBlock( Transform( tryStmt.Block ) )
 				.WithCatches( TransformAll( tryStmt.Catches, Transform ) ),
 
+			ForEachStatementSyntax forEachStmt => forEachStmt
+				.WithType( TransformType( forEachStmt.Type ) )
+				.WithIdentifier( RemoveAsyncSuffix( forEachStmt.Identifier, optional: true ) )
+				.WithExpression( Transform( forEachStmt.Expression ) )
+				.WithStatement( Transform ( forEachStmt.Statement ) ),
+
 			_ => UnhandledSyntax( stmt )
 		};
 
