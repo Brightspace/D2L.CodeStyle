@@ -66,6 +66,15 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 	}
 
 	[Test]
+	public void ExplicitInterfaceSpecifier() {
+		var actual = Transform( @"[GenerateSync] async Task Foo.BazAsync() { return 6; }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Foo.Baz() { return 6; }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 		public void Silly() {
 		var actual = Transform( @"[GenerateSync]
 async Task<int> HelloAsync() {
