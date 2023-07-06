@@ -16,10 +16,9 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		decl = decl.WithAttributeLists( ReplaceGenerateSyncAttribute( decl.AttributeLists ) )
 			.WithModifiers( RemoveAsyncModifier( decl.Modifiers ) )
 			.WithIdentifier( RemoveAsyncSuffix( decl.Identifier ) )
-			.WithReturnType( TransformReturnType( decl.ReturnType ) )
+			.WithReturnType( TransformType( decl.ReturnType, optional: false ) )
 			.WithExpressionBody( MaybeTransform( decl.ExpressionBody, Transform ) )
 			.WithBody( MaybeTransform( decl.Body, Transform ) );
-
 		return GetResult( decl );
 	}
 
@@ -55,7 +54,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		);
 
 	private SyntaxToken RemoveAsyncSuffix( SyntaxToken ident, bool optional = false ) {
-		if( !ident.ValueText.EndsWith( "Async", StringComparison.Ordinal ) || ident.ValueText == "Async") {
+		if( !ident.ValueText.EndsWith( "Async", StringComparison.Ordinal ) || ident.ValueText == "Async" ) {
 			if( optional ) {
 				return ident;
 			}
@@ -76,35 +75,35 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		).WithTriviaFrom( ident );
 	}
 
-	private TypeSyntax TransformReturnType( TypeSyntax returnType ) {
-		var returnTypeInfo = Model.GetTypeInfo( returnType, Token );
+	private TypeSyntax TransformType( TypeSyntax typeSynt, bool optional = true ) {
+		var returnTypeInfo = Model.GetTypeInfo( typeSynt, Token );
 
 		if( returnTypeInfo.Type == null ) {
-			GeneratorError( returnType.GetLocation(), "Couldn't resolve type" );
-			return returnType;
+			GeneratorError( typeSynt.GetLocation(), "Couldn't resolve type" );
+			return typeSynt;
 		}
 
 		if( returnTypeInfo.Type.ContainingNamespace.ToString() == "System.Threading.Tasks" ) {
 			switch( returnTypeInfo.Type.MetadataName ) {
 				case "Task":
 					return SyntaxFactory.ParseTypeName( "void" )
-						.WithTriviaFrom( returnType );
+						.WithTriviaFrom( typeSynt );
 				case "Task`1":
-					return ( (GenericNameSyntax)returnType )
+					return ( (GenericNameSyntax)typeSynt )
 						.TypeArgumentList.Arguments.First()
-						.WithTriviaFrom( returnType );
+						.WithTriviaFrom( typeSynt );
 
 				default:
 					GeneratorError(
-						returnType.GetLocation(),
+						typeSynt.GetLocation(),
 						$"Unexpected Task type: {returnTypeInfo.Type.MetadataName}"
 					);
-					return returnType;
+					return typeSynt;
 			}
 		}
 
-		ReportDiagnostic( Diagnostics.NonTaskReturnType, returnType.GetLocation() );
-		return returnType;
+		if(!optional) { ReportDiagnostic( Diagnostics.NonTaskReturnType, typeSynt.GetLocation() ); }
+		return typeSynt;
 	}
 
 	private ArrowExpressionClauseSyntax Transform( ArrowExpressionClauseSyntax body )
@@ -112,6 +111,9 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 	private BlockSyntax Transform( BlockSyntax block )
 		=> block.WithStatements( TransformAll( block.Statements, Transform ) );
+
+	private SimpleNameSyntax Transform( SimpleNameSyntax simpleExpr )
+		=> simpleExpr.WithIdentifier( RemoveAsyncSuffix( simpleExpr.Identifier, optional: true ) );
 
 	private StatementSyntax Transform( StatementSyntax stmt )
 		=> stmt switch {
@@ -149,6 +151,19 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				.WithCondition( Transform( whileStmt.Condition ) )
 				.WithStatement( Transform( whileStmt.Statement ) ),
 
+			LocalDeclarationStatementSyntax localDeclStmt => localDeclStmt
+				.WithDeclaration( Transform( localDeclStmt.Declaration ) ),
+
+			TryStatementSyntax tryStmt => tryStmt
+				.WithBlock( Transform( tryStmt.Block ) )
+				.WithCatches( TransformAll( tryStmt.Catches, Transform ) ),
+
+			ForEachStatementSyntax forEachStmt => forEachStmt
+				.WithType( TransformType( forEachStmt.Type ) )
+				.WithIdentifier( RemoveAsyncSuffix( forEachStmt.Identifier, optional: true ) )
+				.WithExpression( Transform( forEachStmt.Expression ) )
+				.WithStatement( Transform ( forEachStmt.Statement ) ),
+
 			_ => UnhandledSyntax( stmt )
 		};
 
@@ -184,6 +199,10 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				.WithExpression( Transform( invocationExpr.Expression ) )
 				.WithArgumentList( TransformAll( invocationExpr.ArgumentList, Transform ) ),
 
+			CastExpressionSyntax castExpr => castExpr
+				.WithType( TransformType( castExpr.Type ) )
+				.WithExpression( Transform( castExpr.Expression ) ),
+
 			LiteralExpressionSyntax => expr,
 
 			ObjectCreationExpressionSyntax newExpr => newExpr
@@ -203,8 +222,27 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 			ThisExpressionSyntax => expr,
 
+			MemberAccessExpressionSyntax memberAccessExpr => Transform( memberAccessExpr ),
+
+			DeclarationExpressionSyntax declExpr => declExpr
+				.WithType( TransformType( declExpr.Type ) )
+				.WithDesignation( Transform( declExpr.Designation ) ),
+
+			PredefinedTypeSyntax => expr,
+
+			IsPatternExpressionSyntax pattExpr => pattExpr
+				.WithExpression( Transform( pattExpr.Expression ) )
+				.WithPattern( Transform( pattExpr.Pattern ) ),
 
 			_ => UnhandledSyntax( expr )
+		};
+
+	private VariableDesignationSyntax Transform( VariableDesignationSyntax des )
+		=> des switch {
+			SingleVariableDesignationSyntax varDes => varDes
+				.WithIdentifier( RemoveAsyncSuffix( varDes.Identifier, optional: true ) ),
+
+			_ => UnhandledSyntax( des )
 		};
 
 	private StatementSyntax Transform( ExpressionStatementSyntax exprStmt ) {
@@ -219,6 +257,40 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		return exprStmt.WithExpression( result );
 	}
 
+	private MemberAccessExpressionSyntax Transform( MemberAccessExpressionSyntax memberAccessExpr ) {
+		if( memberAccessExpr.IsKind( SyntaxKind.SimpleMemberAccessExpression ) ) {
+			return memberAccessExpr
+				.WithExpression( Transform( memberAccessExpr.Expression ) )
+				.WithName( Transform( memberAccessExpr.Name ) );
+		}
+
+		return UnhandledSyntax( memberAccessExpr );
+	}
+
+	private VariableDeclarationSyntax Transform( VariableDeclarationSyntax varDecl ) {
+		return varDecl
+			.WithType( TransformType( varDecl.Type ) )
+			.WithVariables( TransformVariables( varDecl.Variables ) );
+	}
+
+	private SeparatedSyntaxList<VariableDeclaratorSyntax> TransformVariables( SeparatedSyntaxList<VariableDeclaratorSyntax> varDecls ) {
+		return SyntaxFactory.SeparatedList(
+			varDecls.Select( varDecl =>
+				SyntaxFactory.VariableDeclarator(
+					RemoveAsyncSuffix( varDecl.Identifier, optional: true ),
+					MaybeTransform( varDecl.ArgumentList, Transform ),
+					MaybeTransform( varDecl.Initializer, Transform )
+				)
+			)
+		);
+	}
+
+	private EqualsValueClauseSyntax Transform( EqualsValueClauseSyntax arg )
+		=> arg.WithValue( Transform( arg.Value ) );
+
+	private BracketedArgumentListSyntax Transform( BracketedArgumentListSyntax argList )
+		=> TransformAll( argList, Transform );
+
 	private ElseClauseSyntax Transform( ElseClauseSyntax clause )
 		=> clause.WithStatement( Transform( clause.Statement ) );
 
@@ -228,8 +300,23 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	private ArgumentSyntax Transform( ArgumentSyntax argument )
 		=> argument.WithExpression( Transform( argument.Expression ) );
 
+	private CatchClauseSyntax Transform( CatchClauseSyntax catchClause ) {
+		return catchClause
+			.WithDeclaration( catchClause.Declaration != null ? Transform( catchClause.Declaration ) : null )
+			.WithBlock( Transform( catchClause.Block ) );
+	}
+
+	private CatchDeclarationSyntax Transform( CatchDeclarationSyntax catchDecl ) {
+		return catchDecl
+			.WithType( TransformType( catchDecl.Type ) )
+			.WithIdentifier( RemoveAsyncSuffix( catchDecl.Identifier, optional: true ) );
+	}
+
 	private InitializerExpressionSyntax Transform( InitializerExpressionSyntax initializer )
 		=> initializer.WithExpressions( TransformAll( initializer.Expressions, Transform ) );
+
+	private PatternSyntax Transform( PatternSyntax pattern )
+		=> pattern;
 
 	private bool IsGenerateSyncAttribute( AttributeSyntax attribute ) {
 		var attributeConstructorSymbol = Model.GetSymbolInfo( attribute, Token ).Symbol as IMethodSymbol;
@@ -241,7 +328,6 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		return attributeConstructorSymbol.ContainingType.ToDisplayString()
 			== "D2L.CodeStyle.Annotations.GenerateSyncAttribute";
 	}
-
 	public T UnhandledSyntax<T>( T node ) where T : SyntaxNode {
 		GeneratorError(
 			node.GetLocation(),
@@ -250,5 +336,4 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 		return node;
 	}
-
 }
