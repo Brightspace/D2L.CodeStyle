@@ -16,7 +16,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		decl = decl.WithAttributeLists( ReplaceGenerateSyncAttribute( decl.AttributeLists ) )
 			.WithModifiers( RemoveAsyncModifier( decl.Modifiers ) )
 			.WithIdentifier( RemoveAsyncSuffix( decl.Identifier ) )
-			.WithReturnType( TransformReturnType( decl.ReturnType ) )
+			.WithReturnType( TransformType( decl.ReturnType, optional: false ) )
 			.WithExpressionBody( MaybeTransform( decl.ExpressionBody, Transform ) )
 			.WithBody( MaybeTransform( decl.Body, Transform ) );
 		return GetResult( decl );
@@ -75,38 +75,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		).WithTriviaFrom( ident );
 	}
 
-	private TypeSyntax TransformReturnType( TypeSyntax returnType ) {
-		var returnTypeInfo = Model.GetTypeInfo( returnType, Token );
-
-		if( returnTypeInfo.Type == null ) {
-			GeneratorError( returnType.GetLocation(), "Couldn't resolve type" );
-			return returnType;
-		}
-
-		if( returnTypeInfo.Type.ContainingNamespace.ToString() == "System.Threading.Tasks" ) {
-			switch( returnTypeInfo.Type.MetadataName ) {
-				case "Task":
-					return SyntaxFactory.ParseTypeName( "void" )
-						.WithTriviaFrom( returnType );
-				case "Task`1":
-					return ( (GenericNameSyntax)returnType )
-						.TypeArgumentList.Arguments.First()
-						.WithTriviaFrom( returnType );
-
-				default:
-					GeneratorError(
-						returnType.GetLocation(),
-						$"Unexpected Task type: {returnTypeInfo.Type.MetadataName}"
-					);
-					return returnType;
-			}
-		}
-
-		ReportDiagnostic( Diagnostics.NonTaskReturnType, returnType.GetLocation() );
-		return returnType;
-	}
-
-	private TypeSyntax TransformType( TypeSyntax typeSynt ) {
+	private TypeSyntax TransformType( TypeSyntax typeSynt, bool optional = true ) {
 		var returnTypeInfo = Model.GetTypeInfo( typeSynt, Token );
 
 		if( returnTypeInfo.Type == null ) {
@@ -133,6 +102,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			}
 		}
 
+		if(!optional) { ReportDiagnostic( Diagnostics.NonTaskReturnType, typeSynt.GetLocation() ); }
 		return typeSynt;
 	}
 
