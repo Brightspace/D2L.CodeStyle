@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Security.Policy;
 using D2L.CodeStyle.Analyzers.Async.Generator;
 using D2L.CodeStyle.Annotations;
 using Microsoft.CodeAnalysis;
@@ -117,6 +118,15 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
 		Assert.AreEqual( "[Blocking] void Bar() { Foo fooFirst = m_foo.Bar( barrer ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void Using() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { using( var foo = await m_bar.GetAsync( qux ).ConfigureAwait( false ) ) { return await( this as IBarProvider ).BarsAsync().ConfigureAwait( false ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Bar() { using( var foo = m_bar.Get( qux )) { return ( this as IBarProvider ).Bars(); }}", actual.Value.ToFullString() );
 	}
 
 	[Test]

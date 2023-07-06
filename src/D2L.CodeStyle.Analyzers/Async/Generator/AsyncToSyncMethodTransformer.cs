@@ -164,6 +164,10 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				.WithExpression( Transform( forEachStmt.Expression ) )
 				.WithStatement( Transform ( forEachStmt.Statement ) ),
 
+			UsingStatementSyntax usingStmt => usingStmt
+				.WithDeclaration( usingStmt.Declaration != null ? Transform( usingStmt.Declaration ) : null )
+				.WithStatement( Transform( usingStmt.Statement ) ),
+
 			_ => UnhandledSyntax( stmt )
 		};
 
