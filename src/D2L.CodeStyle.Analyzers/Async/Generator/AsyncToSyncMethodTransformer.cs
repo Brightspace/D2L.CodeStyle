@@ -164,6 +164,10 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				.WithExpression( Transform( forEachStmt.Expression ) )
 				.WithStatement( Transform ( forEachStmt.Statement ) ),
 
+			UsingStatementSyntax usingStmt => usingStmt
+				.WithDeclaration( usingStmt.Declaration != null ? Transform( usingStmt.Declaration ) : null )
+				.WithStatement( Transform( usingStmt.Statement ) ),
+
 			_ => UnhandledSyntax( stmt )
 		};
 
@@ -195,9 +199,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			IdentifierNameSyntax identExpr => identExpr
 				.WithIdentifier( RemoveAsyncSuffix( identExpr.Identifier, optional: true ) ),
 
-			InvocationExpressionSyntax invocationExpr => invocationExpr
-				.WithExpression( Transform( invocationExpr.Expression ) )
-				.WithArgumentList( TransformAll( invocationExpr.ArgumentList, Transform ) ),
+			InvocationExpressionSyntax invocationExpr => Transform(invocationExpr),
 
 			CastExpressionSyntax castExpr => castExpr
 				.WithType( TransformType( castExpr.Type ) )
@@ -255,6 +257,18 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		}
 
 		return exprStmt.WithExpression( result );
+	}
+
+	private InvocationExpressionSyntax Transform( InvocationExpressionSyntax invocationExpr) {
+		var memberAccess = invocationExpr.Expression as MemberAccessExpressionSyntax;
+		if( string.Equals( memberAccess?.Name?.Identifier.ValueText, "ConfigureAwait", StringComparison.Ordinal ) ) {
+			if( memberAccess?.Expression is not null ) {
+				invocationExpr = (InvocationExpressionSyntax)memberAccess.Expression;
+			}
+		}
+		return invocationExpr
+			.WithExpression( Transform( invocationExpr.Expression ) )
+			.WithArgumentList( TransformAll( invocationExpr.ArgumentList, Transform ) );
 	}
 
 	private MemberAccessExpressionSyntax Transform( MemberAccessExpressionSyntax memberAccessExpr ) {
