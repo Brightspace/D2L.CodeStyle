@@ -111,6 +111,15 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 	}
 
 	[Test]
+	public void ConfigureAwait() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { Foo fooFirst = m_foo.Bar( barrer ).ConfigureAwait( false ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Bar() { Foo fooFirst = m_foo.Bar( barrer ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 	public void TryCatch() {
 		var actual = Transform( @"[GenerateSync]
 			async Task BarAsync() {
