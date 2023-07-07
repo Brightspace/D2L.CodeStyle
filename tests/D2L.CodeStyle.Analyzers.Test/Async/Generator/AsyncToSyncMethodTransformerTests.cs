@@ -130,6 +130,15 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 	}
 
 	[Test]
+	public void SimpleLambda() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { Func<int, Task> bazAsync = async quuxAsync => await fredAsync.Delay( 2*y ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Bar() { Func<int, Task> baz = quux => fred.Delay( 2*y ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 	public void TryCatch() {
 		var actual = Transform( @"[GenerateSync]
 			async Task BarAsync() {

@@ -236,6 +236,11 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				.WithExpression( Transform( pattExpr.Expression ) )
 				.WithPattern( Transform( pattExpr.Pattern ) ),
 
+			SimpleLambdaExpressionSyntax lambExpr => lambExpr
+				.WithModifiers( RemoveAsyncModifier( lambExpr.Modifiers ) )
+				.WithParameter( Transform( lambExpr.Parameter ) )
+				.WithExpressionBody( lambExpr.ExpressionBody != null ? Transform( lambExpr.ExpressionBody ) : null ),
+
 			_ => UnhandledSyntax( expr )
 		};
 
@@ -313,6 +318,9 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 	private ArgumentSyntax Transform( ArgumentSyntax argument )
 		=> argument.WithExpression( Transform( argument.Expression ) );
+
+	private ParameterSyntax Transform( ParameterSyntax parameter )
+		=> parameter.WithIdentifier(RemoveAsyncSuffix( parameter.Identifier, optional: true ) );
 
 	private CatchClauseSyntax Transform( CatchClauseSyntax catchClause ) {
 		return catchClause
