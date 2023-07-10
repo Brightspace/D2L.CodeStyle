@@ -52,14 +52,6 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 			return false;
 		}
 
-		// Require the async keyword if applicable.
-		// Interface and abstract methods won't have bodies and thus won't have the
-		// keyword but we still want to translate their signatures.
-		// TODO: we could probably relax this, or we should have an error.
-		if( method.Body is not null && !method.Modifiers.Any( t => t.IsKind( SyntaxKind.AsyncKeyword ) ) ) {
-			return false;
-		}
-
 		// The ones we care about have to have a particular attribute -- so
 		// perk up when we see _any_ attributes (we don't have a SemanticModel
 		// in this method.)
