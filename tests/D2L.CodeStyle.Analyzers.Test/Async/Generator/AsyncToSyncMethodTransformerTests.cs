@@ -122,16 +122,16 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 
 	[Test]
 	public void CompletedTaskConfigureAwait() {
-		var actual = Transform( @"[GenerateSync] async Task BarAsync() { Task.CompletedTask.ConfigureAwait(false); }" );
+		var actual = Transform( @"[GenerateSync] Task BarAsync() { return Task.CompletedTask; }" );
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
-		Assert.AreEqual( "[Blocking] void Bar() { ; }", actual.Value.ToFullString() );
+		Assert.AreEqual( "[Blocking] void Bar() { return ; }", actual.Value.ToFullString() );
 	}
 
 	[Test]
 	public void FromResult() {
-		var actual = Transform( @"[GenerateSync] async Task BarAsync() { return Task.FromResult( baz ); }" );
+		var actual = Transform( @"[GenerateSync] Task BarAsync() { return Task.FromResult( baz ); }" );
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
@@ -140,11 +140,11 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 
 	[Test]
 	public void FromResultGeneric() {
-		var actual = Transform( @"[GenerateSync] async Task BarAsync() { return Task.FromResult<Baz>( null ); }" );
+		var actual = Transform( @"[GenerateSync] Task<Baz> BarAsync() { return Task.FromResult<Baz>( null ); }" );
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
-		Assert.AreEqual( "[Blocking] void Bar() { return ( null ); }", actual.Value.ToFullString() );
+		Assert.AreEqual( "[Blocking] Baz Bar() { return ( null ); }", actual.Value.ToFullString() );
 	}
 
 	[Test]
