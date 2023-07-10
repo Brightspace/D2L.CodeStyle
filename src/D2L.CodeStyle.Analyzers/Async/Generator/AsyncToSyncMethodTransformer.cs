@@ -279,10 +279,18 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			.WithArgumentList( TransformAll( invocationExpr.ArgumentList, Transform ) );
 	}
 
+	bool ReturnedMemberAccessesToRemove( MemberAccessExpressionSyntax memberAccessExpr )
+	  => memberAccessExpr.Name.Identifier.ValueText switch {
+		  "FromResult" => true,
+		  "CompletedTask" => true,
+		  _ => false
+	  };
+
 	private ExpressionSyntax Transform( MemberAccessExpressionSyntax memberAccessExpr ) {
-		string[] identifiersToRemove = { "FromResult", "CompletedTask" };
 		if( memberAccessExpr.IsKind( SyntaxKind.SimpleMemberAccessExpression ) ) {
-			if ( identifiersToRemove.Contains( memberAccessExpr.Name.Identifier.ValueText ) ) {
+			if( ReturnedMemberAccessesToRemove( memberAccessExpr ) &&
+				( memberAccessExpr.Parent.IsKind( SyntaxKind.ReturnStatement ) ||
+				( memberAccessExpr.Parent?.Parent?.IsKind( SyntaxKind.ReturnStatement ) ?? false ) ) ) {
 				return SyntaxFactory.ParseExpression( "" );
 			}
 
