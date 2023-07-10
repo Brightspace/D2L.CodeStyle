@@ -130,6 +130,24 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 	}
 
 	[Test]
+	public void FromResult() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { return Task.FromResult( baz ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Bar() { return ( baz ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void FromResultGeneric() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { return Task.FromResult<Baz>( null ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Bar() { return ( null ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 	public void Using() {
 		var actual = Transform( @"[GenerateSync] async Task BarAsync() { using( var foo = await m_bar.GetAsync( qux ).ConfigureAwait( false ) ) { return await( this as IBarProvider ).BarsAsync().ConfigureAwait( false ); }" );
 

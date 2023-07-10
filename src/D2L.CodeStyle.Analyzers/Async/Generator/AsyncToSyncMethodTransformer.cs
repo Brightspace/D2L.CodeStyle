@@ -280,9 +280,9 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	}
 
 	private ExpressionSyntax Transform( MemberAccessExpressionSyntax memberAccessExpr ) {
+		string[] identifiersToRemove = { "FromResult", "CompletedTask" };
 		if( memberAccessExpr.IsKind( SyntaxKind.SimpleMemberAccessExpression ) ) {
-
-			if( string.Equals( memberAccessExpr.Name.Identifier.ValueText, "CompletedTask", StringComparison.Ordinal ) ) {
+			if ( identifiersToRemove.Contains( memberAccessExpr.Name.Identifier.ValueText ) ) {
 				return SyntaxFactory.ParseExpression( "" );
 			}
 
