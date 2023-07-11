@@ -19,7 +19,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		decl = decl.WithAttributeLists( ReplaceGenerateSyncAttribute( decl.AttributeLists ) )
 			.WithModifiers( RemoveAsyncModifier( decl.Modifiers ) )
 			.WithIdentifier( RemoveAsyncSuffix( decl.Identifier ) )
-			.WithReturnType( TransformType( decl.ReturnType, isNotReturnType: false ) )
+			.WithReturnType( TransformType( decl.ReturnType, isReturnType: true ) )
 			.WithExpressionBody( MaybeTransform( decl.ExpressionBody, Transform ) )
 			.WithBody( MaybeTransform( decl.Body, Transform ) );
 
@@ -89,7 +89,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		).WithTriviaFrom( ident );
 	}
 
-	private TypeSyntax TransformType( TypeSyntax typeSynt, bool isNotReturnType = true ) {
+	private TypeSyntax TransformType( TypeSyntax typeSynt, bool isReturnType = false ) {
 		var returnTypeInfo = Model.GetTypeInfo( typeSynt, Token );
 
 		if( returnTypeInfo.Type == null ) {
@@ -100,7 +100,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		if( returnTypeInfo.Type.ContainingNamespace.ToString() == "System.Threading.Tasks" ) {
 			switch( returnTypeInfo.Type.MetadataName ) {
 				case "Task":
-					return isNotReturnType ? typeSynt : SyntaxFactory.ParseTypeName( "void" ).WithTriviaFrom( typeSynt );
+					return isReturnType ? SyntaxFactory.ParseTypeName( "void" ).WithTriviaFrom( typeSynt ) : typeSynt;
 				case "Task`1":
 					return ( (GenericNameSyntax)typeSynt )
 						.TypeArgumentList.Arguments.First()
@@ -115,7 +115,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			}
 		}
 
-		if(!isNotReturnType ) { ReportDiagnostic( Diagnostics.NonTaskReturnType, typeSynt.GetLocation() ); }
+		if( isReturnType ) { ReportDiagnostic( Diagnostics.NonTaskReturnType, typeSynt.GetLocation() ); }
 		return typeSynt;
 	}
 
