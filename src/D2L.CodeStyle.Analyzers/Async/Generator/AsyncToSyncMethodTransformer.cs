@@ -16,7 +16,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		decl = decl.WithAttributeLists( ReplaceGenerateSyncAttribute( decl.AttributeLists ) )
 			.WithModifiers( RemoveAsyncModifier( decl.Modifiers ) )
 			.WithIdentifier( RemoveAsyncSuffix( decl.Identifier ) )
-			.WithReturnType( TransformType( decl.ReturnType, optional: false ) )
+			.WithReturnType( TransformType( decl.ReturnType, isReturnType: true ) )
 			.WithExpressionBody( MaybeTransform( decl.ExpressionBody, Transform ) )
 			.WithBody( MaybeTransform( decl.Body, Transform ) );
 		return GetResult( decl );
@@ -75,7 +75,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		).WithTriviaFrom( ident );
 	}
 
-	private TypeSyntax TransformType( TypeSyntax typeSynt, bool optional = true ) {
+	private TypeSyntax TransformType( TypeSyntax typeSynt, bool isReturnType = false ) {
 		var returnTypeInfo = Model.GetTypeInfo( typeSynt, Token );
 
 		if( returnTypeInfo.Type == null ) {
@@ -86,8 +86,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		if( returnTypeInfo.Type.ContainingNamespace.ToString() == "System.Threading.Tasks" ) {
 			switch( returnTypeInfo.Type.MetadataName ) {
 				case "Task":
-					return SyntaxFactory.ParseTypeName( "void" )
-						.WithTriviaFrom( typeSynt );
+					return isReturnType ? SyntaxFactory.ParseTypeName( "void" ).WithTriviaFrom( typeSynt ) : typeSynt;
 				case "Task`1":
 					return ( (GenericNameSyntax)typeSynt )
 						.TypeArgumentList.Arguments.First()
@@ -102,7 +101,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			}
 		}
 
-		if(!optional) { ReportDiagnostic( Diagnostics.NonTaskReturnType, typeSynt.GetLocation() ); }
+		if( isReturnType ) { ReportDiagnostic( Diagnostics.NonTaskReturnType, typeSynt.GetLocation() ); }
 		return typeSynt;
 	}
 
@@ -264,11 +263,14 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		return exprStmt.WithExpression( result );
 	}
 
-	private InvocationExpressionSyntax Transform( InvocationExpressionSyntax invocationExpr) {
+	private ExpressionSyntax Transform( InvocationExpressionSyntax invocationExpr) {
+		ExpressionSyntax newExpr = invocationExpr;
 		var memberAccess = invocationExpr.Expression as MemberAccessExpressionSyntax;
+
 		if( string.Equals( memberAccess?.Name?.Identifier.ValueText, "ConfigureAwait", StringComparison.Ordinal ) ) {
 			if( memberAccess?.Expression is not null ) {
-				invocationExpr = (InvocationExpressionSyntax)memberAccess.Expression;
+				newExpr = memberAccess.Expression;
+				return Transform( newExpr );
 			}
 		}
 		return invocationExpr
@@ -276,8 +278,21 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			.WithArgumentList( TransformAll( invocationExpr.ArgumentList, Transform ) );
 	}
 
-	private MemberAccessExpressionSyntax Transform( MemberAccessExpressionSyntax memberAccessExpr ) {
+	bool ShouldRemoveReturnedMemberAccess( MemberAccessExpressionSyntax memberAccessExpr )
+	  => memberAccessExpr.Name.Identifier.ValueText switch {
+		  "FromResult" => true,
+		  "CompletedTask" => true,
+		  _ => false
+	  };
+
+	private ExpressionSyntax Transform( MemberAccessExpressionSyntax memberAccessExpr ) {
 		if( memberAccessExpr.IsKind( SyntaxKind.SimpleMemberAccessExpression ) ) {
+			if( ShouldRemoveReturnedMemberAccess( memberAccessExpr ) &&
+				( memberAccessExpr.Parent.IsKind( SyntaxKind.ReturnStatement ) ||
+				( memberAccessExpr.Parent?.Parent?.IsKind( SyntaxKind.ReturnStatement ) ?? false ) ) ) {
+				return SyntaxFactory.ParseExpression( "" );
+			}
+
 			return memberAccessExpr
 				.WithExpression( Transform( memberAccessExpr.Expression ) )
 				.WithName( Transform( memberAccessExpr.Name ) );

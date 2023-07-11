@@ -121,6 +121,43 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 	}
 
 	[Test]
+	public void CompletedTaskConfigureAwait() {
+		var actual = Transform( @"[GenerateSync] Task BarAsync() { return Task.CompletedTask; }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Bar() { return ; }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void FromResult() {
+		var actual = Transform( @"[GenerateSync] Task BarAsync() { return Task.FromResult( baz ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Bar() { return ( baz ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void FromResultGeneric() {
+		var actual = Transform( @"[GenerateSync] Task<Baz> BarAsync() { return Task.FromResult<Baz>( null ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] Baz Bar() { return ( null ); }", actual.Value.ToFullString() );
+	}
+
+	// Not the best thing to be doing but unlikely this will happen and it should be easily caught
+	[Test]
+	public void DontRemoveUnreturnedFromResult() {
+		var actual = Transform( @"[GenerateSync] Task BarAsync() { var Baz = Task.CompletedTask; return Baz; }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Bar() { var Baz = Task.CompletedTask; return Baz; }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 	public void Using() {
 		var actual = Transform( @"[GenerateSync] async Task BarAsync() { using( var foo = await m_bar.GetAsync( qux ).ConfigureAwait( false ) ) { return await( this as IBarProvider ).BarsAsync().ConfigureAwait( false ); }" );
 
