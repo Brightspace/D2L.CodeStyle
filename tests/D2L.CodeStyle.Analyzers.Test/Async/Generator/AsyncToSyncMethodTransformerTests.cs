@@ -176,6 +176,15 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 	}
 
 	[Test]
+	public void WrapInTaskRun() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { string baz = response.Content.ReadAsStringAsync(); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "#pragma warning disable D2L0018\r\n[Blocking] void Bar() { string baz = Task.Run(() => response.Content.ReadAsStringAsync()).Result; }\n#pragma warning restore D2L0018\r\n", actual.Value.ToFullString() );
+	}
+
+	[Test]
 	public void TryCatch() {
 		var actual = Transform( @"[GenerateSync]
 			async Task BarAsync() {
