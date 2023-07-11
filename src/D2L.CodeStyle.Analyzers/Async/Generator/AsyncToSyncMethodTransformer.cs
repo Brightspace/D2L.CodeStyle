@@ -31,6 +31,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			decl = decl
 				.WithLeadingTrivia( decl.GetLeadingTrivia().Add( SyntaxFactory.Trivia( disablePragma ) ) )
 				.WithTrailingTrivia( decl.GetTrailingTrivia().Insert( 0, SyntaxFactory.Trivia( restorePragma ) ) );
+			disableTaskRunWarningFlag = false;
 		}
 
 		return GetResult( decl );
@@ -297,6 +298,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			.WithArgumentList( TransformAll( invocationExpr.ArgumentList, Transform ) );
 	}
 
+	// TODO: These two methods may need future modification for more specificity (make sure it's Task.FromResult or Content.ReadAsStringAsync)
 	bool ReturnedMemberAccessesToRemove( MemberAccessExpressionSyntax memberAccessExpr )
 	  => memberAccessExpr.Name.Identifier.ValueText switch {
 		  "FromResult" => true,
