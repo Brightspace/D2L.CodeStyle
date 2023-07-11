@@ -288,7 +288,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				return Transform( newExpr );
 			}
 		}
-		else if( memberAccess is not null && MemberAccessesToWrapInTaskRun( memberAccess ) ) {
+		else if( memberAccess is not null && ShouldWrapMemberAccessesInTaskRun( memberAccess ) ) {
 			disableTaskRunWarningFlag = true;
 			return SyntaxFactory.ParseExpression( $"Task.Run(() => {invocationExpr}).Result" );
 		}
@@ -298,23 +298,25 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			.WithArgumentList( TransformAll( invocationExpr.ArgumentList, Transform ) );
 	}
 
-	// TODO: These two methods may need future modification for more specificity (make sure it's Task.FromResult or Content.ReadAsStringAsync)
-	bool ReturnedMemberAccessesToRemove( MemberAccessExpressionSyntax memberAccessExpr )
-	  => memberAccessExpr.Name.Identifier.ValueText switch {
-		  "FromResult" => true,
-		  "CompletedTask" => true,
-		  _ => false
-	  };
+	bool ShouldRemoveReturnedMemberAccesses( MemberAccessExpressionSyntax memberAccessExpr ) {
+		return ( memberAccessExpr.Expression.ToString(), memberAccessExpr.Name.Identifier.ValueText ) switch
+		{
+			( "Task", "FromResult" ) => true,
+			( "Task", "CompletedTask" ) => true,
+			_ => false
+		};
+	}
 
-	bool MemberAccessesToWrapInTaskRun( MemberAccessExpressionSyntax memberAccessExpr )
-	  => memberAccessExpr.Name.Identifier.ValueText switch {
-		  "ReadAsStringAsync" => true,
-		  _ => false
-	  };
+	bool ShouldWrapMemberAccessesInTaskRun( MemberAccessExpressionSyntax memberAccessExpr ) {
+		return (memberAccessExpr.Expression.ToString(), memberAccessExpr.Name.Identifier.ValueText) switch {
+			(_, "ReadAsStringAsync" ) => true,
+			_ => false
+		};
+	}
 
 	private ExpressionSyntax Transform( MemberAccessExpressionSyntax memberAccessExpr ) {
 		if( memberAccessExpr.IsKind( SyntaxKind.SimpleMemberAccessExpression ) ) {
-			if( ReturnedMemberAccessesToRemove( memberAccessExpr ) &&
+			if( ShouldRemoveReturnedMemberAccesses( memberAccessExpr ) &&
 				( memberAccessExpr.Parent.IsKind( SyntaxKind.ReturnStatement ) ||
 				( memberAccessExpr.Parent?.Parent?.IsKind( SyntaxKind.ReturnStatement ) ?? false ) ) ) {
 				return SyntaxFactory.ParseExpression( "" );
