@@ -12,7 +12,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	) : base( model, token ) { }
 
 	// Need to disable D2L0018 in the method if we add Task.Run() to syncify something
-	private bool disableTaskRunWarningFlag;
+	private bool m_disableTaskRunWarningFlag;
 
 	public TransformResult<MethodDeclarationSyntax> Transform( MethodDeclarationSyntax decl ) {
 		// TODO: remove CancellationToken parameters
@@ -23,7 +23,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			.WithExpressionBody( MaybeTransform( decl.ExpressionBody, Transform ) )
 			.WithBody( MaybeTransform( decl.Body, Transform ) );
 
-		if ( disableTaskRunWarningFlag ) {
+		if ( m_disableTaskRunWarningFlag ) {
 			PragmaWarningDirectiveTriviaSyntax restorePragma = SyntaxFactory.PragmaWarningDirectiveTrivia( SyntaxFactory.Token( SyntaxKind.RestoreKeyword ), true )
 				.AddErrorCodes( SyntaxFactory.IdentifierName( "D2L0018" ) ).NormalizeWhitespace().WithLeadingTrivia( SyntaxFactory.SyntaxTrivia( SyntaxKind.EndOfLineTrivia, "\n" ) ); ;
 			PragmaWarningDirectiveTriviaSyntax disablePragma = SyntaxFactory.PragmaWarningDirectiveTrivia( SyntaxFactory.Token( SyntaxKind.DisableKeyword ), true )
@@ -31,7 +31,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			decl = decl
 				.WithLeadingTrivia( decl.GetLeadingTrivia().Add( SyntaxFactory.Trivia( disablePragma ) ) )
 				.WithTrailingTrivia( decl.GetTrailingTrivia().Insert( 0, SyntaxFactory.Trivia( restorePragma ) ) );
-			disableTaskRunWarningFlag = false;
+			m_disableTaskRunWarningFlag = false;
 		}
 
 		return GetResult( decl );
@@ -289,7 +289,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			}
 		}
 		else if( memberAccess is not null && ShouldWrapMemberAccessesInTaskRun( memberAccess ) ) {
-			disableTaskRunWarningFlag = true;
+			m_disableTaskRunWarningFlag = true;
 			return SyntaxFactory.ParseExpression( $"Task.Run(() => {invocationExpr}).Result" );
 		}
 
