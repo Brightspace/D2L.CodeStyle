@@ -177,7 +177,7 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 
 	[Test]
 	public void WrapInTaskRun() {
-		var actual = Transform( @"[GenerateSync] async Task BarAsync() { string baz = response.Content.ReadAsStringAsync(); }" );
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { string baz = await response.Content.ReadAsStringAsync(); }" );
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );

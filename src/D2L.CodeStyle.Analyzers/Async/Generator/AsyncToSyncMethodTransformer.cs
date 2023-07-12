@@ -287,8 +287,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				newExpr = memberAccess.Expression;
 				return Transform( newExpr );
 			}
-		}
-		else if( memberAccess is not null && ShouldWrapMemberAccessesInTaskRun( memberAccess ) ) {
+		} else if( memberAccess is not null && ShouldWrapMemberAccessesInTaskRun( memberAccess ) ) {
 			m_disableTaskRunWarningFlag = true;
 			return SyntaxFactory.ParseExpression( $"Task.Run(() => {invocationExpr}).Result" );
 		}
