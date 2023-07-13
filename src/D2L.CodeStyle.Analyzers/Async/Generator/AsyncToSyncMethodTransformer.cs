@@ -195,7 +195,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			if( expr is InvocationExpressionSyntax || expr is AssignmentExpressionSyntax || expr is IIncrementOrDecrementOperation || expr is DeclarationExpressionSyntax || expr is MemberAccessExpressionSyntax ) {
 				return SyntaxFactory.ParseStatement( $"{Transform(expr).WithTriviaFrom(returnStmt)};\nreturn;" );
 			} else {
-				return SyntaxFactory.ParseStatement( "" );
+				return SyntaxFactory.ParseStatement( "return;" );
 			}
 		}
 		return returnStmt.WithExpression( MaybeTransform( returnStmt.Expression, Transform ) );

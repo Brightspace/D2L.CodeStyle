@@ -228,6 +228,14 @@ void Bar() {
 		Assert.IsEmpty( actual.Diagnostics );
 		Assert.AreEqual( "[Blocking] void Foo() { Bar(2);\nreturn;}", actual.Value.ToFullString() );
 	}
+	[Test]
+	public void TaskToVoidReturnTypeNull() {
+		var actual = Transform( @"[GenerateSync] Task FooAsync() { return null; }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Foo() { return;}", actual.Value.ToFullString() );
+	}
 
 	[Test]
 		public void Silly() {
