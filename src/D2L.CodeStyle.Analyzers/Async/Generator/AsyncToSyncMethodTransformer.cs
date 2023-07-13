@@ -287,7 +287,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				newExpr = memberAccess.Expression;
 				return Transform( newExpr );
 			}
-		} else if( memberAccess is not null && ShouldWrapMemberAccessesInTaskRun( memberAccess ) ) {
+		} else if( memberAccess is not null && ShouldWrapMemberAccessInTaskRun( memberAccess ) ) {
 			m_disableTaskRunWarningFlag = true;
 			return SyntaxFactory.ParseExpression( $"Task.Run(() => {invocationExpr}).Result" );
 		}
@@ -297,7 +297,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			.WithArgumentList( TransformAll( invocationExpr.ArgumentList, Transform ) );
 	}
 
-	bool ShouldRemoveReturnedMemberAccesses( MemberAccessExpressionSyntax memberAccessExpr ) {
+	bool ShouldRemoveReturnedMemberAccess( MemberAccessExpressionSyntax memberAccessExpr ) {
 		return ( memberAccessExpr.Expression.ToString(), memberAccessExpr.Name.Identifier.ValueText ) switch
 		{
 			( "Task", "FromResult" ) => true,
@@ -306,7 +306,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		};
 	}
 
-	bool ShouldWrapMemberAccessesInTaskRun( MemberAccessExpressionSyntax memberAccessExpr ) {
+	bool ShouldWrapMemberAccessInTaskRun( MemberAccessExpressionSyntax memberAccessExpr ) {
 		return (memberAccessExpr.Expression.ToString(), memberAccessExpr.Name.Identifier.ValueText) switch {
 			(_, "ReadAsStringAsync" ) => true,
 			_ => false
@@ -315,7 +315,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 	private ExpressionSyntax Transform( MemberAccessExpressionSyntax memberAccessExpr ) {
 		if( memberAccessExpr.IsKind( SyntaxKind.SimpleMemberAccessExpression ) ) {
-			if( ShouldRemoveReturnedMemberAccesses( memberAccessExpr ) &&
+			if( ShouldRemoveReturnedMemberAccess( memberAccessExpr ) &&
 				( memberAccessExpr.Parent.IsKind( SyntaxKind.ReturnStatement ) ||
 				( memberAccessExpr.Parent?.Parent?.IsKind( SyntaxKind.ReturnStatement ) ?? false ) ) ) {
 				return SyntaxFactory.ParseExpression( "" );
