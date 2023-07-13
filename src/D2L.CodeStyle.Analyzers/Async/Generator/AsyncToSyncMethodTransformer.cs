@@ -11,6 +11,9 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		CancellationToken token
 	) : base( model, token ) { }
 
+	// Need to disable D2L0018 in the method if we add Task.Run() to syncify something
+	private bool m_disableTaskRunWarningFlag;
+
 	public TransformResult<MethodDeclarationSyntax> Transform( MethodDeclarationSyntax decl ) {
 		// TODO: remove CancellationToken parameters
 		decl = decl.WithAttributeLists( ReplaceGenerateSyncAttribute( decl.AttributeLists ) )
@@ -19,6 +22,18 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			.WithReturnType( TransformType( decl.ReturnType, isReturnType: true ) )
 			.WithExpressionBody( MaybeTransform( decl.ExpressionBody, Transform ) )
 			.WithBody( MaybeTransform( decl.Body, Transform ) );
+
+		if ( m_disableTaskRunWarningFlag ) {
+			PragmaWarningDirectiveTriviaSyntax restorePragma = SyntaxFactory.PragmaWarningDirectiveTrivia( SyntaxFactory.Token( SyntaxKind.RestoreKeyword ), true )
+				.AddErrorCodes( SyntaxFactory.IdentifierName( "D2L0018" ) ).NormalizeWhitespace().WithLeadingTrivia( SyntaxFactory.SyntaxTrivia( SyntaxKind.EndOfLineTrivia, "\n" ) ); ;
+			PragmaWarningDirectiveTriviaSyntax disablePragma = SyntaxFactory.PragmaWarningDirectiveTrivia( SyntaxFactory.Token( SyntaxKind.DisableKeyword ), true )
+				.AddErrorCodes( SyntaxFactory.IdentifierName( "D2L0018" ) ).NormalizeWhitespace();
+			decl = decl
+				.WithLeadingTrivia( decl.GetLeadingTrivia().Add( SyntaxFactory.Trivia( disablePragma ) ) )
+				.WithTrailingTrivia( decl.GetTrailingTrivia().Insert( 0, SyntaxFactory.Trivia( restorePragma ) ) );
+			m_disableTaskRunWarningFlag = false;
+		}
+
 		return GetResult( decl );
 	}
 
@@ -272,16 +287,27 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				newExpr = memberAccess.Expression;
 				return Transform( newExpr );
 			}
+		} else if( memberAccess is not null && ShouldWrapMemberAccessInTaskRun( memberAccess ) ) {
+			m_disableTaskRunWarningFlag = true;
+			return SyntaxFactory.ParseExpression( $"Task.Run(() => {invocationExpr}).Result" );
 		}
+
 		return invocationExpr
 			.WithExpression( Transform( invocationExpr.Expression ) )
 			.WithArgumentList( TransformAll( invocationExpr.ArgumentList, Transform ) );
 	}
 
+	// TODO: These two methods may need future modification for more specificity (make sure it's Task.FromResult or Content.ReadAsStringAsync)
 	bool ShouldRemoveReturnedMemberAccess( MemberAccessExpressionSyntax memberAccessExpr )
 	  => memberAccessExpr.Name.Identifier.ValueText switch {
 		  "FromResult" => true,
 		  "CompletedTask" => true,
+		  _ => false
+	  };
+
+	bool ShouldWrapMemberAccessInTaskRun( MemberAccessExpressionSyntax memberAccessExpr )
+	  => memberAccessExpr.Name.Identifier.ValueText switch {
+		  "ReadAsStringAsync" => true,
 		  _ => false
 	  };
 
