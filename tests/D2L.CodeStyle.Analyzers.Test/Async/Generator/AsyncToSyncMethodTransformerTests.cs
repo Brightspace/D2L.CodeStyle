@@ -154,7 +154,7 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
-		Assert.AreEqual( "[Blocking] void Bar() { var Baz = Task.CompletedTask; }", actual.Value.ToFullString() );
+		Assert.AreEqual( "[Blocking] void Bar() { var Baz = Task.CompletedTask; return;}", actual.Value.ToFullString() );
 	}
 
 	[Test]
