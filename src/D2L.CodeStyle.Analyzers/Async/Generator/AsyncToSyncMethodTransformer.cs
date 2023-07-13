@@ -307,7 +307,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 	bool ShouldWrapMemberAccessInTaskRun( MemberAccessExpressionSyntax memberAccessExpr ) {
 		return (memberAccessExpr.Expression.ToString(), memberAccessExpr.Name.Identifier.ValueText) switch {
-			(_, "ReadAsStringAsync" ) => true,
+			(_, "ReadAsStringAsync") => true,
 			_ => false
 		};
 	}
