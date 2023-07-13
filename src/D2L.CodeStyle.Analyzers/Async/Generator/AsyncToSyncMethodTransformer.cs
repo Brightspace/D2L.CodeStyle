@@ -287,7 +287,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				newExpr = memberAccess.Expression;
 				return Transform( newExpr );
 			}
-		} else if( memberAccess is not null && MemberAccessToWrapInTaskRun( memberAccess ) ) {
+		} else if( memberAccess is not null && ShouldWrapMemberAccessInTaskRun( memberAccess ) ) {
 			m_disableTaskRunWarningFlag = true;
 			return SyntaxFactory.ParseExpression( $"Task.Run(() => {invocationExpr}).Result" );
 		}
@@ -298,14 +298,14 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	}
 
 	// TODO: These two methods may need future modification for more specificity (make sure it's Task.FromResult or Content.ReadAsStringAsync)
-	bool ReturnedMemberAccessToRemove( MemberAccessExpressionSyntax memberAccessExpr )
+	bool ShouldRemoveReturnedMemberAccess( MemberAccessExpressionSyntax memberAccessExpr )
 	  => memberAccessExpr.Name.Identifier.ValueText switch {
 		  "FromResult" => true,
 		  "CompletedTask" => true,
 		  _ => false
 	  };
 
-	bool MemberAccessToWrapInTaskRun( MemberAccessExpressionSyntax memberAccessExpr )
+	bool ShouldWrapMemberAccessInTaskRun( MemberAccessExpressionSyntax memberAccessExpr )
 	  => memberAccessExpr.Name.Identifier.ValueText switch {
 		  "ReadAsStringAsync" => true,
 		  _ => false
@@ -313,7 +313,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 	private ExpressionSyntax Transform( MemberAccessExpressionSyntax memberAccessExpr ) {
 		if( memberAccessExpr.IsKind( SyntaxKind.SimpleMemberAccessExpression ) ) {
-			if( ReturnedMemberAccessToRemove( memberAccessExpr ) &&
+			if( ShouldRemoveReturnedMemberAccess( memberAccessExpr ) &&
 				( memberAccessExpr.Parent.IsKind( SyntaxKind.ReturnStatement ) ||
 				( memberAccessExpr.Parent?.Parent?.IsKind( SyntaxKind.ReturnStatement ) ?? false ) ) ) {
 				return SyntaxFactory.ParseExpression( "" );
