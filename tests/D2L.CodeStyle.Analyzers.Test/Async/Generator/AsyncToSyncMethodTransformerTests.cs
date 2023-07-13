@@ -68,11 +68,11 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 
 	[Test]
 	public void ExplicitInterfaceSpecifier() {
-		var actual = Transform( @"[GenerateSync] async Task Foo.BazAsync() { return 6; }" );
+		var actual = Transform( @"[GenerateSync] async Task<int> Foo.BazAsync() { return intCountAsync(6); }" );
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
-		Assert.AreEqual( "[Blocking] void Foo.Baz() { return 6; }", actual.Value.ToFullString() );
+		Assert.AreEqual( "[Blocking] int Foo.Baz() { return intCount(6); }", actual.Value.ToFullString() );
 	}
 
 	[Test]
@@ -126,16 +126,16 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
-		Assert.AreEqual( "[Blocking] void Bar() { return ; }", actual.Value.ToFullString() );
+		Assert.AreEqual( "[Blocking] void Bar() { ;\nreturn;}", actual.Value.ToFullString() );
 	}
 
 	[Test]
 	public void FromResult() {
-		var actual = Transform( @"[GenerateSync] Task BarAsync() { return Task.FromResult( baz ); }" );
+		var actual = Transform( @"[GenerateSync] Task<Baz> BarAsync() { return Task.FromResult( baz ); }" );
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
-		Assert.AreEqual( "[Blocking] void Bar() { return ( baz ); }", actual.Value.ToFullString() );
+		Assert.AreEqual( "[Blocking] Baz Bar() { return ( baz ); }", actual.Value.ToFullString() );
 	}
 
 	[Test]
@@ -154,16 +154,16 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
-		Assert.AreEqual( "[Blocking] void Bar() { var Baz = Task.CompletedTask; return Baz; }", actual.Value.ToFullString() );
+		Assert.AreEqual( "[Blocking] void Bar() { var Baz = Task.CompletedTask; }", actual.Value.ToFullString() );
 	}
 
 	[Test]
 	public void Using() {
-		var actual = Transform( @"[GenerateSync] async Task BarAsync() { using( var foo = await m_bar.GetAsync( qux ).ConfigureAwait( false ) ) { return await( this as IBarProvider ).BarsAsync().ConfigureAwait( false ); }" );
+		var actual = Transform( @"[GenerateSync] async Task<Qux> BarAsync() { using( var foo = await m_bar.GetAsync( qux ).ConfigureAwait( false ) ) { return await( this as IBarProvider ).BarsAsync().ConfigureAwait( false ); }" );
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
-		Assert.AreEqual( "[Blocking] void Bar() { using( var foo = m_bar.Get( qux )) { return ( this as IBarProvider ).Bars(); }}", actual.Value.ToFullString() );
+		Assert.AreEqual( "[Blocking] Qux Bar() { using( var foo = m_bar.Get( qux )) { return ( this as IBarProvider ).Bars(); }}", actual.Value.ToFullString() );
 	}
 
 	[Test]
@@ -218,6 +218,15 @@ void Bar() {
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
 		Assert.AreEqual( "[Blocking] void Bar() { TryBaz( input,out int result ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void TaskToVoidReturnTypeInvocation() {
+		var actual = Transform( @"[GenerateSync] Task FooAsync() { return BarAsync(2); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Foo() { Bar(2);\nreturn;}", actual.Value.ToFullString() );
 	}
 
 	[Test]

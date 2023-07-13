@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace D2L.CodeStyle.Analyzers.Async.Generator;
 
@@ -13,6 +14,8 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 	// Need to disable D2L0018 in the method if we add Task.Run() to syncify something
 	private bool m_disableTaskRunWarningFlag;
+	// Need to modify return statement later on if function returns Task -> Void to prevent CS0127 (A method with a void return type cannot return a value)
+	private bool m_generatedFunctionReturnsVoid;
 
 	public TransformResult<MethodDeclarationSyntax> Transform( MethodDeclarationSyntax decl ) {
 		// TODO: remove CancellationToken parameters
@@ -33,6 +36,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				.WithTrailingTrivia( decl.GetTrailingTrivia().Insert( 0, SyntaxFactory.Trivia( restorePragma ) ) );
 			m_disableTaskRunWarningFlag = false;
 		}
+		m_generatedFunctionReturnsVoid = false;
 
 		return GetResult( decl );
 	}
@@ -101,6 +105,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		if( returnTypeInfo.Type.ContainingNamespace.ToString() == "System.Threading.Tasks" ) {
 			switch( returnTypeInfo.Type.MetadataName ) {
 				case "Task":
+					if( isReturnType ) { m_generatedFunctionReturnsVoid = true; }
 					return isReturnType ? SyntaxFactory.ParseTypeName( "void" ).WithTriviaFrom( typeSynt ) : typeSynt;
 				case "Task`1":
 					return ( (GenericNameSyntax)typeSynt )
@@ -158,8 +163,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			ThrowStatementSyntax throwStmt => throwStmt
 				.WithExpression( MaybeTransform( throwStmt.Expression, Transform ) ),
 
-			ReturnStatementSyntax returnStmt => returnStmt
-				.WithExpression( MaybeTransform( returnStmt.Expression, Transform ) ),
+			ReturnStatementSyntax returnStmt => Transform ( returnStmt ),
 
 			WhileStatementSyntax whileStmt => whileStmt
 				.WithCondition( Transform( whileStmt.Condition ) )
@@ -184,6 +188,18 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 			_ => UnhandledSyntax( stmt )
 		};
+
+	private StatementSyntax Transform( ReturnStatementSyntax returnStmt ) {
+		var expr = returnStmt.Expression;
+		if( m_generatedFunctionReturnsVoid && expr is not null ) {
+			if( expr is InvocationExpressionSyntax || expr is AssignmentExpressionSyntax || expr is IIncrementOrDecrementOperation || expr is DeclarationExpressionSyntax || expr is MemberAccessExpressionSyntax ) {
+				return SyntaxFactory.ParseStatement( $"{Transform(expr).WithTriviaFrom(returnStmt)};\nreturn;" );
+			} else {
+				return SyntaxFactory.ParseStatement( "" );
+			}
+		}
+		return returnStmt.WithExpression( MaybeTransform( returnStmt.Expression, Transform ) );
+	}
 
 	private ExpressionSyntax Transform( ExpressionSyntax expr )
 		=> expr switch {
