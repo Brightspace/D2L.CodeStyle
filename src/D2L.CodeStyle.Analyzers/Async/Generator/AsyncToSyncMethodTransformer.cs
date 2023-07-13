@@ -313,12 +313,6 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		};
 	}
 
-	bool ShouldWrapMemberAccessInTaskRun( MemberAccessExpressionSyntax memberAccessExpr )
-	  => memberAccessExpr.Name.Identifier.ValueText switch {
-		  "ReadAsStringAsync" => true,
-		  _ => false
-	  };
-
 	private ExpressionSyntax Transform( MemberAccessExpressionSyntax memberAccessExpr ) {
 		if( memberAccessExpr.IsKind( SyntaxKind.SimpleMemberAccessExpression ) ) {
 			if( ShouldRemoveReturnedMemberAccess( memberAccessExpr ) &&
