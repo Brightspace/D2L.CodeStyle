@@ -126,7 +126,7 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
-		Assert.AreEqual( "[Blocking] void Bar() { {\r\n    ;\r\n    return;\r\n}}", actual.Value.ToFullString() );
+		Assert.AreEqual( "[Blocking] void Bar() { {;return;}}", actual.Value.ToFullString() );
 	}
 
 	[Test]
@@ -226,7 +226,7 @@ void Bar() {
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
-		Assert.AreEqual( "[Blocking] void Foo() { {\r\n    Bar(2);\r\n    return;\r\n}}", actual.Value.ToFullString() );
+		Assert.AreEqual( "[Blocking] void Foo() { {Bar(2);return;}}", actual.Value.ToFullString() );
 	}
 
 	[Test]
@@ -244,7 +244,7 @@ void Bar() {
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
-		Assert.AreEqual( "[Blocking] void Foo() { if( Quux() ) { {\r\n    Bar(2);\r\n    return;\r\n}} {\r\n    Bar(4);\r\n    return;\r\n}}", actual.Value.ToFullString() );
+		Assert.AreEqual( "[Blocking] void Foo() { if( Quux() ) { {Bar(2);return;}} {Bar(4);return;}}", actual.Value.ToFullString() );
 	}
 
 	[Test]
