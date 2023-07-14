@@ -192,7 +192,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	private StatementSyntax Transform( ReturnStatementSyntax returnStmt ) {
 		var expr = returnStmt.Expression;
 		if( m_generatedFunctionReturnsVoid && expr is not null ) {
-			if( expr is InvocationExpressionSyntax || expr is AssignmentExpressionSyntax || expr is IIncrementOrDecrementOperation || expr is DeclarationExpressionSyntax || expr is MemberAccessExpressionSyntax ) {
+			if( IsStatementCompatibleExpression( expr ) ) {
 				return SyntaxFactory.ParseStatement( $"{Transform(expr).WithTriviaFrom(returnStmt)};\nreturn;" );
 			} else {
 				return SyntaxFactory.ParseStatement( "return;" );
@@ -200,6 +200,16 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		}
 		return returnStmt.WithExpression( MaybeTransform( returnStmt.Expression, Transform ) );
 	}
+
+	private static bool IsStatementCompatibleExpression( ExpressionSyntax expr )
+		=> expr switch {
+			InvocationExpressionSyntax e => true,
+			AssignmentExpressionSyntax e => true,
+			IIncrementOrDecrementOperation e => true,
+			DeclarationExpressionSyntax e => true,
+			MemberAccessExpressionSyntax e => true,
+			_ => false
+		};
 
 	private ExpressionSyntax Transform( ExpressionSyntax expr )
 		=> expr switch {

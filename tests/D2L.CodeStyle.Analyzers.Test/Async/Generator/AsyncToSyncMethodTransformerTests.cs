@@ -228,6 +228,7 @@ void Bar() {
 		Assert.IsEmpty( actual.Diagnostics );
 		Assert.AreEqual( "[Blocking] void Foo() { Bar(2);\nreturn;}", actual.Value.ToFullString() );
 	}
+
 	[Test]
 	public void TaskToVoidReturnTypeNull() {
 		var actual = Transform( @"[GenerateSync] Task FooAsync() { return null; }" );
@@ -235,6 +236,15 @@ void Bar() {
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
 		Assert.AreEqual( "[Blocking] void Foo() { return;}", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void TaskToVoidReturnTypeDoubleInvocation() {
+		var actual = Transform( @"[GenerateSync] Task FooAsync() { if( QuuxAsync() ) { return BarAsync(2); } return BarAsync(4); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Foo() { if( Quux() ) { Bar(2);\nreturn;} Bar(4);\nreturn;}", actual.Value.ToFullString() );
 	}
 
 	[Test]
