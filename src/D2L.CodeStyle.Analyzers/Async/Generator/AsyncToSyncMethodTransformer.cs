@@ -193,7 +193,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		var expr = returnStmt.Expression;
 		if( m_generatedFunctionReturnsVoid && expr is not null ) {
 			if( IsStatementCompatibleExpression( expr ) ) {
-				return SyntaxFactory.ParseStatement( $"{Transform(expr).WithTriviaFrom(returnStmt)};\nreturn;" );
+				return SyntaxFactory.Block( SyntaxFactory.ExpressionStatement( Transform( expr ) ), SyntaxFactory.ReturnStatement() ).NormalizeWhitespace();
 			} else {
 				return SyntaxFactory.ParseStatement( "return;" );
 			}
