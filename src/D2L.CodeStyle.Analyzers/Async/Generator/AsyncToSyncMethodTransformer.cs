@@ -193,7 +193,10 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		var expr = returnStmt.Expression;
 		if( m_generatedFunctionReturnsVoid && expr is not null ) {
 			if( IsStatementCompatibleExpression( expr ) ) {
-				return SyntaxFactory.Block( SyntaxFactory.ExpressionStatement( Transform( expr ) ), SyntaxFactory.ReturnStatement() );
+				return SyntaxFactory.Block(
+						SyntaxFactory.ExpressionStatement( Transform( expr ) ).WithLeadingTrivia( SyntaxFactory.Space ),
+						SyntaxFactory.ReturnStatement().WithLeadingTrivia( SyntaxFactory.Space ).WithTrailingTrivia( SyntaxFactory.Space ) )
+					.WithTriviaFrom( returnStmt );
 			} else {
 				return SyntaxFactory.ParseStatement( "return;" );
 			}
