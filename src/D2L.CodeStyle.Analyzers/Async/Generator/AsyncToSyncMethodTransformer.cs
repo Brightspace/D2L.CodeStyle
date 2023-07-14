@@ -314,17 +314,16 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	}
 
 	bool ShouldRemoveReturnedMemberAccess( MemberAccessExpressionSyntax memberAccessExpr ) {
-		return ( memberAccessExpr.Expression.ToString(), memberAccessExpr.Name.Identifier.ValueText ) switch
-		{
-			( "Task", "FromResult" ) => true,
-			( "Task", "CompletedTask" ) => true,
+		return (memberAccessExpr.Expression.ToString(), memberAccessExpr.Name.Identifier.ValueText) switch {
+			("Task", "FromResult") => true,
+			("Task", "CompletedTask") => true,
 			_ => false
 		};
 	}
 
 	bool ShouldWrapMemberAccessInTaskRun( MemberAccessExpressionSyntax memberAccessExpr ) {
 		return (memberAccessExpr.Expression.ToString(), memberAccessExpr.Name.Identifier.ValueText) switch {
-			(_, "ReadAsStringAsync" ) => true,
+			(_, "ReadAsStringAsync") => true,
 			_ => false
 		};
 	}
