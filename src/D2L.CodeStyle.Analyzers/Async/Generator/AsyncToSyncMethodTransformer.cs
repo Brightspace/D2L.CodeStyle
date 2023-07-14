@@ -297,19 +297,20 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			.WithArgumentList( TransformAll( invocationExpr.ArgumentList, Transform ) );
 	}
 
-	// TODO: These two methods may need future modification for more specificity (make sure it's Task.FromResult or Content.ReadAsStringAsync)
-	bool ShouldRemoveReturnedMemberAccess( MemberAccessExpressionSyntax memberAccessExpr )
-	  => memberAccessExpr.Name.Identifier.ValueText switch {
-		  "FromResult" => true,
-		  "CompletedTask" => true,
-		  _ => false
-	  };
+	bool ShouldRemoveReturnedMemberAccess( MemberAccessExpressionSyntax memberAccessExpr ) {
+		return (memberAccessExpr.Expression.ToString(), memberAccessExpr.Name.Identifier.ValueText) switch {
+			("Task", "FromResult") => true,
+			("Task", "CompletedTask") => true,
+			_ => false
+		};
+	}
 
-	bool ShouldWrapMemberAccessInTaskRun( MemberAccessExpressionSyntax memberAccessExpr )
-	  => memberAccessExpr.Name.Identifier.ValueText switch {
-		  "ReadAsStringAsync" => true,
-		  _ => false
-	  };
+	bool ShouldWrapMemberAccessInTaskRun( MemberAccessExpressionSyntax memberAccessExpr ) {
+		return (memberAccessExpr.Expression.ToString(), memberAccessExpr.Name.Identifier.ValueText) switch {
+			(_, "ReadAsStringAsync") => true,
+			_ => false
+		};
+	}
 
 	private ExpressionSyntax Transform( MemberAccessExpressionSyntax memberAccessExpr ) {
 		if( memberAccessExpr.IsKind( SyntaxKind.SimpleMemberAccessExpression ) ) {
