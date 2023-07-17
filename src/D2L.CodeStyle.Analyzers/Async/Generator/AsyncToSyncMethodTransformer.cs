@@ -195,7 +195,8 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			if( IsStatementCompatibleExpression( expr ) ) {
 				return SyntaxFactory.Block(
 						SyntaxFactory.ExpressionStatement( Transform( expr ) ).WithLeadingTrivia( SyntaxFactory.Space ),
-						SyntaxFactory.ReturnStatement().WithLeadingTrivia( SyntaxFactory.Space ).WithTrailingTrivia( SyntaxFactory.Space ) )
+						SyntaxFactory.ReturnStatement().WithLeadingTrivia( SyntaxFactory.Space ).WithTrailingTrivia( SyntaxFactory.Space )
+					)
 					.WithTriviaFrom( returnStmt );
 			} else {
 				return SyntaxFactory.ReturnStatement().WithTriviaFrom( returnStmt );
