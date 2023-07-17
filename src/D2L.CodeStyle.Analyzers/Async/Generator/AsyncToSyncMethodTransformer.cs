@@ -105,8 +105,12 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		if( returnTypeInfo.Type.ContainingNamespace.ToString() == "System.Threading.Tasks" ) {
 			switch( returnTypeInfo.Type.MetadataName ) {
 				case "Task":
-					if( isReturnType ) { m_generatedFunctionReturnsVoid = true; }
-					return isReturnType ? SyntaxFactory.ParseTypeName( "void" ).WithTriviaFrom( typeSynt ) : typeSynt;
+					if( isReturnType ) {
+						m_generatedFunctionReturnsVoid = true;
+						return SyntaxFactory.ParseTypeName( "void" ).WithTriviaFrom( typeSynt )
+					} else {
+						return typeSynt;
+					}
 				case "Task`1":
 					return ( (GenericNameSyntax)typeSynt )
 						.TypeArgumentList.Arguments.First()
