@@ -195,18 +195,18 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 	private StatementSyntax Transform( ReturnStatementSyntax returnStmt ) {
 		var expr = returnStmt.Expression;
-		if( m_generatedFunctionReturnsVoid && expr is not null ) {
-			if( IsStatementCompatibleExpression( expr ) ) {
-				return SyntaxFactory.Block(
-						SyntaxFactory.ExpressionStatement( Transform( expr ) ).WithLeadingTrivia( SyntaxFactory.Space ),
-						SyntaxFactory.ReturnStatement().WithLeadingTrivia( SyntaxFactory.Space ).WithTrailingTrivia( SyntaxFactory.Space )
-					)
-					.WithTriviaFrom( returnStmt );
-			} else {
-				return SyntaxFactory.ReturnStatement().WithTriviaFrom( returnStmt );
-			}
+		if( !m_generatedFunctionReturnsVoid || expr is null ) {
+			return returnStmt.WithExpression( MaybeTransform( returnStmt.Expression, Transform ) );
 		}
-		return returnStmt.WithExpression( MaybeTransform( returnStmt.Expression, Transform ) );
+		
+		if( IsStatementCompatibleExpression( expr ) ) {
+			return SyntaxFactory.Block(
+					SyntaxFactory.ExpressionStatement( Transform( expr ) ).WithLeadingTrivia( SyntaxFactory.Space ),
+					SyntaxFactory.ReturnStatement().WithLeadingTrivia( SyntaxFactory.Space ).WithTrailingTrivia( SyntaxFactory.Space )
+			).WithTriviaFrom( returnStmt );
+		}
+		
+		return SyntaxFactory.ReturnStatement().WithTriviaFrom( returnStmt );
 	}
 
 	private static bool IsStatementCompatibleExpression( ExpressionSyntax expr )
