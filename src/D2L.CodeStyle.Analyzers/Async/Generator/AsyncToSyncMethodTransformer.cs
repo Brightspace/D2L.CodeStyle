@@ -107,7 +107,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				case "Task":
 					if( isReturnType ) {
 						m_generatedFunctionReturnsVoid = true;
-						return SyntaxFactory.ParseTypeName( "void" ).WithTriviaFrom( typeSynt )
+						return SyntaxFactory.ParseTypeName( "void" ).WithTriviaFrom( typeSynt );
 					} else {
 						return typeSynt;
 					}
