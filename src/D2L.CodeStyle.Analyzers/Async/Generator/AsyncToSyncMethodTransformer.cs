@@ -198,14 +198,14 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		if( !m_generatedFunctionReturnsVoid || expr is null ) {
 			return returnStmt.WithExpression( MaybeTransform( returnStmt.Expression, Transform ) );
 		}
-		
+
 		if( IsStatementCompatibleExpression( expr ) ) {
 			return SyntaxFactory.Block(
 					SyntaxFactory.ExpressionStatement( Transform( expr ) ).WithLeadingTrivia( SyntaxFactory.Space ),
 					SyntaxFactory.ReturnStatement().WithLeadingTrivia( SyntaxFactory.Space ).WithTrailingTrivia( SyntaxFactory.Space )
 			).WithTriviaFrom( returnStmt );
 		}
-		
+
 		return SyntaxFactory.ReturnStatement().WithTriviaFrom( returnStmt );
 	}
 
@@ -215,7 +215,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			AssignmentExpressionSyntax e => true,
 			PostfixUnaryExpressionSyntax e => true,
 			PrefixUnaryExpressionSyntax e => true,
-			ObjectCreationExpressionSyntax => true,
+			// ObjectCreationExpressionSyntax => true,
 			_ => false
 		};
 
