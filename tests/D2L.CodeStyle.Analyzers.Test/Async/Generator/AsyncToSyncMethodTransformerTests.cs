@@ -240,7 +240,7 @@ void Bar() {
 
 	[Test]
 	public void TaskToVoidReturnTypeDoubleInvocation() {
-		var actual = Transform( @"[GenerateSync] Task FooAsync() { if( QuuxAsync() ) { return BarAsync(2); } return BarAsync(4); }" );
+		var actual = Transform( @"[GenerateSync] async Task FooAsync() { if( await QuuxAsync() ) { return await BarAsync(2); } return await BarAsync(4); }" );
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );

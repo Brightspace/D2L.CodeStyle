@@ -211,10 +211,11 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 	private static bool IsStatementCompatibleExpression( ExpressionSyntax expr )
 		=> expr switch {
-			InvocationExpressionSyntax e => true,
-			AssignmentExpressionSyntax e => true,
-			PostfixUnaryExpressionSyntax e => true,
-			PrefixUnaryExpressionSyntax e => true,
+			InvocationExpressionSyntax => true,
+			AssignmentExpressionSyntax => true,
+			PostfixUnaryExpressionSyntax => true,
+			PrefixUnaryExpressionSyntax => true,
+			AwaitExpressionSyntax => true,
 			// ObjectCreationExpressionSyntax => true,
 			_ => false
 		};
