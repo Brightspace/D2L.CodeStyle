@@ -199,25 +199,36 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			return returnStmt.WithExpression( MaybeTransform( returnStmt.Expression, Transform ) );
 		}
 
-		if( IsStatementCompatibleExpression( expr ) ) {
+		if( IsStatementCompatibleExpression( expr ) == Compatibility.Compatible ) {
 			return SyntaxFactory.Block(
 					SyntaxFactory.ExpressionStatement( Transform( expr ) ).WithLeadingTrivia( SyntaxFactory.Space ),
 					SyntaxFactory.ReturnStatement().WithLeadingTrivia( SyntaxFactory.Space ).WithTrailingTrivia( SyntaxFactory.Space )
 			).WithTriviaFrom( returnStmt );
+		} else if (IsStatementCompatibleExpression( expr ) == Compatibility.Incompatible ) {
+			return SyntaxFactory.ReturnStatement().WithTriviaFrom( returnStmt );
 		}
 
-		return SyntaxFactory.ReturnStatement().WithTriviaFrom( returnStmt );
+		return UnhandledSyntax( returnStmt );
 	}
 
-	private static bool IsStatementCompatibleExpression( ExpressionSyntax expr )
+	private enum Compatibility {
+		Compatible,
+		Incompatible,
+		/// <summary>
+		/// Can't be transformed yet by our code
+		/// </summary>
+		Unsupported
+	}
+
+	private static Compatibility IsStatementCompatibleExpression( ExpressionSyntax expr )
 		=> expr switch {
-			InvocationExpressionSyntax => true,
-			AssignmentExpressionSyntax => true,
-			PostfixUnaryExpressionSyntax => true,
-			PrefixUnaryExpressionSyntax => true,
-			AwaitExpressionSyntax => true,
-			// ObjectCreationExpressionSyntax => true,
-			_ => false
+			InvocationExpressionSyntax => Compatibility.Compatible,
+			PostfixUnaryExpressionSyntax => Compatibility.Compatible,
+			PrefixUnaryExpressionSyntax => Compatibility.Compatible,
+			AwaitExpressionSyntax => Compatibility.Compatible,
+			ObjectCreationExpressionSyntax => Compatibility.Unsupported,
+			AssignmentExpressionSyntax => Compatibility.Unsupported,
+			_ => Compatibility.Incompatible
 		};
 
 	private ExpressionSyntax Transform( ExpressionSyntax expr )

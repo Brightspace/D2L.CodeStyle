@@ -275,26 +275,6 @@ void Bar() {
 	}
 
 	[Test]
-	public void TaskToVoidReturnTypeAssignment() {
-		var actual = Transform( @"[GenerateSync] Task FooAsync() { return m_baz = QuuxAsync(); }" );
-
-		Assert.IsTrue( actual.Success );
-		Assert.IsEmpty( actual.Diagnostics );
-		Assert.AreEqual( "[Blocking] void Foo() { { m_baz = Quux(); return; } }", actual.Value.ToFullString() );
-	}
-
-	// Needs further investigation
-	
-	//[Test]
-	//public void TaskToVoidReturnTypeNewObject() {
-	//	var actual = Transform( @"[GenerateSync] Task FooAsync() { return new Task(QuuxAsync); }" );
-
-	//	Assert.IsTrue( actual.Success );
-	//	Assert.IsEmpty( actual.Diagnostics );
-	//	Assert.AreEqual( "[Blocking] void Foo() { { new Task(Quux); return; } }", actual.Value.ToFullString() );
-	//}
-
-	[Test]
 		public void Silly() {
 		var actual = Transform( @"[GenerateSync]
 async Task<int> HelloAsync() {
@@ -375,6 +355,35 @@ int Hello() {
 			// expected:
 			Diagnostics.ExpectedAsyncSuffix,
 			Diagnostics.NonTaskReturnType
+		);
+	}
+
+
+	// Modify test in future if we find a way to generate this
+	[Test]
+	public void TaskToVoidReturnTypeAssignmentFails() {
+		var actual = Transform( @"[GenerateSync] Task FooAsync() { return m_baz = QuuxAsync(); }" );
+
+		Assert.IsFalse( actual.Success );
+
+		AssertDiagnostics(
+			actual.Diagnostics,
+			// expected:
+			Diagnostics.GenericGeneratorError
+		);
+	}
+
+	// Modify test in future if we find a way to generate this
+	[Test]
+	public void TaskToVoidReturnTypeNewObject() {
+		var actual = Transform( @"[GenerateSync] Task FooAsync() { return new Task(QuuxAsync); }" );
+
+		Assert.IsFalse( actual.Success );
+
+		AssertDiagnostics(
+			actual.Diagnostics,
+			// expected:
+			Diagnostics.GenericGeneratorError
 		);
 	}
 
