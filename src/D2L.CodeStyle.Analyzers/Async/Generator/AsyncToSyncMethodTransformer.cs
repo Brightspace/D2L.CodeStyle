@@ -195,20 +195,20 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 	private StatementSyntax Transform( ReturnStatementSyntax returnStmt ) {
 		var expr = returnStmt.Expression;
+
 		if( !m_generatedFunctionReturnsVoid || expr is null ) {
 			return returnStmt.WithExpression( MaybeTransform( returnStmt.Expression, Transform ) );
 		}
 
-		if( IsStatementCompatibleExpression( expr ) == Compatibility.Compatible ) {
-			return SyntaxFactory.Block(
-					SyntaxFactory.ExpressionStatement( Transform( expr ) ).WithLeadingTrivia( SyntaxFactory.Space ),
-					SyntaxFactory.ReturnStatement().WithLeadingTrivia( SyntaxFactory.Space ).WithTrailingTrivia( SyntaxFactory.Space )
-			).WithTriviaFrom( returnStmt );
-		} else if (IsStatementCompatibleExpression( expr ) == Compatibility.Incompatible ) {
-			return SyntaxFactory.ReturnStatement().WithTriviaFrom( returnStmt );
-		}
-
-		return UnhandledSyntax( returnStmt );
+		return IsStatementCompatibleExpression( expr ) switch {
+			Compatibility.Compatible => SyntaxFactory.Block(
+						SyntaxFactory.ExpressionStatement( Transform( expr ) ).WithLeadingTrivia( SyntaxFactory.Space ),
+						SyntaxFactory.ReturnStatement().WithLeadingTrivia( SyntaxFactory.Space ).WithTrailingTrivia( SyntaxFactory.Space )
+				).WithTriviaFrom( returnStmt ),
+			Compatibility.Incompatible => SyntaxFactory.ReturnStatement().WithTriviaFrom( returnStmt ),
+			Compatibility.Unsupported => UnhandledSyntax( returnStmt ),
+			_ => throw new NotImplementedException()
+		};
 	}
 
 	private enum Compatibility {
