@@ -301,6 +301,10 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				.WithParameter( Transform( lambExpr.Parameter ) )
 				.WithExpressionBody( lambExpr.ExpressionBody != null ? Transform( lambExpr.ExpressionBody ) : null ),
 
+			GenericNameSyntax genExpr => genExpr
+				.WithIdentifier( RemoveAsyncSuffix( genExpr.Identifier, optional: true ) )
+				.WithTypeArgumentList( Transform( genExpr.TypeArgumentList ) ),
+
 			_ => UnhandledSyntax( expr )
 		};
 
@@ -392,6 +396,14 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		);
 	}
 
+	private SeparatedSyntaxList<TypeSyntax> TransformTypes( SeparatedSyntaxList<TypeSyntax> typeDecls ) {
+		return SyntaxFactory.SeparatedList(
+			typeDecls.Select( typeDecl =>
+				TransformType( typeDecl )
+			)
+		);
+	}
+
 	private EqualsValueClauseSyntax Transform( EqualsValueClauseSyntax arg )
 		=> arg.WithValue( Transform( arg.Value ) );
 
@@ -403,6 +415,9 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 	private ArgumentListSyntax Transform( ArgumentListSyntax argList )
 		=> TransformAll( argList, Transform );
+
+	private TypeArgumentListSyntax Transform ( TypeArgumentListSyntax typeArgList )
+		=> SyntaxFactory.TypeArgumentList( TransformTypes( typeArgList.Arguments ) );
 
 	private ArgumentSyntax Transform( ArgumentSyntax argument )
 		=> argument.WithExpression( Transform( argument.Expression ) );
