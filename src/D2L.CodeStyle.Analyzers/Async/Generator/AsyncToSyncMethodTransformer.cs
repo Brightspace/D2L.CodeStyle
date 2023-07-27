@@ -398,9 +398,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 	private SeparatedSyntaxList<TypeSyntax> TransformTypes( SeparatedSyntaxList<TypeSyntax> typeDecls ) {
 		return SyntaxFactory.SeparatedList(
-			typeDecls.Select( typeDecl =>
-				TransformType( typeDecl )
-			)
+			typeDecls.Select( TransformType )
 		);
 	}
 
