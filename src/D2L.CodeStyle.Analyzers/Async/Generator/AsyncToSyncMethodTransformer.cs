@@ -415,7 +415,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		=> TransformAll( argList, Transform );
 
 	private TypeArgumentListSyntax Transform ( TypeArgumentListSyntax typeArgList )
-		=> SyntaxFactory.TypeArgumentList( TransformTypes( typeArgList.Arguments ) );
+		=> typeArgList.WithArguments( TransformTypes( typeArgList.Arguments ) );
 
 	private ArgumentSyntax Transform( ArgumentSyntax argument )
 		=> argument.WithExpression( Transform( argument.Expression ) );
