@@ -147,6 +147,33 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 		Assert.AreEqual( "[Blocking] Baz Bar() { return ( null ); }", actual.Value.ToFullString() );
 	}
 
+	[Test]
+	public void GenericNameSyntaxNonTask() {
+		var actual = Transform( @"[GenerateSync] Task<Foo> BarAsync() { return FooAsync( Baz<Quux>.AllFields ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] Foo Bar() { return Foo( Baz<Quux>.AllFields ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void GenericNameSyntaxTask() {
+		var actual = Transform( @"[GenerateSync] Task<Foo> BarAsync() { return FooAsync( Baz<Task<Quux>>.AllFields ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] Foo Bar() { return Foo( Baz<Quux>.AllFields ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void GenericNameSyntaxMultiple() {
+		var actual = Transform( @"[GenerateSync] Task<Foo> BarAsync() { return FooAsync( Baz<Task<Quux>,Task<Fooz>>.AllFields ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] Foo Bar() { return Foo( Baz<Quux,Fooz>.AllFields ); }", actual.Value.ToFullString() );
+	}
+
 	// Not the best thing to be doing but unlikely this will happen and it should be easily caught
 	[Test]
 	public void DontRemoveUnreturnedFromResult() {
