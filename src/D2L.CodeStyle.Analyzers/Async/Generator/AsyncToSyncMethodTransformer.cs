@@ -417,8 +417,12 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	private TypeArgumentListSyntax Transform ( TypeArgumentListSyntax typeArgList )
 		=> typeArgList.WithArguments( TransformTypes( typeArgList.Arguments ) );
 
-	private ArgumentSyntax Transform( ArgumentSyntax argument )
-		=> argument.WithExpression( Transform( argument.Expression ) );
+	private ArgumentSyntax? Transform( ArgumentSyntax argument ) {
+		if( Model.GetTypeInfo( argument.Expression ).Type?.Name == "CancellationToken" ) {
+			return null;
+		}
+		return argument.WithExpression( Transform( argument.Expression ) );
+	}
 
 	private ParameterSyntax Transform( ParameterSyntax parameter )
 		=> parameter.WithIdentifier(RemoveAsyncSuffix( parameter.Identifier, optional: true ) );

@@ -302,6 +302,24 @@ void Bar() {
 	}
 
 	[Test]
+	public void CancellationTokenArgument() {
+		var actual = Transform( @"[GenerateSync] Task<Foo> BarAsync() { return FooAsync( CancellationToken.None ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] Foo Bar() { return Foo( ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void CancellationTokenVariableArgument() {
+		var actual = Transform( @"[GenerateSync] Task<Foo> BarAsync() { var ct = new CancellationToken(); return FooAsync( 1, ct, ""test"" ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( @"[Blocking] Foo Bar() { var ct = new CancellationToken(); return Foo( 1,""test"" ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 		public void Silly() {
 		var actual = Transform( @"[GenerateSync]
 async Task<int> HelloAsync() {
@@ -437,6 +455,7 @@ int Hello() {
 		var wrappedAndParsed = CSharpSyntaxTree.ParseText( @$"
 using System.Threading.Tasks;
 using D2L.CodeStyle.Annotations;
+using System.Threading;
 
 class TestType{{{methodSource}}}" );
 
