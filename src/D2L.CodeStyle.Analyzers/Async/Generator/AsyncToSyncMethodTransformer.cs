@@ -305,6 +305,12 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				.WithIdentifier( RemoveAsyncSuffix( genExpr.Identifier, optional: true ) )
 				.WithTypeArgumentList( Transform( genExpr.TypeArgumentList ) ),
 
+			ParenthesizedLambdaExpressionSyntax parLambExpr => parLambExpr
+				.WithExpressionBody( parLambExpr.ExpressionBody != null ? Transform( parLambExpr.ExpressionBody ) : null ),
+
+			AnonymousObjectCreationExpressionSyntax anonCreationExpr => anonCreationExpr
+				.WithInitializers( TransformAnonDecls( anonCreationExpr.Initializers ) ),
+
 			_ => UnhandledSyntax( expr )
 		};
 
@@ -410,6 +416,15 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		);
 	}
 
+	private SeparatedSyntaxList<AnonymousObjectMemberDeclaratorSyntax> TransformAnonDecls( SeparatedSyntaxList<AnonymousObjectMemberDeclaratorSyntax> anonDecls ) {
+		return SyntaxFactory.SeparatedList(
+			anonDecls.Select( anonDecl => anonDecl
+				.WithNameEquals( anonDecl.NameEquals?.WithName( anonDecl.NameEquals.Name.WithIdentifier( RemoveAsyncSuffix( anonDecl.NameEquals.Name.Identifier, optional: true ) ) ) )
+				.WithExpression( Transform( anonDecl.Expression ) )
+			)
+		);
+	}
+
 	private EqualsValueClauseSyntax Transform( EqualsValueClauseSyntax arg )
 		=> arg.WithValue( Transform( arg.Value ) );
 
@@ -422,7 +437,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	private ArgumentListSyntax Transform( ArgumentListSyntax argList )
 		=> TransformAll( argList, Transform );
 
-	private TypeArgumentListSyntax Transform ( TypeArgumentListSyntax typeArgList )
+	private TypeArgumentListSyntax Transform( TypeArgumentListSyntax typeArgList )
 		=> typeArgList.WithArguments( TransformTypes( typeArgList.Arguments ) );
 
 	private ArgumentSyntax? Transform( ArgumentSyntax argument ) {
