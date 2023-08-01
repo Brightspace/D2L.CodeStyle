@@ -338,6 +338,33 @@ void Bar() {
 	}
 
 	[Test]
+	public void AnonymousCreation() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { var options = new { size = new { width = GetCurrentWidthAsync(), height = 200 } }; await JsonSerializer.SerializeAsync(options); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( @"[Blocking] void Bar() { var options = new { size = new { width = GetCurrentWidth(),height = 200 } }; JsonSerializer.Serialize(options); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void ParenthesizedLambdaInvocation() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { await context.AddDeleteAction( () => Baz.DeleteAsync() ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( @"[Blocking] void Bar() { context.AddDeleteAction( () => Baz.Delete() ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void AsyncParenthesizedBlockLambda() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { await CreateAsync( async () => { using( new Context() ) { await BazAsync(); } } ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( @"[Blocking] void Bar() { Create( () => { using( new Context() ) { Baz(); } } ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 		public void Silly() {
 		var actual = Transform( @"[GenerateSync]
 async Task<int> HelloAsync() {

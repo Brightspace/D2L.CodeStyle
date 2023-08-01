@@ -306,7 +306,9 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				.WithTypeArgumentList( Transform( genExpr.TypeArgumentList ) ),
 
 			ParenthesizedLambdaExpressionSyntax parLambExpr => parLambExpr
-				.WithExpressionBody( parLambExpr.ExpressionBody != null ? Transform( parLambExpr.ExpressionBody ) : null ),
+				.WithModifiers( RemoveAsyncModifier( parLambExpr.Modifiers ) )
+				.WithExpressionBody( parLambExpr.ExpressionBody != null ? Transform( parLambExpr.ExpressionBody ) : null )
+				.WithBlock( parLambExpr.Block != null ? Transform( parLambExpr.Block ) : null ),
 
 			AnonymousObjectCreationExpressionSyntax anonCreationExpr => anonCreationExpr
 				.WithInitializers( TransformAnonDecls( anonCreationExpr.Initializers ) ),
