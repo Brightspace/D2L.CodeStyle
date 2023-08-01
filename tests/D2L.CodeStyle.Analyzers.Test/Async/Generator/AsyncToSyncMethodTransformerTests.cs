@@ -330,11 +330,11 @@ void Bar() {
 
 	[Test]
 	public void ParenthesizedAnonymousCreationLambda() {
-		var actual = Transform( @"[GenerateSync] Task BarAsync() { () => new { BazAsync = TaskCreator.NewTask, Quux = id.ToStringAsync( ""N"" ) } }" );
+		var actual = Transform( @"[GenerateSync] Task BarAsync() { await BazAsync(() => new { BazAsync = 5, Quux = ""test"" } ); }" );
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
-		Assert.AreEqual( @"[Blocking] void Bar() { () => new { Baz = TaskCreator.NewTask,Quux = id.ToString( ""N"" ) } }", actual.Value.ToFullString() );
+		Assert.AreEqual( @"[Blocking] void Bar() { Baz(() => new { Baz = 5,Quux = ""test"" } ); }", actual.Value.ToFullString() );
 	}
 
 	[Test]
