@@ -212,6 +212,15 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 	}
 
 	[Test]
+	public void SimpleLambdaBlock() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { Func<int, Task> bazAsync = async quuxAsync => { await fredAsync.Delay( 2*y ); await zoopAsync(); } }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Bar() { Func<int, Task> baz = quux => { fred.Delay( 2*y ); zoop(); } }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 	public void WrapInTaskRun() {
 		var actual = Transform( @"[GenerateSync] async Task BarAsync() { string baz = await response.Content.ReadAsStringAsync(); }" );
 

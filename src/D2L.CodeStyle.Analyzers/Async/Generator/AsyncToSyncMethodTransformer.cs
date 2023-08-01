@@ -299,7 +299,8 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			SimpleLambdaExpressionSyntax lambExpr => lambExpr
 				.WithModifiers( RemoveAsyncModifier( lambExpr.Modifiers ) )
 				.WithParameter( Transform( lambExpr.Parameter ) )
-				.WithExpressionBody( lambExpr.ExpressionBody != null ? Transform( lambExpr.ExpressionBody ) : null ),
+				.WithExpressionBody( lambExpr.ExpressionBody != null ? Transform( lambExpr.ExpressionBody ) : null )
+				.WithBlock( lambExpr.Block != null ? Transform( lambExpr.Block ) : null ),
 
 			GenericNameSyntax genExpr => genExpr
 				.WithIdentifier( RemoveAsyncSuffix( genExpr.Identifier, optional: true ) )
