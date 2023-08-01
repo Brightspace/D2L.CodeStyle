@@ -130,6 +130,15 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 	}
 
 	[Test]
+	public void SafeAsync() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { await m_baz.WriteLineAsync( line ).SafeAsync(); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Bar() { m_baz.WriteLine( line ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 	public void FromResult() {
 		var actual = Transform( @"[GenerateSync] Task<Baz> BarAsync() { return Task.FromResult( baz ); }" );
 
