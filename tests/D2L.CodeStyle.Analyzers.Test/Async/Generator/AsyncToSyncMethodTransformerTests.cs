@@ -330,7 +330,7 @@ void Bar() {
 
 	[Test]
 	public void ParenthesizedAnonymousCreationLambda() {
-		var actual = Transform( @"[GenerateSync] Task BarAsync() { await BazAsync(() => new { BazAsync = 5, Quux = ""test"" } ); }" );
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { await BazAsync(() => new { BazAsync = 5, Quux = ""test"" } ); }" );
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
