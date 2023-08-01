@@ -332,7 +332,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		ExpressionSyntax newExpr = invocationExpr;
 		var memberAccess = invocationExpr.Expression as MemberAccessExpressionSyntax;
 
-		if( string.Equals( memberAccess?.Name?.Identifier.ValueText, "ConfigureAwait", StringComparison.Ordinal ) ) {
+		if( memberAccess is not null && ShouldRemoveInvocation( memberAccess ) ) {
 			if( memberAccess?.Expression is not null ) {
 				newExpr = memberAccess.Expression;
 				return Transform( newExpr );
@@ -358,6 +358,14 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	bool ShouldWrapMemberAccessInTaskRun( MemberAccessExpressionSyntax memberAccessExpr ) {
 		return (memberAccessExpr.Expression.ToString(), memberAccessExpr.Name.Identifier.ValueText) switch {
 			(_, "ReadAsStringAsync") => true,
+			_ => false
+		};
+	}
+
+	bool ShouldRemoveInvocation( MemberAccessExpressionSyntax memberAccessExpr ) {
+		return (memberAccessExpr.Expression.ToString(), memberAccessExpr.Name.Identifier.ValueText) switch {
+			(_, "ConfigureAwait" ) => true,
+			(_, "SafeAsync" ) => true,
 			_ => false
 		};
 	}
