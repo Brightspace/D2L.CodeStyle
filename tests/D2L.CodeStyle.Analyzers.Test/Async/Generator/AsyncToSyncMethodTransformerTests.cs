@@ -329,6 +329,15 @@ void Bar() {
 	}
 
 	[Test]
+	public void IAsyncEnumerable() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { IAsyncEnumerable<string> empty = AsyncEnumerable.Empty<string>(); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( @"[Blocking] void Bar() { IEnumerable<string> empty = Enumerable.Empty<string>(); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 		public void Silly() {
 		var actual = Transform( @"[GenerateSync]
 async Task<int> HelloAsync() {
