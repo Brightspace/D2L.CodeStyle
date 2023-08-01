@@ -419,7 +419,6 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	private SeparatedSyntaxList<AnonymousObjectMemberDeclaratorSyntax> TransformAnonDecls( SeparatedSyntaxList<AnonymousObjectMemberDeclaratorSyntax> anonDecls ) {
 		return SyntaxFactory.SeparatedList(
 			anonDecls.Select( anonDecl => anonDecl
-				.WithNameEquals( anonDecl.NameEquals?.WithName( anonDecl.NameEquals.Name.WithIdentifier( RemoveAsyncSuffix( anonDecl.NameEquals.Name.Identifier, optional: true ) ) ) )
 				.WithExpression( Transform( anonDecl.Expression ) )
 			)
 		);
