@@ -125,6 +125,15 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			}
 		}
 
+		switch( returnTypeInfo.Type.MetadataName ) {
+			case "IAsyncEnumerable":
+				return SyntaxFactory.ParseTypeName( "IEnumerable" ).WithTriviaFrom( typeSynt );
+			case "IAsyncEnumerable`1":
+				return ( (GenericNameSyntax)typeSynt )
+					.WithIdentifier( SyntaxFactory.Identifier( "IEnumerable" ) )
+					.WithTriviaFrom( typeSynt );
+		}
+
 		if( isReturnType ) { ReportDiagnostic( Diagnostics.NonTaskReturnType, typeSynt.GetLocation() ); }
 		return typeSynt;
 	}
@@ -329,6 +338,11 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	}
 
 	private ExpressionSyntax Transform( InvocationExpressionSyntax invocationExpr) {
+		if( Model.GetTypeInfo( invocationExpr ).ConvertedType?.Name == "IAsyncEnumerable" ) {
+			// Remove all "Async" in the expression
+			return SyntaxFactory.ParseExpression( invocationExpr.ToString().Replace( "Async", "" ) );
+		}
+
 		ExpressionSyntax newExpr = invocationExpr;
 		var memberAccess = invocationExpr.Expression as MemberAccessExpressionSyntax;
 

@@ -330,11 +330,11 @@ void Bar() {
 
 	[Test]
 	public void IAsyncEnumerable() {
-		var actual = Transform( @"[GenerateSync] async Task BarAsync() { IAsyncEnumerable<string> empty = AsyncEnumerable.Empty<string>(); }" );
+		var actual = TransformWithIAsyncEnumerator( @"[GenerateSync] async Task BarAsync() { IAsyncEnumerable<string> m_enum = MethodReturningIAsyncEnumerable(); }" );
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
-		Assert.AreEqual( @"[Blocking] void Bar() { IEnumerable<string> empty = Enumerable.Empty<string>(); }", actual.Value.ToFullString() );
+		Assert.AreEqual( @"[Blocking] void Bar() { IEnumerable<string> m_enum = MethodReturningIEnumerable(); }", actual.Value.ToFullString() );
 	}
 
 	[Test]
@@ -469,6 +469,17 @@ int Hello() {
 		return transformer.Transform( methodDecl );
 	}
 
+	public static TransformResult<MethodDeclarationSyntax> TransformWithIAsyncEnumerator( string methodSource ) {
+		var (compilation, methodDecl) = ParseMethodWithIAsyncEnumerator( methodSource );
+
+		var transformer = new AsyncToSyncMethodTransformer(
+			compilation.GetSemanticModel( methodDecl.SyntaxTree ),
+			CancellationToken.None
+		);
+
+		return transformer.Transform( methodDecl );
+	}
+
 	public static (Compilation, MethodDeclarationSyntax) ParseMethod( string methodSource ) {
 		var wrappedAndParsed = CSharpSyntaxTree.ParseText( @$"
 using System.Threading.Tasks;
@@ -481,6 +492,26 @@ class TestType{{{methodSource}}}" );
 
 		var compilation = CreateSyncGeneratorTestCompilation( wrappedAndParsed );
 
+		return (compilation, methodDecl);
+	}
+
+
+	public static (Compilation, MethodDeclarationSyntax) ParseMethodWithIAsyncEnumerator( string methodSource ) {
+		var wrappedAndParsed = CSharpSyntaxTree.ParseText( @$"
+using System.Threading.Tasks;
+using D2L.CodeStyle.Annotations;
+using System.Threading;
+
+class TestType{{
+{methodSource}IAsyncEnumerator<string> MethodReturningIAsyncEnumerator() {{
+		yield return ""test"";
+	}}
+}}" );
+
+		var methodDecl = wrappedAndParsed.GetRoot().DescendantNodes().OfType<MethodDeclarationSyntax>().First();
+		
+		var compilation = CreateSyncGeneratorTestCompilation( wrappedAndParsed );
+		
 		return (compilation, methodDecl);
 	}
 
