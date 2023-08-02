@@ -339,7 +339,6 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 	private ExpressionSyntax Transform( InvocationExpressionSyntax invocationExpr) {
 		if( Model.GetTypeInfo( invocationExpr ).ConvertedType?.Name == "IAsyncEnumerable" ) {
-			// Remove all "Async" in the expression
 			return SyntaxFactory.ParseExpression( invocationExpr.ToString().Replace( "Async", "" ) );
 		}
 
