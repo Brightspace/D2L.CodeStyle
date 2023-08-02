@@ -503,7 +503,8 @@ using D2L.CodeStyle.Annotations;
 using System.Threading;
 
 class TestType{{
-{methodSource}IAsyncEnumerator<string> MethodReturningIAsyncEnumerator() {{
+{methodSource}async IAsyncEnumerator<string> MethodReturningIAsyncEnumerator() {{
+		await Task.Delay(1000);
 		yield return ""test"";
 	}}
 }}" );
