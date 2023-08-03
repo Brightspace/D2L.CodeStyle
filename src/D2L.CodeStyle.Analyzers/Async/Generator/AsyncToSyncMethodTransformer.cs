@@ -125,13 +125,10 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			}
 		}
 
-		switch( returnTypeInfo.Type.MetadataName ) {
-			case "IAsyncEnumerable":
-				return SyntaxFactory.ParseTypeName( "IEnumerable" ).WithTriviaFrom( typeSynt );
-			case "IAsyncEnumerable`1":
-				return ( (GenericNameSyntax)typeSynt )
-					.WithIdentifier( SyntaxFactory.Identifier( "IEnumerable" ) )
-					.WithTriviaFrom( typeSynt );
+		if( returnTypeInfo.Type.MetadataName == "IAsyncEnumerable`1" ) {
+			return ( (GenericNameSyntax)typeSynt )
+				.WithIdentifier( SyntaxFactory.Identifier( "IEnumerable" ) )
+				.WithTriviaFrom( typeSynt );
 		}
 
 		if( isReturnType ) { ReportDiagnostic( Diagnostics.NonTaskReturnType, typeSynt.GetLocation() ); }
