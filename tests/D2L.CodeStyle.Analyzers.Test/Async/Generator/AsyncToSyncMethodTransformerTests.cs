@@ -338,6 +338,26 @@ void Bar() {
 	}
 
 	[Test]
+	public void IAsyncEnumerable_WithParameterContainingAsyncInName() {
+		var actual = TransformWithIAsyncEnumerator( @"
+			[GenerateSync] async Task BarAsync() {
+				int parameterWithAsyncInName = 0;
+				IAsyncEnumerable<string> m_enum = MethodReturningIAsyncEnumerable( parameterWithAsyncInName );
+			}"
+		);
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( @"
+			[Blocking] void Bar() {
+				int parameterWithAsyncInName = 0;
+				IEnumerable<string> m_enum = MethodReturningIEnumerable( parameterWithAsyncInName );
+			}",
+			actual.Value.ToFullString()
+		);
+	}
+
+	[Test]
 		public void Silly() {
 		var actual = Transform( @"[GenerateSync]
 async Task<int> HelloAsync() {
