@@ -123,9 +123,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 					);
 					return typeSynt;
 			}
-		}
-
-		if( returnTypeInfo.Type.MetadataName == "IAsyncEnumerable`1" ) {
+		} else if( returnTypeInfo.Type.MetadataName == "IAsyncEnumerable`1" && returnTypeInfo.Type.ContainingNamespace.ToString() == "System.Collections.Generic" ) {
 			return ( (GenericNameSyntax)typeSynt )
 				.WithIdentifier( SyntaxFactory.Identifier( "IEnumerable" ) )
 				.WithTriviaFrom( typeSynt );

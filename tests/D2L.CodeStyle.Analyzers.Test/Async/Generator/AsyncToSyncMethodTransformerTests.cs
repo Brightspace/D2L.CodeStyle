@@ -555,7 +555,8 @@ class TestType{{
 
 			typeof( object ),
 			typeof( Task ),
-			typeof( GenerateSyncAttribute )
+			typeof( GenerateSyncAttribute ),
+			typeof( IAsyncEnumerable<object> )
 
 		}.Select( t => t.Assembly.Location )
 		.Distinct()
