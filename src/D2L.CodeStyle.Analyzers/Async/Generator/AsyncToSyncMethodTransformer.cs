@@ -333,7 +333,8 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	}
 
 	private ExpressionSyntax Transform( InvocationExpressionSyntax invocationExpr) {
-		if( Model.GetTypeInfo( invocationExpr ).ConvertedType?.Name == "IAsyncEnumerable" ) {
+		ITypeSymbol? returnTypeInfo = Model.GetTypeInfo( invocationExpr ).Type;
+		if( returnTypeInfo?.MetadataName == "IAsyncEnumerable`1" && returnTypeInfo.ContainingNamespace.ToString() == "System.Collections.Generic" ) {
 			return invocationExpr.WithExpression( SyntaxFactory.ParseExpression( invocationExpr.Expression.ToString().Replace( "Async", "" ) ) );
 		}
 
