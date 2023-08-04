@@ -524,7 +524,7 @@ using System.Collections.Generic;
 using D2L.CodeStyle.Annotations;
 
 class TestType{{
-{methodSource}async IAsyncEnumerable<string> MethodReturningIAsyncEnumerable() {{
+{methodSource}async IAsyncEnumerable<string> MethodReturningIAsyncEnumerable( int p = 0 ) {{
 		await Task.Delay(1000);
 		yield return ""test"";
 	}}
