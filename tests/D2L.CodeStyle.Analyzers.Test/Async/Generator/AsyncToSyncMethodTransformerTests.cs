@@ -330,7 +330,7 @@ void Bar() {
 
 	[Test]
 	public void IAsyncEnumerable() {
-		var actual = TransformWithIAsyncEnumerator( @"[GenerateSync] async Task BarAsync() { IAsyncEnumerable<string> m_enum = MethodReturningIAsyncEnumerable(); }" );
+		var actual = TransformWithIAsyncEnumerable( @"[GenerateSync] async Task BarAsync() { IAsyncEnumerable<string> m_enum = MethodReturningIAsyncEnumerable(); }" );
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
@@ -339,7 +339,7 @@ void Bar() {
 
 	[Test]
 	public void IAsyncEnumerable_WithParameterContainingAsyncInName() {
-		var actual = TransformWithIAsyncEnumerator( @"
+		var actual = TransformWithIAsyncEnumerable( @"
 			[GenerateSync] async Task BarAsync() {
 				int parameterWithAsyncInName = 0;
 				IAsyncEnumerable<string> m_enum = MethodReturningIAsyncEnumerable( parameterWithAsyncInName );
@@ -489,8 +489,8 @@ int Hello() {
 		return transformer.Transform( methodDecl );
 	}
 
-	public static TransformResult<MethodDeclarationSyntax> TransformWithIAsyncEnumerator( string methodSource ) {
-		var (compilation, methodDecl) = ParseMethodWithIAsyncEnumerator( methodSource );
+	public static TransformResult<MethodDeclarationSyntax> TransformWithIAsyncEnumerable( string methodSource ) {
+		var (compilation, methodDecl) = ParseMethodWithIAsyncEnumerable( methodSource );
 
 		var transformer = new AsyncToSyncMethodTransformer(
 			compilation.GetSemanticModel( methodDecl.SyntaxTree ),
@@ -503,8 +503,8 @@ int Hello() {
 	public static (Compilation, MethodDeclarationSyntax) ParseMethod( string methodSource ) {
 		var wrappedAndParsed = CSharpSyntaxTree.ParseText( @$"
 using System.Threading.Tasks;
-using D2L.CodeStyle.Annotations;
 using System.Threading;
+using D2L.CodeStyle.Annotations;
 
 class TestType{{{methodSource}}}" );
 
@@ -516,14 +516,15 @@ class TestType{{{methodSource}}}" );
 	}
 
 
-	public static (Compilation, MethodDeclarationSyntax) ParseMethodWithIAsyncEnumerator( string methodSource ) {
+	public static (Compilation, MethodDeclarationSyntax) ParseMethodWithIAsyncEnumerable( string methodSource ) {
 		var wrappedAndParsed = CSharpSyntaxTree.ParseText( @$"
 using System.Threading.Tasks;
-using D2L.CodeStyle.Annotations;
 using System.Threading;
+using System.Collections.Generic;
+using D2L.CodeStyle.Annotations;
 
 class TestType{{
-{methodSource}async IAsyncEnumerator<string> MethodReturningIAsyncEnumerator() {{
+{methodSource}async IAsyncEnumerable<string> MethodReturningIAsyncEnumerable() {{
 		await Task.Delay(1000);
 		yield return ""test"";
 	}}
