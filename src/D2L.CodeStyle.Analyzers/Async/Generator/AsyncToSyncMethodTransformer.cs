@@ -361,23 +361,23 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		ExpressionSyntax newExpr = invocationExpr;
 		var memberAccess = invocationExpr.Expression as MemberAccessExpressionSyntax;
 
-		if( memberAccess is not null && ShouldRemoveInvocation( memberAccess ) ) {
-			if( memberAccess?.Expression is not null ) {
-				newExpr = memberAccess.Expression;
-				return Transform( newExpr );
+		try {
+			if( memberAccess is not null && ShouldRemoveInvocation( memberAccess ) ) {
+				if( memberAccess?.Expression is not null ) {
+					newExpr = memberAccess.Expression;
+					return Transform( newExpr );
+				}
+			} else if( memberAccess is not null && ShouldWrapMemberAccessInTaskRun( memberAccess ) ) {
+				m_disableTaskRunWarningFlag = true;
+				return SyntaxFactory.ParseExpression( $"Task.Run(() => {invocationExpr}).Result" );
 			}
-		} else if( memberAccess is not null && ShouldWrapMemberAccessInTaskRun( memberAccess ) ) {
-			m_disableTaskRunWarningFlag = true;
-			return SyntaxFactory.ParseExpression( $"Task.Run(() => {invocationExpr}).Result" );
+
+			return invocationExpr = invocationExpr
+				.WithExpression( Transform( invocationExpr.Expression ) )
+				.WithArgumentList( TransformAll( invocationExpr.ArgumentList, Transform ) ); ;
+		} finally {
+			m_removeAsyncAnywhere = prevRemoveAsyncAnywhereState;
 		}
-
-		invocationExpr = invocationExpr
-			.WithExpression( Transform( invocationExpr.Expression ) )
-			.WithArgumentList( TransformAll( invocationExpr.ArgumentList, Transform ) );
-
-		m_removeAsyncAnywhere = prevRemoveAsyncAnywhereState;
-
-		return invocationExpr;
 	}
 
 	bool ShouldRemoveReturnedMemberAccess( MemberAccessExpressionSyntax memberAccessExpr ) {
