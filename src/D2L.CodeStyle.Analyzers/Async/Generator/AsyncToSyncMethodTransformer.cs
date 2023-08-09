@@ -312,7 +312,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 			SimpleLambdaExpressionSyntax lambExpr => lambExpr
 				.WithModifiers( RemoveAsyncModifier( lambExpr.Modifiers ) )
-				.WithParameter( lambExpr.Parameter != null ? Transform( lambExpr.Parameter ) : null )
+				.WithParameter( Transform( lambExpr.Parameter, removeCancellationToken: false ) ?? lambExpr.Parameter )
 				.WithExpressionBody( lambExpr.ExpressionBody != null ? Transform( lambExpr.ExpressionBody ) : null )
 				.WithBlock( lambExpr.Block != null ? Transform( lambExpr.Block ) : null ),
 
@@ -483,8 +483,8 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		);
 	}
 
-	private ParameterSyntax? Transform( ParameterSyntax parameter ) {
-		if( parameter.Type?.ToString() == "CancellationToken" ) {
+	private ParameterSyntax? Transform( ParameterSyntax parameter, bool removeCancellationToken = true ) {
+		if( removeCancellationToken && parameter.Type?.ToString() == "CancellationToken" ) {
 			return null;
 		}
 		return parameter.WithIdentifier( RemoveAsyncSuffix( parameter.Identifier, optional: true ) );
