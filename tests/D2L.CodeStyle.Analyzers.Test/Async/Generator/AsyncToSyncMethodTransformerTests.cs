@@ -338,6 +338,35 @@ void Bar() {
 	}
 
 	[Test]
+	public void IAsyncEnumerable() {
+		var actual = TransformWithIAsyncEnumerable( @"[GenerateSync] async Task BarAsync() { IAsyncEnumerable<string> m_enum = MethodReturningIAsyncEnumerable(); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( @"[Blocking] void Bar() { IEnumerable<string> m_enum = MethodReturningIEnumerable(); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void IAsyncEnumerable_WithParameterContainingAsyncInName() {
+		var actual = TransformWithIAsyncEnumerable( @"
+			[GenerateSync] async Task BarAsync() {
+				int parameterWithAsyncInName = 0;
+				IAsyncEnumerable<string> m_enum = MethodReturningIAsyncEnumerable( parameterWithAsyncInName );
+			}"
+		);
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( @"
+			[Blocking] void Bar() {
+				int parameterWithAsyncInName = 0;
+				IEnumerable<string> m_enum = MethodReturningIEnumerable( parameterWithAsyncInName );
+			}",
+			actual.Value.ToFullString()
+		);
+  }
+  
+  [Test]
 	public void ParenthesizedAnonymousCreationLambda() {
 		var actual = Transform( @"[GenerateSync] async Task BarAsync() { await BazAsync(() => new { BazAsync = 5, Quux = ""test"" } ); }" );
 
@@ -506,11 +535,22 @@ int Hello() {
 		return transformer.Transform( methodDecl );
 	}
 
+	public static TransformResult<MethodDeclarationSyntax> TransformWithIAsyncEnumerable( string methodSource ) {
+		var (compilation, methodDecl) = ParseMethodWithIAsyncEnumerable( methodSource );
+
+		var transformer = new AsyncToSyncMethodTransformer(
+			compilation.GetSemanticModel( methodDecl.SyntaxTree ),
+			CancellationToken.None
+		);
+
+		return transformer.Transform( methodDecl );
+	}
+
 	public static (Compilation, MethodDeclarationSyntax) ParseMethod( string methodSource ) {
 		var wrappedAndParsed = CSharpSyntaxTree.ParseText( @$"
 using System.Threading.Tasks;
-using D2L.CodeStyle.Annotations;
 using System.Threading;
+using D2L.CodeStyle.Annotations;
 
 class TestType{{{methodSource}}}" );
 
@@ -518,6 +558,28 @@ class TestType{{{methodSource}}}" );
 
 		var compilation = CreateSyncGeneratorTestCompilation( wrappedAndParsed );
 
+		return (compilation, methodDecl);
+	}
+
+
+	public static (Compilation, MethodDeclarationSyntax) ParseMethodWithIAsyncEnumerable( string methodSource ) {
+		var wrappedAndParsed = CSharpSyntaxTree.ParseText( @$"
+using System.Threading.Tasks;
+using System.Threading;
+using System.Collections.Generic;
+using D2L.CodeStyle.Annotations;
+
+class TestType{{
+{methodSource}async IAsyncEnumerable<string> MethodReturningIAsyncEnumerable( int p = 0 ) {{
+		await Task.Delay(1000);
+		yield return ""test"";
+	}}
+}}" );
+
+		var methodDecl = wrappedAndParsed.GetRoot().DescendantNodes().OfType<MethodDeclarationSyntax>().First();
+		
+		var compilation = CreateSyncGeneratorTestCompilation( wrappedAndParsed );
+		
 		return (compilation, methodDecl);
 	}
 
@@ -539,7 +601,8 @@ class TestType{{{methodSource}}}" );
 
 			typeof( object ),
 			typeof( Task ),
-			typeof( GenerateSyncAttribute )
+			typeof( GenerateSyncAttribute ),
+			typeof( IAsyncEnumerable<object> )
 
 		}.Select( t => t.Assembly.Location )
 		.Distinct()
