@@ -26,7 +26,8 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			.WithIdentifier( RemoveAsyncSuffix( decl.Identifier ) )
 			.WithReturnType( TransformType( decl.ReturnType, isReturnType: true ) )
 			.WithExpressionBody( MaybeTransform( decl.ExpressionBody, Transform ) )
-			.WithBody( MaybeTransform( decl.Body, Transform ) );
+			.WithBody( MaybeTransform( decl.Body, Transform ) )
+			.WithParameterList( Transform( decl.ParameterList ) );
 
 		if ( m_disableTaskRunWarningFlag ) {
 			PragmaWarningDirectiveTriviaSyntax restorePragma = SyntaxFactory.PragmaWarningDirectiveTrivia( SyntaxFactory.Token( SyntaxKind.RestoreKeyword ), true )
@@ -311,7 +312,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 			SimpleLambdaExpressionSyntax lambExpr => lambExpr
 				.WithModifiers( RemoveAsyncModifier( lambExpr.Modifiers ) )
-				.WithParameter( Transform( lambExpr.Parameter ) )
+				.WithParameter( lambExpr.Parameter != null ? Transform( lambExpr.Parameter ) : null )
 				.WithExpressionBody( lambExpr.ExpressionBody != null ? Transform( lambExpr.ExpressionBody ) : null )
 				.WithBlock( lambExpr.Block != null ? Transform( lambExpr.Block ) : null ),
 
@@ -466,6 +467,9 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	private TypeArgumentListSyntax Transform( TypeArgumentListSyntax typeArgList )
 		=> typeArgList.WithArguments( TransformTypes( typeArgList.Arguments ) );
 
+	private ParameterListSyntax Transform( ParameterListSyntax paramList )
+		=> paramList.WithParameters( TransformParams( paramList.Parameters ) );
+
 	private ArgumentSyntax? Transform( ArgumentSyntax argument ) {
 		if( Model.GetTypeInfo( argument.Expression ).Type?.Name == "CancellationToken" ) {
 			return null;
@@ -473,8 +477,18 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		return argument.WithExpression( Transform( argument.Expression ) );
 	}
 
-	private ParameterSyntax Transform( ParameterSyntax parameter )
-		=> parameter.WithIdentifier(RemoveAsyncSuffix( parameter.Identifier, optional: true ) );
+	private SeparatedSyntaxList<ParameterSyntax> TransformParams( SeparatedSyntaxList<ParameterSyntax> paramSynts ) {
+		return SyntaxFactory.SeparatedList(
+			paramSynts.Select( param => Transform( param ) ).OfType<ParameterSyntax>()
+		);
+	}
+
+	private ParameterSyntax? Transform( ParameterSyntax parameter ) {
+		if( parameter.Type?.ToString() == "CancellationToken" ) {
+			return null;
+		}
+		return parameter.WithIdentifier( RemoveAsyncSuffix( parameter.Identifier, optional: true ) );
+	}
 
 	private CatchClauseSyntax Transform( CatchClauseSyntax catchClause ) {
 		return catchClause

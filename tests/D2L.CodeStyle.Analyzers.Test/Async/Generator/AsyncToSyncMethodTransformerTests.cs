@@ -338,6 +338,15 @@ void Bar() {
 	}
 
 	[Test]
+	public void CancellationTokenParameter() {
+		var actual = Transform( @"[GenerateSync] Task<Foo> BarAsync( int Baz, CancellationToken ct ) { return FooAsync( Baz + 1, ct ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] Foo Bar( int Baz) { return Foo( Baz + 1); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 	public void IAsyncEnumerable() {
 		var actual = TransformWithIAsyncEnumerable( @"[GenerateSync] async Task BarAsync() { IAsyncEnumerable<string> m_enum = MethodReturningIAsyncEnumerable(); }" );
 
