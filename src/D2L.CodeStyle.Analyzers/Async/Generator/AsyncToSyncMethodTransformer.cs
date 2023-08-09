@@ -352,6 +352,8 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 	private ExpressionSyntax Transform( InvocationExpressionSyntax invocationExpr) {
 		ITypeSymbol? returnTypeInfo = Model.GetTypeInfo( invocationExpr ).Type;
+
+		bool prevRemoveAsyncAnywhereState = m_removeAsyncAnywhere;
 		if( returnTypeInfo?.MetadataName == "IAsyncEnumerable`1" && returnTypeInfo.ContainingNamespace.ToString() == "System.Collections.Generic" ) {
 			m_removeAsyncAnywhere = true;
 		}
@@ -369,9 +371,13 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			return SyntaxFactory.ParseExpression( $"Task.Run(() => {invocationExpr}).Result" );
 		}
 
-		return invocationExpr
+		invocationExpr = invocationExpr
 			.WithExpression( Transform( invocationExpr.Expression ) )
 			.WithArgumentList( TransformAll( invocationExpr.ArgumentList, Transform ) );
+
+		m_removeAsyncAnywhere = prevRemoveAsyncAnywhereState;
+
+		return invocationExpr;
 	}
 
 	bool ShouldRemoveReturnedMemberAccess( MemberAccessExpressionSyntax memberAccessExpr ) {
