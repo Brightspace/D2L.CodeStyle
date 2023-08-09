@@ -212,6 +212,15 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 	}
 
 	[Test]
+	public void SimpleLambdaBlock() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { Action<int> bazAsync = async quuxAsync => { await fredAsync.Delay( 2*y ); await zoopAsync(); } }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Bar() { Action<int> baz = quux => { fred.Delay( 2*y ); zoop(); } }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 	public void WrapInTaskRun() {
 		var actual = Transform( @"[GenerateSync] async Task BarAsync() { string baz = await response.Content.ReadAsStringAsync(); }" );
 
@@ -326,6 +335,43 @@ void Bar() {
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
 		Assert.AreEqual( @"[Blocking] Foo Bar() { var ct = new CancellationToken(); return Foo( 1,""test"" ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void ParenthesizedAnonymousCreationLambda() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { await BazAsync(() => new { BazAsync = 5, Quux = ""test"" } ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		// For now we are not transforming the variable names
+		Assert.AreEqual( @"[Blocking] void Bar() { Baz(() => new { BazAsync = 5,Quux = ""test"" } ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void AnonymousCreation() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { var options = new { size = new { width = GetCurrentWidthAsync(), height = 200 } }; await JsonSerializer.SerializeAsync(options); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( @"[Blocking] void Bar() { var options = new { size = new { width = GetCurrentWidth(),height = 200 } }; JsonSerializer.Serialize(options); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void ParenthesizedLambdaInvocation() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { await context.AddDeleteAction( () => Baz.DeleteAsync() ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( @"[Blocking] void Bar() { context.AddDeleteAction( () => Baz.Delete() ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void AsyncParenthesizedBlockLambda() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { await CreateAsync( async () => { using( new Context() ) { await BazAsync(); } } ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( @"[Blocking] void Bar() { Create( () => { using( new Context() ) { Baz(); } } ); }", actual.Value.ToFullString() );
 	}
 
 	[Test]
