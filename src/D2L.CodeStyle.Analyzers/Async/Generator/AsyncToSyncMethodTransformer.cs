@@ -16,6 +16,8 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	private bool m_disableTaskRunWarningFlag;
 	// Need to modify return statement later on if function returns Task -> Void to prevent CS0127 (A method with a void return type cannot return a value)
 	private bool m_generatedFunctionReturnsVoid;
+	// Need to remove async not anywhere (not just suffix) in certain cases
+	private bool m_removeAsyncAnywhere;
 
 	public TransformResult<MethodDeclarationSyntax> Transform( MethodDeclarationSyntax decl ) {
 		// TODO: remove CancellationToken parameters
@@ -73,6 +75,13 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		);
 
 	private SyntaxToken RemoveAsyncSuffix( SyntaxToken ident, bool optional = false ) {
+		if( m_removeAsyncAnywhere && ident.ValueText.Contains( "Async" ) ) {
+			m_removeAsyncAnywhere = false;
+			return SyntaxFactory.Identifier(
+				ident.ValueText.Replace( "Async", "" )
+			).WithTriviaFrom( ident );
+		}
+
 		if( !ident.ValueText.EndsWith( "Async", StringComparison.Ordinal ) || ident.ValueText == "Async" ) {
 			if( optional ) {
 				return ident;
@@ -335,7 +344,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	private ExpressionSyntax Transform( InvocationExpressionSyntax invocationExpr) {
 		ITypeSymbol? returnTypeInfo = Model.GetTypeInfo( invocationExpr ).Type;
 		if( returnTypeInfo?.MetadataName == "IAsyncEnumerable`1" && returnTypeInfo.ContainingNamespace.ToString() == "System.Collections.Generic" ) {
-			return invocationExpr.WithExpression( SyntaxFactory.ParseExpression( invocationExpr.Expression.ToString().Replace( "Async", "" ) ) );
+			m_removeAsyncAnywhere = true;
 		}
 
 		ExpressionSyntax newExpr = invocationExpr;
