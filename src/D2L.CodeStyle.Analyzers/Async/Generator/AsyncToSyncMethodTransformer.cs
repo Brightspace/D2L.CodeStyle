@@ -16,6 +16,8 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	private bool m_disableTaskRunWarningFlag;
 	// Need to modify return statement later on if function returns Task -> Void to prevent CS0127 (A method with a void return type cannot return a value)
 	private bool m_generatedFunctionReturnsVoid;
+	// Need to remove async not anywhere (not just suffix) in certain cases
+	private bool m_removeAsyncAnywhere;
 
 	public TransformResult<MethodDeclarationSyntax> Transform( MethodDeclarationSyntax decl ) {
 		// TODO: remove CancellationToken parameters
@@ -73,6 +75,13 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		);
 
 	private SyntaxToken RemoveAsyncSuffix( SyntaxToken ident, bool optional = false ) {
+		if( m_removeAsyncAnywhere && ident.ValueText.Contains( "Async" ) ) {
+			m_removeAsyncAnywhere = false;
+			return SyntaxFactory.Identifier(
+				ident.ValueText.Replace( "Async", "" )
+			).WithTriviaFrom( ident );
+		}
+
 		if( !ident.ValueText.EndsWith( "Async", StringComparison.Ordinal ) || ident.ValueText == "Async" ) {
 			if( optional ) {
 				return ident;
@@ -123,6 +132,10 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 					);
 					return typeSynt;
 			}
+		} else if( returnTypeInfo.Type.MetadataName == "IAsyncEnumerable`1" && returnTypeInfo.Type.ContainingNamespace.ToString() == "System.Collections.Generic" ) {
+			return ( (GenericNameSyntax)typeSynt )
+				.WithIdentifier( SyntaxFactory.Identifier( "IEnumerable" ) )
+				.WithTriviaFrom( typeSynt );
 		}
 
 		if( isReturnType ) { ReportDiagnostic( Diagnostics.NonTaskReturnType, typeSynt.GetLocation() ); }
@@ -338,22 +351,33 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	}
 
 	private ExpressionSyntax Transform( InvocationExpressionSyntax invocationExpr) {
+		ITypeSymbol? returnTypeInfo = Model.GetTypeInfo( invocationExpr ).Type;
+
+		bool prevRemoveAsyncAnywhereState = m_removeAsyncAnywhere;
+		if( returnTypeInfo?.MetadataName == "IAsyncEnumerable`1" && returnTypeInfo.ContainingNamespace.ToString() == "System.Collections.Generic" ) {
+			m_removeAsyncAnywhere = true;
+		}
+
 		ExpressionSyntax newExpr = invocationExpr;
 		var memberAccess = invocationExpr.Expression as MemberAccessExpressionSyntax;
 
-		if( memberAccess is not null && ShouldRemoveInvocation( memberAccess ) ) {
-			if( memberAccess?.Expression is not null ) {
-				newExpr = memberAccess.Expression;
-				return Transform( newExpr );
+		try {
+			if( memberAccess is not null && ShouldRemoveInvocation( memberAccess ) ) {
+				if( memberAccess?.Expression is not null ) {
+					newExpr = memberAccess.Expression;
+					return Transform( newExpr );
+				}
+			} else if( memberAccess is not null && ShouldWrapMemberAccessInTaskRun( memberAccess ) ) {
+				m_disableTaskRunWarningFlag = true;
+				return SyntaxFactory.ParseExpression( $"Task.Run(() => {invocationExpr}).Result" );
 			}
-		} else if( memberAccess is not null && ShouldWrapMemberAccessInTaskRun( memberAccess ) ) {
-			m_disableTaskRunWarningFlag = true;
-			return SyntaxFactory.ParseExpression( $"Task.Run(() => {invocationExpr}).Result" );
-		}
 
-		return invocationExpr
-			.WithExpression( Transform( invocationExpr.Expression ) )
-			.WithArgumentList( TransformAll( invocationExpr.ArgumentList, Transform ) );
+			return invocationExpr = invocationExpr
+				.WithExpression( Transform( invocationExpr.Expression ) )
+				.WithArgumentList( TransformAll( invocationExpr.ArgumentList, Transform ) ); ;
+		} finally {
+			m_removeAsyncAnywhere = prevRemoveAsyncAnywhereState;
+		}
 	}
 
 	bool ShouldRemoveReturnedMemberAccess( MemberAccessExpressionSyntax memberAccessExpr ) {
