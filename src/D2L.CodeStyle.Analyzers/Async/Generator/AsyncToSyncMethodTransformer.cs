@@ -478,9 +478,16 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	}
 
 	private SeparatedSyntaxList<ParameterSyntax> TransformParams( SeparatedSyntaxList<ParameterSyntax> paramSynts ) {
-		return SyntaxFactory.SeparatedList(
-			paramSynts.Select( param => Transform( param ) ).OfType<ParameterSyntax>()
-		);
+		for( int i = 0; i < paramSynts.Count; i++ ) {
+			ParameterSyntax? newParamSynt = Transform( paramSynts[i] );
+			if( newParamSynt is not null ) {
+				paramSynts = paramSynts.Replace( paramSynts[i], newParamSynt );
+			} else {
+				paramSynts = paramSynts.RemoveAt( i );
+			}
+		}
+
+		return paramSynts;
 	}
 
 	private ParameterSyntax? Transform( ParameterSyntax parameter, bool removeCancellationToken = true ) {
