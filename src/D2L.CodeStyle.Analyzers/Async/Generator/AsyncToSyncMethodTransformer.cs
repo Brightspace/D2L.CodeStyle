@@ -1,5 +1,4 @@
-﻿using System.Reflection.Metadata;
-using D2L.CodeStyle.Analyzers.Extensions;
+﻿using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
