@@ -221,6 +221,15 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 	}
 
 	[Test]
+	public void SimpleLambdaCancellationToken() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { Func<CancellationToken, int> cancHash = x => x.GetHashCode(); await FooAsync( cancHash ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Bar() { Func<CancellationToken, int> cancHash = x => x.GetHashCode(); Foo( cancHash ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 	public void WrapInTaskRun() {
 		var actual = Transform( @"[GenerateSync] async Task BarAsync() { string baz = await response.Content.ReadAsStringAsync(); }" );
 
@@ -335,6 +344,24 @@ void Bar() {
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
 		Assert.AreEqual( @"[Blocking] Foo Bar() { var ct = new CancellationToken(); return Foo( 1,""test"" ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void CancellationTokenParameter() {
+		var actual = Transform( @"[GenerateSync] Task<Foo> BarAsync( int Baz, CancellationToken ct ) { return FooAsync( Baz + 1, ct ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] Foo Bar( int Baz) { return Foo( Baz + 1); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void CancellationTokenParameterMiddle() {
+		var actual = Transform( @"[GenerateSync] async Task FooAsync( int w, int x, CancellationToken c, CancellationToken ct, int y, int z );" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Foo( int w, int x, int y, int z );", actual.Value.ToFullString() );
 	}
 
 	[Test]
