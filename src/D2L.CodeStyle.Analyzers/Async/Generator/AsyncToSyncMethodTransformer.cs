@@ -1,4 +1,5 @@
-﻿using D2L.CodeStyle.Analyzers.Extensions;
+﻿using System.Reflection.Metadata;
+using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -312,7 +313,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 			SimpleLambdaExpressionSyntax lambExpr => lambExpr
 				.WithModifiers( RemoveAsyncModifier( lambExpr.Modifiers ) )
-				.WithParameter( Transform( lambExpr.Parameter, removeCancellationToken: false ) ?? lambExpr.Parameter )
+				.WithParameter( Transform( lambExpr.Parameter ) )
 				.WithExpressionBody( lambExpr.ExpressionBody != null ? Transform( lambExpr.ExpressionBody ) : null )
 				.WithBlock( lambExpr.Block != null ? Transform( lambExpr.Block ) : null ),
 
@@ -479,22 +480,18 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 	private SeparatedSyntaxList<ParameterSyntax> TransformParams( SeparatedSyntaxList<ParameterSyntax> paramSynts ) {
 		for( int i = 0; i < paramSynts.Count; i++ ) {
-			ParameterSyntax? newParamSynt = Transform( paramSynts[i] );
-			if( newParamSynt is not null ) {
-				paramSynts = paramSynts.Replace( paramSynts[i], newParamSynt );
-			} else {
+			if( paramSynts[i].Type?.ToString() == "CancellationToken" ) {
 				paramSynts = paramSynts.RemoveAt( i );
 				i--;
+			} else {
+				paramSynts = paramSynts.Replace( paramSynts[i], Transform( paramSynts[i] ) );
 			}
 		}
 
 		return paramSynts;
 	}
 
-	private ParameterSyntax? Transform( ParameterSyntax parameter, bool removeCancellationToken = true ) {
-		if( removeCancellationToken && parameter.Type?.ToString() == "CancellationToken" ) {
-			return null;
-		}
+	private ParameterSyntax Transform( ParameterSyntax parameter ) {
 		return parameter.WithIdentifier( RemoveAsyncSuffix( parameter.Identifier, optional: true ) );
 	}
 
