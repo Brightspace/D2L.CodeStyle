@@ -221,6 +221,15 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 	}
 
 	[Test]
+	public void SimpleLambdaCancellationToken() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { Func<CancellationToken, int> cancHash = x => x.GetHashCode(); await FooAsync( cancHash ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Bar() { Func<CancellationToken, int> cancHash = x => x.GetHashCode(); Foo( cancHash ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 	public void WrapInTaskRun() {
 		var actual = Transform( @"[GenerateSync] async Task BarAsync() { string baz = await response.Content.ReadAsStringAsync(); }" );
 
