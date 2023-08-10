@@ -484,6 +484,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				paramSynts = paramSynts.Replace( paramSynts[i], newParamSynt );
 			} else {
 				paramSynts = paramSynts.RemoveAt( i );
+				i--;
 			}
 		}
 
