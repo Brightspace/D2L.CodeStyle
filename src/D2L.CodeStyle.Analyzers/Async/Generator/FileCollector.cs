@@ -80,6 +80,8 @@ internal partial class SyncGenerator {
 		}
 
 		public string CollectSource() {
+			// TODO: Remove this and modify XML param elements in generator when changed/removed
+			m_out.AppendLine( "#pragma warning disable CS1572" );
 			// File-scoped usings:
 			m_out.Append( m_root.Usings.ToFullString() );
 

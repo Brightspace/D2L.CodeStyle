@@ -23,7 +23,8 @@ public sealed class Y {
 			ImmutableArray<(TypeDeclarationSyntax, string)>.Empty 
 		);
 
-		Assert.AreEqual( "", collector.CollectSource() );
+		Assert.AreEqual( @"#pragma warning disable CS1572
+", collector.CollectSource() );
 	}
 
 	[Test]
@@ -50,7 +51,8 @@ public sealed class Y {
 			)
 		);
 
-		Assert.AreEqual( @"
+		Assert.AreEqual( @"#pragma warning disable CS1572
+
 using Foo;
 
 namespace X;
@@ -86,7 +88,8 @@ public sealed class Y<T, U> where T : new where U : T {
 			)
 		);
 
-		Assert.AreEqual( @"
+		Assert.AreEqual( @"#pragma warning disable CS1572
+
 using Foo;
 
 namespace X;
@@ -120,7 +123,8 @@ public partial {kind} X {{
 			)
 		);
 
-		Assert.AreEqual( @$"
+		Assert.AreEqual( @$"#pragma warning disable CS1572
+
 partial {kind} X {{
 	any text
 }}",
@@ -158,7 +162,8 @@ namespace A.B.C {
 			)
 		);
 
-		Assert.AreEqual( @"
+		Assert.AreEqual( @"#pragma warning disable CS1572
+
 using Foo;
 
 namespace A.B.C {
@@ -238,7 +243,8 @@ namespace Q {
 			myMethodsBefore.ToImmutableArray()
 		);
 
-		Assert.AreEqual( @"
+		Assert.AreEqual( @"#pragma warning disable CS1572
+
 using Foo;
 
 namespace A.B.C {
