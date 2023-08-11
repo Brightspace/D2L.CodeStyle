@@ -57,7 +57,8 @@ sealed class Bar {
 }"
 		);
 
-		AssertNewTrees( result, @"
+		AssertNewTrees( result, @"#pragma warning disable CS1572
+
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -89,7 +90,8 @@ partial interface IFoo {
 }"
 		);
 
-		AssertNewTrees( result, @"
+		AssertNewTrees( result, @"#pragma warning disable CS1572
+
 using System;
 using System.Threading.Tasks;
 using D2L.CodeStyle.Annotations;
@@ -137,7 +139,8 @@ public sealed partial class Abcdefg {
 }"
 		);
 
-		AssertNewTrees( result, @"
+		AssertNewTrees( result, @"#pragma warning disable CS1572
+
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -149,7 +152,8 @@ partial class Bar {
 
 	[Blocking]
 	public void Baz( StreamWriter x ) { return; }
-}", @"
+}", @"#pragma warning disable CS1572
+
 using System;
 using System.IO;
 using System.Threading.Tasks;
