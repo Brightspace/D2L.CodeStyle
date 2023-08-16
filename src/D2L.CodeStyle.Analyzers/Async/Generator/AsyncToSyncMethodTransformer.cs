@@ -334,6 +334,9 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			MemberBindingExpressionSyntax memBindExpr => memBindExpr
 				.WithName( Transform( memBindExpr.Name ) ),
 
+			InterpolatedStringExpressionSyntax interStringExpr => interStringExpr
+				.WithContents( TransformInterpolations( interStringExpr.Contents ) ),
+
 			_ => UnhandledSyntax( expr )
 		};
 
@@ -456,6 +459,17 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				.WithExpression( Transform( anonDecl.Expression ) )
 			)
 		);
+	}
+
+	private SyntaxList<InterpolatedStringContentSyntax> TransformInterpolations( SyntaxList<InterpolatedStringContentSyntax> interSyntaxs ) {
+		SyntaxList <InterpolatedStringContentSyntax> newInterSyntaxs = interSyntaxs;
+		for( int i = 0; i < interSyntaxs.Count; i++ ) {
+			if( interSyntaxs[i].IsKind( SyntaxKind.Interpolation ) ) {
+				InterpolationSyntax inter = (InterpolationSyntax)interSyntaxs[i];
+				newInterSyntaxs = newInterSyntaxs.Replace( newInterSyntaxs[i], inter.WithExpression( Transform( inter.Expression ) ) );
+			}
+		}
+		return newInterSyntaxs;
 	}
 
 	private EqualsValueClauseSyntax Transform( EqualsValueClauseSyntax arg )

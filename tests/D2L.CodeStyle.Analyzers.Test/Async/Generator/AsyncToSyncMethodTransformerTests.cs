@@ -440,6 +440,15 @@ void Bar() {
 	}
 
 	[Test]
+	public void StringInterpolationExpression() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { Console.WriteLine($""Hello, {await GetUsernameAsync()}! Welcome back to {m_baz}, it is {await GetTimeAsync()} {m_ampm}.""); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( @"[Blocking] void Bar() { Console.WriteLine($""Hello, {GetUsername()}! Welcome back to {m_baz}, it is {GetTime()} {m_ampm}.""); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 		public void Silly() {
 		var actual = Transform( @"[GenerateSync]
 async Task<int> HelloAsync() {
