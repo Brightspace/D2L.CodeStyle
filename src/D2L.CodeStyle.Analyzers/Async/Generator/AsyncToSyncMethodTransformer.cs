@@ -124,6 +124,8 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 					return ( (GenericNameSyntax)typeSynt )
 						.TypeArgumentList.Arguments.First()
 						.WithTriviaFrom( typeSynt );
+				case "TaskCanceledException":
+					return SyntaxFactory.ParseTypeName( "OperationCanceledException" ).WithTriviaFrom( typeSynt );
 
 				default:
 					GeneratorError(

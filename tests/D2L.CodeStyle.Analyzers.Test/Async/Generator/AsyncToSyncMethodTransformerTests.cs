@@ -449,6 +449,15 @@ void Bar() {
 	}
 
 	[Test]
+	public void TaskCanceledException() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { try { response = await GetBazAsync().ConfigureAwait( false ); } catch( TaskCanceledException exception ) { Console.WriteLine( ""Failed"" ); } }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( @"[Blocking] void Bar() { try { response = GetBaz(); } catch( OperationCanceledException exception ) { Console.WriteLine( ""Failed"" ); } }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 		public void Silly() {
 		var actual = Transform( @"[GenerateSync]
 async Task<int> HelloAsync() {
