@@ -454,7 +454,16 @@ void Bar() {
 
 		Assert.IsTrue( actual.Success );
 		Assert.IsEmpty( actual.Diagnostics );
-		Assert.AreEqual( @"[Blocking] void Bar() { try { response = GetBaz(); } catch( OperationCanceledException exception ) { Console.WriteLine( ""Failed"" ); } }", actual.Value.ToFullString() );
+		Assert.AreEqual( @"[Blocking] void Bar() { { response = GetBaz(); } }", actual.Value.ToFullString() );
+	}
+
+	[Test]
+	public void TaskCanceledExceptionAndOthers() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { try { response = await GetBazAsync().ConfigureAwait( false ); } catch( TaskCanceledException exception ) { Console.WriteLine( ""Failed"" ); } catch ( IndexOutOfRangeException ) { Console.WriteLine( ""Index out of range"" ); } }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( @"[Blocking] void Bar() { try { response = GetBaz(); } catch ( IndexOutOfRangeException ) { Console.WriteLine( ""Index out of range"" ); } }", actual.Value.ToFullString() );
 	}
 
 	[Test]

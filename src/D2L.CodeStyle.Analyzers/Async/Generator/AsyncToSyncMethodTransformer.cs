@@ -18,6 +18,9 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	private bool m_generatedFunctionReturnsVoid;
 	// Need to remove async not anywhere (not just suffix) in certain cases
 	private bool m_removeAsyncAnywhere;
+	// Need to remove catch clause if it's catching a task related exception
+	private bool m_removeCatchClause;
+	private int m_catchClauseCount;
 
 	public TransformResult<MethodDeclarationSyntax> Transform( MethodDeclarationSyntax decl ) {
 		decl = decl.WithAttributeLists( ReplaceGenerateSyncAttribute( decl.AttributeLists ) )
@@ -125,7 +128,8 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 						.TypeArgumentList.Arguments.First()
 						.WithTriviaFrom( typeSynt );
 				case "TaskCanceledException":
-					return SyntaxFactory.ParseTypeName( "OperationCanceledException" ).WithTriviaFrom( typeSynt );
+					m_removeCatchClause = true;
+					return typeSynt;
 
 				default:
 					GeneratorError(
@@ -191,9 +195,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			LocalDeclarationStatementSyntax localDeclStmt => localDeclStmt
 				.WithDeclaration( Transform( localDeclStmt.Declaration ) ),
 
-			TryStatementSyntax tryStmt => tryStmt
-				.WithBlock( Transform( tryStmt.Block ) )
-				.WithCatches( TransformAll( tryStmt.Catches, Transform ) ),
+			TryStatementSyntax tryStmt => Transform( tryStmt ),
 
 			ForEachStatementSyntax forEachStmt => forEachStmt
 				.WithType( TransformType( forEachStmt.Type ) )
@@ -437,6 +439,17 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			.WithVariables( TransformVariables( varDecl.Variables ) );
 	}
 
+	private StatementSyntax Transform( TryStatementSyntax tryStmt ) {
+		m_catchClauseCount = tryStmt.Catches.Count;
+		TryStatementSyntax newTryStmt = tryStmt
+			.WithBlock( Transform( tryStmt.Block ) )
+			.WithCatches( TransformAll( tryStmt.Catches, Transform ) );
+		if( m_catchClauseCount == 0) {
+			return Transform( tryStmt.Block );
+		}
+		return newTryStmt;
+	}
+
 	private SeparatedSyntaxList<VariableDeclaratorSyntax> TransformVariables( SeparatedSyntaxList<VariableDeclaratorSyntax> varDecls ) {
 		return SyntaxFactory.SeparatedList(
 			varDecls.Select( varDecl =>
@@ -516,10 +529,16 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		return parameter.WithIdentifier( RemoveAsyncSuffix( parameter.Identifier, optional: true ) );
 	}
 
-	private CatchClauseSyntax Transform( CatchClauseSyntax catchClause ) {
-		return catchClause
+	private CatchClauseSyntax? Transform( CatchClauseSyntax catchClause ) {
+		catchClause = catchClause
 			.WithDeclaration( catchClause.Declaration != null ? Transform( catchClause.Declaration ) : null )
 			.WithBlock( Transform( catchClause.Block ) );
+		if( m_removeCatchClause ) {
+			m_removeCatchClause = false;
+			m_catchClauseCount--;
+			return null;
+		}
+		return catchClause;
 	}
 
 	private CatchDeclarationSyntax Transform( CatchDeclarationSyntax catchDecl ) {
