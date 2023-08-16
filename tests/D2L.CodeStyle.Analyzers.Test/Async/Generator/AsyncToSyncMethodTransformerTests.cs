@@ -431,6 +431,15 @@ void Bar() {
 	}
 
 	[Test]
+	public void ConditionalAccessExpression() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { await m_baz?.PushAsync(); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( @"[Blocking] void Bar() { m_baz?.Push(); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 		public void Silly() {
 		var actual = Transform( @"[GenerateSync]
 async Task<int> HelloAsync() {

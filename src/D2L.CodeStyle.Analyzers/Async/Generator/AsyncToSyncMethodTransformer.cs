@@ -20,7 +20,6 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	private bool m_removeAsyncAnywhere;
 
 	public TransformResult<MethodDeclarationSyntax> Transform( MethodDeclarationSyntax decl ) {
-		// TODO: remove CancellationToken parameters
 		decl = decl.WithAttributeLists( ReplaceGenerateSyncAttribute( decl.AttributeLists ) )
 			.WithModifiers( RemoveAsyncModifier( decl.Modifiers ) )
 			.WithIdentifier( RemoveAsyncSuffix( decl.Identifier ) )
@@ -327,6 +326,13 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 			AnonymousObjectCreationExpressionSyntax anonCreationExpr => anonCreationExpr
 				.WithInitializers( TransformAnonDecls( anonCreationExpr.Initializers ) ),
+
+			ConditionalAccessExpressionSyntax condAccessExpr => condAccessExpr
+				.WithExpression( Transform( condAccessExpr.Expression ) )
+				.WithWhenNotNull( Transform( condAccessExpr.WhenNotNull ) ),
+
+			MemberBindingExpressionSyntax memBindExpr => memBindExpr
+				.WithName( Transform( memBindExpr.Name ) ),
 
 			_ => UnhandledSyntax( expr )
 		};
