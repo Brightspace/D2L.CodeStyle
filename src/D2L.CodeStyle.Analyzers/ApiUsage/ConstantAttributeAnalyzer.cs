@@ -134,16 +134,16 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			INamedTypeSymbol constantAttribute
 		) {
 
-			IMethodSymbol method = conversion.OperatorMethod;
-			if( method is null ) {
+			IMethodSymbol @operator = conversion.OperatorMethod;
+			if( @operator is null ) {
 				return;
 			}
-			if( method.Parameters.Length != 1 ) {
+			if( @operator.Parameters.Length != 1 ) {
 				return;
 			}
 
-			// Parameter is not [Constant], so do nothing
-			IParameterSymbol parameter = method.Parameters[ 0 ];
+			// Operator parameter is not [Constant], so do nothing
+			IParameterSymbol parameter = @operator.Parameters[ 0 ];
 			if( !HasAttribute( parameter, constantAttribute ) ) {
 				return;
 			}
@@ -160,7 +160,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				return;
 			}
 
-			// Conversion argument is not constant, so report it
+			// Operand is not constant, so report it
 			context.ReportDiagnostic(
 				descriptor: Diagnostics.NonConstantPassedToConstantParameter,
 				location: operand.Syntax.GetLocation(),
