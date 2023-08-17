@@ -467,6 +467,15 @@ void Bar() {
 	}
 
 	[Test]
+	public void TaskCanceledExceptionWhenWrappedInTaskRun() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { try { json = await m_response.Content.ReadAsStringAsync().ConfigureAwait( false ); } catch( TaskCanceledException exception ) { Console.WriteLine( ""Failed"" ); } }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "#pragma warning disable D2L0018\r\n[Blocking] void Bar() { try { json = Task.Run(() => m_response.Content.ReadAsStringAsync()).Result; } catch( TaskCanceledException exception ) { Console.WriteLine( \"Failed\" ); } }\n#pragma warning restore D2L0018\r\n", actual.Value.ToFullString() );
+	}
+
+	[Test]
 		public void Silly() {
 		var actual = Transform( @"[GenerateSync]
 async Task<int> HelloAsync() {

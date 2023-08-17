@@ -128,7 +128,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 						.TypeArgumentList.Arguments.First()
 						.WithTriviaFrom( typeSynt );
 				case "TaskCanceledException":
-					m_removeCatchClause = true;
+					m_removeCatchClause = !m_disableTaskRunWarningFlag;
 					return typeSynt;
 
 				default:
@@ -444,7 +444,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		TryStatementSyntax newTryStmt = tryStmt
 			.WithBlock( Transform( tryStmt.Block ) )
 			.WithCatches( TransformAll( tryStmt.Catches, Transform ) );
-		if( m_catchClauseCount == 0) {
+		if( m_catchClauseCount == 0 ) {
 			return Transform( tryStmt.Block );
 		}
 		return newTryStmt;
