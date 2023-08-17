@@ -148,7 +148,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				return;
 			}
 
-			// Operand is a constant value, so do nothing
+			// Operand is a constant value, so trust it
 			IOperation operand = conversion.Operand;
 			if( operand.ConstantValue.HasValue ) {
 				return;
