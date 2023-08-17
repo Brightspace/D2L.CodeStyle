@@ -52,6 +52,15 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				),
 				OperationKind.Argument
 			);
+
+			context.RegisterOperationAction(
+				ctx => AnalyzeConversion(
+					ctx,
+					(IConversionOperation)ctx.Operation,
+					constantAttribute
+				),
+				OperationKind.Conversion
+			);
 		}
 
 		private static void AnalyzeParameter(
@@ -119,6 +128,45 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			);
 		}
 
+		private static void AnalyzeConversion(
+			OperationAnalysisContext context,
+			IConversionOperation conversion,
+			INamedTypeSymbol constantAttribute
+		) {
+
+			IMethodSymbol method = conversion.OperatorMethod;
+			if( method is null ) {
+				return;
+			}
+			if( method.Parameters.Length != 1 ) {
+				return;
+			}
+
+			// Parameter is not [Constant], so do nothing
+			IParameterSymbol parameter = method.Parameters[ 0 ];
+			if( !HasAttribute( parameter, constantAttribute ) ) {
+				return;
+			}
+
+			// Operand is a constant value, so do nothing
+			IOperation operand = conversion.Operand;
+			if( operand.ConstantValue.HasValue ) {
+				return;
+			}
+
+			// Operand was defined as [Constant] already, so trust it
+			ISymbol operandSymbol = conversion.SemanticModel.GetSymbolInfo( operand.Syntax ).Symbol;
+			if( operandSymbol is not null && HasAttribute( operandSymbol, constantAttribute ) ) {
+				return;
+			}
+
+			// Conversion argument is not constant, so report it
+			context.ReportDiagnostic(
+				descriptor: Diagnostics.NonConstantPassedToConstantParameter,
+				location: operand.Syntax.GetLocation(),
+				messageArgs: new[] { parameter.Name }
+			);
+		}
 
 		/// <summary>
 		/// Check if the symbol has a specific attribute attached to it.
