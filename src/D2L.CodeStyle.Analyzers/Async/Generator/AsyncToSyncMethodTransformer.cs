@@ -19,7 +19,6 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	// Need to remove async not anywhere (not just suffix) in certain cases
 	private bool m_removeAsyncAnywhere;
 	// Need to remove catch clause if it's catching a task related exception
-	private bool m_removeCatchClause;
 	private int m_catchClauseCount;
 
 	public TransformResult<MethodDeclarationSyntax> Transform( MethodDeclarationSyntax decl ) {
@@ -128,7 +127,6 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 						.TypeArgumentList.Arguments.First()
 						.WithTriviaFrom( typeSynt );
 				case "TaskCanceledException":
-					m_removeCatchClause = !m_disableTaskRunWarningFlag;
 					return typeSynt;
 
 				default:
@@ -533,8 +531,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		catchClause = catchClause
 			.WithDeclaration( catchClause.Declaration != null ? Transform( catchClause.Declaration ) : null )
 			.WithBlock( Transform( catchClause.Block ) );
-		if( m_removeCatchClause ) {
-			m_removeCatchClause = false;
+		if( !m_disableTaskRunWarningFlag && catchClause.Declaration?.Type.ToString() == "TaskCanceledException" ) {
 			m_catchClauseCount--;
 			return null;
 		}
