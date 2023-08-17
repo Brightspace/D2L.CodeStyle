@@ -204,18 +204,26 @@ namespace SpecTests {
 
 		#region Constructor Tests
 
-		void ConstructorTests() {
+		void ConstructorTests(
+			[D2L.CodeStyle.Annotations.Contract.Constant] string trusted,
+			string untrusted
+		) {
+			const string constant = "foo";
+			string variable = "bar";
 
-			const string constantStr = "foo";
-			string variableStr = "bar";
-
+			new Types.ConstantStruct( "abc" );
 			new Types.ConstantStruct( Constants.String );
-			new Types.ConstantStruct( constantStr );
-			new Types.ConstantStruct( /* NonConstantPassedToConstantParameter(value) */ variableStr /**/ );
+			new Types.ConstantStruct( constant );
+			new Types.ConstantStruct( trusted );
+			new Types.ConstantStruct( /* NonConstantPassedToConstantParameter(value) */ variable /**/ );
+			new Types.ConstantStruct( /* NonConstantPassedToConstantParameter(value) */ untrusted /**/ );
 
+			new Types.NonConstantStruct( "abc" );
 			new Types.NonConstantStruct( Constants.String );
-			new Types.NonConstantStruct( constantStr );
-			new Types.NonConstantStruct( variableStr );
+			new Types.NonConstantStruct( constant );
+			new Types.NonConstantStruct( trusted );
+			new Types.NonConstantStruct( variable );
+			new Types.NonConstantStruct( untrusted );
 		}
 
 		#endregion
@@ -229,12 +237,14 @@ namespace SpecTests {
 			const bool constant = true;
 			bool variable = true;
 
+			{ Types.ConstantStruct v = (Types.ConstantStruct)true; }
 			{ Types.ConstantStruct v = (Types.ConstantStruct)Constants.Bool; }
 			{ Types.ConstantStruct v = (Types.ConstantStruct)constant; }
 			{ Types.ConstantStruct v = (Types.ConstantStruct)trusted; }
 			{ Types.ConstantStruct v = (Types.ConstantStruct) /* NonConstantPassedToConstantParameter(value) */ variable /**/; }
 			{ Types.ConstantStruct v = (Types.ConstantStruct) /* NonConstantPassedToConstantParameter(value) */ untrusted /**/; }
 
+			{ Types.NonConstantStruct v = (Types.NonConstantStruct)true; }
 			{ Types.NonConstantStruct v = (Types.NonConstantStruct)Constants.Bool; }
 			{ Types.NonConstantStruct v = (Types.NonConstantStruct)constant; }
 			{ Types.NonConstantStruct v = (Types.NonConstantStruct)trusted; }
@@ -253,12 +263,14 @@ namespace SpecTests {
 			const string constant = "foo";
 			string variable = "bar";
 
+			{ Types.ConstantStruct v = "abc"; }
 			{ Types.ConstantStruct v = Constants.String; }
 			{ Types.ConstantStruct v = constant; }
 			{ Types.ConstantStruct v = trusted; }
 			{ Types.ConstantStruct v = /* NonConstantPassedToConstantParameter(value) */ variable /**/; }
 			{ Types.ConstantStruct v = /* NonConstantPassedToConstantParameter(value) */ untrusted /**/; }
 
+			{ Types.NonConstantStruct v = "abc"; }
 			{ Types.NonConstantStruct v = Constants.String; }
 			{ Types.NonConstantStruct v = constant; }
 			{ Types.NonConstantStruct v = trusted; }
