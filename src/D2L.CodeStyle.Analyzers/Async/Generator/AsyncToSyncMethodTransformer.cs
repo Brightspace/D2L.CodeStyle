@@ -124,6 +124,8 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 					return ( (GenericNameSyntax)typeSynt )
 						.TypeArgumentList.Arguments.First()
 						.WithTriviaFrom( typeSynt );
+				case "TaskCanceledException":
+					return typeSynt;
 
 				default:
 					GeneratorError(
@@ -189,9 +191,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			LocalDeclarationStatementSyntax localDeclStmt => localDeclStmt
 				.WithDeclaration( Transform( localDeclStmt.Declaration ) ),
 
-			TryStatementSyntax tryStmt => tryStmt
-				.WithBlock( Transform( tryStmt.Block ) )
-				.WithCatches( TransformAll( tryStmt.Catches, Transform ) ),
+			TryStatementSyntax tryStmt => Transform( tryStmt ),
 
 			ForEachStatementSyntax forEachStmt => forEachStmt
 				.WithType( TransformType( forEachStmt.Type ) )
@@ -435,6 +435,17 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			.WithVariables( TransformVariables( varDecl.Variables ) );
 	}
 
+	private StatementSyntax Transform( TryStatementSyntax tryStmt ) {
+		var block = Transform( tryStmt.Block );
+		var catches = TransformAll( tryStmt.Catches, Transform );
+
+		if( catches.Count == 0 ) {
+			return block;
+		} else {
+			return tryStmt.WithBlock( block ).WithCatches( catches );
+		}
+	}
+
 	private SeparatedSyntaxList<VariableDeclaratorSyntax> TransformVariables( SeparatedSyntaxList<VariableDeclaratorSyntax> varDecls ) {
 		return SyntaxFactory.SeparatedList(
 			varDecls.Select( varDecl =>
@@ -514,10 +525,14 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		return parameter.WithIdentifier( RemoveAsyncSuffix( parameter.Identifier, optional: true ) );
 	}
 
-	private CatchClauseSyntax Transform( CatchClauseSyntax catchClause ) {
-		return catchClause
+	private CatchClauseSyntax? Transform( CatchClauseSyntax catchClause ) {
+		catchClause = catchClause
 			.WithDeclaration( catchClause.Declaration != null ? Transform( catchClause.Declaration ) : null )
 			.WithBlock( Transform( catchClause.Block ) );
+		if( !m_disableTaskRunWarningFlag && catchClause.Declaration?.Type.ToString() == "TaskCanceledException" ) {
+			return null;
+		}
+		return catchClause;
 	}
 
 	private CatchDeclarationSyntax Transform( CatchDeclarationSyntax catchDecl ) {
