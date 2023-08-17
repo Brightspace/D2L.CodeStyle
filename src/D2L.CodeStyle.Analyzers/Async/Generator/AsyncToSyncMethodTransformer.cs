@@ -476,15 +476,15 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 		);
 	}
 
-	private SyntaxList<InterpolatedStringContentSyntax> TransformInterpolations( SyntaxList<InterpolatedStringContentSyntax> interSyntaxs ) {
-		SyntaxList <InterpolatedStringContentSyntax> newInterSyntaxs = interSyntaxs;
-		for( int i = 0; i < interSyntaxs.Count; i++ ) {
-			if( interSyntaxs[i].IsKind( SyntaxKind.Interpolation ) ) {
-				InterpolationSyntax inter = (InterpolationSyntax)interSyntaxs[i];
-				newInterSyntaxs = newInterSyntaxs.Replace( newInterSyntaxs[i], inter.WithExpression( Transform( inter.Expression ) ) );
+	private SyntaxList<InterpolatedStringContentSyntax> TransformInterpolations( SyntaxList<InterpolatedStringContentSyntax> interSyntaxes ) {
+		SyntaxList<InterpolatedStringContentSyntax> newInterSyntaxes = interSyntaxes;
+		for( int i = 0; i < interSyntaxes.Count; i++ ) {
+			if( interSyntaxes[i].IsKind( SyntaxKind.Interpolation ) ) {
+				InterpolationSyntax inter = (InterpolationSyntax)interSyntaxes[i];
+				newInterSyntaxes = newInterSyntaxes.Replace( newInterSyntaxes[i], inter.WithExpression( Transform( inter.Expression ) ) );
 			}
 		}
-		return newInterSyntaxs;
+		return newInterSyntaxes;
 	}
 
 	private EqualsValueClauseSyntax Transform( EqualsValueClauseSyntax arg )
