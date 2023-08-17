@@ -18,8 +18,6 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	private bool m_generatedFunctionReturnsVoid;
 	// Need to remove async not anywhere (not just suffix) in certain cases
 	private bool m_removeAsyncAnywhere;
-	// Need to remove catch clause if it's catching a task related exception
-	private int m_catchClauseCount;
 
 	public TransformResult<MethodDeclarationSyntax> Transform( MethodDeclarationSyntax decl ) {
 		decl = decl.WithAttributeLists( ReplaceGenerateSyncAttribute( decl.AttributeLists ) )
@@ -438,14 +436,14 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	}
 
 	private StatementSyntax Transform( TryStatementSyntax tryStmt ) {
-		m_catchClauseCount = tryStmt.Catches.Count;
-		TryStatementSyntax newTryStmt = tryStmt
-			.WithBlock( Transform( tryStmt.Block ) )
-			.WithCatches( TransformAll( tryStmt.Catches, Transform ) );
-		if( m_catchClauseCount == 0 ) {
-			return Transform( tryStmt.Block );
+		var block = Transform( tryStmt.Block );
+		var catches = TransformAll( tryStmt.Catches, Transform );
+
+		if( catches.Count == 0 ) {
+			return block;
+		} else {
+			return tryStmt.WithBlock( block ).WithCatches( catches );
 		}
-		return newTryStmt;
 	}
 
 	private SeparatedSyntaxList<VariableDeclaratorSyntax> TransformVariables( SeparatedSyntaxList<VariableDeclaratorSyntax> varDecls ) {
@@ -532,7 +530,6 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			.WithDeclaration( catchClause.Declaration != null ? Transform( catchClause.Declaration ) : null )
 			.WithBlock( Transform( catchClause.Block ) );
 		if( !m_disableTaskRunWarningFlag && catchClause.Declaration?.Type.ToString() == "TaskCanceledException" ) {
-			m_catchClauseCount--;
 			return null;
 		}
 		return catchClause;
