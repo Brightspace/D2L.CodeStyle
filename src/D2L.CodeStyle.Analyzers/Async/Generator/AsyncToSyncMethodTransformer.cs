@@ -438,13 +438,17 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 	private StatementSyntax Transform( TryStatementSyntax tryStmt ) {
 		var block = Transform( tryStmt.Block );
 		var catches = TransformAll( tryStmt.Catches, Transform );
+		var finallyClause = tryStmt.Finally != null ? Transform( tryStmt.Finally ) : null;
 
-		if( catches.Count == 0 ) {
+		if( finallyClause == null && catches.Count == 0 ) {
 			return block;
 		} else {
-			return tryStmt.WithBlock( block ).WithCatches( catches );
+			return tryStmt.WithBlock( block ).WithCatches( catches ).WithFinally( finallyClause );
 		}
 	}
+
+	private FinallyClauseSyntax Transform( FinallyClauseSyntax finallyClause )
+		=> finallyClause.WithBlock( Transform( finallyClause.Block ) );
 
 	private SeparatedSyntaxList<VariableDeclaratorSyntax> TransformVariables( SeparatedSyntaxList<VariableDeclaratorSyntax> varDecls ) {
 		return SyntaxFactory.SeparatedList(
