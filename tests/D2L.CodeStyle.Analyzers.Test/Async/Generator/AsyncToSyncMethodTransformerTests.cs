@@ -494,6 +494,15 @@ void Bar() {
 	}
 
 	[Test]
+	public void EmptyTryFinally() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { try {} finally { await FinalizeBazAsync(); } }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( @"[Blocking] void Bar() { try {} finally { FinalizeBaz(); } }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 	public void TryTaskCancelledFinally() {
 		var actual = Transform( @"[GenerateSync] async Task BarAsync() { try { response = await GetBazAsync().ConfigureAwait( false ); } catch( TaskCanceledException exception ) { Console.WriteLine( ""Failed"" ); } finally { await FinalizeBazAsync(); } }" );
 
