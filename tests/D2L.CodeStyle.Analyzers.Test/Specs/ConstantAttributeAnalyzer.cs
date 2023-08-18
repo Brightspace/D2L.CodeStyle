@@ -2,8 +2,8 @@
 
 using System;
 
-namespace SpecTests
-{
+namespace SpecTests {
+
 	using D2L.CodeStyle.Annotations.Contract;
 
 	public sealed class Logger {
@@ -19,8 +19,8 @@ namespace SpecTests
 		}
 	}
 
-	public sealed class Types
-	{
+	public sealed class Types {
+
 		public static void SomeMethodWithConstantParameter<T>( [Constant] T param1 ) { }
 		public static void SomeMethodWithParameter<T>( T param1 ) { }
 		public static void SomeMethodWithOneConstantParameter<T>( [Constant] T param1, T param2 ) { }
@@ -30,13 +30,44 @@ namespace SpecTests
 		public interface IInterface { }
 		public class SomeClassImplementingInterface : IInterface { }
 		public static void SomeMethodWithInterfaceParameter( [Constant] IInterface /* InvalidConstantType(Interface) */ @interface /**/ ) { }
-		public static void SomeMethodWithOneInterfaceParameter<T>(IInterface param1, [Constant] T param2) { }
+		public static void SomeMethodWithOneInterfaceParameter<T>( IInterface param1, [Constant] T param2 ) { }
+
+		public readonly struct ConstantStruct {
+			public ConstantStruct( [Constant] string value ) {
+				Value = value;
+			}
+			public string Value { get; }
+			public static implicit operator ConstantStruct( [Constant] string value ) {
+				return new ConstantStruct( value );
+			}
+			public static explicit operator ConstantStruct( [Constant] bool value ) {
+				return new ConstantStruct( "true" );
+			}
+		}
+
+		public readonly struct NonConstantStruct {
+			public NonConstantStruct( string value ) {
+				Value = value;
+			}
+			public string Value { get; }
+			public static implicit operator NonConstantStruct( string value ) {
+				return new NonConstantStruct( value );
+			}
+			public static explicit operator NonConstantStruct( bool value ) {
+				return new NonConstantStruct( "true" );
+			}
+		}
 	}
 
-	public sealed class Tests
-	{
-		void Method()
-		{
+	public sealed class Tests {
+
+		private static class Constants {
+			public const bool Bool = true;
+			public const string String = "foo";
+		}
+
+		void Method() {
+
 			#region Invalid type tests
 			const Types.SomeClassImplementingInterface interfaceClass = new Types.SomeClassImplementingInterface { };
 			Types.SomeMethodWithConstantParameter<Types.IInterface>( /* NonConstantPassedToConstantParameter(param1) */ interfaceClass /**/ );
@@ -170,5 +201,84 @@ namespace SpecTests
 			Types.SomeMethodWithTwoConstantParameters<bool>( /* NonConstantPassedToConstantParameter(param1) */ variableBool /**/, /* NonConstantPassedToConstantParameter(param2) */ variableBool /**/ );
 			#endregion
 		}
+
+		#region Constructor Tests
+
+		void ConstructorTests(
+			[D2L.CodeStyle.Annotations.Contract.Constant] string trusted,
+			string untrusted
+		) {
+			const string constant = "foo";
+			string variable = "bar";
+
+			new Types.ConstantStruct( "abc" );
+			new Types.ConstantStruct( Constants.String );
+			new Types.ConstantStruct( constant );
+			new Types.ConstantStruct( trusted );
+			new Types.ConstantStruct( /* NonConstantPassedToConstantParameter(value) */ variable /**/ );
+			new Types.ConstantStruct( /* NonConstantPassedToConstantParameter(value) */ untrusted /**/ );
+
+			new Types.NonConstantStruct( "abc" );
+			new Types.NonConstantStruct( Constants.String );
+			new Types.NonConstantStruct( constant );
+			new Types.NonConstantStruct( trusted );
+			new Types.NonConstantStruct( variable );
+			new Types.NonConstantStruct( untrusted );
+		}
+
+		#endregion
+
+		#region Explicit Operator Tests
+
+		void ExplicitOperatorTests(
+			[D2L.CodeStyle.Annotations.Contract.Constant] bool trusted,
+			bool untrusted
+		) {
+			const bool constant = true;
+			bool variable = true;
+
+			{ Types.ConstantStruct v = (Types.ConstantStruct)true; }
+			{ Types.ConstantStruct v = (Types.ConstantStruct)Constants.Bool; }
+			{ Types.ConstantStruct v = (Types.ConstantStruct)constant; }
+			{ Types.ConstantStruct v = (Types.ConstantStruct)trusted; }
+			{ Types.ConstantStruct v = (Types.ConstantStruct) /* NonConstantPassedToConstantParameter(value) */ variable /**/; }
+			{ Types.ConstantStruct v = (Types.ConstantStruct) /* NonConstantPassedToConstantParameter(value) */ untrusted /**/; }
+
+			{ Types.NonConstantStruct v = (Types.NonConstantStruct)true; }
+			{ Types.NonConstantStruct v = (Types.NonConstantStruct)Constants.Bool; }
+			{ Types.NonConstantStruct v = (Types.NonConstantStruct)constant; }
+			{ Types.NonConstantStruct v = (Types.NonConstantStruct)trusted; }
+			{ Types.NonConstantStruct v = (Types.NonConstantStruct)variable; }
+			{ Types.NonConstantStruct v = (Types.NonConstantStruct)untrusted; }
+		}
+
+		#endregion
+
+		#region Implicit Operator Tests
+
+		void ImplicitOperatorTests(
+			[D2L.CodeStyle.Annotations.Contract.Constant] string trusted,
+			string untrusted
+		) {
+			const string constant = "foo";
+			string variable = "bar";
+
+			{ Types.ConstantStruct v = "abc"; }
+			{ Types.ConstantStruct v = Constants.String; }
+			{ Types.ConstantStruct v = constant; }
+			{ Types.ConstantStruct v = trusted; }
+			{ Types.ConstantStruct v = /* NonConstantPassedToConstantParameter(value) */ variable /**/; }
+			{ Types.ConstantStruct v = /* NonConstantPassedToConstantParameter(value) */ untrusted /**/; }
+
+			{ Types.NonConstantStruct v = "abc"; }
+			{ Types.NonConstantStruct v = Constants.String; }
+			{ Types.NonConstantStruct v = constant; }
+			{ Types.NonConstantStruct v = trusted; }
+			{ Types.NonConstantStruct v = variable; }
+			{ Types.NonConstantStruct v = untrusted; }
+		}
+
+		#endregion
+
 	}
 }
