@@ -757,5 +757,14 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor LocatedUnlocatable = new DiagnosticDescriptor(
+			id: "D2L0102",
+			title: "Attemped to locate an unlocatable type",
+			messageFormat: "Cannot locate {0} because it is marked [Unlocatable] or [Unlocatable.Candidate]",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }
