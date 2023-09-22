@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -25,14 +24,14 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				return;
 			}
 
-			ImmutableDictionary<INamedTypeSymbol, int> containerTypes = GetContainerTypes( context.Compilation );
+			ContainedTypeResolver containedTypeResolver = GetContainedTypeResolver( context.Compilation );
 
 			context.RegisterOperationAction(
 				ctx => EnforceSingletonsOnly(
 					ctx,
 					( (IInvocationOperation)ctx.Operation ).TargetMethod,
 					IsSingletonLocatorGet,
-					IsContainerType
+					containedTypeResolver
 				),
 				OperationKind.Invocation
 			);
@@ -42,7 +41,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 					ctx,
 					( (IMethodReferenceOperation)ctx.Operation ).Method,
 					IsSingletonLocatorGet,
-					IsContainerType
+					containedTypeResolver
 				),
 				OperationKind.MethodReference
 			);
@@ -51,34 +50,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 				getMethodSymbol,
 				methodSymbol?.OriginalDefinition
 			);
-
-			bool IsContainerType(
-					ITypeSymbol type,
-					[NotNullWhen( true )] out ITypeSymbol? containedType
-				) {
-
-				if( type is not INamedTypeSymbol namedType  ) {
-					containedType = null;
-					return false;
-				}
-
-				if( containerTypes.TryGetValue( namedType.OriginalDefinition, out int typeArgumentIndex ) ) {
-					containedType = namedType.TypeArguments[ typeArgumentIndex ];
-					return true;
-				}
-
-				containedType = null;
-				return false;
-			}
 		}
 
 		private delegate bool IsSingletonLocatorGet(
 			IMethodSymbol? methodSymbol
-		);
-
-		private delegate bool IsContainerType(
-			ITypeSymbol type,
-			[NotNullWhen( true )] out ITypeSymbol? containedType
 		);
 
 		// Enforce that SingletonLocator can only load actual [Singleton]s
@@ -86,16 +61,15 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			OperationAnalysisContext context,
 			IMethodSymbol methodSymbol,
 			IsSingletonLocatorGet isSingletonLocatorGet,
-			IsContainerType isContainerType
+			ContainedTypeResolver containedTypeResolver
 		) {
 			if( !isSingletonLocatorGet( methodSymbol ) ) {
 				return;
 			}
 
-			ITypeSymbol typeArg = methodSymbol.TypeArguments.Single();
-			if( isContainerType( typeArg, out ITypeSymbol? containedType ) ) {
-				typeArg = containedType;
-			}
+			ITypeSymbol typeArg = containedTypeResolver(
+				methodSymbol.TypeArguments.Single()
+			);
 
 			if( Attributes.Singleton.IsDefined( typeArg ) ) {
 				return;
@@ -123,6 +97,23 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.ServiceLocator {
 			}
 
 			return (IMethodSymbol)getMembers[ 0 ];
+		}
+
+		internal delegate ITypeSymbol ContainedTypeResolver( ITypeSymbol type );
+		internal static ContainedTypeResolver GetContainedTypeResolver( Compilation compilation ) {
+			ImmutableDictionary<INamedTypeSymbol, int> containerTypes = GetContainerTypes( compilation );
+
+			return type => {
+				if( type is not INamedTypeSymbol namedType ) {
+					return type;
+				}
+
+				if( containerTypes.TryGetValue( namedType.OriginalDefinition, out int typeArgumentIndex ) ) {
+					return namedType.TypeArguments[ typeArgumentIndex ];
+				}
+
+				return type;
+			};
 		}
 
 		private static ImmutableDictionary<INamedTypeSymbol, int> GetContainerTypes( Compilation compilation ) {
