@@ -21,4 +21,8 @@
     <IncludeSymbols>True</IncludeSymbols>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Pinning\" />
+  </ItemGroup>
+
 </Project>
