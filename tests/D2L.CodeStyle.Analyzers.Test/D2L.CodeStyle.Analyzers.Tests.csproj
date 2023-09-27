@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <Compile Remove="Specs\*" />
+    <Compile Include="Specs\PinnedAttributeAnalyzer.cs" />
     <EmbeddedResource Include="Specs\*" />
   </ItemGroup>
 
