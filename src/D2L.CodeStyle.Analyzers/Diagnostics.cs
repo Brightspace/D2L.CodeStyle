@@ -757,5 +757,15 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor PinnedTypesMustNotMove = new DiagnosticDescriptor(
+			id: "D2L0102",
+			title: "Pinned types must not move",
+			messageFormat: "Changing the fully qualified assembly name risks breaking operations on Pinned objects",
+			category: "Correctness",
+			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/pinning.md",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }
