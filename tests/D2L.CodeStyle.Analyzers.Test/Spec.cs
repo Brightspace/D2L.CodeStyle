@@ -56,8 +56,14 @@ namespace D2L.CodeStyle.Analyzers {
 			builder.AddAssemblyOf( typeof( Uri ) );                     // System
 			builder.AddAssemblyOf( typeof( Enumerable ) );              // System.Core
 			builder.AddAssemblyOf( typeof( Annotations.Because ) );     // D2L.CodeStyle.Annotations
+			builder.AddAssemblyOf( typeof( ImmutableArray<> ) );
 
-			builder.AddAssembly( "System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" );
+			Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+			foreach( var assembly in assemblies ) {
+				if(!string.IsNullOrEmpty( assembly.Location ) ) {
+					builder.Add( MetadataReference.CreateFromFile( assembly.Location ) );
+				}
+			}
 
 			return builder.ToImmutable();
 		}

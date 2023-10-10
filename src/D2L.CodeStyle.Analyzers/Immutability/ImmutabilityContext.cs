@@ -198,10 +198,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 				case TypeKind.Interface:
 				case TypeKind.Struct:
+					string typeKindName = query.Type.TypeKind == TypeKind.Struct ? "structure" : query.Type.TypeKind.ToString().ToLower();
 					diagnostic = Diagnostic.Create(
 						Diagnostics.NonImmutableTypeHeldByImmutable,
 						getLocation(),
-						query.Type.TypeKind.ToString().ToLower(),
+						typeKindName,
 						query.Type.ToDisplayString(),
 						""
 					);
