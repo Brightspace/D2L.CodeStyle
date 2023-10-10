@@ -9,6 +9,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 using NUnit.Framework;
+using Compilation = Microsoft.CodeAnalysis.Compilation;
 
 namespace D2L.CodeStyle.SpecTests {
 
@@ -300,32 +301,19 @@ namespace D2L.CodeStyle.SpecTests {
 			SourceText source,
 			ImmutableArray<MetadataReference> metadataReferences
 		) {
-			var projectId = ProjectId.CreateNewId( debugName: specName );
 			var filename = specName + ".cs";
-			var documentId = DocumentId.CreateNewId( projectId, debugName: filename );
 
-			var solution = new AdhocWorkspace().CurrentSolution
-				.AddProject( projectId, specName, specName, LanguageNames.CSharp )
-				.AddMetadataReferences( projectId, metadataReferences )
-				.AddDocument( documentId, filename, source );
+			ParseOptions parseOptions = new CSharpParseOptions( languageVersion: LanguageVersion.CSharp10);
+			List<SyntaxTree> trees = new List<SyntaxTree> {
+				SyntaxFactory.ParseSyntaxTree( text: source, path: filename, options: parseOptions  ),
+			};
 
-			var compilationOptions = solution
-				.GetProject( projectId )
-				.CompilationOptions
-				.WithOutputKind( OutputKind.DynamicallyLinkedLibrary );
+			CSharpCompilationOptions compilationOptions = new CSharpCompilationOptions(
+				OutputKind.DynamicallyLinkedLibrary,
+				nullableContextOptions: NullableContextOptions.Enable);
 
-			CSharpParseOptions parseOptions = solution
-				.GetProject( projectId )
-				.ParseOptions as CSharpParseOptions;
-
-			parseOptions = parseOptions
-				.WithLanguageVersion( LanguageVersion.CSharp10 );
-
-			solution = solution
-				.WithProjectCompilationOptions( projectId, compilationOptions )
-				.WithProjectParseOptions( projectId, parseOptions );
-
-			return solution.Projects.First().GetCompilationAsync();
+			CSharpCompilation compilation = CSharpCompilation.Create( specName, trees, metadataReferences, compilationOptions );
+			return Task.FromResult<Compilation>(compilation);
 		}
 
 		private sealed class PrettyDiagnostic {
