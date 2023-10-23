@@ -757,5 +757,14 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor DangerousSerializationTypeReference = new DiagnosticDescriptor(
+			id: "D2L0102",
+			title: "Internal serialization type references are restricted to serialization framework internals",
+			messageFormat: "Internal serialization types shouldn't be used outside of the serialization framework. Use 'ISerialization' or 'IDeserialization' implementations instead.",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }
