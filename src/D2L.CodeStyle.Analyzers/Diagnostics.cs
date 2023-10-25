@@ -767,5 +767,65 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor RecursivePinnedDescendantsMustBeRecursivelyPinned = new DiagnosticDescriptor(
+			id: "D2L0103",
+			title: "Must be recursively pinned",
+			messageFormat: "Descendants of recursively pinned types must be pinned",
+			category: "Correctness",
+			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/pinning.md",
+			defaultSeverity: DiagnosticSeverity.Info,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor MustBePinnedRequiresPinned = new DiagnosticDescriptor(
+			id: "D2L0104",
+			title: "Need to pin arguments",
+			messageFormat: "Arguments to methods that have the MustBePinnedAttribute need to have the MustBePinnedAttribute or the PinnedAttribute",
+			category: "Correctness",
+			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/pinning.md",
+			defaultSeverity: DiagnosticSeverity.Info,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor MustBeDeserializableRequiresRecursivelyPinned = new DiagnosticDescriptor(
+			id: "D2L0105",
+			title: "Need to recursively pin arguments",
+			messageFormat: "Arguments to methods that have the MustBeDeserializableAttribute need to have the MustBeRecursivelyPinnedAttribute or the PinnedAttribute with the recursivelyPinned flag on",
+			category: "Correctness",
+			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/pinning.md",
+			defaultSeverity: DiagnosticSeverity.Info,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor ArgumentShouldBeDeserializable = new DiagnosticDescriptor(
+			id: "D2L0106",
+			title: "Need to recursively pin arguments",
+			messageFormat: "Arguments to methods that have the MustBeDeserializableAttribute need to have the MustBeDeserializableAttribute or the PinnedAttribute with the recursivelyPinned flag on",
+			category: "Correctness",
+			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/pinning.md",
+			defaultSeverity: DiagnosticSeverity.Info,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor ArgumentShouldBeMustBePinned = new DiagnosticDescriptor(
+			id: "D2L0107",
+			title: "Need to pin arguments",
+			messageFormat: "Arguments to methods that have the MustBePinnedAttribute need to have the MustBePinnedAttribute or the PinnedAttribute with the recursivelyPinned flag on",
+			category: "Correctness",
+			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/pinning.md",
+			defaultSeverity: DiagnosticSeverity.Info,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor PinningAttributesShouldBeInTheInterfaceIfInImplementations = new DiagnosticDescriptor(
+			id: "D2L0108",
+			title: "Pinning attributes need to exist on the interface",
+			messageFormat: "Arguments to methods with the MustBePinnedAttribute or MustBeDeserializableAttribute must exist on the interface to be on an implementation",
+			category: "Correctness",
+			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/pinning.md",
+			defaultSeverity: DiagnosticSeverity.Info,
+			isEnabledByDefault: true
+		);
 	}
 }
