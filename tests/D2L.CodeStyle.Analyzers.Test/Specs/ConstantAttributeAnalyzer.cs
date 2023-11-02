@@ -280,5 +280,17 @@ namespace SpecTests {
 
 		#endregion
 
+		#region Method Reference Tests
+
+		void MethodReferenceTests() {
+
+			{ Action<int> action = Types.SomeMethodWithParameter<int>; }
+			{ Action<int> action = /* ReferenceToMethodWithConstantParameterNotSupport */ Types.SomeMethodWithConstantParameter<int> /**/; }
+			{ Action<int, int> action = /* ReferenceToMethodWithConstantParameterNotSupport */ Types.SomeMethodWithOneConstantParameter<int> /**/; }
+			{ Action<int, int> action = /* ReferenceToMethodWithConstantParameterNotSupport */ Types.SomeMethodWithOneOtherConstantParameter<int> /**/; }
+			{ Action<int, int> action = /* ReferenceToMethodWithConstantParameterNotSupport */ Types.SomeMethodWithTwoConstantParameters<int> /**/; }
+		}
+
+		#endregion
 	}
 }
