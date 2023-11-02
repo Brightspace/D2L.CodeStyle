@@ -1,7 +1,6 @@
 #nullable disable
 
 using System.Collections.Immutable;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -14,7 +13,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
 			ImmutableArray.Create(
 				Diagnostics.NonConstantPassedToConstantParameter,
-				Diagnostics.InvalidConstantType
+				Diagnostics.InvalidConstantType,
+				Diagnostics.ReferenceToMethodWithConstantParameterNotSupport
 			);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -60,6 +60,15 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 					constantAttribute
 				),
 				OperationKind.Conversion
+			);
+
+			context.RegisterOperationAction(
+				ctx => AnalyzeMethodReference(
+					ctx,
+					(IMethodReferenceOperation)ctx.Operation,
+					constantAttribute
+				),
+				OperationKind.MethodReference
 			);
 		}
 
@@ -166,6 +175,27 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				location: operand.Syntax.GetLocation(),
 				messageArgs: new[] { parameter.Name }
 			);
+		}
+
+		private static void AnalyzeMethodReference(
+			OperationAnalysisContext context,
+			IMethodReferenceOperation operation,
+			INamedTypeSymbol constantAttribute
+		) {
+
+			foreach( IParameterSymbol parameter in operation.Method.Parameters ) {
+
+				if( !HasAttribute( parameter, constantAttribute ) ) {
+					continue;
+				}
+
+				context.ReportDiagnostic(
+					descriptor: Diagnostics.ReferenceToMethodWithConstantParameterNotSupport,
+					location: operation.Syntax.GetLocation()
+				);
+
+				return;
+			}
 		}
 
 		/// <summary>
