@@ -352,7 +352,7 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
 			description: "Unnecessarily listed in an analyzer allowed list."
-		 );
+		);
 
 		public static readonly DiagnosticDescriptor NamedArgumentsRequired = new DiagnosticDescriptor(
 			id: "D2L0058",
@@ -763,6 +763,16 @@ namespace D2L.CodeStyle.Analyzers {
 			title: "References to methods with parameters marked as [Constant] is not supported",
 			messageFormat: "References to methods with parameters marked as [Constant] is currently not supported",
 			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor PinnedTypesMustNotMove = new DiagnosticDescriptor(
+			id: "D2L0103",
+			title: "Pinned types must not move",
+			messageFormat: "Changing the fully qualified assembly name risks breaking operations on Pinned objects",
+			category: "Correctness",
+			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/pinning.md",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
