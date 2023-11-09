@@ -766,14 +766,5 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
-
-		public static readonly DiagnosticDescriptor TypeNotVisibleToCaller = new DiagnosticDescriptor(
-			id: "D2L0103",
-			title: "Type is not visible to caller",
-			messageFormat: "The type '{0}' has restricted its visibility to an explicit set of callers",
-			category: "Correctness",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true
-		);
 	}
 }

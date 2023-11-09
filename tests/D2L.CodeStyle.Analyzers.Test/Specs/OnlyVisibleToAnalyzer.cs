@@ -9,7 +9,7 @@ using Targets;
 namespace D2L.CodeStyle.Annotations.Contract {
 
 	[AttributeUsage(
-		validOn: AttributeTargets.Interface | AttributeTargets.Method | AttributeTargets.Property,
+		validOn: AttributeTargets.Method | AttributeTargets.Property,
 		AllowMultiple = true,
 		Inherited = false
 	)]
@@ -84,7 +84,7 @@ namespace Targets {
 
 namespace TestCases {
 
-	public static partial class AllowedCaller {
+	public static class AllowedCaller {
 
 		public const string MetadataName = "TestCases.AllowedCaller";
 
@@ -200,34 +200,6 @@ namespace TestCases {
 		public const string MetadataName = "TestCases.AllowedCallerB";
 		public static void Test() {
 			MultipleTargets.Action();
-		}
-	}
-}
-
-// ===============================================================================
-
-namespace Targets {
-	[OnlyVisibleToType( TestCases.AllowedCaller.MetadataName, "OnlyVisibleToAnalyzer" )]
-	public interface ITypeRestrictedInterface { }
-	public interface ITypeUnrestrictedInterface { }
-}
-
-namespace TestCases {
-	public static partial class AllowedCaller {
-		public static void UnrestrictedInterface() {
-			ITypeUnrestrictedInterface @interface = null;
-		}
-		public static void RestrictedInterface() {
-			ITypeRestrictedInterface @interface = null;
-		}
-	}
-
-	public static partial class DisallowedCaller {
-		public static void UnrestrictedInterface() {
-			ITypeUnrestrictedInterface @interface = null;
-		}
-		public static void RestrictedInterface() {
-			/* TypeNotVisibleToCaller(ITypeRestrictedInterface) */ ITypeRestrictedInterface /**/ @interface = null;
 		}
 	}
 }
