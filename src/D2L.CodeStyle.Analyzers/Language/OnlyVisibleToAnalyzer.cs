@@ -1,7 +1,5 @@
 ﻿using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
 
@@ -11,8 +9,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 	public sealed partial class OnlyVisibleToAnalyzer : DiagnosticAnalyzer {
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-			Diagnostics.MemberNotVisibleToCaller,
-			Diagnostics.TypeNotVisibleToCaller
+			Diagnostics.MemberNotVisibleToCaller
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -63,46 +60,6 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				},
 				OperationKind.PropertyReference
 			);
-
-			context.RegisterSyntaxNodeAction(
-				context => {
-					AnalyzeTypeUsage( context, (IdentifierNameSyntax)context.Node, model );
-				},
-				SyntaxKind.IdentifierName
-			);
-		}
-
-		private static void AnalyzeTypeUsage(
-			SyntaxNodeAnalysisContext context,
-			IdentifierNameSyntax syntax,
-			in Model model
-		) {
-			// If there is no caller, we have nothing to check
-			INamedTypeSymbol? caller = context.ContainingSymbol?.ContainingType;
-			if( caller == null ) {
-				return;
-			}
-
-			// If the identifier itself is not for an interface, we have nothing to check
-			if( context.SemanticModel.GetSymbolInfo( syntax ).Symbol is not INamedTypeSymbol symbol
-				|| symbol.TypeKind != TypeKind.Interface ) {
-				return;
-			}
-
-			// Perform the visibility check
-			if( model.IsVisibleTo( caller, symbol ) ) {
-				return;
-			}
-
-			Diagnostic diagnostic = Diagnostic.Create(
-				Diagnostics.TypeNotVisibleToCaller,
-				syntax.GetLocation(),
-				messageArgs: new[] {
-					symbol.Name
-				}
-			);
-
-			context.ReportDiagnostic( diagnostic );
 		}
 
 		private static void AnalyzeMemberUsage(
