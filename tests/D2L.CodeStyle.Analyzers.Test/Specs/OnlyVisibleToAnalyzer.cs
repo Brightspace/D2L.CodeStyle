@@ -9,13 +9,13 @@ using Targets;
 namespace D2L.CodeStyle.Annotations.Contract {
 
 	[AttributeUsage(
-		validOn: AttributeTargets.Method | AttributeTargets.Property,
+		validOn: AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Method | AttributeTargets.Property,
 		AllowMultiple = true,
 		Inherited = false
 	)]
 	public sealed class OnlyVisibleToTypeAttribute : Attribute {
-		public OnlyVisibleToTypeAttribute( Type type ) { }
-		public OnlyVisibleToTypeAttribute( string fullyQualifiedTypeName, string assemblyName ) { }
+		public OnlyVisibleToTypeAttribute( Type type, bool inherited = true ) { }
+		public OnlyVisibleToTypeAttribute( string fullyQualifiedTypeName, string assemblyName, bool inherited = true ) { }
 	}
 }
 
@@ -252,7 +252,7 @@ namespace TestCases {
 	public class RestrictedMembersOnSelf : IRestrictedInterface {
 
 		[OnlyVisibleToType( typeof( string ) )]
-		public void RestrictedMethod() {}
+		public void RestrictedMethod() { }
 
 		public void Caller() {
 
@@ -358,6 +358,367 @@ namespace TestCases {
 		public static void Test() {
 			/* MemberNotVisibleToCaller(VisibleByTypeOf) */ GenericTargetTypes<int>.VisibleByTypeOf() /**/;
 			/* MemberNotVisibleToCaller(VisibleByQualifiedTypeName) */ GenericTargetTypes<int>.VisibleByQualifiedTypeName() /**/;
+		}
+	}
+}
+
+// ===============================================================================
+
+namespace Targets {
+	public static class InterfaceWithInheritance {
+		[OnlyVisibleToType( typeof( RestrictedClass ) )]
+		[OnlyVisibleToType( typeof( InterfaceWithInheritance ) )]
+		[OnlyVisibleToType( typeof( TestCases.AllowedInterfaceWithInheritanceCaller ) )]
+		public interface IBaseInterface {
+			string SomeProperty;
+			void SomeMethod( string someValue );
+		}
+
+		public class RestrictedClass : IBaseInterface {
+			public RestrictedClass() { }
+			string SomeProperty => "SomeProperty";
+			void SomeMethod( string someValue ) { }
+		}
+
+		public static void GenericArgumentMethod<T>() { }
+
+		public static IBaseInterface GetInterfaceObject() {
+			return new RestrictedClass();
+		}
+
+		public static RestrictedClass GetClassObject() {
+			return new RestrictedClass();
+		}
+	}
+}
+
+namespace TestCases {
+	public static class AllowedInterfaceWithInheritanceCaller {
+		public static void DirectUsage() {
+			InterfaceWithInheritance.IBaseInterface interfaceObject = new InterfaceWithInheritance.RestrictedClass();
+			InterfaceWithInheritance.RestrictedClass classObject = new InterfaceWithInheritance.RestrictedClass();
+
+			var implicitInterfaceObject = InterfaceWithInheritance.GetInterfaceObject();
+			var implicitClassObject = InterfaceWithInheritance.GetClassObject();
+
+			InterfaceWithInheritance.GenericArgumentMethod<InterfaceWithInheritance.IBaseInterface>();
+			InterfaceWithInheritance.GenericArgumentMethod<InterfaceWithInheritance.RestrictedClass>();
+		}
+
+		public static void InterfaceParameter( InterfaceWithInheritance.IBaseInterface p ) {
+			p.SomeMethod( p.SomeProperty );
+		}
+		public static void ClassParameter( InterfaceWithInheritance.RestrictedClass p ) {
+			p.SomeMethod( p.SomeProperty );
+		}
+
+		public static void GenericInterface<T>() where T : InterfaceWithInheritance.IBaseInterface, new() {
+			T genericObject = new T();
+			genericObject.SomeMethod( p.SomeProperty );
+		}
+		public static void GenericClass<T>() where T : InterfaceWithInheritance.RestrictedClass, new() {
+			T genericObject = new T();
+			genericObject.SomeMethod( p.SomeProperty );
+		}
+	}
+
+	public static class DisallowedInterfaceWithInheritanceCaller {
+		public static void DirectUsage() {
+			/* TypeNotVisibleToCaller(IBaseInterface) */ InterfaceWithInheritance.IBaseInterface /**/ interfaceObject = new /* TypeNotVisibleToCaller(RestrictedClass) */ InterfaceWithInheritance.RestrictedClass /**/();
+			/* TypeNotVisibleToCaller(RestrictedClass) */ InterfaceWithInheritance.RestrictedClass /**/ classObject = new /* TypeNotVisibleToCaller(RestrictedClass) */ InterfaceWithInheritance.RestrictedClass /**/();
+
+			/* TypeNotVisibleToCaller(IBaseInterface) */ var /**/ implicitInterfaceObject = InterfaceWithInheritance.GetInterfaceObject();
+			/* TypeNotVisibleToCaller(RestrictedClass) */ var /**/ implicitClassObject = InterfaceWithInheritance.GetClassObject();
+
+			InterfaceWithInheritance.GenericArgumentMethod</* TypeNotVisibleToCaller(IBaseInterface) */ InterfaceWithInheritance.IBaseInterface /**/>();
+			InterfaceWithInheritance.GenericArgumentMethod</* TypeNotVisibleToCaller(RestrictedClass) */ InterfaceWithInheritance.RestrictedClass /**/>();
+		}
+
+		public static void InterfaceParameter( /* TypeNotVisibleToCaller(IBaseInterface) */ InterfaceWithInheritance.IBaseInterface /**/ p ) {
+			p.SomeMethod( p.SomeProperty );
+		}
+		public static void ClassParameter( /* TypeNotVisibleToCaller(RestrictedClass) */ InterfaceWithInheritance.RestrictedClass /**/ p ) {
+			p.SomeMethod( p.SomeProperty );
+		}
+
+		public static void GenericInterface<T>() where T : /* TypeNotVisibleToCaller(IBaseInterface) */ InterfaceWithInheritance.IBaseInterface /**/, new() {
+			T genericObject = new T();
+			genericObject.SomeMethod( p.SomeProperty );
+		}
+		public static void GenericClass<T>() where T : /* TypeNotVisibleToCaller(RestrictedClass) */ InterfaceWithInheritance.RestrictedClass /**/, new() {
+			T genericObject = new T();
+			genericObject.SomeMethod( p.SomeProperty );
+		}
+	}
+}
+
+// ===============================================================================
+
+namespace Targets {
+	public static class InterfaceWithoutInheritance {
+		[OnlyVisibleToType( typeof( RestrictedClass ) )]
+		[OnlyVisibleToType( typeof( InterfaceWithoutInheritance ) )]
+		[OnlyVisibleToType( typeof( TestCases.AllowedInterfaceWithoutInheritanceCaller ) )]
+		public interface IBaseInterface {
+			string SomeProperty;
+			void SomeMethod( string someValue );
+		}
+
+		public class RestrictedClass : IBaseInterface {
+			public RestrictedClass() { }
+			string SomeProperty => "SomeProperty";
+			void SomeMethod( string someValue ) { }
+		}
+
+		public static void GenericArgumentMethod<T>() { }
+
+		public static IBaseInterface GetInterfaceObject() {
+			return new RestrictedClass();
+		}
+
+		public static RestrictedClass GetClassObject() {
+			return new RestrictedClass();
+		}
+	}
+}
+
+namespace TestCases {
+	public static class AllowedInterfaceWithoutInheritanceCaller {
+		public static void DirectUsage() {
+			InterfaceWithoutInheritance.IBaseInterface interfaceObject = new InterfaceWithoutInheritance.RestrictedClass();
+			InterfaceWithoutInheritance.RestrictedClass classObject = new InterfaceWithoutInheritance.RestrictedClass();
+
+			var implicitInterfaceObject = InterfaceWithoutInheritance.GetInterfaceObject();
+			var implicitClassObject = InterfaceWithoutInheritance.GetClassObject();
+
+			InterfaceWithoutInheritance.GenericArgumentMethod<InterfaceWithoutInheritance.IBaseInterface>();
+			InterfaceWithoutInheritance.GenericArgumentMethod<InterfaceWithoutInheritance.RestrictedClass>();
+		}
+
+		public static void InterfaceParameter( InterfaceWithoutInheritance.IBaseInterface p ) {
+			p.SomeMethod( p.SomeProperty );
+		}
+		public static void ClassParameter( InterfaceWithoutInheritance.RestrictedClass p ) {
+			p.SomeMethod( p.SomeProperty );
+		}
+
+		public static void GenericInterface<T>() where T : InterfaceWithoutInheritance.IBaseInterface, new() {
+			T genericObject = new T();
+			genericObject.SomeMethod( p.SomeProperty );
+		}
+		public static void GenericClass<T>() where T : InterfaceWithoutInheritance.RestrictedClass, new() {
+			T genericObject = new T();
+			genericObject.SomeMethod( p.SomeProperty );
+		}
+	}
+
+	public static class DisallowedInterfaceWithoutInheritanceCaller {
+		public static void DirectUsage() {
+			/* TypeNotVisibleToCaller(IBaseInterface) */ InterfaceWithoutInheritance.IBaseInterface /**/ interfaceObject = new /* TypeNotVisibleToCaller(RestrictedClass) */ InterfaceWithoutInheritance.RestrictedClass /**/();
+			/* TypeNotVisibleToCaller(RestrictedClass) */ InterfaceWithoutInheritance.RestrictedClass /**/ classObject = new /* TypeNotVisibleToCaller(RestrictedClass) */ InterfaceWithoutInheritance.RestrictedClass /**/();
+
+			/* TypeNotVisibleToCaller(IBaseInterface) */ var /**/ implicitInterfaceObject = InterfaceWithoutInheritance.GetInterfaceObject();
+			/* TypeNotVisibleToCaller(RestrictedClass) */ var /**/ implicitClassObject = InterfaceWithoutInheritance.GetClassObject();
+
+			InterfaceWithoutInheritance.GenericArgumentMethod</* TypeNotVisibleToCaller(IBaseInterface) */ InterfaceWithoutInheritance.IBaseInterface /**/>();
+			InterfaceWithoutInheritance.GenericArgumentMethod</* TypeNotVisibleToCaller(RestrictedClass) */ InterfaceWithoutInheritance.RestrictedClass /**/>();
+		}
+
+		public static void InterfaceParameter( /* TypeNotVisibleToCaller(IBaseInterface) */ InterfaceWithoutInheritance.IBaseInterface /**/ p ) {
+			p.SomeMethod( p.SomeProperty );
+		}
+		public static void ClassParameter( /* TypeNotVisibleToCaller(RestrictedClass) */ InterfaceWithoutInheritance.RestrictedClass /**/ p ) {
+			p.SomeMethod( p.SomeProperty );
+		}
+
+		public static void GenericInterface<T>() where T : /* TypeNotVisibleToCaller(IBaseInterface) */ InterfaceWithoutInheritance.IBaseInterface /**/, new() {
+			T genericObject = new T();
+			genericObject.SomeMethod( p.SomeProperty );
+		}
+		public static void GenericClass<T>() where T : /* TypeNotVisibleToCaller(RestrictedClass) */ InterfaceWithoutInheritance.RestrictedClass /**/, new() {
+			T genericObject = new T();
+			genericObject.SomeMethod( p.SomeProperty );
+		}
+	}
+}
+
+
+// ===============================================================================
+
+namespace Targets {
+	public static class ClassWithInheritance {
+		[OnlyVisibleToType( typeof( RestrictedClass ) )]
+		[OnlyVisibleToType( typeof( ClassWithInheritance ) )]
+		[OnlyVisibleToType( typeof( TestCases.AllowedClassWithInheritanceCaller ) )]
+		public abstract class BaseClass {
+			string SomeProperty;
+			void SomeMethod( string someValue );
+		}
+
+		public class RestrictedClass : BaseClass {
+			public RestrictedClass() { }
+			string SomeProperty => "SomeProperty";
+			void SomeMethod( string someValue ) { }
+		}
+
+		public static void GenericArgumentMethod<T>() { }
+
+		public static BaseClass GetBaseObject() {
+			return new RestrictedClass();
+		}
+
+		public static RestrictedClass GetClassObject() {
+			return new RestrictedClass();
+		}
+	}
+}
+
+namespace TestCases {
+	public static class AllowedClassWithInheritanceCaller {
+		public static void DirectUsage() {
+			ClassWithInheritance.BaseClass interfaceObject = new ClassWithInheritance.RestrictedClass();
+			ClassWithInheritance.RestrictedClass classObject = new ClassWithInheritance.RestrictedClass();
+
+			var implicitBaseObject = ClassWithInheritance.GetBaseObject();
+			var implicitClassObject = ClassWithInheritance.GetClassObject();
+
+			ClassWithInheritance.GenericArgumentMethod<ClassWithInheritance.BaseClass>();
+			ClassWithInheritance.GenericArgumentMethod<ClassWithInheritance.RestrictedClass>();
+		}
+
+		public static void BaseParameter( ClassWithInheritance.BaseClass p ) {
+			p.SomeMethod( p.SomeProperty );
+		}
+		public static void ClassParameter( ClassWithInheritance.RestrictedClass p ) {
+			p.SomeMethod( p.SomeProperty );
+		}
+
+		public static void GenericBase<T>() where T : ClassWithInheritance.BaseClass, new() {
+			T genericObject = new T();
+			genericObject.SomeMethod( p.SomeProperty );
+		}
+		public static void GenericClass<T>() where T : ClassWithInheritance.RestrictedClass, new() {
+			T genericObject = new T();
+			genericObject.SomeMethod( p.SomeProperty );
+		}
+	}
+
+	public static class DisallowedClassWithInheritanceCaller {
+		public static void DirectUsage() {
+			/* TypeNotVisibleToCaller(BaseClass) */ ClassWithInheritance.BaseClass /**/ interfaceObject = new /* TypeNotVisibleToCaller(RestrictedClass) */ ClassWithInheritance.RestrictedClass /**/();
+			/* TypeNotVisibleToCaller(RestrictedClass) */ ClassWithInheritance.RestrictedClass /**/ classObject = new /* TypeNotVisibleToCaller(RestrictedClass) */ ClassWithInheritance.RestrictedClass /**/();
+
+			/* TypeNotVisibleToCaller(BaseClass) */ var /**/ implicitBaseObject = ClassWithInheritance.GetBaseObject();
+			/* TypeNotVisibleToCaller(RestrictedClass) */ var /**/ implicitClassObject = ClassWithInheritance.GetClassObject();
+
+			ClassWithInheritance.GenericArgumentMethod</* TypeNotVisibleToCaller(BaseClass) */ ClassWithInheritance.BaseClass /**/>();
+			ClassWithInheritance.GenericArgumentMethod</* TypeNotVisibleToCaller(RestrictedClass) */ ClassWithInheritance.RestrictedClass /**/>();
+		}
+
+		public static void BaseParameter( /* TypeNotVisibleToCaller(BaseClass) */ ClassWithInheritance.BaseClass /**/ p ) {
+			p.SomeMethod( p.SomeProperty );
+		}
+		public static void ClassParameter( /* TypeNotVisibleToCaller(RestrictedClass) */ ClassWithInheritance.RestrictedClass /**/ p ) {
+			p.SomeMethod( p.SomeProperty );
+		}
+
+		public static void GenericBase<T>() where T : /* TypeNotVisibleToCaller(BaseClass) */ ClassWithInheritance.BaseClass /**/, new() {
+			T genericObject = new T();
+			genericObject.SomeMethod( p.SomeProperty );
+		}
+		public static void GenericClass<T>() where T : /* TypeNotVisibleToCaller(RestrictedClass) */ ClassWithInheritance.RestrictedClass /**/, new() {
+			T genericObject = new T();
+			genericObject.SomeMethod( p.SomeProperty );
+		}
+	}
+}
+
+// ===============================================================================
+
+namespace Targets {
+	public static class ClassWithoutInheritance {
+		[OnlyVisibleToType( typeof( RestrictedClass ) )]
+		[OnlyVisibleToType( typeof( ClassWithoutInheritance ) )]
+		[OnlyVisibleToType( typeof( TestCases.AllowedClassWithoutInheritanceCaller ) )]
+		public interface BaseClass {
+			string SomeProperty;
+			void SomeMethod( string someValue );
+		}
+
+		public class RestrictedClass : BaseClass {
+			public RestrictedClass() { }
+			string SomeProperty => "SomeProperty";
+			void SomeMethod( string someValue ) { }
+		}
+
+		public static void GenericArgumentMethod<T>() { }
+
+		public static BaseClass GetBaseObject() {
+			return new RestrictedClass();
+		}
+
+		public static RestrictedClass GetClassObject() {
+			return new RestrictedClass();
+		}
+	}
+}
+
+namespace TestCases {
+	public static class AllowedClassWithoutInheritanceCaller {
+		public static void DirectUsage() {
+			ClassWithoutInheritance.BaseClass interfaceObject = new ClassWithoutInheritance.RestrictedClass();
+			ClassWithoutInheritance.RestrictedClass classObject = new ClassWithoutInheritance.RestrictedClass();
+
+			var implicitBaseObject = ClassWithoutInheritance.GetBaseObject();
+			var implicitClassObject = ClassWithoutInheritance.GetClassObject();
+
+			ClassWithoutInheritance.GenericArgumentMethod<ClassWithoutInheritance.BaseClass>();
+			ClassWithoutInheritance.GenericArgumentMethod<ClassWithoutInheritance.RestrictedClass>();
+		}
+
+		public static void BaseParameter( ClassWithoutInheritance.BaseClass p ) {
+			p.SomeMethod( p.SomeProperty );
+		}
+		public static void ClassParameter( ClassWithoutInheritance.RestrictedClass p ) {
+			p.SomeMethod( p.SomeProperty );
+		}
+
+		public static void GenericBase<T>() where T : ClassWithoutInheritance.BaseClass, new() {
+			T genericObject = new T();
+			genericObject.SomeMethod( p.SomeProperty );
+		}
+		public static void GenericClass<T>() where T : ClassWithoutInheritance.RestrictedClass, new() {
+			T genericObject = new T();
+			genericObject.SomeMethod( p.SomeProperty );
+		}
+	}
+
+	public static class DisallowedClassWithoutInheritanceCaller {
+		public static void DirectUsage() {
+			/* TypeNotVisibleToCaller(BaseClass) */ ClassWithoutInheritance.BaseClass /**/ interfaceObject = new /* TypeNotVisibleToCaller(RestrictedClass) */ ClassWithoutInheritance.RestrictedClass /**/();
+			/* TypeNotVisibleToCaller(RestrictedClass) */ ClassWithoutInheritance.RestrictedClass /**/ classObject = new /* TypeNotVisibleToCaller(RestrictedClass) */ ClassWithoutInheritance.RestrictedClass /**/();
+
+			/* TypeNotVisibleToCaller(BaseClass) */ var /**/ implicitBaseObject = ClassWithoutInheritance.GetBaseObject();
+			/* TypeNotVisibleToCaller(RestrictedClass) */ var /**/ implicitClassObject = ClassWithoutInheritance.GetClassObject();
+
+			ClassWithoutInheritance.GenericArgumentMethod</* TypeNotVisibleToCaller(BaseClass) */ ClassWithoutInheritance.BaseClass /**/>();
+			ClassWithoutInheritance.GenericArgumentMethod</* TypeNotVisibleToCaller(RestrictedClass) */ ClassWithoutInheritance.RestrictedClass /**/>();
+		}
+
+		public static void BaseParameter( /* TypeNotVisibleToCaller(BaseClass) */ ClassWithoutInheritance.BaseClass /**/ p ) {
+			p.SomeMethod( p.SomeProperty );
+		}
+		public static void ClassParameter( /* TypeNotVisibleToCaller(RestrictedClass) */ ClassWithoutInheritance.RestrictedClass /**/ p ) {
+			p.SomeMethod( p.SomeProperty );
+		}
+
+		public static void GenericBase<T>() where T : /* TypeNotVisibleToCaller(BaseClass) */ ClassWithoutInheritance.BaseClass /**/, new() {
+			T genericObject = new T();
+			genericObject.SomeMethod( p.SomeProperty );
+		}
+		public static void GenericClass<T>() where T : /* TypeNotVisibleToCaller(RestrictedClass) */ ClassWithoutInheritance.RestrictedClass /**/, new() {
+			T genericObject = new T();
+			genericObject.SomeMethod( p.SomeProperty );
 		}
 	}
 }

@@ -1,5 +1,7 @@
 ﻿using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
 
@@ -9,7 +11,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 	public sealed partial class OnlyVisibleToAnalyzer : DiagnosticAnalyzer {
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-			Diagnostics.MemberNotVisibleToCaller
+			Diagnostics.MemberNotVisibleToCaller,
+			Diagnostics.TypeNotVisibleToCaller
 		);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -60,6 +63,11 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				},
 				OperationKind.PropertyReference
 			);
+
+			context.RegisterSyntaxNodeAction(
+				context => AnalyzeTypeUsage( context, (IdentifierNameSyntax)context.Node, model ),
+				SyntaxKind.IdentifierName
+			);
 		}
 
 		private static void AnalyzeMemberUsage(
@@ -67,7 +75,6 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			ISymbol member,
 			in Model model
 		) {
-
 			INamedTypeSymbol caller = context.ContainingSymbol.ContainingType;
 			if( model.IsVisibleTo( caller, member ) ) {
 				return;
@@ -78,6 +85,47 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				context.Operation.Syntax.GetLocation(),
 				messageArgs: new[] {
 					member.Name
+				}
+			);
+
+			context.ReportDiagnostic( diagnostic );
+		}
+
+		private static void AnalyzeTypeUsage(
+			SyntaxNodeAnalysisContext context,
+			IdentifierNameSyntax node,
+			in Model model
+		) {
+			INamedTypeSymbol? caller = context.ContainingSymbol?.ContainingType;
+			if( caller == null ) {
+				return;
+			}
+
+			ISymbol? originalDefinition = context
+				.SemanticModel
+				.GetSymbolInfo( node )
+				.Symbol?
+				.OriginalDefinition;
+			if( originalDefinition is not INamedTypeSymbol symbol ) {
+				return;
+			}
+
+			if( symbol.TypeKind != TypeKind.Interface
+				&& symbol.TypeKind != TypeKind.Class ) {
+				return;
+			}
+
+			if( model.IsVisibleTo( caller, symbol ) ) {
+				return;
+			}
+
+			Diagnostic diagnostic = Diagnostic.Create(
+				descriptor: Diagnostics.TypeNotVisibleToCaller,
+				location: node.Parent is QualifiedNameSyntax qns
+					? qns.GetLocation()
+					: node.GetLocation(),
+				messageArgs: new[] {
+					symbol.Name
 				}
 			);
 
