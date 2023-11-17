@@ -1,36 +1,34 @@
-#nullable disable
+#nullable enable
 
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
-using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace D2L.CodeStyle.Analyzers.Language {
 
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class RequireNamedArgumentsAnalyzer : DiagnosticAnalyzer {
 
+		private const string LambdaExpressionMetadataName = "System.Linq.Expressions.LambdaExpression";
 		private const string RequireNamedArgumentsAttribute = "D2L.CodeStyle.Annotations.Contract.RequireNamedArgumentsAttribute";
 
 		public sealed class ArgParamBinding {
 			public ArgParamBinding(
 				int position,
 				string paramName,
-				ArgumentSyntax syntax
+				IArgumentOperation operation
 			) {
 				Position = position;
 				ParamName = paramName;
-				Syntax = syntax;
+				Operation = operation;
 			}
 
 			public int Position { get; }
 			public string ParamName { get; }
-			public ArgumentSyntax Syntax { get; }
+			public IArgumentOperation Operation { get; }
 		}
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
@@ -45,57 +43,66 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			context.EnableConcurrentExecution();
 			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.None );
 
-			context.RegisterSyntaxNodeAction(
-				AnalyzeCallSyntax,
-				SyntaxKind.InvocationExpression
-			);
-
-			context.RegisterSyntaxNodeAction(
-				AnalyzeCallSyntax,
-				SyntaxKind.ObjectCreationExpression
-			);
-
-			context.RegisterSyntaxNodeAction(
-				AnalyzeCallSyntax,
-				SyntaxKind.ThisConstructorInitializer
-			);
-
-			context.RegisterSyntaxNodeAction(
-				AnalyzeCallSyntax,
-				SyntaxKind.BaseConstructorInitializer
-			);
+			context.RegisterCompilationStartAction( OnCompilationStart );
 		}
 
-		private static void AnalyzeCallSyntax(
-			SyntaxNodeAnalysisContext ctx
-		) {
-
-			ArgumentListSyntax args = GetArgs( ctx.Node );
-			if( args == null ) {
+		private static void OnCompilationStart( CompilationStartAnalysisContext context ) {
+			INamedTypeSymbol? requiredNamedArguments = context.Compilation.GetTypeByMetadataName( RequireNamedArgumentsAttribute );
+			if( requiredNamedArguments is null ) {
 				return;
 			}
 
+			INamedTypeSymbol? lambdaExpresssion = context.Compilation.GetTypeByMetadataName( LambdaExpressionMetadataName );
+
+			context.RegisterOperationAction(
+				ctx => AnalyzeInvocation(
+					ctx,
+					requiredNamedArguments,
+					lambdaExpresssion
+				),
+				OperationKind.Invocation,
+				OperationKind.ObjectCreation
+			);
+		}
+
+		private static void AnalyzeInvocation(
+			OperationAnalysisContext ctx,
+			INamedTypeSymbol requireNamedArgumentsSymbol,
+			INamedTypeSymbol? lambdaExpresssionSymbol
+		) {
+			(IMethodSymbol targetMethod, ImmutableArray<IArgumentOperation> args) = ctx.Operation switch {
+				IInvocationOperation op => (op.TargetMethod, op.Arguments),
+				IObjectCreationOperation op => (op.Constructor!, op.Arguments),
+				_ => default
+			};
+
+			if( targetMethod == default || args == default ) {
+				return;
+			}
+
+			if( args.IsEmpty ) {
+				return;
+			}
+
+			bool requireNamedArguments = HasRequireNamedArgumentsAttribute( requireNamedArgumentsSymbol, targetMethod );
+
 			// Don't complain about single argument functions because they're
 			// very likely to be understandable
-			if( args.Arguments.Count <= 1 ) {
+			if( !requireNamedArguments && args.Length == 1 ) {
+				return;
+			}
+
+			ImmutableArray<ArgParamBinding> unnamedArgs = GetUnnamedArgs( args ).ToImmutableArray();
+			if( unnamedArgs.IsEmpty ) {
 				return;
 			}
 
 			// Don't complain about expression trees, since they aren't allowed
 			// to have named arguments
-			if( IsExpressionTree( ctx.Node, ctx.SemanticModel ) ) {
+			if( IsExpressionTree( lambdaExpresssionSymbol, ctx.Operation.SemanticModel!, ctx.Operation ) ) {
 				return;
 			}
 
-			ImmutableArray<ArgParamBinding> unnamedArgs =
-				GetUnnamedArgs( ctx.SemanticModel, args, ctx.CancellationToken )
-				.ToImmutableArray();
-
-			if( unnamedArgs.IsEmpty ) {
-				return;
-			}
-
-			bool requireNamedArguments = HasRequireNamedArgumentsAttribute( ctx.SemanticModel, args, ctx.CancellationToken );
 			if( requireNamedArguments ) {
 
 				var fixerContext = CreateFixerContext( unnamedArgs );
@@ -103,7 +110,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				ctx.ReportDiagnostic(
 					Diagnostic.Create(
 						descriptor: Diagnostics.NamedArgumentsRequired,
-						location: ctx.Node.GetLocation(),
+						location: ctx.Operation.Syntax.GetLocation(),
 						properties: fixerContext
 					)
 				);
@@ -118,7 +125,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				ctx.ReportDiagnostic(
 					Diagnostic.Create(
 						descriptor: Diagnostics.TooManyUnnamedArgs,
-						location: ctx.Node.GetLocation(),
+						location: ctx.Operation.Syntax.GetLocation(),
 						properties: fixerContext,
 						messageArgs: TooManyUnnamedArgs
 					)
@@ -131,13 +138,18 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			foreach( var arg in unnamedArgs ) {
 
 				// Check if the argument type is literal
-				if( arg.Syntax.Expression is LiteralExpressionSyntax ) {
+				IOperation valueOperation = arg.Operation.Value;
+				if( valueOperation is IConversionOperation conversionOperation ) {
+					valueOperation = conversionOperation.Operand;
+				}
+
+				if( valueOperation is ILiteralOperation ) {
 
 					var fixerContext = CreateFixerContext( ImmutableArray.Create( arg ) );
 
 					ctx.ReportDiagnostic( Diagnostic.Create(
 							descriptor: Diagnostics.LiteralArgShouldBeNamed,
-							location: arg.Syntax.Expression.GetLocation(),
+							location: arg.Operation.Value.Syntax.GetLocation(),
 							properties: fixerContext,
 							messageArgs: arg.ParamName
 						)
@@ -150,11 +162,11 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			// all the args instead to avoid craziness with overloading.
 		}
 
-		private static ImmutableDictionary<string, string> CreateFixerContext( ImmutableArray<ArgParamBinding> unnamedArgs ) {
+		private static ImmutableDictionary<string, string?> CreateFixerContext( ImmutableArray<ArgParamBinding> unnamedArgs ) {
 
 			// Pass the names and positions for each unnamed arg to the codefix.
-			ImmutableDictionary<string, string> context = unnamedArgs
-				.ToImmutableDictionary(
+			ImmutableDictionary<string, string?> context = unnamedArgs
+				.ToImmutableDictionary<ArgParamBinding, string, string?>(
 					keySelector: binding => binding.Position.ToString(),
 					elementSelector: binding => binding.ParamName
 				);
@@ -162,22 +174,23 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			return context;
 		}
 
-		private static bool IsExpressionTree( SyntaxNode node, SemanticModel model ) {
-			// Expression trees aren't compatible with named arguments,
-			// so skip any expressions
-			// Only lambda type expressions have arguments,
-			// so this only applies to LambdaExpression
-			var expressionType = model.Compilation.
-				GetTypeByMetadataName( "System.Linq.Expressions.LambdaExpression" );
-
+		private static bool IsExpressionTree(
+			INamedTypeSymbol? expressionType,
+			SemanticModel model,
+			IOperation operation
+		) {
 			if( expressionType == null || expressionType.Kind == SymbolKind.ErrorType ) {
 				return false;
 			}
 
 			// the current call could be nested inside an expression tree, so
 			// check every call we are nested inside
-			foreach( var syntax in node.AncestorsAndSelf() ) {
+			foreach( var syntax in operation.Syntax.AncestorsAndSelf() ) {
 				if( !( syntax is InvocationExpressionSyntax || syntax is ObjectCreationExpressionSyntax ) ) {
+					continue;
+				}
+
+				if( syntax.Parent is null ) {
 					continue;
 				}
 
@@ -198,36 +211,19 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		/// Get the arguments which are unnamed and not "params"
 		/// </summary>
 		private static IEnumerable<ArgParamBinding> GetUnnamedArgs(
-				SemanticModel model,
-				ArgumentListSyntax args,
-				CancellationToken cancellationToken
+				ImmutableArray<IArgumentOperation> args
 			) {
 
-			for( int idx = 0; idx < args.Arguments.Count; idx++ ) {
-				ArgumentSyntax arg = args.Arguments[ idx ];
+			for( int idx = 0; idx < args.Length; idx++ ) {
+				IArgumentOperation arg = args[ idx ];
 
-				// Ignore args that already have names
-				if( arg.NameColon != null ) {
+				if( arg.ArgumentKind != ArgumentKind.Explicit ) {
 					continue;
 				}
 
-				IParameterSymbol param = arg.DetermineParameter(
-					model,
+				IParameterSymbol? param = arg.Parameter;
 
-					// Don't map params arguments. It's okay that they are
-					// unnamed. Some things like ImmutableArray.Create() could
-					// take a large number of args and we don't want anything to
-					// be named. Named params really suck so we may still
-					// encourage it but APIs that take params and many other
-					// args would suck anyway.
-					allowParams: false,
-
-					cancellationToken
-				);
-
-				// Not sure if this can happen but it'd be hard to name this
-				// param so ignore it.
-				if( param == null ) {
+				if( param is null ) {
 					continue;
 				}
 
@@ -237,18 +233,16 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					continue;
 				}
 
-				// C# allows us to create variables with the same names as reserved keywords,
-				// as long as we prefix with @ (e.g. @int is a valid identifier)
-				// So any parameters which are reserved must have the @ prefix
-				string paramName;
-				SyntaxKind paramNameKind = SyntaxFacts.GetKeywordKind( param.Name );
-				if( SyntaxFacts.GetReservedKeywordKinds().Any( reservedKind => reservedKind == paramNameKind ) ) {
-					paramName = "@" + param.Name;
-				} else {
-					paramName = param.Name;
+				if( arg.Syntax is not ArgumentSyntax syntax ) {
+					continue;
 				}
 
-				string psuedoName = GetPsuedoName( arg );
+				// Ignore args that already have names
+				if( syntax.NameColon != null ) {
+					continue;
+				}
+
+				string? psuedoName = GetPsuedoName( arg );
 				if( psuedoName != null ) {
 
 					bool matchesParamName = string.Equals(
@@ -262,17 +256,34 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					}
 				}
 
+				// C# allows us to create variables with the same names as reserved keywords,
+				// as long as we prefix with @ (e.g. @int is a valid identifier)
+				// So any parameters which are reserved must have the @ prefix
+				string paramName = param.Name;
+				if( SyntaxFacts.GetKeywordKind( paramName ) != SyntaxKind.None
+					|| SyntaxFacts.GetContextualKeywordKind( paramName ) != SyntaxKind.None
+				) {
+					paramName = $"@{paramName}";
+				}
+
 				yield return new ArgParamBinding(
 					position: idx,
 					paramName: paramName, // Use the verbatim parameter name if applicable
-					syntax: arg
+					operation: arg
 				);
 			}
 		}
 
-		private static string GetPsuedoName( ArgumentSyntax arg ) {
+		private static string? GetPsuedoName( IArgumentOperation arg ) {
+			IOperation valueOperation = GetNamableValueOperation( arg.Value );
+			string? ident = valueOperation switch {
+				IFieldReferenceOperation op => op.Field.Name,
+				ILocalReferenceOperation op => op.Local.Name,
+				IParameterReferenceOperation op => op.Parameter.Name,
+				IPropertyReferenceOperation op => op.Property.Name,
+				_ => null
+			};
 
-			string ident = arg.Expression.TryGetInferredMemberName();
 			if( ident == null ) {
 				return null;
 			}
@@ -287,41 +298,22 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			}
 
 			return ident;
-		}
 
-		// Not an extension method because there may be more cases (e.g. in the
-		// future) and if more than this fix + its analyzer used this logic
-		// there could be undesirable coupling if we handled more cases.
-		internal static ArgumentListSyntax GetArgs( SyntaxNode syntax ) {
-			switch( syntax ) {
-				case InvocationExpressionSyntax invocation:
-					return invocation.ArgumentList;
-				case ObjectCreationExpressionSyntax objectCreation:
-					return objectCreation.ArgumentList;
-				case ConstructorInitializerSyntax constructorInitializer:
-					return constructorInitializer.ArgumentList;
-				default:
-					if( syntax.Parent is ArgumentSyntax ) {
-						return (ArgumentListSyntax)syntax.Parent.Parent;
-					}
-					return null;
-			}
+			static IOperation GetNamableValueOperation( IOperation op ) => op switch {
+				IConversionOperation conv => GetNamableValueOperation( conv.Operand ),
+				IDeclarationExpressionOperation decl => decl.Expression,
+				_ => op,
+			};
 		}
 
 		private static bool HasRequireNamedArgumentsAttribute(
-				SemanticModel model,
-				ArgumentListSyntax args,
-				CancellationToken cancellationToken
+				INamedTypeSymbol requireNamedArgumentsSymbol,
+				IMethodSymbol method
 			) {
 
-			ISymbol symbol = model.GetSymbolInfo( args.Parent , cancellationToken ).Symbol;
-			if( symbol == null ) {
-				return false;
-			}
-
-			bool hasAttribute = symbol
+			bool hasAttribute = method
 				.GetAttributes()
-				.Any( x => x.AttributeClass.GetFullTypeName() == RequireNamedArgumentsAttribute );
+				.Any( x => SymbolEqualityComparer.Default.Equals( x.AttributeClass, requireNamedArgumentsSymbol ) );
 
 			return hasAttribute;
 		}

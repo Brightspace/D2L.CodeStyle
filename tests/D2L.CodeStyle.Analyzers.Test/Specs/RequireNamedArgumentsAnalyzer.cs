@@ -23,6 +23,9 @@ namespace D2L {
 
 		// These will shrink as we shrink the max *blush*
 		public static void _arg5( int a1, int a2, int a3, int a4, int a5 ) { }
+		public static void _arg5_nullable( int? a1, int? a2, int? a3, int? a4, int? a5 ) { }
+		public static void _arg5_long( long a1, long a2, long a3, long a4, long a5 ) { }
+		public static void _arg5_long_nullable( long? a1, long? a2, long? a3, long? a4, long? a5 ) { }
 		public static void _arg6( int a1, int a2, int a3, int a4, int a5, int a6 ) { }
 
         public static int _arg1_ret(int a1) { return 0; }
@@ -34,7 +37,13 @@ namespace D2L {
         public static void funcWithVerbatims( int @int, int @class, int @params, int @name, int @a5 ) { }
 
 		[RequireNamedArguments]
+		public static void _arg1_required( int a1 ) { }
+
+		[RequireNamedArguments]
 		public static void funcWithRequiredNamedArgs( int a1, int a2 ) { }
+
+		[RequireNamedArguments]
+		public static void funcWithOutParameter( out int out1 ) { }
 
 		public delegate void delegate0Args();
 		public delegate void delegate1Args( int a1 );
@@ -58,6 +67,11 @@ namespace D2L {
 			_arg2( _a1, _a2 );
 			_arg3( _a1, _a2, _a3 );
 			_arg4( _a1, _a2, _a3, _a4 );
+			_arg5( _a1, _a2, _a3, _a4, _a5 );
+			_arg5_nullable( _a1, _a2, _a3, _a4, _a5 );
+			_arg5_long( _a1, _a2, _a3, _a4, _a5 );
+			_arg5_long_nullable( _a1, _a2, _a3, _a4, _a5 );
+			_arg6( _a1, _a2, _a3_, _a4, _a5 );
 
             // Named literals
             _arg5( a1: 1, a2: 2, a3: 3, a4: 4, a5: 5 );
@@ -80,6 +94,19 @@ namespace D2L {
 			/* NamedArgumentsRequired */ funcWithRequiredNamedArgs( a1: 1, 2 ) /**/;
 			/* NamedArgumentsRequired */ funcWithRequiredNamedArgs( 1, a2: 2 ) /**/;
 			/* NamedArgumentsRequired */ funcWithRequiredNamedArgs( 1, 2 ) /**/;
+
+			{
+				_arg1( _a1 );
+				_arg1_required( _a1 );
+			}
+			{
+				_arg1( a1: _a2 );
+				_arg1_required( a1: _a2 );
+			}
+			{
+				_arg1( _a2 );
+				/* NamedArgumentsRequired */ _arg1_required( _a2 ) /**/;
+			}
 			#endregion
 
 			#region verbatim identifiers
@@ -146,12 +173,19 @@ namespace D2L {
 			// these aren't InvocationExpressions like the above but should
 			// behave just the same.
 			new SomeClass();
+			{ SomeClass c = new(); }
 			new SomeClass( 1 );
+			{ SomeClass c = new( 1 ); }
 			new SomeClass( p, p );
+			{ SomeClass c = new( p, p ); }
 			/* TooManyUnnamedArgs(5) */ new SomeClass( p, p, p, p, p ) /**/;
+			{ SomeClass c = /* TooManyUnnamedArgs(5) */ new( p, p, p, p, p ) /**/ };
 			new SomeClass( a1: 1, p, p, p, p );
+			{ SomeClass c = new( a1: 1, p, p, p, p ); }
 			new SomeClass( a1: 1, a2: 2, a3: 3 );
+			{ SomeClass c = new( a1: 1, a2: 2, a3: 3 ); }
 			/* NamedArgumentsRequired */ new SomeClass( 1, 2, 3 ) /**/;
+			{ SomeClass c = /* NamedArgumentsRequired */ new( 1, 2, 3 ) /**/; }
 			#endregion
 
 			#region expressions should not trigger named argument diagnostics
@@ -185,6 +219,23 @@ namespace D2L {
             System.Linq.Expressions.Expression<Func<int>> nest6 =
                 () => _arg2_ret( 1, _arg2_ret(1, 2) * _arg2_ret( 1, 2 ) );
             #endregion
+
+			#region out parameters
+			{
+				int out1;
+				funcWithOutParameter( out out1 );
+			}
+			{
+				funcWithOutParameter( out int out1 );
+			}
+			{
+				int out2;
+				/* NamedArgumentsRequired */ funcWithOutParameter( out out2 ) /**/;
+			}
+			{
+				/* NamedArgumentsRequired */ funcWithOutParameter( out int out2 ) /**/;
+			}
+			#endregion
         }
 
 		public abstract class SomeBaseClass {
