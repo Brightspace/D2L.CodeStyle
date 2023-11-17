@@ -128,9 +128,30 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					getInnermostNodeForTie: true
 				);
 
-			var args = RequireNamedArgumentsAnalyzer.GetArgs( node );
+			var args = GetArgs( node );
 
 			return args;
+		}
+
+		// Not an extension method because there may be more cases (e.g. in the
+		// future) and if more than this fix + its analyzer used this logic
+		// there could be undesirable coupling if we handled more cases.
+		private static ArgumentListSyntax GetArgs( SyntaxNode syntax ) {
+			switch( syntax ) {
+				case ImplicitObjectCreationExpressionSyntax implicitObjectCreation:
+					return implicitObjectCreation.ArgumentList;
+				case InvocationExpressionSyntax invocation:
+					return invocation.ArgumentList;
+				case ObjectCreationExpressionSyntax objectCreation:
+					return objectCreation.ArgumentList;
+				case ConstructorInitializerSyntax constructorInitializer:
+					return constructorInitializer.ArgumentList;
+				default:
+					if( syntax.Parent is ArgumentSyntax ) {
+						return (ArgumentListSyntax)syntax.Parent.Parent;
+					}
+					return null;
+			}
 		}
 	}
 }
