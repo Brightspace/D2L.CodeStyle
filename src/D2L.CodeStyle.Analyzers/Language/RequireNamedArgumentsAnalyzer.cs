@@ -99,7 +99,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 			// Don't complain about expression trees, since they aren't allowed
 			// to have named arguments
-			if( IsExpressionTree( lambdaExpresssionSymbol, ctx.Operation.SemanticModel!, ctx.Operation ) ) {
+			if( IsExpressionTree( lambdaExpresssionSymbol, ctx.Operation ) ) {
 				return;
 			}
 
@@ -172,31 +172,26 @@ namespace D2L.CodeStyle.Analyzers.Language {
 
 		private static bool IsExpressionTree(
 			INamedTypeSymbol? expressionType,
-			SemanticModel model,
 			IOperation operation
 		) {
 			if( expressionType == null || expressionType.Kind == SymbolKind.ErrorType ) {
 				return false;
 			}
 
-			// the current call could be nested inside an expression tree, so
-			// check every call we are nested inside
-			foreach( var syntax in operation.Syntax.AncestorsAndSelf() ) {
-				if( !( syntax is InvocationExpressionSyntax || syntax is ObjectCreationExpressionSyntax ) ) {
+			IOperation? current = operation;
+			for( ; ; ) {
+				current = current?.Parent;
+
+				if( current is null ) {
+					break;
+				}
+
+				if( current is not IConversionOperation conversion ) {
 					continue;
 				}
 
-				if( syntax.Parent is null ) {
-					continue;
-				}
-
-				var implicitType = model.GetTypeInfo( syntax.Parent ).ConvertedType;
-				if( implicitType != null && implicitType.Kind != SymbolKind.ErrorType ) {
-
-					var baseExprType = implicitType.BaseType;
-					if( expressionType.OriginalDefinition.Equals( baseExprType, SymbolEqualityComparer.Default ) ) {
-						return true;
-					}
+				if( SymbolEqualityComparer.Default.Equals( expressionType, conversion.Type?.BaseType ) ) {
+					return true;
 				}
 			}
 
