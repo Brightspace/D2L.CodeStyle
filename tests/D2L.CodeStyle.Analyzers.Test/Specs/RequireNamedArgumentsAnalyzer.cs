@@ -87,6 +87,10 @@ namespace D2L {
             /* TooManyUnnamedArgs(5) */ _arg6( 1, 2, 3, 4, 5, 6 ) /**/;
             _arg3( /* LiteralArgShouldBeNamed(a1) */ 1 /**/, /* LiteralArgShouldBeNamed(a2) */ 2 /**/, /* LiteralArgShouldBeNamed(a3) */ 3 /**/ );
             _arg3( a1: 1, /* LiteralArgShouldBeNamed(a2) */ 2 /**/, /* LiteralArgShouldBeNamed(a3) */ 3 /**/ );
+
+			_arg5_nullable( a1: 1, a2: 2, a3: 3, a4: 4, /* LiteralArgShouldBeNamed(a5) */ 5 /**/ );
+			_arg5_long( a1: 1, a2: 2, a3: 3, a4: 4, /* LiteralArgShouldBeNamed(a5) */ 5 /**/ );
+			_arg5_long_nullable( a1: 1, a2: 2, a3: 3, a4: 4, /* LiteralArgShouldBeNamed(a5) */ 5 /**/ );
 			#endregion
 
 			#region diagnostic required named args

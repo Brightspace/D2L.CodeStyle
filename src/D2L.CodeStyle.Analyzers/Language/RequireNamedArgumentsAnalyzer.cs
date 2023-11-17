@@ -138,11 +138,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			foreach( var arg in unnamedArgs ) {
 
 				// Check if the argument type is literal
-				IOperation valueOperation = arg.Operation.Value;
-				if( valueOperation is IConversionOperation conversionOperation ) {
-					valueOperation = conversionOperation.Operand;
-				}
-
+				IOperation valueOperation = UnwrapConversionOperation( arg.Operation.Value );
 				if( valueOperation is ILiteralOperation ) {
 
 					var fixerContext = CreateFixerContext( ImmutableArray.Create( arg ) );
@@ -305,6 +301,11 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				_ => op,
 			};
 		}
+
+		private static IOperation UnwrapConversionOperation( IOperation op ) => op switch {
+			IConversionOperation conv => UnwrapConversionOperation( conv.Operand ),
+			_ => op,
+		};
 
 		private static bool HasRequireNamedArgumentsAttribute(
 				INamedTypeSymbol requireNamedArgumentsSymbol,
