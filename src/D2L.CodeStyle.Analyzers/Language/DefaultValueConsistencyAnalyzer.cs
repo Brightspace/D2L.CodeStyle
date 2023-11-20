@@ -1,12 +1,9 @@
-#nullable disable
+#nullable enable
 
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Diagnostics;
-using System;
 using System.Collections.Immutable;
-using System.Linq;
+using D2L.CodeStyle.Analyzers.Extensions;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers.Language {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
@@ -22,127 +19,94 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			context.EnableConcurrentExecution();
 			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics );
 
-			// Check for methods with the "override" modifier
-			context.RegisterSyntaxNodeAction(
-				AnalyzeOverrideMethodDeclaration,
-				SyntaxKind.MethodDeclaration
-			);
-
-			// We also need to check interface method impls, and unfortunately
-			// this is the best way I know how to do it:
-			context.RegisterSyntaxNodeAction(
-				AnalyzeBaseList,
-				SyntaxKind.BaseList
+			context.RegisterSymbolAction(
+				static ctx => AnalyzeNamedType( ctx, (INamedTypeSymbol)ctx.Symbol ),
+				SymbolKind.NamedType
 			);
 		}
 
-		private static void AnalyzeOverrideMethodDeclaration(
-			SyntaxNodeAnalysisContext ctx
+		private static void AnalyzeNamedType(
+			SymbolAnalysisContext ctx,
+			INamedTypeSymbol type
 		) {
-			var methodDecl = (MethodDeclarationSyntax)ctx.Node;
-
-			var hostDecl = methodDecl.Parent as TypeDeclarationSyntax;
-
-			// The parser may create MethodDeclaration nodes in weird places
-			// (e.g. as a member of a NamespaceDeclaration) just to continue
-			// on parsing and generating diagnostics. The only sensible places
-			// are TypeDeclarationSyntaxs (class, struct or interface decls)
-			// so just bail out if we're in a weird situation.
-			if ( hostDecl == null ) {
+			if( type.TypeKind == TypeKind.Interface ) {
 				return;
 			}
 
-			// As a performance optimization we can bail out early if there
-			// are no overrides we care about (e.g. our base class is either
-			// System.Object or System.ValueType and we don't implement any
-			// interfaces.) This saves querying the semantic model.
-			if ( hostDecl.BaseList == null ) {
-				return;
-			}
-
-			var method = ctx.SemanticModel
-				.GetDeclaredSymbol( methodDecl, ctx.CancellationToken );
-
-			if ( method == null || method.Kind == SymbolKind.ErrorType ) {
-				return;
-			}
-
-			if( !method.IsOverride ) {
-				return;
-			}
-
-			// There might be other build errors (e.g. from missing partial
-			// classes from code-gen, or incomplete code when we're running
-			// in intellisense) preventing the semantic model from locating
-			// the original method. Ignore these.
-			if( method.OverriddenMethod == null ) {
-				return;
-			}
-
-			AnalyzeMethod(
-				ctx.ReportDiagnostic,
-				baseMethod: method.OverriddenMethod,
-				implMethod: method,
-				ctx.CancellationToken
-			);
-		}
-
-		private static void AnalyzeBaseList( SyntaxNodeAnalysisContext ctx ) {
-			var baseList = (BaseListSyntax)ctx.Node;
-
-			// ignore enums, their BaseListSyntax isn't relevant
-			if ( baseList.Parent is EnumDeclarationSyntax ) {
-				return;
-			}
-
-			// Not likely, maybe as the user is typing stuff out.
-			if ( baseList.Types.Count == 0 ) {
-				return;
-			}
-
-			var implType = ctx.SemanticModel
-				.GetDeclaredSymbol( (TypeDeclarationSyntax)baseList.Parent, ctx.CancellationToken );
-
-			// The most expensive thing we do:
-			var interfaceMethodsAndImpls = implType
-				.AllInterfaces // interfaces can extend interfaces, etc.
-				.SelectMany( iface => iface.GetMembers() )
-				.OfType<IMethodSymbol>()
-				.Select( ifaceMethod =>
-					(ifaceMethod, implType.FindImplementationForInterfaceMember( ifaceMethod ) as IMethodSymbol )
-				);
-
-			foreach( (var ifaceMethod, var implMethod) in interfaceMethodsAndImpls ) {
-				if ( implMethod == null ) {
-					// Maybe they implemented a method with a non-method (which
-					// would be a different build error) or they haven't
-					// implemented it yet.
+			// Check for base class overrides
+			foreach( ISymbol member in type.GetMembers() ) {
+				if( member is not IMethodSymbol method ) {
 					continue;
 				}
 
-				if ( !implMethod.ContainingType.Equals( implType, SymbolEqualityComparer.Default ) ) {
-					// Our base class could implement the method. We don't want
-					// to duplicate the work on principle but also when we look
-					// at DeclaringSyntaxReferences in GetLocation it could
-					// fail because our base could be in a different assembly.
-					return;
+				// Explicit implementations aren't overriding anything on the base type, so ignore them
+				if( !method.ExplicitInterfaceImplementations.IsEmpty ) {
+					continue;
 				}
 
-				// This is O(# of explicit implementations for this method), in
-				// a loop which includes at least that many things, so O(n^2)
-				// for some n. But n is probably small.
-				if ( implMethod.ExplicitInterfaceImplementations.Contains( ifaceMethod ) ) {
-					// Explicit implementations can't change default value
-					// behaviour, so we don't need to worry about them.
+				if( method.OverriddenMethod is null ) {
+					continue;
+				}
+
+				// Ignore overloads of System.Object methods (such as Equals) that we don't care about
+				if( SymbolEqualityComparer.Default.Equals( method.OverriddenMethod.ContainingType, ctx.Compilation.ObjectType ) ) {
+					continue;
+				}
+
+				// Ignore overloads of System.ValueType methods (such as Equals) that we don't care about
+				if( SymbolEqualityComparer.Default.Equals( method.OverriddenMethod.ContainingType, ctx.Compilation.GetSpecialType( SpecialType.System_ValueType ) ) ) {
 					continue;
 				}
 
 				AnalyzeMethod(
 					ctx.ReportDiagnostic,
-					baseMethod: ifaceMethod,
-					implMethod: implMethod,
+					baseMethod: method.OverriddenMethod,
+					implMethod: method,
+					locationOverride: null,
 					ctx.CancellationToken
 				);
+			}
+
+			// Check for interface implementations, which may come from base types
+			foreach( INamedTypeSymbol @interface in type.AllInterfaces ) {
+				bool? interfaceIsFromBaseType = null;
+				foreach( ISymbol member in @interface.GetMembers() ) {
+					if( member is not IMethodSymbol method ) {
+						continue;
+					}
+
+					ISymbol? implementingMember = type.FindImplementationForInterfaceMember( method );
+
+					// Should always be a method symbol
+					if( implementingMember is not IMethodSymbol implementingMethod ) {
+						continue;
+					}
+
+					// Explicit implementations can't change default value
+					// behaviour, so we don't need to worry about them.
+					if( !implementingMethod.ExplicitInterfaceImplementations.IsEmpty ) {
+						continue;
+					}
+
+					bool methodIsImplementedLocally = SymbolEqualityComparer.Default.Equals( type, implementingMethod.ContainingType );
+					if( !methodIsImplementedLocally ) {
+
+						// If the method and interface come from the base type then any diagnostics
+						// will be raised when analyzing the base type, skip analyzing the method
+						interfaceIsFromBaseType ??= type.BaseType!.AllInterfaces.Contains( @interface, SymbolEqualityComparer.Default );
+						if( interfaceIsFromBaseType.Value == true ) {
+							continue;
+						}
+					}
+
+					AnalyzeMethod(
+						ctx.ReportDiagnostic,
+						baseMethod: method,
+						implMethod: implementingMethod,
+						locationOverride: methodIsImplementedLocally ? null : GetTypeNameDiagnosticLocation( ctx, type ),
+						ctx.CancellationToken
+					);
+				}
 			}
 		}
 
@@ -150,6 +114,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			Action<Diagnostic> reportDiagnostic,
 			IMethodSymbol baseMethod,
 			IMethodSymbol implMethod,
+			Location? locationOverride,
 			CancellationToken cancellationToken
 		) {
 			foreach( var implParameter in implMethod.Parameters ) {
@@ -175,7 +140,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					reportDiagnostic(
 						Diagnostic.Create(
 							Diagnostics.IncludeDefaultValueInOverrideForReadability,
-							GetLocation( implParameter, cancellationToken ),
+							locationOverride ?? GetLocation( implParameter, cancellationToken ),
 							implParameter.Name,
 							baseMethod.ContainingType.Name
 						)
@@ -190,7 +155,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					reportDiagnostic(
 						Diagnostic.Create(
 							Diagnostics.DontIntroduceNewDefaultValuesInOverrides,
-							GetLocation( implParameter, cancellationToken ),
+							locationOverride ?? GetLocation( implParameter, cancellationToken ),
 							implParameter.Name,
 							baseMethod.ContainingType.Name
 						)
@@ -217,7 +182,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					reportDiagnostic(
 						Diagnostic.Create(
 							Diagnostics.DefaultValuesInOverridesShouldBeConsistent,
-							GetLocation( implParameter, cancellationToken ),
+							locationOverride ?? GetLocation( implParameter, cancellationToken ),
 							implParameter.Name,
 							FormatDefaultValue( implDefault ),
 							FormatDefaultValue( baseDefault ),
@@ -228,7 +193,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			}
 		}
 
-		private static string FormatDefaultValue( object val ) {
+		private static string FormatDefaultValue( object? val ) {
 			if ( val == null ) {
 				return "null";
 			}
@@ -245,6 +210,20 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				.DeclaringSyntaxReferences[0]
 				.GetSyntax( cancellationToken )
 				.GetLocation();
+		}
+
+		private static Location GetTypeNameDiagnosticLocation( SymbolAnalysisContext ctx, INamedTypeSymbol namedType ) {
+			var (type, baseType) = namedType.ExpensiveGetSyntaxImplementingType( namedType.BaseType!, ctx.Compilation, ctx.CancellationToken );
+
+			if( baseType is not null ) {
+				return baseType.GetLocation();
+			}
+
+			if( type is not null ) {
+				return type.Identifier.GetLocation();
+			}
+
+			return Location.None;
 		}
 	}
 }
