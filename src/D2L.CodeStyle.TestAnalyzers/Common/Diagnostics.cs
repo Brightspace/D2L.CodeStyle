@@ -24,7 +24,8 @@ namespace D2L.CodeStyle.TestAnalyzers.Common {
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true,
-			description: "Tests need to be correctly categorized in order to be run."
+			description: "Tests need to be correctly categorized in order to be run.",
+			customTags: new[] { "CompilationEnd" }
 		);
 
 		public static readonly DiagnosticDescriptor CustomServiceLocator = new DiagnosticDescriptor(
@@ -47,7 +48,8 @@ namespace D2L.CodeStyle.TestAnalyzers.Common {
             category: "Cleanliness",
             defaultSeverity: DiagnosticSeverity.Error,
             isEnabledByDefault: true,
-            description: "Unnecessarily listed in an analyzer allowed list."
+            description: "Unnecessarily listed in an analyzer allowed list.",
+            customTags: new[] { "CompilationEnd" }
         );
     }
 }
