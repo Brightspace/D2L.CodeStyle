@@ -1,9 +1,8 @@
 using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Operations;
 using static D2L.CodeStyle.Analyzers.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.DataRecordConverters {
@@ -30,54 +29,57 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DataRecordConverters {
 				return;
 			}
 
-			context.RegisterSyntaxNodeAction(
-					c => AnalyzeGenericName( c, interfaceBinderType, (GenericNameSyntax)c.Node ),
-					SyntaxKind.GenericName
-				);
+			context.RegisterOperationAction(
+				ctx => AnalyzeMemberReference(
+					ctx,
+					interfaceBinderType: interfaceBinderType,
+					member: ( (IPropertyReferenceOperation)ctx.Operation ).Member
+				),
+				OperationKind.PropertyReference
+			);
+
+			context.RegisterOperationAction(
+				ctx => AnalyzeMemberReference(
+					ctx,
+					interfaceBinderType: interfaceBinderType,
+					member: ( (IInvocationOperation)ctx.Operation ).TargetMethod
+				),
+				OperationKind.Invocation
+			);
+
+			context.RegisterOperationAction(
+				ctx => AnalyzeMemberReference(
+					ctx,
+					interfaceBinderType: interfaceBinderType,
+					member: ( (IMethodReferenceOperation)ctx.Operation ).Member
+				),
+				OperationKind.MethodReference
+			);
 		}
 
-		private static void AnalyzeGenericName(
-				SyntaxNodeAnalysisContext context,
-				INamedTypeSymbol interfaceBinderType,
-				GenericNameSyntax genericName
-			) {
-
-			TypeArgumentListSyntax argumentList = genericName.TypeArgumentList;
-			if( argumentList.Arguments.Count != 1 ) {
+		private static void AnalyzeMemberReference(
+			OperationAnalysisContext context,
+			INamedTypeSymbol interfaceBinderType,
+			ISymbol member
+		) {
+			if( member.DeclaredAccessibility != Accessibility.Public ) {
 				return;
 			}
 
-			ITypeSymbol? genericType = context.SemanticModel
-				.GetTypeInfo( genericName, context.CancellationToken )
-				.Type;
-
-			if( genericType == null ) {
+			if( !SymbolEqualityComparer.Default.Equals( interfaceBinderType, member.ContainingType.OriginalDefinition ) ) {
 				return;
 			}
 
-			if( !SymbolEqualityComparer.Default.Equals( genericType.OriginalDefinition, interfaceBinderType ) ) {
-				return;
-			}
-
-			TypeSyntax interfaceArgument = argumentList.Arguments[ 0 ];
-
-			ITypeSymbol? interfaceType = context.SemanticModel
-				.GetTypeInfo( interfaceArgument, context.CancellationToken )
-				.Type;
-
-			if( interfaceType == null ) {
-				return;
-			}
-
-			if( interfaceType.TypeKind == TypeKind.Interface ) {
+			ITypeSymbol boundType = member.ContainingType.TypeArguments[ 0 ];
+			if( boundType.TypeKind == TypeKind.Interface ) {
 				return;
 			}
 
 			context.ReportDiagnostic(
-					InterfaceBinder_InterfacesOnly,
-					interfaceArgument.GetLocation(),
-					messageArgs: new[] { interfaceType.Name }
-				);
+				InterfaceBinder_InterfacesOnly,
+				context.Operation.Syntax.GetLocation(),
+				messageArgs: new[] { boundType.Name }
+			);
 		}
 	}
 }
