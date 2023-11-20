@@ -1,9 +1,8 @@
 using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Helpers;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 
@@ -35,9 +34,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 				analyzerOptions: context.Options
 			);
 
-			context.RegisterSyntaxNodeAction(
+			context.RegisterOperationAction(
 				ctx => AnalyzeAttribute( ctx, attributeType, allowedTypeList ),
-				SyntaxKind.Attribute
+				OperationKind.Attribute
 			);
 
 			context.RegisterSymbolAction(
@@ -51,57 +50,34 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 		}
 
 		private static void AnalyzeAttribute(
-			SyntaxNodeAnalysisContext context,
+			OperationAnalysisContext context,
 			INamedTypeSymbol jsonParamBinderT,
 			AllowedTypeList allowedList
 		) {
-			if( !( context.Node is AttributeSyntax attribute ) ) {
+			IAttributeOperation operation = ( IAttributeOperation )context.Operation;
+
+			if( operation.Operation is not IObjectCreationOperation attributeCreationOperation ) {
 				return;
 			}
 
-			if( !AttributeIsOfDisallowedType( context.SemanticModel, jsonParamBinderT, attribute ) ) {
+			if( !SymbolEqualityComparer.Default.Equals( jsonParamBinderT, attributeCreationOperation.Type ) ) {
 				return;
 			}
 
-			ISymbol? methodSymbol = context.ContainingSymbol;
-			if( methodSymbol == null ) {
+			if( context.ContainingSymbol.ContainingType is not INamedTypeSymbol containingType ) {
 				return;
 			}
 
-			if( methodSymbol.Kind != SymbolKind.Method ) {
+			if( allowedList.Contains( containingType ) ) {
 				return;
 			}
 
-			if( !( methodSymbol.ContainingType is INamedTypeSymbol classSymbol ) ) {
-				return;
-			}
-
-			if( allowedList.Contains( classSymbol ) ) {
-				return;
-			}
-
-			Location location = attribute.GetLocation();
+			Location location = operation.Syntax.GetLocation();
 
 			context.ReportDiagnostic(
 				Diagnostics.ObsoleteJsonParamBinder,
 				location
 			);
-		}
-
-		private static bool AttributeIsOfDisallowedType(
-			SemanticModel model,
-			INamedTypeSymbol jsonParamBinderT,
-			AttributeSyntax syntax
-		) {
-			if( !( model.GetTypeInfo( syntax ).Type is INamedTypeSymbol actualType ) ) {
-				return false;
-			}
-
-			if( !actualType.Equals( jsonParamBinderT, SymbolEqualityComparer.Default ) ) {
-				return false;
-			}
-
-			return true;
 		}
 
 	}
