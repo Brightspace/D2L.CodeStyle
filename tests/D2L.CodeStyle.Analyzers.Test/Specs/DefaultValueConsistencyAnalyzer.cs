@@ -179,6 +179,26 @@ namespace MultipleInterfaces {
 	}
 }
 
+namespace InterfaceFromBaseClass {
+	public interface IFoo {
+		void Fizz( int x = 111 );
+		void Buzz( int y = 222 );
+		void FizzBuzz( int s );
+	}
+
+	public class BaseClass {
+		public void Fizz( int x );
+		public void Buzz( int y = 333 );
+		public void FizzBuzz( int s = 444 );
+	}
+
+	public class InterhitsInterfaceImplementation : /*
+		IncludeDefaultValueInOverrideForReadability(x, IFoo)
+		| DefaultValuesInOverridesShouldBeConsistent(y, 333, 222, IFoo)
+		| DontIntroduceNewDefaultValuesInOverrides(s, IFoo)
+		*/ BaseClass /**/, IFoo { }
+}
+
 namespace NewModifier {
 	interface IBaseInterface {
 		void GetStuff( int count = 99 );
