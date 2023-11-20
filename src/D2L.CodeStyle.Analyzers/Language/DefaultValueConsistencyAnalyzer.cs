@@ -39,11 +39,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					continue;
 				}
 
-				// Explicit implementations aren't overriding anything on the base type, so ignore them
-				if( !method.ExplicitInterfaceImplementations.IsEmpty ) {
-					continue;
-				}
-
+				// Not overriding anything on the base type, so ignore
 				if( method.OverriddenMethod is null ) {
 					continue;
 				}
