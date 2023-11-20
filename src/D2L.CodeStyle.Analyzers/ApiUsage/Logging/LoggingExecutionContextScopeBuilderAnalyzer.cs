@@ -8,6 +8,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.Logging {
 
@@ -59,39 +60,37 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Logging {
 			// See https://blogs.msdn.microsoft.com/seteplia/2018/01/11/extending-the-async-methods-in-c/
 			INamedTypeSymbol AsyncMethodBuilderAttribute = context.Compilation.GetTypeByMetadataName( "System.Runtime.CompilerServices.AsyncMethodBuilderAttribute" );
 
-			context.RegisterSyntaxNodeAction(
+			context.RegisterOperationAction(
 				ctx => RunInvocationAnalysis(
 					context: ctx,
 					AsyncMethodBuilderAttribute: AsyncMethodBuilderAttribute,
 					ILoggingExecutionContextScopeBuilderRunSymbols: ILoggingExecutionContextScopeBuilderRunSymbols,
 					taskTypeBuiltins: taskTypeBuiltins,
-					invocationSyntax: ctx.Node as InvocationExpressionSyntax
+					invocationOperation: (IInvocationOperation)ctx.Operation
 				),
-				SyntaxKind.InvocationExpression
+				OperationKind.Invocation
 			);
 		}
 
 		private static void RunInvocationAnalysis(
-			SyntaxNodeAnalysisContext context,
+			OperationAnalysisContext context,
 			IImmutableSet<ISymbol> ILoggingExecutionContextScopeBuilderRunSymbols,
 			INamedTypeSymbol AsyncMethodBuilderAttribute,
 			IImmutableSet<ISymbol> taskTypeBuiltins,
-			InvocationExpressionSyntax invocationSyntax
+			IInvocationOperation invocationOperation
 		) {
-			SemanticModel model = context.SemanticModel;
+			SemanticModel model = context.Operation.SemanticModel;
 
 			if( !IsRunInvocation(
-				model,
 				ILoggingExecutionContextScopeBuilderRunSymbols,
-				invocationSyntax,
-				context.CancellationToken
+				invocationOperation
 			) ) {
 				return;
 			}
 
 			if( !TryGetActionArgument(
-				invocationSyntax,
-				out ArgumentSyntax actionArgument
+				invocationOperation,
+				out IArgumentOperation actionArgument
 			) ) {
 				return;
 			}
@@ -109,7 +108,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Logging {
 				) ) {
 					ReportDiagnostic(
 						context: context,
-						invocationSyntax: invocationSyntax
+						invocationOperation: invocationOperation
 					);
 					return;
 				}
@@ -117,31 +116,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Logging {
 		}
 
 		private static bool IsRunInvocation(
-			SemanticModel model,
 			IImmutableSet<ISymbol> ILoggingExecutionContextScopeBuilderRunSymbols,
-			InvocationExpressionSyntax invocationSyntax,
-			CancellationToken ct
+			IInvocationOperation invocationOperation
 		) {
-			SymbolInfo methodSymbolInfo = model.GetSymbolInfo(
-				invocationSyntax,
-				ct
-			);
-
-			if( methodSymbolInfo.Symbol != null ) {
-				if( ILoggingExecutionContextScopeBuilderRunSymbols.Contains(
-					methodSymbolInfo.Symbol.OriginalDefinition
-				) ) {
-					return true;
-				}
-
-				return false;
-			}
-
-			if( methodSymbolInfo
-				.CandidateSymbols
-				.Select( s => s.OriginalDefinition )
-				.Any( ILoggingExecutionContextScopeBuilderRunSymbols.Contains )
-			) {
+			
+			if( ILoggingExecutionContextScopeBuilderRunSymbols.Contains(
+				invocationOperation.TargetMethod.OriginalDefinition
+			) ) {
 				return true;
 			}
 
@@ -149,26 +130,21 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Logging {
 		}
 
 		private static bool TryGetActionArgument(
-			InvocationExpressionSyntax invocationSyntax,
-			out ArgumentSyntax actionArgument
+			IInvocationOperation invocationOperation,
+			out IArgumentOperation actionArgument
 		) {
-			var arguments = invocationSyntax.ArgumentList.Arguments;
-			if( arguments.Count != 1 ) {
-				actionArgument = default;
-				return false;
-			}
-
-			actionArgument = arguments.First();
+			actionArgument = invocationOperation.Arguments.Single();
 			return true;
 		}
 
 		private static ImmutableArray<ITypeSymbol> GetReturnTypesToCheck(
 			SemanticModel model,
-			ArgumentSyntax actionArgument,
+			IArgumentOperation actionArgument,
 			CancellationToken ct
 		) {
+
 			SymbolInfo argumentSymbolInfo = model.GetSymbolInfo(
-				actionArgument.Expression,
+				actionArgument.Value.Syntax,
 				ct
 			);
 
@@ -208,12 +184,15 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Logging {
 		}
 
 		private static void ReportDiagnostic(
-			SyntaxNodeAnalysisContext context,
-			InvocationExpressionSyntax invocationSyntax
+			OperationAnalysisContext context,
+			IInvocationOperation invocationOperation
 		) {
-			ExpressionSyntax syntaxToLocate = invocationSyntax.Expression;
-			if( syntaxToLocate is MemberAccessExpressionSyntax memberAccessSyntax ) {
-				syntaxToLocate = memberAccessSyntax.Name;
+			SyntaxNode syntaxToLocate = invocationOperation.Syntax;
+
+			if( syntaxToLocate is InvocationExpressionSyntax invocationExpressionSyntax ) {
+				if( invocationExpressionSyntax.Expression is MemberAccessExpressionSyntax memberAccessSyntax ) {
+					syntaxToLocate = memberAccessSyntax.Name;
+				}
 			}
 
 			context.ReportDiagnostic(

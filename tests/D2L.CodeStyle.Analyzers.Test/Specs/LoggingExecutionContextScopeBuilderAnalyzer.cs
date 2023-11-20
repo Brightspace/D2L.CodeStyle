@@ -1,6 +1,7 @@
 ﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.Logging.LoggingExecutionContextScopeBuilderAnalyzer
 
 namespace D2L.LP.Logging.ExecutionContexts {
+	using System;
 	using System.Threading.Tasks;
 
 	public interface ILoggingExecutionContextScopeBuilder {
@@ -50,8 +51,8 @@ namespace D2L.CodeStyle.Analyzers.Specs {
 			{ ConfiguredTaskAwaitable<int> t = m_builder./* LoggingContextRunAwaitable(Use RunAsync for awaitable actions.) */ Run<ConfiguredTaskAwaitable<int>> /**/( ConfiguredTaskTAction ); }
 
 			m_builder./* LoggingContextRunAwaitable(Use RunAsync for awaitable actions.) */ Run /**/( () => TaskAction().ConfigureAwait( false ) );
-			{ ConfiguredTaskAwaitable t = m_builder./* LoggingContextRunAwaitable(Use RunAsync for awaitable actions.) */ Run /**/( TaskAction().ConfigureAwait( false ) ); }
-			{ ConfiguredTaskAwaitable t = m_builder./* LoggingContextRunAwaitable(Use RunAsync for awaitable actions.) */ Run<ConfiguredTaskAwaitable> /**/( TaskAction().ConfigureAwait( false ) ); }
+			{ ConfiguredTaskAwaitable t = m_builder./* LoggingContextRunAwaitable(Use RunAsync for awaitable actions.) */ Run /**/( () => TaskAction().ConfigureAwait( false ) ); }
+			{ ConfiguredTaskAwaitable t = m_builder./* LoggingContextRunAwaitable(Use RunAsync for awaitable actions.) */ Run<ConfiguredTaskAwaitable> /**/( () => TaskAction().ConfigureAwait( false ) ); }
 
 			m_builder./* LoggingContextRunAwaitable(Use RunAsync for awaitable actions.) */ Run /**/( () => TaskTAction().ConfigureAwait( false ) );
 			{ ConfiguredTaskAwaitable<int> t = m_builder./* LoggingContextRunAwaitable(Use RunAsync for awaitable actions.) */ Run /**/( () => TaskTAction().ConfigureAwait( false ) ); }
