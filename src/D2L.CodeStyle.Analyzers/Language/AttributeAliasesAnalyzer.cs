@@ -104,7 +104,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				}
 
 				// ignore aliases that just import the class from the namespace
-				string unqualifiedUsingName = usingDirective.Name.GetUnqualifiedNameAsString();
+				string? unqualifiedUsingName = usingDirective.Name?.GetUnqualifiedNameAsString();
 				if( StringComparer.Ordinal.Equals( alias.Name.ToString(), unqualifiedUsingName ) ) {
 					continue;
 				}
