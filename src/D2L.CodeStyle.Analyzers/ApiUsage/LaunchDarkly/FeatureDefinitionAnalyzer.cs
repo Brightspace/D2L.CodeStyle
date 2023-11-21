@@ -9,13 +9,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly {
 
 		public const string FeatureDefinitionFullName = "D2L.LP.LaunchDarkly.FeatureDefinition`1";
 
-		private static readonly ImmutableHashSet<SpecialType> ValidTypes = ImmutableHashSet.Create(
-				SpecialType.System_Int32,
-				SpecialType.System_Boolean,
-				SpecialType.System_String,
-				SpecialType.System_Single
-			);
-
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 				Diagnostics.InvalidLaunchDarklyFeatureDefinition
 			);
@@ -67,7 +60,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly {
 				return;
 			}
 
-			if( ValidTypes.Contains( namedValueType.SpecialType ) ) {
+			if( IsValidType( namedValueType ) ) {
 				return;
 			}
 
@@ -79,5 +72,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly {
 					messageArgs: new[] { namedValueType.ToDisplayString() }
 				);
 		}
+
+		private static bool IsValidType( INamedTypeSymbol valueType ) => valueType.SpecialType switch {
+			SpecialType.System_Int32 => true,
+			SpecialType.System_Boolean => true,
+			SpecialType.System_String => true,
+			SpecialType.System_Single => true,
+			_ => false
+		};
 	}
 }
