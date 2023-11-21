@@ -36,8 +36,14 @@ namespace SpecTests {
 			public ConstantStruct( [Constant] string value ) {
 				Value = value;
 			}
+			public ConstantStruct( [Constant] long value ) {
+				Value = value.ToString();
+			}
 			public string Value { get; }
 			public static implicit operator ConstantStruct( [Constant] string value ) {
+				return new ConstantStruct( value );
+			}
+			public static explicit operator ConstantStruct( [Constant] int value ) {
 				return new ConstantStruct( value );
 			}
 			public static explicit operator ConstantStruct( [Constant] bool value ) {
@@ -258,7 +264,9 @@ namespace SpecTests {
 
 		void ImplicitOperatorTests(
 			[D2L.CodeStyle.Annotations.Contract.Constant] string trusted,
-			string untrusted
+			[D2L.CodeStyle.Annotations.Contract.Constant] short trustedConversion,
+			string untrusted,
+			short untrustedConversion
 		) {
 			const string constant = "foo";
 			string variable = "bar";
@@ -267,8 +275,10 @@ namespace SpecTests {
 			{ Types.ConstantStruct v = Constants.String; }
 			{ Types.ConstantStruct v = constant; }
 			{ Types.ConstantStruct v = trusted; }
+			{ Types.ConstantStruct v = trustedConversion; }
 			{ Types.ConstantStruct v = /* NonConstantPassedToConstantParameter(value) */ variable /**/; }
 			{ Types.ConstantStruct v = /* NonConstantPassedToConstantParameter(value) */ untrusted /**/; }
+			{ Types.ConstantStruct v = /* NonConstantPassedToConstantParameter(value) */ untrustedConversion /**/; }
 
 			{ Types.NonConstantStruct v = "abc"; }
 			{ Types.NonConstantStruct v = Constants.String; }
