@@ -56,11 +56,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly {
 				return;
 			}
 
-			if( valueTypeSymbol is not INamedTypeSymbol namedValueType ) {
-				return;
-			}
-
-			if( IsValidType( namedValueType ) ) {
+			if( valueTypeSymbol is INamedTypeSymbol namedValueType
+				&& IsValidType( namedValueType )
+			) {
 				return;
 			}
 
@@ -69,7 +67,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly {
 			context.ReportDiagnostic(
 					Diagnostics.InvalidLaunchDarklyFeatureDefinition,
 					location: baseTypeSyntax?.GetLocation() ?? typeSyntax?.Identifier.GetLocation() ?? Location.None,
-					messageArgs: new[] { namedValueType.ToDisplayString() }
+					messageArgs: new[] { valueTypeSymbol.ToDisplayString() }
 				);
 		}
 

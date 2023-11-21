@@ -10,6 +10,7 @@ namespace SpecTests {
 
 	public sealed class LongDefinition :/* InvalidLaunchDarklyFeatureDefinition(long) */ FeatureDefinition<long> /**/{ }
 	public sealed class ObjectDefinition :/* InvalidLaunchDarklyFeatureDefinition(System.TimeSpan) */ FeatureDefinition<TimeSpan> /**/{ }
+	public sealed class GenericDefinition<T> : /* InvalidLaunchDarklyFeatureDefinition(T) */ FeatureDefinition<T> /**/ { }
 
 	namespace Keywords {
 		public sealed class BoolDefinition : FeatureDefinition<bool> { }
