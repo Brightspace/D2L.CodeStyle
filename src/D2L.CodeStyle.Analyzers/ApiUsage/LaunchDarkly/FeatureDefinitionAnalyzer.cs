@@ -1,8 +1,6 @@
 using System.Collections.Immutable;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly {
@@ -11,11 +9,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly {
 
 		public const string FeatureDefinitionFullName = "D2L.LP.LaunchDarkly.FeatureDefinition`1";
 
-		private static readonly ImmutableHashSet<string> ValidTypes = ImmutableHashSet.Create<string>(
-				"int",
-				"bool",
-				"string",
-				"float"
+		private static readonly ImmutableHashSet<SpecialType> ValidTypes = ImmutableHashSet.Create(
+				SpecialType.System_Int32,
+				SpecialType.System_Boolean,
+				SpecialType.System_String,
+				SpecialType.System_Single
 			);
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
@@ -38,48 +36,47 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly {
 				return;
 			}
 
-			context.RegisterSyntaxNodeAction(
-					c => AnalyzeSimpleBaseType( c, featureDefinitionType ),
-					SyntaxKind.SimpleBaseType
-				);
+			context.RegisterSymbolAction(
+				c => AnalyzeMaybeSubtype( c, featureDefinitionType ),
+				SymbolKind.NamedType
+			);
 		}
 
-		private static void AnalyzeSimpleBaseType(
-				SyntaxNodeAnalysisContext context,
+		private static void AnalyzeMaybeSubtype(
+				SymbolAnalysisContext context,
 				INamedTypeSymbol featureDefinitionType
 			) {
 
-			SimpleBaseTypeSyntax baseTypeSyntax = (SimpleBaseTypeSyntax)context.Node;
-			SymbolInfo baseTypeSymbol = context.SemanticModel.GetSymbolInfo( baseTypeSyntax.Type, context.CancellationToken );
+			INamedTypeSymbol maybeSubtype = (INamedTypeSymbol)context.Symbol;
 
-			INamedTypeSymbol? baseSymbol = ( baseTypeSymbol.Symbol as INamedTypeSymbol );
-			if( baseSymbol.IsNullOrErrorType() ) {
+			if( maybeSubtype.BaseType is null ) {
 				return;
 			}
 
-			ISymbol originalSymbol = baseSymbol.OriginalDefinition;
-			if( originalSymbol.IsNullOrErrorType() ) {
+			if( !SymbolEqualityComparer.Default.Equals( maybeSubtype.BaseType.OriginalDefinition, featureDefinitionType ) ) {
 				return;
 			}
 
-			if( !originalSymbol.Equals( featureDefinitionType, SymbolEqualityComparer.Default ) ) {
-				return;
-			}
+			ISymbol valueTypeSymbol = maybeSubtype.BaseType.TypeArguments[ 0 ];
 
-			ISymbol valueTypeSymbol = baseSymbol.TypeArguments[ 0 ];
 			if( valueTypeSymbol.IsNullOrErrorType() ) {
 				return;
 			}
 
-			string valueType = valueTypeSymbol.ToDisplayString();
-			if( ValidTypes.Contains( valueType ) ) {
+			if( valueTypeSymbol is not INamedTypeSymbol namedValueType ) {
 				return;
 			}
 
+			if( ValidTypes.Contains( namedValueType.SpecialType ) ) {
+				return;
+			}
+
+			var (typeSyntax, baseTypeSyntax) = maybeSubtype.ExpensiveGetSyntaxImplementingType( maybeSubtype.BaseType, context.Compilation, context.CancellationToken );
+
 			context.ReportDiagnostic(
 					Diagnostics.InvalidLaunchDarklyFeatureDefinition,
-					baseTypeSyntax.GetLocation(),
-					messageArgs: new[] { valueType }
+					location: baseTypeSyntax?.GetLocation() ?? typeSyntax?.Identifier.GetLocation() ?? Location.None,
+					messageArgs: new[] { namedValueType.ToDisplayString() }
 				);
 		}
 	}
