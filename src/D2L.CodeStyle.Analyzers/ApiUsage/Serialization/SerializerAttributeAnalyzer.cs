@@ -1,13 +1,10 @@
-#nullable disable
+#nullable enable
 
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
@@ -37,68 +34,62 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 		private void RegisterScopeBuilderAnalyzer( CompilationStartAnalysisContext context ) {
 
 			Compilation comp = context.Compilation;
-			if( !comp.TryGetTypeByMetadataName( SerializerAttributeFullName, out INamedTypeSymbol serializerAttributeType ) ) {
+			if( !comp.TryGetTypeByMetadataName( SerializerAttributeFullName, out INamedTypeSymbol? serializerAttributeType ) ) {
 				return;
 			}
 
 			var serializerInterfaceTypes = ImmutableArray.CreateBuilder<INamedTypeSymbol>();
-			if( comp.TryGetTypeByMetadataName( ISerializerFullName, out INamedTypeSymbol serializerType ) ) {
+			if( comp.TryGetTypeByMetadataName( ISerializerFullName, out INamedTypeSymbol? serializerType ) ) {
 				serializerInterfaceTypes.Add( serializerType );
 			}
-			if( comp.TryGetTypeByMetadataName( ITrySerializerFullName, out INamedTypeSymbol trySerializerType ) ) {
+			if( comp.TryGetTypeByMetadataName( ITrySerializerFullName, out INamedTypeSymbol? trySerializerType ) ) {
 				serializerInterfaceTypes.Add( trySerializerType );
 			}
 
-			context.RegisterSyntaxNodeAction(
-					c => AnalyzeAttributeSyntax(
-						c,
-						(AttributeSyntax)c.Node,
-						serializerAttributeType,
-						serializerInterfaceTypes.ToImmutable()
-					),
-					SyntaxKind.Attribute
-				);
+			context.RegisterOperationAction(
+				ctx => AnalyzeAttribute(
+					ctx,
+					(IAttributeOperation)ctx.Operation,
+					serializerAttributeType,
+					serializerInterfaceTypes.ToImmutable()
+				),
+				OperationKind.Attribute
+			);
 		}
 
-		private static void AnalyzeAttributeSyntax(
-				SyntaxNodeAnalysisContext context,
-				AttributeSyntax attributeSyntax,
+		private static void AnalyzeAttribute(
+				OperationAnalysisContext context,
+				IAttributeOperation attribute,
 				INamedTypeSymbol serializerAttributeType,
 				ImmutableArray<INamedTypeSymbol> serializerInterfaceTypes
 			) {
 
-			SemanticModel model = context.SemanticModel;
-			if( !model.IsAttributeOfType( attributeSyntax, serializerAttributeType ) ) {
+			// Some sort of error if Operation isn't an ObjectCreation (alternatively an IInvalidOperation)
+			if( attribute.Operation is not IObjectCreationOperation attributeCreation ) {
 				return;
 			}
 
-			AttributeArgumentListSyntax argumentList = attributeSyntax.ArgumentList;
-			if( argumentList == null ) {
+			if( !SymbolEqualityComparer.Default.Equals( attributeCreation.Type, serializerAttributeType ) ) {
 				return;
 			}
 
-			SeparatedSyntaxList<AttributeArgumentSyntax> arguments = argumentList.Arguments;
-			if( arguments.Count == 0 ) {
+			if( attributeCreation.Arguments.IsEmpty ) {
 				return;
 			}
 
-			AttributeArgumentSyntax typeArgumentSyntax = arguments[ 0 ];
-			if( !( typeArgumentSyntax.Expression is TypeOfExpressionSyntax typeofSyntax ) ) {
+			IArgumentOperation argument = attributeCreation.Arguments[ 0 ];
 
+			if( argument.Value is not ITypeOfOperation typeofOperation ) {
 				ReportInvalidSerializerType(
 						context,
-						typeArgumentSyntax,
-						messageArg: typeArgumentSyntax.Expression.ToString()
+						argument.Value.Syntax,
+						messageArg: argument.Value.Syntax.ToString()
 					);
 				return;
 			}
 
-			ITypeSymbol serializerType = model
-				.GetTypeInfo( typeofSyntax.Type, context.CancellationToken )
-				.Type;
-
 			if( DoesImplementOneOfSerializerInterfaces(
-					serializerType,
+					typeofOperation.TypeOperand,
 					serializerInterfaceTypes
 				) ) {
 				return;
@@ -106,14 +97,14 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 			ReportInvalidSerializerType(
 					context,
-					typeArgumentSyntax,
-					messageArg: serializerType.ToDisplayString( TypeDisplayFormat )
+					typeofOperation.Syntax,
+					messageArg: typeofOperation.TypeOperand.ToDisplayString( TypeDisplayFormat )
 				);
 		}
 
 		private static void ReportInvalidSerializerType(
-				SyntaxNodeAnalysisContext context,
-				AttributeArgumentSyntax typeArgumentSyntax,
+				OperationAnalysisContext context,
+				SyntaxNode typeArgumentSyntax,
 				string messageArg
 			) {
 

@@ -38,7 +38,8 @@ namespace SpecTests {
 	[Serializer( /* InvalidSerializerType(null) */ null /**/ )]
 	public sealed class NullSerializerType { }
 
-	[Serializer( /* InvalidSerializerType(123) */ 123 /**/ )]
+	// This is simply a compilation failure as there is no conversion from int -> Type
+	[Serializer( 123 )]
 	public sealed class InvalidSerializerTypeArgument { }
 
 	[Serializer]
