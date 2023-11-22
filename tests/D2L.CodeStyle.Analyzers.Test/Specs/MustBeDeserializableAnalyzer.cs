@@ -232,8 +232,26 @@ namespace D2L.Pinning.MustBeDeserializable.Recursive.Test {
 
 		public T Unsafe { get; }
 
-		public static GenericPinnedRecursivelyWithMustBeDeserializableConstructor<X> TriggerErrorByConstruction<[MustBeDeserializable] X>(X value) {
+		public static GenericPinnedRecursivelyWithMustBeDeserializableConstructor<X> TriggerNoErrorByConstruction<[MustBeDeserializable] X>(X value) {
 			return new GenericPinnedRecursivelyWithMustBeDeserializableConstructor<X>( value );
+		}
+	}
+
+	[Pinned( fullyQualifiedName: "D2L.Pinning.Recursive.Test.PinnedRecursivelyWithMustBeDeserializableConstructor", assembly: Constants.AssemblyName, pinnedRecursively: true )]
+	public class PinnedRecursivelyWithMustBeDeserializableConstructor {
+		public PinnedRecursivelyWithMustBeDeserializableConstructor(
+			[MustBeDeserializable] object value ) {
+			Unsafe = value;
+		}
+
+		public object Unsafe { get; }
+
+		public static PinnedRecursivelyWithMustBeDeserializableConstructor TriggerNoErrorByConstruction( [MustBeDeserializable] object value ) {
+			return new PinnedRecursivelyWithMustBeDeserializableConstructor( value );
+		}
+
+		public static PinnedRecursivelyWithMustBeDeserializableConstructor TriggerErrorByConstruction( object /* ArgumentShouldBeDeserializable() */ value /**/ ) {
+			return new PinnedRecursivelyWithMustBeDeserializableConstructor( value );
 		}
 	}
 }

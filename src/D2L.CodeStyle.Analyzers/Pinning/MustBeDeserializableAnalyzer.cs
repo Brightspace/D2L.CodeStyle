@@ -1,10 +1,12 @@
 ﻿using System.Collections.Immutable;
+using System.Runtime.InteropServices.ComTypes;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
+using static D2L.CodeStyle.Analyzers.Language.OnlyVisibleToAnalyzer;
 
 namespace D2L.CodeStyle.Analyzers.Pinning {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
@@ -222,7 +224,7 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			ImmutableArray<AdditionalText> additionalFiles ) {
 
 			var operation = context.Operation as IObjectCreationOperation;
-			if(operation == null) {
+			if( operation == null ) {
 				return;
 			}
 			INamedTypeSymbol? pinnedAttributeSymbol = context.Compilation.GetTypeByMetadataName( PinnedAnalyzerHelper.PinnedAttributeName );
@@ -235,66 +237,129 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 				return PinnedAnalyzerHelper.IsExemptFromPinning( symbol, inAllowedList, out _ );
 			};
 			var typeSymbol = operation.Type as INamedTypeSymbol;
-			if( operation.Constructor != null) {
-				var originalTypeArgs = operation.Constructor.ContainingType.OriginalDefinition.TypeArguments;
-				foreach(var pinningType in mustBePinnedTypes) {
-					for( int i = 0; i < originalTypeArgs.Length; i++ ) {
-						var current = originalTypeArgs[i];
-						if( PinnedAnalyzerHelper.TryGetPinnedAttribute( current, pinningType.PinnedAttributeSymbol, out _ ) ) {
-							var argSymbol = operation.Constructor.ContainingType.TypeArguments[ i ];
-							if(!PinnedAnalyzerHelper.HasAppropriateMustBePinnedAttribute(argSymbol, pinningType, out _)) {
-								var syntax = operation.Syntax as ObjectCreationExpressionSyntax;
-								var model = operation.SemanticModel;
+			if( operation.Constructor == null ) {
+				return;
+			}
 
-								if( syntax == null || model == null ) {
-									continue;
+			// check type arguments
+			var originalTypeArgs = operation.Constructor.ContainingType.OriginalDefinition.TypeArguments;
+			var syntax = operation.Syntax as ObjectCreationExpressionSyntax;
+			var model = operation.SemanticModel;
+
+			if( syntax == null || model == null ) {
+				return;
+			}
+
+			var parentMethod = syntax.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
+
+			IEnumerable<ITypeSymbol> genericMethodArguments = Enumerable.Empty<ITypeSymbol>();
+			IEnumerable<ITypeSymbol> genericBaseTypeArguments = Enumerable.Empty<ITypeSymbol>();
+			IMethodSymbol? parentMethodSymbol = parentMethod != null ? model.GetDeclaredSymbol( parentMethod ) : null;
+
+			if( parentMethodSymbol != null ) {
+				genericMethodArguments = genericMethodArguments.Concat( parentMethodSymbol.TypeArguments );
+				if( parentMethodSymbol.ContainingType != null ) {
+					genericBaseTypeArguments = parentMethodSymbol.ContainingType.TypeArguments;
+				}
+			}
+
+			foreach( var pinningType in mustBePinnedTypes ) {
+				for( int i = 0; i < originalTypeArgs.Length; i++ ) {
+					var current = originalTypeArgs[i];
+					if( PinnedAnalyzerHelper.TryGetPinnedAttribute( current, pinningType.PinnedAttributeSymbol, out _ ) ) {
+						var argSymbol = operation.Constructor.ContainingType.TypeArguments[i];
+						if( !PinnedAnalyzerHelper.HasAppropriateMustBePinnedAttribute( argSymbol, pinningType, out _ ) ) {
+							
+							var operationSymbol = model.GetSymbolInfo( syntax ).Symbol;
+							ISymbol definitionSymbol = current;
+
+							var matchingTypeArgument = operation.Arguments.SingleOrDefault( a => a.Type != null && a.Type.Equals( current, SymbolEqualityComparer.Default ) );
+
+
+							if( matchingTypeArgument != null ) {
+								var matchingInvocationArgument = operation.Arguments[operation.Arguments.IndexOf( matchingTypeArgument )];
+								ISymbol? symbol = model.GetSymbolInfo( matchingInvocationArgument.Value.Syntax ).Symbol;
+								if( symbol != null ) {
+									definitionSymbol = symbol;
 								}
-
-								var operationSymbol = model.GetSymbolInfo( syntax ).Symbol ;
-
-								var parentMethod = syntax.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
-
-								IEnumerable<ITypeSymbol> genericMethodArguments = Enumerable.Empty<ITypeSymbol>();
-								IEnumerable<ITypeSymbol> genericBaseTypeArguments = Enumerable.Empty<ITypeSymbol>();
-								IMethodSymbol? parentMethodSymbol = parentMethod != null ? model.GetDeclaredSymbol( parentMethod ) : null;
-
-								if( parentMethodSymbol != null ) {
-									genericMethodArguments = genericMethodArguments.Concat( parentMethodSymbol.TypeArguments );
-									if( parentMethodSymbol.ContainingType != null ) {
-										genericBaseTypeArguments = parentMethodSymbol.ContainingType.TypeArguments;
-									}
-								}
-
-								ISymbol definitionSymbol = current;
-
-								var matchingTypeArgument = operation.Arguments.SingleOrDefault( a => a.Type!= null && a.Type.Equals( current, SymbolEqualityComparer.Default ) );
-
-
-								if( matchingTypeArgument != null ) {
-									var matchingInvocationArgument = operation.Arguments[ operation.Arguments.IndexOf( matchingTypeArgument ) ];
-									ISymbol? symbol = model.GetSymbolInfo( matchingInvocationArgument.Value.Syntax ).Symbol;
-									if( symbol != null ) {
-										definitionSymbol = symbol;
-									}
-								}
-
-								ValidatePinning(
-									context: context,
-									pinLocation: syntax.GetLocation(),
-									pinnedAttributeSymbol: pinnedAttributeSymbol,
-									pinningType: pinningType,
-									argSymbol: argSymbol,
-									definitionSymbol: definitionSymbol,
-									isExemptFromPinning: isExemptFromPinning,
-									genericArguments: genericMethodArguments,
-									genericBaseArguments: genericBaseTypeArguments );
 							}
+
+							ValidatePinning(
+								context: context,
+								pinLocation: syntax.GetLocation(),
+								pinnedAttributeSymbol: pinnedAttributeSymbol,
+								pinningType: pinningType,
+								argSymbol: argSymbol,
+								definitionSymbol: definitionSymbol,
+								isExemptFromPinning: isExemptFromPinning,
+								genericArguments: genericMethodArguments,
+								genericBaseArguments: genericBaseTypeArguments );
 						}
 					}
 				}
 			}
 
 
+			// check constructor parameters
+			ImmutableArray<IParameterSymbol> constructorParameters = operation.Constructor.Parameters;
+			if(syntax.ArgumentList == null ) {
+				return;
+			}
+			foreach( var pinningType in mustBePinnedTypes ) {
+				for( int i = 0; i < constructorParameters.Length; i++ ) {
+					IParameterSymbol current = constructorParameters[i];
+					if( PinnedAnalyzerHelper.TryGetPinnedAttribute( current, pinningType.PinnedAttributeSymbol, out _ ) ) {
+					
+						ArgumentSyntax? arg = syntax.ArgumentList.Arguments.FirstOrDefault( a => a.NameColon?.ToString() == current.Name );
+
+						if( arg == null ) {
+							if( syntax.ArgumentList.Arguments.Count <= i ) {
+								continue;
+							}
+
+							arg = syntax.ArgumentList.Arguments[i];
+						}
+						if( arg == null ) {
+							continue;
+						}
+						var argSymbol = operation.Arguments.FirstOrDefault( a => current.Equals( a.Parameter, SymbolEqualityComparer.Default ) );
+
+						// fetch the variable definition
+						// the following operations require handling a wide variety of cases to accomplish the same thing without the semantic model
+						ISymbol? symbol = model.GetSymbolInfo( arg.Expression ).Symbol;
+						TypeInfo typeInfo = model.GetTypeInfo( arg.Expression );
+						(bool isPinned, ITypeSymbol? type) = CheckIfPinnedAndUpdateToUnderlyingType(
+								context,
+								ref symbol,
+								argSymbol,
+								arg.GetLocation(),
+								pinnedAttributeSymbol,
+								typeInfo,
+								pinningType
+							);
+						if( isPinned || symbol == null ) {
+							continue;
+						}
+						
+						if( type != null ) {
+							// if there isn't an appropriate MustBePinnedAttribute on it then check the type and all it's generic arguments
+							ValidatePinning(
+								context: context,
+								pinLocation: arg.GetLocation(),
+								pinnedAttributeSymbol: pinnedAttributeSymbol,
+								pinningType: pinningType,
+								argSymbol: type,
+								definitionSymbol: symbol,
+								isExemptFromPinning: isExemptFromPinning,
+								genericArguments: genericMethodArguments,
+								genericBaseArguments: genericBaseTypeArguments );
+
+						} else {
+							//context.ReportDiagnostic( Diagnostic.Create( pinningType.Descriptor, arg.GetLocation() ) );
+						}
+					}
+				}
+			}
 		}
 
 		private void AnalyzeInvocation(
@@ -419,41 +484,17 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 						// the following operations require handling a wide variety of cases to accomplish the same thing without the semantic model
 						ISymbol? symbol = model.GetSymbolInfo( arg.Expression ).Symbol;
 						TypeInfo typeInfo = model.GetTypeInfo( arg.Expression );
-
-						if( symbol == null ) {
-							// check for typeof(T)
-							if( symbol == null && argSymbol?.Value is ITypeOfOperation typeOp ) {
-								if( IsPinnedProperly( pinnedAttributeSymbol, pinningType, typeOp.TypeOperand ) ) {
-									continue;
-								}
-								symbol = typeOp.TypeOperand;
-								// check the result of casting or other non-obvious conversions
-							} else if( typeInfo.Type != null
-								&& IsPinnedProperly( pinnedAttributeSymbol, pinningType, typeInfo.Type ) ) {
-								continue;
-							}
-						}
-
-						if( symbol == null ) {
-							context.ReportDiagnostic( Diagnostic.Create( pinningType.Descriptor, arg.GetLocation() ) );
+						( bool isPinned, ITypeSymbol? type ) = CheckIfPinnedAndUpdateToUnderlyingType(
+								context,
+								ref symbol,
+								argSymbol,
+								arg.GetLocation(),
+								pinnedAttributeSymbol,
+								typeInfo,
+								pinningType
+							);
+						if( isPinned || symbol == null ) {
 							continue;
-						}
-
-						// if the appropriate MustBePinned attribute is on the definition of the variable in question then it's fine unless it has invalid type arguments
-						if( PinnedAnalyzerHelper.HasAppropriateMustBePinnedAttribute( symbol, pinningType, out _ ) ) {
-							INamedTypeSymbol? typeSymbol = symbol as INamedTypeSymbol;
-							if( typeSymbol is not { IsGenericType: true } ) {
-								continue;
-							}
-						}
-
-						// try getting the type from common ways the variable might be assigned
-						var parameterSymbol = symbol as IParameterSymbol;
-						ITypeSymbol? type = typeInfo.Type ?? parameterSymbol?.Type;
-						if( symbol is IFieldSymbol fieldSymbol ) {
-							type = fieldSymbol.Type;
-						} else if( symbol is IMethodSymbol methodParameterSymbol ) {
-							type = methodParameterSymbol.ReceiverType ?? methodParameterSymbol.ReturnType;
 						}
 
 						if( type != null ) {
@@ -476,6 +517,54 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 
 				}
 			}
+		}
+
+		private static (bool,ITypeSymbol? type)  CheckIfPinnedAndUpdateToUnderlyingType(
+			OperationAnalysisContext context,
+			ref ISymbol? symbol,
+			IArgumentOperation? argSymbol,
+			Location argLocation,
+			INamedTypeSymbol pinnedAttributeSymbol,
+			TypeInfo typeInfo,
+			MustBePinnedType pinningType
+		) {
+			if( symbol == null ) {
+				// check for typeof(T)
+				if( symbol == null && argSymbol?.Value is ITypeOfOperation typeOp ) {
+					if( IsPinnedProperly( pinnedAttributeSymbol, pinningType, typeOp.TypeOperand ) ) {
+						return (true, null);
+					}
+					symbol = typeOp.TypeOperand;
+					// check the result of casting or other non-obvious conversions
+				} else if( typeInfo.Type != null
+				           && IsPinnedProperly( pinnedAttributeSymbol, pinningType, typeInfo.Type ) ) {
+					return (true, null);
+				}
+			}
+
+			if( symbol == null ) {
+				context.ReportDiagnostic( Diagnostic.Create( pinningType.Descriptor, argLocation ) );
+				return (true, null);
+			}
+
+			// if the appropriate MustBePinned attribute is on the definition of the variable in question then it's fine unless it has invalid type arguments
+			if( PinnedAnalyzerHelper.HasAppropriateMustBePinnedAttribute( symbol, pinningType, out _ ) ) {
+				INamedTypeSymbol? typeSymbol = symbol as INamedTypeSymbol;
+				if( typeSymbol is not { IsGenericType: true } ) {
+					return (true, null);
+				}
+			}
+
+			// try getting the type from common ways the variable might be assigned
+			var parameterSymbol = symbol as IParameterSymbol;
+			ITypeSymbol? type = typeInfo.Type ?? parameterSymbol?.Type;
+			if( symbol is IFieldSymbol fieldSymbol ) {
+				type = fieldSymbol.Type;
+			} else if( symbol is IMethodSymbol methodParameterSymbol ) {
+				type = methodParameterSymbol.ReceiverType ?? methodParameterSymbol.ReturnType;
+			}
+
+			return (false, type);
 		}
 
 		private static bool ValidatePinning(
@@ -550,6 +639,7 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			if( !PinnedAnalyzerHelper.TryGetPinnedAttribute( argSymbol, pinnedAttributeSymbol, out AttributeData? attribute ) ) {
 				return false;
 			}
+			// recursive is sufficient for MustBePinned, but not MustBeDeserializable
 			if( !pinningType.Recursive ) {
 				return true;
 			}

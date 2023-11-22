@@ -103,7 +103,7 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 						}
 					}
 
-					AnalyzeTypeSymbol( context, pinnedAttributeSymbol, inAllowedList, typeSymbol, propertyDeclaration.GetLocation() );
+					AnalyzeTypeSymbol( context, pinnedAttributeSymbol, inAllowedList, typeSymbol, propertyDeclaration.GetLocation(), mustBePinnedSymbol, propertyDeclaration );
 				}
 			}
 
@@ -124,7 +124,7 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 						continue;
 					}
 
-					AnalyzeTypeSymbol( context, pinnedAttributeSymbol, inAllowedList, typeSymbol, parameter.GetLocation() );
+					AnalyzeTypeSymbol( context, pinnedAttributeSymbol, inAllowedList, typeSymbol, parameter.GetLocation(), mustBePinnedSymbol );
 				}
 			}
 		}
@@ -134,7 +134,10 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			INamedTypeSymbol pinnedAttributeSymbol,
 			Func<ITypeSymbol, bool> inAllowedList,
 			ITypeSymbol typeSymbol,
-			Location location ) {
+			Location location,
+			INamedTypeSymbol mustBePinnedSymbol,
+			PropertyDeclarationSyntax? propertyDeclarationSyntax = null
+			) {
 
 			if( PinnedAnalyzerHelper.IsExemptFromPinning( typeSymbol, inAllowedList, out ITypeSymbol actualType)) {
 				if( typeSymbol is INamedTypeSymbol namedTypeSymbol ) {
@@ -144,15 +147,64 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 							pinnedAttributeSymbol,
 							inAllowedList,
 							childType,
-							location );
+							location,
+							mustBePinnedSymbol);
 					}
 				}
 				return;
 			}
 
-			if( !PinnedAnalyzerHelper.IsRecursivelyPinned( actualType, pinnedAttributeSymbol ) ) {
-				context.ReportDiagnostic( Diagnostic.Create( Diagnostics.RecursivePinnedDescendantsMustBeRecursivelyPinned, location, typeSymbol.Name ) );
+			if( PinnedAnalyzerHelper.IsRecursivelyPinned( actualType, pinnedAttributeSymbol ) ) {
+				return;
 			}
+
+			// this check is expensive, but should be extremely rare
+			if( propertyDeclarationSyntax is not null ) {
+				var propertySymbol = context.SemanticModel.GetDeclaredSymbol( propertyDeclarationSyntax );
+				if( propertySymbol is not null && propertySymbol.IsReadOnly ) {
+					if( AnalyzeConstructorAssignmentsToReadonlyProperty( context, propertySymbol, pinnedAttributeSymbol, mustBePinnedSymbol ) ) {
+						return;
+					}
+				}
+			}
+
+			context.ReportDiagnostic( Diagnostic.Create( Diagnostics.RecursivePinnedDescendantsMustBeRecursivelyPinned, location, typeSymbol.Name ) );
+		}
+
+		private static bool AnalyzeConstructorAssignmentsToReadonlyProperty(
+			SyntaxNodeAnalysisContext context,
+			IPropertySymbol propertySymbol,
+			INamedTypeSymbol pinnedAttributeSymbol,
+			INamedTypeSymbol mustBePinnedSymbol) {
+			INamedTypeSymbol containingType = propertySymbol.ContainingType;
+			bool allConstructorsSafe = containingType.Constructors.Any();
+			foreach( IMethodSymbol constructor in containingType.Constructors ) {
+				bool currentSafe = false;
+				// Analyze the constructor's body
+				foreach( SyntaxNode node in constructor.DeclaringSyntaxReferences.SelectMany( syntaxRef => syntaxRef.GetSyntax().DescendantNodes() ) ) {
+					// Find assignment expressions
+					
+					if( node is AssignmentExpressionSyntax assignment &&
+					    assignment.Left is IdentifierNameSyntax leftIdentifier &&
+					    leftIdentifier.Identifier.ValueText == propertySymbol.Name ) {
+						
+						// Check if the right-hand side of the assignment is a parameter
+						if( assignment.Right is IdentifierNameSyntax rightIdentifier &&
+						    constructor.Parameters.Any( p => p.Name == rightIdentifier.Identifier.ValueText ) ) {
+							IParameterSymbol parameterSymbol = constructor.Parameters.First( p => p.Name == rightIdentifier.Identifier.ValueText );
+							var hasMustBeDeserializable = PinnedAnalyzerHelper.TryGetPinnedAttribute( parameterSymbol, mustBePinnedSymbol, out _ );
+							if( PinnedAnalyzerHelper.IsRecursivelyPinned( parameterSymbol.Type, pinnedAttributeSymbol )
+								|| hasMustBeDeserializable  ) {
+								currentSafe = true;
+							}
+						}
+					}
+				}
+				if( !currentSafe ) {
+					allConstructorsSafe = false;
+				}
+			}
+			return allConstructorsSafe;
 		}
 
 		private static bool InheritsFromRecursivelyPinned( SyntaxNodeAnalysisContext context, INamedTypeSymbol classSymbol, INamedTypeSymbol pinnedAttributeSymbol ) {
