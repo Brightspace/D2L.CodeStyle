@@ -12,7 +12,33 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 		public const string PinnedAttributeName = "D2L.CodeStyle.Annotations.Pinning.PinnedAttribute";
 		public const string MustBeDeserializableAttributeName = "D2L.CodeStyle.Annotations.Pinning.MustBeDeserializableAttribute";
 		public const string MustBePinnedAttributeName = "D2L.CodeStyle.Annotations.Pinning.MustBePinnedAttribute";
+		public const string ReflectionSerializerAttributeName = "D2L.LP.Serialization.ReflectionSerializerAttribute";
+		public const string SerializerAttributeName = "D2L.LP.Serialization.SerializerAttribute";
 
+		internal static MustBePinnedType? GetMustBePinnedType(Compilation compilation, bool recursive) {
+			INamedTypeSymbol? recursiveSymbol = compilation.GetTypeByMetadataName( MustBeDeserializableAttributeName );
+			INamedTypeSymbol? plainSymbol = compilation.GetTypeByMetadataName( MustBePinnedAttributeName );
+
+			if( recursiveSymbol == null || plainSymbol == null ) {
+				return null;
+			}
+
+			if(!recursive) {
+				return new MustBePinnedType( plainSymbol, false, Diagnostics.MustBePinnedRequiresPinned, Diagnostics.ArgumentShouldBeMustBePinned, recursiveSymbol );
+			}
+
+			List<INamedTypeSymbol> alternates = new List<INamedTypeSymbol>();
+			INamedTypeSymbol? reflectionSerializerSymbol = compilation.GetTypeByMetadataName( ReflectionSerializerAttributeName );
+			if(reflectionSerializerSymbol != null) {
+				alternates.Add(reflectionSerializerSymbol);
+			}
+			INamedTypeSymbol? serializerSymbol = compilation.GetTypeByMetadataName( SerializerAttributeName );
+			if( serializerSymbol != null ) {
+				alternates.Add( serializerSymbol );
+			}
+
+			return new MustBePinnedType( recursiveSymbol, true, Diagnostics.MustBeDeserializableRequiresAppropriateAttribute, Diagnostics.ArgumentShouldBeDeserializable, alternates.ToArray() );
+		}
 		public static bool TryGetPinnedAttribute( ISymbol classSymbol, INamedTypeSymbol pinnedAttributeSymbol, out AttributeData? attribute ) {
 			attribute = null;
 
@@ -27,13 +53,34 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			return false;
 		}
 
+		internal static bool IsPinnedProperly( ISymbol classSymbol, INamedTypeSymbol pinnedSymbol, MustBePinnedType pinningType ) {
+
+			foreach( var attributeData in classSymbol.GetAttributes() ) {
+				var attributeSymbol = attributeData.AttributeClass;
+				if( pinnedSymbol.Equals( attributeSymbol, SymbolEqualityComparer.Default )
+					) {
+					if(!pinningType.Recursive) {
+						return true;
+					}
+					bool isRecursive = (bool)attributeData?.ConstructorArguments[2].Value!;
+					return isRecursive;
+				}
+
+				if(pinningType.AlternatePinnedAttributes.Any( a => a.Equals( attributeSymbol, SymbolEqualityComparer.Default ) )) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
 		internal static bool HasAppropriateMustBePinnedAttribute( ISymbol symbol, MustBePinnedType pinningType, out AttributeData? attribute ) {
 			attribute = null;
 			var attributes = symbol.GetAttributes();
 			foreach( var attributeData in  attributes) {
 				var attributeSymbol = attributeData.AttributeClass;
 				if( pinningType.PinnedAttributeSymbol.Equals( attributeSymbol, SymbolEqualityComparer.Default )
-					|| ( pinningType.AlternatePinnedAttribute != null && pinningType.AlternatePinnedAttribute.Equals(attributeSymbol, SymbolEqualityComparer.Default))) {
+					|| pinningType.AlternatePinnedAttributes.Any(a => a.Equals(attributeSymbol, SymbolEqualityComparer.Default))) {
 					attribute = attributeData;
 					return true;
 				}

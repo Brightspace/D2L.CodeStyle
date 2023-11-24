@@ -13,7 +13,7 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 	internal sealed class MustBeDeserializableAnalyzer : DiagnosticAnalyzer {
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-			Diagnostics.MustBeDeserializableRequiresRecursivelyPinned,
+			Diagnostics.MustBeDeserializableRequiresAppropriateAttribute,
 			Diagnostics.MustBePinnedRequiresPinned,
 			Diagnostics.ArgumentShouldBeMustBePinned,
 			Diagnostics.ArgumentShouldBeDeserializable,
@@ -30,14 +30,17 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 		private void OnCompilationStart(
 			CompilationStartAnalysisContext context
 		) {
-			INamedTypeSymbol? plain = context.Compilation.GetTypeByMetadataName(PinnedAnalyzerHelper.MustBePinnedAttributeName );
-			INamedTypeSymbol? recursive = context.Compilation.GetTypeByMetadataName( PinnedAnalyzerHelper.MustBeDeserializableAttributeName );
-
+			var plain = PinnedAnalyzerHelper.GetMustBePinnedType( context.Compilation, false );
+			var recursive = PinnedAnalyzerHelper.GetMustBePinnedType( context.Compilation, true );
+			
 			if( recursive != null
 				&& plain != null ) {
+
+				var altPlain = new MustBePinnedType( plain.PinnedAttributeSymbol, false, Diagnostics.MustBePinnedRequiresPinned, Diagnostics.ArgumentShouldBeMustBePinned, recursive.PinnedAttributeSymbol );
+				var altRec = new MustBePinnedType( recursive.PinnedAttributeSymbol, true, Diagnostics.MustBeDeserializableRequiresAppropriateAttribute, Diagnostics.ArgumentShouldBeDeserializable );
 				ImmutableList<MustBePinnedType>? mustBePinnedTypes = ImmutableList.Create(
-					new MustBePinnedType( plain, false, Diagnostics.MustBePinnedRequiresPinned, Diagnostics.ArgumentShouldBeMustBePinned, recursive ),
-					new MustBePinnedType( recursive, true, Diagnostics.MustBeDeserializableRequiresRecursivelyPinned, Diagnostics.ArgumentShouldBeDeserializable, null )
+					plain,
+					recursive
 				);
 				var additionalFiles = context.Options.AdditionalFiles;
 				context.RegisterOperationAction( ( ctx ) =>
@@ -636,15 +639,8 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			if( pinnedAttributeSymbol.TypeKind == TypeKind.TypeParameter ) {
 				return true;
 			}
-			if( !PinnedAnalyzerHelper.TryGetPinnedAttribute( argSymbol, pinnedAttributeSymbol, out AttributeData? attribute ) ) {
-				return false;
-			}
-			// recursive is sufficient for MustBePinned, but not MustBeDeserializable
-			if( !pinningType.Recursive ) {
-				return true;
-			}
-			bool isRecursive = (bool)attribute?.ConstructorArguments[2].Value!;
-			return isRecursive;
+
+			return PinnedAnalyzerHelper.IsPinnedProperly( argSymbol, pinnedAttributeSymbol, pinningType ); 
 		}
 	}
 }

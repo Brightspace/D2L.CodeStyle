@@ -47,7 +47,11 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 				return;
 			}
 
-			var pinningType = new MustBePinnedType( mustBePinnedSymbol, true, Diagnostics.MustBeDeserializableRequiresRecursivelyPinned, Diagnostics.ArgumentShouldBeDeserializable, null );
+			var pinningType = PinnedAnalyzerHelper.GetMustBePinnedType( context.Compilation, true );
+
+			if( pinningType == null ) {
+				return;
+			}
 
 			var classSymbol = context.SemanticModel.GetDeclaredSymbol( baseDeclaration );
 			if( classSymbol == null ) {

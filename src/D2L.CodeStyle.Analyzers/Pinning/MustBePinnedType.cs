@@ -7,6 +7,6 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 		bool Recursive,
 		DiagnosticDescriptor Descriptor,
 		DiagnosticDescriptor ParameterShouldBeChangedDescriptor,
-		INamedTypeSymbol? AlternatePinnedAttribute);
+		params INamedTypeSymbol[] AlternatePinnedAttributes);
 
 }
