@@ -36,8 +36,6 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			if( recursive != null
 				&& plain != null ) {
 
-				var altPlain = new MustBePinnedType( plain.PinnedAttributeSymbol, false, Diagnostics.MustBePinnedRequiresPinned, Diagnostics.ArgumentShouldBeMustBePinned, recursive.PinnedAttributeSymbol );
-				var altRec = new MustBePinnedType( recursive.PinnedAttributeSymbol, true, Diagnostics.MustBeDeserializableRequiresAppropriateAttribute, Diagnostics.ArgumentShouldBeDeserializable );
 				ImmutableList<MustBePinnedType>? mustBePinnedTypes = ImmutableList.Create(
 					plain,
 					recursive
@@ -83,8 +81,8 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			// check generic type arguments
 			for( int i = 0; i < symbol.TypeArguments.Length; i++ ) {
 				foreach( var pinnedSymbol in mustBePinnedTypes ) {
-					if( PinnedAnalyzerHelper.TryGetPinnedAttribute( symbol.TypeArguments[i], pinnedSymbol.PinnedAttributeSymbol, out _ ) ) {
-						if( !PinnedAnalyzerHelper.TryGetPinnedAttribute( interfaceMethod.TypeArguments[i], pinnedSymbol.PinnedAttributeSymbol, out _ ) ) {
+					if( PinnedAnalyzerHelper.TryGetPinnedAttribute( symbol.TypeArguments[i], pinnedSymbol.MustBePinnedAttribute, out _ ) ) {
+						if( !PinnedAnalyzerHelper.TryGetPinnedAttribute( interfaceMethod.TypeArguments[i], pinnedSymbol.MustBePinnedAttribute, out _ ) ) {
 							context.ReportDiagnostic( Diagnostic.Create( Diagnostics.PinningAttributesShouldBeInTheInterfaceIfInImplementations, symbol.TypeArguments[i].Locations.FirstOrDefault() ));
 						}
 					}
@@ -93,8 +91,8 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			// check method parameters
 			for( int i = 0; i < symbol.Parameters.Length; i++ ) {
 				foreach( var pinnedSymbol in mustBePinnedTypes ) {
-					if( PinnedAnalyzerHelper.TryGetPinnedAttribute( symbol.Parameters[i], pinnedSymbol.PinnedAttributeSymbol, out _ ) ) {
-						if( !PinnedAnalyzerHelper.TryGetPinnedAttribute( interfaceMethod.Parameters[i], pinnedSymbol.PinnedAttributeSymbol, out _ ) ) {
+					if( PinnedAnalyzerHelper.TryGetPinnedAttribute( symbol.Parameters[i], pinnedSymbol.MustBePinnedAttribute, out _ ) ) {
+						if( !PinnedAnalyzerHelper.TryGetPinnedAttribute( interfaceMethod.Parameters[i], pinnedSymbol.MustBePinnedAttribute, out _ ) ) {
 							context.ReportDiagnostic( Diagnostic.Create( Diagnostics.PinningAttributesShouldBeInTheInterfaceIfInImplementations, symbol.Parameters[i].Locations.FirstOrDefault() ));
 						}
 					}
@@ -174,7 +172,7 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			}
 
 			foreach( var pinningType in mustBePinnedTypes ) {
-				if( PinnedAnalyzerHelper.TryGetPinnedAttribute( type, pinningType.PinnedAttributeSymbol, out _ ) ) {
+				if( PinnedAnalyzerHelper.TryGetPinnedAttribute( type, pinningType.MustBePinnedAttribute, out _ ) ) {
 
 					var definitionSymbol = model.GetSymbolInfo( assignmentOperation.Value.Syntax ).Symbol;
 					var argSymbol = assignmentOperation.Value.Type;
@@ -269,7 +267,7 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			foreach( var pinningType in mustBePinnedTypes ) {
 				for( int i = 0; i < originalTypeArgs.Length; i++ ) {
 					var current = originalTypeArgs[i];
-					if( PinnedAnalyzerHelper.TryGetPinnedAttribute( current, pinningType.PinnedAttributeSymbol, out _ ) ) {
+					if( PinnedAnalyzerHelper.TryGetPinnedAttribute( current, pinningType.MustBePinnedAttribute, out _ ) ) {
 						var argSymbol = operation.Constructor.ContainingType.TypeArguments[i];
 						if( !PinnedAnalyzerHelper.HasAppropriateMustBePinnedAttribute( argSymbol, pinningType, out _ ) ) {
 							
@@ -311,7 +309,7 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			foreach( var pinningType in mustBePinnedTypes ) {
 				for( int i = 0; i < constructorParameters.Length; i++ ) {
 					IParameterSymbol current = constructorParameters[i];
-					if( PinnedAnalyzerHelper.TryGetPinnedAttribute( current, pinningType.PinnedAttributeSymbol, out _ ) ) {
+					if( PinnedAnalyzerHelper.TryGetPinnedAttribute( current, pinningType.MustBePinnedAttribute, out _ ) ) {
 					
 						ArgumentSyntax? arg = syntax.ArgumentList.Arguments.FirstOrDefault( a => a.NameColon?.ToString() == current.Name );
 
@@ -425,7 +423,7 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 				// check for generic arguments that must be pinned from the invoked method
 				foreach( ITypeSymbol invokedMethodTypeArgument in methodSymbol.OriginalDefinition.TypeArguments ) {
 					foreach( MustBePinnedType pinningType in mustBePinnedTypes ) {
-						if( PinnedAnalyzerHelper.TryGetPinnedAttribute( invokedMethodTypeArgument, pinningType.PinnedAttributeSymbol, out _ ) ) {
+						if( PinnedAnalyzerHelper.TryGetPinnedAttribute( invokedMethodTypeArgument, pinningType.MustBePinnedAttribute, out _ ) ) {
 							// find the matching type parameter from the invocation
 
 							int argIndex = methodSymbol.OriginalDefinition.TypeArguments.IndexOf( invokedMethodTypeArgument );
@@ -465,7 +463,7 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			foreach( IParameterSymbol argument in methodSymbol.OriginalDefinition.Parameters ) {
 				SeparatedSyntaxList<ArgumentSyntax> arguments = invocation.ArgumentList.Arguments;
 				foreach( MustBePinnedType pinningType in mustBePinnedTypes ) {
-					if( PinnedAnalyzerHelper.TryGetPinnedAttribute( argument, pinningType.PinnedAttributeSymbol, out _ ) ) {
+					if( PinnedAnalyzerHelper.TryGetPinnedAttribute( argument, pinningType.MustBePinnedAttribute, out _ ) ) {
 						// find the matching type parameter
 						int argIndex = methodSymbol.OriginalDefinition.Parameters.IndexOf( argument );
 
@@ -534,13 +532,13 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			if( symbol == null ) {
 				// check for typeof(T)
 				if( symbol == null && argSymbol?.Value is ITypeOfOperation typeOp ) {
-					if( IsPinnedProperly( pinnedAttributeSymbol, pinningType, typeOp.TypeOperand ) ) {
+					if( IsDeserializable( pinnedAttributeSymbol, pinningType, typeOp.TypeOperand ) ) {
 						return (true, null);
 					}
 					symbol = typeOp.TypeOperand;
 					// check the result of casting or other non-obvious conversions
 				} else if( typeInfo.Type != null
-				           && IsPinnedProperly( pinnedAttributeSymbol, pinningType, typeInfo.Type ) ) {
+				           && IsDeserializable( pinnedAttributeSymbol, pinningType, typeInfo.Type ) ) {
 					return (true, null);
 				}
 			}
@@ -614,7 +612,7 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 				// if there's a concrete type that isn't pinned then mark the location given
 				} else if( !unpinnedArgument
 					&& !isExemptFromPinning( current )
-					&& !IsPinnedProperly( pinnedAttributeSymbol, pinningType, current ) ) {
+					&& !IsDeserializable( pinnedAttributeSymbol, pinningType, current ) ) {
 					if( definitionSymbol is IParameterSymbol ) {
 						if( !PinnedAnalyzerHelper.HasAppropriateMustBePinnedAttribute( definitionSymbol, pinningType, out _ ) ) {
 							context.ReportDiagnostic( Diagnostic.Create( pinningType.ParameterShouldBeChangedDescriptor, definitionSymbol.Locations.First() ) );
@@ -635,12 +633,12 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			return unpinnedArgument;
 		}
 
-		private static bool IsPinnedProperly( INamedTypeSymbol pinnedAttributeSymbol, MustBePinnedType pinningType, ITypeSymbol argSymbol ) {
+		private static bool IsDeserializable( INamedTypeSymbol pinnedAttributeSymbol, MustBePinnedType pinningType, ITypeSymbol argSymbol ) {
 			if( pinnedAttributeSymbol.TypeKind == TypeKind.TypeParameter ) {
 				return true;
 			}
 
-			return PinnedAnalyzerHelper.IsPinnedProperly( argSymbol, pinnedAttributeSymbol, pinningType ); 
+			return PinnedAnalyzerHelper.IsDeserializable( argSymbol, pinningType ); 
 		}
 	}
 }

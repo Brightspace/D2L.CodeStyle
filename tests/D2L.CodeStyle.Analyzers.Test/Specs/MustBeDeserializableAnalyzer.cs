@@ -45,10 +45,10 @@ namespace D2L.Pinning.MustBeDeserializable.Test {
 		public const string AssemblyName = "PinnedAttributeAnalyzer";
 	}
 
-	[Pinned( fullyQualifiedName: "D2L.Pinning.MustBeDeserializable.Test.EmptyGenericPinnedRecursively<T>", assembly: "RecursivelyPinnedAnalyzer", pinnedRecursively: true )]
+	[ReflectionSerializer]
 	public class EmptyGenericPinnedRecursively<T> { }
 
-	[Pinned( fullyQualifiedName: "D2L.Pinning.MustBeDeserializable.Test.EmptyMultiParamGenericPinnedRecursively<T,U>", assembly: "RecursivelyPinnedAnalyzer", pinnedRecursively: true )]
+	[ReflectionSerializer]
 	public class EmptyMultiParamGenericPinnedRecursively<T, U> { }
 
 	public class EmptyGenericNotPinned<T> { }
@@ -64,7 +64,7 @@ namespace D2L.Pinning.MustBeDeserializable.Test {
 	}
 
 
-	[Pinned( fullyQualifiedName: "D2L.Pinning.Recursive.Test.EmptyPinnedRecursively", assembly: "RecursivelyPinnedAnalyzer", pinnedRecursively: true )]
+	[ReflectionSerializer]
 	public class EmptyPinnedRecursively { }
 
 	[ReflectionSerializer]
@@ -256,7 +256,7 @@ namespace D2L.Pinning.MustBeDeserializable.Test {
 namespace D2L.Pinning.MustBeDeserializable.System.Types.Test {
 	internal sealed class NotPinned {};
 
-	[Pinned( "D2L.Pinning.MustBeDeserializable.System.Types.Test.Pinned", "", true)]
+	[ReflectionSerializer]
 	internal sealed class Pinned {}
 
 	internal sealed class TestClass {
@@ -272,7 +272,7 @@ namespace D2L.Pinning.MustBeDeserializable.System.Types.Test {
 // the following tests check that generic classes with MustBeDeserializable enforce setting of values related to that type are set to MustBeDeserializable
 namespace D2L.Pinning.MustBeDeserializable.Recursive.Test {
 	internal sealed class TestRecord {
-		[Pinned( fullyQualifiedName: "D2L.Pinning.MustBeDeserializable.Recursive.Test.MustBeDeserializableObjectRecord<T>", assembly: Constants.AssemblyName, pinnedRecursively: true )]
+		[ReflectionSerializer]
 		private sealed record MustBeDeserializableObjectRecord<[MustBeDeserializable] T>( T Value );
 		public void UnsafeCall( object o ) {
 			var unsafeVal = /* MustBeDeserializableRequiresAppropriateAttribute() */ new MustBeDeserializableObjectRecord<object>( o ) /**/;
@@ -287,7 +287,7 @@ namespace D2L.Pinning.MustBeDeserializable.Recursive.Test {
 		}
 	}
 
-	[Pinned( fullyQualifiedName: "D2L.Pinning.Recursive.Test.GenericPinnedRecursivelyWithoutMustBeDeserializableConstructor<T>", assembly: Constants.AssemblyName, pinnedRecursively: true )]
+	[ReflectionSerializer]
 	public class GenericPinnedRecursivelyWithoutMustBeDeserializableConstructor<[MustBeDeserializable] T> {
 		public GenericPinnedRecursivelyWithoutMustBeDeserializableConstructor(
 			 T /* ArgumentShouldBeDeserializable() */ value /**/ ) {
@@ -300,7 +300,7 @@ namespace D2L.Pinning.MustBeDeserializable.Recursive.Test {
 		}
 	}
 
-	[Pinned( fullyQualifiedName: "D2L.Pinning.Recursive.Test.GenericPinnedRecursivelyWithoutMustBePinnedConstructor<T>", assembly: Constants.AssemblyName, pinnedRecursively: true )]
+	[ReflectionSerializer]
 	public class GenericPinnedRecursivelyWithMustBeDeserializableConstructor<[MustBeDeserializable] T> {
 		public GenericPinnedRecursivelyWithMustBeDeserializableConstructor(
 			[MustBeDeserializable] T value ) {
@@ -314,7 +314,7 @@ namespace D2L.Pinning.MustBeDeserializable.Recursive.Test {
 		}
 	}
 
-	[Pinned( fullyQualifiedName: "D2L.Pinning.Recursive.Test.PinnedRecursivelyWithMustBeDeserializableConstructor", assembly: Constants.AssemblyName, pinnedRecursively: true )]
+	[ReflectionSerializer]
 	public class PinnedRecursivelyWithMustBeDeserializableConstructor {
 		public PinnedRecursivelyWithMustBeDeserializableConstructor(
 			[MustBeDeserializable] object value ) {

@@ -20,7 +20,6 @@
 
   <ItemGroup>
     <Compile Remove="Specs\*" />
-    <Compile Include="Specs\MustBe*" />
     <EmbeddedResource Include="Specs\*" />
   </ItemGroup>
 

@@ -11,12 +11,10 @@ namespace D2L.CodeStyle.Annotations.Pinning {
 	public sealed class PinnedAttribute : Attribute {
 		public string FullyQualifiedName { get; }
 		public string Assembly { get; }
-		public bool PinnedRecursively { get; }
 
-		public PinnedAttribute( string fullyQualifiedName, string assembly, bool pinnedRecursively = false ) {
+		public PinnedAttribute( string fullyQualifiedName, string assembly ) {
 			FullyQualifiedName = fullyQualifiedName;
 			Assembly = assembly;
-			PinnedRecursively = pinnedRecursively;
 		}
 	}
 }

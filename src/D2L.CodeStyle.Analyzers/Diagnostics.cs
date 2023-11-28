@@ -780,7 +780,7 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true
 		);
 
-		public static readonly DiagnosticDescriptor RecursivePinnedDescendantsMustBeRecursivelyPinned = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor ReflectionSerializerDescendantsMustBeDeserializable = new DiagnosticDescriptor(
 			id: "D2L0103",
 			title: "Must be deserializable",
 			messageFormat: "Descendants of ReflectionSerializer must be deserializable",

@@ -3,10 +3,10 @@
 namespace D2L.CodeStyle.Analyzers.Pinning {
 
 	internal record MustBePinnedType(
-		INamedTypeSymbol PinnedAttributeSymbol,
+		INamedTypeSymbol MustBePinnedAttribute,
 		bool Recursive,
 		DiagnosticDescriptor Descriptor,
 		DiagnosticDescriptor ParameterShouldBeChangedDescriptor,
-		params INamedTypeSymbol[] AlternatePinnedAttributes);
+		params INamedTypeSymbol[] ValidAttributes);
 
 }

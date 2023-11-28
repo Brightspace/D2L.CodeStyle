@@ -23,21 +23,30 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 				return null;
 			}
 
-			if(!recursive) {
-				return new MustBePinnedType( plainSymbol, false, Diagnostics.MustBePinnedRequiresPinned, Diagnostics.ArgumentShouldBeMustBePinned, recursiveSymbol );
+			List<INamedTypeSymbol> validAttributes = new List<INamedTypeSymbol>();
+			INamedTypeSymbol? reflectionSerializerSymbol = compilation.GetTypeByMetadataName( ReflectionSerializerAttributeName );
+			if( reflectionSerializerSymbol == null ) {
+				return null;
 			}
 
-			List<INamedTypeSymbol> alternates = new List<INamedTypeSymbol>();
-			INamedTypeSymbol? reflectionSerializerSymbol = compilation.GetTypeByMetadataName( ReflectionSerializerAttributeName );
-			if(reflectionSerializerSymbol != null) {
-				alternates.Add(reflectionSerializerSymbol);
+			if(!recursive) {
+				INamedTypeSymbol? pinnedSymbol = compilation.GetTypeByMetadataName( PinnedAttributeName );
+				if(pinnedSymbol == null ) {
+					return null;
+				}
+				return new MustBePinnedType( plainSymbol, false, Diagnostics.MustBePinnedRequiresPinned, Diagnostics.ArgumentShouldBeMustBePinned, pinnedSymbol, reflectionSerializerSymbol );
 			}
+
+			
+
+			validAttributes.Add(reflectionSerializerSymbol);
+			
 			INamedTypeSymbol? serializerSymbol = compilation.GetTypeByMetadataName( SerializerAttributeName );
 			if( serializerSymbol != null ) {
-				alternates.Add( serializerSymbol );
+				validAttributes.Add( serializerSymbol );
 			}
 
-			return new MustBePinnedType( recursiveSymbol, true, Diagnostics.MustBeDeserializableRequiresAppropriateAttribute, Diagnostics.ArgumentShouldBeDeserializable, alternates.ToArray() );
+			return new MustBePinnedType( recursiveSymbol, true, Diagnostics.MustBeDeserializableRequiresAppropriateAttribute, Diagnostics.ArgumentShouldBeDeserializable, validAttributes.ToArray() );
 		}
 		public static bool TryGetPinnedAttribute( ISymbol classSymbol, INamedTypeSymbol pinnedAttributeSymbol, out AttributeData? attribute ) {
 			attribute = null;
@@ -53,34 +62,15 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			return false;
 		}
 
-		internal static bool IsPinnedProperly( ISymbol classSymbol, INamedTypeSymbol pinnedSymbol, MustBePinnedType pinningType ) {
-
-			foreach( var attributeData in classSymbol.GetAttributes() ) {
-				var attributeSymbol = attributeData.AttributeClass;
-				if( pinnedSymbol.Equals( attributeSymbol, SymbolEqualityComparer.Default )
-					) {
-					if(!pinningType.Recursive) {
-						return true;
-					}
-					bool isRecursive = (bool)attributeData?.ConstructorArguments[2].Value!;
-					return isRecursive;
-				}
-
-				if(pinningType.AlternatePinnedAttributes.Any( a => a.Equals( attributeSymbol, SymbolEqualityComparer.Default ) )) {
-					return true;
-				}
-			}
-
-			return false;
-		}
+	
 
 		internal static bool HasAppropriateMustBePinnedAttribute( ISymbol symbol, MustBePinnedType pinningType, out AttributeData? attribute ) {
 			attribute = null;
 			var attributes = symbol.GetAttributes();
 			foreach( var attributeData in  attributes) {
 				var attributeSymbol = attributeData.AttributeClass;
-				if( pinningType.PinnedAttributeSymbol.Equals( attributeSymbol, SymbolEqualityComparer.Default )
-					|| pinningType.AlternatePinnedAttributes.Any(a => a.Equals(attributeSymbol, SymbolEqualityComparer.Default))) {
+				if( pinningType.MustBePinnedAttribute.Equals( attributeSymbol, SymbolEqualityComparer.Default )
+					|| pinningType.ValidAttributes.Any(a => a.Equals(attributeSymbol, SymbolEqualityComparer.Default))) {
 					attribute = attributeData;
 					return true;
 				}
@@ -89,13 +79,16 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			return false;
 		}
 
-		public static bool IsRecursivelyPinned( ISymbol classSymbol, INamedTypeSymbol pinnedAttributeSymbol ) {
-			if( !TryGetPinnedAttribute( classSymbol, pinnedAttributeSymbol, out AttributeData? attributeData ) ) {
-				return false;
+		internal static bool IsDeserializable( ISymbol classSymbol, MustBePinnedType pinningType ) {
+			foreach( var attributeData in classSymbol.GetAttributes() ) {
+				var attributeSymbol = attributeData.AttributeClass;
+				
+				if( pinningType.ValidAttributes.Any( a => a.Equals( attributeSymbol, SymbolEqualityComparer.Default ) ) ) {
+					return true;
+				}
 			}
-			object parameterValue = attributeData!.ConstructorArguments[2].Value!;
 
-			return (bool)parameterValue;
+			return false;
 		}
 
 		public static Func<ITypeSymbol, bool> AllowedUnpinnedTypes(ImmutableArray<AdditionalText> additionalFiles, Compilation compilation) {

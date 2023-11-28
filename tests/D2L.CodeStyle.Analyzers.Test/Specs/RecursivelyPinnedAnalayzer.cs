@@ -1,59 +1,96 @@
-// analyzer: D2L.CodeStyle.Analyzers.Pinning.RecursivelyPinnedAnalyzer
+// analyzer: D2L.CodeStyle.Analyzers.Pinning.RecursivelyDeserializableAnalyzer
 
+using System;
 using System.Collections.Generic;
 using D2L.CodeStyle.Annotations.Pinning;
 
+using D2L.LP.Serialization;
+
+namespace D2L.LP.Serialization {
+
+	[AttributeUsage(
+		AttributeTargets.Class,
+		AllowMultiple = false,
+		Inherited = false
+	)]
+	public sealed class ReflectionSerializerAttribute : Attribute {
+	}
+
+	[AttributeUsage(
+			AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Enum | AttributeTargets.Interface,
+			AllowMultiple = false,
+			Inherited = false
+	)]
+	public sealed class SerializerAttribute : Attribute {
+
+		private readonly Type m_type;
+
+		public SerializerAttribute( Type type ) {
+
+			if( type == null ) {
+				throw new ArgumentNullException( nameof( type ) );
+			}
+
+			m_type = type;
+		}
+
+		public Type Type {
+			get { return m_type; }
+		}
+	}
+}
+
 namespace D2L.Pinning.Recursive.Test {
 
-	[Pinned(fullyQualifiedName: "D2L.Pinning.Recursive.Test.EmptyPinnedNotRecursively", assembly: "RecursivelyPinnedAnalyzer", pinnedRecursively: false)]
+	[ReflectionSerializer]
 	public class EmptyPinnedNotRecursively {}
 
-	[Pinned(fullyQualifiedName: "D2L.Pinning.Recursive.Test.EmptyPinnedRecursively", assembly: "RecursivelyPinnedAnalyzer", pinnedRecursively: true)]
+	[ReflectionSerializer]
 	public class EmptyPinnedRecursively {}
 
-	[Pinned(fullyQualifiedName: "D2L.Pinning.Recursive.Test.EmptyGenericPinnedRecursively<T>", assembly: "RecursivelyPinnedAnalyzer", pinnedRecursively: true)]
+	[ReflectionSerializer]
 	public class EmptyGenericPinnedRecursively<T> {}
 
-	[Pinned( fullyQualifiedName: "D2L.Pinning.Recursive.Test.PinnedRecursivelyWithBasicTypes", assembly: "RecursivelyPinnedAnalyzer", pinnedRecursively: true )]
+	[ReflectionSerializer]
 	public class PinnedRecursivelyWithSafeTypes {
 		public int ThisIsFine { get; }
 		public string ThisIsAFineString { get; }
 	}
 
-	[Pinned( fullyQualifiedName: "D2L.Pinning.Recursive.Test.PinnedRecursivelyWithUnsafeTypes", assembly: "RecursivelyPinnedAnalyzer", pinnedRecursively: true )]
+	[ReflectionSerializer]
 	public class PinnedRecursivelyWithUnsafeTypes {
-		/* RecursivePinnedDescendantsMustBeRecursivelyPinned() */ public object ThisIsNotFine { get; set; }/**/
-		/* RecursivePinnedDescendantsMustBeRecursivelyPinned() */ public Dictionary<string, object>  ThisIsNotAFineDictionary { get; set; }/**/
+		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public object ThisIsNotFine { get; set; }/**/
+		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public Dictionary<string, object>  ThisIsNotAFineDictionary { get; set; }/**/
 	}
 
-	[Pinned( fullyQualifiedName: "D2L.Pinning.Recursive.Test.PinnedRecursivelyWithBasicTypesInAllowedTypes", assembly: "RecursivelyPinnedAnalyzer", pinnedRecursively: true )]
+	[ReflectionSerializer]
 	public class PinnedRecursivelyWithBasicTypesInAllowedTypes {
 		public Dictionary<string, string> ThisIsAFineDictionary { get; }
 	}
 
 	// The following go hand-in-hand with the MustBeDeserializable analysis to ensure the sets are safe
-	[Pinned( fullyQualifiedName: "D2L.Pinning.Recursive.Test.NotDeserializableObjectRecord<T>", assembly: "RecursivelyPinnedAnalyzer", pinnedRecursively: true )]
+	[ReflectionSerializer]
 	public sealed record UnsafeRecord<T>(
-		/* RecursivePinnedDescendantsMustBeRecursivelyPinned() */ T Value /**/,
-		/* RecursivePinnedDescendantsMustBeRecursivelyPinned() */ object O /**/);
+		/* ReflectionSerializerDescendantsMustBeDeserializable() */ T Value /**/,
+		/* ReflectionSerializerDescendantsMustBeDeserializable() */ object O /**/);
 
-	[Pinned( fullyQualifiedName: "D2L.Pinning.Recursive.Test.SafeRecord<T>", assembly: "RecursivelyPinnedAnalyzer", pinnedRecursively: true )]
+	[ReflectionSerializer]
 	public sealed record SafeRecord<[MustBeDeserializable] T>( T Value );
 
-	[Pinned( fullyQualifiedName: "D2L.Pinning.Recursive.Test.GenericPinnedRecursivelyWithoutMustBeDeserializable<T>", assembly: "RecursivelyPinnedAnalyzer", pinnedRecursively: true )]
+	[ReflectionSerializer]
 	public class GenericPinnedRecursivelyWithoutMustBeDeserializable<T> {
 		public GenericPinnedRecursivelyWithoutMustBeDeserializable(
 			T value ) {
 			Unsafe = value;
 		}
-		/* RecursivePinnedDescendantsMustBeRecursivelyPinned() */ public T Unsafe { get; set; } /**/
+		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public T Unsafe { get; set; } /**/
 
-		/* RecursivePinnedDescendantsMustBeRecursivelyPinned() */ public object UnsafeObject => Unsafe; /**/
+		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public object UnsafeObject => Unsafe; /**/
 
-		/* RecursivePinnedDescendantsMustBeRecursivelyPinned() */ public Type UnsafeType { get { return typeof(T); } } /**/
+		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public Type UnsafeType { get { return typeof(T); } } /**/
 	}
 
-	[Pinned( fullyQualifiedName: "D2L.Pinning.Recursive.Test.GenericPinnedRecursivelyWithoutMustBePinnedConstructor<T>", assembly: "RecursivelyPinnedAnalyzer", pinnedRecursively: true )]
+	[ReflectionSerializer]
 	public class GenericPinnedRecursivelyWithMustBeDeserializableConstructor<[MustBeDeserializable] T> {
 		public GenericPinnedRecursivelyWithMustBeDeserializableConstructor(
 			[MustBeDeserializable] T value ) {
@@ -67,7 +104,7 @@ namespace D2L.Pinning.Recursive.Test {
 		public Type UnsafeType { get { return typeof(T); } }
 	}
 
-	[Pinned( fullyQualifiedName: "D2L.Pinning.Recursive.Test.NonGenericPinnedRecursivelyWithMustBeDeserializableConstructor", assembly: "RecursivelyPinnedAnalyzer", pinnedRecursively: true )]
+	[ReflectionSerializer]
 	public class NonGenericPinnedRecursivelyWithMustBeDeserializableConstructor {
 		private object m_unsafeField;
 		public GenericPinnedRecursivelyWithMustBeDeserializableConstructor(
@@ -79,8 +116,8 @@ namespace D2L.Pinning.Recursive.Test {
 
 		public readonly object SafeObject { get; }
 
-		/* RecursivePinnedDescendantsMustBeRecursivelyPinned() */ public object UnsafeObject { get; set; } /**/
+		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public object UnsafeObject { get; set; } /**/
 
-		/* RecursivePinnedDescendantsMustBeRecursivelyPinned() */ public object UnsafeObject2 => m_unsafeField; /**/
+		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public object UnsafeObject2 => m_unsafeField; /**/
 	}
 }
