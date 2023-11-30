@@ -73,7 +73,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			IMethodSymbol method = parameter.ContainingSymbol as IMethodSymbol;
-			BlockSyntax methodBody = ( method.DeclaringSyntaxReferences[0].GetSyntax( ctx.CancellationToken ) as BaseMethodDeclarationSyntax ).Body;
+			SyntaxNode methodSyntaxNode = method.DeclaringSyntaxReferences[ 0 ].GetSyntax( ctx.CancellationToken );
+
+			BlockSyntax methodBody = methodSyntaxNode switch {
+				BaseMethodDeclarationSyntax baseMethod => baseMethod.Body,
+				LocalFunctionStatementSyntax localFunction => localFunction.Body,
+				_ => throw new NotSupportedException( $"Unsupported method syntax kind: {methodSyntaxNode.Kind()}" )
+			};
 
 			if( methodBody == null ) {
 				/**

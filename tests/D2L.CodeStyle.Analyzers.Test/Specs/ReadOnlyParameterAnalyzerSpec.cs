@@ -53,6 +53,14 @@ namespace SpecTests {
 			void Foo( [ReadOnly] int foo );
 		}
 
+		void LocalFunctionTests() {
+
+			void WrittenToInBody( /* ReadOnlyParameterIsnt(is assigned to and/or passed by reference) */ [ReadOnly] int value /**/ ) {
+				value = 1;
+			}
+		}
+
+		#endregion
 	}
 
 	internal sealed class SubclassAttributeUsages {
