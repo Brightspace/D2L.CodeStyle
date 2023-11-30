@@ -49,6 +49,12 @@ namespace SpecTests {
 			C( [ReadOnly] int foo ) { }
 		}
 
+		internal class CProblem {
+			CProblem( /* ReadOnlyParameterIsnt(is assigned to and/or passed by reference) */ [ReadOnly] int foo /**/ ) {
+				foo = 1;
+			}
+		}
+
 		internal interface I {
 			void Foo( [ReadOnly] int foo );
 		}
@@ -107,6 +113,12 @@ namespace SpecTests {
 
 		internal class C {
 			C( [ReadOnlySubclass] int foo ) { }
+		}
+
+		internal class CProblem {
+			CProblem( /* ReadOnlyParameterIsnt(is assigned to and/or passed by reference) */ [ReadOnlySubclass] int foo /**/ ) {
+				foo = 1;
+			}
 		}
 
 		internal interface I {
