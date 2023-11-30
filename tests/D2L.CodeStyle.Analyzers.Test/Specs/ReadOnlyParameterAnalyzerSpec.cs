@@ -115,6 +115,31 @@ namespace SpecTests {
 
 	}
 
+	internal partial class PartialMethodUsage {
+		internal partial void Foo( [ReadOnly] int foo );
+		internal partial void Bar( [ReadOnly] int bar );
+		internal partial void Baz( int baz );
+		internal partial void Quux( [ReadOnly] int quux );
+		internal partial void Foobar( int foobar );
+	}
+	internal partial class PartialMethodUsage {
+		internal partial void Foo( /* ReadOnlyParameterIsnt(is assigned to and/or passed by reference) */ int foo /**/ ) {
+			foo = 1;
+		}
+		internal partial void Bar( /* ReadOnlyParameterIsnt(is assigned to and/or passed by reference) */ [ReadOnly] int bar /**/ ) {
+			bar = 1;
+		}
+		internal partial void Baz( /* ReadOnlyParameterIsnt(is assigned to and/or passed by reference) */ [ReadOnly] int baz /**/ ) {
+			baz = 1;
+		}
+		internal partial void Quux( int quux ) {
+			int x = quux;
+		}
+		internal partial void Baz( [ReadOnly] int foobar ) {
+			int x = foobar;
+		}
+	}
+
 	internal sealed class NonReadOnlyThings {
 
 		void Unused( int foo ) { }
