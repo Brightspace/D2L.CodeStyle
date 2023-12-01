@@ -1,11 +1,10 @@
 #nullable disable
 
+using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using System.Collections.Immutable;
-using System.Linq;
+using Microsoft.CodeAnalysis.Operations;
 
 namespace D2L.CodeStyle.Analyzers.Immutability {
 
@@ -32,77 +31,101 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
-			context.RegisterSyntaxNodeAction(
-				ctx => AnalyzeParameter(
-					ctx: ctx,
-					readOnlyAttribute: readOnlyAttribute,
-					syntax: ctx.Node as ParameterSyntax
+			context.RegisterOperationAction(
+				ctx => AnalyzeMethodBodyOperation(
+					ctx,
+					readOnlyAttribute,
+					(IMethodBodyBaseOperation)ctx.Operation
 				),
-				SyntaxKind.Parameter
+				OperationKind.ConstructorBody,
+				OperationKind.MethodBody
+			);
+
+			context.RegisterOperationAction(
+				ctx => AnalyzeLocalFunctionOperation(
+					ctx,
+					readOnlyAttribute,
+					(ILocalFunctionOperation)ctx.Operation
+				),
+				OperationKind.LocalFunction
+			);
+		}
+		private static void AnalyzeMethodBodyOperation(
+			OperationAnalysisContext ctx,
+			INamedTypeSymbol readOnlyAttribute,
+			IMethodBodyBaseOperation operation
+		) => AnalyzeParameters(
+			ctx,
+			readOnlyAttribute,
+			(IMethodSymbol)ctx.ContainingSymbol,
+			operation.BlockBody ?? operation.ExpressionBody
+		);
+
+		private static void AnalyzeLocalFunctionOperation(
+			OperationAnalysisContext ctx,
+			INamedTypeSymbol readOnlyAttribute,
+			ILocalFunctionOperation operation
+		) {
+			if( operation.Body is null ) {
+				return;
+			}
+
+			AnalyzeParameters(
+				ctx,
+				readOnlyAttribute,
+				operation.Symbol,
+				operation.Body
 			);
 		}
 
-		private static void AnalyzeParameter(
-			SyntaxNodeAnalysisContext ctx,
+		private static void AnalyzeParameters(
+			OperationAnalysisContext ctx,
 			INamedTypeSymbol readOnlyAttribute,
-			ParameterSyntax syntax
+			IMethodSymbol method,
+			IBlockOperation operation
 		) {
-			SemanticModel model = ctx.SemanticModel;
+			IParameterSymbol[] readOnlyParameters = method.Parameters.Where( p => IsMarkedReadOnly( readOnlyAttribute, p ) ).ToArray();
 
-			if( syntax.AttributeLists.Count == 0 ) {
+			if( readOnlyParameters.Length == 0 ) {
 				return;
 			}
 
-			IParameterSymbol parameter = model.GetDeclaredSymbol( syntax, ctx.CancellationToken );
+			DataFlowAnalysis dataflow = operation.SemanticModel.AnalyzeDataFlow( operation.Syntax );
 
-			if( !IsMarkedReadOnly( readOnlyAttribute, parameter ) ) {
-				return;
-			}
+			foreach( IParameterSymbol parameter in readOnlyParameters ) {
+				Location parameterLocation = null;
+				Location getLocation() {
+					return parameterLocation ??= parameter.DeclaringSyntaxReferences[ 0 ].GetSyntax( ctx.CancellationToken ).GetLocation();
+				}
 
-			if( parameter.RefKind != RefKind.None ) {
-				/**
-				 * public void Foo( [ReadOnly] in int foo )
-				 * public void Foo( [ReadOnly] ref int foo )
-				 * public void Foo( [ReadOnly] out int foo )
-				 */
-				ctx.ReportDiagnostic(
-					Diagnostics.ReadOnlyParameterIsnt,
-					syntax.GetLocation(),
-					messageArgs: new[] { "is an in/ref/out parameter" }
-				);
-			}
+				if( parameter.RefKind != RefKind.None ) {
+					/**
+					 * public void Foo( [ReadOnly] in int foo )
+					 * public void Foo( [ReadOnly] ref int foo )
+					 * public void Foo( [ReadOnly] out int foo )
+					 */
+					ctx.ReportDiagnostic(
+						Diagnostics.ReadOnlyParameterIsnt,
+						getLocation(),
+						messageArgs: new[] { "is an in/ref/out parameter" }
+					);
+				}
 
-			IMethodSymbol method = parameter.ContainingSymbol as IMethodSymbol;
-			SyntaxNode methodSyntaxNode = method.DeclaringSyntaxReferences[ 0 ].GetSyntax( ctx.CancellationToken );
-
-			BlockSyntax methodBody = methodSyntaxNode switch {
-				BaseMethodDeclarationSyntax baseMethod => baseMethod.Body,
-				LocalFunctionStatementSyntax localFunction => localFunction.Body,
-				_ => throw new NotSupportedException( $"Unsupported method syntax kind: {methodSyntaxNode.Kind()}" )
-			};
-
-			if( methodBody == null ) {
-				/**
-				 * Method declaration on an interface.
-				 */
-				return;
-			}
-
-			DataFlowAnalysis dataflow = model.AnalyzeDataFlow( methodBody );
-			if( dataflow.WrittenInside.Contains( parameter ) ) {
-				/**
-				 * public void Foo( [ReadOnly] int foo ) {
-				 *   foo = 1; // write
-				 *   void Inline() { foo = 1; // write }
-				 *   var lambda = () => foo = 1; // write
-				 *   SomeRefFunc( ref foo ); // pass by ref, potential for write
-				 * }
-				 */
-				ctx.ReportDiagnostic(
-					Diagnostics.ReadOnlyParameterIsnt,
-					syntax.GetLocation(),
-					messageArgs: new[] { "is assigned to and/or passed by reference" }
-				);
+				if( dataflow.WrittenInside.Contains( parameter ) ) {
+					/**
+					 * public void Foo( [ReadOnly] int foo ) {
+					 *   foo = 1; // write
+					 *   void Inline() { foo = 1; // write }
+					 *   var lambda = () => foo = 1; // write
+					 *   SomeRefFunc( ref foo ); // pass by ref, potential for write
+					 * }
+					 */
+					ctx.ReportDiagnostic(
+						Diagnostics.ReadOnlyParameterIsnt,
+						getLocation(),
+						messageArgs: new[] { "is assigned to and/or passed by reference" }
+					);
+				}
 			}
 		}
 
