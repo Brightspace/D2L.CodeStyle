@@ -1,8 +1,8 @@
-// analyzer: D2L.CodeStyle.Analyzers.Pinning.RecursivelyDeserializableAnalyzer
+// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.Serialization.RecursivelyDeserializableAnalyzer
 
 using System;
 using System.Collections.Generic;
-using D2L.CodeStyle.Annotations.Pinning;
+using D2L.CodeStyle.Annotations.Serialization;
 
 using D2L.LP.Serialization;
 
@@ -40,31 +40,26 @@ namespace D2L.LP.Serialization {
 	}
 }
 
-namespace D2L.Pinning.Recursive.Test {
-
+namespace D2L.Deserialization.Recursive.Test {
 	[ReflectionSerializer]
-	public class EmptyPinnedNotRecursively {}
-
-	[ReflectionSerializer]
-	public class EmptyPinnedRecursively {}
-
-	[ReflectionSerializer]
-	public class EmptyGenericPinnedRecursively<T> {}
-
-	[ReflectionSerializer]
-	public class PinnedRecursivelyWithSafeTypes {
+	public class ReflectionSerializerWithSafeTypes {
 		public int ThisIsFine { get; }
 		public string ThisIsAFineString { get; }
+		public ReflectionSerializerWithSafeTypes Child {	get; }
+	}
+
+	public class UnsafeClass {
 	}
 
 	[ReflectionSerializer]
-	public class PinnedRecursivelyWithUnsafeTypes {
+	public class ReflectionSerializerWithUnsafeTypes {
 		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public object ThisIsNotFine { get; set; }/**/
 		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public Dictionary<string, object>  ThisIsNotAFineDictionary { get; set; }/**/
+		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public object UnsafeClass { get; set; }/**/
 	}
 
 	[ReflectionSerializer]
-	public class PinnedRecursivelyWithBasicTypesInAllowedTypes {
+	public class ReflectionSerializerWithBasicTypesInAllowedTypes {
 		public Dictionary<string, string> ThisIsAFineDictionary { get; }
 	}
 
@@ -78,11 +73,16 @@ namespace D2L.Pinning.Recursive.Test {
 	public sealed record SafeRecord<[MustBeDeserializable] T>( T Value );
 
 	[ReflectionSerializer]
-	public class GenericPinnedRecursivelyWithoutMustBeDeserializable<T> {
-		public GenericPinnedRecursivelyWithoutMustBeDeserializable(
+	public class GenericReflectionSerializerWithoutMustBeDeserializable<T> {
+		public GenericReflectionSerializerWithoutMustBeDeserializable(
 			T value ) {
 			Unsafe = value;
 		}
+
+		public SafeRecord<string> SafeGeneric { get; set; }
+
+		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public SafeRecord<object> UnsafeGeneric { get; set; }  /**/
+
 		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public T Unsafe { get; set; } /**/
 
 		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public object UnsafeObject => Unsafe; /**/
@@ -91,8 +91,8 @@ namespace D2L.Pinning.Recursive.Test {
 	}
 
 	[ReflectionSerializer]
-	public class GenericPinnedRecursivelyWithMustBeDeserializableConstructor<[MustBeDeserializable] T> {
-		public GenericPinnedRecursivelyWithMustBeDeserializableConstructor(
+	public class GenericReflectionSerializerWithMustBeDeserializableConstructor<[MustBeDeserializable] T> {
+		public GenericReflectionSerializerWithMustBeDeserializableConstructor(
 			[MustBeDeserializable] T value ) {
 			Unsafe = value;
 		}
@@ -105,9 +105,9 @@ namespace D2L.Pinning.Recursive.Test {
 	}
 
 	[ReflectionSerializer]
-	public class NonGenericPinnedRecursivelyWithMustBeDeserializableConstructor {
+	public class ReflectionSerializerWithMustBeDeserializableConstructor {
 		private object m_unsafeField;
-		public GenericPinnedRecursivelyWithMustBeDeserializableConstructor(
+		public ReflectionSerializerWithMustBeDeserializableConstructor(
 			[MustBeDeserializable] object value ) {
 			SafeObject = value;
 			UnsafeObject = value;

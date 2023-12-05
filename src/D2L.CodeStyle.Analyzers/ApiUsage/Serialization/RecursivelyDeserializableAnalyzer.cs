@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace D2L.CodeStyle.Analyzers.Pinning {
+namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	internal sealed class RecursivelyDeserializableAnalyzer : DiagnosticAnalyzer {
@@ -24,18 +24,18 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 		private void OnCompilationStart(
 			CompilationStartAnalysisContext context
 		) {
-			var deserializableType = PinnedAnalyzerHelper.GetMustBePinnedType( context.Compilation, true );
-			if ( deserializableType == null ) {
+			var deserializableType = DeserializableAnalyzerHelper.GetDeserializableTypeInfo( context.Compilation );
+			if( deserializableType == null ) {
 				return;
 			}
-			context.RegisterSyntaxNodeAction( (ctx) => AnalyzeSyntaxNode(ctx, context.Options.AdditionalFiles, deserializableType),
+			context.RegisterSyntaxNodeAction( ( ctx ) => AnalyzeSyntaxNode( ctx, context.Options.AdditionalFiles, deserializableType ),
 				SyntaxKind.ClassDeclaration,
 				SyntaxKind.InterfaceDeclaration,
 				SyntaxKind.RecordDeclaration,
 				SyntaxKind.StructDeclaration );
 		}
 
-		private static void AnalyzeSyntaxNode( SyntaxNodeAnalysisContext context, ImmutableArray<AdditionalText> additionalTexts, MustBePinnedType deserializableType ) {
+		private static void AnalyzeSyntaxNode( SyntaxNodeAnalysisContext context, ImmutableArray<AdditionalText> additionalTexts, DeserializableTypeInfo deserializableType ) {
 			var baseDeclaration = context.Node as TypeDeclarationSyntax;
 			if( baseDeclaration == null ) {
 				return;
@@ -43,42 +43,36 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 
 			var reflectionSerializerType = deserializableType.ValidAttributes.First();
 
-			var mustBePinnedSymbol = deserializableType.MustBePinnedAttribute;
-			if( mustBePinnedSymbol == null ) {
+			var typeSymbol = context.SemanticModel.GetDeclaredSymbol( baseDeclaration );
+			if( typeSymbol == null ) {
 				return;
 			}
 
-
-			var classSymbol = context.SemanticModel.GetDeclaredSymbol( baseDeclaration );
-			if( classSymbol == null ) {
-				return;
-			}
-
-			// Check if the class is marked with the "RecursivelyPinned" attribute
-			if( !PinnedAnalyzerHelper.IsDeserializable( classSymbol, deserializableType )) {
-				if( InheritsFromRecursivelyPinned( context, classSymbol, reflectionSerializerType, deserializableType ) ) {
-					context.ReportDiagnostic( Diagnostic.Create( Diagnostics.ReflectionSerializerDescendantsMustBeDeserializable, baseDeclaration.GetLocation(), classSymbol.Name ) );
+			// Check if the type isn't deserializable, but inherits from a type with the ReflectionSerializer attibute
+			if( !DeserializableAnalyzerHelper.IsDeserializable( typeSymbol, deserializableType ) ) {
+				if( InheritsFromReflectionSerializer( context, typeSymbol, deserializableType ) ) {
+					context.ReportDiagnostic( Diagnostic.Create( Diagnostics.ReflectionSerializerDescendantsMustBeDeserializable, baseDeclaration.GetLocation(), typeSymbol.Name ) );
 				}
 				return;
 			}
 
-			var inAllowedList = PinnedAnalyzerHelper.AllowedUnpinnedTypes( additionalTexts, context.Compilation );
+			var inAllowedList = DeserializableAnalyzerHelper.GetAllowListFunction( additionalTexts, context.Compilation );
 
-			var pinnedTypeArguments = classSymbol.TypeArguments.Where( t => PinnedAnalyzerHelper.HasAppropriateMustBePinnedAttribute( t, deserializableType, out _ ) );
+			var deserializableTypeArguments = typeSymbol.TypeArguments.Where( t => DeserializableAnalyzerHelper.HasMustBeDeserializableAttribute( t, deserializableType ) );
 
 			// skip checking properties on interfaces because implementations may be able to mark them safe
-			if(baseDeclaration is InterfaceDeclarationSyntax) {
+			if( baseDeclaration is InterfaceDeclarationSyntax ) {
 				return;
 			}
 			// Iterate through properties and fields to check for non-primitive types
 			foreach( var member in baseDeclaration.Members ) {
-				if(member is PropertyDeclarationSyntax propertyDeclaration ) {
+				if( member is PropertyDeclarationSyntax propertyDeclaration ) {
 					var typeSymbol = context.SemanticModel.GetTypeInfo( propertyDeclaration.Type ).Type;
 					if( typeSymbol == null ) {
 						continue;
 					}
 
-					if( pinnedTypeArguments.Any( t => t.Equals( typeSymbol, SymbolEqualityComparer.Default ) ) ) {
+					if( deserializableTypeArguments.Any( t => t.Equals( typeSymbol, SymbolEqualityComparer.Default ) ) ) {
 						continue;
 					}
 
@@ -98,12 +92,12 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 						}
 						var type = context.SemanticModel.GetTypeInfo( typeExpression ).Type;
 
-						if( type != null && pinnedTypeArguments.Any( t => t.Equals( type, SymbolEqualityComparer.Default ))) {
+						if( type != null && deserializableTypeArguments.Any( t => t.Equals( type, SymbolEqualityComparer.Default ) ) ) {
 							continue;
 						}
 					}
 
-					AnalyzeTypeSymbol( context, reflectionSerializerType, deserializableType, inAllowedList, typeSymbol, propertyDeclaration.GetLocation(), mustBePinnedSymbol, propertyDeclaration );
+					AnalyzeTypeSymbol( context, deserializableType, inAllowedList, typeSymbol, propertyDeclaration.GetLocation(), propertyDeclaration );
 				}
 			}
 
@@ -120,43 +114,25 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 						continue;
 					}
 
-					if( pinnedTypeArguments.Any( t => t.Equals( typeSymbol, SymbolEqualityComparer.Default ) ) ) {
+					if( deserializableTypeArguments.Any( t => t.Equals( typeSymbol, SymbolEqualityComparer.Default ) ) ) {
 						continue;
 					}
 
-					AnalyzeTypeSymbol( context, reflectionSerializerType, deserializableType, inAllowedList, typeSymbol, parameter.GetLocation(), mustBePinnedSymbol );
+					AnalyzeTypeSymbol( context, deserializableType, inAllowedList, typeSymbol, parameter.GetLocation() );
 				}
 			}
 		}
 
 		private static void AnalyzeTypeSymbol(
 			SyntaxNodeAnalysisContext context,
-			INamedTypeSymbol pinnedAttributeSymbol,
-			MustBePinnedType deserializableType,
+			DeserializableTypeInfo deserializableType,
 			Func<ITypeSymbol, bool> inAllowedList,
 			ITypeSymbol typeSymbol,
 			Location location,
-			INamedTypeSymbol mustBePinnedSymbol,
 			PropertyDeclarationSyntax? propertyDeclarationSyntax = null
 			) {
 
-			if( PinnedAnalyzerHelper.IsExemptFromPinning( typeSymbol, inAllowedList, out ITypeSymbol actualType)) {
-				if( typeSymbol is INamedTypeSymbol namedTypeSymbol ) {
-					foreach(ITypeSymbol childType in namedTypeSymbol.TypeArguments) {
-						AnalyzeTypeSymbol(
-							context,
-							pinnedAttributeSymbol,
-							deserializableType,
-							inAllowedList,
-							childType,
-							location,
-							mustBePinnedSymbol);
-					}
-				}
-				return;
-			}
-
-			if( PinnedAnalyzerHelper.IsDeserializable( actualType, deserializableType ) ) {
+			if(DeserializableAnalyzerHelper.IsDeserializableAtAllLevels( typeSymbol, inAllowedList, deserializableType ) ) {
 				return;
 			}
 
@@ -164,7 +140,7 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			if( propertyDeclarationSyntax is not null ) {
 				var propertySymbol = context.SemanticModel.GetDeclaredSymbol( propertyDeclarationSyntax );
 				if( propertySymbol is not null && propertySymbol.IsReadOnly ) {
-					if( AnalyzeConstructorAssignmentsToReadonlyProperty( context, propertySymbol, pinnedAttributeSymbol, deserializableType, mustBePinnedSymbol ) ) {
+					if( AnalyzeConstructorAssignmentsToReadonlyProperty( context, propertySymbol, deserializableType ) ) {
 						return;
 					}
 				}
@@ -176,9 +152,7 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 		private static bool AnalyzeConstructorAssignmentsToReadonlyProperty(
 			SyntaxNodeAnalysisContext context,
 			IPropertySymbol propertySymbol,
-			INamedTypeSymbol pinnedAttributeSymbol,
-			MustBePinnedType deserializableType,
-			INamedTypeSymbol mustBePinnedSymbol) {
+			DeserializableTypeInfo deserializableType ) {
 			INamedTypeSymbol containingType = propertySymbol.ContainingType;
 			bool allConstructorsSafe = containingType.Constructors.Any();
 			foreach( IMethodSymbol constructor in containingType.Constructors ) {
@@ -186,18 +160,18 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 				// Analyze the constructor's body
 				foreach( SyntaxNode node in constructor.DeclaringSyntaxReferences.SelectMany( syntaxRef => syntaxRef.GetSyntax().DescendantNodes() ) ) {
 					// Find assignment expressions
-					
+
 					if( node is AssignmentExpressionSyntax assignment &&
-					    assignment.Left is IdentifierNameSyntax leftIdentifier &&
-					    leftIdentifier.Identifier.ValueText == propertySymbol.Name ) {
-						
+						assignment.Left is IdentifierNameSyntax leftIdentifier &&
+						leftIdentifier.Identifier.ValueText == propertySymbol.Name ) {
+
 						// Check if the right-hand side of the assignment is a parameter
 						if( assignment.Right is IdentifierNameSyntax rightIdentifier &&
-						    constructor.Parameters.Any( p => p.Name == rightIdentifier.Identifier.ValueText ) ) {
+							constructor.Parameters.Any( p => p.Name == rightIdentifier.Identifier.ValueText ) ) {
 							IParameterSymbol parameterSymbol = constructor.Parameters.First( p => p.Name == rightIdentifier.Identifier.ValueText );
-							var hasMustBeDeserializable = PinnedAnalyzerHelper.TryGetPinnedAttribute( parameterSymbol, mustBePinnedSymbol, out _ );
-							if( PinnedAnalyzerHelper.IsDeserializable( parameterSymbol.Type, deserializableType )
-								|| hasMustBeDeserializable  ) {
+							var hasMustBeDeserializable = DeserializableAnalyzerHelper.HasMustBeDeserializableAttribute( parameterSymbol, deserializableType );
+							if( DeserializableAnalyzerHelper.IsDeserializable( parameterSymbol.Type, deserializableType )
+								|| hasMustBeDeserializable ) {
 								currentSafe = true;
 							}
 						}
@@ -210,7 +184,7 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			return allConstructorsSafe;
 		}
 
-		private static bool InheritsFromRecursivelyPinned( SyntaxNodeAnalysisContext context, INamedTypeSymbol classSymbol, INamedTypeSymbol pinnedAttributeSymbol, MustBePinnedType deserializableType ) {
+		private static bool InheritsFromReflectionSerializer( SyntaxNodeAnalysisContext context, INamedTypeSymbol classSymbol, DeserializableTypeInfo deserializableType ) {
 			List<INamedTypeSymbol> symbolsInheritedFrom = new List<INamedTypeSymbol>( classSymbol.AllInterfaces );
 			INamedTypeSymbol? currentType = classSymbol.BaseType;
 			if( currentType != null ) {
@@ -218,7 +192,7 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			}
 
 			foreach( var symbol in symbolsInheritedFrom ) {
-				if( symbol.SpecialType != SpecialType.System_Object && PinnedAnalyzerHelper.IsDeserializable( symbol, deserializableType ) ) {
+				if( symbol.SpecialType != SpecialType.System_Object && DeserializableAnalyzerHelper.IsDeserializable( symbol, deserializableType ) ) {
 					return true;
 				}
 			}

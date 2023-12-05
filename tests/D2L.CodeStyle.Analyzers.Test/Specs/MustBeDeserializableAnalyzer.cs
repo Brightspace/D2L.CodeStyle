@@ -1,10 +1,10 @@
-// analyzer: D2L.CodeStyle.Analyzers.Pinning.MustBeDeserializableAnalyzer
+// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.Serialization.MustBeDeserializableAnalyzer
 
 using System;
 using System.Collections.Generic;
 using D2L.LP.Serialization;
-using D2L.CodeStyle.Annotations.Pinning;
-using D2L.Pinning.MustBeDeserializable.Test;
+using D2L.CodeStyle.Annotations.Serialization;
+using D2L.Deserialization.MustBeDeserializable.Test;
 
 namespace D2L.LP.Serialization {
 
@@ -40,32 +40,21 @@ namespace D2L.LP.Serialization {
 	}
 }
 
-namespace D2L.Pinning.MustBeDeserializable.Test {
-	public class Constants {
-		public const string AssemblyName = "PinnedAttributeAnalyzer";
-	}
+namespace D2L.Deserialization.MustBeDeserializable.Test {
 
 	[ReflectionSerializer]
-	public class EmptyGenericPinnedRecursively<T> { }
+	public class EmptyGenericWithReflectionSerializer<T> { }
 
 	[ReflectionSerializer]
-	public class EmptyMultiParamGenericPinnedRecursively<T, U> { }
+	public class EmptyMultiParamGenericWithReflectionSerializer<T, U> { }
 
-	public class EmptyGenericNotPinned<T> { }
+	public class EmptyGenericNotDeserializable<T> { }
 
 	internal interface ISerializer {
 		string Serialize<[MustBeDeserializable] T>( T t );
 
 		string SerializeUnsafe( [MustBeDeserializable] object o );
-
-		string FormatType<[MustBePinned] T>( T t );
-
-		string FormatTypeUnsafe( [MustBePinned] object o );
 	}
-
-
-	[ReflectionSerializer]
-	public class EmptyPinnedRecursively { }
 
 	[ReflectionSerializer]
 	public class EmptyReflectionSerializerType { }
@@ -105,40 +94,6 @@ namespace D2L.Pinning.MustBeDeserializable.Test {
 			m_serializer.SerializeUnsafe( o );
 		}
 
-		private void UnsafeGenericMustBePinnedCall() {
-			/* MustBePinnedRequiresPinned() */
-			m_serializer.FormatType<object>( new { } )/**/;
-		}
-
-		private void UnsafeGenericMustBePinnedCallFromParameter( object /* ArgumentShouldBeMustBePinned() */ o /**/) {
-			m_serializer.FormatType( o );
-		}
-
-		private void SafeGenericMustBePinnedCallFromPinnedParameter<[MustBePinned] T>( T t ) {
-			m_serializer.FormatType<T>( t );
-		}
-
-		private void SafeImplicitGenericMustBePinnedCallFromDeserializableParameter<[MustBeDeserializable] T>( T t ) {
-			m_serializer.FormatType( t );
-		}
-
-		private void UnsafeMustBePinnedCall() {
-			/* MustBePinnedRequiresPinned() */
-			m_serializer.FormatType( new { } )/**/;
-		}
-
-		private void UnsafeMustBePinnedCallFromParameter( object /* ArgumentShouldBeMustBePinned() */ o /**/) {
-			m_serializer.FormatType( o );
-		}
-
-		private void SafeMustBePinnedCallFromParameter( [MustBePinned] object o ) {
-			m_serializer.FormatTypeUnsafe( o );
-		}
-
-		private void SafeMustBePinnedCallFromDeserializableParameter( [MustBeDeserializable] object o ) {
-			m_serializer.FormatTypeUnsafe( o );
-		}
-
 		private void SafeObjectCallDueToAllowList( Dictionary<string, string> o ) {
 			m_serializer.SerializeUnsafe( o );
 		}
@@ -163,60 +118,35 @@ namespace D2L.Pinning.MustBeDeserializable.Test {
 			m_serializer = serializer;
 		}
 
-		private void SafeImplicitGenericMustBeDeserializableCallFromPinnedType( EmptyGenericPinnedRecursively<string> t ) {
+		private void ImplicitGenericMustBeDeserializableCallWithSafeType( EmptyGenericWithReflectionSerializer<string> t ) {
 			m_serializer.Serialize( t );
 		}
 
-		private void ImplicitGenericMustBeDeserializableCallFromPinnedTypeWithUnpinnedChild( EmptyGenericPinnedRecursively<EmptyGenericNotPinned<string>>/* ArgumentShouldBeDeserializable */ t /**/) {
+		private void ImplicitGenericMustBeDeserializableCallFromDeserializableTypeWithUnsafeGenericParameter(
+			EmptyGenericWithReflectionSerializer<EmptyGenericNotDeserializable<string>>/* ArgumentShouldBeDeserializable */ t /**/) {
 			m_serializer.Serialize( t );
 		}
 
-		private void ImplicitGenericMustBeDeserializableCallFromPinnedTypeWithDeeplyNestedUnpinnedChild( EmptyMultiParamGenericPinnedRecursively<string, EmptyMultiParamGenericPinnedRecursively<EmptyGenericNotPinned<string>, string>>/* ArgumentShouldBeDeserializable */ t /**/) {
+		private void ImplicitGenericMustBeDeserializableCallFromDeserializableTypeWithDeeplyNestedUnsafeGenericParameter(
+			EmptyMultiParamGenericWithReflectionSerializer<string, EmptyMultiParamGenericWithReflectionSerializer<EmptyGenericNotDeserializable<string>, string>>/* ArgumentShouldBeDeserializable */ t /**/) {
 			m_serializer.Serialize( t );
 		}
 
-		private void SafeImplicitGenericMustBeDeserializableCallFromPinnedType( EmptyGenericNotPinned<string> /* ArgumentShouldBeDeserializable */ t/**/) {
+		private void ImplicitMustBeDeserializableCallWithUnsafeType( EmptyGenericNotDeserializable<string> /* ArgumentShouldBeDeserializable */ t/**/) {
 			m_serializer.Serialize( t );
 		}
 
-		private void SafeImplicitGenericMustBePinnedCallFromPinnedType( EmptyGenericPinnedRecursively<string> t ) {
-			m_serializer.FormatType( t );
-		}
-
-		private void ImplicitGenericMustBePinnedCallFromPinnedTypeWithUnpinnedChild( EmptyGenericPinnedRecursively<EmptyGenericNotPinned<string>>/* ArgumentShouldBeMustBePinned */ t /**/) {
-			m_serializer.FormatType( t );
-		}
-
-		private void ImplicitGenericMustBePinnedCallFromPinnedTypeWithDeeplyNestedUnpinnedChild( EmptyMultiParamGenericPinnedRecursively<string, EmptyMultiParamGenericPinnedRecursively<EmptyGenericNotPinned<string>, string>>/* ArgumentShouldBeMustBePinned */ t /**/) {
-			m_serializer.FormatType( t );
-		}
-
-		private void SafeImplicitGenericMustBePinnedCallFromPinnedType( EmptyGenericNotPinned<string> /* ArgumentShouldBeMustBePinned */ t/**/) {
-			m_serializer.FormatType( t );
-		}
-
-		private void SafeObjectCallDueToLackOfPinning( EmptyGenericNotPinned<string> /* ArgumentShouldBeDeserializable */o/**/ ) {
+		private void MustBeDeserializableCallWithUnsafeType( EmptyGenericNotDeserializable<string> /* ArgumentShouldBeDeserializable */o/**/ ) {
 			m_serializer.SerializeUnsafe( o );
 		}
 
-		private void UnsafeObjectCallMustBePinnedCallFromPinnedTypeWithUnpinnedChild( EmptyGenericPinnedRecursively<EmptyGenericNotPinned<string>>/* ArgumentShouldBeDeserializable */ t /**/) {
+		private void MustBeDeserializableCallWithUnsafeGenericParameterInTheMiddle( EmptyGenericWithReflectionSerializer<EmptyGenericNotDeserializable<string>>/* ArgumentShouldBeDeserializable */ t /**/) {
 			m_serializer.SerializeUnsafe( t );
 		}
 
-		private void UnsafeObjectCallMustBePinnedCallFromPinnedTypeWithDeeplyNestedUnpinnedChild( EmptyMultiParamGenericPinnedRecursively<string, EmptyMultiParamGenericPinnedRecursively<EmptyGenericNotPinned<string>, string>>/* ArgumentShouldBeDeserializable */ t /**/) {
+		private void MustBeDeserializableCallWithDeeplyNestedUnsafeGenericParameter(
+			EmptyMultiParamGenericWithReflectionSerializer<string, EmptyMultiParamGenericWithReflectionSerializer<EmptyGenericNotDeserializable<string>, string>>/* ArgumentShouldBeDeserializable */ t /**/) {
 			m_serializer.SerializeUnsafe( t );
-		}
-
-		private void SafeImplicitGenericCallDueToLackOfPinning( EmptyGenericNotPinned<string> /* ArgumentShouldBeMustBePinned */o/**/ ) {
-			m_serializer.FormatTypeUnsafe( o );
-		}
-
-		private void UnsafeImplicitGenericCallMustBePinnedCallFromPinnedTypeWithUnpinnedChild( EmptyGenericPinnedRecursively<EmptyGenericNotPinned<string>>/* ArgumentShouldBeMustBePinned */ t /**/) {
-			m_serializer.FormatTypeUnsafe( t );
-		}
-
-		private void UnsafeImplicitGenericCallMustBePinnedCallFromPinnedTypeWithDeeplyNestedUnpinnedChild( EmptyMultiParamGenericPinnedRecursively<string, EmptyMultiParamGenericPinnedRecursively<EmptyGenericNotPinned<string>, string>>/* ArgumentShouldBeMustBePinned */ t /**/) {
-			m_serializer.FormatTypeUnsafe( t );
 		}
 	}
 
@@ -253,24 +183,24 @@ namespace D2L.Pinning.MustBeDeserializable.Test {
 	}
 }
 
-namespace D2L.Pinning.MustBeDeserializable.System.Types.Test {
-	internal sealed class NotPinned {};
+namespace D2L.Deserialization.MustBeDeserializable.System.Types.Test {
+	internal sealed class NotDeserializable { };
 
 	[ReflectionSerializer]
-	internal sealed class Pinned {}
+	internal sealed class Deserializable { }
 
 	internal sealed class TestClass {
-		private void Dangerous([MustBePinned] global::System.Type t) {}
+		private void Dangerous([MustBeDeserializable] global::System.Type t) {}
 
 		public void CallDangerous() {
-			Dangerous( /* MustBePinnedRequiresPinned() */ typeof(NotPinned) /**/ );
-			Dangerous( typeof(Pinned) );
+			Dangerous( /* MustBeDeserializableRequiresAppropriateAttribute() */ typeof( NotDeserializable ) /**/ );
+			Dangerous( typeof( Deserializable ) );
 		}
 	}
 }
 
 // the following tests check that generic classes with MustBeDeserializable enforce setting of values related to that type are set to MustBeDeserializable
-namespace D2L.Pinning.MustBeDeserializable.Recursive.Test {
+namespace D2L.Deserialization.MustBeDeserializable.Recursive.Test {
 	internal sealed class TestRecord {
 		[ReflectionSerializer]
 		private sealed record MustBeDeserializableObjectRecord<[MustBeDeserializable] T>( T Value );
@@ -288,70 +218,64 @@ namespace D2L.Pinning.MustBeDeserializable.Recursive.Test {
 	}
 
 	[ReflectionSerializer]
-	public class GenericPinnedRecursivelyWithoutMustBeDeserializableConstructor<[MustBeDeserializable] T> {
-		public GenericPinnedRecursivelyWithoutMustBeDeserializableConstructor(
+	public class GenericReflectionSerializerWithoutMustBeDeserializableConstructor<[MustBeDeserializable] T> {
+		public GenericReflectionSerializerWithoutMustBeDeserializableConstructor(
 			 T /* ArgumentShouldBeDeserializable() */ value /**/ ) {
 			Unsafe = value;
 		}
 		public T Unsafe { get; }
 
-		public static GenericPinnedRecursivelyWithoutMustBeDeserializableConstructor<X> TriggerErrorByConstruction</* ArgumentShouldBeDeserializable() */ X /**/>( X value ) {
-			return new GenericPinnedRecursivelyWithoutMustBeDeserializableConstructor<X>( value );
+		public static GenericReflectionSerializerWithoutMustBeDeserializableConstructor<X> TriggerErrorByConstruction</* ArgumentShouldBeDeserializable() */ X /**/>( X value ) {
+			return new GenericReflectionSerializerWithoutMustBeDeserializableConstructor<X>( value );
 		}
 	}
 
 	[ReflectionSerializer]
-	public class GenericPinnedRecursivelyWithMustBeDeserializableConstructor<[MustBeDeserializable] T> {
-		public GenericPinnedRecursivelyWithMustBeDeserializableConstructor(
+	public class GenericReflectionSerializerWithMustBeDeserializableConstructor<[MustBeDeserializable] T> {
+		public GenericReflectionSerializerWithMustBeDeserializableConstructor(
 			[MustBeDeserializable] T value ) {
 			Unsafe = value;
 		}
 
 		public T Unsafe { get; }
 
-		public static GenericPinnedRecursivelyWithMustBeDeserializableConstructor<X> TriggerNoErrorByConstruction<[MustBeDeserializable] X>(X value) {
-			return new GenericPinnedRecursivelyWithMustBeDeserializableConstructor<X>( value );
+		public static GenericReflectionSerializerWithMustBeDeserializableConstructor<X> TriggerNoErrorByConstruction<[MustBeDeserializable] X>(X value) {
+			return new GenericReflectionSerializerWithMustBeDeserializableConstructor<X>( value );
 		}
 	}
 
 	[ReflectionSerializer]
-	public class PinnedRecursivelyWithMustBeDeserializableConstructor {
-		public PinnedRecursivelyWithMustBeDeserializableConstructor(
+	public class ReflectionSerializerWithMustBeDeserializableConstructor {
+		public ReflectionSerializerWithMustBeDeserializableConstructor(
 			[MustBeDeserializable] object value ) {
 			Unsafe = value;
 		}
 
 		public object Unsafe { get; }
 
-		public static PinnedRecursivelyWithMustBeDeserializableConstructor TriggerNoErrorByConstruction( [MustBeDeserializable] object value ) {
-			return new PinnedRecursivelyWithMustBeDeserializableConstructor( value );
+		public static ReflectionSerializerWithMustBeDeserializableConstructor TriggerNoErrorByConstruction( [MustBeDeserializable] object value ) {
+			return new ReflectionSerializerWithMustBeDeserializableConstructor( value );
 		}
 
-		public static PinnedRecursivelyWithMustBeDeserializableConstructor TriggerErrorByConstruction( object /* ArgumentShouldBeDeserializable() */ value /**/ ) {
-			return new PinnedRecursivelyWithMustBeDeserializableConstructor( value );
+		public static ReflectionSerializerWithMustBeDeserializableConstructor TriggerErrorByConstruction( object /* ArgumentShouldBeDeserializable() */ value /**/ ) {
+			return new ReflectionSerializerWithMustBeDeserializableConstructor( value );
 		}
 	}
 }
 
-namespace D2L.Pinning.MustBeDeserializable.AttributesShouldBeOnInterface.Test {
+namespace D2L.Deserialization.MustBeDeserializable.AttributesShouldBeOnInterface.Test {
 	internal interface ISampleInterface {
-		void UnpinnedTypeArgumentInInterface<T>();
 		void NotDeserializeableTypeArgumentInInterface<T>();
-		void UnpinnedParameterInInterface(object o);
 		void NotDeserializeableParameterInInterface(object o);
 	}
 
 	internal sealed class EmptyChangedImplementation : ISampleInterface {
-		public void UnpinnedTypeArgumentInInterface<[MustBePinned] /* PinningAttributesShouldBeInTheInterfaceIfInImplementations() */ T /**/>() {}
 		public void NotDeserializeableTypeArgumentInInterface<[MustBeDeserializable] /* PinningAttributesShouldBeInTheInterfaceIfInImplementations() */ T /**/>() {}
-		public void UnpinnedParameterInInterface([MustBePinned] object /* PinningAttributesShouldBeInTheInterfaceIfInImplementations() */ o /**/ ) { }
 		public void NotDeserializeableParameterInInterface([MustBeDeserializable] object /* PinningAttributesShouldBeInTheInterfaceIfInImplementations() */ o /**/) { }
 	}
 
 	internal sealed class EmptyMatchingImplementation : ISampleInterface {
-		public void UnpinnedTypeArgumentInInterface<T>() { }
 		public void NotDeserializeableTypeArgumentInInterface<T>() { }
-		public void UnpinnedParameterInInterface( object o ) { }
 		public void NotDeserializeableParameterInInterface( object o ) { }
 	}
 }

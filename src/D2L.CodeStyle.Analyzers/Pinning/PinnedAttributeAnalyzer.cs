@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using D2L.CodeStyle.Analyzers.ApiUsage.Serialization;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -27,7 +28,7 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 		}
 
 		private static void AnalyzeSymbol( SymbolAnalysisContext context ) {
-			INamedTypeSymbol? pinnedAttributeSymbol = context.Compilation.GetTypeByMetadataName( PinnedAnalyzerHelper.PinnedAttributeName );
+			INamedTypeSymbol? pinnedAttributeSymbol = context.Compilation.GetTypeByMetadataName( DeserializableAnalyzerHelper.PinnedAttributeName );
 			if( pinnedAttributeSymbol == null ) {
 				return;
 			}
@@ -42,7 +43,7 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			}
 
 			Location? location = classSymbol.Locations.FirstOrDefault();
-			if( !PinnedAnalyzerHelper.TryGetPinnedAttribute( classSymbol, pinnedAttributeSymbol, out AttributeData? attribute ) ) {
+			if( !DeserializableAnalyzerHelper.TryGetPinnedAttribute( classSymbol, pinnedAttributeSymbol, out AttributeData? attribute ) ) {
 				return;
 			}
 

@@ -6,20 +6,17 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace D2L.CodeStyle.Analyzers.Pinning {
-	public static class PinnedAnalyzerHelper {
+namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
+	public static class DeserializableAnalyzerHelper {
 
-		public const string PinnedAttributeName = "D2L.CodeStyle.Annotations.Pinning.PinnedAttribute";
-		public const string MustBeDeserializableAttributeName = "D2L.CodeStyle.Annotations.Pinning.MustBeDeserializableAttribute";
-		public const string MustBePinnedAttributeName = "D2L.CodeStyle.Annotations.Pinning.MustBePinnedAttribute";
+		public const string MustBeDeserializableAttributeName = "D2L.CodeStyle.Annotations.Serialization.MustBeDeserializableAttribute";
 		public const string ReflectionSerializerAttributeName = "D2L.LP.Serialization.ReflectionSerializerAttribute";
 		public const string SerializerAttributeName = "D2L.LP.Serialization.SerializerAttribute";
 
-		internal static MustBePinnedType? GetMustBePinnedType(Compilation compilation, bool recursive) {
+		internal static DeserializableTypeInfo? GetDeserializableTypeInfo( Compilation compilation) {
 			INamedTypeSymbol? recursiveSymbol = compilation.GetTypeByMetadataName( MustBeDeserializableAttributeName );
-			INamedTypeSymbol? plainSymbol = compilation.GetTypeByMetadataName( MustBePinnedAttributeName );
 
-			if( recursiveSymbol == null || plainSymbol == null ) {
+			if( recursiveSymbol == null ) {
 				return null;
 			}
 
@@ -29,49 +26,21 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 				return null;
 			}
 
-			if(!recursive) {
-				INamedTypeSymbol? pinnedSymbol = compilation.GetTypeByMetadataName( PinnedAttributeName );
-				if(pinnedSymbol == null ) {
-					return null;
-				}
-				return new MustBePinnedType( plainSymbol, false, Diagnostics.MustBePinnedRequiresPinned, Diagnostics.ArgumentShouldBeMustBePinned, pinnedSymbol, reflectionSerializerSymbol );
-			}
+			validAttributes.Add( reflectionSerializerSymbol );
 
-			
-
-			validAttributes.Add(reflectionSerializerSymbol);
-			
 			INamedTypeSymbol? serializerSymbol = compilation.GetTypeByMetadataName( SerializerAttributeName );
 			if( serializerSymbol != null ) {
 				validAttributes.Add( serializerSymbol );
 			}
 
-			return new MustBePinnedType( recursiveSymbol, true, Diagnostics.MustBeDeserializableRequiresAppropriateAttribute, Diagnostics.ArgumentShouldBeDeserializable, validAttributes.ToArray() );
-		}
-		public static bool TryGetPinnedAttribute( ISymbol classSymbol, INamedTypeSymbol pinnedAttributeSymbol, out AttributeData? attribute ) {
-			attribute = null;
-
-			foreach( var attributeData in classSymbol.GetAttributes() ) {
-				var attributeSymbol = attributeData.AttributeClass;
-				if( pinnedAttributeSymbol.Equals( attributeSymbol, SymbolEqualityComparer.Default ) ) {
-					attribute = attributeData;
-					return true;
-				}
-			}
-
-			return false;
+			return new DeserializableTypeInfo( recursiveSymbol, Diagnostics.MustBeDeserializableRequiresAppropriateAttribute, Diagnostics.ArgumentShouldBeDeserializable, validAttributes.ToArray() );
 		}
 
-	
-
-		internal static bool HasAppropriateMustBePinnedAttribute( ISymbol symbol, MustBePinnedType pinningType, out AttributeData? attribute ) {
-			attribute = null;
+		internal static bool HasMustBeDeserializableAttribute( ISymbol symbol, DeserializableTypeInfo deserializableTypeInfo ) {
 			var attributes = symbol.GetAttributes();
-			foreach( var attributeData in  attributes) {
+			foreach( var attributeData in attributes ) {
 				var attributeSymbol = attributeData.AttributeClass;
-				if( pinningType.MustBePinnedAttribute.Equals( attributeSymbol, SymbolEqualityComparer.Default )
-					|| pinningType.ValidAttributes.Any(a => a.Equals(attributeSymbol, SymbolEqualityComparer.Default))) {
-					attribute = attributeData;
+				if( deserializableTypeInfo.MustBeDeserializableAttribute.Equals( attributeSymbol, SymbolEqualityComparer.Default ) ) {
 					return true;
 				}
 			}
@@ -79,11 +48,11 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			return false;
 		}
 
-		internal static bool IsDeserializable( ISymbol classSymbol, MustBePinnedType pinningType ) {
+		internal static bool IsDeserializable( ISymbol classSymbol, DeserializableTypeInfo deserializableTypeInfo ) {
 			foreach( var attributeData in classSymbol.GetAttributes() ) {
 				var attributeSymbol = attributeData.AttributeClass;
-				
-				if( pinningType.ValidAttributes.Any( a => a.Equals( attributeSymbol, SymbolEqualityComparer.Default ) ) ) {
+
+				if( deserializableTypeInfo.ValidAttributes.Any( a => a.Equals( attributeSymbol, SymbolEqualityComparer.Default ) ) ) {
 					return true;
 				}
 			}
@@ -91,14 +60,32 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			return false;
 		}
 
-		public static Func<ITypeSymbol, bool> AllowedUnpinnedTypes(ImmutableArray<AdditionalText> additionalFiles, Compilation compilation) {
-			List<ISymbol>? allowUnpinned = null;
-			var canBeUnpinned = ( ITypeSymbol symbol ) => {
+		internal static bool IsDeserializableAtAllLevels ( ITypeSymbol classSymbol, Func<ITypeSymbol, bool> inAllowedList, DeserializableTypeInfo deserializableTypeInfo ) {
+
+			if( !IsExemptFromNeedingSerializationAttributes( classSymbol, inAllowedList, out ITypeSymbol actualType)
+				&& !IsDeserializable(actualType, deserializableTypeInfo)) {
+				return false;
+			}
+
+			if( classSymbol is INamedTypeSymbol namedTypeSymbol ) {
+				foreach( ITypeSymbol childType in namedTypeSymbol.TypeArguments ) {
+					if( !IsDeserializableAtAllLevels( childType, inAllowedList, deserializableTypeInfo ) ) {
+						return false;
+					}
+				}
+			}
+
+			return true;
+		}
+
+		public static Func<ITypeSymbol, bool> GetAllowListFunction( ImmutableArray<AdditionalText> additionalFiles, Compilation compilation ) {
+			List<ISymbol>? allowNonSerializable = null;
+			var allowed = ( ITypeSymbol symbol ) => {
 				if( symbol.SpecialType != SpecialType.None && symbol.SpecialType != SpecialType.System_Object ) {
 					return true;
 				}
-				if( allowUnpinned == null ) {
-					allowUnpinned = new List<ISymbol>();
+				if( allowNonSerializable == null ) {
+					allowNonSerializable = new List<ISymbol>();
 					var file = additionalFiles.FirstOrDefault( f => f.Path.EndsWith( "UnpinnedAllowedList.txt" ) );
 					if( file == null ) {
 						return false;
@@ -111,23 +98,23 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 					foreach( var line in text.Lines ) {
 						var type = compilation.GetTypeByMetadataName( line.ToString().Trim() );
 						if( type != null ) {
-							allowUnpinned.Add( type );
+							allowNonSerializable.Add( type );
 						}
 					}
 				}
 
-				var match = allowUnpinned.FirstOrDefault( u => u.Equals( symbol, SymbolEqualityComparer.Default ) );
+				var match = allowNonSerializable.FirstOrDefault( u => u.Equals( symbol, SymbolEqualityComparer.Default ) );
 
 				if( match == null ) {
-					match = allowUnpinned.FirstOrDefault( u => u.Equals( symbol.OriginalDefinition, SymbolEqualityComparer.Default ) );
+					match = allowNonSerializable.FirstOrDefault( u => u.Equals( symbol.OriginalDefinition, SymbolEqualityComparer.Default ) );
 				}
 
 				return match != null;
 			};
-			return canBeUnpinned;
+			return allowed;
 		}
 
-		public static bool IsExemptFromPinning(ITypeSymbol typeSymbol, Func<ITypeSymbol, bool> inAllowList, out ITypeSymbol actualType ) {
+		public static bool IsExemptFromNeedingSerializationAttributes( ITypeSymbol typeSymbol, Func<ITypeSymbol, bool> inAllowList, out ITypeSymbol actualType ) {
 			var currentType = typeSymbol;
 			var enumerableTypeArgument = GetEnumerableTypeArgument( currentType );
 			while( enumerableTypeArgument != null ) {
@@ -154,14 +141,14 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 				return true;
 			}
 
-			if(inAllowList(typeSymbol) || inAllowList(currentType)) {
+			if( inAllowList( typeSymbol ) || inAllowList( currentType ) ) {
 				return true;
 			}
 
 			return false;
 		}
 
-		private static ITypeSymbol? GetEnumerableTypeArgument( ITypeSymbol typeSymbol) {
+		private static ITypeSymbol? GetEnumerableTypeArgument( ITypeSymbol typeSymbol ) {
 
 			// Check if the type is an array. If so, return the element type.
 			if( typeSymbol.Kind == SymbolKind.ArrayType ) {
@@ -172,7 +159,7 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 			// Check if the type is named type symbol. It must be in order to be IEnumerable<T>
 			if( typeSymbol is INamedTypeSymbol namedTypeSymbol && !typeSymbol.Locations.Any( l => l.IsInSource ) ) {
 				// If it's directly IEnumerable<T>
-				if( namedTypeSymbol.ConstructedFrom.ToDisplayString() == iEnumerableId  ) {
+				if( namedTypeSymbol.ConstructedFrom.ToDisplayString() == iEnumerableId ) {
 					return namedTypeSymbol.TypeArguments[0];
 				}
 

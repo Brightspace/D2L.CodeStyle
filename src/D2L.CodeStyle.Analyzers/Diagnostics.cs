@@ -781,19 +781,9 @@ namespace D2L.CodeStyle.Analyzers {
 		);
 
 		public static readonly DiagnosticDescriptor ReflectionSerializerDescendantsMustBeDeserializable = new DiagnosticDescriptor(
-			id: "D2L0103",
-			title: "Must be deserializable",
-			messageFormat: "Descendants of ReflectionSerializer must be deserializable",
-			category: "Correctness",
-			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/pinning.md",
-			defaultSeverity: DiagnosticSeverity.Info,
-			isEnabledByDefault: true
-		);
-
-		public static readonly DiagnosticDescriptor MustBePinnedRequiresPinned = new DiagnosticDescriptor(
 			id: "D2L0104",
-			title: "Need to pin arguments",
-			messageFormat: "Arguments to methods that have the MustBePinnedAttribute need to have the MustBePinnedAttribute or the PinnedAttribute",
+			title: "Descendants of ReflectionSerializer must be deserializable",
+			messageFormat: "Descendants of ReflectionSerializer must be deserializable",
 			category: "Correctness",
 			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/pinning.md",
 			defaultSeverity: DiagnosticSeverity.Info,
@@ -820,20 +810,10 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true
 		);
 
-		public static readonly DiagnosticDescriptor ArgumentShouldBeMustBePinned = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor MustBeDeserializableAttributeShouldBeInTheInterfaceIfInImplementations = new DiagnosticDescriptor(
 			id: "D2L0107",
-			title: "Need to pin arguments",
-			messageFormat: "Arguments to methods that have the MustBePinnedAttribute need to have the MustBePinnedAttribute or the PinnedAttribute",
-			category: "Correctness",
-			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/pinning.md",
-			defaultSeverity: DiagnosticSeverity.Info,
-			isEnabledByDefault: true
-		);
-
-		public static readonly DiagnosticDescriptor PinningAttributesShouldBeInTheInterfaceIfInImplementations = new DiagnosticDescriptor(
-			id: "D2L0108",
-			title: "Pinning / deserializable attributes need to exist on the interface",
-			messageFormat: "Arguments to methods with the MustBePinnedAttribute or MustBeDeserializableAttribute must exist on the interface to be on an implementation",
+			title: "MustBeDeserializableAttribute needs to exist on the interface if on the implementation",
+			messageFormat: "Arguments to methods with th MustBeDeserializableAttribute must exist on the interface to be on an implementation",
 			category: "Correctness",
 			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/pinning.md",
 			defaultSeverity: DiagnosticSeverity.Info,
