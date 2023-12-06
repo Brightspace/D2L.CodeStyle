@@ -14,6 +14,8 @@ namespace SpecTests {
 			int bar = foo;
 		}
 
+		int OnlyReadExpressionBody( [ReadOnly] int foo ) => foo;
+
 		void PassedByValue( [ReadOnly] int foo ) {
 			WrittenToInBody( foo );
 		}
@@ -41,6 +43,9 @@ namespace SpecTests {
 		void PassedToRef( /* ReadOnlyParameterIsnt(is assigned to and/or passed by reference) */ [ReadOnly] int foo /**/ ) {
 			RefParameter( ref foo );
 		}
+
+		void PassedToRefExpressionBody( /* ReadOnlyParameterIsnt(is assigned to and/or passed by reference) */ [ReadOnly] int foo /**/ )
+			=> RefParameter( ref foo );
 
 		void RefParameter( /* ReadOnlyParameterIsnt(is an in/ref/out parameter) */ [ReadOnly] ref int foo /**/ ) { }
 		void InParameter( /* ReadOnlyParameterIsnt(is an in/ref/out parameter) */ [ReadOnly] in int foo /**/ ) { }
