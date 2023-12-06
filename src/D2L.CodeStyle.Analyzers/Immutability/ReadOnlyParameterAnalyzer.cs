@@ -3,6 +3,7 @@
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
 
@@ -90,7 +91,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				return;
 			}
 
-			DataFlowAnalysis dataflow = operation.SemanticModel.AnalyzeDataFlow( operation.Syntax );
+			SyntaxNode nodeToAnalyze = operation.Syntax switch {
+				ArrowExpressionClauseSyntax arrow => arrow.Expression,
+				_ => operation.Syntax
+			};
+			DataFlowAnalysis dataflow = operation.SemanticModel.AnalyzeDataFlow( nodeToAnalyze );
 
 			foreach( IParameterSymbol parameter in readOnlyParameters ) {
 				Location parameterLocation = null;
