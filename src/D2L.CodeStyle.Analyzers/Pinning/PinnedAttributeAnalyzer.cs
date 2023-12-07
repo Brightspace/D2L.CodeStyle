@@ -1,5 +1,4 @@
 ﻿using System.Collections.Immutable;
-using D2L.CodeStyle.Analyzers.ApiUsage.Serialization;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -9,7 +8,13 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	internal sealed class PinnedAttributeAnalyzer : DiagnosticAnalyzer {
 
-		private static readonly TypeKind[] TypeKindsSupported = new[] { TypeKind.Class, TypeKind.Interface };
+		public const string PinnedAttributeName = "D2L.CodeStyle.Annotations.Pinning.PinnedAttribute";
+
+		private static readonly SymbolDisplayFormat FullyQualifiedNameFormat = new SymbolDisplayFormat(
+			typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+			genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters
+		);
+
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.PinnedTypesMustNotMove
 			);
@@ -23,49 +28,47 @@ namespace D2L.CodeStyle.Analyzers.Pinning {
 		private void OnCompilationStart(
 			CompilationStartAnalysisContext context
 		) {
-			context.RegisterSymbolAction( AnalyzeSymbol,
-				SymbolKind.NamedType );
+			INamedTypeSymbol? pinnedAttributeSymbol = context.Compilation.GetTypeByMetadataName( PinnedAttributeName );
+			if( pinnedAttributeSymbol != null ) {
+				context.RegisterSymbolAction( ( ctx ) => AnalyzeSymbol( ctx, pinnedAttributeSymbol ),
+					SymbolKind.NamedType );
+			}
 		}
 
-		private static void AnalyzeSymbol( SymbolAnalysisContext context ) {
-			INamedTypeSymbol? pinnedAttributeSymbol = context.Compilation.GetTypeByMetadataName( DeserializableAnalyzerHelper.PinnedAttributeName );
-			if( pinnedAttributeSymbol == null ) {
-				return;
-			}
-
-			INamedTypeSymbol? classSymbol = context.Symbol as INamedTypeSymbol;
-			if( classSymbol == null ) {
-				return;
-			}
-
-			if( !TypeKindsSupported.Contains( classSymbol.TypeKind ) ) {
-				return;
-			}
+		private static void AnalyzeSymbol( SymbolAnalysisContext context, INamedTypeSymbol pinnedAttributeSymbol ) {
+			INamedTypeSymbol classSymbol = (INamedTypeSymbol)context.Symbol;
 
 			Location? location = classSymbol.Locations.FirstOrDefault();
-			if( !DeserializableAnalyzerHelper.TryGetPinnedAttribute( classSymbol, pinnedAttributeSymbol, out AttributeData? attribute ) ) {
+			var attribute = GetPinnedAttribute( classSymbol, pinnedAttributeSymbol );
+			if( attribute == null ) {
 				return;
 			}
 
-			string? fqName = attribute?.ConstructorArguments[0].Value?.ToString();
-			string? assembly = attribute?.ConstructorArguments[1].Value?.ToString();
+			string? fqName = attribute.ConstructorArguments[0].Value?.ToString();
+			string? assembly = attribute.ConstructorArguments[1].Value?.ToString();
 			if( fqName == null || assembly == null ) {
 				context.ReportDiagnostic( Diagnostic.Create( Diagnostics.PinnedTypesMustNotMove, location, classSymbol.Name ) );
 				return;
 			}
 
-			SymbolDisplayFormat fullyQualifiedNameFormat = new SymbolDisplayFormat(
-				typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
-				genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters
-			);
-
-			string classFqName = classSymbol.ToDisplayString( fullyQualifiedNameFormat );
+			string classFqName = classSymbol.ToDisplayString( FullyQualifiedNameFormat );
 
 			if( fqName != classFqName
-			    || assembly != classSymbol.ContainingAssembly.Name
+				|| assembly != classSymbol.ContainingAssembly.Name
 			  ) {
 				context.ReportDiagnostic( Diagnostic.Create( Diagnostics.PinnedTypesMustNotMove, location, classSymbol.Name ) );
 			}
+		}
+
+		private static AttributeData? GetPinnedAttribute( ISymbol classSymbol, INamedTypeSymbol pinnedAttributeSymbol ) {
+			foreach( AttributeData? attributeData in classSymbol.GetAttributes() ) {
+				INamedTypeSymbol? attributeSymbol = attributeData.AttributeClass;
+				if( pinnedAttributeSymbol.Equals( attributeSymbol, SymbolEqualityComparer.Default ) ) {
+					return attributeData;
+				}
+			}
+
+			return null;
 		}
 	}
 }
