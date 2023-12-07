@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
+﻿using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Text;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 	public static class DeserializableAnalyzerHelper {
 
-		public const string MustBeDeserializableAttributeName = "D2L.CodeStyle.Annotations.Serialization.MustBeDeserializableAttribute";
-		public const string ReflectionSerializerAttributeName = "D2L.LP.Serialization.ReflectionSerializerAttribute";
-		public const string SerializerAttributeName = "D2L.LP.Serialization.SerializerAttribute";
+		private const string MustBeDeserializableAttributeName = "D2L.CodeStyle.Annotations.Serialization.MustBeDeserializableAttribute";
+		private const string ReflectionSerializerAttributeName = "D2L.LP.Serialization.ReflectionSerializerAttribute";
+		private const string SerializerAttributeName = "D2L.LP.Serialization.SerializerAttribute";
 
 		internal static DeserializableTypeInfo? GetDeserializableTypeInfo( Compilation compilation) {
 			INamedTypeSymbol? recursiveSymbol = compilation.GetTypeByMetadataName( MustBeDeserializableAttributeName );
@@ -33,13 +29,18 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				validAttributes.Add( serializerSymbol );
 			}
 
+			INamedTypeSymbol? serializableSymbol = compilation.GetTypeByMetadataName( "System.SerializableAttribute" );
+			if( serializableSymbol != null ) {
+				validAttributes.Add( serializableSymbol );
+			}
+
 			return new DeserializableTypeInfo( recursiveSymbol, Diagnostics.MustBeDeserializableRequiresAppropriateAttribute, Diagnostics.ArgumentShouldBeDeserializable, validAttributes.ToArray() );
 		}
 
 		internal static bool HasMustBeDeserializableAttribute( ISymbol symbol, DeserializableTypeInfo deserializableTypeInfo ) {
-			var attributes = symbol.GetAttributes();
-			foreach( var attributeData in attributes ) {
-				var attributeSymbol = attributeData.AttributeClass;
+			ImmutableArray<AttributeData> attributes = symbol.GetAttributes();
+			foreach( AttributeData? attributeData in attributes ) {
+				INamedTypeSymbol? attributeSymbol = attributeData.AttributeClass;
 				if( deserializableTypeInfo.MustBeDeserializableAttribute.Equals( attributeSymbol, SymbolEqualityComparer.Default ) ) {
 					return true;
 				}
@@ -48,9 +49,22 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			return false;
 		}
 
-		internal static bool IsDeserializable( ISymbol classSymbol, DeserializableTypeInfo deserializableTypeInfo ) {
-			foreach( var attributeData in classSymbol.GetAttributes() ) {
-				var attributeSymbol = attributeData.AttributeClass;
+		internal static bool HasReflectionSerializerAttribe( ISymbol symbol, DeserializableTypeInfo deserializableTypeInfo ) {
+			foreach( AttributeData? attributeData in symbol.GetAttributes() ) {
+				INamedTypeSymbol? attributeSymbol = attributeData.AttributeClass;
+
+				if( deserializableTypeInfo.ValidAttributes.Any( a => a.Name =="ReflectionSerializerAttribute" && a.Equals( attributeSymbol, SymbolEqualityComparer.Default ) ) ) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		internal static bool IsDeserializable( ITypeSymbol classSymbol, DeserializableTypeInfo deserializableTypeInfo ) {
+			classSymbol = GetActualSymbol( classSymbol );
+			foreach( AttributeData? attributeData in classSymbol.GetAttributes() ) {
+				INamedTypeSymbol? attributeSymbol = attributeData.AttributeClass;
 
 				if( deserializableTypeInfo.ValidAttributes.Any( a => a.Equals( attributeSymbol, SymbolEqualityComparer.Default ) ) ) {
 					return true;
@@ -60,75 +74,82 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			return false;
 		}
 
-		internal static bool IsDeserializableAtAllLevels ( ITypeSymbol classSymbol, Func<ITypeSymbol, bool> inAllowedList, DeserializableTypeInfo deserializableTypeInfo ) {
+		internal static bool IsDeserializableAtAllLevels(ITypeSymbol classSymbol, Func<ITypeSymbol, bool> inAllowedList, DeserializableTypeInfo deserializableTypeInfo)
+        {
+            Queue<ITypeSymbol> typeQueue = new Queue<ITypeSymbol>();
+            typeQueue.Enqueue(classSymbol);
 
-			if( !IsExemptFromNeedingSerializationAttributes( classSymbol, inAllowedList, out ITypeSymbol actualType)
-				&& !IsDeserializable(actualType, deserializableTypeInfo)) {
-				return false;
-			}
+            while (typeQueue.Count > 0)
+            {
+                ITypeSymbol currentType = typeQueue.Dequeue();
 
-			if( classSymbol is INamedTypeSymbol namedTypeSymbol ) {
-				foreach( ITypeSymbol childType in namedTypeSymbol.TypeArguments ) {
-					if( !IsDeserializableAtAllLevels( childType, inAllowedList, deserializableTypeInfo ) ) {
-						return false;
-					}
-				}
-			}
+                if (!IsExemptFromNeedingSerializationAttributes(currentType, inAllowedList, out ITypeSymbol actualType)
+                    && !IsDeserializable(actualType, deserializableTypeInfo))
+                {
+                    return false;
+                }
 
-			return true;
-		}
+                if (currentType is INamedTypeSymbol namedTypeSymbol)
+                {
+                    foreach (ITypeSymbol childType in namedTypeSymbol.TypeArguments)
+                    {
+                        typeQueue.Enqueue(childType);
+                    }
+                }
+            }
+
+            return true;
+        }
 
 		public static Func<ITypeSymbol, bool> GetAllowListFunction( ImmutableArray<AdditionalText> additionalFiles, Compilation compilation ) {
 			List<ISymbol>? allowNonSerializable = null;
-			var allowed = ( ITypeSymbol symbol ) => {
+
+			bool Allowed( ITypeSymbol symbol ) {
 				if( symbol.SpecialType != SpecialType.None && symbol.SpecialType != SpecialType.System_Object ) {
 					return true;
 				}
+
 				if( allowNonSerializable == null ) {
 					allowNonSerializable = new List<ISymbol>();
-					var file = additionalFiles.FirstOrDefault( f => f.Path.EndsWith( "UnpinnedAllowedList.txt" ) );
+					AdditionalText? file = additionalFiles.FirstOrDefault( f => f.Path.EndsWith( "UnpinnedAllowedList.txt" ) );
 					if( file == null ) {
 						return false;
 					}
 
-					var text = file.GetText();
+					SourceText? text = file.GetText();
 					if( text == null ) {
 						return false;
 					}
-					foreach( var line in text.Lines ) {
-						var type = compilation.GetTypeByMetadataName( line.ToString().Trim() );
+
+					foreach( TextLine line in text.Lines ) {
+						INamedTypeSymbol? type = compilation.GetTypeByMetadataName( line.ToString().Trim() );
 						if( type != null ) {
 							allowNonSerializable.Add( type );
 						}
 					}
 				}
 
-				var match = allowNonSerializable.FirstOrDefault( u => u.Equals( symbol, SymbolEqualityComparer.Default ) );
+				ISymbol? match = allowNonSerializable.FirstOrDefault( u => u.Equals( symbol, SymbolEqualityComparer.Default ) );
 
 				if( match == null ) {
 					match = allowNonSerializable.FirstOrDefault( u => u.Equals( symbol.OriginalDefinition, SymbolEqualityComparer.Default ) );
 				}
 
 				return match != null;
-			};
-			return allowed;
+			}
+
+			return Allowed;
 		}
 
-		public static bool IsExemptFromNeedingSerializationAttributes( ITypeSymbol typeSymbol, Func<ITypeSymbol, bool> inAllowList, out ITypeSymbol actualType ) {
-			var currentType = typeSymbol;
-			var enumerableTypeArgument = GetEnumerableTypeArgument( currentType );
-			while( enumerableTypeArgument != null ) {
-				currentType = enumerableTypeArgument;
-				enumerableTypeArgument = GetEnumerableTypeArgument( currentType );
-			}
+		public static Func<ITypeSymbol, bool> IsDeserializableWithoutSerializerAttribute(ImmutableArray<AdditionalText> additionalFiles, Compilation compilation  ) {
+			Func<ITypeSymbol, bool> inAllowedList = DeserializableAnalyzerHelper.GetAllowListFunction( additionalFiles, compilation );
 
-			if( currentType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T ) {
-				// Get the non-nullable type argument
-				ITypeSymbol? nonNullableType = ( currentType as INamedTypeSymbol )?.TypeArguments[0];
-				if( nonNullableType != null ) {
-					currentType = nonNullableType;
-				}
-			}
+			return (ITypeSymbol symbol) => DeserializableAnalyzerHelper.IsExemptFromNeedingSerializationAttributes( symbol, inAllowedList, out _ );
+		}
+
+
+		public static bool IsExemptFromNeedingSerializationAttributes( ITypeSymbol typeSymbol, Func<ITypeSymbol, bool> inAllowList, out ITypeSymbol actualType ) {
+			ITypeSymbol currentType = GetActualSymbol( typeSymbol );
 
 			actualType = currentType;
 
@@ -148,30 +169,25 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			return false;
 		}
 
-		private static ITypeSymbol? GetEnumerableTypeArgument( ITypeSymbol typeSymbol ) {
+		private static ITypeSymbol GetActualSymbol( ITypeSymbol typeSymbol ) {
+			ITypeSymbol currentType = typeSymbol;
 
-			// Check if the type is an array. If so, return the element type.
-			if( typeSymbol.Kind == SymbolKind.ArrayType ) {
-				return ( (IArrayTypeSymbol)typeSymbol ).ElementType;
+
+			if( currentType.TypeKind == TypeKind.Array && currentType is IArrayTypeSymbol arrayTypeSymbol ) {
+				currentType = arrayTypeSymbol.ElementType;
 			}
 
-			const string iEnumerableId = "System.Collections.Generic.IEnumerable<T>";
-			// Check if the type is named type symbol. It must be in order to be IEnumerable<T>
-			if( typeSymbol is INamedTypeSymbol namedTypeSymbol && !typeSymbol.Locations.Any( l => l.IsInSource ) ) {
-				// If it's directly IEnumerable<T>
-				if( namedTypeSymbol.ConstructedFrom.ToDisplayString() == iEnumerableId ) {
-					return namedTypeSymbol.TypeArguments[0];
-				}
-
-				// If implements IEnumerable<T>
-				var match = namedTypeSymbol.Interfaces.FirstOrDefault( i => i.ConstructedFrom.ToDisplayString() == iEnumerableId );
-				if( match != null ) {
-					return match.TypeArguments[0];
-				}
+			if( currentType.OriginalDefinition.SpecialType != SpecialType.System_Nullable_T ) {
+				return currentType;
 			}
 
-			// It's not an IEnumerable<T>
-			return null;
+			// Get the non-nullable type argument
+			ITypeSymbol? nonNullableType = ( currentType as INamedTypeSymbol )?.TypeArguments[0];
+			if( nonNullableType != null ) {
+				currentType = nonNullableType;
+			}
+
+			return currentType;
 		}
 	}
 }

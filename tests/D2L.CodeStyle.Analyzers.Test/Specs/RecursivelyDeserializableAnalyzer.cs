@@ -16,6 +16,12 @@ namespace D2L.LP.Serialization {
 	public sealed class ReflectionSerializerAttribute : Attribute {
 	}
 
+	public enum SampleEnum {
+		One,
+		Two,
+		Three
+	}
+
 	[AttributeUsage(
 			AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Enum | AttributeTargets.Interface,
 			AllowMultiple = false,
@@ -43,9 +49,10 @@ namespace D2L.LP.Serialization {
 namespace D2L.Deserialization.Recursive.Test {
 	[ReflectionSerializer]
 	public class ReflectionSerializerWithSafeTypes {
-		public int ThisIsFine { get; }
-		public string ThisIsAFineString { get; }
-		public ReflectionSerializerWithSafeTypes Child {	get; }
+		public int ThisIsFine { get; set; }
+		public string ThisIsAFineString { get; set; }
+		public ReflectionSerializerWithSafeTypes Child { get; set; }
+		public SampleEnum EnumsAreSafe { get; set; }
 	}
 
 	public class UnsafeClass {
@@ -55,25 +62,29 @@ namespace D2L.Deserialization.Recursive.Test {
 	public class ReflectionSerializerWithUnsafeTypes {
 		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public object ThisIsNotFine { get; set; }/**/
 		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public Dictionary<string, object>  ThisIsNotAFineDictionary { get; set; }/**/
-		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public object UnsafeClass { get; set; }/**/
+		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public Dictionary<string, Dictionary<string, object>> ThisIsNotAFineNestedDictionary { get; set; }/**/
+		/* ReflectionSerializerDescendantsMustBeDeserializable() */
+		public object UnsafeClass { get; set; }/**/
 	}
 
 	[ReflectionSerializer]
 	public class ReflectionSerializerWithBasicTypesInAllowedTypes {
 		public Dictionary<string, string> ThisIsAFineDictionary { get; }
+
+		public Dictionary<string, Dictionary<string, string?>> NestedNullableIsFine { get; set; }
 	}
 
 	// The following go hand-in-hand with the MustBeDeserializable analysis to ensure the sets are safe
 	[ReflectionSerializer]
-	public sealed record UnsafeRecord<T>(
-		/* ReflectionSerializerDescendantsMustBeDeserializable() */ T Value /**/,
+	public sealed record UnsafeRecord</* ArgumentShouldBeDeserializable() */ T /**/>(
+		T Value,
 		/* ReflectionSerializerDescendantsMustBeDeserializable() */ object O /**/);
 
 	[ReflectionSerializer]
 	public sealed record SafeRecord<[MustBeDeserializable] T>( T Value );
 
 	[ReflectionSerializer]
-	public class GenericReflectionSerializerWithoutMustBeDeserializable<T> {
+	public class GenericReflectionSerializerWithoutMustBeDeserializable</* ArgumentShouldBeDeserializable() */ T /**/> {
 		public GenericReflectionSerializerWithoutMustBeDeserializable(
 			T value ) {
 			Unsafe = value;
@@ -83,7 +94,7 @@ namespace D2L.Deserialization.Recursive.Test {
 
 		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public SafeRecord<object> UnsafeGeneric { get; set; }  /**/
 
-		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public T Unsafe { get; set; } /**/
+		public T Unsafe { get; set; }
 
 		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public object UnsafeObject => Unsafe; /**/
 
@@ -106,7 +117,7 @@ namespace D2L.Deserialization.Recursive.Test {
 
 	[ReflectionSerializer]
 	public class ReflectionSerializerWithMustBeDeserializableConstructor {
-		private object m_unsafeField;
+		private readonly object m_unsafeField;
 		public ReflectionSerializerWithMustBeDeserializableConstructor(
 			[MustBeDeserializable] object value ) {
 			SafeObject = value;
@@ -114,10 +125,29 @@ namespace D2L.Deserialization.Recursive.Test {
 			m_unsafeField = value;
 		}
 
-		public readonly object SafeObject { get; }
+		public object SafeObject { get; }
 
 		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public object UnsafeObject { get; set; } /**/
 
 		/* ReflectionSerializerDescendantsMustBeDeserializable() */ public object UnsafeObject2 => m_unsafeField; /**/
+	}
+
+
+	// Test that Serializer attribute isn't actually getting picked up accidentally for recursive checks
+	[Serializer]
+	public class SerializerWithMustBeDeserializableConstructor {
+		private readonly object m_unsafeField;
+		public SerializerWithMustBeDeserializableConstructor(
+			[MustBeDeserializable] object value ) {
+			SafeObject = value;
+			UnsafeObject = value;
+			m_unsafeField = value;
+		}
+
+		public object SafeObject { get; }
+
+		public object UnsafeObject { get; set; } 
+
+		public object UnsafeObject2 => m_unsafeField;
 	}
 }

@@ -102,6 +102,10 @@ namespace D2L.Deserialization.MustBeDeserializable.Test {
 			m_serializer.SerializeUnsafe( o );
 		}
 
+		private void SafeObjectCallDueToPrimitiveTypeInArray( byte[] o ) {
+			m_serializer.SerializeUnsafe( o );
+		}
+
 		private void UnsafeObjectCallDueToAllowListButUnsafeType( Dictionary<string, object> /* ArgumentShouldBeDeserializable */o/**/ ) {
 			m_serializer.SerializeUnsafe( o );
 		}
@@ -261,6 +265,16 @@ namespace D2L.Deserialization.MustBeDeserializable.Recursive.Test {
 			return new ReflectionSerializerWithMustBeDeserializableConstructor( value );
 		}
 	}
+
+	public interface IUnsafeIndirectlyMustBeDeserializable {
+		void Unsafe<T>(T value );
+	}
+
+	public class UnsafeIndirectlyMustBeDeserializableCall : IUnsafeIndirectlyMustBeDeserializable {
+		public void Unsafe</* ArgumentShouldBeDeserializable() */T /**/>( T t) {
+			new ReflectionSerializerWithMustBeDeserializableConstructor( t );
+		}
+	}
 }
 
 namespace D2L.Deserialization.MustBeDeserializable.AttributesShouldBeOnInterface.Test {
@@ -270,8 +284,8 @@ namespace D2L.Deserialization.MustBeDeserializable.AttributesShouldBeOnInterface
 	}
 
 	internal sealed class EmptyChangedImplementation : ISampleInterface {
-		public void NotDeserializeableTypeArgumentInInterface<[MustBeDeserializable] /* PinningAttributesShouldBeInTheInterfaceIfInImplementations() */ T /**/>() {}
-		public void NotDeserializeableParameterInInterface([MustBeDeserializable] object /* PinningAttributesShouldBeInTheInterfaceIfInImplementations() */ o /**/) { }
+		public void NotDeserializeableTypeArgumentInInterface<[MustBeDeserializable] /* MustBeDeserializableAttributeShouldBeInTheInterfaceIfInImplementations() */ T /**/>() {}
+		public void NotDeserializeableParameterInInterface([MustBeDeserializable] object /* MustBeDeserializableAttributeShouldBeInTheInterfaceIfInImplementations() */ o /**/) { }
 	}
 
 	internal sealed class EmptyMatchingImplementation : ISampleInterface {

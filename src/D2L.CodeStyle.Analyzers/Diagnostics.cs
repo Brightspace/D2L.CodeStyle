@@ -766,7 +766,7 @@ namespace D2L.CodeStyle.Analyzers {
 			title: "References to methods with parameters marked as [Constant] is not supported",
 			messageFormat: "References to methods with parameters marked as [Constant] is currently not supported",
 			category: "Correctness",
-				defaultSeverity: DiagnosticSeverity.Error,
+			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
 
@@ -776,7 +776,7 @@ namespace D2L.CodeStyle.Analyzers {
 			messageFormat: "Changing the fully qualified assembly name risks breaking operations on Pinned objects",
 			category: "Correctness",
 			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/consistent-serialization.md",
-			defaultSeverity: DiagnosticSeverity.Error,
+			defaultSeverity: DiagnosticSeverity.Info,
 			isEnabledByDefault: true
 		);
 
@@ -804,7 +804,7 @@ namespace D2L.CodeStyle.Analyzers {
 			id: "D2L0106",
 			title: "Need to ensure arguments are deserializable",
 			messageFormat: "Arguments to methods that have the MustBeDeserializableAttribute need to have the MustBeDeserializableAttribute or an attribute that makes them deserializable",
-				category: "Correctness",
+			category: "Correctness",
 			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/consistent-serialization.md",
 			defaultSeverity: DiagnosticSeverity.Info,
 			isEnabledByDefault: true

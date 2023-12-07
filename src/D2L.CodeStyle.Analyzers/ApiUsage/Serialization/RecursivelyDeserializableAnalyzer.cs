@@ -12,8 +12,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 	internal sealed class RecursivelyDeserializableAnalyzer : DiagnosticAnalyzer {
 
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
-			Diagnostics.ReflectionSerializerDescendantsMustBeDeserializable
-			);
+			Diagnostics.ReflectionSerializerDescendantsMustBeDeserializable,
+			Diagnostics.ArgumentShouldBeDeserializable
+		);
 
 		public override void Initialize( AnalysisContext context ) {
 			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics );
@@ -24,7 +25,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 		private void OnCompilationStart(
 			CompilationStartAnalysisContext context
 		) {
-			var deserializableType = DeserializableAnalyzerHelper.GetDeserializableTypeInfo( context.Compilation );
+			DeserializableTypeInfo? deserializableType = DeserializableAnalyzerHelper.GetDeserializableTypeInfo( context.Compilation );
 			if( deserializableType == null ) {
 				return;
 			}
@@ -36,38 +37,38 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 		}
 
 		private static void AnalyzeSyntaxNode( SyntaxNodeAnalysisContext context, ImmutableArray<AdditionalText> additionalTexts, DeserializableTypeInfo deserializableType ) {
-			var baseDeclaration = context.Node as TypeDeclarationSyntax;
+			TypeDeclarationSyntax? baseDeclaration = context.Node as TypeDeclarationSyntax;
 			if( baseDeclaration == null ) {
 				return;
 			}
 
-			var reflectionSerializerType = deserializableType.ValidAttributes.First();
+			INamedTypeSymbol reflectionSerializerType = deserializableType.ValidAttributes.First();
 
-			var typeSymbol = context.SemanticModel.GetDeclaredSymbol( baseDeclaration );
-			if( typeSymbol == null ) {
+			INamedTypeSymbol? baseTypeSymbol = context.SemanticModel.GetDeclaredSymbol( baseDeclaration );
+			if( baseTypeSymbol == null ) {
 				return;
 			}
 
-			// Check if the type isn't deserializable, but inherits from a type with the ReflectionSerializer attibute
-			if( !DeserializableAnalyzerHelper.IsDeserializable( typeSymbol, deserializableType ) ) {
-				if( InheritsFromReflectionSerializer( context, typeSymbol, deserializableType ) ) {
-					context.ReportDiagnostic( Diagnostic.Create( Diagnostics.ReflectionSerializerDescendantsMustBeDeserializable, baseDeclaration.GetLocation(), typeSymbol.Name ) );
+			// Check if the type has the ReflectionSerializerAttribute, but inherits from a type with the ReflectionSerializer attibute
+			if( !DeserializableAnalyzerHelper.HasReflectionSerializerAttribe( baseTypeSymbol, deserializableType ) ) {
+				if( InheritsFromReflectionSerializer( context, baseTypeSymbol, deserializableType ) ) {
+					context.ReportDiagnostic( Diagnostic.Create( Diagnostics.ReflectionSerializerDescendantsMustBeDeserializable, baseDeclaration.GetLocation(), baseTypeSymbol.Name ) );
 				}
 				return;
 			}
 
-			var inAllowedList = DeserializableAnalyzerHelper.GetAllowListFunction( additionalTexts, context.Compilation );
+			Func<ITypeSymbol, bool> inAllowedList = DeserializableAnalyzerHelper.GetAllowListFunction( additionalTexts, context.Compilation );
 
-			var deserializableTypeArguments = typeSymbol.TypeArguments.Where( t => DeserializableAnalyzerHelper.HasMustBeDeserializableAttribute( t, deserializableType ) );
+			IEnumerable<ITypeSymbol> deserializableTypeArguments = baseTypeSymbol.TypeArguments.Where( t => DeserializableAnalyzerHelper.HasMustBeDeserializableAttribute( t, deserializableType ) );
 
 			// skip checking properties on interfaces because implementations may be able to mark them safe
 			if( baseDeclaration is InterfaceDeclarationSyntax ) {
 				return;
 			}
 			// Iterate through properties and fields to check for non-primitive types
-			foreach( var member in baseDeclaration.Members ) {
+			foreach( MemberDeclarationSyntax member in baseDeclaration.Members ) {
 				if( member is PropertyDeclarationSyntax propertyDeclaration ) {
-					var typeSymbol = context.SemanticModel.GetTypeInfo( propertyDeclaration.Type ).Type;
+					ITypeSymbol? typeSymbol = context.SemanticModel.GetTypeInfo( propertyDeclaration.Type ).Type;
 					if( typeSymbol == null ) {
 						continue;
 					}
@@ -76,28 +77,24 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 						continue;
 					}
 
-					if( baseDeclaration is RecordDeclarationSyntax ) {
-						Console.Write( "" );
-					}
+					ArrowExpressionClauseSyntax? arrowExpression = propertyDeclaration.DescendantNodes().OfType<ArrowExpressionClauseSyntax>().FirstOrDefault();
+					ExpressionSyntax? expression = arrowExpression?.Expression;
 
-					var arrowExpression = propertyDeclaration.DescendantNodes().OfType<ArrowExpressionClauseSyntax>().FirstOrDefault();
-					var expression = arrowExpression?.Expression;
-
-					var returnStatement = propertyDeclaration.DescendantNodes().OfType<ReturnStatementSyntax>().FirstOrDefault();
+					ReturnStatementSyntax? returnStatement = propertyDeclaration.DescendantNodes().OfType<ReturnStatementSyntax>().FirstOrDefault();
 					expression = expression ?? returnStatement?.Expression;
 					if( expression != null ) {
-						var typeExpression = expression;
+						ExpressionSyntax typeExpression = expression;
 						if( expression is TypeOfExpressionSyntax typeOfExpression ) {
 							typeExpression = typeOfExpression.Type;
 						}
-						var type = context.SemanticModel.GetTypeInfo( typeExpression ).Type;
+						ITypeSymbol? type = context.SemanticModel.GetTypeInfo( typeExpression ).Type;
 
 						if( type != null && deserializableTypeArguments.Any( t => t.Equals( type, SymbolEqualityComparer.Default ) ) ) {
 							continue;
 						}
 					}
 
-					AnalyzeTypeSymbol( context, deserializableType, inAllowedList, typeSymbol, propertyDeclaration.GetLocation(), propertyDeclaration );
+					AnalyzeTypeSymbol( context, deserializableType, inAllowedList, typeSymbol, baseTypeSymbol, propertyDeclaration.GetLocation(), propertyDeclaration );
 				}
 			}
 
@@ -105,11 +102,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				if( recordDeclarationSyntax.ParameterList == null ) {
 					return;
 				}
-				foreach( var parameter in recordDeclarationSyntax.ParameterList.Parameters ) {
+				foreach( ParameterSyntax parameter in recordDeclarationSyntax.ParameterList.Parameters ) {
 					if( parameter.Type == null ) {
 						continue;
 					}
-					var typeSymbol = context.SemanticModel.GetTypeInfo( parameter.Type ).Type;
+					ITypeSymbol? typeSymbol = context.SemanticModel.GetTypeInfo( parameter.Type ).Type;
 					if( typeSymbol == null ) {
 						continue;
 					}
@@ -118,7 +115,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 						continue;
 					}
 
-					AnalyzeTypeSymbol( context, deserializableType, inAllowedList, typeSymbol, parameter.GetLocation() );
+					AnalyzeTypeSymbol( context, deserializableType, inAllowedList, typeSymbol, baseTypeSymbol, parameter.GetLocation() );
 				}
 			}
 		}
@@ -128,17 +125,45 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			DeserializableTypeInfo deserializableType,
 			Func<ITypeSymbol, bool> inAllowedList,
 			ITypeSymbol typeSymbol,
+			INamedTypeSymbol baseTypeSymbol,
 			Location location,
 			PropertyDeclarationSyntax? propertyDeclarationSyntax = null
 			) {
 
-			if(DeserializableAnalyzerHelper.IsDeserializableAtAllLevels( typeSymbol, inAllowedList, deserializableType ) ) {
+			Queue<ITypeSymbol> typeQueue = new Queue<ITypeSymbol>();
+			typeQueue.Enqueue( typeSymbol );
+
+			bool unValidatedArgument = false;
+
+			while( typeQueue.Count > 0 ) {
+				ITypeSymbol currentType = typeQueue.Dequeue();
+
+				if( !DeserializableAnalyzerHelper.IsExemptFromNeedingSerializationAttributes( currentType, inAllowedList, out ITypeSymbol actualType )
+					&& !DeserializableAnalyzerHelper.IsDeserializable( actualType, deserializableType ) ) {
+					// if generic type from base type then create a diagnostic for the generic type
+					ITypeSymbol? matchingBaseTypeArgument = baseTypeSymbol.TypeArguments.FirstOrDefault( t => t.Equals( currentType, SymbolEqualityComparer.Default ));
+					if( matchingBaseTypeArgument != null ) {
+						context.ReportDiagnostic( Diagnostic.Create( Diagnostics.ArgumentShouldBeDeserializable, matchingBaseTypeArgument.Locations.FirstOrDefault(), currentType.Name ) );
+					} else {
+						unValidatedArgument = true;
+					}
+
+				}
+
+				if( currentType is INamedTypeSymbol namedTypeSymbol ) {
+					foreach( ITypeSymbol childType in namedTypeSymbol.TypeArguments ) {
+						typeQueue.Enqueue( childType );
+					}
+				}
+			}
+
+			if( !unValidatedArgument ) {
 				return;
 			}
 
-			// this check is expensive, but should be extremely rare
+			// This check should be extremely rare and only exists to support legacy patterns. It's only when dealing with a readonly property that's not generic and not directly deserializable. (e.g. System.object)
 			if( propertyDeclarationSyntax is not null ) {
-				var propertySymbol = context.SemanticModel.GetDeclaredSymbol( propertyDeclarationSyntax );
+				IPropertySymbol? propertySymbol = context.SemanticModel.GetDeclaredSymbol( propertyDeclarationSyntax );
 				if( propertySymbol is not null && propertySymbol.IsReadOnly ) {
 					if( AnalyzeConstructorAssignmentsToReadonlyProperty( context, propertySymbol, deserializableType ) ) {
 						return;
@@ -155,10 +180,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			DeserializableTypeInfo deserializableType ) {
 			INamedTypeSymbol containingType = propertySymbol.ContainingType;
 			bool allConstructorsSafe = containingType.Constructors.Any();
+
 			foreach( IMethodSymbol constructor in containingType.Constructors ) {
 				bool currentSafe = false;
 				// Analyze the constructor's body
-				foreach( SyntaxNode node in constructor.DeclaringSyntaxReferences.SelectMany( syntaxRef => syntaxRef.GetSyntax().DescendantNodes() ) ) {
+				foreach( SyntaxNode node in constructor.DeclaringSyntaxReferences
+					.SelectMany( syntaxRef => syntaxRef.GetSyntax().DescendantNodes()
+					.Where(n => n is AssignmentExpressionSyntax) ) ) {
 					// Find assignment expressions
 
 					if( node is AssignmentExpressionSyntax assignment &&
@@ -169,7 +197,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 						if( assignment.Right is IdentifierNameSyntax rightIdentifier &&
 							constructor.Parameters.Any( p => p.Name == rightIdentifier.Identifier.ValueText ) ) {
 							IParameterSymbol parameterSymbol = constructor.Parameters.First( p => p.Name == rightIdentifier.Identifier.ValueText );
-							var hasMustBeDeserializable = DeserializableAnalyzerHelper.HasMustBeDeserializableAttribute( parameterSymbol, deserializableType );
+							bool hasMustBeDeserializable = DeserializableAnalyzerHelper.HasMustBeDeserializableAttribute( parameterSymbol, deserializableType );
 							if( DeserializableAnalyzerHelper.IsDeserializable( parameterSymbol.Type, deserializableType )
 								|| hasMustBeDeserializable ) {
 								currentSafe = true;
@@ -191,8 +219,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				symbolsInheritedFrom.Add( currentType );
 			}
 
-			foreach( var symbol in symbolsInheritedFrom ) {
-				if( symbol.SpecialType != SpecialType.System_Object && DeserializableAnalyzerHelper.IsDeserializable( symbol, deserializableType ) ) {
+			foreach( INamedTypeSymbol? symbol in symbolsInheritedFrom ) {
+				if( symbol.SpecialType != SpecialType.System_Object && DeserializableAnalyzerHelper.HasReflectionSerializerAttribe( symbol, deserializableType ) ) {
 					return true;
 				}
 			}

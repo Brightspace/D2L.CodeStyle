@@ -1,12 +1,10 @@
 ﻿using System.Collections.Immutable;
-using System.Runtime.InteropServices.ComTypes;
 using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
-using static D2L.CodeStyle.Analyzers.Language.OnlyVisibleToAnalyzer;
 
 namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
@@ -15,8 +13,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
 			Diagnostics.MustBeDeserializableRequiresAppropriateAttribute,
 			Diagnostics.ArgumentShouldBeDeserializable,
-			Diagnostics.MustBeDeserializableAttributeShouldBeInTheInterfaceIfInImplementations
-			);
+			Diagnostics.MustBeDeserializableAttributeShouldBeInTheInterfaceIfInImplementations );
 
 		public override void Initialize( AnalysisContext context ) {
 			context.ConfigureGeneratedCodeAnalysis( GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics );
@@ -28,10 +25,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 		private void OnCompilationStart(
 			CompilationStartAnalysisContext context
 		) {
-			var deserializableTypeInfo = DeserializableAnalyzerHelper.GetDeserializableTypeInfo( context.Compilation );
+			DeserializableTypeInfo? deserializableTypeInfo = DeserializableAnalyzerHelper.GetDeserializableTypeInfo( context.Compilation );
 
 			if( deserializableTypeInfo != null ) {
-				var additionalFiles = context.Options.AdditionalFiles;
+				ImmutableArray<AdditionalText> additionalFiles = context.Options.AdditionalFiles;
 				context.RegisterOperationAction( ( ctx ) =>
 					AnalyzeInvocation( ctx, deserializableTypeInfo, additionalFiles ),
 					OperationKind.Invocation );
@@ -57,13 +54,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 		private void AnalyzeMethodDeclaration(
 			SymbolAnalysisContext context,
 			DeserializableTypeInfo deserializableTypeInfo ) {
-			var symbol = context.Symbol as IMethodSymbol;
+			IMethodSymbol? symbol = context.Symbol as IMethodSymbol;
 			if( symbol == null ) {
 				return;
 			}
 
-			var interfaceMethod = symbol.ExplicitInterfaceImplementations.FirstOrDefault()
-				?? symbol.GetImplementedMethods().FirstOrDefault();
+			IMethodSymbol? interfaceMethod = symbol.ExplicitInterfaceImplementations.FirstOrDefault()
+			                                 ?? symbol.GetImplementedMethods().FirstOrDefault();
 			if( interfaceMethod == null ) {
 				return;
 			}
@@ -91,26 +88,25 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			OperationAnalysisContext context,
 			DeserializableTypeInfo deserializableTypeInfo,
 			ImmutableArray<AdditionalText> additionalFiles ) {
-			var operation = context.Operation as IFieldReferenceOperation;
+			IFieldReferenceOperation? operation = context.Operation as IFieldReferenceOperation;
 			if( operation == null || !( operation.Parent is IAssignmentOperation assignmentOperation ) ) {
 				return;
 			}
 
-			var syntax = assignmentOperation.Syntax;
-			var model = assignmentOperation.SemanticModel;
-			var type = assignmentOperation.Value.Type;
+			SemanticModel? model = assignmentOperation.SemanticModel;
+			ITypeSymbol? type = assignmentOperation.Value.Type;
 
 
-			var definitionSymbol = model?.GetSymbolInfo( assignmentOperation.Value.Syntax ).Symbol;
+			ISymbol? definitionSymbol = model?.GetSymbolInfo( assignmentOperation.Value.Syntax ).Symbol;
 			if( definitionSymbol == null ) {
 				return;
 			}
-			var baseType = definitionSymbol.ContainingType;
+			INamedTypeSymbol? baseType = definitionSymbol.ContainingType;
 			if( baseType == null ) {
 				return;
 			}
 
-			var parentGenericType = baseType.TypeArguments.FirstOrDefault( t => t.Equals( type, SymbolEqualityComparer.Default ) );
+			ITypeSymbol? parentGenericType = baseType.TypeArguments.FirstOrDefault( t => t.Equals( type, SymbolEqualityComparer.Default ) );
 			if( parentGenericType == null ) {
 				return;
 			}
@@ -129,23 +125,20 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			OperationAnalysisContext context,
 			DeserializableTypeInfo deserializableTypeInfo,
 			ImmutableArray<AdditionalText> additionalFiles ) {
-			var operation = context.Operation as IPropertyReferenceOperation;
+			IPropertyReferenceOperation? operation = context.Operation as IPropertyReferenceOperation;
 			if( operation == null || !( operation.Parent is IAssignmentOperation assignmentOperation ) ) {
 				return;
 			}
-			var type = operation.Property.OriginalDefinition.Type;
+			ITypeSymbol type = operation.Property.OriginalDefinition.Type;
 
 			if( type.TypeKind != TypeKind.TypeParameter ) {
 				return;
 			}
 
-			var isExempt = ( ITypeSymbol symbol ) => {
-				var inAllowedList = DeserializableAnalyzerHelper.GetAllowListFunction( additionalFiles, context.Compilation );
-				return DeserializableAnalyzerHelper.IsExemptFromNeedingSerializationAttributes( symbol, inAllowedList, out _ );
-			};
+			Func<ITypeSymbol, bool> isExempt = DeserializableAnalyzerHelper.IsDeserializableWithoutSerializerAttribute( additionalFiles, context.Compilation );
 
-			var syntax = operation.Syntax;
-			var model = operation.SemanticModel;
+			SyntaxNode syntax = operation.Syntax;
+			SemanticModel? model = operation.SemanticModel;
 
 			if( model == null ) {
 				return;
@@ -153,8 +146,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 			if( DeserializableAnalyzerHelper.HasMustBeDeserializableAttribute( type, deserializableTypeInfo ) ) {
 
-				var definitionSymbol = model.GetSymbolInfo( assignmentOperation.Value.Syntax ).Symbol;
-				var argSymbol = assignmentOperation.Value.Type;
+				ISymbol? definitionSymbol = model.GetSymbolInfo( assignmentOperation.Value.Syntax ).Symbol;
+				ITypeSymbol? argSymbol = assignmentOperation.Value.Type;
 				if( argSymbol == null || definitionSymbol == null ) {
 					return;
 				}
@@ -163,7 +156,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 					argSymbol = parameterSymbol.Type;
 				}
 
-				var parentMethod = syntax.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
+				MethodDeclarationSyntax? parentMethod = syntax.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
 				IEnumerable<ITypeSymbol> genericMethodArguments = Enumerable.Empty<ITypeSymbol>();
 				IEnumerable<ITypeSymbol> genericBaseTypeArguments = Enumerable.Empty<ITypeSymbol>();
 				IMethodSymbol? parentMethodSymbol = parentMethod != null ? model.GetDeclaredSymbol( parentMethod ) : null;
@@ -202,30 +195,31 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			DeserializableTypeInfo deserializableTypeInfo,
 			ImmutableArray<AdditionalText> additionalFiles ) {
 
-			var operation = context.Operation as IObjectCreationOperation;
+			IObjectCreationOperation? operation = context.Operation as IObjectCreationOperation;
 			if( operation == null ) {
 				return;
 			}
 
-			var isExempt = ( ITypeSymbol symbol ) => {
-				var inAllowedList = DeserializableAnalyzerHelper.GetAllowListFunction( additionalFiles, context.Compilation );
-				return DeserializableAnalyzerHelper.IsExemptFromNeedingSerializationAttributes( symbol, inAllowedList, out _ );
-			};
-			var typeSymbol = operation.Type as INamedTypeSymbol;
+			Func<ITypeSymbol, bool> isExempt = DeserializableAnalyzerHelper.IsDeserializableWithoutSerializerAttribute( additionalFiles, context.Compilation );
+			INamedTypeSymbol? typeSymbol = operation.Type as INamedTypeSymbol;
 			if( operation.Constructor == null ) {
 				return;
 			}
 
 			// check type arguments
-			var originalTypeArgs = operation.Constructor.ContainingType.OriginalDefinition.TypeArguments;
-			var syntax = operation.Syntax as ObjectCreationExpressionSyntax;
-			var model = operation.SemanticModel;
+			ImmutableArray<ITypeSymbol> originalTypeArgs = operation.Constructor.ContainingType.OriginalDefinition.TypeArguments;
+			ObjectCreationExpressionSyntax? syntax = operation.Syntax as ObjectCreationExpressionSyntax;
+			SemanticModel? model = operation.SemanticModel;
 
 			if( syntax == null || model == null ) {
 				return;
 			}
 
-			var parentMethod = syntax.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
+			MethodDeclarationSyntax? parentMethod = syntax.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
+
+			if( parentMethod?.ToString()?.Contains( "INotificationQueueAppender.Enqueue<T>" ) ?? false ) {
+				Console.WriteLine( "debug" );
+			}
 
 			IEnumerable<ITypeSymbol> genericMethodArguments = Enumerable.Empty<ITypeSymbol>();
 			IEnumerable<ITypeSymbol> genericBaseTypeArguments = Enumerable.Empty<ITypeSymbol>();
@@ -239,19 +233,19 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			}
 
 			for( int i = 0; i < originalTypeArgs.Length; i++ ) {
-				var current = originalTypeArgs[i];
+				ITypeSymbol current = originalTypeArgs[i];
 				if( DeserializableAnalyzerHelper.HasMustBeDeserializableAttribute( current, deserializableTypeInfo ) ) {
-					var argSymbol = operation.Constructor.ContainingType.TypeArguments[i];
+					ITypeSymbol argSymbol = operation.Constructor.ContainingType.TypeArguments[i];
 					if( !DeserializableAnalyzerHelper.HasMustBeDeserializableAttribute( argSymbol, deserializableTypeInfo ) ) {
 
-						var operationSymbol = model.GetSymbolInfo( syntax ).Symbol;
+						ISymbol? operationSymbol = model.GetSymbolInfo( syntax ).Symbol;
 						ISymbol definitionSymbol = current;
 
-						var matchingTypeArgument = operation.Arguments.SingleOrDefault( a => a.Type != null && a.Type.Equals( current, SymbolEqualityComparer.Default ) );
+						IArgumentOperation? matchingTypeArgument = operation.Arguments.SingleOrDefault( a => a.Type != null && a.Type.Equals( current, SymbolEqualityComparer.Default ) );
 
 
 						if( matchingTypeArgument != null ) {
-							var matchingInvocationArgument = operation.Arguments[operation.Arguments.IndexOf( matchingTypeArgument )];
+							IArgumentOperation matchingInvocationArgument = operation.Arguments[operation.Arguments.IndexOf( matchingTypeArgument )];
 							ISymbol? symbol = model.GetSymbolInfo( matchingInvocationArgument.Value.Syntax ).Symbol;
 							if( symbol != null ) {
 								definitionSymbol = symbol;
@@ -292,10 +286,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 						arg = syntax.ArgumentList.Arguments[i];
 					}
-					if( arg == null ) {
-						continue;
-					}
-					var argSymbol = operation.Arguments.FirstOrDefault( a => current.Equals( a.Parameter, SymbolEqualityComparer.Default ) );
+
+					IArgumentOperation? argSymbol = operation.Arguments.FirstOrDefault( a => current.Equals( a.Parameter, SymbolEqualityComparer.Default ) );
 
 					// fetch the variable definition
 					// the following operations require handling a wide variety of cases to accomplish the same thing without the semantic model
@@ -337,31 +329,24 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			DeserializableTypeInfo deserializableTypeInfo,
 			ImmutableArray<AdditionalText> additionalFiles ) {
 
-			var operation = context.Operation as IInvocationOperation;
+			IInvocationOperation? operation = context.Operation as IInvocationOperation;
 
-			if( operation == null || deserializableTypeInfo == null ) {
-				return;
-			}
-			var invocation = operation.Syntax as InvocationExpressionSyntax;
-			if( invocation == null ) {
+			InvocationExpressionSyntax? invocation = operation?.Syntax as InvocationExpressionSyntax;
+			if( invocation == null || operation == null ) {
 				return;
 			}
 
 			IMethodSymbol methodSymbol = operation.TargetMethod;
 			SyntaxReference? match = methodSymbol.DeclaringSyntaxReferences.FirstOrDefault();
-			if( match == null ) {
-				return;
-			}
 
-			SyntaxNode matchNode = match.GetSyntax();
-			var methodDeclaration = matchNode as MethodDeclarationSyntax;
+			SyntaxNode? matchNode = match?.GetSyntax();
 
-			if( methodDeclaration == null ) {
+			if( matchNode is not MethodDeclarationSyntax methodDeclaration ) {
 				return;
 			}
 
 			// collect generic arguments from the method and the base type for passing into future checks so MustBeDeserializable can be associated with them
-			var parentMethod = invocation.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
+			MethodDeclarationSyntax? parentMethod = invocation.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
 
 			IEnumerable<ITypeSymbol> genericMethodArguments = Enumerable.Empty<ITypeSymbol>();
 			IEnumerable<ITypeSymbol> genericBaseTypeArguments = Enumerable.Empty<ITypeSymbol>();
@@ -375,10 +360,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 				}
 			}
 
-			var isExempt = ( ITypeSymbol symbol ) => {
-				var inAllowedList = DeserializableAnalyzerHelper.GetAllowListFunction( additionalFiles, context.Compilation );
-				return DeserializableAnalyzerHelper.IsExemptFromNeedingSerializationAttributes( symbol, inAllowedList, out _ );
-			};
+			Func<ITypeSymbol, bool> isExempt = DeserializableAnalyzerHelper.IsDeserializableWithoutSerializerAttribute( additionalFiles, context.Compilation );
 
 			// check type arguments if they exist on the invoked method definition
 
@@ -395,11 +377,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 
 						ITypeSymbol invocationTypeArgument = arguments[argIndex];
 
-						var matchingTypeArgument = methodSymbol.Parameters.SingleOrDefault( p => p.Type.Equals( invocationTypeArgument, SymbolEqualityComparer.Default ) );
+						IParameterSymbol? matchingTypeArgument = methodSymbol.Parameters.FirstOrDefault( p => p.Type.Equals( invocationTypeArgument, SymbolEqualityComparer.Default ) );
 
 
 						if( matchingTypeArgument != null ) {
-							var matchingInvocationArgument = operation.Arguments[methodSymbol.Parameters.IndexOf( matchingTypeArgument )];
+							IArgumentOperation matchingInvocationArgument = operation.Arguments[methodSymbol.Parameters.IndexOf( matchingTypeArgument )];
 							ISymbol? symbol = model.GetSymbolInfo( matchingInvocationArgument.Value.Syntax ).Symbol;
 							if( symbol != null ) {
 								definitionSymbol = symbol;
@@ -418,61 +400,60 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 							genericBaseArguments: genericBaseTypeArguments );
 					}
 				}
-
 			}
 
 			// check parameters to the method comparing the invocation parameters to the called method
 			foreach( IParameterSymbol argument in methodSymbol.OriginalDefinition.Parameters ) {
 				SeparatedSyntaxList<ArgumentSyntax> arguments = invocation.ArgumentList.Arguments;
-				if( DeserializableAnalyzerHelper.HasMustBeDeserializableAttribute(argument, deserializableTypeInfo) ) {
-					// find the matching type parameter
-					int argIndex = methodSymbol.OriginalDefinition.Parameters.IndexOf( argument );
+				if( !DeserializableAnalyzerHelper.HasMustBeDeserializableAttribute( argument, deserializableTypeInfo ) ) {
+					continue;
+				}
 
-					ArgumentSyntax? arg = invocation.ArgumentList.Arguments.FirstOrDefault( a => a.NameColon?.ToString() == argument.Name );
+				// find the matching type parameter
+				int argIndex = methodSymbol.OriginalDefinition.Parameters.IndexOf( argument );
 
-					if( arg == null ) {
-						if( arguments.Count <= argIndex ) {
-							continue;
-						}
+				ArgumentSyntax? arg = invocation.ArgumentList.Arguments.FirstOrDefault( a => a.NameColon?.ToString() == argument.Name );
 
-						arg = invocation.ArgumentList.Arguments[argIndex];
-					}
-					if( arg == null ) {
-						continue;
-					}
-					var argSymbol = operation.Arguments.FirstOrDefault( a => argument.Equals( a.Parameter, SymbolEqualityComparer.Default ) );
-
-					// fetch the variable definition
-					// the following operations require handling a wide variety of cases to accomplish the same thing without the semantic model
-					ISymbol? symbol = model.GetSymbolInfo( arg.Expression ).Symbol;
-					TypeInfo typeInfo = model.GetTypeInfo( arg.Expression );
-					(bool isDeserializable, ITypeSymbol? type) = CheckIfDeserializableAndUpdateToUnderlyingType(
-							context,
-							ref symbol,
-							argSymbol,
-							arg.GetLocation(),
-							typeInfo,
-							deserializableTypeInfo
-						);
-					if( isDeserializable || symbol == null ) {
+				if( arg == null ) {
+					if( arguments.Count <= argIndex ) {
 						continue;
 					}
 
-					if( type != null ) {
-						// if there isn't the MustBeDeserializableAttribute on it then check the type and all it's generic arguments
-						ValidateIsDeserializable(
-							context: context,
-							location: arg.GetLocation(),
-							deserializableTypeInfo: deserializableTypeInfo,
-							argSymbol: type,
-							definitionSymbol: symbol,
-							isExempt: isExempt,
-							genericArguments: genericMethodArguments,
-							genericBaseArguments: genericBaseTypeArguments );
+					arg = invocation.ArgumentList.Arguments[argIndex];
+				}
 
-					} else {
-						context.ReportDiagnostic( Diagnostic.Create( deserializableTypeInfo.Descriptor, arg.GetLocation() ) );
-					}
+				IArgumentOperation? argSymbol = operation.Arguments.FirstOrDefault( a => argument.Equals( a.Parameter, SymbolEqualityComparer.Default ) );
+
+				// fetch the variable definition
+				// the following operations require handling a wide variety of cases to accomplish the same thing without the semantic model
+				ISymbol? symbol = model.GetSymbolInfo( arg.Expression ).Symbol;
+				TypeInfo typeInfo = model.GetTypeInfo( arg.Expression );
+				(bool isDeserializable, ITypeSymbol? type) = CheckIfDeserializableAndUpdateToUnderlyingType(
+					context,
+					ref symbol,
+					argSymbol,
+					arg.GetLocation(),
+					typeInfo,
+					deserializableTypeInfo
+				);
+				if( isDeserializable || symbol == null ) {
+					continue;
+				}
+
+				if( type != null ) {
+					// if there isn't the MustBeDeserializableAttribute on it then check the type and all it's generic arguments
+					ValidateIsDeserializable(
+						context: context,
+						location: arg.GetLocation(),
+						deserializableTypeInfo: deserializableTypeInfo,
+						argSymbol: type,
+						definitionSymbol: symbol,
+						isExempt: isExempt,
+						genericArguments: genericMethodArguments,
+						genericBaseArguments: genericBaseTypeArguments );
+
+				} else {
+					context.ReportDiagnostic( Diagnostic.Create( deserializableTypeInfo.Descriptor, arg.GetLocation() ) );
 				}
 
 
@@ -515,7 +496,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.Serialization {
 			}
 
 			// try getting the type from common ways the variable might be assigned
-			var parameterSymbol = symbol as IParameterSymbol;
+			IParameterSymbol? parameterSymbol = symbol as IParameterSymbol;
 			ITypeSymbol? type = typeInfo.Type ?? parameterSymbol?.Type;
 			if( symbol is IFieldSymbol fieldSymbol ) {
 				type = fieldSymbol.Type;
