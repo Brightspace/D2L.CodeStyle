@@ -775,7 +775,7 @@ namespace D2L.CodeStyle.Analyzers {
 			title: "Pinned types must not move",
 			messageFormat: "Changing the fully qualified assembly name risks breaking operations on Pinned objects",
 			category: "Correctness",
-			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/pinning.md",
+			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/consistent-serialization.md",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
@@ -785,7 +785,7 @@ namespace D2L.CodeStyle.Analyzers {
 			title: "Descendants of ReflectionSerializer must be deserializable",
 			messageFormat: "Descendants of ReflectionSerializer must be deserializable",
 			category: "Correctness",
-			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/pinning.md",
+			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/consistent-serialization.md",
 			defaultSeverity: DiagnosticSeverity.Info,
 			isEnabledByDefault: true
 		);
@@ -795,7 +795,7 @@ namespace D2L.CodeStyle.Analyzers {
 			title: "Need to ensure arguments are deserializable",
 			messageFormat: "Arguments to methods that have the MustBeDeserializableAttribute need to have the MustBeDeserializableAttribute or an attribute that makes them deserializable",
 			category: "Correctness",
-			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/pinning.md",
+			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/consistent-serialization.md",
 			defaultSeverity: DiagnosticSeverity.Info,
 			isEnabledByDefault: true
 		);
@@ -805,7 +805,7 @@ namespace D2L.CodeStyle.Analyzers {
 			title: "Need to ensure arguments are deserializable",
 			messageFormat: "Arguments to methods that have the MustBeDeserializableAttribute need to have the MustBeDeserializableAttribute or an attribute that makes them deserializable",
 				category: "Correctness",
-			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/pinning.md",
+			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/consistent-serialization.md",
 			defaultSeverity: DiagnosticSeverity.Info,
 			isEnabledByDefault: true
 		);
@@ -815,7 +815,7 @@ namespace D2L.CodeStyle.Analyzers {
 			title: "MustBeDeserializableAttribute needs to exist on the interface if on the implementation",
 			messageFormat: "Arguments to methods with th MustBeDeserializableAttribute must exist on the interface to be on an implementation",
 			category: "Correctness",
-			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/pinning.md",
+			helpLinkUri: "https://github.com/Brightspace/architecture/blob/main/proposals/lms-modern-dot-net/consistent-serialization.md",
 			defaultSeverity: DiagnosticSeverity.Info,
 			isEnabledByDefault: true
 		);
