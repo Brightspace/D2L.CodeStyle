@@ -274,14 +274,13 @@ namespace D2L.CodeStyle.Analyzers {
 			description: "The parameter {0} has a default value of {1} here, but {2} in its original definition in {3}. This causes inconsistent behaviour. Please use the same defualt value everywhere."
 		);
 
-		public static readonly DiagnosticDescriptor LoggingContextRunAwaitable = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor AsyncFuncsBlocked = new DiagnosticDescriptor(
 			id: "D2L0050",
-			title: "Use RunAsync for awaitable actions",
-			messageFormat: "Use RunAsync for awaitable actions",
+			title: "Awaitable-returning funcs are not allowed",
+			messageFormat: "This argument expects a synchronous action, awaitable-returning funcs are not allowed{0}",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "Use RunAsync for awaitable actions."
+			isEnabledByDefault: true
 		);
 
 		public static readonly DiagnosticDescriptor BannedConfig = new DiagnosticDescriptor(
