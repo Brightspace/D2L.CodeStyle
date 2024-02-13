@@ -24,6 +24,7 @@ public sealed class Y {
 		);
 
 		Assert.AreEqual( @"#pragma warning disable CS1572
+#nullable annotations
 ", collector.CollectSource() );
 	}
 
@@ -52,6 +53,7 @@ public sealed class Y {
 		);
 
 		Assert.AreEqual( @"#pragma warning disable CS1572
+#nullable annotations
 
 using Foo;
 
@@ -89,6 +91,7 @@ public sealed class Y<T, U> where T : new where U : T {
 		);
 
 		Assert.AreEqual( @"#pragma warning disable CS1572
+#nullable annotations
 
 using Foo;
 
@@ -124,6 +127,7 @@ public partial {kind} X {{
 		);
 
 		Assert.AreEqual( @$"#pragma warning disable CS1572
+#nullable annotations
 
 partial {kind} X {{
 	any text
@@ -163,6 +167,7 @@ namespace A.B.C {
 		);
 
 		Assert.AreEqual( @"#pragma warning disable CS1572
+#nullable annotations
 
 using Foo;
 
@@ -244,6 +249,7 @@ namespace Q {
 		);
 
 		Assert.AreEqual( @"#pragma warning disable CS1572
+#nullable annotations
 
 using Foo;
 
