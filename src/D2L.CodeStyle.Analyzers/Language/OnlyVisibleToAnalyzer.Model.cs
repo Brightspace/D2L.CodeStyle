@@ -25,8 +25,9 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			}
 
 			public static Model? TryCreate( Compilation compilation ) {
+				INamedTypeSymbol? onlyVisibleToTypeAttribute = compilation
+					.GetTypeByMetadataName( OnlyVisibleToTypeAttributeMetadataName );
 
-				INamedTypeSymbol? onlyVisibleToTypeAttribute = compilation.GetTypeByMetadataName( OnlyVisibleToTypeAttributeMetadataName );
 				if( onlyVisibleToTypeAttribute == null ) {
 					return null;
 				}
@@ -34,10 +35,10 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return new Model( compilation, onlyVisibleToTypeAttribute );
 			}
 
-			public bool IsVisibleTo( INamedTypeSymbol caller, ISymbol member ) {
+			public bool IsVisibleTo( INamedTypeSymbol caller, ISymbol symbol ) {
 
 				ImmutableHashSet<INamedTypeSymbol>? restrictions = m_visibilityCache
-					.GetOrAdd( member, GetTypeVisibilityRestrictions );
+					.GetOrAdd( symbol, GetSymbolVisibilityRestrictions );
 
 				if( restrictions == null ) {
 					return true;
@@ -47,88 +48,179 @@ namespace D2L.CodeStyle.Analyzers.Language {
 					return true;
 				}
 
-				if( SymbolEqualityComparer.Default.Equals( caller, member.ContainingType ) ) {
+				if( SymbolEqualityComparer.Default.Equals( caller, symbol.ContainingType ) ) {
 					return true;
 				}
 
 				return false;
 			}
 
-			private ImmutableHashSet<INamedTypeSymbol>? GetTypeVisibilityRestrictions( ISymbol member ) {
-
-				ImmutableArray<AttributeData> attributes = member.GetAttributes();
-				if( attributes.IsEmpty ) {
-					return null;
-				}
+			private ImmutableHashSet<INamedTypeSymbol>? GetSymbolVisibilityRestrictions( ISymbol symbol ) {
 
 				ImmutableHashSet<INamedTypeSymbol>.Builder? restrictions = null;
 
-				foreach( AttributeData attribute in attributes ) {
+				// Local method to be able to add directly to the builder
+				void AddTypeRestrictions(
+					INamedTypeSymbol attributeSymbol,
+					Compilation compilation,
+					ISymbol symbol,
+					bool excludeUninherited
+				) {
+					// Get all attributes on the specified symbol
+					ImmutableArray<AttributeData> attributes = symbol.GetAttributes();
+					if( attributes.IsEmpty ) {
+						return;
+					}
 
-					if( SymbolEqualityComparer.Default.Equals( attribute.AttributeClass, m_onlyVisibleToTypeAttribute ) ) {
-
-						restrictions ??= ImmutableHashSet.CreateBuilder<INamedTypeSymbol>( SymbolEqualityComparer.Default );
-
-						INamedTypeSymbol? visibleToType = TryGetOnlyVisibleToType( attribute );
-						if( visibleToType != null ) {
-
-							restrictions.Add( visibleToType );
+					foreach( AttributeData attribute in attributes ) {
+						// Ignore any attributes that are not the relevant attribute
+						if( !SymbolEqualityComparer.Default.Equals( attribute.AttributeClass, attributeSymbol ) ) {
+							continue;
 						}
+
+						restrictions ??= ImmutableHashSet.CreateBuilder<INamedTypeSymbol>(
+							SymbolEqualityComparer.Default
+						);
+
+						// Retrieve the referenced type and inheritance from the attribute
+						AttributeInfo? attributeInfo = GetAttributeInfo( attribute, compilation );
+
+						// Ignore any attributes which could not be retrieved
+						if( attributeInfo == null ) {
+							continue;
+						}
+
+						// Conditionally ignore any attributes which are not inherited
+						// (if `Foo : IBar`, this prevents references of `Foo` from
+						// throwing an error if `IBar` has restrictions that are not inherited)
+						if( excludeUninherited && !attributeInfo.Value.IsInherited ) {
+							continue;
+						}
+
+						restrictions.Add( attributeInfo.Value.Symbol );
 					}
 				}
 
-				// null implies that we never saw any [OnlyVisibleToType] attributes
+				// Get any restrictions that are explicitly on the symbol
+				AddTypeRestrictions(
+					attributeSymbol: m_onlyVisibleToTypeAttribute,
+					compilation: m_compilation,
+					symbol: symbol,
+					excludeUninherited: false
+				);
+
+				// Only named types have bases, so if the symbol is
+				// a named type then we need to look at its bases
+				if( symbol is INamedTypeSymbol namedTypeSymbol ) {
+
+					// Check visibility against all base classes
+					INamedTypeSymbol? baseType = namedTypeSymbol.BaseType;
+					while( baseType is not null ) {
+						AddTypeRestrictions(
+							attributeSymbol: m_onlyVisibleToTypeAttribute,
+							compilation: m_compilation,
+							symbol: baseType,
+							excludeUninherited: true
+						);
+						baseType = baseType.BaseType;
+					}
+
+					// Check visibility against all implemented interfaces
+					foreach( INamedTypeSymbol interfaceSymbol in namedTypeSymbol.AllInterfaces ) {
+						AddTypeRestrictions(
+							attributeSymbol: m_onlyVisibleToTypeAttribute,
+							compilation: m_compilation,
+							symbol: interfaceSymbol,
+							excludeUninherited: true
+						);
+					}
+				}
+
+				// Null implies that we never saw any [OnlyVisibleToType] attributes
 				if( restrictions == null ) {
 					return null;
 				}
 
-				// could be empty in the case where we saw an [OnlyVisibleTo] attribute but none of the indicated types are in this compilation
+				// Could be empty in the case where we saw an [OnlyVisibleTo] attribute
+				// but none of the indicated types are in this compilation
 				return restrictions.ToImmutable();
 			}
 
-			private INamedTypeSymbol? TryGetOnlyVisibleToType( AttributeData attribute ) {
+			private static AttributeInfo? GetAttributeInfo(
+				AttributeData attribute,
+				Compilation compilation
+			) {
+				ImmutableArray<TypedConstant> attributeArgs = attribute.ConstructorArguments;
+				return attributeArgs.Length switch {
+					2 => GetFullyTypedAttributeInfo( attributeArgs ),
+					3 => GetQualifiedAttributeInfo( attributeArgs, compilation ),
+					_ => null,
+				};
+			}
 
-				ImmutableArray<TypedConstant> arguments = attribute.ConstructorArguments;
-
-				if( arguments.Length == 2 ) {
-
-					TypedConstant metadataNameArgument = arguments[ 0 ];
-					if( metadataNameArgument.Value is not string metadataName ) {
-						return null;
-					}
-
-					TypedConstant assemblyNameAttribute = arguments[ 1 ];
-					if( assemblyNameAttribute.Value is not string assemblyName ) {
-						return null;
-					}
-
-					INamedTypeSymbol? type = m_compilation.GetTypeByMetadataName( metadataName );
-					if( type == null ) {
-						return null;
-					}
-
-					if( !type.ContainingAssembly.Name.Equals( assemblyName, StringComparison.Ordinal ) ) {
-						return null;
-					}
-
-					return type;
+			private static AttributeInfo? GetFullyTypedAttributeInfo(
+				ImmutableArray<TypedConstant> arguments
+			) {
+				TypedConstant typeArgument = arguments[0];
+				if( typeArgument.Value is not INamedTypeSymbol type ) {
+					return null;
 				}
 
-				if( arguments.Length == 1 ) {
-
-					TypedConstant typeArgument = arguments[ 0 ];
-					if( typeArgument.Value is not INamedTypeSymbol type ) {
-						return null;
-					}
-
-					if( type.IsUnboundGenericType ) {
-						return type.OriginalDefinition;
-					}
-
-					return type;
+				TypedConstant inheritedArgument = arguments[1];
+				if( inheritedArgument.Value is not bool inherited ) {
+					return null;
 				}
 
-				return null;
+				if( type.IsUnboundGenericType ) {
+					return new AttributeInfo {
+						Symbol = type.OriginalDefinition,
+						IsInherited = inherited
+					};
+				}
+
+				return new AttributeInfo {
+					Symbol = type,
+					IsInherited = inherited
+				};
+			}
+
+			private static AttributeInfo? GetQualifiedAttributeInfo(
+				ImmutableArray<TypedConstant> arguments,
+				Compilation compilation
+			) {
+				TypedConstant metadataNameArgument = arguments[0];
+				if( metadataNameArgument.Value is not string metadataName ) {
+					return null;
+				}
+
+				TypedConstant assemblyNameArgument = arguments[1];
+				if( assemblyNameArgument.Value is not string assemblyName ) {
+					return null;
+				}
+
+				INamedTypeSymbol? type = compilation.GetTypeByMetadataName( metadataName );
+				if( type == null ) {
+					return null;
+				}
+
+				TypedConstant inheritedArgument = arguments[2];
+				if( inheritedArgument.Value is not bool inherited ) {
+					return null;
+				}
+
+				if( !type.ContainingAssembly.Name.Equals( assemblyName, StringComparison.Ordinal ) ) {
+					return null;
+				}
+
+				return new AttributeInfo {
+					Symbol = type,
+					IsInherited = inherited
+				};
+			}
+
+			private readonly struct AttributeInfo {
+				public INamedTypeSymbol Symbol { get; init; }
+				public bool IsInherited { get; init; }
 			}
 		}
 	}
