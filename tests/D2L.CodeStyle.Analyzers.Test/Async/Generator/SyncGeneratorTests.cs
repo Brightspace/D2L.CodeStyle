@@ -58,7 +58,7 @@ sealed class Bar {
 		);
 
 		AssertNewTrees( result, @"#pragma warning disable CS1572
-#nullable annotations
+#nullable enable annotations
 
 using System;
 using System.IO;
@@ -92,7 +92,7 @@ partial interface IFoo {
 		);
 
 		AssertNewTrees( result, @"#pragma warning disable CS1572
-#nullable annotations
+#nullable enable annotations
 
 using System;
 using System.Threading.Tasks;
@@ -142,7 +142,7 @@ public sealed partial class Abcdefg {
 		);
 
 		AssertNewTrees( result, @"#pragma warning disable CS1572
-#nullable annotations
+#nullable enable annotations
 
 using System;
 using System.IO;
@@ -156,7 +156,7 @@ partial class Bar {
 	[Blocking]
 	public void Baz( StreamWriter x ) { return; }
 }", @"#pragma warning disable CS1572
-#nullable annotations
+#nullable enable annotations
 
 using System;
 using System.IO;
