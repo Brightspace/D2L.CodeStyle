@@ -65,16 +65,7 @@ namespace D2L.CodeStyle.Analyzers {
 
 		// Retired:
 		// D2L0014 (SingletonIsntImmutable): "Classes marked as a singleton should be immutable.",
-
-		public static readonly DiagnosticDescriptor SingletonLocatorMisuse = new DiagnosticDescriptor(
-			id: "D2L0017",
-			title: "Can only use OldAndBrokenSingletonLocator to inject interfaces with the [Singleton] attribute",
-			messageFormat: "Cannot use OldAndBrokenSingletonLocator to inject {0} because it lacks the [Singleton] attribute",
-			category: "Correctness",
-			defaultSeverity: DiagnosticSeverity.Error,
-			isEnabledByDefault: true,
-			description: "Can only use OldAndBrokenSingletonLocator to inject interfaces with the [Singleton] attribute."
-		);
+		// D2L0017 (SingletonLocatorMisuse): "Can only use OldAndBrokenSingletonLocator to inject interfaces with the [Singleton] attribute"
 
 		public static readonly DiagnosticDescriptor DangerousMethodsShouldBeAvoided = new DiagnosticDescriptor(
 			id: "D2L0018",
