@@ -84,7 +84,7 @@ internal partial class SyncGenerator {
 			m_out.AppendLine( "#pragma warning disable CS1572" );
 			// This allows us to copy+paste annotations but otherwise does not emit diagnostics
 			// otherwise we get "CS8669: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context. Auto-generated code requires an explicit '#nullable' directive in source."
-			m_out.AppendLine( "#nullable annotations" );
+			m_out.AppendLine( "#nullable enable annotations" );
 			// File-scoped usings:
 			m_out.Append( m_root.Usings.ToFullString() );
 
