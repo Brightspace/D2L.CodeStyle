@@ -8,6 +8,9 @@ namespace D2L.CodeStyle.Analyzers.Async.Generator;
 [Generator]
 internal sealed partial class SyncGenerator : IIncrementalGenerator {
 	public void Initialize( IncrementalGeneratorInitializationContext context ) {
+		var options = context.AnalyzerConfigOptionsProvider
+			.Select( ParseConfig );
+
 		// Collect all the methods we want to generate sync versions for
 		// individually (for better incremental builds)
 		IncrementalValuesProvider<(MethodDeclarationSyntax, Compilation)> methodsToGenerate =
@@ -35,7 +38,7 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 			generatedMethods.Collect()
 				.SelectMany( GenerateFiles );
 
-		context.RegisterSourceOutput( generatedFiles, WriteFiles );
+		context.RegisterSourceOutput( generatedFiles.Combine( options ), WriteFiles );
 	}
 
 	private static bool IsInterestingLookingMethod(
@@ -167,8 +170,15 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 
 	private static void WriteFiles(
 		SourceProductionContext context,
-		FileGenerationResult result
+		(FileGenerationResult, SyncGeneratorOptions) args 
 	) {
+		var (result, options) = args;
+
+		// TODO: can we read options earlier and not spend time generating?
+		if( options.SuppressSyncGenerator ) {
+			return;
+		}
+
 		foreach( var diagnostic in result.Diagnostics ) {
 			context.ReportDiagnostic( diagnostic );
 		}
@@ -176,6 +186,24 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 		context.AddSource(
 			hintName: result.HintName,
 			source: result.GeneratedSource
+		);
+	}
+
+	private sealed record SyncGeneratorOptions(
+		bool Enabled
+	);
+
+	private static SyncGeneratorOptions ParseConfig(
+		AnalyzerConfigOptionsProvider options,
+		CancellationToken ct
+	) {
+		options.GlobalOptions.TryGetValue(
+			"build_property.SuppressSyncGenerator",
+			out var supressValue
+		);
+
+		return new SyncGeneratorOptions(
+			SuppressSyncGenerator: supressValue == "true"
 		);
 	}
 }
