@@ -24,7 +24,8 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 		// Do the generation per method
 		IncrementalValuesProvider<MethodGenerationResult> generatedMethods =
 			methodsToGenerate
-				.Select( GenerateSyncMethod )
+				.Combine( options )
+				.Select( (x, ct) => GenerateSyncMethod( x.Left.Item1, x.Left.Item2, x.Right, ct ) )
 				// Filter out things we simply couldn't generate anything for.
 				.Where( static mr => mr.HasValue )
 				.Select( static ( mr, _ ) => mr!.Value );
@@ -39,7 +40,7 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 			generatedMethods.Collect()
 				.SelectMany( GenerateFiles );
 
-		context.RegisterSourceOutput( generatedFiles.Combine( options ), WriteFiles );
+		context.RegisterSourceOutput( generatedFiles, WriteFiles );
 	}
 
 	private static bool IsInterestingLookingMethod(
@@ -98,15 +99,21 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 	}
 
 	private static MethodGenerationResult? GenerateSyncMethod(
-		(MethodDeclarationSyntax MethodDeclaration, Compilation Compilation) data,
+		MethodDeclarationSyntax methodDeclaration,
+		Compilation compilation,
+		SyncGeneratorOptions options,
 		CancellationToken cancellationToken
 	) {
-		if( !data.Compilation.ContainsSyntaxTree( data.MethodDeclaration.SyntaxTree ) ) {
+		if( options.SuppressSyncGenerator ) {
 			return null;
 		}
 
-		var model = data.Compilation.GetSemanticModel( data.MethodDeclaration.SyntaxTree );
-		var methodSymbol = model.GetDeclaredSymbol( data.MethodDeclaration, cancellationToken );
+		if( !compilation.ContainsSyntaxTree( methodDeclaration.SyntaxTree ) ) {
+			return null;
+		}
+
+		var model = compilation.GetSemanticModel( methodDeclaration.SyntaxTree );
+		var methodSymbol = model.GetDeclaredSymbol( methodDeclaration, cancellationToken );
 
 		if( methodSymbol == null || methodSymbol.Kind == SymbolKind.ErrorType ) {
 			return null;
@@ -114,10 +121,10 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 
 		var transformer = new AsyncToSyncMethodTransformer( model, cancellationToken );
 
-		var transformResult = transformer.Transform( data.MethodDeclaration );
+		var transformResult = transformer.Transform( methodDeclaration );
 
 		return new(
-			Original: data.MethodDeclaration,
+			Original: methodDeclaration,
 			GeneratedSyntax: transformResult.Success ? transformResult.Value!.ToFullString() : "",
 			Diagnostics: transformResult.Diagnostics
 		);
@@ -171,15 +178,8 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 
 	private static void WriteFiles(
 		SourceProductionContext context,
-		(FileGenerationResult, SyncGeneratorOptions) args 
+		FileGenerationResult result
 	) {
-		var (result, options) = args;
-
-		// TODO: can we read options earlier and not spend time generating?
-		if( options.SuppressSyncGenerator ) {
-			return;
-		}
-
 		foreach( var diagnostic in result.Diagnostics ) {
 			context.ReportDiagnostic( diagnostic );
 		}
@@ -191,7 +191,7 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 	}
 
 	private sealed record SyncGeneratorOptions(
-		bool Enabled
+		bool SuppressSyncGenerator
 	);
 
 	private static SyncGeneratorOptions ParseConfig(
