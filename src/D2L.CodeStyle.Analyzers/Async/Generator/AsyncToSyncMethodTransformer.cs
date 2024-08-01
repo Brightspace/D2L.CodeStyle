@@ -272,6 +272,10 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			IdentifierNameSyntax identExpr => identExpr
 				.WithIdentifier( RemoveAsyncSuffix( identExpr.Identifier, optional: true ) ),
 
+			ImplicitObjectCreationExpressionSyntax implicitObjectCreationExpr => implicitObjectCreationExpr
+				.WithArgumentList( Transform( implicitObjectCreationExpr.ArgumentList ) )
+				.WithInitializer( MaybeTransform( implicitObjectCreationExpr.Initializer, Transform ) ),
+
 			InvocationExpressionSyntax invocationExpr => Transform(invocationExpr),
 
 			CastExpressionSyntax castExpr => castExpr
