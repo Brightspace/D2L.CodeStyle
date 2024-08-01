@@ -2,12 +2,16 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace D2L.CodeStyle.Analyzers.Async.Generator;
 
 [Generator]
 internal sealed partial class SyncGenerator : IIncrementalGenerator {
 	public void Initialize( IncrementalGeneratorInitializationContext context ) {
+		var options = context.AnalyzerConfigOptionsProvider
+			.Select( ParseConfig );
+
 		// Collect all the methods we want to generate sync versions for
 		// individually (for better incremental builds)
 		IncrementalValuesProvider<(MethodDeclarationSyntax, Compilation)> methodsToGenerate =
@@ -20,7 +24,8 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 		// Do the generation per method
 		IncrementalValuesProvider<MethodGenerationResult> generatedMethods =
 			methodsToGenerate
-				.Select( GenerateSyncMethod )
+				.Combine( options )
+				.Select( (x, ct) => GenerateSyncMethod( x.Left.Item1, x.Left.Item2, x.Right, ct ) )
 				// Filter out things we simply couldn't generate anything for.
 				.Where( static mr => mr.HasValue )
 				.Select( static ( mr, _ ) => mr!.Value );
@@ -94,15 +99,21 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 	}
 
 	private static MethodGenerationResult? GenerateSyncMethod(
-		(MethodDeclarationSyntax MethodDeclaration, Compilation Compilation) data,
+		MethodDeclarationSyntax methodDeclaration,
+		Compilation compilation,
+		SyncGeneratorOptions options,
 		CancellationToken cancellationToken
 	) {
-		if( !data.Compilation.ContainsSyntaxTree( data.MethodDeclaration.SyntaxTree ) ) {
+		if( options.SuppressSyncGenerator ) {
 			return null;
 		}
 
-		var model = data.Compilation.GetSemanticModel( data.MethodDeclaration.SyntaxTree );
-		var methodSymbol = model.GetDeclaredSymbol( data.MethodDeclaration, cancellationToken );
+		if( !compilation.ContainsSyntaxTree( methodDeclaration.SyntaxTree ) ) {
+			return null;
+		}
+
+		var model = compilation.GetSemanticModel( methodDeclaration.SyntaxTree );
+		var methodSymbol = model.GetDeclaredSymbol( methodDeclaration, cancellationToken );
 
 		if( methodSymbol == null || methodSymbol.Kind == SymbolKind.ErrorType ) {
 			return null;
@@ -110,10 +121,10 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 
 		var transformer = new AsyncToSyncMethodTransformer( model, cancellationToken );
 
-		var transformResult = transformer.Transform( data.MethodDeclaration );
+		var transformResult = transformer.Transform( methodDeclaration );
 
 		return new(
-			Original: data.MethodDeclaration,
+			Original: methodDeclaration,
 			GeneratedSyntax: transformResult.Success ? transformResult.Value!.ToFullString() : "",
 			Diagnostics: transformResult.Diagnostics
 		);
@@ -176,6 +187,24 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 		context.AddSource(
 			hintName: result.HintName,
 			source: result.GeneratedSource
+		);
+	}
+
+	private sealed record SyncGeneratorOptions(
+		bool SuppressSyncGenerator
+	);
+
+	private static SyncGeneratorOptions ParseConfig(
+		AnalyzerConfigOptionsProvider options,
+		CancellationToken ct
+	) {
+		options.GlobalOptions.TryGetValue(
+			"build_property.SuppressSyncGenerator",
+			out var supressValue
+		);
+
+		return new SyncGeneratorOptions(
+			SuppressSyncGenerator: supressValue == "true"
 		);
 	}
 }

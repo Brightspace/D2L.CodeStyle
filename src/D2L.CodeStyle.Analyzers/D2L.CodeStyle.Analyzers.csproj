@@ -46,4 +46,8 @@
     <PackageReference Include="System.Collections.Immutable" Version="7.0.0" PrivateAssets="All" />
   </ItemGroup>
 
+  <ItemGroup>
+    <CompilerVisibleProperty Include="SuppressSyncGenerator" />
+  </ItemGroup>
+
 </Project>
