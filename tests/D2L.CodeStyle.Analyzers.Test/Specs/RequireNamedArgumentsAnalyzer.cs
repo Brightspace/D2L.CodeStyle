@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.Language.RequireNamedArgumentsAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.Language.RequireNamedArgumentsAnalyzer, D2L.CodeStyle.Analyzers
 
 using D2L.CodeStyle.Annotations.Contract;
 

@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.Immutability.ReadOnlyParameterAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.Immutability.ReadOnlyParameterAnalyzer, D2L.CodeStyle.Analyzers
 
 using System;
 

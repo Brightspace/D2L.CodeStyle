@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.NoAsyncFuncsAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.NoAsyncFuncsAnalyzer, D2L.CodeStyle.Analyzers
 
 using System;
 using System.Runtime.CompilerServices;

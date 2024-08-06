@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.Configs.ConfigViewerAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.Configs.ConfigViewerAnalyzer, D2L.CodeStyle.Analyzers
 
 namespace D2L.LP.Configuration.Config.Domain {
 	public interface IConfigViewer {

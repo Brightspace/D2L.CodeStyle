@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.Language.DefaultValueConsistencyAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.Language.DefaultValueConsistencyAnalyzer, D2L.CodeStyle.Analyzers
 
 namespace ThingThatShouldntCrash {
 	public void FunctionOutOfPlace( int arg = 3 );

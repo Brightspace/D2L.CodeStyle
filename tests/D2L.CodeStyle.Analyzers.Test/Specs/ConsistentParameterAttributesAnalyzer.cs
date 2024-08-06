@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.ConsistentParameterAttributesAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.ConsistentParameterAttributesAnalyzer, D2L.CodeStyle.Analyzers
 
 using System;
 using D2L.CodeStyle.Annotations.Contract

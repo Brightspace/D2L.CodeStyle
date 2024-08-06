@@ -1,5 +1,4 @@
-﻿
-// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.Events.EventHandlerLoaderTypesAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.Events.EventHandlerLoaderTypesAnalyzer, D2L.CodeStyle.Analyzers
 
 namespace D2L.LP.Distributed.Events.Domain {
 

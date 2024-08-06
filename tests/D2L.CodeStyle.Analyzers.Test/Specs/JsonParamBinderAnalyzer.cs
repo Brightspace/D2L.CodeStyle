@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute.JsonParamBinderAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute.JsonParamBinderAnalyzer, D2L.CodeStyle.Analyzers
 
 using System;
 using D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute;
