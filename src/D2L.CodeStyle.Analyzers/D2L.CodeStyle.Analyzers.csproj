@@ -17,7 +17,6 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <IncludeBuildOutput>False</IncludeBuildOutput>
     <IncludeSymbols>True</IncludeSymbols>
-    <Nullable>enable</Nullable>
     <WarningsAsErrors>CA2016,Nullable</WarningsAsErrors>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>

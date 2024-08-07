@@ -27,10 +27,10 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
 		private static void Register( CompilationStartAnalysisContext context ) {
 
-			INamedTypeSymbol attributeType =
+			INamedTypeSymbol? attributeType =
 				context.Compilation.GetTypeByMetadataName( AttributeTypeName );
 
-			if( attributeType.IsNullOrErrorType() ) {
+			if( attributeType == null || attributeType.IsErrorType() ) {
 				return;
 			}
 
@@ -73,12 +73,12 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
 			foreach( AttributeSyntax attribute in attributes ) {
 
-				ISymbol symbol = context
+				ISymbol? symbol = context
 					.SemanticModel
 					.GetSymbolInfo( attribute, context.CancellationToken )
 					.Symbol;
 
-				if( symbol.IsNullOrErrorType() ) {
+				if( symbol == null || symbol.Kind == SymbolKind.ErrorType ) {
 					continue;
 				}
 
@@ -88,9 +88,9 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 				}
 
 				SeparatedSyntaxList<AttributeArgumentSyntax> arguments =
-					attribute.ArgumentList.Arguments;
+					attribute.ArgumentList?.Arguments ?? default;
 
-				if( arguments.Count != 1 ) {
+				if( arguments == default || arguments.Count != 1 ) {
 					continue;
 				}
 
