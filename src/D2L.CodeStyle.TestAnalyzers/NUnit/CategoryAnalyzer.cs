@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using D2L.CodeStyle.TestAnalyzers.Common;
@@ -42,7 +43,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 		}
 
 		private static void OnCompilationStart( CompilationStartAnalysisContext context ) {
-			if( !TryLoadNUnitTypes( context.Compilation, out NUnitTypes types ) ) {
+			if( !TryLoadNUnitTypes( context.Compilation, out NUnitTypes? types ) ) {
 				return;
 			}
 
@@ -53,7 +54,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 					context: ctx,
 					bannedCategories: bannedCategories,
 					types: types,
-					syntax: ctx.Node as MethodDeclarationSyntax
+					syntax: (MethodDeclarationSyntax)ctx.Node
 				),
 				SyntaxKind.MethodDeclaration
 			);
@@ -69,9 +70,12 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 					return;
 				}
 
+				// TODO: can this actually be null?
+				var syntaxReference = attribute.ApplicationSyntaxReference!;
+
 				context.ReportDiagnostic( Diagnostic.Create(
 					Diagnostics.NUnitCategory,
-					attribute.ApplicationSyntaxReference.GetSyntax( context.CancellationToken ).GetLocation(),
+					syntaxReference.GetSyntax( context.CancellationToken ).GetLocation(),
 					$"Assemblies cannot be categorized as any of [{string.Join( ", ", ProhibitedAssemblyCategories )}], but saw '{category}'."
 				) );
 			} );
@@ -85,7 +89,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 		) {
 			SemanticModel model = context.SemanticModel;
 
-			IMethodSymbol method = model.GetDeclaredSymbol( syntax, context.CancellationToken );
+			IMethodSymbol? method = model.GetDeclaredSymbol( syntax, context.CancellationToken );
 			if( method == null ) {
 				return;
 			}
@@ -117,8 +121,8 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 			IMethodSymbol method
 		) {
 			foreach( AttributeData attribute in method.GetAttributes() ) {
-				INamedTypeSymbol attributeType = attribute.AttributeClass;
-				if( types.TestAttributes.Contains( attributeType ) ) {
+				INamedTypeSymbol? attributeType = attribute.AttributeClass;
+				if( attributeType != null && types.TestAttributes.Contains( attributeType ) ) {
 					return true;
 				}
 			}
@@ -159,7 +163,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 			Action<string, AttributeData> visitor
 		) {
 			foreach( AttributeData attribute in symbol.GetAttributes() ) {
-				INamedTypeSymbol attributeType = attribute.AttributeClass;
+				INamedTypeSymbol? attributeType = attribute.AttributeClass;
 				if( types.CategoryAttribute.Equals( attributeType, SymbolEqualityComparer.Default ) ) {
 					VisitCategoryAttribute( attribute, visitor );
 					continue;
@@ -189,11 +193,16 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
 			TypedConstant arg = args[0];
 
+			if( arg.Type == null ) {
+				return;
+			}
+
 			if( arg.Type.SpecialType != SpecialType.System_String ) {
 				return;
 			}
 
-			string category = arg.Value as string;
+			string category = (string?)arg.Value!;
+
 			visitor( category, attribute );
 		}
 
@@ -208,11 +217,16 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
 				TypedConstant arg = namedArg.Value;
 
+				if( arg.Type == null ) {
+					continue;
+				}
+
 				if( arg.Type.SpecialType != SpecialType.System_String ) {
 					continue;
 				}
 
-				string categoryCsv = arg.Value as string;
+				string categoryCsv = (string?)arg.Value!;
+
 				foreach( string category in categoryCsv.Split( ',' ) ) {
 					visitor( category.Trim(), attribute );
 				}
@@ -221,24 +235,29 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
 		private static bool TryLoadNUnitTypes(
 			Compilation compilation,
-			out NUnitTypes types
+			[NotNullWhen( true )]
+			out NUnitTypes? types
 		) {
-			INamedTypeSymbol categoryAttribute = compilation.GetTypeByMetadataName( "NUnit.Framework.CategoryAttribute" );
+			INamedTypeSymbol? categoryAttribute = compilation.GetTypeByMetadataName( "NUnit.Framework.CategoryAttribute" );
 			if( categoryAttribute == null || categoryAttribute.TypeKind == TypeKind.Error ) {
 				types = null;
 				return false;
 			}
 
-			ImmutableHashSet<INamedTypeSymbol> testAttributes = ImmutableHashSet
-				.Create<INamedTypeSymbol>(
-					SymbolEqualityComparer.Default,
-					compilation.GetTypeByMetadataName( "NUnit.Framework.TestAttribute" ),
-					compilation.GetTypeByMetadataName( "NUnit.Framework.TestCaseAttribute" ),
-					compilation.GetTypeByMetadataName( "NUnit.Framework.TestCaseSourceAttribute" ),
-					compilation.GetTypeByMetadataName( "NUnit.Framework.TheoryAttribute" )
-				);
+			ImmutableHashSet<INamedTypeSymbol> testAttributes = new[] {
+				compilation.GetTypeByMetadataName( "NUnit.Framework.TestAttribute" ),
+				compilation.GetTypeByMetadataName( "NUnit.Framework.TestCaseAttribute" ),
+				compilation.GetTypeByMetadataName( "NUnit.Framework.TestCaseSourceAttribute" ),
+				compilation.GetTypeByMetadataName( "NUnit.Framework.TheoryAttribute" )
+			}.Where( x => x != null )!
+			.ToImmutableHashSet<INamedTypeSymbol>( SymbolEqualityComparer.Default );
 
-			INamedTypeSymbol testFixtureAttribute = compilation.GetTypeByMetadataName( "NUnit.Framework.TestFixtureAttribute" );
+			INamedTypeSymbol? testFixtureAttribute = compilation.GetTypeByMetadataName( "NUnit.Framework.TestFixtureAttribute" );
+
+			if( testFixtureAttribute == null ) {
+				types = null;
+				return false;
+			}
 
 			types = new NUnitTypes( categoryAttribute, testAttributes, testFixtureAttribute );
 			return true;
@@ -268,7 +287,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 				StringComparer.Ordinal
 			);
 
-			AdditionalText bannedListFile = options.AdditionalFiles.FirstOrDefault(
+			AdditionalText? bannedListFile = options.AdditionalFiles.FirstOrDefault(
 				file => Path.GetFileName( file.Path ) == "BannedTestCategoriesList.txt"
 			);
 
@@ -276,7 +295,11 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 				return bannedList.ToImmutableHashSet();
 			}
 
-			SourceText allowedListText = bannedListFile.GetText();
+			SourceText? allowedListText = bannedListFile.GetText();
+
+			if( allowedListText == null ) {
+				throw new Exception( "Couldn't read config" );
+			}
 
 			foreach( TextLine line in allowedListText.Lines ) {
 				bannedList.Add( line.ToString().Trim() );

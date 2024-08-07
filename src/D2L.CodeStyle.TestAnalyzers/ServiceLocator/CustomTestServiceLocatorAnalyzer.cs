@@ -28,7 +28,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 		public static void RegisterServiceLocatorAnalyzer(
 			CompilationStartAnalysisContext context
 		) {
-			INamedTypeSymbol factoryType = context.Compilation
+			INamedTypeSymbol? factoryType = context.Compilation
 				.GetTypeByMetadataName( TestServiceLocatorFactoryType );
 
 			if( factoryType.IsNullOrErrorType() ) {
