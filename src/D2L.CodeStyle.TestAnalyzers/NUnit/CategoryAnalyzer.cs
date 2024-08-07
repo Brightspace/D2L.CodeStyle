@@ -70,12 +70,8 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 					return;
 				}
 
-				var syntaxReference = attribute.ApplicationSyntaxReference;
-
-				if( syntaxReference == null ) {
-					// ??
-					return;
-				}
+				// TODO: can this actually be null?
+				var syntaxReference = attribute.ApplicationSyntaxReference!;
 
 				context.ReportDiagnostic( Diagnostic.Create(
 					Diagnostics.NUnitCategory,
@@ -197,15 +193,15 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
 			TypedConstant arg = args[0];
 
-			if( arg.Type?.SpecialType != SpecialType.System_String ) {
+			if( arg.Type == null ) {
 				return;
 			}
 
-			string? category = arg.Value as string;
-
-			if( category == null ) {
+			if( arg.Type.SpecialType != SpecialType.System_String ) {
 				return;
 			}
+
+			string category = (string?)arg.Value!;
 
 			visitor( category, attribute );
 		}
@@ -221,15 +217,15 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
 				TypedConstant arg = namedArg.Value;
 
-				if( arg.Type?.SpecialType != SpecialType.System_String ) {
+				if( arg.Type == null ) {
 					continue;
 				}
 
-				string? categoryCsv = arg.Value as string;
-
-				if( categoryCsv == null ) {
+				if( arg.Type.SpecialType != SpecialType.System_String ) {
 					continue;
 				}
+
+				string categoryCsv = (string?)arg.Value!;
 
 				foreach( string category in categoryCsv.Split( ',' ) ) {
 					visitor( category.Trim(), attribute );
