@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.Async.BlockingAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.Async.BlockingAnalyzer, D2L.CodeStyle.Analyzers
 
 using System;
 using System.Threading.Tasks;

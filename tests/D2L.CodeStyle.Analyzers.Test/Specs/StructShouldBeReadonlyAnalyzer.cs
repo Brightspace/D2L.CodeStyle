@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.Language.StructShouldBeReadonlyAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.Language.StructShouldBeReadonlyAnalyzer, D2L.CodeStyle.Analyzers
 
 namespace D2L.CodeStyle.Analyzers.Specs.Good {
 

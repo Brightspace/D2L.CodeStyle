@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.D2LPageAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.D2LPageAnalyzer, D2L.CodeStyle.Analyzers
 
 namespace D2L.Web
 {

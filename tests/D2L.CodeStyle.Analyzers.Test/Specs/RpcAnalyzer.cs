@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.RpcAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.RpcAnalyzer, D2L.CodeStyle.Analyzers
 
 using System;
 using System.Collections.Generic;

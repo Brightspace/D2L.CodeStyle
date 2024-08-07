@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly.FeatureDefinitionAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.LaunchDarkly.FeatureDefinitionAnalyzer, D2L.CodeStyle.Analyzers
 
 namespace D2L.LP.LaunchDarkly {
 	public abstract class FeatureDefinition<TValue> { }

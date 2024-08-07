@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.Language.AwaitedTasksAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.Language.AwaitedTasksAnalyzer, D2L.CodeStyle.Analyzers
 
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;

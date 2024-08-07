@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.Language.AttributeAliasesAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.Language.AttributeAliasesAnalyzer, D2L.CodeStyle.Analyzers
 
 using System;
 

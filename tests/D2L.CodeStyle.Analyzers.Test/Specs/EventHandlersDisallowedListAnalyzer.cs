@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.Events.EventHandlersDisallowedListAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.Events.EventHandlersDisallowedListAnalyzer, D2L.CodeStyle.Analyzers
 
 namespace D2L.LP.Distributed.Events.ExternalPublish.UserInteraction {
 	public sealed class UserInteractionEvent { }

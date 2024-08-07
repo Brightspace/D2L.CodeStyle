@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.Async.ExplicitCancellationTokenArgumentAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.Async.ExplicitCancellationTokenArgumentAnalyzer, D2L.CodeStyle.Analyzers
 
 using System.Threading;
 using System.Threading.Tasks;

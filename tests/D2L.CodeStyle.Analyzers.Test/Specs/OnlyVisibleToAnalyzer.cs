@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.Language.OnlyVisibleToAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.Language.OnlyVisibleToAnalyzer, D2L.CodeStyle.Analyzers
 
 using System;
 

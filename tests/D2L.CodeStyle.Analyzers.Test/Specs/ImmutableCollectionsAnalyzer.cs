@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.SystemCollectionsImmutable.ImmutableCollectionsAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.SystemCollectionsImmutable.ImmutableCollectionsAnalyzer, D2L.CodeStyle.Analyzers
 
 using System;
 using System.Collections.Generic;

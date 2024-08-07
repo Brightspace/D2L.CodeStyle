@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.Immutability.StatelessFuncAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.Immutability.StatelessFuncAnalyzer, D2L.CodeStyle.Analyzers
 
 using System;
 

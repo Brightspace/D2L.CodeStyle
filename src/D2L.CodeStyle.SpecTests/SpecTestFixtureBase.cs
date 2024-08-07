@@ -98,7 +98,7 @@ namespace D2L.CodeStyle.SpecTests {
 
 			string analyzerName = headerContents.Substring( "analyzer: ".Length ).Trim();
 
-			var type = Type.GetType( analyzerName + ", D2L.CodeStyle.Analyzers" );
+			var type = Type.GetType( analyzerName );
 
 			Assert.NotNull( type, "couldn't get type for analyzer {0}", analyzerName );
 

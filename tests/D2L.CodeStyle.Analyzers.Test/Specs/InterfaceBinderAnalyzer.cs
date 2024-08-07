@@ -1,4 +1,4 @@
-﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.DataRecordConverters.InterfaceBinderAnalyzer
+﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.DataRecordConverters.InterfaceBinderAnalyzer, D2L.CodeStyle.Analyzers
 
 using System;
 using D2L.LP.Serialization;
