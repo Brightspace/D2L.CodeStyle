@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Microsoft.CodeAnalysis;
 
@@ -9,7 +10,9 @@ namespace D2L.CodeStyle.TestAnalyzers.Extensions {
 
 		// Copied from the non-test assembly because we do not reference it.
 
-		public static bool IsNullOrErrorType( this ITypeSymbol? symbol ) {
+		public static bool IsNullOrErrorType(
+			[NotNullWhen( false )] this ITypeSymbol? symbol
+		) {
 
 			if( symbol == null ) {
 				return true;
@@ -26,20 +29,9 @@ namespace D2L.CodeStyle.TestAnalyzers.Extensions {
 			return false;
 		}
 
-		public static bool IsErrorType( this ITypeSymbol symbol ) {
-
-			if( symbol.Kind == SymbolKind.ErrorType ) {
-				return true;
-			}
-
-			if( symbol.TypeKind == TypeKind.Error ) {
-				return true;
-			}
-
-			return false;
-		}
-
-		public static bool IsNullOrErrorType( this ISymbol symbol ) {
+		public static bool IsNullOrErrorType(
+			[NotNullWhen( false )] this ISymbol? symbol
+		) {
 
 			if( symbol == null ) {
 				return true;

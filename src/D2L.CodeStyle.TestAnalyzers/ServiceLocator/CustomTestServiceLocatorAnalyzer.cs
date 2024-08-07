@@ -31,7 +31,7 @@ namespace D2L.CodeStyle.TestAnalyzers.ServiceLocator {
 			INamedTypeSymbol? factoryType = context.Compilation
 				.GetTypeByMetadataName( TestServiceLocatorFactoryType );
 
-			if( factoryType == null || factoryType.IsErrorType() ) {
+			if( factoryType.IsNullOrErrorType() ) {
 				return;
 			}
 

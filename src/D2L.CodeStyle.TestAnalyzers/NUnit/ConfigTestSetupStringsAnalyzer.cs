@@ -30,7 +30,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 			INamedTypeSymbol? attributeType =
 				context.Compilation.GetTypeByMetadataName( AttributeTypeName );
 
-			if( attributeType == null || attributeType.IsErrorType() ) {
+			if( attributeType.IsNullOrErrorType() ) {
 				return;
 			}
 
@@ -78,7 +78,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 					.GetSymbolInfo( attribute, context.CancellationToken )
 					.Symbol;
 
-				if( symbol == null || symbol.Kind == SymbolKind.ErrorType ) {
+				if( symbol.IsNullOrErrorType() ) {
 					continue;
 				}
 

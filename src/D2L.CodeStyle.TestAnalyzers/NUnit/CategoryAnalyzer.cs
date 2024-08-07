@@ -54,7 +54,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 					context: ctx,
 					bannedCategories: bannedCategories,
 					types: types,
-					syntax: (ctx.Node as MethodDeclarationSyntax)!
+					syntax: (MethodDeclarationSyntax)ctx.Node
 				),
 				SyntaxKind.MethodDeclaration
 			);
