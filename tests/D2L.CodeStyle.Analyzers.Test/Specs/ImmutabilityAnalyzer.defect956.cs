@@ -9,28 +9,23 @@ namespace Defect956;
 [ConditionallyImmutable]
 interface IFoo<[ConditionallyImmutable.OnlyIf]A> {}
 
-
 [ConditionallyImmutable]
-class Foo<[ConditionallyImmutable.OnlyIf]A, [ConditionallyImmutable.OnlyIf]B> : IFoo<A> {
-  public readonly A m_a;
-  public readonly B m_b;
+record Foo<[ConditionallyImmutable.OnlyIf]A, [ConditionallyImmutable.OnlyIf]B>(
+  A A
+  B B
+) : IFoo<A>;
 
-  public Foo( A a, B b ) {
-    m_a = a;
-    m_b = b;
-  }
+static class Demo {
+  public static readonly Foo<int, int> ThisIsFine = new( 1, 2 );
 
-  public static IFoo<int> Evil( int x, Dictionary<int, int> mutability ) {
-    // Here we are constructing a Foo; that ObjectCreationExpression would
-    // return something that is correctly judged to be mutable/not-immutable.
-    var foo = new Foo( x, mutability );
+  public static readonly
+    /* NonImmutableTypeHeldByImmutable(class, object, ) */ Foo<int, Dictionary<int, int>> /**/
+    ObviouslyBad = new( 3, new() );
 
-    // This assignment is allowed by the language, but our analyzer doesn't
-    // realize we are losing that mutability judgement.
-    IFoo<int> evilFoo = foo;
-
-    // We are returning this and callers will think it is Immutable based on
-    // IFoo<int>, but they can mutate it through a backdoor
-    return evilFoo;
-  }
+  // That this is allowed is a problem: we can cast back to Foo<int, Dictionary<int, int>>
+  // and poke at the dictionary, or maybe the dictionary got smuggled in from elsehwere
+  // where its still accessible etc.
+  // The point is that IFoo<A> looks immutable if A does, and Foo<A, B> was able to implement
+  // it for any B
+  public static readonly IFoo<int> Defect = (IFoo<int>)(new Foo<int, Dictionary<int, int>>( 4, new() ));
 }
