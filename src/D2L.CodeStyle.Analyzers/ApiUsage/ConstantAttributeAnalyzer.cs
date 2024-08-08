@@ -1,9 +1,8 @@
 #nullable disable
 
 using System.Collections.Immutable;
+using D2L.CodeStyle.Analyzers.Extensions;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
 
@@ -124,8 +123,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			}
 
 			// Argument was defined as [Constant] already, so trust it
-			var argumentSymbol = argument.SemanticModel.GetSymbolInfo( (argument.Syntax as ArgumentSyntax).Expression, context.CancellationToken ).Symbol;
-			if( argumentSymbol != null && HasAttribute( argumentSymbol, constantAttribute ) ) {
+			if( argument.Value.UnwrapConversions() is IParameterReferenceOperation parameterReference
+				&& HasAttribute( parameterReference.Parameter, constantAttribute )
+			) {
 				return;
 			}
 
@@ -164,8 +164,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			}
 
 			// Operand was defined as [Constant] already, so trust it
-			ISymbol operandSymbol = conversion.SemanticModel.GetSymbolInfo( operand.Syntax ).Symbol;
-			if( operandSymbol is not null && HasAttribute( operandSymbol, constantAttribute ) ) {
+			if( operand.UnwrapConversions() is IParameterReferenceOperation parameterReference
+				&& HasAttribute( parameterReference.Parameter, constantAttribute )
+			) {
 				return;
 			}
 
