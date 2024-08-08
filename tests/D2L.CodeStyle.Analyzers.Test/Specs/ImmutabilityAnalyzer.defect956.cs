@@ -19,7 +19,7 @@ static class Demo {
   public static readonly Foo<int, int> ThisIsFine = new( 1, 2 );
 
   public static readonly
-    /* NonImmutableTypeHeldByImmutable(class, object, ) */ Foo<int, Dictionary<int, int>> /**/
+    /* NonImmutableTypeHeldByImmutable(class, Foo<int<Dictionary<int, int>>, ) */ Foo<int, Dictionary<int, int>> /**/
     ObviouslyBad = new( 3, new() );
 
   // That this is allowed is a problem: we can cast back to Foo<int, Dictionary<int, int>>
