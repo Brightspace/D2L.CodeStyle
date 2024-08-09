@@ -31,7 +31,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			Diagnostics.UnknownImmutabilityAssignmentKind,
 
 			Diagnostics.MissingTransitiveImmutableAttribute,
-			Diagnostics.InconsistentMethodAttributeApplication
+			Diagnostics.InconsistentMethodAttributeApplication,
+			Diagnostics.UnappliedConditionalImmutability
 		);
 
 		private readonly ImmutableHashSet<string> m_additionalImmutableTypes;

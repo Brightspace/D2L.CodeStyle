@@ -1399,6 +1399,12 @@ namespace ConsistencyTests {
 	[ConditionallyImmutable]
 	public sealed class ConditionallyImmutableClassImplementingConditionallyImmutable<[ConditionallyImmutable.OnlyIf] T> : ISomethingConditionallyImmutable<T> { }
 
+	[ConditionallyImmutable]
+	public sealed class /* UnappliedConditionalImmutability(ConsistencyTests.ConditionallyImmutableImplementerWithUnappliedCondition, interface, ConsistencyTests.ISomethingConditionallyImmutable) */ ConditionallyImmutableImplementerWithUnappliedCondition /**/<[ConditionallyImmutable.OnlyIf] T, [ConditionallyImmutable.OnlyIf] U> : ISomethingConditionallyImmutable<T> { }
+
+	[ConditionallyImmutable]
+	public sealed class /* MissingTransitiveImmutableAttribute(ConsistencyTests.ConditionallyImmutableImplementingImmutable, , interface, ConsistencyTests.ISomethingImmutable) */ ConditionallyImmutableImplementingImmutable /**/<[ConditionallyImmutable.OnlyIf] T> : ISomethingImmutable { }
+
 	public sealed class /* MissingTransitiveImmutableAttribute(ConsistencyTests.SadImplementerOfConditionallyImmutable,  (or [ConditionallyImmutable]), interface, ConsistencyTests.ISomethingConditionallyImmutable) */ SadImplementerOfConditionallyImmutable /**/<T> : ISomethingConditionallyImmutable<T> { }
 
 	public partial class PartialClassNeedingImmutable { }
