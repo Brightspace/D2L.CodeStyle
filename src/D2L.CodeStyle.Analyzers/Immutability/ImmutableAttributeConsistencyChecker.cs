@@ -113,6 +113,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					RaiseMissingAttribute();
 					return;
 
+				// When we and our base type are [ConditionallyImmutable] we need to consider the compatibility of those conditions
 				case ((ImmutableTypeKind.Total, true), (ImmutableTypeKind.Total, true)):
 					InspectConditionalParameterApplication();
 					return;
