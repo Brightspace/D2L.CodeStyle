@@ -87,94 +87,101 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			CancellationToken cancellationToken
 		) {
 			switch( baseTypeInfo.Kind ) {
+				// The base type doesn't require its subtypes to be immutable
 				case ImmutableTypeKind.None:
-					return;
-
 				case ImmutableTypeKind.Instance:
 					return;
 
 				case ImmutableTypeKind.Total:
-					bool missingConditionalParameterUsage = false;
-					if( typeInfo.Kind == ImmutableTypeKind.Total ) {
-						if( !typeInfo.IsConditional ) {
-							break;
-						}
-
-						if( baseTypeInfo.IsConditional ) {
-							foreach( ITypeParameterSymbol typeParameter in typeInfo.ConditionalTypeParameters ) {
-								bool parameterUsed = false;
-								for( int i = 0; i < baseTypeInfo.Type.TypeArguments.Length && !parameterUsed; i++ ) {
-									ITypeSymbol typeArgument = baseTypeInfo.Type.TypeArguments[ i ];
-									if( !SymbolEqualityComparer.Default.Equals( typeParameter, typeArgument ) ) {
-										continue;
-									}
-
-									ITypeParameterSymbol baseTypeParameter = baseTypeInfo.Type.TypeParameters[ i ];
-									if( baseTypeInfo.ConditionalTypeParameters.Contains( baseTypeParameter, SymbolEqualityComparer.Default ) ) {
-										parameterUsed = true;
-										break;
-									}
-								}
-
-								if( !parameterUsed ) {
-									missingConditionalParameterUsage = true;
-									break;
-								}
-							}
-
-							if( !missingConditionalParameterUsage ) {
-								break;
-							}
-						}
-					}
-
-					// The docs say the only things that can have BaseType == null
-					// are interfaces, System.Object itself (won't come up in our
-					// analysis because (1) it !hasTheImmutableAttribute (2) you
-					// can't explicitly list it as a base class anyway) and
-					// pointer types (the base value type probably also doesn't
-					// have it.)
-					bool isInterface =
-						baseTypeInfo.Type.BaseType == null
-						&& baseTypeInfo.Type.SpecialType != SpecialType.System_Object
-						&& baseTypeInfo.Type.SpecialType != SpecialType.System_ValueType
-						&& baseTypeInfo.Type.Kind != SymbolKind.PointerType;
-
-					(TypeDeclarationSyntax syntax, _) = typeInfo.Type.ExpensiveGetSyntaxImplementingType(
-						baseTypeOrInterface: baseTypeInfo.Type,
-						compilation: m_compilation,
-						cancellationToken
-					);
-
-					if( missingConditionalParameterUsage ) {
-						m_diagnosticSink(
-							Diagnostic.Create(
-								Diagnostics.UnappliedConditionalImmutability,
-								syntax.Identifier.GetLocation(),
-								typeInfo.Type.GetFullTypeName(),
-								isInterface ? "interface" : "base class",
-								baseTypeInfo.Type.GetFullTypeName()
-							)
-						);
-					} else {
-						m_diagnosticSink(
-							Diagnostic.Create(
-								Diagnostics.MissingTransitiveImmutableAttribute,
-								syntax.Identifier.GetLocation(),
-								properties: FixArgs,
-								typeInfo.Type.GetFullTypeName(),
-								baseTypeInfo.IsConditional ? " (or [ConditionallyImmutable])" : "",
-								isInterface ? "interface" : "base class",
-								baseTypeInfo.Type.GetFullTypeName()
-							)
-						);
-					}
-
+					CompareConsistencyToTotallyImmutableBaseType( typeInfo, baseTypeInfo, cancellationToken );
 					break;
 
 				default:
 					throw new NotImplementedException();
 			}
+		}
+
+		private void CompareConsistencyToTotallyImmutableBaseType(
+			ImmutableTypeInfo typeInfo,
+			ImmutableTypeInfo baseTypeInfo,
+			CancellationToken cancellationToken
+		) {
+			bool missingConditionalParameterUsage = false;
+			if( typeInfo.Kind == ImmutableTypeKind.Total ) {
+				if( !typeInfo.IsConditional ) {
+					return;
+				}
+
+				if( baseTypeInfo.IsConditional ) {
+					foreach( ITypeParameterSymbol typeParameter in typeInfo.ConditionalTypeParameters ) {
+						bool parameterUsed = false;
+						for( int i = 0; i < baseTypeInfo.Type.TypeArguments.Length && !parameterUsed; i++ ) {
+							ITypeSymbol typeArgument = baseTypeInfo.Type.TypeArguments[ i ];
+							if( !SymbolEqualityComparer.Default.Equals( typeParameter, typeArgument ) ) {
+								continue;
+							}
+
+							ITypeParameterSymbol baseTypeParameter = baseTypeInfo.Type.TypeParameters[ i ];
+							if( baseTypeInfo.ConditionalTypeParameters.Contains( baseTypeParameter, SymbolEqualityComparer.Default ) ) {
+								parameterUsed = true;
+								break;
+							}
+						}
+
+						if( !parameterUsed ) {
+							missingConditionalParameterUsage = true;
+							break;
+						}
+					}
+
+					if( !missingConditionalParameterUsage ) {
+						return;
+					}
+				}
+			}
+
+			// The docs say the only things that can have BaseType == null
+			// are interfaces, System.Object itself (won't come up in our
+			// analysis because (1) it !hasTheImmutableAttribute (2) you
+			// can't explicitly list it as a base class anyway) and
+			// pointer types (the base value type probably also doesn't
+			// have it.)
+			bool isInterface =
+				baseTypeInfo.Type.BaseType == null
+				&& baseTypeInfo.Type.SpecialType != SpecialType.System_Object
+				&& baseTypeInfo.Type.SpecialType != SpecialType.System_ValueType
+				&& baseTypeInfo.Type.Kind != SymbolKind.PointerType;
+
+			(TypeDeclarationSyntax syntax, _) = typeInfo.Type.ExpensiveGetSyntaxImplementingType(
+				baseTypeOrInterface: baseTypeInfo.Type,
+				compilation: m_compilation,
+				cancellationToken
+			);
+
+			if( missingConditionalParameterUsage ) {
+				m_diagnosticSink(
+					Diagnostic.Create(
+						Diagnostics.UnappliedConditionalImmutability,
+						syntax.Identifier.GetLocation(),
+						typeInfo.Type.GetFullTypeName(),
+						isInterface ? "interface" : "base class",
+						baseTypeInfo.Type.GetFullTypeName()
+					)
+				);
+			} else {
+				m_diagnosticSink(
+					Diagnostic.Create(
+						Diagnostics.MissingTransitiveImmutableAttribute,
+						syntax.Identifier.GetLocation(),
+						properties: FixArgs,
+						typeInfo.Type.GetFullTypeName(),
+						baseTypeInfo.IsConditional ? " (or [ConditionallyImmutable])" : "",
+						isInterface ? "interface" : "base class",
+						baseTypeInfo.Type.GetFullTypeName()
+					)
+				);
+			}
+
 		}
 
 		private static Location GetLocationOfNthTypeParameter(
