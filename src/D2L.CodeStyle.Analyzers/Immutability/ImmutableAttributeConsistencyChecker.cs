@@ -139,20 +139,19 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			void InspectConditionalParameterApplication() {
-				foreach( ITypeParameterSymbol typeParameter in typeInfo.ConditionalTypeParameters ) {
+				typeInfo.Accept( ( typeParameter, typeParameterOrdinal ) => {
+
 					bool parameterUsed = false;
-					for( int i = 0; i < baseTypeInfo.Type.TypeArguments.Length && !parameterUsed; i++ ) {
-						ITypeSymbol typeArgument = baseTypeInfo.Type.TypeArguments[ i ];
+					baseTypeInfo.Accept( ( baseTypeParameter, baseTypeParameterOrdinal ) => {
+						ITypeSymbol typeArgument = baseTypeInfo.Type.TypeArguments[ baseTypeParameterOrdinal ];
+
 						if( !SymbolEqualityComparer.Default.Equals( typeParameter, typeArgument ) ) {
-							continue;
+							return false;
 						}
 
-						ITypeParameterSymbol baseTypeParameter = baseTypeInfo.Type.TypeParameters[ i ];
-						if( baseTypeInfo.ConditionalTypeParameters.Contains( baseTypeParameter, SymbolEqualityComparer.Default ) ) {
-							parameterUsed = true;
-							break;
-						}
-					}
+						parameterUsed = true;
+						return true;
+					} );
 
 					if( !parameterUsed ) {
 						(TypeDeclarationSyntax syntax, _) = typeInfo.Type.ExpensiveGetSyntaxImplementingType(
@@ -160,18 +159,23 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 							compilation: m_compilation,
 							cancellationToken
 						);
+
+						TypeParameterSyntax parameterSyntax = syntax.TypeParameterList!.Parameters[ typeParameterOrdinal ];
+
 						m_diagnosticSink(
 							Diagnostic.Create(
 								Diagnostics.UnappliedConditionalImmutability,
-								syntax.Identifier.GetLocation(),
+								parameterSyntax.Identifier.GetLocation(),
 								typeInfo.Type.GetFullTypeName(),
+								typeParameter.Name,
 								baseTypeInfo.Type.TypeKind == TypeKind.Interface ? "interface" : "base class",
 								baseTypeInfo.Type.GetFullTypeName()
 							)
 						);
-						return;
 					}
-				}
+
+					return false;
+				} );
 			}
 		}
 

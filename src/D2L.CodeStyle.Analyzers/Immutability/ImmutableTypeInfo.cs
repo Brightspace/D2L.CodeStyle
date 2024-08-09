@@ -33,8 +33,26 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		public bool IsConditional { get; }
 
-		public IEnumerable<ITypeParameterSymbol> ConditionalTypeParameters => Type.TypeParameters.Where( IsConditionalParameter );
-		private bool IsConditionalParameter( ITypeParameterSymbol _, int index ) => m_conditionalTypeParameters[ index ];
+		public delegate bool ConditionalTypeParameterVisitor( ITypeParameterSymbol typeParameter, int ordinal );
+		/// <summary>
+		/// Applies the visitor to each conditional type parameter, with it's original ordinal.
+		/// Halts application if the visitor returns true.
+		/// </summary>
+		public void Accept( ConditionalTypeParameterVisitor visitor ) {
+			if( !IsConditional ) {
+				return;
+			}
+
+			for( int i = 0; i < Type.TypeParameters.Length; i++ ) {
+				if( !m_conditionalTypeParameters[ i ] ) {
+					continue;
+				}
+
+				if( visitor( Type.TypeParameters[ i ], i ) ) {
+					return;
+				}
+			}
+		}
 
 		public bool IsImmutableDefinition(
 			ImmutabilityContext context,
