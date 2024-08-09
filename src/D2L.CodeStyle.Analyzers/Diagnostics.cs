@@ -760,7 +760,7 @@ namespace D2L.CodeStyle.Analyzers {
 		public static readonly DiagnosticDescriptor UnappliedConditionalImmutability = new DiagnosticDescriptor(
 			id: "D2L0103",
 			title: "A type parameter marked [ConditionallyImmutable.OnlyIf] was not applied to a [ConditionallyImmutable] implemented type",
-			messageFormat: "The conditional type parameter <{0}> was not applied to the [ConditionallyImmutable] {2} {3}",
+			messageFormat: "The conditional type parameter <{0}> was not applied to the [ConditionallyImmutable] {1} {2}",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
