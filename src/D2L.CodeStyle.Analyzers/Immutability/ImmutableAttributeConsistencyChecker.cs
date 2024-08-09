@@ -161,7 +161,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 								Diagnostics.UnappliedConditionalImmutability,
 								syntax.Identifier.GetLocation(),
 								typeInfo.Type.GetFullTypeName(),
-								isInterface ? "interface" : "base class",
+								baseTypeInfo.Type.TypeKind == TypeKind.Interface ? "interface" : "base class",
 								baseTypeInfo.Type.GetFullTypeName()
 							)
 						);
