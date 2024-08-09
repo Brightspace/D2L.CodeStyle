@@ -86,67 +86,76 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ImmutableTypeInfo baseTypeInfo,
 			CancellationToken cancellationToken
 		) {
-			switch( baseTypeInfo.Kind ) {
-				case ImmutableTypeKind.None:
+			switch( ((baseTypeInfo.Kind, baseTypeInfo.IsConditional), (typeInfo.Kind, typeInfo.IsConditional)) ) {
+				default:
+					throw new NotImplementedException();
+
+				case ((ImmutableTypeKind.None, _), _):
+				case ((ImmutableTypeKind.Instance, _), _):
 					return;
 
-				case ImmutableTypeKind.Instance:
+				case ((ImmutableTypeKind.Total, _), (ImmutableTypeKind.None, _)):
+				case ((ImmutableTypeKind.Total, _), (ImmutableTypeKind.Instance, _)):
+					RaiseMissingAttribute();
 					return;
 
-				case ImmutableTypeKind.Total:
-					bool missingConditionalParameterUsage = false;
-					if( typeInfo.Kind == ImmutableTypeKind.Total ) {
-						if( !typeInfo.IsConditional ) {
-							break;
+				// If the implementing type is [Immutable] then the conditionality of the
+				// base type doesn't matter (for this diagnostic)
+				case ((ImmutableTypeKind.Total, _), (ImmutableTypeKind.Total, false)):
+					return;
+
+				// If the base type is [Immutable] then the implementing type should be as well
+				case ((ImmutableTypeKind.Total, false), (ImmutableTypeKind.Total, true)):
+					RaiseMissingAttribute();
+					return;
+
+				case ((ImmutableTypeKind.Total, true), (ImmutableTypeKind.Total, true)):
+					InspectConditionalParameterApplication();
+					return;
+			}
+
+			void RaiseMissingAttribute() {
+				(TypeDeclarationSyntax syntax, _) = typeInfo.Type.ExpensiveGetSyntaxImplementingType(
+					baseTypeOrInterface: baseTypeInfo.Type,
+					compilation: m_compilation,
+					cancellationToken
+				);
+
+				m_diagnosticSink(
+					Diagnostic.Create(
+						Diagnostics.MissingTransitiveImmutableAttribute,
+						syntax.Identifier.GetLocation(),
+						properties: FixArgs,
+						typeInfo.Type.GetFullTypeName(),
+						baseTypeInfo.IsConditional ? " (or [ConditionallyImmutable])" : "",
+						baseTypeInfo.Type.TypeKind == TypeKind.Interface ? "interface" : "base class",
+						baseTypeInfo.Type.GetFullTypeName()
+					)
+				);
+			}
+
+			void InspectConditionalParameterApplication() {
+				foreach( ITypeParameterSymbol typeParameter in typeInfo.ConditionalTypeParameters ) {
+					bool parameterUsed = false;
+					for( int i = 0; i < baseTypeInfo.Type.TypeArguments.Length && !parameterUsed; i++ ) {
+						ITypeSymbol typeArgument = baseTypeInfo.Type.TypeArguments[ i ];
+						if( !SymbolEqualityComparer.Default.Equals( typeParameter, typeArgument ) ) {
+							continue;
 						}
 
-						if( baseTypeInfo.IsConditional ) {
-							foreach( ITypeParameterSymbol typeParameter in typeInfo.ConditionalTypeParameters ) {
-								bool parameterUsed = false;
-								for( int i = 0; i < baseTypeInfo.Type.TypeArguments.Length && !parameterUsed; i++ ) {
-									ITypeSymbol typeArgument = baseTypeInfo.Type.TypeArguments[ i ];
-									if( !SymbolEqualityComparer.Default.Equals( typeParameter, typeArgument ) ) {
-										continue;
-									}
-
-									ITypeParameterSymbol baseTypeParameter = baseTypeInfo.Type.TypeParameters[ i ];
-									if( baseTypeInfo.ConditionalTypeParameters.Contains( baseTypeParameter, SymbolEqualityComparer.Default ) ) {
-										parameterUsed = true;
-										break;
-									}
-								}
-
-								if( !parameterUsed ) {
-									missingConditionalParameterUsage = true;
-									break;
-								}
-							}
-
-							if( !missingConditionalParameterUsage ) {
-								break;
-							}
+						ITypeParameterSymbol baseTypeParameter = baseTypeInfo.Type.TypeParameters[ i ];
+						if( baseTypeInfo.ConditionalTypeParameters.Contains( baseTypeParameter, SymbolEqualityComparer.Default ) ) {
+							parameterUsed = true;
+							break;
 						}
 					}
 
-					// The docs say the only things that can have BaseType == null
-					// are interfaces, System.Object itself (won't come up in our
-					// analysis because (1) it !hasTheImmutableAttribute (2) you
-					// can't explicitly list it as a base class anyway) and
-					// pointer types (the base value type probably also doesn't
-					// have it.)
-					bool isInterface =
-						baseTypeInfo.Type.BaseType == null
-						&& baseTypeInfo.Type.SpecialType != SpecialType.System_Object
-						&& baseTypeInfo.Type.SpecialType != SpecialType.System_ValueType
-						&& baseTypeInfo.Type.Kind != SymbolKind.PointerType;
-
-					(TypeDeclarationSyntax syntax, _) = typeInfo.Type.ExpensiveGetSyntaxImplementingType(
-						baseTypeOrInterface: baseTypeInfo.Type,
-						compilation: m_compilation,
-						cancellationToken
-					);
-
-					if( missingConditionalParameterUsage ) {
+					if( !parameterUsed ) {
+						(TypeDeclarationSyntax syntax, _) = typeInfo.Type.ExpensiveGetSyntaxImplementingType(
+							baseTypeOrInterface: baseTypeInfo.Type,
+							compilation: m_compilation,
+							cancellationToken
+						);
 						m_diagnosticSink(
 							Diagnostic.Create(
 								Diagnostics.UnappliedConditionalImmutability,
@@ -156,24 +165,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 								baseTypeInfo.Type.GetFullTypeName()
 							)
 						);
-					} else {
-						m_diagnosticSink(
-							Diagnostic.Create(
-								Diagnostics.MissingTransitiveImmutableAttribute,
-								syntax.Identifier.GetLocation(),
-								properties: FixArgs,
-								typeInfo.Type.GetFullTypeName(),
-								baseTypeInfo.IsConditional ? " (or [ConditionallyImmutable])" : "",
-								isInterface ? "interface" : "base class",
-								baseTypeInfo.Type.GetFullTypeName()
-							)
-						);
+						return;
 					}
-
-					break;
-
-				default:
-					throw new NotImplementedException();
+				}
 			}
 		}
 
