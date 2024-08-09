@@ -108,6 +108,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 				// If the base type is [Immutable] then the implementing type should be as well
 				case ((ImmutableTypeKind.Total, false), (ImmutableTypeKind.Total, true)):
+					// TODO: error message could be improved to directly explain that we need [Immutable]
 					RaiseMissingAttribute();
 					return;
 
