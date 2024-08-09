@@ -139,39 +139,45 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			void InspectConditionalParameterApplication() {
-				foreach( ITypeParameterSymbol typeParameter in typeInfo.ConditionalTypeParameters ) {
+				TypeDeclarationSyntax implementingSyntax = null;
+
+				foreach( var p in typeInfo.GetConditionalTypeParameters() ) {
 					bool parameterUsed = false;
-					for( int i = 0; i < baseTypeInfo.Type.TypeArguments.Length && !parameterUsed; i++ ) {
-						ITypeSymbol typeArgument = baseTypeInfo.Type.TypeArguments[ i ];
-						if( !SymbolEqualityComparer.Default.Equals( typeParameter, typeArgument ) ) {
+					foreach( var bp in baseTypeInfo.GetConditionalTypeParameters() ) {
+						ITypeSymbol typeArgument = baseTypeInfo.Type.TypeArguments[ bp.OriginalOrdinal ];
+
+						if( !SymbolEqualityComparer.Default.Equals( p.TypeParameter, typeArgument ) ) {
 							continue;
 						}
 
-						ITypeParameterSymbol baseTypeParameter = baseTypeInfo.Type.TypeParameters[ i ];
-						if( baseTypeInfo.ConditionalTypeParameters.Contains( baseTypeParameter, SymbolEqualityComparer.Default ) ) {
-							parameterUsed = true;
-							break;
-						}
+						parameterUsed = true;
+						break;
+					};
+
+					if( parameterUsed ) {
+						continue;
 					}
 
-					if( !parameterUsed ) {
-						(TypeDeclarationSyntax syntax, _) = typeInfo.Type.ExpensiveGetSyntaxImplementingType(
+					if( implementingSyntax is null ) {
+						(implementingSyntax, _) = typeInfo.Type.ExpensiveGetSyntaxImplementingType(
 							baseTypeOrInterface: baseTypeInfo.Type,
 							compilation: m_compilation,
 							cancellationToken
 						);
-						m_diagnosticSink(
-							Diagnostic.Create(
-								Diagnostics.UnappliedConditionalImmutability,
-								syntax.Identifier.GetLocation(),
-								typeInfo.Type.GetFullTypeName(),
-								baseTypeInfo.Type.TypeKind == TypeKind.Interface ? "interface" : "base class",
-								baseTypeInfo.Type.GetFullTypeName()
-							)
-						);
-						return;
 					}
-				}
+
+					TypeParameterSyntax parameterSyntax = implementingSyntax.TypeParameterList!.Parameters[ p.OriginalOrdinal ];
+
+					m_diagnosticSink(
+						Diagnostic.Create(
+							Diagnostics.UnappliedConditionalImmutability,
+							parameterSyntax.Identifier.GetLocation(),
+							p.TypeParameter.Name,
+							baseTypeInfo.Type.TypeKind == TypeKind.Interface ? "interface" : "base class",
+							baseTypeInfo.Type.GetFullTypeName()
+						)
+					);
+				};
 			}
 		}
 

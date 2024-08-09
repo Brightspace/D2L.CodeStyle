@@ -33,8 +33,19 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		public bool IsConditional { get; }
 
-		public IEnumerable<ITypeParameterSymbol> ConditionalTypeParameters => Type.TypeParameters.Where( IsConditionalParameter );
-		private bool IsConditionalParameter( ITypeParameterSymbol _, int index ) => m_conditionalTypeParameters[ index ];
+		public IEnumerable<(ITypeParameterSymbol TypeParameter, int OriginalOrdinal)> GetConditionalTypeParameters() {
+			if( !IsConditional ) {
+				yield break;
+			}
+
+			for( int i = 0; i < Type.TypeParameters.Length; i++ ) {
+				if( !m_conditionalTypeParameters[ i ] ) {
+					continue;
+				}
+
+				yield return (Type.TypeParameters[ i ], i);
+			}
+		}
 
 		public bool IsImmutableDefinition(
 			ImmutabilityContext context,
