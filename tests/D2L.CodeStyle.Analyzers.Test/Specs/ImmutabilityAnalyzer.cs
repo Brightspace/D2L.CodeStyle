@@ -198,6 +198,15 @@ namespace SpecTests {
 		[ConditionallyImmutable]
 		public interface SomeImmutableGenericInterfaceGivenTU<[ConditionallyImmutable.OnlyIf] T, [ConditionallyImmutable.OnlyIf] U> { }
 
+		[ConditionallyImmutable]
+		public abstract class SomeImmutableGenericBaseClassGivenT<[ConditionallyImmutable.OnlyIf] T, U> { }
+
+		[ConditionallyImmutable]
+		public abstract class SomeImmutableGenericBaseClassGivenU<T, [ConditionallyImmutable.OnlyIf] U> { }
+
+		[ConditionallyImmutable]
+		public abstract class SomeImmutableGenericBaseClassGivenTU<[ConditionallyImmutable.OnlyIf] T, [ConditionallyImmutable.OnlyIf] U> { }
+
 		[Immutable]
 		public interface SomeImmutableGenericInterfaceRestrictingT<[Immutable] T, U> { }
 
@@ -242,6 +251,24 @@ namespace SpecTests {
 
 	[Immutable]
 	public sealed class AnalyzedClassWithNonImmutableTypeParameterImplementingImmutableBaseClassParameter<T> : Types.SomeImmutableGenericClassRestrictingT</* TypeParameterIsNotKnownToBeImmutable(T) */ T /**/> { }
+
+	[Immutable] public sealed class ImmutableType_ConditionalInterface_TypeParameters_NotMet<T> : Types.SomeImmutableGenericInterfaceGivenT<T, T> { }
+	[Immutable] public sealed class ImmutableType_ConditionalInterface_TypeParameters_Met1<[Immutable] T> : Types.SomeImmutableGenericInterfaceGivenT<T, T> { }
+	[Immutable] public sealed class ImmutableType_ConditionalInterface_TypeParameters_Met2<[Immutable] T> : Types.SomeImmutableGenericInterfaceGivenU<T, T> { }
+	[Immutable] public sealed class ImmutableType_ConditionalInterface_TypeParameters_Met3<[Immutable] T> : Types.SomeImmutableGenericInterfaceGivenTU<T, T> { }
+	[Immutable] public sealed class ImmutableType_ConditionalInterface_KnownTypes_NotMet : Types.SomeImmutableGenericInterfaceGivenT<object, object> { }
+	[Immutable] public sealed class ImmutableType_ConditionalInterface_KnownTypes_Met1 : Types.SomeImmutableGenericInterfaceGivenT<int, int> { }
+	[Immutable] public sealed class ImmutableType_ConditionalInterface_KnownTypes_Met2 : Types.SomeImmutableGenericInterfaceGivenU<int, int> { }
+	[Immutable] public sealed class ImmutableType_ConditionalInterface_KnownTypes_Met3 : Types.SomeImmutableGenericInterfaceGivenTU<int, int> { }
+
+	[Immutable] public sealed class ImmutableType_ConditionalBaseClass_TypeParameters_NotMet<T> : /* TypeParameterIsNotKnownToBeImmutable(T) */ Types.SomeImmutableGenericBaseClassGivenT<T, T> /**/ { }
+	[Immutable] public sealed class ImmutableType_ConditionalBaseClass_TypeParameters_Met1<[Immutable] T> : Types.SomeImmutableGenericBaseClassGivenT<T, T> { }
+	[Immutable] public sealed class ImmutableType_ConditionalBaseClass_TypeParameters_Met2<[Immutable] T> : Types.SomeImmutableGenericBaseClassGivenU<T, T> { }
+	[Immutable] public sealed class ImmutableType_ConditionalBaseClass_TypeParameters_Met3<[Immutable] T> : Types.SomeImmutableGenericBaseClassGivenTU<T, T> { }
+	[Immutable] public sealed class ImmutableType_ConditionalBaseClass_KnownTypes_NotMet : /* NonImmutableTypeHeldByImmutable(class, object,) */ Types.SomeImmutableGenericBaseClassGivenT<object, object> /**/ { }
+	[Immutable] public sealed class ImmutableType_ConditionalBaseClass_KnownTypes_Met1 : Types.SomeImmutableGenericBaseClassGivenT<int, int> { }
+	[Immutable] public sealed class ImmutableType_ConditionalBaseClass_KnownTypes_Met2 : Types.SomeImmutableGenericBaseClassGivenU<int, int> { }
+	[Immutable] public sealed class ImmutableType_ConditionalBaseClass_KnownTypes_Met3 : Types.SomeImmutableGenericBaseClassGivenTU<int, int> { }
 
 	[ Immutable]
 	[ConditionallyImmutable]
@@ -1398,6 +1425,12 @@ namespace ConsistencyTests {
 
 	[ConditionallyImmutable]
 	public sealed class ConditionallyImmutableClassImplementingConditionallyImmutable<[ConditionallyImmutable.OnlyIf] T> : ISomethingConditionallyImmutable<T> { }
+
+	[ConditionallyImmutable]
+	public sealed class /* UnappliedConditionalImmutability(ConsistencyTests.ConditionallyImmutableImplementerWithUnappliedCondition, interface, ConsistencyTests.ISomethingConditionallyImmutable) */ ConditionallyImmutableImplementerWithUnappliedCondition /**/<[ConditionallyImmutable.OnlyIf] T, [ConditionallyImmutable.OnlyIf] U> : ISomethingConditionallyImmutable<T> { }
+
+	[ConditionallyImmutable]
+	public sealed class /* MissingTransitiveImmutableAttribute(ConsistencyTests.ConditionallyImmutableImplementingImmutable, , interface, ConsistencyTests.ISomethingImmutable) */ ConditionallyImmutableImplementingImmutable /**/<[ConditionallyImmutable.OnlyIf] T> : ISomethingImmutable { }
 
 	public sealed class /* MissingTransitiveImmutableAttribute(ConsistencyTests.SadImplementerOfConditionallyImmutable,  (or [ConditionallyImmutable]), interface, ConsistencyTests.ISomethingConditionallyImmutable) */ SadImplementerOfConditionallyImmutable /**/<T> : ISomethingConditionallyImmutable<T> { }
 

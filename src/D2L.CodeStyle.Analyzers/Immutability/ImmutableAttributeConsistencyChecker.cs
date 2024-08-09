@@ -94,8 +94,38 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					return;
 
 				case ImmutableTypeKind.Total:
+					bool missingConditionalParameterUsage = false;
 					if( typeInfo.Kind == ImmutableTypeKind.Total ) {
-						break;
+						if( !typeInfo.IsConditional ) {
+							break;
+						}
+
+						if( baseTypeInfo.IsConditional ) {
+							foreach( ITypeParameterSymbol typeParameter in typeInfo.ConditionalTypeParameters ) {
+								bool parameterUsed = false;
+								for( int i = 0; i < baseTypeInfo.Type.TypeArguments.Length && !parameterUsed; i++ ) {
+									ITypeSymbol typeArgument = baseTypeInfo.Type.TypeArguments[ i ];
+									if( !SymbolEqualityComparer.Default.Equals( typeParameter, typeArgument ) ) {
+										continue;
+									}
+
+									ITypeParameterSymbol baseTypeParameter = baseTypeInfo.Type.TypeParameters[ i ];
+									if( baseTypeInfo.ConditionalTypeParameters.Contains( baseTypeParameter, SymbolEqualityComparer.Default ) ) {
+										parameterUsed = true;
+										break;
+									}
+								}
+
+								if( !parameterUsed ) {
+									missingConditionalParameterUsage = true;
+									break;
+								}
+							}
+
+							if( !missingConditionalParameterUsage ) {
+								break;
+							}
+						}
 					}
 
 					// The docs say the only things that can have BaseType == null
@@ -116,17 +146,29 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						cancellationToken
 					);
 
-					m_diagnosticSink(
-						Diagnostic.Create(
-							Diagnostics.MissingTransitiveImmutableAttribute,
-							syntax.Identifier.GetLocation(),
-							properties: FixArgs,
-							typeInfo.Type.GetFullTypeName(),
-							baseTypeInfo.IsConditional ? " (or [ConditionallyImmutable])" : "",
-							isInterface ? "interface" : "base class",
-							baseTypeInfo.Type.GetFullTypeName()
-						)
-					);
+					if( missingConditionalParameterUsage ) {
+						m_diagnosticSink(
+							Diagnostic.Create(
+								Diagnostics.UnappliedConditionalImmutability,
+								syntax.Identifier.GetLocation(),
+								typeInfo.Type.GetFullTypeName(),
+								isInterface ? "interface" : "base class",
+								baseTypeInfo.Type.GetFullTypeName()
+							)
+						);
+					} else {
+						m_diagnosticSink(
+							Diagnostic.Create(
+								Diagnostics.MissingTransitiveImmutableAttribute,
+								syntax.Identifier.GetLocation(),
+								properties: FixArgs,
+								typeInfo.Type.GetFullTypeName(),
+								baseTypeInfo.IsConditional ? " (or [ConditionallyImmutable])" : "",
+								isInterface ? "interface" : "base class",
+								baseTypeInfo.Type.GetFullTypeName()
+							)
+						);
+					}
 
 					break;
 
