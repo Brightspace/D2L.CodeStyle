@@ -139,43 +139,41 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			void InspectConditionalParameterApplication() {
-				typeInfo.Accept( ( typeParameter, typeParameterOrdinal ) => {
-
+				foreach( var p in typeInfo.GetConditionalTypeParameters() ) {
 					bool parameterUsed = false;
-					baseTypeInfo.Accept( ( baseTypeParameter, baseTypeParameterOrdinal ) => {
-						ITypeSymbol typeArgument = baseTypeInfo.Type.TypeArguments[ baseTypeParameterOrdinal ];
+					foreach( var bp in baseTypeInfo.GetConditionalTypeParameters() ) {
+						ITypeSymbol typeArgument = baseTypeInfo.Type.TypeArguments[ bp.OriginalOrdinal ];
 
-						if( !SymbolEqualityComparer.Default.Equals( typeParameter, typeArgument ) ) {
-							return false;
+						if( !SymbolEqualityComparer.Default.Equals( p.TypeParameter, typeArgument ) ) {
+							continue;
 						}
 
 						parameterUsed = true;
-						return true;
-					} );
+						break;
+					};
 
-					if( !parameterUsed ) {
-						(TypeDeclarationSyntax syntax, _) = typeInfo.Type.ExpensiveGetSyntaxImplementingType(
-							baseTypeOrInterface: baseTypeInfo.Type,
-							compilation: m_compilation,
-							cancellationToken
-						);
-
-						TypeParameterSyntax parameterSyntax = syntax.TypeParameterList!.Parameters[ typeParameterOrdinal ];
-
-						m_diagnosticSink(
-							Diagnostic.Create(
-								Diagnostics.UnappliedConditionalImmutability,
-								parameterSyntax.Identifier.GetLocation(),
-								typeInfo.Type.GetFullTypeName(),
-								typeParameter.Name,
-								baseTypeInfo.Type.TypeKind == TypeKind.Interface ? "interface" : "base class",
-								baseTypeInfo.Type.GetFullTypeName()
-							)
-						);
+					if( parameterUsed ) {
+						continue;
 					}
 
-					return false;
-				} );
+					(TypeDeclarationSyntax syntax, _) = typeInfo.Type.ExpensiveGetSyntaxImplementingType(
+						baseTypeOrInterface: baseTypeInfo.Type,
+						compilation: m_compilation,
+						cancellationToken
+					);
+
+					TypeParameterSyntax parameterSyntax = syntax.TypeParameterList!.Parameters[ p.OriginalOrdinal ];
+
+					m_diagnosticSink(
+						Diagnostic.Create(
+							Diagnostics.UnappliedConditionalImmutability,
+							parameterSyntax.Identifier.GetLocation(),
+							p.TypeParameter.Name,
+							baseTypeInfo.Type.TypeKind == TypeKind.Interface ? "interface" : "base class",
+							baseTypeInfo.Type.GetFullTypeName()
+						)
+					);
+				};
 			}
 		}
 

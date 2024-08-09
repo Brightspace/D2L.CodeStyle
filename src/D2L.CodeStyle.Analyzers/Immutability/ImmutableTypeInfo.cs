@@ -33,14 +33,9 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		public bool IsConditional { get; }
 
-		public delegate bool ConditionalTypeParameterVisitor( ITypeParameterSymbol typeParameter, int ordinal );
-		/// <summary>
-		/// Applies the visitor to each conditional type parameter, with it's original ordinal.
-		/// Halts application if the visitor returns true.
-		/// </summary>
-		public void Accept( ConditionalTypeParameterVisitor visitor ) {
+		public IEnumerable<(ITypeParameterSymbol TypeParameter, int OriginalOrdinal)> GetConditionalTypeParameters() {
 			if( !IsConditional ) {
-				return;
+				yield break;
 			}
 
 			for( int i = 0; i < Type.TypeParameters.Length; i++ ) {
@@ -48,9 +43,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					continue;
 				}
 
-				if( visitor( Type.TypeParameters[ i ], i ) ) {
-					return;
-				}
+				yield return (Type.TypeParameters[ i ], i );
 			}
 		}
 
