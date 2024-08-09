@@ -86,52 +86,92 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ImmutableTypeInfo baseTypeInfo,
 			CancellationToken cancellationToken
 		) {
-			switch( baseTypeInfo.Kind ) {
-				case ImmutableTypeKind.None:
-					return;
-
-				case ImmutableTypeKind.Instance:
-					return;
-
-				case ImmutableTypeKind.Total:
-					if( typeInfo.Kind == ImmutableTypeKind.Total ) {
-						break;
-					}
-
-					// The docs say the only things that can have BaseType == null
-					// are interfaces, System.Object itself (won't come up in our
-					// analysis because (1) it !hasTheImmutableAttribute (2) you
-					// can't explicitly list it as a base class anyway) and
-					// pointer types (the base value type probably also doesn't
-					// have it.)
-					bool isInterface =
-						baseTypeInfo.Type.BaseType == null
-						&& baseTypeInfo.Type.SpecialType != SpecialType.System_Object
-						&& baseTypeInfo.Type.SpecialType != SpecialType.System_ValueType
-						&& baseTypeInfo.Type.Kind != SymbolKind.PointerType;
-
-					(TypeDeclarationSyntax syntax, _) = typeInfo.Type.ExpensiveGetSyntaxImplementingType(
-						baseTypeOrInterface: baseTypeInfo.Type,
-						compilation: m_compilation,
-						cancellationToken
-					);
-
-					m_diagnosticSink(
-						Diagnostic.Create(
-							Diagnostics.MissingTransitiveImmutableAttribute,
-							syntax.Identifier.GetLocation(),
-							properties: FixArgs,
-							typeInfo.Type.GetFullTypeName(),
-							baseTypeInfo.IsConditional ? " (or [ConditionallyImmutable])" : "",
-							isInterface ? "interface" : "base class",
-							baseTypeInfo.Type.GetFullTypeName()
-						)
-					);
-
-					break;
-
+			switch( ((baseTypeInfo.Kind, baseTypeInfo.IsConditional), (typeInfo.Kind, typeInfo.IsConditional)) ) {
 				default:
 					throw new NotImplementedException();
+
+				// If the base type doesn't require us to be immutable then there is nothing to check
+				case ((ImmutableTypeKind.None, _), _):
+				case ((ImmutableTypeKind.Instance, _), _):
+					return;
+
+				// When the base type is [Immutable] or [ConditionallyImmutable] we need to be as well
+				case ((ImmutableTypeKind.Total, _), (ImmutableTypeKind.None, _)):
+				case ((ImmutableTypeKind.Total, _), (ImmutableTypeKind.Instance, _)):
+					RaiseMissingAttribute();
+					return;
+
+				// If the implementing type is [Immutable] then the conditionality of the
+				// base type doesn't matter (for this diagnostic)
+				case ((ImmutableTypeKind.Total, _), (ImmutableTypeKind.Total, false)):
+					return;
+
+				// If the base type is [Immutable] then the implementing type should be as well
+				case ((ImmutableTypeKind.Total, false), (ImmutableTypeKind.Total, true)):
+					// TODO: error message could be improved to directly explain that we need [Immutable]
+					RaiseMissingAttribute();
+					return;
+
+				// When we and our base type are [ConditionallyImmutable] we need to consider the compatibility of those conditions
+				case ((ImmutableTypeKind.Total, true), (ImmutableTypeKind.Total, true)):
+					InspectConditionalParameterApplication();
+					return;
+			}
+
+			void RaiseMissingAttribute() {
+				(TypeDeclarationSyntax syntax, _) = typeInfo.Type.ExpensiveGetSyntaxImplementingType(
+					baseTypeOrInterface: baseTypeInfo.Type,
+					compilation: m_compilation,
+					cancellationToken
+				);
+
+				m_diagnosticSink(
+					Diagnostic.Create(
+						Diagnostics.MissingTransitiveImmutableAttribute,
+						syntax.Identifier.GetLocation(),
+						properties: FixArgs,
+						typeInfo.Type.GetFullTypeName(),
+						baseTypeInfo.IsConditional ? " (or [ConditionallyImmutable])" : "",
+						baseTypeInfo.Type.TypeKind == TypeKind.Interface ? "interface" : "base class",
+						baseTypeInfo.Type.GetFullTypeName()
+					)
+				);
+			}
+
+			void InspectConditionalParameterApplication() {
+				foreach( ITypeParameterSymbol typeParameter in typeInfo.ConditionalTypeParameters ) {
+					bool parameterUsed = false;
+					for( int i = 0; i < baseTypeInfo.Type.TypeArguments.Length && !parameterUsed; i++ ) {
+						ITypeSymbol typeArgument = baseTypeInfo.Type.TypeArguments[ i ];
+						if( !SymbolEqualityComparer.Default.Equals( typeParameter, typeArgument ) ) {
+							continue;
+						}
+
+						ITypeParameterSymbol baseTypeParameter = baseTypeInfo.Type.TypeParameters[ i ];
+						if( baseTypeInfo.ConditionalTypeParameters.Contains( baseTypeParameter, SymbolEqualityComparer.Default ) ) {
+							parameterUsed = true;
+							break;
+						}
+					}
+
+					if( !parameterUsed ) {
+						(TypeDeclarationSyntax syntax, _) = typeInfo.Type.ExpensiveGetSyntaxImplementingType(
+							baseTypeOrInterface: baseTypeInfo.Type,
+							compilation: m_compilation,
+							cancellationToken
+						);
+						m_diagnosticSink(
+							Diagnostic.Create(
+								Diagnostics.UnappliedConditionalImmutability,
+								syntax.Identifier.GetLocation(),
+								typeInfo.Type.GetFullTypeName(),
+								baseTypeInfo.Type.TypeKind == TypeKind.Interface ? "interface" : "base class",
+								baseTypeInfo.Type.GetFullTypeName()
+							)
+						);
+						return;
+					}
+				}
 			}
 		}
 
