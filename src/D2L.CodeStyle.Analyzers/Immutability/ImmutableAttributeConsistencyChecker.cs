@@ -139,6 +139,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			void InspectConditionalParameterApplication() {
+				TypeDeclarationSyntax implementingSyntax = null;
+
 				foreach( var p in typeInfo.GetConditionalTypeParameters() ) {
 					bool parameterUsed = false;
 					foreach( var bp in baseTypeInfo.GetConditionalTypeParameters() ) {
@@ -156,13 +158,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 						continue;
 					}
 
-					(TypeDeclarationSyntax syntax, _) = typeInfo.Type.ExpensiveGetSyntaxImplementingType(
-						baseTypeOrInterface: baseTypeInfo.Type,
-						compilation: m_compilation,
-						cancellationToken
-					);
+					if( implementingSyntax is null ) {
+						(implementingSyntax, _) = typeInfo.Type.ExpensiveGetSyntaxImplementingType(
+							baseTypeOrInterface: baseTypeInfo.Type,
+							compilation: m_compilation,
+							cancellationToken
+						);
+					}
 
-					TypeParameterSyntax parameterSyntax = syntax.TypeParameterList!.Parameters[ p.OriginalOrdinal ];
+					TypeParameterSyntax parameterSyntax = implementingSyntax.TypeParameterList!.Parameters[ p.OriginalOrdinal ];
 
 					m_diagnosticSink(
 						Diagnostic.Create(
