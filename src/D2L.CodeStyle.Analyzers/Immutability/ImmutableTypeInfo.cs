@@ -23,13 +23,15 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			Kind = kind;
 			Type = type;
 			m_conditionalTypeParameters = conditionalTypeParameters;
+
+			IsConditional = m_conditionalTypeParameters.Any( isConditional => isConditional );
 		}
 
 		public ImmutableTypeKind Kind { get; }
 
 		public INamedTypeSymbol Type { get; }
 
-		public bool IsConditional => m_conditionalTypeParameters.Length > 0;
+		public bool IsConditional { get; }
 
 		public IEnumerable<ITypeParameterSymbol> ConditionalTypeParameters => Type.TypeParameters.Where( IsConditionalParameter );
 		private bool IsConditionalParameter( ITypeParameterSymbol _, int index ) => m_conditionalTypeParameters[ index ];
