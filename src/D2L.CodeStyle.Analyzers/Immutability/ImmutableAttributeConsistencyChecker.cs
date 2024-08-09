@@ -92,13 +92,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 				// If the base type doesn't require us to be immutable then there is nothing to check
 				case ((ImmutableTypeKind.None, _), _):
-
 				case ((ImmutableTypeKind.Instance, _), _):
 					return;
 
 				// When the base type is [Immutable] or [ConditionallyImmutable] we need to be as well
 				case ((ImmutableTypeKind.Total, _), (ImmutableTypeKind.None, _)):
-
 				case ((ImmutableTypeKind.Total, _), (ImmutableTypeKind.Instance, _)):
 					RaiseMissingAttribute();
 					return;
