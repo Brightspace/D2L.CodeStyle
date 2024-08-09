@@ -43,7 +43,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					continue;
 				}
 
-				yield return (Type.TypeParameters[ i ], i );
+				yield return (Type.TypeParameters[ i ], i);
 			}
 		}
 
