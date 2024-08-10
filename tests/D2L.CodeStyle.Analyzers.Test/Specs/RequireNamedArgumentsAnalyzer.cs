@@ -1,6 +1,20 @@
 ﻿// analyzer: D2L.CodeStyle.Analyzers.Language.RequireNamedArgumentsAnalyzer, D2L.CodeStyle.Analyzers
 
+using System;
 using D2L.CodeStyle.Annotations.Contract;
+
+namespace System {
+	public struct HashCode {
+		public static int Combine<T1>( T1 value1 ) { }
+		public static int Combine<T1, T2>( T1 value1, T2 value2 ) { }
+		public static int Combine<T1, T2, T3>( T1 value1, T2 value2, T3 value3 ) { }
+		public static int Combine<T1, T2, T3, T4>( T1 value1, T2 value2, T3 value3, T4 value4 ) { }
+		public static int Combine<T1, T2, T3, T4, T5>( T1 value1, T2 value2, T3 value3, T4 value4, T5 value5 ) { }
+		public static int Combine<T1, T2, T3, T4, T5, T6>( T1 value1, T2 value2, T3 value3, T4 value4, T5 value5, T6 value6 ) { }
+		public static int Combine<T1, T2, T3, T4, T5, T6, T7>( T1 value1, T2 value2, T3 value3, T4 value4, T5 value5, T6 value6, T7 value7 ) { }
+		public static int Combine<T1, T2, T3, T4, T5, T6, T7, T8>( T1 value1, T2 value2, T3 value3, T4 value4, T5 value5, T6 value6, T7 value7, T8 value8 ) { }
+	}
+}
 
 namespace D2L {
 
@@ -239,6 +253,17 @@ namespace D2L {
 			{
 				/* NamedArgumentsRequired */ funcWithOutParameter( out int out2 ) /**/;
 			}
+			#endregion
+
+			#region exempted methods do not trigger a diagnostic
+			HashCode.Combine( 1 );
+			HashCode.Combine( 1, 2 );
+			HashCode.Combine( 1, 2, 3 );
+			HashCode.Combine( 1, 2, 3, 4 );
+			HashCode.Combine( 1, 2, 3, 4, 5 );
+			HashCode.Combine( 1, 2, 3, 4, 5, 6 );
+			HashCode.Combine( 1, 2, 3, 4, 5, 6, 7 );
+			HashCode.Combine( 1, 2, 3, 4, 5, 6, 7, 8 );
 			#endregion
         }
 
