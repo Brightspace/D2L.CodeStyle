@@ -53,7 +53,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
-			ImmutableHashSet<ISymbol> exemptions = new ExemptSymbolsBuilder( context )
+			HashSet<ISymbol> exemptions = new ExemptSymbolsBuilder( context )
 				.AddFromAdditionalFiles( "D2L.CodeStyle.RequireNamedArguments.Exemptions" )
 
 				// HashCode.Combine takes a series of args named value1..valueN which are not useful to name
@@ -86,7 +86,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			OperationAnalysisContext ctx,
 			INamedTypeSymbol requireNamedArgumentsSymbol,
 			INamedTypeSymbol? lambdaExpresssionSymbol,
-			ImmutableHashSet<ISymbol> exemptions
+			HashSet<ISymbol> exemptions
 		) {
 			(IMethodSymbol targetMethod, ImmutableArray<IArgumentOperation> args) = ctx.Operation switch {
 				IInvocationOperation op => (op.TargetMethod, op.Arguments),

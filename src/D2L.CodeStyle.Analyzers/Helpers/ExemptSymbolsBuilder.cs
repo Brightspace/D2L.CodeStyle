@@ -11,7 +11,8 @@ internal sealed class ExemptSymbolsBuilder {
 	private readonly AnalyzerOptions m_analyzerOptions;
 	private readonly CancellationToken m_cancellationToken;
 
-	private readonly ImmutableHashSet<ISymbol>.Builder m_exemptions = ImmutableHashSet.CreateBuilder<ISymbol>( SymbolEqualityComparer.Default );
+	private readonly HashSet<ISymbol> m_exemptions = new( SymbolEqualityComparer.Default );
+	private bool m_built = false;
 
 	[System.Diagnostics.CodeAnalysis.SuppressMessage(
 		"MicrosoftCodeAnalysisPerformance",
@@ -26,7 +27,12 @@ internal sealed class ExemptSymbolsBuilder {
 		m_cancellationToken = context.CancellationToken;
 	}
 
-	public ImmutableHashSet<ISymbol> Build() => m_exemptions.ToImmutable();
+	public HashSet<ISymbol> Build() {
+		ThrowIfBuilt();
+
+		m_built = true;
+		return m_exemptions;
+	}
 
 	/// <summary>
 	/// Loads exemptions from AdditionalFiles matching "<paramref name="fileNameBase"/>.txt" and "<paramref name="fileNameBase"/>.*.txt".
@@ -35,6 +41,8 @@ internal sealed class ExemptSymbolsBuilder {
 	public ExemptSymbolsBuilder AddFromAdditionalFiles(
 		string fileNameBase
 	) {
+		ThrowIfBuilt();
+
 		fileNameBase += ".";
 
 		foreach( AdditionalText file in m_analyzerOptions.AdditionalFiles ) {
@@ -73,12 +81,20 @@ internal sealed class ExemptSymbolsBuilder {
 	}
 
 	public ExemptSymbolsBuilder AddFromDocumentationCommentId( string id ) {
+		ThrowIfBuilt();
+
 		ImmutableArray<ISymbol> symbols = DocumentationCommentId.GetSymbolsForDeclarationId( id, m_compilation );
 		foreach( var symbol in symbols ) {
 			m_exemptions.Add( symbol );
 		}
 
 		return this;
+	}
+
+	private void ThrowIfBuilt() {
+		if( m_built ) {
+			throw new InvalidOperationException( "Builder instance has already been used" );
+		}
 	}
 
 }
