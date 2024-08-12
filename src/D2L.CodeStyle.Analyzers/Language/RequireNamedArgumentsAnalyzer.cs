@@ -1,6 +1,7 @@
 #nullable enable
 
 using System.Collections.Immutable;
+using D2L.CodeStyle.Analyzers.Helpers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -52,13 +53,29 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				return;
 			}
 
+			HashSet<ISymbol> exemptions = new ExemptSymbolsBuilder( context )
+				.AddFromAdditionalFiles( "D2L.CodeStyle.RequireNamedArguments.Exemptions" )
+
+				// HashCode.Combine takes a series of args named value1..valueN which are not useful to name
+				.AddFromDocumentationCommentId( "M:System.HashCode.Combine``1(``0)" )
+				.AddFromDocumentationCommentId( "M:System.HashCode.Combine``2(``0,``1)" )
+				.AddFromDocumentationCommentId( "M:System.HashCode.Combine``3(``0,``1,``2)" )
+				.AddFromDocumentationCommentId( "M:System.HashCode.Combine``4(``0,``1,``2,``3)" )
+				.AddFromDocumentationCommentId( "M:System.HashCode.Combine``5(``0,``1,``2,``3,``4)" )
+				.AddFromDocumentationCommentId( "M:System.HashCode.Combine``6(``0,``1,``2,``3,``4,``5)" )
+				.AddFromDocumentationCommentId( "M:System.HashCode.Combine``7(``0,``1,``2,``3,``4,``5,``6)" )
+				.AddFromDocumentationCommentId( "M:System.HashCode.Combine``8(``0,``1,``2,``3,``4,``5,``6,``7)" )
+
+				.Build();
+
 			INamedTypeSymbol? lambdaExpresssion = context.Compilation.GetTypeByMetadataName( LambdaExpressionMetadataName );
 
 			context.RegisterOperationAction(
 				ctx => AnalyzeInvocation(
 					ctx,
 					requiredNamedArguments,
-					lambdaExpresssion
+					lambdaExpresssion,
+					exemptions
 				),
 				OperationKind.Invocation,
 				OperationKind.ObjectCreation
@@ -68,7 +85,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 		private static void AnalyzeInvocation(
 			OperationAnalysisContext ctx,
 			INamedTypeSymbol requireNamedArgumentsSymbol,
-			INamedTypeSymbol? lambdaExpresssionSymbol
+			INamedTypeSymbol? lambdaExpresssionSymbol,
+			HashSet<ISymbol> exemptions
 		) {
 			(IMethodSymbol targetMethod, ImmutableArray<IArgumentOperation> args) = ctx.Operation switch {
 				IInvocationOperation op => (op.TargetMethod, op.Arguments),
@@ -81,6 +99,10 @@ namespace D2L.CodeStyle.Analyzers.Language {
 			}
 
 			if( args.IsEmpty ) {
+				return;
+			}
+
+			if( exemptions.Contains( targetMethod.OriginalDefinition ) ) {
 				return;
 			}
 
