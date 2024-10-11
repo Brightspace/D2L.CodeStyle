@@ -6,19 +6,6 @@ using Microsoft.CodeAnalysis.CSharp;
 namespace D2L.CodeStyle.Analyzers.Extensions {
 	internal static partial class RoslynExtensions {
 
-		public static bool IsTypeMarkedSingleton( this ITypeSymbol symbol ) {
-			if( Attributes.Singleton.IsDefined( symbol ) ) {
-				return true;
-			}
-			if( symbol.Interfaces.Any( IsTypeMarkedSingleton ) ) {
-				return true;
-			}
-			if( symbol.BaseType != null && IsTypeMarkedSingleton( symbol.BaseType ) ) {
-				return true;
-			}
-			return false;
-		}
-
 		private static readonly SymbolDisplayFormat FullTypeDisplayFormat = new SymbolDisplayFormat(
 			typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
 			miscellaneousOptions: SymbolDisplayMiscellaneousOptions.ExpandNullable
