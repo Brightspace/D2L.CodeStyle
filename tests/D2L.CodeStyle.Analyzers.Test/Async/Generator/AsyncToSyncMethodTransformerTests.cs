@@ -633,6 +633,41 @@ int Hello() {
 		Assert.AreEqual( "[Blocking] T Hello() { return new( Foo() ); }", actual.Value.ToFullString() );
 	}
 
+	[Test]
+	public void CollectionSyntax() {
+		var actual = Transform(
+			"""
+			[GenerateSync]
+			async Task<IEnumerable<int>> HelloAsync()
+				=> [
+					await FooAsync(),
+					3,
+					..(await BarAsync()),
+					4,
+					await XAsync() + await YAsync()
+				];
+			"""
+		);
+			
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual(
+			"""
+			[Blocking]
+			IEnumerable<int> Hello()
+				=> [
+					Foo(),
+					3,
+					..(Bar()),
+					4,
+					X() + Y()
+				];
+			""",
+			actual.Value.ToFullString()
+		);
+			
+	}
 
 	// loosly assert that the right sorts of diagnostics came out
 	private static void AssertDiagnostics( IEnumerable<Diagnostic> actual, params DiagnosticDescriptor[] expected ) {

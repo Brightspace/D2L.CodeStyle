@@ -258,6 +258,9 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 				.WithLeft( Transform( binExpr.Left ) )
 				.WithRight( Transform( binExpr.Right ) ),
 
+			CollectionExpressionSyntax collectionExpr =>
+				collectionExpr.WithElements( Transform( collectionExpr.Elements ) ),
+
 			ConditionalExpressionSyntax condExpr => condExpr
 				.WithCondition( Transform( condExpr.Condition ) )
 				.WithWhenTrue( Transform( condExpr.WhenTrue ) )
@@ -351,6 +354,17 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 
 			_ => UnhandledSyntax( des )
 		};
+
+	private SeparatedSyntaxList<CollectionElementSyntax> Transform(
+		SeparatedSyntaxList<CollectionElementSyntax> original
+	) => SyntaxFactory.SeparatedList(
+		original.Select( elem => elem switch {
+			ExpressionElementSyntax ee => ee.WithExpression( Transform( ee.Expression ) ),
+			SpreadElementSyntax sp => sp.WithExpression( Transform( sp.Expression ) ),
+			_ => UnhandledSyntax( elem )
+		} ),
+		original.GetSeparators()
+	);
 
 	private StatementSyntax Transform( ExpressionStatementSyntax exprStmt ) {
 		var result = Transform( exprStmt.Expression );
