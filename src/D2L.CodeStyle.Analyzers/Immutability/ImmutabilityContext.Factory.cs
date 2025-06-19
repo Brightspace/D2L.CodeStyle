@@ -54,6 +54,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			("System.Text.RegularExpressions.Regex", default),
 			("System.Text.UTF8Encoding", default),
 			("System.Threading.ReaderWriterLockSlim", default),
+			("System.Threading.SemaphoreSlim", default),
 			("System.TimeSpan", default),
 			("System.Type", default),
 			("System.Uri", default),
