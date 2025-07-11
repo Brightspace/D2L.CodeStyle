@@ -76,6 +76,56 @@ partial class Bar {
 	}
 
 	[Test]
+	public void OneFileWithOneMethodThatHasObjectArray() {
+		var result = RunGenerator( @"
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using D2L.CodeStyle.Annotations;
+
+namespace Foo;
+
+sealed class Bar {
+	public void Baz() => Console.WriteLine( ""hello"" );
+
+	[GenerateSync]
+	public async Task BazAsync( StreamWriter x ) {
+		Object[] searchThings = null;
+		return;
+
+}
+
+	public int Add( int x, int y ) => x + y;
+}"
+
+	
+		);
+
+		AssertNewTrees( result, @"#pragma warning disable CS1572
+#nullable enable annotations
+
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using D2L.CodeStyle.Annotations;
+
+namespace Foo;
+
+partial class Bar {
+
+	[Blocking]
+	public void Baz( StreamWriter x ) {
+		Object[] searchThings = null;
+		return;
+
+}
+}"
+
+
+		);
+	}
+
+	[Test]
 	public void InterfaceMethod() {
 		var result = RunGenerator( @"
 using System;
@@ -174,6 +224,7 @@ partial class Abcdefg {
 }"
 		);
 	}
+
 
 	public (Compilation Before, Compilation After) RunGenerator( params string[] sources ) {
 		var oldCompilation = AsyncToSyncMethodTransformerTests.CreateSyncGeneratorTestCompilation(

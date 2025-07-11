@@ -2,7 +2,6 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Operations;
 
 namespace D2L.CodeStyle.Analyzers.Async.Generator;
 
@@ -111,7 +110,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			return typeSynt;
 		}
 
-		if( returnTypeInfo.Type.ContainingNamespace.ToString() == "System.Threading.Tasks" ) {
+		if( returnTypeInfo.Type.ContainingNamespace?.ToString() == "System.Threading.Tasks" ) {
 			switch( returnTypeInfo.Type.MetadataName ) {
 				case "Task":
 					if( isReturnType ) {
@@ -134,7 +133,7 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 					);
 					return typeSynt;
 			}
-		} else if( returnTypeInfo.Type.MetadataName == "IAsyncEnumerable`1" && returnTypeInfo.Type.ContainingNamespace.ToString() == "System.Collections.Generic" ) {
+		} else if( returnTypeInfo.Type.MetadataName == "IAsyncEnumerable`1" && returnTypeInfo.Type.ContainingNamespace?.ToString() == "System.Collections.Generic" ) {
 			return ( (GenericNameSyntax)typeSynt )
 				.WithIdentifier( SyntaxFactory.Identifier( "IEnumerable" ) )
 				.WithTriviaFrom( typeSynt );
