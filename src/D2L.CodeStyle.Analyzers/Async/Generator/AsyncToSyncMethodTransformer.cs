@@ -111,6 +111,10 @@ internal sealed class AsyncToSyncMethodTransformer : SyntaxTransformer {
 			return typeSynt;
 		}
 
+		if( returnTypeInfo.Type is IArrayTypeSymbol ) {
+			return typeSynt;
+		}
+
 		if( returnTypeInfo.Type.ContainingNamespace.ToString() == "System.Threading.Tasks" ) {
 			switch( returnTypeInfo.Type.MetadataName ) {
 				case "Task":

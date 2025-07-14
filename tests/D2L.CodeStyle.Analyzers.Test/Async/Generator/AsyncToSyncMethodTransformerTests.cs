@@ -85,6 +85,15 @@ internal sealed class AsyncToSyncMethodTransformerTests {
 	}
 
 	[Test]
+	public void ArrayVariableDeclaration() {
+		var actual = Transform( @"[GenerateSync] async Task BarAsync() { IBaz[] q = await m_bazValidator.ValidateAsync( bar ); }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] void Bar() { IBaz[] q = m_bazValidator.Validate( bar ); }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 	public void PredefinedType() {
 		var actual = Transform( @"[GenerateSync] async Task BarAsync() { string.IsNullOrEmpty(""""); }" );
 
