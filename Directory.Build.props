@@ -1,5 +1,6 @@
 <Project>
 	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
 		<Deterministic>true</Deterministic>
 		<LangVersion>12.0</LangVersion>
 		<ImplicitUsings>true</ImplicitUsings>
