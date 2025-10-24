@@ -352,13 +352,9 @@ namespace SpecTests {
 		static readonly int m_field2 = 0;
 		int /* MemberIsNotReadOnly(Field, m_field3, AnalyzedClassMarkedImmutable) */ m_field3 /**/ = 0;
 		int /* MemberIsNotReadOnly(Field, m_field4, AnalyzedClassMarkedImmutable) */ m_field4 /**/;
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		int m_field5 = 0;
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		int m_field6 = 0;
 		readonly int m_field7 = 0;
-		[/* UnnecessaryMutabilityAnnotation() */ Mutability.Unaudited( Because.ItHasntBeenLookedAt ) /**/]
-		readonly int m_field8 = 0;
 		[/* UnnecessaryMutabilityAnnotation() */ Mutability.Audited( "John Doe", "1970-01-01", "Rationale" ) /**/]
 		readonly int m_field9 = 0;
 		readonly int m_field10;
@@ -374,8 +370,6 @@ namespace SpecTests {
 		static readonly Types.SomeEnum m_field12 = Types.SomeEnum.Foo;
 		Types.SomeEnum /* MemberIsNotReadOnly(Field, m_field13, AnalyzedClassMarkedImmutable) */ m_field13 /**/ = Types.SomeEnum.Foo;
 		Types.SomeEnum /* MemberIsNotReadOnly(Field, m_field14, AnalyzedClassMarkedImmutable) */ m_field14 /**/;
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		Types.SomeEnum m_field15 = Types.SomeEnum.Foo;
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		Types.SomeEnum m_field16 = Types.SomeEnum.Foo;
 		readonly Types.SomeEnum m_field17 = Types.SomeEnum.Foo;
@@ -390,8 +384,6 @@ namespace SpecTests {
 		static readonly int[] m_field20 = /* ArraysAreMutable(Int32) */ new[] { 0 } /**/;
 		int[] /* MemberIsNotReadOnly(Field, m_field21, AnalyzedClassMarkedImmutable) */ m_field21 /**/ = /* ArraysAreMutable(Int32) */ new[] { 0 } /**/;
 		/* ArraysAreMutable(Int32) */ int[] /**/ /* MemberIsNotReadOnly(Field, m_field22, AnalyzedClassMarkedImmutable) */ m_field22 /**/;
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		int[] m_field23 = new[] { 0 };
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		int[] m_field24 = new[] { 0 };
 		readonly int[] m_field25 = /* ArraysAreMutable(Int32) */ new[] { 0 } /**/;
@@ -404,8 +396,6 @@ namespace SpecTests {
 
 		static readonly /* UnexpectedTypeKind(PointerType) */ int* /**/ m_field27;
 		/* UnexpectedTypeKind(PointerType) */ int* /**/ /* MemberIsNotReadOnly(Field, m_field28, AnalyzedClassMarkedImmutable) */ m_field28 /**/;
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		int* m_field29;
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		int* m_field30;
 		readonly /* UnexpectedTypeKind(PointerType) */ int* /**/ m_field31;
@@ -439,13 +429,9 @@ namespace SpecTests {
 		static readonly /* DynamicObjectsAreMutable */ dynamic /**/ m_field42;
 		/* DynamicObjectsAreMutable */ dynamic /**/ /* MemberIsNotReadOnly(Field, m_field44, AnalyzedClassMarkedImmutable) */ m_field44 /**/;
 		readonly /* DynamicObjectsAreMutable */ dynamic /**/ m_field45;
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		readonly dynamic m_field46;
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		readonly dynamic m_field47;
 		/* DynamicObjectsAreMutable */ dynamic /**/ Property16 { get; }
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		dynamic Property17 { get; }
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		dynamic Property18 { get; }
 		dynamic Property19 { get { return new ExpandoObject(); } }
@@ -501,13 +487,9 @@ namespace SpecTests {
 		static readonly Types.RegularClass m_field71 = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.RegularClass,  (or [ImmutableBaseClass])) */ new Types.RegularClass() /**/;
 		Types.RegularClass /* MemberIsNotReadOnly(Field, m_field72, AnalyzedClassMarkedImmutable) */ m_field72 /**/ = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.RegularClass,  (or [ImmutableBaseClass])) */ new Types.RegularClass() /**/;
 		readonly Types.RegularClass m_field73 = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.RegularClass,  (or [ImmutableBaseClass])) */ new Types.RegularClass() /**/;
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		readonly Types.RegularClass m_field74 = new Types.RegularClass ();
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		readonly Types.RegularClass m_field75 = new Types.RegularClass();
 		Types.RegularClass Property29 { get; } = /* NonImmutableTypeHeldByImmutable(class, SpecTests.Types.RegularClass,  (or [ImmutableBaseClass])) */ new Types.RegularClass() /**/;
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		Types.RegularClass Property30 { get; } = new Types.RegularClass ();
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		Types.RegularClass Property31 { get; } = new Types.RegularClass();
 		Types.RegularClass Property32 { get { return new Types.RegularClass(); } }
@@ -564,13 +546,9 @@ namespace SpecTests {
 		static readonly /* NonImmutableTypeHeldByImmutable(interface, SpecTests.Types.RegularInterface, ) */ Types.RegularInterface /**/ m_field93;
 		/* NonImmutableTypeHeldByImmutable(interface, SpecTests.Types.RegularInterface, ) */ Types.RegularInterface /**/ /* MemberIsNotReadOnly(Field, m_field94, AnalyzedClassMarkedImmutable) */ m_field94 /**/;
 		readonly /* NonImmutableTypeHeldByImmutable(interface, SpecTests.Types.RegularInterface, ) */ Types.RegularInterface /**/ m_field95;
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		readonly Types.RegularInterface m_field96;
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		readonly Types.RegularInterface m_field97;
 		/* NonImmutableTypeHeldByImmutable(interface, SpecTests.Types.RegularInterface, ) */ Types.RegularInterface /**/ Property42 { get; }
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		Types.RegularInterface Property43 { get; }
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		Types.RegularInterface Property44 { get; }
 
@@ -598,14 +576,10 @@ namespace SpecTests {
 		Types.SomeStruct /* MemberIsNotReadOnly(Field, m_field109, AnalyzedClassMarkedImmutable) */ m_field109 /**/ = /* NonImmutableTypeHeldByImmutable(structure, SpecTests.Types.SomeStruct, ) */ new Types.SomeStruct() /**/;
 		readonly /* NonImmutableTypeHeldByImmutable(structure, SpecTests.Types.SomeStruct, ) */ Types.SomeStruct /**/ m_field110;
 		readonly Types.SomeStruct  m_field111 = /* NonImmutableTypeHeldByImmutable(structure, SpecTests.Types.SomeStruct, ) */ new Types.SomeStruct() /**/;
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		readonly Types.SomeStruct m_field112;
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		readonly Types.SomeStruct m_field113;
 		/* NonImmutableTypeHeldByImmutable(structure, SpecTests.Types.SomeStruct, ) */ Types.SomeStruct /**/ Property47 { get; }
 		Types.SomeStruct Property48 { get; } = /* NonImmutableTypeHeldByImmutable(structure, SpecTests.Types.SomeStruct, ) */ new Types.SomeStruct() /**/;
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		Types.SomeStruct Property49 { get; }
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		Types.SomeStruct Property50 { get; }
 
@@ -781,18 +755,12 @@ namespace SpecTests {
 		static /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/ /* MemberIsNotReadOnly(Field, m_field185, AnalyzedImmutableGenericClassRestrictingT) */ m_field185 /**/;
 		static readonly /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/ m_field186;
 		/* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/ /* MemberIsNotReadOnly(Field, m_field187, AnalyzedImmutableGenericClassRestrictingT) */ m_field187 /**/;
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		U m_field188;
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		U m_field189;
 		readonly /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/ m_field190;
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		readonly U m_field191;
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		readonly U m_field192;
 		/* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/ Property86 { get; }
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		U Property87 { get; }
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		U Property88 { get; }
 		U Property89 { get { return default; } }
@@ -802,18 +770,12 @@ namespace SpecTests {
 		static U /* MemberIsNotReadOnly(Field, m_field193, AnalyzedImmutableGenericClassRestrictingT) */ m_field193 /**/ = /* TypeParameterIsNotKnownToBeImmutable(U) */ new U() /**/;
 		static readonly U m_field194 = /* TypeParameterIsNotKnownToBeImmutable(U) */ new U() /**/;
 		U /* MemberIsNotReadOnly(Field, m_field195, AnalyzedImmutableGenericClassRestrictingT) */ m_field195 /**/ = /* TypeParameterIsNotKnownToBeImmutable(U) */ new U() /**/;
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		U m_field196 = new U();
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		U m_field197 = new U();
 		readonly U m_field198 = /* TypeParameterIsNotKnownToBeImmutable(U) */ new U() /**/;
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		readonly U m_field199 = new U();
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		readonly U m_field200 = new U();
 		U Property90 { get; } = /* TypeParameterIsNotKnownToBeImmutable(U) */ new U() /**/;
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		U Property91 { get; } = new U();
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		U Property92 { get; } = new U();
 
@@ -940,26 +902,17 @@ namespace SpecTests {
 		Types.SomeImmutableGenericInterfaceRestrictingTU</* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/, T> Property120 { get { return default; } }
 
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
-		[Mutability.Unaudited(Because.ItsSketchy)]
-		object /* ConflictingImmutability(Mutability.Audited, Mutability.Unaudited, field) */ someMutabilityAuditedAndUnauditedObject /**/;
-
-		[Statics.Audited]
-		[Statics.Unaudited(Because.ItsSketchy)]
-		static object /* ConflictingImmutability(Statics.Audited, Statics.Unaudited, field) */ someStaticsAuditedAndUnauditedObject /**/;
-
-		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		static /* NonImmutableTypeHeldByImmutable(class, object, ) */ object /**/ /* InvalidAuditType(static, field, Statics.*) | MemberIsNotReadOnly(Field, someStaticsMutabilityAuditedObject, AnalyzedImmutableGenericClassRestrictingT) */ someStaticsMutabilityAuditedObject /**/;
 
 		[Statics.Audited]
 		/* NonImmutableTypeHeldByImmutable(class, object, ) */ object /**/ /* InvalidAuditType(non-static, field, Mutability.*) | MemberIsNotReadOnly(Field, someNonstaticStaticsAuditedObject, AnalyzedImmutableGenericClassRestrictingT) */ someNonstaticStaticsAuditedObject /**/;
 
-		[Statics.Unaudited(Because.ItsSketchy)]
+		[Statics.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
-		[Mutability.Unaudited(Because.ItsSketchy)]
-		object /* InvalidAuditType(non-static, field, Mutability.*) | ConflictingImmutability(Mutability.Audited, Mutability.Unaudited, field) */ someNonstaticDoublyAuditedObject /**/;
+		object /* InvalidAuditType(non-static, field, Mutability.*) */ someNonstaticDoublyAuditedObject /**/;
 
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
-		[Statics.Unaudited(Because.ItsSketchy)]
+		[Statics.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		static object /* InvalidAuditType(static, field, Statics.*) */ someStaticSortOfDoublyAuditedObject /**/;
 
 		void Method() {
@@ -1017,18 +970,12 @@ namespace SpecTests {
 		static /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/ /* MemberIsNotReadOnly(Field, m_field267, AnalyzedImmutableGenericClassGivenT) */ m_field267 /**/;
 		static readonly /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/ m_field268;
 		/* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/ /* MemberIsNotReadOnly(Field, m_field269, AnalyzedImmutableGenericClassGivenT) */ m_field269 /**/;
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		U m_field270;
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		U m_field271;
 		readonly /* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/ m_field272;
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		readonly U m_field273;
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		readonly U m_field274;
 		/* TypeParameterIsNotKnownToBeImmutable(U) */ U /**/ Property125 { get; }
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		U Property126 { get; }
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		U Property127 { get; }
 		U Property128 { get { return default; } }
@@ -1038,18 +985,12 @@ namespace SpecTests {
 		static U /* MemberIsNotReadOnly(Field, m_field275, AnalyzedImmutableGenericClassGivenT) */ m_field275 /**/ = /* TypeParameterIsNotKnownToBeImmutable(U) */ new U() /**/;
 		static readonly U m_field276 = /* TypeParameterIsNotKnownToBeImmutable(U) */ new U() /**/;
 		U /* MemberIsNotReadOnly(Field, m_field278, AnalyzedImmutableGenericClassGivenT) */ m_field278 /**/ = /* TypeParameterIsNotKnownToBeImmutable(U) */ new U() /**/;
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		U m_field279 = new U();
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		U m_field280 = new U();
 		readonly U m_field281 = /* TypeParameterIsNotKnownToBeImmutable(U) */ new U() /**/;
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		readonly U m_field282 = new U();
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		readonly U m_field283 = new U();
 		U Property129 { get; } = /* TypeParameterIsNotKnownToBeImmutable(U) */ new U() /**/;
-		[Mutability.Unaudited( Because.ItHasntBeenLookedAt )]
-		U Property130 { get; } = new U();
 		[Mutability.Audited( "John Doe", "1970-01-01", "Rationale" )]
 		U Property131 { get; } = new U();
 
@@ -1226,15 +1167,6 @@ namespace SpecTests {
 
 		[/* UnnecessaryMutabilityAnnotation */ Statics.Audited /**/]
 		static readonly object m_lock1 = new object();
-
-		[Statics.Unaudited( Because.ItHasntBeenLookedAt )]
-		static int staticint2;
-
-		[Statics.Unaudited( Because.ItHasntBeenLookedAt )]
-		static readonly object staticreadonlyobject2;
-
-		[/* UnnecessaryMutabilityAnnotation */ Statics.Unaudited( Because.ItHasntBeenLookedAt ) /**/]
-		static readonly object m_lock = new object();
     }
 
 	[Immutable]

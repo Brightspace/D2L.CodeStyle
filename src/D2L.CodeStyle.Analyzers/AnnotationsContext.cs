@@ -1,7 +1,6 @@
 #nullable disable
 
 using System.Collections.Immutable;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 
 namespace D2L.CodeStyle.Analyzers {
@@ -20,25 +19,19 @@ namespace D2L.CodeStyle.Analyzers {
 		}
 
 		private AnnotationsContext( Compilation compilation ) {
-			Statics = (
-				Audited: GetAttr( compilation, "D2L.CodeStyle.Annotations.Statics+Audited" ),
-				Unaudited: GetAttr( compilation, "D2L.CodeStyle.Annotations.Statics+Unaudited" )
-			);
+			Statics_Audited = GetAttr( compilation, "D2L.CodeStyle.Annotations.Statics+Audited" );
+			Mutability_Audited = GetAttr( compilation, "D2L.CodeStyle.Annotations.Mutability+AuditedAttribute" );
 			Objects = (
 				Immutable: GetAttr( compilation, "D2L.CodeStyle.Annotations.Objects+Immutable" ),
 				ImmutableBaseClass: GetAttr( compilation, "D2L.CodeStyle.Annotations.Objects+ImmutableBaseClassAttribute" ),
 				ConditionallyImmutable: GetAttr( compilation, "D2L.CodeStyle.Annotations.Objects+ConditionallyImmutable" ),
 				OnlyIf: GetAttr( compilation, "D2L.CodeStyle.Annotations.Objects+ConditionallyImmutable+OnlyIf" )
 			);
-			Mutability = (
-				Audited: GetAttr( compilation, "D2L.CodeStyle.Annotations.Mutability+AuditedAttribute" ),
-				Unaudited: GetAttr( compilation, "D2L.CodeStyle.Annotations.Mutability+UnauditedAttribute" )
-			);
 		}
 
-		internal (Attr Audited, Attr Unaudited) Statics { get; }
+		internal Attr Statics_Audited { get; }
+		internal Attr Mutability_Audited { get; }
 		internal (Attr Immutable, Attr ImmutableBaseClass, Attr ConditionallyImmutable, Attr OnlyIf) Objects { get; }
-		internal (Attr Audited, Attr Unaudited) Mutability { get; }
 
 		private static Attr GetAttr( Compilation compilation, string metadataName )
 			=> new( compilation.GetTypeByMetadataName( metadataName ) );
