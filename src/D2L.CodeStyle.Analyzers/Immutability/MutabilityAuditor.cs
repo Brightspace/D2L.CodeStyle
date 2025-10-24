@@ -1,6 +1,5 @@
 #nullable disable
 
-using System.Linq;
 using Microsoft.CodeAnalysis;
 using static D2L.CodeStyle.Analyzers.Immutability.ImmutableDefinitionChecker;
 
@@ -15,17 +14,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 		) {
 
 			// Collect audit information
-			var hasStaticAudited = annotationsContext.Statics.Audited.IsDefined( symbol );
-			var hasStaticUnaudited = annotationsContext.Statics.Unaudited.IsDefined( symbol );
-			var hasMutabilityAudited = annotationsContext.Mutability.Audited.IsDefined( symbol );
-			var hasMutabilityUnaudited = annotationsContext.Mutability.Unaudited.IsDefined( symbol );
-			var hasBothStaticsAttributes = hasStaticAudited && hasStaticUnaudited;
-			var hasBothMutabilityAttributes = hasMutabilityAudited && hasMutabilityUnaudited;
-			var hasEitherStaticsAttributes = hasStaticAudited || hasStaticUnaudited;
-			var hasEitherMutabilityAttributes = hasMutabilityAudited || hasMutabilityUnaudited;
+			var hasStaticAudited = annotationsContext.Statics_Audited.IsDefined( symbol );
+			var hasMutabilityAudited = annotationsContext.Mutability_Audited.IsDefined( symbol );
 
 			// If there are no audits, don't do anything
-			if( !hasEitherStaticsAttributes && !hasEitherMutabilityAttributes ) {
+			if( !hasStaticAudited && !hasMutabilityAudited ) {
 				location = null;
 				return false;
 			}
@@ -36,33 +29,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				.GetLastToken()
 				.GetLocation();
 
-			// Check if both static audits are applied
-			if( hasBothStaticsAttributes ) {
-				var diagnostic = Diagnostic.Create(
-					Diagnostics.ConflictingImmutability,
-					syntaxLocation,
-					"Statics.Audited",
-					"Statics.Unaudited",
-					symbol.Kind.ToString().ToLower() );
-				diagnosticSink( diagnostic );
-			}
-
-			// Check if both mutability audits are applied
-			if( hasBothMutabilityAttributes ) {
-				var diagnostic = Diagnostic.Create(
-					Diagnostics.ConflictingImmutability,
-					syntaxLocation,
-					"Mutability.Audited",
-					"Mutability.Unaudited",
-					symbol.Kind.ToString().ToLower() );
-				diagnosticSink( diagnostic );
-			}
-
 			AttributeData attr = null;
 
 			if( symbol.IsStatic ) {
 				// Check if a static member is using mutability audits
-				if( hasEitherMutabilityAttributes ) {
+				if( hasMutabilityAudited ) {
 					var diagnostic = Diagnostic.Create(
 						Diagnostics.InvalidAuditType,
 						syntaxLocation,
@@ -72,11 +43,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					diagnosticSink( diagnostic );
 				}
 
-				attr = annotationsContext.Statics.Audited.GetAll( symbol ).FirstOrDefault()
-					?? annotationsContext.Statics.Unaudited.GetAll( symbol ).FirstOrDefault();
+				attr = annotationsContext.Statics_Audited.GetAll( symbol ).FirstOrDefault();
 			} else {
 				// Check if a non-static member is using static audits
-				if( hasEitherStaticsAttributes ) {
+				if( hasStaticAudited ) {
 					var diagnostic = Diagnostic.Create(
 						Diagnostics.InvalidAuditType,
 						syntaxLocation,
@@ -86,8 +56,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					diagnosticSink( diagnostic );
 				}
 
-				attr = annotationsContext.Mutability.Audited.GetAll( symbol ).FirstOrDefault()
-					?? annotationsContext.Mutability.Unaudited.GetAll( symbol ).FirstOrDefault();
+				attr = annotationsContext.Mutability_Audited.GetAll( symbol ).FirstOrDefault();
 			}
 
 			if( attr != null ) {

@@ -117,8 +117,8 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor UnnecessaryMutabilityAnnotation = new DiagnosticDescriptor(
 			id: "D2L0030",
-			title: "Unnecessary Mutability.(Un)Audited Attribute",
-			messageFormat: "There is a Mutability.Audited or Mutability.Unaudited attribute on an immutable member. Remove the unnecessary attribute.",
+			title: "Unnecessary Mutability.Audited Attribute",
+			messageFormat: "There is a Mutability.Audited attribute on an immutable member. Remove the unnecessary attribute.",
 			category: "Cleanliness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
