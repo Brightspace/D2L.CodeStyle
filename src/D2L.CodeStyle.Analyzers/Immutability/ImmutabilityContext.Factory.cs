@@ -9,6 +9,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		internal static readonly ImmutableArray<(string TypeName, string AssmeblyName)> DefaultExtraTypes = ImmutableArray.Create(
 			// Framework Container Types (not that the distinction matters)
+			("System.Collections.Frozen.FrozenDictionary`2", default),
+			("System.Collections.Frozen.FrozenSet`1", default),
 			("System.Collections.Immutable.IImmutableSet`1", default),
 			("System.Collections.Immutable.ImmutableArray`1", default),
 			("System.Collections.Immutable.ImmutableDictionary`2", default),
@@ -216,3 +218,4 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 	}
 }
+
