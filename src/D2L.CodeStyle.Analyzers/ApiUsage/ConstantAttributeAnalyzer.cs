@@ -197,6 +197,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			if( @operator is null ) {
 				return;
 			}
+			if( @operator.Parameters.Length != 1 ) {
+				context.ReportDiagnostic(
+					descriptor: Diagnostics.UnexpectedNumberOfParametersForImplicitOperator,
+					location: compoundAssignment.Value.Syntax.GetLocation()
+				);
+				return;
+			}
 
 			// Operator parameter is not [Constant], so do nothing
 			IParameterSymbol parameter = @operator.Parameters[0];
