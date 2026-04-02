@@ -269,6 +269,22 @@ namespace SpecTests {
 			{ Types.ConstantStruct v = trusted; }
 			{ Types.ConstantStruct v = /* NonConstantPassedToConstantParameter(value) */ variable /**/; }
 			{ Types.ConstantStruct v = /* NonConstantPassedToConstantParameter(value) */ untrusted /**/; }
+			{
+				Types.ConstantStruct v = Constants.String;
+				v += /* NonConstantPassedToConstantParameter(value) */ "abc" /**/;
+			}
+			{
+				Types.ConstantStruct v = Constants.String;
+				v += /* NonConstantPassedToConstantParameter(value) */ trusted /**/;
+			}
+			{
+				Types.ConstantStruct v = Constants.String;
+				v += /* NonConstantPassedToConstantParameter(value) */ variable /**/;
+			}
+			{
+				Types.ConstantStruct v = Constants.String;
+				v += /* NonConstantPassedToConstantParameter(value) */ "a" + "b" /**/;
+			}
 
 			{ Types.NonConstantStruct v = "abc"; }
 			{ Types.NonConstantStruct v = Constants.String; }
@@ -276,6 +292,22 @@ namespace SpecTests {
 			{ Types.NonConstantStruct v = trusted; }
 			{ Types.NonConstantStruct v = variable; }
 			{ Types.NonConstantStruct v = untrusted; }
+			{
+				Types.NonConstantStruct v = Constants.String;
+				v += "abc";
+			}
+			{
+				Types.NonConstantStruct v = Constants.String;
+				v += trusted;
+			}
+			{
+				Types.NonConstantStruct v = Constants.String;
+				v += variable;
+			}
+			{
+				Types.NonConstantStruct v = Constants.String;
+				v += "a" + "b";
+			}
 		}
 
 		#endregion

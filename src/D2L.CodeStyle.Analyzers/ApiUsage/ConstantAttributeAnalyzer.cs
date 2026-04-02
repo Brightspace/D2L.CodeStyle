@@ -63,6 +63,15 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			);
 
 			context.RegisterOperationAction(
+				ctx => AnalyzeCompoundAssignment(
+					ctx,
+					(ICompoundAssignmentOperation)ctx.Operation,
+					constantAttribute
+				),
+				OperationKind.CompoundAssignment
+			);
+
+			context.RegisterOperationAction(
 				ctx => AnalyzeMethodReference(
 					ctx,
 					(IMethodReferenceOperation)ctx.Operation,
@@ -173,6 +182,35 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			context.ReportDiagnostic(
 				descriptor: Diagnostics.NonConstantPassedToConstantParameter,
 				location: operand.Syntax.GetLocation(),
+				messageArgs: new[] { parameter.Name }
+			);
+		}
+
+		private static void AnalyzeCompoundAssignment(
+			OperationAnalysisContext context,
+			ICompoundAssignmentOperation compoundAssignment,
+			INamedTypeSymbol constantAttribute
+		) {
+
+			// Get implicit operator for the compound assignment
+			IMethodSymbol @operator = compoundAssignment.OutConversion.MethodSymbol;
+			if( @operator is null ) {
+				return;
+			}
+			if( @operator.Parameters.Length != 1 ) {
+				return;
+			}
+
+			// Operator parameter is not [Constant], so do nothing
+			IParameterSymbol parameter = @operator.Parameters[0];
+			if( !HasAttribute( parameter, constantAttribute ) ) {
+				return;
+			}
+
+			// Compound assignment with operator parameter that has [Constant] cannot be constant, so report it
+			context.ReportDiagnostic(
+				descriptor: Diagnostics.NonConstantPassedToConstantParameter,
+				location: compoundAssignment.Value.Syntax.GetLocation(),
 				messageArgs: new[] { parameter.Name }
 			);
 		}
