@@ -127,8 +127,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				return;
 			}
 
-			// Argument is a constant value, so do nothing
-			if( argument.Value.ConstantValue.HasValue ) {
+			// Argument is a constant value or string.Empty, so do nothing
+			if( argument.Value.ConstantValue.HasValue || IsStringEmpty( argument.Value ) ) {
 				return;
 			}
 
@@ -166,9 +166,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				return;
 			}
 
-			// Operand is a constant value, so trust it
+			// Operand is a constant value or string.Empty, so trust it
 			IOperation operand = conversion.Operand;
-			if( operand.ConstantValue.HasValue ) {
+			if( operand.ConstantValue.HasValue || IsStringEmpty( operand ) ) {
 				return;
 			}
 
@@ -256,6 +256,14 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 						attr.AttributeClass
 					)
 				);
+		}
+
+		private static bool IsStringEmpty( IOperation operation ) {
+			if( operation is IFieldReferenceOperation fieldRef ) {
+				return fieldRef.Field.ContainingType.SpecialType == SpecialType.System_String
+					&& fieldRef.Field.Name == "Empty";
+			}
+			return false;
 		}
 
 		private static bool TypeCanBeConstant( SpecialType specialType ) {

@@ -80,6 +80,7 @@ namespace SpecTests {
 
 			Logger.Error( CONSTANT_MESSAGE );
 			Logger.Error( "Organization 1 is constant." );
+			Logger.Error( string.Empty );
 			Logger.Error( /* NonConstantPassedToConstantParameter(message) */ string.Format(CONSTANT_MESSAGE, orgId) /**/ );
 			Logger.Error( /* NonConstantPassedToConstantParameter(message) */ $"Organization {orgId} is not constant." /**/ );
 
@@ -94,12 +95,14 @@ namespace SpecTests {
 			Types.SomeMethodWithConstantParameter<string>( "This is a constant message" );
 			Types.SomeMethodWithConstantParameter<string>( CONSTANT_STR );
 			Types.SomeMethodWithConstantParameter<string>( CONSTANT_STR + "This is a constant message" );
+			Types.SomeMethodWithConstantParameter<string>( string.Empty );
 			Types.SomeMethodWithConstantParameter<string>( /* NonConstantPassedToConstantParameter(param1) */ CONSTANT_STR + variableStr /**/ );
 			Types.SomeMethodWithConstantParameter<string>( /* NonConstantPassedToConstantParameter(param1) */ variableStr /**/ );
 
 			Types.SomeMethodWithParameter<string>( "This is a constant message" );
 			Types.SomeMethodWithParameter<string>( CONSTANT_STR );
 			Types.SomeMethodWithParameter<string>( CONSTANT_STR + "This is a constant message" );
+			Types.SomeMethodWithConstantParameter<string>( string.Empty );
 			Types.SomeMethodWithParameter<string>( CONSTANT_STR + variableStr );
 			Types.SomeMethodWithParameter<string>( variableStr );
 
@@ -212,6 +215,7 @@ namespace SpecTests {
 			string variable = "bar";
 
 			new Types.ConstantStruct( "abc" );
+			new Types.ConstantStruct( string.Empty );
 			new Types.ConstantStruct( Constants.String );
 			new Types.ConstantStruct( constant );
 			new Types.ConstantStruct( trusted );
@@ -219,6 +223,7 @@ namespace SpecTests {
 			new Types.ConstantStruct( /* NonConstantPassedToConstantParameter(value) */ untrusted /**/ );
 
 			new Types.NonConstantStruct( "abc" );
+			new Types.NonConstantStruct( string.Empty );
 			new Types.NonConstantStruct( Constants.String );
 			new Types.NonConstantStruct( constant );
 			new Types.NonConstantStruct( trusted );
@@ -264,6 +269,7 @@ namespace SpecTests {
 			string variable = "bar";
 
 			{ Types.ConstantStruct v = "abc"; }
+			{ Types.ConstantStruct v = string.Empty; }
 			{ Types.ConstantStruct v = Constants.String; }
 			{ Types.ConstantStruct v = constant; }
 			{ Types.ConstantStruct v = trusted; }
@@ -287,6 +293,7 @@ namespace SpecTests {
 			}
 
 			{ Types.NonConstantStruct v = "abc"; }
+			{ Types.NonConstantStruct v = string.Empty; }
 			{ Types.NonConstantStruct v = Constants.String; }
 			{ Types.NonConstantStruct v = constant; }
 			{ Types.NonConstantStruct v = trusted; }
