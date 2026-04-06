@@ -20,12 +20,57 @@ public sealed class Y {
 
 		var collector = FileCollector.Create(
 			root,
-			ImmutableArray<(TypeDeclarationSyntax, string)>.Empty 
+			ImmutableArray<(TypeDeclarationSyntax, string)>.Empty,
+			endOfLine: null
 		);
 
 		Assert.AreEqual( @"#pragma warning disable CS1572
 #nullable enable annotations
 ", collector.CollectSource() );
+	}
+
+	[TestCase( "\n" )]
+	[TestCase( "\r\n" )]
+	public void EndOfLine( string endOfLine ) {
+		var source = string.Join( endOfLine, [
+			"",
+			"using Foo;",
+			"",
+			"namespace X;",
+			"",
+			"public sealed class Y {",
+			"	void MyMethodBefore() {",
+			"		Console.WriteLine( \"Hello\" );",
+			"	}",
+			"}",
+		] );
+
+		var root = CSharpSyntaxTree.ParseText( source ).GetCompilationUnitRoot();
+
+		SyntaxNode myMethodBefore = root.DescendantNodes().OfType<MethodDeclarationSyntax>().Single();
+
+		var collector = FileCollector.Create(
+			root,
+			ImmutableArray.Create(
+				((TypeDeclarationSyntax)myMethodBefore.Parent, "\tany text" + endOfLine)
+			),
+			endOfLine
+		);
+
+		var expected = string.Join( endOfLine, [
+			"#pragma warning disable CS1572",
+			"#nullable enable annotations",
+			"",
+			"using Foo;",
+			"",
+			"namespace X;",
+			"",
+			"partial class Y {",
+			"	any text",
+			"}",
+		] );
+
+		Assert.AreEqual( expected, collector.CollectSource() );
 	}
 
 	[Test]
@@ -49,7 +94,8 @@ public sealed class Y {
 			root,
 			ImmutableArray.Create(
 				((TypeDeclarationSyntax)myMethodBefore.Parent, "\tany text\r\n")
-			)
+			),
+			endOfLine: null
 		);
 
 		Assert.AreEqual( @"#pragma warning disable CS1572
@@ -87,7 +133,8 @@ public sealed class Y<T, U> where T : new where U : T {
 			root,
 			ImmutableArray.Create(
 				((TypeDeclarationSyntax)myMethodBefore.Parent, "\tany text\r\n")
-			)
+			),
+			endOfLine: null
 		);
 
 		Assert.AreEqual( @"#pragma warning disable CS1572
@@ -123,7 +170,8 @@ public partial {kind} X {{
 			root,
 			ImmutableArray.Create(
 				((TypeDeclarationSyntax)myMethodBefore.Parent, "\tany text\r\n")
-			)
+			),
+			endOfLine: null
 		);
 
 		Assert.AreEqual( @$"#pragma warning disable CS1572
@@ -163,7 +211,8 @@ namespace A.B.C {
 			root,
 			ImmutableArray.Create(
 				((TypeDeclarationSyntax)myMethodBefore.Parent, "\t\t\t\tany text\r\n")
-			)
+			),
+			endOfLine: null
 		);
 
 		Assert.AreEqual( @"#pragma warning disable CS1572
@@ -245,7 +294,8 @@ namespace Q {
 
 		var collector = FileCollector.Create(
 			root,
-			myMethodsBefore.ToImmutableArray()
+			myMethodsBefore.ToImmutableArray(),
+			endOfLine: null
 		);
 
 		Assert.AreEqual( @"#pragma warning disable CS1572

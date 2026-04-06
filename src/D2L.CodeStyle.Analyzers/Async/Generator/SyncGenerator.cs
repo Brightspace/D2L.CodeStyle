@@ -38,7 +38,8 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 		// that when any file with [GenerateSync] has changed.
 		IncrementalValuesProvider<FileGenerationResult> generatedFiles =
 			generatedMethods.Collect()
-				.SelectMany( GenerateFiles );
+				.Combine( context.AnalyzerConfigOptionsProvider )
+				.SelectMany( ( x, ct ) => GenerateFiles( x.Left, x.Right, ct ) );
 
 		context.RegisterSourceOutput( generatedFiles, WriteFiles );
 	}
@@ -132,6 +133,7 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 
 	private static IEnumerable<FileGenerationResult> GenerateFiles(
 		ImmutableArray<MethodGenerationResult> methodResults,
+		AnalyzerConfigOptionsProvider configOptionsProvider,
 		CancellationToken cancellationToken
 	) {
 		var methodsByFile = methodResults
@@ -161,9 +163,19 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 				generatedMethods.Add( ((method.Original.Parent as TypeDeclarationSyntax)!, method.GeneratedSyntax ) );
 			}
 
+			var fileOptions = configOptionsProvider.GetOptions( file.Data.Key.SyntaxTree );
+			fileOptions.TryGetValue( "end_of_line", out var endOfLineValue );
+			var endOfLine = endOfLineValue?.Trim() switch {
+				"crlf" => "\r\n",
+				"lf" => "\n",
+				"cr" => "\r",
+				_ => null,
+			};
+
 			var collector = FileCollector.Create(
 				file.Data.Key,
-				generatedMethods.ToImmutable()
+				generatedMethods.ToImmutable(),
+				endOfLine
 			);
 
 			var generatedFile = collector.CollectSource();
