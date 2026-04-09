@@ -10,6 +10,7 @@ using Microsoft.CodeAnalysis.Operations;
 namespace D2L.CodeStyle.Analyzers.ApiUsage {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class ConstantAttributeAnalyzer : DiagnosticAnalyzer {
+
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
 			ImmutableArray.Create(
 				Diagnostics.NonConstantPassedToConstantParameter,
@@ -31,7 +32,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			);
 
 			// The D2L.CodeStyle.Annotations reference is optional
-			if ( constantAttribute == null || constantAttribute .Kind == SymbolKind.ErrorType ) {
+			if( constantAttribute == null || constantAttribute.Kind == SymbolKind.ErrorType ) {
 				return;
 			}
 
@@ -106,13 +107,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			if( type.Kind == SymbolKind.TypeParameter ) {
 				return;
 			}
-
+			
 			// The current parameter type cannot be marked as [Constant]
 			context.ReportDiagnostic(
 				descriptor: Diagnostics.InvalidConstantType,
 				location: parameter.Locations.First(),
 				messageArgs: new object[] { type.TypeKind }
-			);
+			);			
 		}
 
 		private static void AnalyzeArgument(
@@ -123,12 +124,22 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			var parameter = argument.Parameter;
 
 			// Parameter is not [Constant], so do nothing
-			if( !HasAttribute( parameter, constantAttribute ) ) {
+			if( !HasAttribute( parameter, constantAttribute )) {
 				return;
 			}
 
 			// Argument is a constant value or string.Empty, so do nothing
 			if( argument.Value.ConstantValue.HasValue || IsStringEmpty( argument.Value ) ) {
+				return;
+			}
+
+			// Argument is inside an expression tree (e.g. Moq Verify/Setup), so do nothing
+			if( IsInsideExpressionTree( argument ) ) {
+				return;
+			}
+
+			// Argument is a mock argument constraint (e.g. Arg<string>.Is.Anything), so do nothing
+			if( IsMockArgumentConstraint( argument.Value ) ) {
 				return;
 			}
 
@@ -161,7 +172,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			}
 
 			// Operator parameter is not [Constant], so do nothing
-			IParameterSymbol parameter = @operator.Parameters[ 0 ];
+			IParameterSymbol parameter = @operator.Parameters[0];
 			if( !HasAttribute( parameter, constantAttribute ) ) {
 				return;
 			}
@@ -256,6 +267,58 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 						attr.AttributeClass
 					)
 				);
+		}
+
+		private static bool IsInsideExpressionTree( IOperation operation ) {
+			IOperation current = operation;
+			while( current != null ) {
+				if( current is IConversionOperation conversion
+					&& conversion.Type is INamedTypeSymbol namedType
+					&& namedType.BaseType != null
+					&& namedType.BaseType.Name == "LambdaExpression"
+				) {
+					return true;
+				}
+				current = current.Parent;
+			}
+			return false;
+		}
+
+		private static bool IsMockArgumentConstraint( IOperation operation ) {
+			// Matches patterns like Arg<T>.Is.Anything or Arg<T>.Is.Equal(...) (Rhino Mocks)
+			// Arg<T>.Is.Anything is a property chain: Arg<string>.Is (static) -> .Anything (instance)
+			// Arg<T>.Is.Equal(...) is a method call on the .Is property result
+			if( operation is IInvocationOperation invocation ) {
+				var containingType = invocation.TargetMethod.ContainingType;
+				if( IsArgType( containingType ) ) {
+					return true;
+				}
+				// Check if the instance receiver is an Arg<T> property chain
+				if( invocation.Instance != null && IsMockArgumentConstraint( invocation.Instance ) ) {
+					return true;
+				}
+			}
+
+			IOperation current = operation;
+			while( current is IPropertyReferenceOperation propertyRef ) {
+				var containingType = propertyRef.Property.ContainingType;
+				if( IsArgType( containingType ) ) {
+					return true;
+				}
+				current = propertyRef.Instance;
+			}
+			return false;
+		}
+
+		private static bool IsArgType( INamedTypeSymbol type ) {
+			if( type == null ) {
+				return false;
+			}
+			if( type.Name == "Arg" && type.IsGenericType ) {
+				return true;
+			}
+			// Check containing types for nested types within Arg<T>
+			return IsArgType( type.ContainingType );
 		}
 
 		private static bool IsStringEmpty( IOperation operation ) {

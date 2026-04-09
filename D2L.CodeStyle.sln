@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.32112.339
+# Visual Studio Version 18
+VisualStudioVersion = 18.5.11626.173
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "D2L.CodeStyle.Annotations", "src\D2L.CodeStyle.Annotations\D2L.CodeStyle.Annotations.csproj", "{1812AF7E-59B1-4764-8090-F84446A71C4E}"
 EndProject
@@ -21,6 +21,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		Directory.build.props = Directory.build.props
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D2L.CodeStyle.Analyzers.Rule.Constant", "src\Rules\D2L.CodeStyle.Analyzers.Rule.Constant\D2L.CodeStyle.Analyzers.Rule.Constant\D2L.CodeStyle.Analyzers.Rule.Constant.csproj", "{9F66950B-83B2-4A9E-8C26-ABAC97E55CA9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Rules", "Rules", "{1D7FCA55-CA25-4264-BB5D-331CF09C1A00}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "D2L.CodeStyle.Analyzers.Rule", "src\Rules\D2L.CodeStyle.Analyzers.Rule\D2L.CodeStyle.Analyzers.Rule\D2L.CodeStyle.Analyzers.Rule.csproj", "{04534CAC-57B7-4462-BE31-D8C1C6B7BAA7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Constant", "Constant", "{FE0449B9-2A7B-48DD-BBDB-B6A0FB19A2A9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -78,6 +86,22 @@ Global
 		{C7B3A703-A549-48AA-90A6-A145C91D4F85}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C7B3A703-A549-48AA-90A6-A145C91D4F85}.Release|x86.ActiveCfg = Release|Any CPU
 		{C7B3A703-A549-48AA-90A6-A145C91D4F85}.Release|x86.Build.0 = Release|Any CPU
+		{9F66950B-83B2-4A9E-8C26-ABAC97E55CA9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F66950B-83B2-4A9E-8C26-ABAC97E55CA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F66950B-83B2-4A9E-8C26-ABAC97E55CA9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9F66950B-83B2-4A9E-8C26-ABAC97E55CA9}.Debug|x86.Build.0 = Debug|Any CPU
+		{9F66950B-83B2-4A9E-8C26-ABAC97E55CA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F66950B-83B2-4A9E-8C26-ABAC97E55CA9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F66950B-83B2-4A9E-8C26-ABAC97E55CA9}.Release|x86.ActiveCfg = Release|Any CPU
+		{9F66950B-83B2-4A9E-8C26-ABAC97E55CA9}.Release|x86.Build.0 = Release|Any CPU
+		{04534CAC-57B7-4462-BE31-D8C1C6B7BAA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04534CAC-57B7-4462-BE31-D8C1C6B7BAA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04534CAC-57B7-4462-BE31-D8C1C6B7BAA7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{04534CAC-57B7-4462-BE31-D8C1C6B7BAA7}.Debug|x86.Build.0 = Debug|Any CPU
+		{04534CAC-57B7-4462-BE31-D8C1C6B7BAA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04534CAC-57B7-4462-BE31-D8C1C6B7BAA7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04534CAC-57B7-4462-BE31-D8C1C6B7BAA7}.Release|x86.ActiveCfg = Release|Any CPU
+		{04534CAC-57B7-4462-BE31-D8C1C6B7BAA7}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -85,6 +109,9 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{1C54E78A-E12B-45C3-BA6E-31DB5C63B389} = {3873E5AD-A61F-4CE4-B2E1-5AD83D25BF79}
 		{2F10EDAF-8585-4B4C-A82A-BABC5D23A186} = {3873E5AD-A61F-4CE4-B2E1-5AD83D25BF79}
+		{9F66950B-83B2-4A9E-8C26-ABAC97E55CA9} = {FE0449B9-2A7B-48DD-BBDB-B6A0FB19A2A9}
+		{04534CAC-57B7-4462-BE31-D8C1C6B7BAA7} = {1D7FCA55-CA25-4264-BB5D-331CF09C1A00}
+		{FE0449B9-2A7B-48DD-BBDB-B6A0FB19A2A9} = {1D7FCA55-CA25-4264-BB5D-331CF09C1A00}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B1068C74-1517-443E-99B8-CB4834D47628}

@@ -2,7 +2,7 @@
 
 namespace Microsoft.CodeAnalysis {
 
-	internal static class ReportDiagnosticExtensions {
+	public static class ReportDiagnosticExtensions {
 
 		public static void ReportDiagnostic(
 				this SourceProductionContext context,
@@ -28,7 +28,7 @@ namespace Microsoft.CodeAnalysis {
 
 namespace Microsoft.CodeAnalysis.Diagnostics {
 
-	internal static class ReportDiagnosticExtensions {
+	public static class ReportDiagnosticExtensions {
 
 		public static void ReportDiagnostic(
 				this CompilationAnalysisContext context,

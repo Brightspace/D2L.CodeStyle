@@ -27,6 +27,8 @@
   <ItemGroup>
     <None Include="tools\*.ps1" Pack="true" PackagePath="tools" />
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+	<None Include="$(OutputPath)\$(AssemblyName).Rule.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+	<None Include="$(OutputPath)\$(AssemblyName).Rule.Constant.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4">
@@ -47,6 +49,15 @@
 
   <ItemGroup>
     <CompilerVisibleProperty Include="SuppressSyncGenerator" />
+  </ItemGroup>
+
+  <ItemGroup>
+	  <ProjectReference Include="..\Rules\D2L.CodeStyle.Analyzers.Rule.Constant\D2L.CodeStyle.Analyzers.Rule.Constant\D2L.CodeStyle.Analyzers.Rule.Constant.csproj">
+		  <PrivateAssets>all</PrivateAssets>
+	  </ProjectReference>
+	  <ProjectReference Include="..\Rules\D2L.CodeStyle.Analyzers.Rule\D2L.CodeStyle.Analyzers.Rule\D2L.CodeStyle.Analyzers.Rule.csproj">
+		  <PrivateAssets>all</PrivateAssets>
+	  </ProjectReference>
   </ItemGroup>
 
 </Project>
