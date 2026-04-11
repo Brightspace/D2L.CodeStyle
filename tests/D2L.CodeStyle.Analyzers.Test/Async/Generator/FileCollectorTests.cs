@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -21,12 +22,13 @@ public sealed class Y {
 		var collector = FileCollector.Create(
 			root,
 			ImmutableArray<(TypeDeclarationSyntax, string)>.Empty,
-			endOfLine: null
+			endOfLine: null,
+			encoding: Encoding.Default
 		);
 
 		Assert.AreEqual( @"#pragma warning disable CS1572
 #nullable enable annotations
-", collector.CollectSource() );
+", collector.CollectSource().ToString() );
 	}
 
 	[TestCase( "\n" )]
@@ -54,7 +56,8 @@ public sealed class Y {
 			ImmutableArray.Create(
 				((TypeDeclarationSyntax)myMethodBefore.Parent, "\tany text" + endOfLine)
 			),
-			endOfLine
+			endOfLine: endOfLine,
+			encoding: Encoding.Default
 		);
 
 		var expected = string.Join( endOfLine, [
@@ -70,7 +73,7 @@ public sealed class Y {
 			"}",
 		] );
 
-		Assert.AreEqual( expected, collector.CollectSource() );
+		Assert.AreEqual( expected, collector.CollectSource().ToString() );
 	}
 
 	[Test]
@@ -95,7 +98,8 @@ public sealed class Y {
 			ImmutableArray.Create(
 				((TypeDeclarationSyntax)myMethodBefore.Parent, "\tany text\r\n")
 			),
-			endOfLine: null
+			endOfLine: null,
+			encoding: Encoding.Default
 		);
 
 		Assert.AreEqual( @"#pragma warning disable CS1572
@@ -108,7 +112,7 @@ namespace X;
 partial class Y {
 	any text
 }",
-			collector.CollectSource()
+			collector.CollectSource().ToString()
 		);
 	}
 
@@ -134,7 +138,8 @@ public sealed class Y<T, U> where T : new where U : T {
 			ImmutableArray.Create(
 				((TypeDeclarationSyntax)myMethodBefore.Parent, "\tany text\r\n")
 			),
-			endOfLine: null
+			endOfLine: null,
+			encoding: Encoding.Default
 		);
 
 		Assert.AreEqual( @"#pragma warning disable CS1572
@@ -147,7 +152,7 @@ namespace X;
 partial class Y<T, U> {
 	any text
 }",
-			collector.CollectSource()
+			collector.CollectSource().ToString()
 		);
 	}
 	[TestCase( "class" )] // static/selaed come before partial and don't need to show up in the other partials
@@ -171,7 +176,8 @@ public partial {kind} X {{
 			ImmutableArray.Create(
 				((TypeDeclarationSyntax)myMethodBefore.Parent, "\tany text\r\n")
 			),
-			endOfLine: null
+			endOfLine: null,
+			encoding: Encoding.Default
 		);
 
 		Assert.AreEqual( @$"#pragma warning disable CS1572
@@ -180,7 +186,7 @@ public partial {kind} X {{
 partial {kind} X {{
 	any text
 }}",
-			collector.CollectSource()
+			collector.CollectSource().ToString()
 		);
 	}
 
@@ -212,7 +218,8 @@ namespace A.B.C {
 			ImmutableArray.Create(
 				((TypeDeclarationSyntax)myMethodBefore.Parent, "\t\t\t\tany text\r\n")
 			),
-			endOfLine: null
+			endOfLine: null,
+			encoding: Encoding.Default
 		);
 
 		Assert.AreEqual( @"#pragma warning disable CS1572
@@ -230,7 +237,7 @@ namespace A.B.C {
 		}
 	}
 }",
-			collector.CollectSource()
+			collector.CollectSource().ToString()
 		);
 	}
 
@@ -295,7 +302,8 @@ namespace Q {
 		var collector = FileCollector.Create(
 			root,
 			myMethodsBefore.ToImmutableArray(),
-			endOfLine: null
+			endOfLine: null,
+			encoding: Encoding.Default
 		);
 
 		Assert.AreEqual( @"#pragma warning disable CS1572
@@ -334,7 +342,7 @@ namespace Q {
 	}
 }
 ",
-			collector.CollectSource()
+			collector.CollectSource().ToString()
 		);
 	}
 }

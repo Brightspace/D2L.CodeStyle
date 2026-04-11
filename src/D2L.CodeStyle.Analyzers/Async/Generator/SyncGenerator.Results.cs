@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 
 namespace D2L.CodeStyle.Analyzers.Async.Generator;
 
@@ -23,7 +24,7 @@ internal sealed partial class SyncGenerator {
 	/// </summary>
 	private readonly record struct FileGenerationResult(
 		string HintName,
-		string GeneratedSource,
+		SourceText GeneratedSource,
 		ImmutableArray<Diagnostic> Diagnostics
 	);
 }

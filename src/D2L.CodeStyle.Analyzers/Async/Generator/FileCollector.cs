@@ -3,6 +3,7 @@ using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 
 namespace D2L.CodeStyle.Analyzers.Async.Generator;
 
@@ -57,21 +58,25 @@ internal partial class SyncGenerator {
 
 		private readonly StringBuilder m_out = new();
 		private readonly string? m_endOfLine;
+		private readonly Encoding m_encoding;
 
 		private FileCollector(
 			CompilationUnitSyntax root,
 			Dictionary<TypeDeclarationSyntax, IEnumerable<string>> methods,
-			string? endOfLine
+			string? endOfLine,
+			Encoding encoding
 		) {
 			m_root = root;
 			m_methods = methods;
 			m_endOfLine = endOfLine;
+			m_encoding = encoding;
 		}
 
 		public static FileCollector Create(
 			CompilationUnitSyntax root,
 			ImmutableArray<(TypeDeclarationSyntax Parent, string Source)> methods,
-			string? endOfLine
+			string? endOfLine,
+			Encoding encoding
 		) {
 			var groupedMethods = methods
 				.GroupBy( static m => m.Parent )
@@ -80,10 +85,10 @@ internal partial class SyncGenerator {
 					static g => g.Select( static m => m.Source )
 				);
 
-			return new FileCollector( root, groupedMethods, endOfLine );
+			return new FileCollector( root, groupedMethods, endOfLine, encoding );
 		}
 
-		public string CollectSource() {
+		public SourceText CollectSource() {
 			// TODO: Remove this and modify XML param elements in generator when changed/removed
 			if( m_endOfLine != null ) {
 				m_out.Append( "#pragma warning disable CS1572" + m_endOfLine );
@@ -111,7 +116,7 @@ internal partial class SyncGenerator {
 				throw new BugException( "left over methods" );
 			}
 
-			return m_out.ToString();
+			return SourceText.From( m_out.ToString(), m_encoding );
 		}
 
 		private bool WriteChildren( SyntaxNode node ) {
