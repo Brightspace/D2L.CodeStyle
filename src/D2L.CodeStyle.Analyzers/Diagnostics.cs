@@ -765,5 +765,14 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor UnexpectedNumberOfParametersForImplicitOperator = new DiagnosticDescriptor(
+			id: "D2L0104",
+			title: "Unexpected number of parameters for implicit operator",
+			messageFormat: "The implicit operator has an unexpected number of parameters. Update analyzer to handle this case.",
+			category: "Safety",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
 	}
 }
