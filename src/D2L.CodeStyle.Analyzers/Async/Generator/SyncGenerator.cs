@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -8,6 +9,8 @@ namespace D2L.CodeStyle.Analyzers.Async.Generator;
 
 [Generator]
 internal sealed partial class SyncGenerator : IIncrementalGenerator {
+	private static readonly Encoding UTF8WithoutBom = new UTF8Encoding( encoderShouldEmitUTF8Identifier: false );
+
 	public void Initialize( IncrementalGeneratorInitializationContext context ) {
 		var options = context.AnalyzerConfigOptionsProvider
 			.Select( ParseConfig );
@@ -38,7 +41,8 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 		// that when any file with [GenerateSync] has changed.
 		IncrementalValuesProvider<FileGenerationResult> generatedFiles =
 			generatedMethods.Collect()
-				.SelectMany( GenerateFiles );
+				.Combine( context.AnalyzerConfigOptionsProvider )
+				.SelectMany( ( x, ct ) => GenerateFiles( x.Left, x.Right, ct ) );
 
 		context.RegisterSourceOutput( generatedFiles, WriteFiles );
 	}
@@ -132,6 +136,7 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 
 	private static IEnumerable<FileGenerationResult> GenerateFiles(
 		ImmutableArray<MethodGenerationResult> methodResults,
+		AnalyzerConfigOptionsProvider configOptionsProvider,
 		CancellationToken cancellationToken
 	) {
 		var methodsByFile = methodResults
@@ -161,9 +166,31 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 				generatedMethods.Add( ((method.Original.Parent as TypeDeclarationSyntax)!, method.GeneratedSyntax ) );
 			}
 
+			var fileOptions = configOptionsProvider.GetOptions( file.Data.Key.SyntaxTree );
+
+			fileOptions.TryGetValue( "end_of_line", out var endOfLineValue );
+			var endOfLine = endOfLineValue?.Trim() switch {
+				"crlf" => "\r\n",
+				"lf" => "\n",
+				"cr" => "\r",
+				_ => null,
+			};
+
+			fileOptions.TryGetValue( "charset", out var charsetValue );
+			var encoding = charsetValue?.Trim().ToLower() switch {
+				"latin-1" => Encoding.GetEncoding( "iso-8859-1" ),
+				"utf-8" => UTF8WithoutBom,
+				"utf-8-bom" => Encoding.UTF8,
+				"utf-16le" => Encoding.Unicode,
+				"utf-16be" => Encoding.BigEndianUnicode,
+				_ => Encoding.Default,
+			};
+
 			var collector = FileCollector.Create(
 				file.Data.Key,
-				generatedMethods.ToImmutable()
+				generatedMethods.ToImmutable(),
+				endOfLine,
+				encoding
 			);
 
 			var generatedFile = collector.CollectSource();
@@ -186,7 +213,7 @@ internal sealed partial class SyncGenerator : IIncrementalGenerator {
 
 		context.AddSource(
 			hintName: result.HintName,
-			source: result.GeneratedSource
+			sourceText: result.GeneratedSource
 		);
 	}
 

@@ -3,6 +3,7 @@ using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 
 namespace D2L.CodeStyle.Analyzers.Async.Generator;
 
@@ -56,18 +57,26 @@ internal partial class SyncGenerator {
 		private readonly LinkedList<PieceOfSyntax[]> m_preambles = new();
 
 		private readonly StringBuilder m_out = new();
+		private readonly string? m_endOfLine;
+		private readonly Encoding m_encoding;
 
 		private FileCollector(
 			CompilationUnitSyntax root,
-			Dictionary<TypeDeclarationSyntax, IEnumerable<string>> methods
+			Dictionary<TypeDeclarationSyntax, IEnumerable<string>> methods,
+			string? endOfLine,
+			Encoding encoding
 		) {
 			m_root = root;
 			m_methods = methods;
+			m_endOfLine = endOfLine;
+			m_encoding = encoding;
 		}
 
 		public static FileCollector Create(
 			CompilationUnitSyntax root,
-			ImmutableArray<(TypeDeclarationSyntax Parent, string Source)> methods
+			ImmutableArray<(TypeDeclarationSyntax Parent, string Source)> methods,
+			string? endOfLine,
+			Encoding encoding
 		) {
 			var groupedMethods = methods
 				.GroupBy( static m => m.Parent )
@@ -76,15 +85,24 @@ internal partial class SyncGenerator {
 					static g => g.Select( static m => m.Source )
 				);
 
-			return new FileCollector( root, groupedMethods );
+			return new FileCollector( root, groupedMethods, endOfLine, encoding );
 		}
 
-		public string CollectSource() {
+		public SourceText CollectSource() {
 			// TODO: Remove this and modify XML param elements in generator when changed/removed
-			m_out.AppendLine( "#pragma warning disable CS1572" );
+			if( m_endOfLine != null ) {
+				m_out.Append( "#pragma warning disable CS1572" + m_endOfLine );
+			} else {
+				m_out.AppendLine( "#pragma warning disable CS1572" );
+			}
 			// This allows us to copy+paste annotations but otherwise does not emit diagnostics
 			// otherwise we get "CS8669: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context. Auto-generated code requires an explicit '#nullable' directive in source."
-			m_out.AppendLine( "#nullable enable annotations" );
+			if( m_endOfLine != null ) {
+				m_out.Append( "#nullable enable annotations" + m_endOfLine );
+			} else {
+				m_out.AppendLine( "#nullable enable annotations" );
+			}
+
 			// File-scoped usings:
 			m_out.Append( m_root.Usings.ToFullString() );
 
@@ -98,7 +116,7 @@ internal partial class SyncGenerator {
 				throw new BugException( "left over methods" );
 			}
 
-			return m_out.ToString();
+			return SourceText.From( m_out.ToString(), m_encoding );
 		}
 
 		private bool WriteChildren( SyntaxNode node ) {
