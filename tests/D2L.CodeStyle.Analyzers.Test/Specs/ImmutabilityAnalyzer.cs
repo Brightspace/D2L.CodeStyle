@@ -1461,4 +1461,7 @@ namespace ConsistencyTests {
 			SometimesBad2 = static () => 2;
         }
     }
+
+	[Immutable]
+	public class ClassPrimaryConstructor( ClassPrimaryConstructor other );
 }
