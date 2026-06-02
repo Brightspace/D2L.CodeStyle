@@ -1463,5 +1463,8 @@ namespace ConsistencyTests {
     }
 
 	[Immutable]
-	public class ClassPrimaryConstructor( ClassPrimaryConstructor other );
+	public class ClassPrimaryConstructor( ClassPrimaryConstructor other ) {
+		private readonly int m_x;
+		private int m_y;
+	}
 }
