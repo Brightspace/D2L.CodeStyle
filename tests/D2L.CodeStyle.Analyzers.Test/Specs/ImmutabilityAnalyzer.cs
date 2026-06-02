@@ -1461,4 +1461,14 @@ namespace ConsistencyTests {
 			SometimesBad2 = static () => 2;
         }
     }
+
+	// This one doesn't create a diagnostic because there are no parameters.
+	[Immutable]
+	class ClassWithTrivialPrimaryConstructor();
+
+	[Immutable]
+	class ClassWithPrimaryConstructor /* PrimaryClassConstructorIntroducesMutability */ ( int X ) /**/;
+
+	[Immutable]
+	record class RecordClassCanHavePrimaryConstructor(int X);
 }

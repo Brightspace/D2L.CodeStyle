@@ -51,6 +51,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				.Where( m => !m.IsStatic );
 
 			if( type.TypeKind == TypeKind.Class ) {
+				if( HasPrimaryClassConstructorMutability( type ) ) {
+					result = false;
+				}
+
 				// Check that the base class is immutable for classes
 				var baseClassOk = m_context.IsImmutable(
 					new ImmutabilityQuery(
@@ -79,6 +83,35 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			}
 
 			return result;
+		}
+
+		public bool HasPrimaryClassConstructorMutability( INamedTypeSymbol @class ) {
+			foreach( var constructor in @class.InstanceConstructors ) {
+				foreach( var syntaxRef in constructor.DeclaringSyntaxReferences ) {
+					var syntax = syntaxRef.GetSyntax( m_cancellationToken );
+
+					// Primary constructors for classes introduce mutability.
+					if( syntax is not ClassDeclarationSyntax ctor ) {
+						continue;
+					}
+
+					// Unimportant edge case
+					if( ctor.ParameterList.Parameters.Count == 0 ) {
+						return false;
+					}
+
+					m_diagnosticSink(
+						Diagnostic.Create(
+							Diagnostics.PrimaryClassConstructorIntroducesMutability,
+							ctor.ParameterList.GetLocation()
+						)
+					);
+
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		/// <remarks>
