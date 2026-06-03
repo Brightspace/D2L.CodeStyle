@@ -774,5 +774,14 @@ namespace D2L.CodeStyle.Analyzers {
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		);
+
+		public static readonly DiagnosticDescriptor PrimaryClassConstructorIntroducesMutability = new DiagnosticDescriptor(
+			id: "D2L0105",
+			title: "Primary class constructors introduce mutability into classes via their parameters",
+			messageFormat: "Primary class constructors introduce mutability into classes via their parameters",
+			category: "Immutability",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		 );
 	}
 }
