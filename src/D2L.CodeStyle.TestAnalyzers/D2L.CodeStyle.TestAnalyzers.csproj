@@ -1,8 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-
     <Title>D2L.CodeStyle.TestAnalyzers</Title>
     <Product>D2L.CodeStyle</Product>
     <Description>D2L.CodeStyle test analyzers</Description>
