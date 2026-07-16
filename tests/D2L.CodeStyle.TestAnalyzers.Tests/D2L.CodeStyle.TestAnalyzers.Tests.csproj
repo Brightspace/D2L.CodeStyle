@@ -2,12 +2,6 @@
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Remove="Specs\ConstantAttributeAnalyzer.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Specs\ConstantAttributeAnalyzer.cs" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.7.0" />
@@ -21,6 +15,11 @@
     <ProjectReference Include="..\..\src\D2L.CodeStyle.Annotations\D2L.CodeStyle.Annotations.csproj" />
     <ProjectReference Include="..\..\src\D2L.CodeStyle.SpecTests\D2L.CodeStyle.SpecTests.csproj" />
     <ProjectReference Include="..\..\src\D2L.CodeStyle.TestAnalyzers\D2L.CodeStyle.TestAnalyzers.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Specs\*" />
+    <EmbeddedResource Include="Specs\*" />
   </ItemGroup>
 
 </Project>
