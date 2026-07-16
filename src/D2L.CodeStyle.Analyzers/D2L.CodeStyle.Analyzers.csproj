@@ -30,6 +30,11 @@
     <None Include="$(OutputPath)\$(AssemblyName).Rule.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(OutputPath)\$(AssemblyName).Rule.Constant.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
+  <Target Name="ValidateRequiredFiles" BeforeTargets="Build">
+    <Error Condition="!Exists('$(OutputPath)$(AssemblyName).dll')" Text="Required file '$(OutputPath)$(AssemblyName).dll' is missing." />
+    <Error Condition="!Exists('$(OutputPath)D2L.CodeStyle.Analyzers.Rule.dll')" Text="Required file '$(OutputPath)D2L.CodeStyle.Analyzers.Rule.dll' is missing." />
+    <Error Condition="!Exists('$(OutputPath)D2L.CodeStyle.Analyzers.Rule.Constant.dll')" Text="Required file '$(OutputPath)D2L.CodeStyle.Analyzers.Rule.Constant.dll' is missing." />
+  </Target>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4">
       <PrivateAssets>all</PrivateAssets>
