@@ -1,7 +1,6 @@
 ﻿// analyzer: D2L.CodeStyle.Analyzers.ApiUsage.ConstantAttributeAnalyzer, D2L.CodeStyle.Analyzers.Rule.Constant
 
 using System;
-using D2L.Core;
 
 namespace SpecTests {
 
@@ -92,7 +91,6 @@ namespace SpecTests {
 			#region String tests
 			string variableStr = "This is a variable message";
 			const string CONSTANT_STR = "This is a constant message";
-			ConstantString constantStr = "This is a constant string message";
 
 			Types.SomeMethodWithConstantParameter<string>( "This is a constant message" );
 			Types.SomeMethodWithConstantParameter<string>( CONSTANT_STR );

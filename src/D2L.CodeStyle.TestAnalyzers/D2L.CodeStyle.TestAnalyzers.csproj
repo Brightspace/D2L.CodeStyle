@@ -27,7 +27,7 @@
     <None Include="tools\*.ps1" Pack="true" PackagePath="tools" />
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(OutputPath)\D2L.CodeStyle.Analyzers.Rule.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-	<None Include="$(OutputPath)\D2L.CodeStyle.Analyzers.Rule.Constant.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(OutputPath)\D2L.CodeStyle.Analyzers.Rule.Constant.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
 
   <Target Name="ValidateRequiredFiles" BeforeTargets="Build">
@@ -35,7 +35,7 @@
     <Error Condition="!Exists('$(OutputPath)D2L.CodeStyle.Analyzers.Rule.dll')" Text="Required file '$(OutputPath)D2L.CodeStyle.Analyzers.Rule.dll' is missing." />
     <Error Condition="!Exists('$(OutputPath)D2L.CodeStyle.Analyzers.Rule.Constant.dll')" Text="Required file '$(OutputPath)D2L.CodeStyle.Analyzers.Rule.Constant.dll' is missing." />
   </Target>
-		
+        
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4">
       <PrivateAssets>all</PrivateAssets>
@@ -49,13 +49,13 @@
     <PackageReference Include="System.Collections.Immutable" Version="7.0.0" PrivateAssets="All" />
   </ItemGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\Rules\D2L.CodeStyle.Analyzers.Rule.Constant\D2L.CodeStyle.Analyzers.Rule.Constant\D2L.CodeStyle.Analyzers.Rule.Constant.csproj">
-			<PrivateAssets>all</PrivateAssets>
-		</ProjectReference>
-		<ProjectReference Include="..\Rules\D2L.CodeStyle.Analyzers.Rule\D2L.CodeStyle.Analyzers.Rule\D2L.CodeStyle.Analyzers.Rule.csproj">
-			<PrivateAssets>all</PrivateAssets>
-		</ProjectReference>
-	</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Rules\D2L.CodeStyle.Analyzers.Rule.Constant\D2L.CodeStyle.Analyzers.Rule.Constant\D2L.CodeStyle.Analyzers.Rule.Constant.csproj">
+      <PrivateAssets>all</PrivateAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\Rules\D2L.CodeStyle.Analyzers.Rule\D2L.CodeStyle.Analyzers.Rule\D2L.CodeStyle.Analyzers.Rule.csproj">
+      <PrivateAssets>all</PrivateAssets>
+    </ProjectReference>
+  </ItemGroup>
 
 </Project>
