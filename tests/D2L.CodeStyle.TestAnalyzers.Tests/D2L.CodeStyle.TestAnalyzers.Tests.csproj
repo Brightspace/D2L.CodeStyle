@@ -2,6 +2,12 @@
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Specs\ConstantAttributeAnalyzer.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Specs\ConstantAttributeAnalyzer.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.7.0" />

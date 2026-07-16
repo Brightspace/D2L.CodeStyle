@@ -1,0 +1,335 @@
+﻿// analyzer: D2L.CodeStyle.TestAnalyzers.ApiUsage.ConstantAttributeAnalyzer, D2L.CodeStyle.TestAnalyzers
+
+using System;
+
+namespace SpecTests {
+
+	using D2L.CodeStyle.Annotations.Contract;
+
+	public sealed class Logger {
+		public static void Error( [Constant] string message ) { }
+	}
+
+	public sealed class WrappedLogger {
+		public static void Error( [Constant] string message ) {
+			Logger.Error( message );
+		}
+		public static void OtherError( string message ) {
+			Logger.Error( /* NonConstantPassedToConstantParameter(message) */ message /**/ );
+		}
+	}
+
+	public sealed class Types {
+
+		public static void SomeMethodWithConstantParameter<T>( [Constant] T param1 ) { }
+		public static void SomeMethodWithParameter<T>( T param1 ) { }
+		public static void SomeMethodWithOneConstantParameter<T>( [Constant] T param1, T param2 ) { }
+		public static void SomeMethodWithOneOtherConstantParameter<T>( T param1, [Constant] T param2 ) { }
+		public static void SomeMethodWithTwoConstantParameters<T>( [Constant] T param1, [Constant] T param2 ) { }
+
+		public interface IInterface { }
+		public class SomeClassImplementingInterface : IInterface { }
+		public static void SomeMethodWithInterfaceParameter( [Constant] IInterface /* InvalidConstantType(Interface) */ @interface /**/ ) { }
+		public static void SomeMethodWithOneInterfaceParameter<T>( IInterface param1, [Constant] T param2 ) { }
+
+		public readonly struct ConstantStruct {
+			public ConstantStruct( [Constant] string value ) {
+				Value = value;
+			}
+			public string Value { get; }
+			public static implicit operator ConstantStruct( [Constant] string value ) {
+				return new ConstantStruct( value );
+			}
+			public static explicit operator ConstantStruct( [Constant] bool value ) {
+				return new ConstantStruct( "true" );
+			}
+		}
+
+		public readonly struct NonConstantStruct {
+			public NonConstantStruct( string value ) {
+				Value = value;
+			}
+			public string Value { get; }
+			public static implicit operator NonConstantStruct( string value ) {
+				return new NonConstantStruct( value );
+			}
+			public static explicit operator NonConstantStruct( bool value ) {
+				return new NonConstantStruct( "true" );
+			}
+		}
+	}
+
+	public sealed class Tests {
+
+		private static class Constants {
+			public const bool Bool = true;
+			public const string String = "foo";
+		}
+
+		void Method() {
+
+			#region Invalid type tests
+			const Types.SomeClassImplementingInterface interfaceClass = new Types.SomeClassImplementingInterface { };
+			Types.SomeMethodWithConstantParameter<Types.IInterface>( /* NonConstantPassedToConstantParameter(param1) */ interfaceClass /**/ );
+			Types.SomeMethodWithOneInterfaceParameter<Types.IInterface>( interfaceClass, /* NonConstantPassedToConstantParameter(param2) */ interfaceClass /**/ );
+			#endregion
+
+			#region Logger tests
+			const string CONSTANT_MESSAGE = "Organization {0} is not constant.";
+			int orgId = 0;
+
+			Logger.Error( CONSTANT_MESSAGE );
+			Logger.Error( "Organization 1 is constant." );
+			Logger.Error( string.Empty );
+			Logger.Error( /* NonConstantPassedToConstantParameter(message) */ string.Format(CONSTANT_MESSAGE, orgId) /**/ );
+			Logger.Error( /* NonConstantPassedToConstantParameter(message) */ $"Organization {orgId} is not constant." /**/ );
+
+			const string CONSTANT_STRING = "Foo";
+			Logger.Error( $"Interpolated strings of constant strings (like {CONSTANT_STRING}) are compile-time constants as of C#10." );
+			#endregion
+
+			#region String tests
+			string variableStr = "This is a variable message";
+			const string CONSTANT_STR = "This is a constant message";
+
+			Types.SomeMethodWithConstantParameter<string>( "This is a constant message" );
+			Types.SomeMethodWithConstantParameter<string>( CONSTANT_STR );
+			Types.SomeMethodWithConstantParameter<string>( CONSTANT_STR + "This is a constant message" );
+			Types.SomeMethodWithConstantParameter<string>( string.Empty );
+			Types.SomeMethodWithConstantParameter<string>( /* NonConstantPassedToConstantParameter(param1) */ CONSTANT_STR + variableStr /**/ );
+			Types.SomeMethodWithConstantParameter<string>( /* NonConstantPassedToConstantParameter(param1) */ variableStr /**/ );
+
+			Types.SomeMethodWithParameter<string>( "This is a constant message" );
+			Types.SomeMethodWithParameter<string>( CONSTANT_STR );
+			Types.SomeMethodWithParameter<string>( CONSTANT_STR + "This is a constant message" );
+			Types.SomeMethodWithConstantParameter<string>( string.Empty );
+			Types.SomeMethodWithParameter<string>( CONSTANT_STR + variableStr );
+			Types.SomeMethodWithParameter<string>( variableStr );
+
+			Types.SomeMethodWithOneConstantParameter<string>( "This is a constant message", "This is a constant message" );
+			Types.SomeMethodWithOneConstantParameter<string>( CONSTANT_STR, CONSTANT_STR );
+			Types.SomeMethodWithOneConstantParameter<string>( CONSTANT_STR + "This is a constant message", CONSTANT_STR + "This is a constant message" );
+			Types.SomeMethodWithOneConstantParameter<string>( CONSTANT_STR, variableStr );
+			Types.SomeMethodWithOneConstantParameter<string>( /* NonConstantPassedToConstantParameter(param1) */ variableStr /**/, CONSTANT_STR );
+			Types.SomeMethodWithOneConstantParameter<string>( /* NonConstantPassedToConstantParameter(param1) */ variableStr /**/, variableStr );
+
+			Types.SomeMethodWithOneOtherConstantParameter<string>( "This is a constant message", "This is a constant message" );
+			Types.SomeMethodWithOneOtherConstantParameter<string>( CONSTANT_STR, CONSTANT_STR );
+			Types.SomeMethodWithOneOtherConstantParameter<string>( CONSTANT_STR + "This is a constant message", CONSTANT_STR + "This is a constant message" );
+			Types.SomeMethodWithOneOtherConstantParameter<string>( CONSTANT_STR, /* NonConstantPassedToConstantParameter(param2) */ variableStr /**/ );
+			Types.SomeMethodWithOneOtherConstantParameter<string>( variableStr, CONSTANT_STR );
+			Types.SomeMethodWithOneOtherConstantParameter<string>( variableStr, /* NonConstantPassedToConstantParameter(param2) */ variableStr /**/ );
+
+			Types.SomeMethodWithTwoConstantParameters<string>( "This is a constant message", "This is a constant message" );
+			Types.SomeMethodWithTwoConstantParameters<string>( CONSTANT_STR, CONSTANT_STR );
+			Types.SomeMethodWithTwoConstantParameters<string>( CONSTANT_STR + "This is a constant message", CONSTANT_STR + "This is a constant message" );
+			Types.SomeMethodWithTwoConstantParameters<string>( CONSTANT_STR, /* NonConstantPassedToConstantParameter(param2) */ variableStr /**/ );
+			Types.SomeMethodWithTwoConstantParameters<string>( /* NonConstantPassedToConstantParameter(param1) */ variableStr /**/, CONSTANT_STR );
+			Types.SomeMethodWithTwoConstantParameters<string>( /* NonConstantPassedToConstantParameter(param1) */ variableStr /**/, /* NonConstantPassedToConstantParameter(param2) */ variableStr /**/ );
+			#endregion
+
+			#region Number tests
+			int variableInt = 5;
+			const int CONSTANT_INT = 29;
+
+			Types.SomeMethodWithConstantParameter<int>( 29 );
+			Types.SomeMethodWithConstantParameter<int>( CONSTANT_INT );
+			Types.SomeMethodWithConstantParameter<int>( CONSTANT_INT + 29 );
+			Types.SomeMethodWithConstantParameter<int>( /* NonConstantPassedToConstantParameter(param1) */ CONSTANT_INT + variableInt /**/ );
+			Types.SomeMethodWithConstantParameter<int>( /* NonConstantPassedToConstantParameter(param1) */ variableInt /**/ );
+
+			Types.SomeMethodWithParameter<int>( 29 );
+			Types.SomeMethodWithParameter<int>( CONSTANT_INT );
+			Types.SomeMethodWithParameter<int>( CONSTANT_INT + 29 );
+			Types.SomeMethodWithParameter<int>( CONSTANT_INT + variableInt );
+			Types.SomeMethodWithParameter<int>( variableInt );
+
+			Types.SomeMethodWithOneConstantParameter<int>( 29, 29 );
+			Types.SomeMethodWithOneConstantParameter<int>( CONSTANT_INT, CONSTANT_INT );
+			Types.SomeMethodWithOneConstantParameter<int>( CONSTANT_INT + 29, CONSTANT_INT + 29 );
+			Types.SomeMethodWithOneConstantParameter<int>( CONSTANT_INT, variableInt );
+			Types.SomeMethodWithOneConstantParameter<int>( /* NonConstantPassedToConstantParameter(param1) */ variableInt /**/, CONSTANT_INT );
+			Types.SomeMethodWithOneConstantParameter<int>( /* NonConstantPassedToConstantParameter(param1) */ variableInt /**/, variableInt );
+
+			Types.SomeMethodWithOneOtherConstantParameter<int>( 29, 29 );
+			Types.SomeMethodWithOneOtherConstantParameter<int>( CONSTANT_INT, CONSTANT_INT );
+			Types.SomeMethodWithOneOtherConstantParameter<int>( CONSTANT_INT + 29, CONSTANT_INT + 29 );
+			Types.SomeMethodWithOneOtherConstantParameter<int>( CONSTANT_INT, /* NonConstantPassedToConstantParameter(param2) */ variableInt /**/ );
+			Types.SomeMethodWithOneOtherConstantParameter<int>( variableInt, CONSTANT_INT );
+			Types.SomeMethodWithOneOtherConstantParameter<int>( variableInt, /* NonConstantPassedToConstantParameter(param2) */ variableInt /**/ );
+
+			Types.SomeMethodWithTwoConstantParameters<int>( 29, 29 );
+			Types.SomeMethodWithTwoConstantParameters<int>( CONSTANT_INT, CONSTANT_INT );
+			Types.SomeMethodWithTwoConstantParameters<int>( CONSTANT_INT + 29, CONSTANT_INT + 29 );
+			Types.SomeMethodWithTwoConstantParameters<int>( CONSTANT_INT, /* NonConstantPassedToConstantParameter(param2) */ variableInt /**/ );
+			Types.SomeMethodWithTwoConstantParameters<int>( /* NonConstantPassedToConstantParameter(param1) */ variableInt /**/, CONSTANT_INT );
+			Types.SomeMethodWithTwoConstantParameters<int>( /* NonConstantPassedToConstantParameter(param1) */ variableInt /**/, /* NonConstantPassedToConstantParameter(param2) */ variableInt /**/ );
+			#endregion
+
+			#region Boolean tests
+			bool variableBool = true;
+			const bool CONSTANT_BOOL = false;
+
+			Types.SomeMethodWithConstantParameter<bool>( false );
+			Types.SomeMethodWithConstantParameter<bool>( CONSTANT_BOOL );
+			Types.SomeMethodWithConstantParameter<bool>( CONSTANT_BOOL || false );
+			Types.SomeMethodWithConstantParameter<bool>( /* NonConstantPassedToConstantParameter(param1) */ CONSTANT_BOOL || variableBool /**/ );
+			Types.SomeMethodWithConstantParameter<bool>( /* NonConstantPassedToConstantParameter(param1) */ variableBool /**/ );
+
+			Types.SomeMethodWithParameter<bool>( false );
+			Types.SomeMethodWithParameter<bool>( CONSTANT_BOOL );
+			Types.SomeMethodWithParameter<bool>( CONSTANT_BOOL || false );
+			Types.SomeMethodWithParameter<bool>( CONSTANT_BOOL || variableBool );
+			Types.SomeMethodWithParameter<bool>( variableBool );
+
+			Types.SomeMethodWithOneConstantParameter<bool>( false, false );
+			Types.SomeMethodWithOneConstantParameter<bool>( CONSTANT_BOOL, CONSTANT_BOOL );
+			Types.SomeMethodWithOneConstantParameter<bool>( CONSTANT_BOOL || false, CONSTANT_BOOL || false );
+			Types.SomeMethodWithOneConstantParameter<bool>( CONSTANT_BOOL, variableBool );
+			Types.SomeMethodWithOneConstantParameter<bool>( /* NonConstantPassedToConstantParameter(param1) */ variableBool /**/, CONSTANT_BOOL );
+			Types.SomeMethodWithOneConstantParameter<bool>( /* NonConstantPassedToConstantParameter(param1) */ variableBool /**/, variableBool );
+
+			Types.SomeMethodWithOneOtherConstantParameter<bool>( false, false );
+			Types.SomeMethodWithOneOtherConstantParameter<bool>( CONSTANT_BOOL, CONSTANT_BOOL );
+			Types.SomeMethodWithOneOtherConstantParameter<bool>( CONSTANT_BOOL || false, CONSTANT_BOOL || false );
+			Types.SomeMethodWithOneOtherConstantParameter<bool>( CONSTANT_BOOL, /* NonConstantPassedToConstantParameter(param2) */ variableBool /**/ );
+			Types.SomeMethodWithOneOtherConstantParameter<bool>( variableBool, CONSTANT_BOOL );
+			Types.SomeMethodWithOneOtherConstantParameter<bool>( variableBool, /* NonConstantPassedToConstantParameter(param2) */ variableBool /**/ );
+
+			Types.SomeMethodWithTwoConstantParameters<bool>( false, false );
+			Types.SomeMethodWithTwoConstantParameters<bool>( CONSTANT_BOOL, CONSTANT_BOOL );
+			Types.SomeMethodWithTwoConstantParameters<bool>( CONSTANT_BOOL || false, CONSTANT_BOOL || false );
+			Types.SomeMethodWithTwoConstantParameters<bool>( CONSTANT_BOOL, /* NonConstantPassedToConstantParameter(param2) */ variableBool /**/ );
+			Types.SomeMethodWithTwoConstantParameters<bool>( /* NonConstantPassedToConstantParameter(param1) */ variableBool /**/, CONSTANT_BOOL );
+			Types.SomeMethodWithTwoConstantParameters<bool>( /* NonConstantPassedToConstantParameter(param1) */ variableBool /**/, /* NonConstantPassedToConstantParameter(param2) */ variableBool /**/ );
+			#endregion
+		}
+
+		#region Constructor Tests
+
+		void ConstructorTests(
+			[D2L.CodeStyle.Annotations.Contract.Constant] string trusted,
+			string untrusted
+		) {
+			const string constant = "foo";
+			string variable = "bar";
+
+			new Types.ConstantStruct( "abc" );
+			new Types.ConstantStruct( string.Empty );
+			new Types.ConstantStruct( Constants.String );
+			new Types.ConstantStruct( constant );
+			new Types.ConstantStruct( trusted );
+			new Types.ConstantStruct( /* NonConstantPassedToConstantParameter(value) */ variable /**/ );
+			new Types.ConstantStruct( /* NonConstantPassedToConstantParameter(value) */ untrusted /**/ );
+
+			new Types.NonConstantStruct( "abc" );
+			new Types.NonConstantStruct( string.Empty );
+			new Types.NonConstantStruct( Constants.String );
+			new Types.NonConstantStruct( constant );
+			new Types.NonConstantStruct( trusted );
+			new Types.NonConstantStruct( variable );
+			new Types.NonConstantStruct( untrusted );
+		}
+
+		#endregion
+
+		#region Explicit Operator Tests
+
+		void ExplicitOperatorTests(
+			[D2L.CodeStyle.Annotations.Contract.Constant] bool trusted,
+			bool untrusted
+		) {
+			const bool constant = true;
+			bool variable = true;
+
+			{ Types.ConstantStruct v = (Types.ConstantStruct)true; }
+			{ Types.ConstantStruct v = (Types.ConstantStruct)Constants.Bool; }
+			{ Types.ConstantStruct v = (Types.ConstantStruct)constant; }
+			{ Types.ConstantStruct v = (Types.ConstantStruct)trusted; }
+			{ Types.ConstantStruct v = (Types.ConstantStruct) /* NonConstantPassedToConstantParameter(value) */ variable /**/; }
+			{ Types.ConstantStruct v = (Types.ConstantStruct) /* NonConstantPassedToConstantParameter(value) */ untrusted /**/; }
+
+			{ Types.NonConstantStruct v = (Types.NonConstantStruct)true; }
+			{ Types.NonConstantStruct v = (Types.NonConstantStruct)Constants.Bool; }
+			{ Types.NonConstantStruct v = (Types.NonConstantStruct)constant; }
+			{ Types.NonConstantStruct v = (Types.NonConstantStruct)trusted; }
+			{ Types.NonConstantStruct v = (Types.NonConstantStruct)variable; }
+			{ Types.NonConstantStruct v = (Types.NonConstantStruct)untrusted; }
+		}
+
+		#endregion
+
+		#region Implicit Operator Tests
+
+		void ImplicitOperatorTests(
+			[D2L.CodeStyle.Annotations.Contract.Constant] string trusted,
+			string untrusted
+		) {
+			const string constant = "foo";
+			string variable = "bar";
+
+			{ Types.ConstantStruct v = "abc"; }
+			{ Types.ConstantStruct v = string.Empty; }
+			{ Types.ConstantStruct v = Constants.String; }
+			{ Types.ConstantStruct v = constant; }
+			{ Types.ConstantStruct v = trusted; }
+			{ Types.ConstantStruct v = /* NonConstantPassedToConstantParameter(value) */ variable /**/; }
+			{ Types.ConstantStruct v = /* NonConstantPassedToConstantParameter(value) */ untrusted /**/; }
+			{
+				Types.ConstantStruct v = Constants.String;
+				v += /* NonConstantPassedToConstantParameter(value) */ "abc" /**/;
+			}
+			{
+				Types.ConstantStruct v = Constants.String;
+				v += /* NonConstantPassedToConstantParameter(value) */ trusted /**/;
+			}
+			{
+				Types.ConstantStruct v = Constants.String;
+				v += /* NonConstantPassedToConstantParameter(value) */ variable /**/;
+			}
+			{
+				Types.ConstantStruct v = Constants.String;
+				v += /* NonConstantPassedToConstantParameter(value) */ "a" + "b" /**/;
+			}
+
+			{ Types.NonConstantStruct v = "abc"; }
+			{ Types.NonConstantStruct v = string.Empty; }
+			{ Types.NonConstantStruct v = Constants.String; }
+			{ Types.NonConstantStruct v = constant; }
+			{ Types.NonConstantStruct v = trusted; }
+			{ Types.NonConstantStruct v = variable; }
+			{ Types.NonConstantStruct v = untrusted; }
+			{
+				Types.NonConstantStruct v = Constants.String;
+				v += "abc";
+			}
+			{
+				Types.NonConstantStruct v = Constants.String;
+				v += trusted;
+			}
+			{
+				Types.NonConstantStruct v = Constants.String;
+				v += variable;
+			}
+			{
+				Types.NonConstantStruct v = Constants.String;
+				v += "a" + "b";
+			}
+		}
+
+		#endregion
+
+		#region Method Reference Tests
+
+		void MethodReferenceTests() {
+
+			{ Action<int> action = Types.SomeMethodWithParameter<int>; }
+			{ Action<int> action = /* ReferenceToMethodWithConstantParameterNotSupport */ Types.SomeMethodWithConstantParameter<int> /**/; }
+			{ Action<int, int> action = /* ReferenceToMethodWithConstantParameterNotSupport */ Types.SomeMethodWithOneConstantParameter<int> /**/; }
+			{ Action<int, int> action = /* ReferenceToMethodWithConstantParameterNotSupport */ Types.SomeMethodWithOneOtherConstantParameter<int> /**/; }
+			{ Action<int, int> action = /* ReferenceToMethodWithConstantParameterNotSupport */ Types.SomeMethodWithTwoConstantParameters<int> /**/; }
+		}
+
+		#endregion
+	}
+}
