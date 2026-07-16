@@ -107,13 +107,13 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			if( type.Kind == SymbolKind.TypeParameter ) {
 				return;
 			}
-			
+
 			// The current parameter type cannot be marked as [Constant]
 			context.ReportDiagnostic(
 				descriptor: Diagnostics.InvalidConstantType,
 				location: parameter.Locations.First(),
 				messageArgs: new object[] { type.TypeKind }
-			);			
+			);
 		}
 
 		private static void AnalyzeArgument(
