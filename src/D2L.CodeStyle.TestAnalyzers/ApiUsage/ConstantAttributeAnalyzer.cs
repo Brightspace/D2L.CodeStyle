@@ -1,13 +1,13 @@
-#nullable disable
+﻿#nullable disable
 
 using System.Collections.Immutable;
+using D2L.CodeStyle.TestAnalyzers.Common;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
 
-namespace D2L.CodeStyle.Analyzers.ApiUsage {
+namespace D2L.CodeStyle.TestAnalyzers.ApiUsage {
 	[DiagnosticAnalyzer( LanguageNames.CSharp )]
 	public sealed class ConstantAttributeAnalyzer : DiagnosticAnalyzer {
 		public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
@@ -32,7 +32,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			);
 
 			// The D2L.CodeStyle.Annotations reference is optional
-			if ( constantAttribute == null || constantAttribute .Kind == SymbolKind.ErrorType ) {
+			if( constantAttribute == null || constantAttribute.Kind == SymbolKind.ErrorType ) {
 				return;
 			}
 
@@ -110,9 +110,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 
 			// The current parameter type cannot be marked as [Constant]
 			context.ReportDiagnostic(
-				descriptor: Diagnostics.InvalidConstantType,
-				location: parameter.Locations.First(),
-				messageArgs: new object[] { type.TypeKind }
+				Diagnostic.Create(
+					descriptor: Diagnostics.InvalidConstantType,
+					location: parameter.Locations.First(),
+					messageArgs: new object[] { type.TypeKind }
+				)
 			);
 		}
 
@@ -137,7 +139,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			if( IsInsideExpressionTree( argument ) ) {
 				return;
 			}
-			
+
 			// Argument is a mock argument constraint (e.g. Arg<string>.Is.Anything), so do nothing
 			if( IsMockArgumentConstraint( argument.Value ) ) {
 				return;
@@ -151,9 +153,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 
 			// Argument is not constant, so report it
 			context.ReportDiagnostic(
-				descriptor: Diagnostics.NonConstantPassedToConstantParameter,
-				location: argument.Syntax.GetLocation(),
-				messageArgs: new[] { parameter.Name }
+				Diagnostic.Create(
+					descriptor: Diagnostics.NonConstantPassedToConstantParameter,
+					location: argument.Syntax.GetLocation(),
+					messageArgs: new[] { parameter.Name }
+				)
 			);
 		}
 
@@ -172,7 +176,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			}
 
 			// Operator parameter is not [Constant], so do nothing
-			IParameterSymbol parameter = @operator.Parameters[ 0 ];
+			IParameterSymbol parameter = @operator.Parameters[0];
 			if( !HasAttribute( parameter, constantAttribute ) ) {
 				return;
 			}
@@ -191,9 +195,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 
 			// Operand is not constant, so report it
 			context.ReportDiagnostic(
-				descriptor: Diagnostics.NonConstantPassedToConstantParameter,
-				location: operand.Syntax.GetLocation(),
-				messageArgs: new[] { parameter.Name }
+				Diagnostic.Create(
+					descriptor: Diagnostics.NonConstantPassedToConstantParameter,
+					location: operand.Syntax.GetLocation(),
+					messageArgs: new[] { parameter.Name }
+				)
 			);
 		}
 
@@ -210,8 +216,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			}
 			if( @operator.Parameters.Length != 1 ) {
 				context.ReportDiagnostic(
-					descriptor: Diagnostics.UnexpectedNumberOfParametersForImplicitOperator,
-					location: compoundAssignment.Value.Syntax.GetLocation()
+					Diagnostic.Create(
+						descriptor: Diagnostics.UnexpectedNumberOfParametersForImplicitOperator,
+						location: compoundAssignment.Value.Syntax.GetLocation()
+					)
 				);
 				return;
 			}
@@ -224,9 +232,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 
 			// Compound assignment with operator parameter that has [Constant] cannot be constant, so report it
 			context.ReportDiagnostic(
-				descriptor: Diagnostics.NonConstantPassedToConstantParameter,
-				location: compoundAssignment.Value.Syntax.GetLocation(),
-				messageArgs: new[] { parameter.Name }
+				Diagnostic.Create(
+					descriptor: Diagnostics.NonConstantPassedToConstantParameter,
+					location: compoundAssignment.Value.Syntax.GetLocation(),
+					messageArgs: new[] { parameter.Name }
+				)
 			);
 		}
 
@@ -243,8 +253,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				}
 
 				context.ReportDiagnostic(
-					descriptor: Diagnostics.ReferenceToMethodWithConstantParameterNotSupport,
-					location: operation.Syntax.GetLocation()
+					Diagnostic.Create(
+						descriptor: Diagnostics.ReferenceToMethodWithConstantParameterNotSupport,
+						location: operation.Syntax.GetLocation()
+					)
 				);
 
 				return;
@@ -300,58 +312,58 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			}
 		}
 
-        private static bool IsInsideExpressionTree(
-            IOperation operation
-        ) {
-            IOperation current = operation;
-            while( current != null ) {
-                if( current is IConversionOperation conversion
-                && conversion.Type is INamedTypeSymbol namedType
-                && namedType.BaseType != null
-                && namedType.BaseType.Name == "LambdaExpression"
-                ) {
-                    return true;
-                }
-                current = current.Parent;
-            }
-            return false;
-        }
-
-        private static bool IsMockArgumentConstraint( IOperation operation ) {
-            // Matches patterns like Arg<T>.Is.Anything or Arg<T>.Is.Equal(...) (Rhino Mocks)
-            // Arg<T>.Is.Anything is a property chain: Arg<string>.Is (static) -> .Anything (instance)
-            // Arg<T>.Is.Equal(...) is a method call on the .Is property result
-            if( operation is IInvocationOperation invocation ) {
-                var containingType = invocation.TargetMethod.ContainingType;
-                if( IsArgType( containingType ) ) {
-                    return true;
-                }
-                // Check if the instance receiver is an Arg<T> property chain
-                if( invocation.Instance != null && IsMockArgumentConstraint( invocation.Instance ) ) {
-                    return true;
-                }
-            }
-
-            IOperation current = operation;
-            while( current is IPropertyReferenceOperation propertyRef ) {
-                var containingType = propertyRef.Property.ContainingType;
-                if( IsArgType( containingType ) ) {
-                    return true;
-                }
-                current = propertyRef.Instance;
-            }
-            return false;
+		private static bool IsInsideExpressionTree(
+			IOperation operation
+		) {
+			IOperation current = operation;
+			while( current != null ) {
+				if( current is IConversionOperation conversion
+				&& conversion.Type is INamedTypeSymbol namedType
+				&& namedType.BaseType != null
+				&& namedType.BaseType.Name == "LambdaExpression"
+				) {
+					return true;
+				}
+				current = current.Parent;
+			}
+			return false;
 		}
 
-        private static bool IsArgType( INamedTypeSymbol type ) {
-            if( type == null ) {
-                return false;
-            }
-            if( type.Name == "Arg" && type.IsGenericType ) {
-                return true;
-            }
-            // Check containing types for nested types within Arg<T>
-            return IsArgType( type.ContainingType );
-        }
+		private static bool IsMockArgumentConstraint( IOperation operation ) {
+			// Matches patterns like Arg<T>.Is.Anything or Arg<T>.Is.Equal(...) (Rhino Mocks)
+			// Arg<T>.Is.Anything is a property chain: Arg<string>.Is (static) -> .Anything (instance)
+			// Arg<T>.Is.Equal(...) is a method call on the .Is property result
+			if( operation is IInvocationOperation invocation ) {
+				var containingType = invocation.TargetMethod.ContainingType;
+				if( IsArgType( containingType ) ) {
+					return true;
+				}
+				// Check if the instance receiver is an Arg<T> property chain
+				if( invocation.Instance != null && IsMockArgumentConstraint( invocation.Instance ) ) {
+					return true;
+				}
+			}
+
+			IOperation current = operation;
+			while( current is IPropertyReferenceOperation propertyRef ) {
+				var containingType = propertyRef.Property.ContainingType;
+				if( IsArgType( containingType ) ) {
+					return true;
+				}
+				current = propertyRef.Instance;
+			}
+			return false;
+		}
+
+		private static bool IsArgType( INamedTypeSymbol type ) {
+			if( type == null ) {
+				return false;
+			}
+			if( type.Name == "Arg" && type.IsGenericType ) {
+				return true;
+			}
+			// Check containing types for nested types within Arg<T>
+			return IsArgType( type.ContainingType );
+		}
 	}
 }
