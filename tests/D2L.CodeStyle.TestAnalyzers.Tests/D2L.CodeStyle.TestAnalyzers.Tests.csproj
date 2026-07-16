@@ -18,6 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\D2L.CodeStyle.Annotations\D2L.CodeStyle.Annotations.csproj" />
+    <ProjectReference Include="..\..\src\D2L.CodeStyle.SpecTests\D2L.CodeStyle.SpecTests.csproj" />
     <ProjectReference Include="..\..\src\D2L.CodeStyle.TestAnalyzers\D2L.CodeStyle.TestAnalyzers.csproj" />
   </ItemGroup>
 
