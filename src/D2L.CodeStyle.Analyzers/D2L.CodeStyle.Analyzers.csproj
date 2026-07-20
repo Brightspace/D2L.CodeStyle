@@ -16,6 +16,7 @@
     <DevelopmentDependency>true</DevelopmentDependency>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <IncludeBuildOutput>False</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <IncludeSymbols>True</IncludeSymbols>
     <WarningsAsErrors>CA2016,Nullable</WarningsAsErrors>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
