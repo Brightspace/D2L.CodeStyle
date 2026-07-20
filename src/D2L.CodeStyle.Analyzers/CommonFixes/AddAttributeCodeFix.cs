@@ -74,7 +74,7 @@ namespace D2L.CodeStyle.Analyzers.CommonFixes {
 							attrName: attrName,
 							ct
 						),
-						equivalenceKey: $"{attrName}-{nameof( AddAttributeCodeFix )}"
+						equivalenceKey: attrName
 					),
 					diagnostic
 				);
