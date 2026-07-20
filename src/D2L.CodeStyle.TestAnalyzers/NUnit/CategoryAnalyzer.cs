@@ -298,7 +298,7 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 			SourceText? allowedListText = bannedListFile.GetText();
 
 			if( allowedListText == null ) {
-				throw new Exception( "Couldn't read config" );
+				throw new InvalidOperationException( "Couldn't read config" );
 			}
 
 			foreach( TextLine line in allowedListText.Lines ) {
