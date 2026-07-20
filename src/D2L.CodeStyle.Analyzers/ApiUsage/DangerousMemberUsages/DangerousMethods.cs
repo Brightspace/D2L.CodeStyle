@@ -79,8 +79,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.DangerousMemberUsages {
 
 				List<string> methods = new List<string>( new[] { methodName } );
 
-				if( types.ContainsKey( type ) ) {
-					methods.AddRange( types[ type ] );
+				if( types.TryGetValue( type, out var value ) ) {
+					methods.AddRange( value );
 					types = types.Remove( type );
 				}
 
