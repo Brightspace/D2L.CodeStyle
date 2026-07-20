@@ -72,7 +72,8 @@ namespace D2L.CodeStyle.Analyzers.CommonFixes {
 							usingNs: usingNs,
 							attrName: attrName,
 							ct
-						)
+						),
+						equivalenceKey: attrName
 					),
 					diagnostic
 				);

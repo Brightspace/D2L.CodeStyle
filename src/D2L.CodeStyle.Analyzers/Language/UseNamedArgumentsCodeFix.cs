@@ -58,8 +58,9 @@ namespace D2L.CodeStyle.Analyzers.Language {
 								args,
 								paramNames,
 								ct
-							)
-                    ),
+							),
+						equivalenceKey: nameof( UseNamedArgumentsCodeFix )
+					),
 					diagnostic
 				);
 			}

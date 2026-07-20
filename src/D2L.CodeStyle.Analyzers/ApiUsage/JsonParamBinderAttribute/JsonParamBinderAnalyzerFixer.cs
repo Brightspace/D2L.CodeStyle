@@ -34,7 +34,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage.JsonParamBinderAttribute {
 			context.RegisterCodeFix( 
 				CodeAction.Create( 
 					Diagnostics.ObsoleteJsonParamBinder.Title.ToString(),
-					ct => SwapAttributes( context.Document, oldAttribute, ct)
+					ct => SwapAttributes( context.Document, oldAttribute, ct),
+					equivalenceKey: nameof( JsonParamBinderAnalyzerFixer )
 				), 
 				diagnostic
 			);
