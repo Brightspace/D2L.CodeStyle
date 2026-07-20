@@ -51,7 +51,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 								awaitExpression: awaitExpression,
 								useSafeAsync: useSafeAsync,
 								cancellationToken: ct
-							)
+							),
+							equivalenceKey: nameof( ConfigureAwaitedTaskCodeFix )
 						),
 						diagnostic
 					);

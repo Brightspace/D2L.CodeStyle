@@ -40,7 +40,8 @@ namespace D2L.CodeStyle.Analyzers.CommonFixes {
 					CodeAction.Create(
 						title: $"Remove [{attr.Name}]",
 						createChangedDocument: ct =>
-							Task.FromResult( Fix( context.Document, root, attr ) )
+							Task.FromResult( Fix( context.Document, root, attr ) ),
+						equivalenceKey: nameof( RemoveAttributeCodeFix )
 					),
 					diagnostic
 				);

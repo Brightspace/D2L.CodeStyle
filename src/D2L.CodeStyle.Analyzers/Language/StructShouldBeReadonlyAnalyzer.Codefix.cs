@@ -47,7 +47,8 @@ namespace D2L.CodeStyle.Analyzers.Language {
 								root: root,
 								declaration: declaration,
 								ct: ct
-							)
+							),
+							equivalenceKey: nameof( AddReadonlyModifierCodefix )
 						),
 						diagnostic
 					);
