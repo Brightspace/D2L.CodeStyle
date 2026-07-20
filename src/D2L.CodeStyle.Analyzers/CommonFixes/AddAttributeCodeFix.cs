@@ -10,7 +10,6 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using static D2L.CodeStyle.Analyzers.AnnotationsContext;
 
 namespace D2L.CodeStyle.Analyzers.CommonFixes {
 	// BUG: this doesn't consider multiple partial decls so if the attribute
