@@ -204,8 +204,8 @@ namespace D2L.CodeStyle.Analyzers.CommonFixes {
 		) {
 			bool usingStatic = false;
 
-			if ( properties.ContainsKey( AddAttributeCodeFixArgs.UsingStatic ) ) {
-				usingStatic = bool.Parse( properties[ AddAttributeCodeFixArgs.UsingStatic ] );
+			if ( properties.TryGetValue( AddAttributeCodeFixArgs.UsingStatic, out string value ) ) {
+				usingStatic = bool.Parse( value );
 			}
 
 			string usingNs = properties[ AddAttributeCodeFixArgs.UsingNamespace ];

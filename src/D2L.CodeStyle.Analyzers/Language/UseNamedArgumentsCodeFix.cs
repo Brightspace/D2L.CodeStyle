@@ -100,7 +100,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				var arg = args.Arguments[idx];
 
 				// Some args might already be named
-				if ( !paramNames.ContainsKey( idx ) ) {
+				if ( !paramNames.TryGetValue( idx, out string value ) ) {
 					yield return arg;
 					continue;
 				}
@@ -113,7 +113,7 @@ namespace D2L.CodeStyle.Analyzers.Language {
 				yield return arg
 					.WithoutLeadingTrivia() // Remove leading trivia before argument
 					.WithNameColon(
-						SyntaxFactory.NameColon( paramNames[idx] )
+						SyntaxFactory.NameColon( value )
 							.WithLeadingTrivia( leadingTrivia ) // Re-apply leading trivia before NameColon
 					);
 			}
