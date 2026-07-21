@@ -280,11 +280,11 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				ctx.ReportDiagnostic(
 					Diagnostics.ConflictingImmutability,
 					parameter.Locations[0],
-					messageArgs: new[] {
+					messageArgs: [
 						"Immutable",
 						"ConditionallyImmutable.OnlyIf",
 						"typeparameter"
-					}
+					]
 				);
 			}
 		}

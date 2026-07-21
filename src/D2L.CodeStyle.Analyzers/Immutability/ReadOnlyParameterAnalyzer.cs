@@ -112,7 +112,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					ctx.ReportDiagnostic(
 						Diagnostics.ReadOnlyParameterIsnt,
 						getLocation(),
-						messageArgs: new[] { "is an in/ref/out parameter" }
+						messageArgs: [ "is an in/ref/out parameter" ]
 					);
 				}
 
@@ -128,7 +128,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					ctx.ReportDiagnostic(
 						Diagnostics.ReadOnlyParameterIsnt,
 						getLocation(),
-						messageArgs: new[] { "is assigned to and/or passed by reference" }
+						messageArgs: [ "is assigned to and/or passed by reference" ]
 					);
 				}
 			}
