@@ -126,7 +126,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					context.ReportDiagnostic(
 						Diagnostics.StatelessFuncIsnt,
 						argumentOperation.Syntax.GetLocation(),
-						messageArgs: [ "Lambda is not static" ]
+						messageArgs: new[] { "Lambda is not static" }
 					);
 					break;
 
