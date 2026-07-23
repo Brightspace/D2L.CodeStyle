@@ -786,8 +786,8 @@ namespace D2L.CodeStyle.Analyzers {
 
 		public static readonly DiagnosticDescriptor PatternStringMustBeConstant = new DiagnosticDescriptor(
 			id: "D2L0106",
-			title: "Members marked with [PatternString] must also be marked with [Constant]",
-			messageFormat: "Members marked with [PatternString] must also be marked with [Constant]",
+			title: "The value assigned to a member marked with [PatternString] must be a compile-time constant",
+			messageFormat: "The value assigned to a member marked with [PatternString] must be a compile-time constant",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true

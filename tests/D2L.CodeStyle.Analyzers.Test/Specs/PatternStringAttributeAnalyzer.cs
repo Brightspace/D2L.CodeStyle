@@ -9,38 +9,28 @@ namespace SpecTests {
 	public sealed class Model {
 
 		// Requires a constant string consisting solely of digits.
-		[Constant]
+		// [Constant] is no longer required alongside [PatternString].
 		[PatternString( "^[0-9]+$" )]
 		public string Property { get; set; }
 
-		[Constant]
 		[PatternString( "^[0-9]+$" )]
 		public string Field;
 
 		// Requires a constant string that does NOT contain whitespace.
-		[Constant]
 		[PatternString( "\\s", expectMatch: false )]
 		public string NoWhitespace { get; set; }
 
-		// [PatternString] without [Constant] is flagged on the member declaration.
-		[PatternString( "^[0-9]+$" )]
-		public string /* PatternStringMustBeConstant() */ MissingConstant /**/ = "123";
-
-		// A fully-attributed const declaration is evaluated at its initializer.
-		[Constant]
+		// A const declaration is evaluated at its initializer.
 		[PatternString( "^[0-9]+$" )]
 		public const string GoodConst = "123";
 
-		[Constant]
 		[PatternString( "^[0-9]+$" )]
 		public const string BadConst = /* PatternStringDoesNotMatch(abc, to match, ^[0-9]+$) */ "abc" /**/;
 
-		// A fully-attributed static field declaration is evaluated at its initializer.
-		[Constant]
+		// A static field declaration is evaluated at its initializer.
 		[PatternString( "^[0-9]+$" )]
 		public static readonly string GoodStaticField = "123";
 
-		[Constant]
 		[PatternString( "^[0-9]+$" )]
 		public static readonly string BadStaticField = /* PatternStringDoesNotMatch(xyz, to match, ^[0-9]+$) */ "xyz" /**/;
 	}
@@ -72,6 +62,21 @@ namespace SpecTests {
 			#region expectMatch: false semantics (must NOT contain whitespace)
 			good.NoWhitespace = "no-whitespace";
 			good.NoWhitespace = /* PatternStringDoesNotMatch(has space, to not match, \s) */ "has space" /**/;
+			#endregion
+		}
+
+		void NonConstantValuesAreFlagged() {
+
+			string variable = "123";
+			var good = new Model();
+
+			#region Non-constant values are flagged as needing to be constant
+			good.Property = /* PatternStringMustBeConstant() */ variable /**/;
+			good.Field = /* PatternStringMustBeConstant() */ Guid.NewGuid().ToString() /**/;
+
+			var built = new Model {
+				Property = /* PatternStringMustBeConstant() */ variable /**/
+			};
 			#endregion
 		}
 

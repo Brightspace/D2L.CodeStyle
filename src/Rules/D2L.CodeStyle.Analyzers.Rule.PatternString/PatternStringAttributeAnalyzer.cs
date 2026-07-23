@@ -28,17 +28,12 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		public static void CompilationStart(
 			CompilationStartAnalysisContext context
 		) {
-			var constantAttribute = context.Compilation.GetTypeByMetadataName(
-				"D2L.CodeStyle.Annotations.Contract.ConstantAttribute"
-			);
 			var patternStringAttribute = context.Compilation.GetTypeByMetadataName(
 				"D2L.CodeStyle.Annotations.Contract.PatternStringAttribute"
 			);
 
-			// If we couldn't find the symbols don't proceed with the evaluation.
-			if( constantAttribute is null
-				|| constantAttribute.Kind == SymbolKind.ErrorType
-				|| patternStringAttribute is null
+			// If we couldn't find the symbol don't proceed with the evaluation.
+			if( patternStringAttribute is null
 				|| patternStringAttribute.Kind == SymbolKind.ErrorType
 			) {
 				return;
@@ -50,7 +45,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				ctx => AnalyzeAssignment(
 					ctx,
 					(ISimpleAssignmentOperation)ctx.Operation,
-					constantAttribute,
 					patternStringAttribute,
 					regexCache
 				),
@@ -61,7 +55,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				ctx => AnalyzeFieldInitializer(
 					ctx,
 					(IFieldInitializerOperation)ctx.Operation,
-					constantAttribute,
 					patternStringAttribute,
 					regexCache
 				),
@@ -72,7 +65,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				ctx => AnalyzePropertyInitializer(
 					ctx,
 					(IPropertyInitializerOperation)ctx.Operation,
-					constantAttribute,
 					patternStringAttribute,
 					regexCache
 				),
@@ -83,7 +75,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		private static void AnalyzeAssignment(
 			OperationAnalysisContext context,
 			ISimpleAssignmentOperation assignment,
-			ISymbol constantAttribute,
 			ISymbol patternStringAttribute,
 			ConcurrentDictionary<string, Regex> regexCache
 		) {
@@ -108,7 +99,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				attributedSymbol: target,
 				targetType: targetType,
 				valueOperation: assignment.Value,
-				constantAttribute: constantAttribute,
 				patternStringAttribute: patternStringAttribute,
 				regexCache: regexCache
 			);
@@ -117,7 +107,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		private static void AnalyzeFieldInitializer(
 			OperationAnalysisContext context,
 			IFieldInitializerOperation initializer,
-			ISymbol constantAttribute,
 			ISymbol patternStringAttribute,
 			ConcurrentDictionary<string, Regex> regexCache
 		) {
@@ -127,7 +116,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 					attributedSymbol: field,
 					targetType: field.Type,
 					valueOperation: initializer.Value,
-					constantAttribute: constantAttribute,
 					patternStringAttribute: patternStringAttribute,
 					regexCache: regexCache
 				);
@@ -137,7 +125,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		private static void AnalyzePropertyInitializer(
 			OperationAnalysisContext context,
 			IPropertyInitializerOperation initializer,
-			ISymbol constantAttribute,
 			ISymbol patternStringAttribute,
 			ConcurrentDictionary<string, Regex> regexCache
 		) {
@@ -147,7 +134,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 					attributedSymbol: property,
 					targetType: property.Type,
 					valueOperation: initializer.Value,
-					constantAttribute: constantAttribute,
 					patternStringAttribute: patternStringAttribute,
 					regexCache: regexCache
 				);
@@ -161,13 +147,11 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			ISymbol attributedSymbol,
 			ITypeSymbol targetType,
 			IOperation valueOperation,
-			ISymbol constantAttribute,
 			ISymbol patternStringAttribute,
 			ConcurrentDictionary<string, Regex> regexCache
 		) {
 			// This only matters for strings, everything else should be ignored.
-			if( targetType.SpecialType != SpecialType.System_String
-			) {
+			if( targetType.SpecialType != SpecialType.System_String ) {
 				return;
 			}
 
@@ -183,21 +167,14 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				return;
 			}
 
-			// We will only analyze symbols with [PatternString] if it is also
-			// marked with [Constant].
-			if( !HasAttribute( attributedSymbol, constantAttribute ) ) {
-				context.ReportDiagnostic(
-					Diagnostic.Create(
-						descriptor: Diagnostics.PatternStringMustBeConstant,
-						location: attributedSymbol.Locations.First(),
-						messageArgs: []
-					)
-				);
-			}
-
-			// Once we've determine that we have a symbol and it's appropriately
-			// decorated then we attempt to evaluate the value of string.
-			ProcessConstantValue( context, valueOperation, patternStringInstance, regexCache );
+			// Once we've determined that we have a [PatternString] target then we
+			// attempt to evaluate the value of the string.
+			ProcessConstantValue(
+				context,
+				valueOperation,
+				patternStringInstance,
+				regexCache
+			);
 		}
 
 		private static void ProcessConstantValue(
@@ -206,10 +183,17 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			AttributeData patternStringInstance,
 			ConcurrentDictionary<string, Regex> regexCache
 		) {
-			// The [Constant] attribute guarantees that the value is a compile-time
-			// constant, so we can read its constant value directly off the operation.
+			// [PatternString] requires the assigned value to be a compile-time
+			// constant so that we can evaluate it here.
 			Optional<object?> constant = valueOperation.ConstantValue;
 			if( !constant.HasValue ) {
+				context.ReportDiagnostic(
+					Diagnostic.Create(
+						descriptor: Diagnostics.PatternStringMustBeConstant,
+						location: valueOperation.Syntax.GetLocation(),
+						messageArgs: []
+					)
+				);
 				return;
 			}
 
@@ -240,6 +224,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			// Try to get the cached regex, if it's not in the cache create it,
 			// but only store it if it was successfully created.
 			if( !regexCache.TryGetValue( pattern, out Regex? regex ) ) {
+				// It wasn't in the cache, so make a new one
 				try {
 					regex = new Regex(
 						pattern,
@@ -260,7 +245,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 					);
 					return;
 				}
-				regexCache.TryAdd( pattern, regex );
+				regexCache[ pattern ] = regex;
 			}
 
 			bool matched;
@@ -283,6 +268,8 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				return;
 			}
 
+			// Check against the expectMatch of the attribute to confirm
+			// the result is what the declaration expected.
 			if( matched != expectMatch ) {
 				context.ReportDiagnostic(
 					Diagnostic.Create(
@@ -305,18 +292,22 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		) {
 			ImmutableArray<TypedConstant> arguments = patternStringData.ConstructorArguments;
 
+			// Confirm there are enough arguments
 			string? patternValue = arguments.Length > 0
 				? arguments[0].Value as string
 				: null;
 
+			// and confirm the arguments are of the correct type
 			expectMatch = !( arguments.Length > 1 && arguments[1].Value is bool b )
 				|| b;
 
+			// and confirm the pattern is actually specified
 			if( string.IsNullOrWhiteSpace( patternValue ) ) {
 				pattern = "";
 				return false;
 			}
 
+			// The above check confirms it's not null, so we can use ! here
 			pattern = patternValue!;
 			return true;
 		}
@@ -336,64 +327,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			}
 
 			return Location.Create( reference.SyntaxTree, reference.Span );
-		}
-
-
-		/// <summary>
-		/// Check if the symbol has a specific attribute attached to it.
-		/// </summary>
-		/// <param name="symbol">The symbol to check for an attribute on</param>
-		/// <param name="attributeSymbol">The symbol of the attribute</param>
-		/// <returns>True if the attribute exists on the symbol, false otherwise</returns>
-		private static bool HasAttribute(
-			ISymbol symbol,
-			ISymbol attributeSymbol
-		) {
-			return symbol.GetAttributes()
-				.Any( attr => SymbolEqualityComparer.Default.Equals(
-						attributeSymbol,
-						attr.AttributeClass
-					)
-				);
-		}
-
-		private static bool IsMockArgumentConstraint(
-			IOperation operation
-		) {
-			// Matches patterns like Arg<T>.Is.Anything or Arg<T>.Is.Equal(...) (Rhino Mocks)
-			// Arg<T>.Is.Anything is a property chain: Arg<string>.Is (static) -> .Anything (instance)
-			// Arg<T>.Is.Equal(...) is a method call on the .Is property result
-			if( operation is IInvocationOperation invocation ) {
-				var containingType = invocation.TargetMethod.ContainingType;
-				if( IsArgType( containingType ) ) {
-					return true;
-				}
-				// Check if the instance receiver is an Arg<T> property chain
-				if( invocation.Instance != null && IsMockArgumentConstraint( invocation.Instance ) ) {
-					return true;
-				}
-			}
-
-			IOperation? current = operation;
-			while( current is IPropertyReferenceOperation propertyRef ) {
-				var containingType = propertyRef.Property.ContainingType;
-				if( IsArgType( containingType ) ) {
-					return true;
-				}
-				current = propertyRef.Instance;
-			}
-			return false;
-		}
-
-		private static bool IsArgType( INamedTypeSymbol type ) {
-			if( type == null ) {
-				return false;
-			}
-			if( type.Name == "Arg" && type.IsGenericType ) {
-				return true;
-			}
-			// Check containing types for nested types within Arg<T>
-			return IsArgType( type.ContainingType );
 		}
 	}
 }
