@@ -45,6 +45,21 @@ namespace SpecTests {
 		public const string GoodMultiConst = "123";
 	}
 
+	public sealed class FieldList {
+
+		// [PatternString] on a parameter validates the argument at the call site.
+		public FieldList( [PatternString( "^[0-9]+$" )] string fields ) { }
+
+		public static implicit operator FieldList( [PatternString( "^[0-9]+$" )] string fields ) {
+			return null;
+		}
+
+		// [PatternString] may coexist with [Constant] on the same parameter.
+		public static FieldList Create( [Constant][PatternString( "^[0-9]+$" )] string fields ) {
+			return null;
+		}
+	}
+
 	public sealed class Tests {
 
 		void PropertyAndFieldTests() {
@@ -118,6 +133,52 @@ namespace SpecTests {
 
 			#region Failing both patterns is flagged once per pattern
 			model.MultiPattern = /* PatternStringDoesNotMatch(ab, to match, ^[0-9]+$) | PatternStringDoesNotMatch(ab, to match, ^.{3}$) */ "ab" /**/;
+			#endregion
+		}
+
+		void ParameterTests() {
+
+			const string DIGITS = "123";
+			string variable = "123";
+
+			#region Matching constant arguments are fine
+			var a = new FieldList( "123" );
+			var b = new FieldList( DIGITS );
+			var d = FieldList.Create( "123" );
+			#endregion
+
+			#region Non-matching constant arguments are flagged
+			var e = new FieldList( /* PatternStringDoesNotMatch(abc, to match, ^[0-9]+$) */ "abc" /**/ );
+			var g = FieldList.Create( /* PatternStringDoesNotMatch(abc, to match, ^[0-9]+$) */ "abc" /**/ );
+			#endregion
+
+			#region Non-constant arguments are flagged as needing to be constant
+			var h = new FieldList( /* PatternStringMustBeConstant() */ variable /**/ );
+			var i = new FieldList( /* PatternStringMustBeConstant() */ Guid.NewGuid().ToString() /**/ );
+			#endregion
+		}
+
+		void ConversionTests() {
+
+			const string DIGITS = "123";
+			string variable = "123";
+
+			#region Matching conversion operands are fine
+			FieldList a = "123";
+			FieldList b = DIGITS;
+			var c = (FieldList)"123";
+			#endregion
+
+			#region Non-matching implicit conversion operands are flagged
+			FieldList d = /* PatternStringDoesNotMatch(abc, to match, ^[0-9]+$) */ "abc" /**/;
+			#endregion
+
+			#region Non-matching explicit conversion operands are flagged
+			var e = (FieldList)( /* PatternStringDoesNotMatch(abc, to match, ^[0-9]+$) */ "abc" /**/ );
+			#endregion
+
+			#region Non-constant conversion operands are flagged as needing to be constant
+			FieldList f = /* PatternStringMustBeConstant() */ variable /**/;
 			#endregion
 		}
 	}

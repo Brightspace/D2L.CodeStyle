@@ -70,6 +70,26 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				),
 				OperationKind.PropertyInitializer
 			);
+
+			context.RegisterOperationAction(
+				ctx => AnalyzeArgument(
+					ctx,
+					(IArgumentOperation)ctx.Operation,
+					patternStringAttribute,
+					regexCache
+				),
+				OperationKind.Argument
+			);
+
+			context.RegisterOperationAction(
+				ctx => AnalyzeConversion(
+					ctx,
+					(IConversionOperation)ctx.Operation,
+					patternStringAttribute,
+					regexCache
+				),
+				OperationKind.Conversion
+			);
 		}
 
 		private static void AnalyzeAssignment(
@@ -140,8 +160,54 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			}
 		}
 
-		// AnalyzeAssignment, AnalyzeFieldInitializer, and AnalyzePropertyInitializer
-		// from above all feed in to here to centralize the logic.
+		private static void AnalyzeArgument(
+			OperationAnalysisContext context,
+			IArgumentOperation argument,
+			ISymbol patternStringAttribute,
+			ConcurrentDictionary<string, Regex> regexCache
+		) {
+			IParameterSymbol? parameter = argument.Parameter;
+			if( parameter is null ) {
+				return;
+			}
+
+			HandleAttributedTarget(
+				context,
+				attributedSymbol: parameter,
+				targetType: parameter.Type,
+				valueOperation: argument.Value,
+				patternStringAttribute: patternStringAttribute,
+				regexCache: regexCache
+			);
+		}
+
+		private static void AnalyzeConversion(
+			OperationAnalysisContext context,
+			IConversionOperation conversion,
+			ISymbol patternStringAttribute,
+			ConcurrentDictionary<string, Regex> regexCache
+		) {
+			// Only user-defined conversion operators can carry a [PatternString]
+			// attribute on their parameter.
+			IMethodSymbol? conversionMethod = conversion.OperatorMethod;
+			if( conversionMethod is null || conversionMethod.Parameters.Length != 1 ) {
+				return;
+			}
+
+			IParameterSymbol parameter = conversionMethod.Parameters[ 0 ];
+
+			HandleAttributedTarget(
+				context,
+				attributedSymbol: parameter,
+				targetType: parameter.Type,
+				valueOperation: conversion.Operand,
+				patternStringAttribute: patternStringAttribute,
+				regexCache: regexCache
+			);
+		}
+
+		// AnalyzeAssignment, AnalyzeFieldInitializer, AnalyzePropertyInitializer,
+		// and AnalyzeArgument from above all feed in to here to centralize the logic.
 		private static void HandleAttributedTarget(
 			OperationAnalysisContext context,
 			ISymbol attributedSymbol,
