@@ -155,15 +155,16 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				return;
 			}
 
-			// We only care about targets annotated with [PatternString].
-			AttributeData? patternStringInstance = attributedSymbol.GetAttributes().FirstOrDefault(
+			// We only care about targets annotated with [PatternString]. Since
+			// the attribute may be specified multiple times we collect all of them.
+			ImmutableArray<AttributeData> patternStringInstances = attributedSymbol.GetAttributes().Where(
 				attr => SymbolEqualityComparer.Default.Equals(
 					attr.AttributeClass,
 					patternStringAttribute
 				)
-			);
+			).ToImmutableArray();
 			// If it doesn't have the attribute, nothing to do
-			if( patternStringInstance == null ) {
+			if( patternStringInstances.IsEmpty ) {
 				return;
 			}
 
@@ -172,7 +173,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			ProcessConstantValue(
 				context,
 				valueOperation,
-				patternStringInstance,
+				patternStringInstances,
 				regexCache
 			);
 		}
@@ -180,7 +181,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 		private static void ProcessConstantValue(
 			OperationAnalysisContext context,
 			IOperation valueOperation,
-			AttributeData patternStringInstance,
+			ImmutableArray<AttributeData> patternStringInstances,
 			ConcurrentDictionary<string, Regex> regexCache
 		) {
 			// [PatternString] requires the assigned value to be a compile-time
@@ -200,14 +201,17 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			// We can use ! here because the above check ensures there's a value
 			string patternStringValue = (string)constant.Value!;
 
-			// Now that we have the value, we can evaluate it against the declared regex pattern.
-			DoPatternMatching(
-				context,
-				patternStringValue,
-				valueOperation.Syntax.GetLocation(),
-				patternStringInstance,
-				regexCache
-			);
+			// Now that we have the value, we can evaluate it against every declared
+			// regex pattern. A diagnostic is emitted for each pattern that fails.
+			foreach( AttributeData patternStringInstance in patternStringInstances ) {
+				DoPatternMatching(
+					context,
+					patternStringValue,
+					valueOperation.Syntax.GetLocation(),
+					patternStringInstance,
+					regexCache
+				);
+			}
 		}
 
 		private static void DoPatternMatching(

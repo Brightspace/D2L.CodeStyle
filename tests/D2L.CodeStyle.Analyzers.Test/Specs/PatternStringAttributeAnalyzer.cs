@@ -33,6 +33,16 @@ namespace SpecTests {
 
 		[PatternString( "^[0-9]+$" )]
 		public static readonly string BadStaticField = /* PatternStringDoesNotMatch(xyz, to match, ^[0-9]+$) */ "xyz" /**/;
+
+		// Multiple [PatternString] attributes require the value to satisfy every
+		// pattern: must be digits AND must be exactly 3 characters long.
+		[PatternString( "^[0-9]+$" )]
+		[PatternString( "^.{3}$" )]
+		public string MultiPattern { get; set; }
+
+		[PatternString( "^[0-9]+$" )]
+		[PatternString( "^.{3}$" )]
+		public const string GoodMultiConst = "123";
 	}
 
 	public sealed class Tests {
@@ -87,6 +97,27 @@ namespace SpecTests {
 				Property = /* PatternStringDoesNotMatch(abc, to match, ^[0-9]+$) */ "abc" /**/,
 				Field = /* PatternStringDoesNotMatch(xyz, to match, ^[0-9]+$) */ "xyz" /**/
 			};
+			#endregion
+		}
+
+		void MultiplePatternTests() {
+
+			var model = new Model();
+
+			#region A value satisfying every pattern is fine
+			model.MultiPattern = "123";
+			#endregion
+
+			#region Failing the first pattern (not digits) is flagged
+			model.MultiPattern = /* PatternStringDoesNotMatch(abc, to match, ^[0-9]+$) */ "abc" /**/;
+			#endregion
+
+			#region Failing the second pattern (wrong length) is flagged
+			model.MultiPattern = /* PatternStringDoesNotMatch(12, to match, ^.{3}$) */ "12" /**/;
+			#endregion
+
+			#region Failing both patterns is flagged once per pattern
+			model.MultiPattern = /* PatternStringDoesNotMatch(ab, to match, ^[0-9]+$) | PatternStringDoesNotMatch(ab, to match, ^.{3}$) */ "ab" /**/;
 			#endregion
 		}
 	}
