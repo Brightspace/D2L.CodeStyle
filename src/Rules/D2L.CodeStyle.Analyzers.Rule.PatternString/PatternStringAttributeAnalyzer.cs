@@ -45,36 +45,6 @@ public sealed class PatternStringAttributeAnalyzer : DiagnosticAnalyzer {
 		ConcurrentDictionary<string, Lazy<Regex>> regexCache = [];
 
 		context.RegisterOperationAction(
-			ctx => AnalyzeAssignment(
-				ctx,
-				(ISimpleAssignmentOperation)ctx.Operation,
-				patternStringAttribute,
-				regexCache
-			),
-			OperationKind.SimpleAssignment
-		);
-
-		context.RegisterOperationAction(
-			ctx => AnalyzeFieldInitializer(
-				ctx,
-				(IFieldInitializerOperation)ctx.Operation,
-				patternStringAttribute,
-				regexCache
-			),
-			OperationKind.FieldInitializer
-		);
-
-		context.RegisterOperationAction(
-			ctx => AnalyzePropertyInitializer(
-				ctx,
-				(IPropertyInitializerOperation)ctx.Operation,
-				patternStringAttribute,
-				regexCache
-			),
-			OperationKind.PropertyInitializer
-		);
-
-		context.RegisterOperationAction(
 			ctx => AnalyzeArgument(
 				ctx,
 				(IArgumentOperation)ctx.Operation,
@@ -94,23 +64,11 @@ public sealed class PatternStringAttributeAnalyzer : DiagnosticAnalyzer {
 			OperationKind.Conversion
 		);
 
-		context.RegisterOperationAction(
-			ctx => AnalyzeDeconstructionAssignment(
-				ctx,
-				(IDeconstructionAssignmentOperation)ctx.Operation,
-				patternStringAttribute,
-				regexCache
-			),
-			OperationKind.DeconstructionAssignment
-		);
-
 		// The above operation actions validate the assigned value; this symbol
 		// action validates the declaration itself so that applying
 		// [PatternString] to a non-string member is flagged once at its source.
 		context.RegisterSymbolAction(
 			ctx => AnalyzeSymbolDeclaration( ctx, patternStringAttribute ),
-			SymbolKind.Field,
-			SymbolKind.Property,
 			SymbolKind.Method
 		);
 	}
@@ -120,12 +78,6 @@ public sealed class PatternStringAttributeAnalyzer : DiagnosticAnalyzer {
 		ISymbol patternStringAttribute
 	) {
 		switch( context.Symbol ) {
-			case IFieldSymbol field:
-				ReportIfNonStringTarget( context, field, field.Type, patternStringAttribute );
-				break;
-			case IPropertySymbol property:
-				ReportIfNonStringTarget( context, property, property.Type, patternStringAttribute );
-				break;
 			case IMethodSymbol method:
 				foreach( IParameterSymbol parameter in method.Parameters ) {
 					ReportIfNonStringTarget( context, parameter, parameter.Type, patternStringAttribute );
@@ -164,74 +116,6 @@ public sealed class PatternStringAttributeAnalyzer : DiagnosticAnalyzer {
 					location: location,
 					messageArgs: [ targetType.ToDisplayString() ]
 				)
-			);
-		}
-	}
-
-	private static void AnalyzeAssignment(
-		OperationAnalysisContext context,
-		ISimpleAssignmentOperation assignment,
-		INamedTypeSymbol patternStringAttribute,
-		ConcurrentDictionary<string, Lazy<Regex>> regexCache
-	) {
-		ISymbol target;
-		ITypeSymbol targetType;
-
-		switch( assignment.Target ) {
-			case IPropertyReferenceOperation propertyReference:
-				target = propertyReference.Property;
-				targetType = propertyReference.Property.Type;
-				break;
-			case IFieldReferenceOperation fieldReference:
-				target = fieldReference.Field;
-				targetType = fieldReference.Field.Type;
-				break;
-			default:
-				return;
-		}
-
-		HandleAttributedTarget(
-			context,
-			attributedSymbol: target,
-			targetType: targetType,
-			valueOperation: assignment.Value,
-			patternStringAttribute: patternStringAttribute,
-			regexCache: regexCache
-		);
-	}
-
-	private static void AnalyzeFieldInitializer(
-		OperationAnalysisContext context,
-		IFieldInitializerOperation initializer,
-		INamedTypeSymbol patternStringAttribute,
-		ConcurrentDictionary<string, Lazy<Regex>> regexCache
-	) {
-		foreach( IFieldSymbol field in initializer.InitializedFields ) {
-			HandleAttributedTarget(
-				context,
-				attributedSymbol: field,
-				targetType: field.Type,
-				valueOperation: initializer.Value,
-				patternStringAttribute: patternStringAttribute,
-				regexCache: regexCache
-			);
-		}
-	}
-
-	private static void AnalyzePropertyInitializer(
-		OperationAnalysisContext context,
-		IPropertyInitializerOperation initializer,
-		INamedTypeSymbol patternStringAttribute,
-		ConcurrentDictionary<string, Lazy<Regex>> regexCache
-	) {
-		foreach( IPropertySymbol property in initializer.InitializedProperties ) {
-			HandleAttributedTarget(
-				context,
-				attributedSymbol: property,
-				targetType: property.Type,
-				valueOperation: initializer.Value,
-				patternStringAttribute: patternStringAttribute,
-				regexCache: regexCache
 			);
 		}
 	}
@@ -282,103 +166,6 @@ public sealed class PatternStringAttributeAnalyzer : DiagnosticAnalyzer {
 		);
 	}
 
-	private static void AnalyzeDeconstructionAssignment(
-		OperationAnalysisContext context,
-		IDeconstructionAssignmentOperation assignment,
-		INamedTypeSymbol patternStringAttribute,
-		ConcurrentDictionary<string, Lazy<Regex>> regexCache
-	) {
-		HandleDeconstruction(
-			context,
-			target: assignment.Target,
-			value: assignment.Value,
-			patternStringAttribute: patternStringAttribute,
-			regexCache: regexCache
-		);
-	}
-
-	// Handle deconstruction operations like (foo.Property, foo.Field) = ("123", "456");
-	// and ensure it carries through to the validation.
-	private static void HandleDeconstruction(
-		OperationAnalysisContext context,
-		IOperation target,
-		IOperation value,
-		INamedTypeSymbol patternStringAttribute,
-		ConcurrentDictionary<string, Lazy<Regex>> regexCache
-	) {
-		// First, on each target/value unwrap them in case they're using implicit
-		// conversions, then confirm that we're going tuple<->tuple
-		if( ( UnwrapConversions( target ) is not ITupleOperation targetTuple )
-			|| ( UnwrapConversions( value ) is not ITupleOperation valueTuple )
-		) {
-			return;
-		}
-
-		// Now confirm we're deconstructing to tuples of the same size
-		// otherwise this doesn't allow us to pair up below.
-		if( targetTuple.Elements.Length != valueTuple.Elements.Length ) {
-			return;
-		}
-
-		for( int i = 0; i < targetTuple.Elements.Length; i++ ) {
-			IOperation elementTarget = UnwrapConversions( targetTuple.Elements[ i ] );
-			IOperation elementValue = valueTuple.Elements[ i ];
-
-			// Nested deconstruction, e.g. ((a, b), c) = ((x, y), z).
-			if( elementTarget is ITupleOperation ) {
-				HandleDeconstruction(
-					context,
-					target: elementTarget,
-					value: elementValue,
-					patternStringAttribute: patternStringAttribute,
-					regexCache: regexCache
-				);
-				continue;
-			}
-
-			// Comb out the member and memberType we're interested in
-			// so HandleAttributedTarget doesn't care where it came from.
-			ISymbol member;
-			ITypeSymbol memberType;
-			switch( elementTarget ) {
-				case IPropertyReferenceOperation propertyReference:
-					member = propertyReference.Property;
-					memberType = propertyReference.Property.Type;
-					break;
-				case IFieldReferenceOperation fieldReference:
-					member = fieldReference.Field;
-					memberType = fieldReference.Field.Type;
-					break;
-				default:
-					continue;
-			}
-
-			HandleAttributedTarget(
-				context,
-				attributedSymbol: member,
-				targetType: memberType,
-				valueOperation: UnwrapConversions( elementValue ),
-				patternStringAttribute: patternStringAttribute,
-				regexCache: regexCache
-			);
-		}
-	}
-
-	private static IOperation UnwrapConversions(
-		IOperation operation
-	) {
-		// Keep peeling away conversions until we get to the underlying operation
-		while( operation is IConversionOperation conversion
-			&& conversion.OperatorMethod is null
-		) {
-			operation = conversion.Operand;
-		}
-
-		return operation;
-	}
-
-	// AnalyzeAssignment, AnalyzeFieldInitializer, AnalyzePropertyInitializer,
-	// and AnalyzeArgument from above all feed in to here to centralize the logic.
 	private static void HandleAttributedTarget(
 		OperationAnalysisContext context,
 		ISymbol attributedSymbol,
