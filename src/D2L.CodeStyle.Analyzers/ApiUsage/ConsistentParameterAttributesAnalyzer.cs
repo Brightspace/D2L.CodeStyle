@@ -60,20 +60,26 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 					var implementedParameterUsage = consistentAttributesContext.GetAttributeUsage( implementedMethod.Parameters[ i ] );
 
 					for( int j = 0; j < thisParameterUsage.Length; ++j ) {
-						var thisParameterUsageAttr = thisParameterUsage[ j ];
-						var implementedParameterUsageAttr = implementedParameterUsage[ j ];
+						(string AttributeName, ImmutableArray<AttributeData> Instances) thisParameterUsageAttr = thisParameterUsage[ j ];
+						(string AttributeName, ImmutableArray<AttributeData> Instances) implementedParameterUsageAttr = implementedParameterUsage[ j ];
 
-						if( thisParameterUsageAttr != implementedParameterUsageAttr ) {
-							ctx.ReportDiagnostic(
-								Diagnostics.InconsistentMethodAttributeApplication,
-								GetLocationOfNthParameter( methodSymbol, i, ctx.CancellationToken ),
-								messageArgs: new[] {
-									thisParameterUsageAttr.AttributeName,
-									$"{ methodSymbol.ContainingType.Name }.{ methodSymbol.Name }",
-									$"{ implementedMethod.ContainingType.Name }.{ implementedMethod.Name }"
-								}
-							);
+						if( thisParameterUsageAttr.Instances.IsDefaultOrEmpty && implementedParameterUsageAttr.Instances.IsDefaultOrEmpty ) {
+							continue;
 						}
+
+						if( thisParameterUsageAttr.Instances.SequenceEqual( implementedParameterUsageAttr.Instances, AttributeDataComparer.Instance ) ) {
+							continue;
+						}
+
+						ctx.ReportDiagnostic(
+							Diagnostics.InconsistentMethodAttributeApplication,
+							GetLocationOfNthParameter( methodSymbol, i, ctx.CancellationToken ),
+							messageArgs: new[] {
+								thisParameterUsageAttr.AttributeName,
+								$"{ methodSymbol.ContainingType.Name }.{ methodSymbol.Name }",
+								$"{ implementedMethod.ContainingType.Name }.{ implementedMethod.Name }"
+							}
+						);
 					}
 				}
 			}
@@ -96,13 +102,16 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 
 			private readonly INamedTypeSymbol m_constantAttribute;
 			private readonly INamedTypeSymbol m_statelessFuncAttribute;
+			private readonly INamedTypeSymbol m_patternStringAttribute;
 
 			private ConsistentAttributesContext(
 				INamedTypeSymbol constantAttribute,
-				INamedTypeSymbol statelessFuncAttribute
+				INamedTypeSymbol statelessFuncAttribute,
+				INamedTypeSymbol patternStringAttribute
 			) {
 				m_constantAttribute = constantAttribute;
 				m_statelessFuncAttribute = statelessFuncAttribute;
+				m_patternStringAttribute = patternStringAttribute;
 			}
 
 			public static bool TryCreate(
@@ -121,22 +130,74 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 					return false;
 				}
 
+				INamedTypeSymbol? patternStringAttribute = compilation.GetTypeByMetadataName( "D2L.CodeStyle.Annotations.Contract.PatternStringAttribute" );
+				if( patternStringAttribute.IsNullOrErrorType() ) {
+					consistentAttributesContext = null;
+					return false;
+				}
+
 				consistentAttributesContext = new(
 					constantAttribute: constantAttribute,
-					statelessFuncAttribute: statelessFuncAttribute
+					statelessFuncAttribute: statelessFuncAttribute,
+					patternStringAttribute: patternStringAttribute
 				);
 				return true;
 			}
 
-			public ImmutableArray<(string AttributeName, bool Applied)> GetAttributeUsage(
+			public ImmutableArray<(string AttributeName, ImmutableArray<AttributeData> Instances)> GetAttributeUsage(
 				ISymbol symbol
 			) => ImmutableArray.Create(
-				("Constant", HasAttribute( symbol, m_constantAttribute )),
-				("StatelessFunc", HasAttribute( symbol, m_statelessFuncAttribute ))
+				("Constant", GetAttributes( symbol, m_constantAttribute )),
+				("StatelessFunc", GetAttributes( symbol, m_statelessFuncAttribute )),
+				("PatternString", GetAttributes( symbol, m_patternStringAttribute ))
 			);
 
-			internal static bool HasAttribute( ISymbol s, INamedTypeSymbol attribute )
-				=> s.GetAttributes().Any( a => SymbolEqualityComparer.Default.Equals( a.AttributeClass, attribute ) );
+			internal static ImmutableArray<AttributeData> GetAttributes( ISymbol s, INamedTypeSymbol attribute )
+				=> s.GetAttributes().Where( a => SymbolEqualityComparer.Default.Equals( a.AttributeClass, attribute ) ).ToImmutableArray();
+		}
+
+		private sealed class AttributeDataComparer : IEqualityComparer<AttributeData> {
+
+			public static readonly AttributeDataComparer Instance = new();
+
+			private AttributeDataComparer() { }
+
+			bool IEqualityComparer<AttributeData>.Equals( AttributeData x, AttributeData y ) {
+				if( x.ConstructorArguments.Length != y.ConstructorArguments.Length ) {
+					return false;
+				}
+
+				if( x.NamedArguments.Length != y.NamedArguments.Length ) {
+					return false;
+				}
+
+				for( int i = 0; i < x.ConstructorArguments.Length; i++ ) {
+					if( !x.ConstructorArguments[ i ].Equals( y.ConstructorArguments[ i ] ) ) {
+						return false;
+					}
+				}
+
+				var namedXArgs = x.NamedArguments.OrderBy( static arg => arg.Key, StringComparer.Ordinal ).ToArray();
+				var namedYArgs = y.NamedArguments.OrderBy( static arg => arg.Key, StringComparer.Ordinal ).ToArray();
+				for( int i = 0; i < namedXArgs.Length; i++ ) {
+					var namedXArg = namedXArgs[ i ];
+					var namedYArg = namedYArgs[ i ];
+
+					if( !StringComparer.Ordinal.Equals( namedXArg.Key, namedYArg.Key ) ) {
+						return false;
+					}
+
+					if( !namedXArg.Value.Equals( namedYArg.Value ) ) {
+						return false;
+					}
+				}
+
+				return true;
+			}
+
+			int IEqualityComparer<AttributeData>.GetHashCode( AttributeData obj ) {
+				throw new NotImplementedException();
+			}
 		}
 	}
 }

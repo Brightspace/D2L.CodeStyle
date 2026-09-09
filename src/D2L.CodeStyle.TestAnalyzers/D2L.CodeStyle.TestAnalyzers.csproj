@@ -28,12 +28,14 @@
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(OutputPath)\D2L.CodeStyle.Analyzers.Rule.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(OutputPath)\D2L.CodeStyle.Analyzers.Rule.Constant.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(OutputPath)\D2L.CodeStyle.Analyzers.Rule.PatternString.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
 
   <Target Name="ValidateRequiredFiles" BeforeTargets="Build">
     <Error Condition="!Exists('$(OutputPath)$(AssemblyName).dll')" Text="Required file '$(OutputPath)$(AssemblyName).dll' is missing." />
     <Error Condition="!Exists('$(OutputPath)D2L.CodeStyle.Analyzers.Rule.dll')" Text="Required file '$(OutputPath)D2L.CodeStyle.Analyzers.Rule.dll' is missing." />
     <Error Condition="!Exists('$(OutputPath)D2L.CodeStyle.Analyzers.Rule.Constant.dll')" Text="Required file '$(OutputPath)D2L.CodeStyle.Analyzers.Rule.Constant.dll' is missing." />
+    <Error Condition="!Exists('$(OutputPath)D2L.CodeStyle.Analyzers.Rule.PatternString.dll')" Text="Required file '$(OutputPath)D2L.CodeStyle.Analyzers.Rule.PatternString.dll' is missing." />
   </Target>
         
   <ItemGroup>
@@ -47,6 +49,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Rules\D2L.CodeStyle.Analyzers.Rule.Constant\D2L.CodeStyle.Analyzers.Rule.Constant\D2L.CodeStyle.Analyzers.Rule.Constant.csproj">
+      <PrivateAssets>all</PrivateAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\Rules\D2L.CodeStyle.Analyzers.Rule.PatternString\D2L.CodeStyle.Analyzers.Rule.PatternString.csproj">
       <PrivateAssets>all</PrivateAssets>
     </ProjectReference>
     <ProjectReference Include="..\Rules\D2L.CodeStyle.Analyzers.Rule\D2L.CodeStyle.Analyzers.Rule\D2L.CodeStyle.Analyzers.Rule.csproj">

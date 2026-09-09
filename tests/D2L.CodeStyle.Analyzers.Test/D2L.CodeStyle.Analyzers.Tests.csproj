@@ -18,6 +18,7 @@
     <ProjectReference Include="..\..\src\D2L.CodeStyle.Annotations\D2L.CodeStyle.Annotations.csproj" />
     <ProjectReference Include="..\..\src\D2L.CodeStyle.SpecTests\D2L.CodeStyle.SpecTests.csproj" />
     <ProjectReference Include="..\..\src\Rules\D2L.CodeStyle.Analyzers.Rule.Constant\D2L.CodeStyle.Analyzers.Rule.Constant\D2L.CodeStyle.Analyzers.Rule.Constant.csproj" />
+    <ProjectReference Include="..\..\src\Rules\D2L.CodeStyle.Analyzers.Rule.PatternString\D2L.CodeStyle.Analyzers.Rule.PatternString.csproj" />
     <ProjectReference Include="..\..\src\Rules\D2L.CodeStyle.Analyzers.Rule\D2L.CodeStyle.Analyzers.Rule\D2L.CodeStyle.Analyzers.Rule.csproj" />
   </ItemGroup>
 

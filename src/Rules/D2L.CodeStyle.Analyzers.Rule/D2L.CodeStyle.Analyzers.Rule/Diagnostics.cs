@@ -748,10 +748,10 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true
 		);
 
-		public static readonly DiagnosticDescriptor ReferenceToMethodWithConstantParameterNotSupport = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor ReferenceToMethodWithAttributedParameterNotSupported = new DiagnosticDescriptor(
 			id: "D2L0102",
-			title: "References to methods with parameters marked as [Constant] is not supported",
-			messageFormat: "References to methods with parameters marked as [Constant] is currently not supported",
+			title: "References to methods with parameters marked as [{0}] is not supported",
+			messageFormat: "References to methods with parameters marked as [{0}] is currently not supported",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
@@ -780,6 +780,51 @@ namespace D2L.CodeStyle.Analyzers {
 			title: "Primary class constructors introduce mutability into classes via their parameters",
 			messageFormat: "Primary class constructors introduce mutability into classes via their parameters",
 			category: "Immutability",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		 );
+
+		public static readonly DiagnosticDescriptor PatternStringMustBeConstant = new DiagnosticDescriptor(
+			id: "D2L0106",
+			title: "The value assigned to a member marked with [PatternString] must be a compile-time constant",
+			messageFormat: "The value assigned to a member marked with [PatternString] must be a compile-time constant",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		 );
+
+		public static readonly DiagnosticDescriptor PatternStringDoesNotMatch = new DiagnosticDescriptor(
+			id: "D2L0107",
+			title: "A [PatternString] value does not satisfy its required regex pattern",
+			messageFormat: "The constant string \"{0}\" was expected {1} the pattern \"{2}\"",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		 );
+
+		public static readonly DiagnosticDescriptor PatternStringInvalidPattern = new DiagnosticDescriptor(
+			id: "D2L0108",
+			title: "The [PatternString] regex pattern is not a valid regular expression",
+			messageFormat: "The [PatternString] regex pattern \"{0}\" is not a valid regular expression: {1}",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		 );
+
+		public static readonly DiagnosticDescriptor PatternStringEvaluationTimeout = new DiagnosticDescriptor(
+			id: "D2L0109",
+			title: "The [PatternString] regex pattern could not be evaluated in time",
+			messageFormat: "The [PatternString] regex pattern \"{0}\" could not be evaluated against the constant string \"{1}\" within {2}ms",
+			category: "Correctness",
+			defaultSeverity: DiagnosticSeverity.Error,
+			isEnabledByDefault: true
+		);
+
+		public static readonly DiagnosticDescriptor PatternStringOnNonStringType = new DiagnosticDescriptor(
+			id: "D2L0110",
+			title: "[PatternString] can only be applied to string members",
+			messageFormat: "[PatternString] can only be applied to string members, but was applied to a member of type \"{0}\"",
+			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true
 		 );
