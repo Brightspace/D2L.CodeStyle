@@ -324,10 +324,10 @@ namespace SpecTests {
 		void MethodReferenceTests() {
 
 			{ Action<int> action = Types.SomeMethodWithParameter<int>; }
-			{ Action<int> action = /* ReferenceToMethodWithConstantParameterNotSupport */ Types.SomeMethodWithConstantParameter<int> /**/; }
-			{ Action<int, int> action = /* ReferenceToMethodWithConstantParameterNotSupport */ Types.SomeMethodWithOneConstantParameter<int> /**/; }
-			{ Action<int, int> action = /* ReferenceToMethodWithConstantParameterNotSupport */ Types.SomeMethodWithOneOtherConstantParameter<int> /**/; }
-			{ Action<int, int> action = /* ReferenceToMethodWithConstantParameterNotSupport */ Types.SomeMethodWithTwoConstantParameters<int> /**/; }
+			{ Action<int> action = /* ReferenceToMethodWithAttributedParameterNotSupported(Constant) */ Types.SomeMethodWithConstantParameter<int> /**/; }
+			{ Action<int, int> action = /* ReferenceToMethodWithAttributedParameterNotSupported(Constant) */ Types.SomeMethodWithOneConstantParameter<int> /**/; }
+			{ Action<int, int> action = /* ReferenceToMethodWithAttributedParameterNotSupported(Constant) */ Types.SomeMethodWithOneOtherConstantParameter<int> /**/; }
+			{ Action<int, int> action = /* ReferenceToMethodWithAttributedParameterNotSupported(Constant) */ Types.SomeMethodWithTwoConstantParameters<int> /**/; }
 		}
 
 		#endregion

@@ -46,6 +46,20 @@ namespace SpecTests {
 		public static void M4( [/* PatternStringInvalidPattern(  ,Pattern is empty) */ PatternString( " " ) /**/] string s ) { }
 	}
 
+	public sealed class MethodReferenceTests {
+		void M1( string s ) { }
+		void M2( [PatternString( "^[0-9]+$" )] string s ) { }
+		void M3( [PatternString( "^[0-9]+$" )] string s, string s2 ) { }
+		void M4( [PatternString( "^[0-9]+$" )] string s, [PatternString( "^[0-9]+$" )] string s2 ) { }
+
+		void M2() {
+			Action<string> _ = M1;
+			Action<string> _ = /* ReferenceToMethodWithAttributedParameterNotSupported(PatternString) */ M2 /**/;
+			Action<string, string> _ = /* ReferenceToMethodWithAttributedParameterNotSupported(PatternString) */ M3 /**/;
+			Action<string, string> _ = /* ReferenceToMethodWithAttributedParameterNotSupported(PatternString) */ M4 /**/;
+		}
+	}
+
 	public sealed class Tests {
 
 		void SinglePatternTests() {

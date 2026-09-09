@@ -18,7 +18,8 @@ public sealed class PatternStringAttributeAnalyzer : DiagnosticAnalyzer {
 			Diagnostics.PatternStringDoesNotMatch,
 			Diagnostics.PatternStringInvalidPattern,
 			Diagnostics.PatternStringEvaluationTimeout,
-			Diagnostics.PatternStringOnNonStringType
+			Diagnostics.PatternStringOnNonStringType,
+			Diagnostics.ReferenceToMethodWithAttributedParameterNotSupported
 		);
 
 	public override void Initialize( AnalysisContext context ) {
@@ -74,6 +75,15 @@ public sealed class PatternStringAttributeAnalyzer : DiagnosticAnalyzer {
 			),
 			SymbolKind.Parameter
 		);
+
+		context.RegisterOperationAction(
+			ctx => AnalyzeMethodReference(
+				ctx,
+				(IMethodReferenceOperation)ctx.Operation,
+				patternStringAttribute
+			),
+			OperationKind.MethodReference
+		);
 	}
 
 	private static void AnalyzeParameter(
@@ -126,6 +136,26 @@ public sealed class PatternStringAttributeAnalyzer : DiagnosticAnalyzer {
 					)
 				);
 			}
+		}
+	}
+
+	private static void AnalyzeMethodReference(
+		OperationAnalysisContext context,
+		IMethodReferenceOperation operation,
+		INamedTypeSymbol PatternStringAttributeT
+	) {
+		foreach( IParameterSymbol parameter in operation.Method.Parameters ) {
+			if( !HasAttribute( parameter, PatternStringAttributeT ) ) {
+				continue;
+			}
+
+			context.ReportDiagnostic(
+				descriptor: Diagnostics.ReferenceToMethodWithAttributedParameterNotSupported,
+				location: operation.Syntax.GetLocation(),
+				messageArgs: ["PatternString"]
+			);
+
+			return;
 		}
 	}
 
@@ -352,5 +382,17 @@ public sealed class PatternStringAttributeAnalyzer : DiagnosticAnalyzer {
 
 		message = null;
 		return regex;
+	}
+
+	private static bool HasAttribute(
+		ISymbol symbol,
+		INamedTypeSymbol attributeType
+	) {
+		return symbol.GetAttributes()
+			.Any( attr => SymbolEqualityComparer.Default.Equals(
+					attributeType,
+					attr.AttributeClass
+				)
+			);
 	}
 }

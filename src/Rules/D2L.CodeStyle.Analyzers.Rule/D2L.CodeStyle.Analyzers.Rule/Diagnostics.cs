@@ -748,10 +748,10 @@ namespace D2L.CodeStyle.Analyzers {
 			isEnabledByDefault: true
 		);
 
-		public static readonly DiagnosticDescriptor ReferenceToMethodWithConstantParameterNotSupport = new DiagnosticDescriptor(
+		public static readonly DiagnosticDescriptor ReferenceToMethodWithAttributedParameterNotSupported = new DiagnosticDescriptor(
 			id: "D2L0102",
-			title: "References to methods with parameters marked as [Constant] is not supported",
-			messageFormat: "References to methods with parameters marked as [Constant] is currently not supported",
+			title: "References to methods with parameters marked as [{0}] is not supported",
+			messageFormat: "References to methods with parameters marked as [{0}] is currently not supported",
 			category: "Correctness",
 			defaultSeverity: DiagnosticSeverity.Error,
 			isEnabledByDefault: true

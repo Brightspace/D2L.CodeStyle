@@ -15,7 +15,7 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			ImmutableArray.Create(
 				Diagnostics.NonConstantPassedToConstantParameter,
 				Diagnostics.InvalidConstantType,
-				Diagnostics.ReferenceToMethodWithConstantParameterNotSupport
+				Diagnostics.ReferenceToMethodWithAttributedParameterNotSupported
 			);
 
 		public override void Initialize( AnalysisContext context ) {
@@ -243,8 +243,9 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				}
 
 				context.ReportDiagnostic(
-					descriptor: Diagnostics.ReferenceToMethodWithConstantParameterNotSupport,
-					location: operation.Syntax.GetLocation()
+					descriptor: Diagnostics.ReferenceToMethodWithAttributedParameterNotSupported,
+					location: operation.Syntax.GetLocation(),
+					messageArgs: ["Constant"]
 				);
 
 				return;
