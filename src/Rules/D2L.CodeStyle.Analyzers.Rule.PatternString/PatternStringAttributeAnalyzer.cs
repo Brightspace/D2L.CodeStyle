@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -456,7 +457,7 @@ public sealed class PatternStringAttributeAnalyzer : DiagnosticAnalyzer {
 		AttributeData patternStringData,
 		ConcurrentDictionary<string, Lazy<Regex>> regexCache
 	) {
-		if( !TryGetPatternStringArguments( patternStringData, out string pattern, out bool expectMatch ) ) {
+		if( !TryGetPatternStringArguments( patternStringData, out string? pattern, out bool? expectMatch ) ) {
 			return;
 		}
 
@@ -524,7 +525,7 @@ public sealed class PatternStringAttributeAnalyzer : DiagnosticAnalyzer {
 					location: location,
 					messageArgs: [
 						patternStringValue,
-						expectMatch ? "to match" : "to not match",
+						expectMatch.Value ? "to match" : "to not match",
 						pattern
 					]
 				)
@@ -534,28 +535,30 @@ public sealed class PatternStringAttributeAnalyzer : DiagnosticAnalyzer {
 
 	private static bool TryGetPatternStringArguments(
 		AttributeData patternStringData,
-		out string pattern,
-		out bool expectMatch
+		[NotNullWhen( true )] out string? pattern,
+		[NotNullWhen( true )] out bool? expectMatch
 	) {
 		ImmutableArray<TypedConstant> arguments = patternStringData.ConstructorArguments;
 
-		// Confirm there are enough arguments
-		string? patternValue = arguments.Length > 0
+		pattern = arguments.Length > 0
 			? arguments[ 0 ].Value as string
 			: null;
-
-		// and confirm the arguments are of the correct type
-		expectMatch = !( arguments.Length > 1 && arguments[ 1 ].Value is bool b )
-			|| b;
-
-		// and confirm the pattern is actually specified
-		if( string.IsNullOrWhiteSpace( patternValue ) ) {
-			pattern = "";
+		if( pattern is null || string.IsNullOrWhiteSpace( pattern ) ) {
+			pattern = null;
+			expectMatch = false;
 			return false;
 		}
 
-		// The above check confirms it's not null, so we can use ! here
-		pattern = patternValue!;
+		expectMatch = true;
+
+		foreach( KeyValuePair<string, TypedConstant> argument in patternStringData.NamedArguments ) {
+			switch( argument.Key ) {
+				case "ExpectMatch":
+					expectMatch = (bool)argument.Value.Value!;
+					break;
+			}
+		}
+
 		return true;
 	}
 

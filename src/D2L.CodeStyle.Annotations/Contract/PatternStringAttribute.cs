@@ -14,12 +14,11 @@ namespace D2L.CodeStyle.Annotations.Contract;
 )]
 public sealed class PatternStringAttribute : Attribute {
 
-	public PatternStringAttribute( string regexPattern, bool expectMatch = true ) {
+	public PatternStringAttribute( string regexPattern ) {
 		RegexPattern = regexPattern;
-		ExpectMatch = expectMatch;
 	}
 
 	public string RegexPattern { get; }
-	public bool ExpectMatch { get; }
+	public bool ExpectMatch { get; set; } = true;
 
 }

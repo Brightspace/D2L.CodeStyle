@@ -17,7 +17,7 @@ namespace SpecTests {
 		public string Field;
 
 		// Requires a constant string that does NOT contain whitespace.
-		[PatternString( "\\s", expectMatch: false )]
+		[PatternString( "\\s", ExpectMatch = false )]
 		public string NoWhitespace { get; set; }
 
 		// A const declaration is evaluated at its initializer.
@@ -102,7 +102,7 @@ namespace SpecTests {
 			good.Field = /* PatternStringDoesNotMatch(12a, to match, ^[0-9]+$) */ "12a" /**/;
 			#endregion
 
-			#region expectMatch: false semantics (must NOT contain whitespace)
+			#region ExpectMatch = false semantics (must NOT contain whitespace)
 			good.NoWhitespace = "no-whitespace";
 			good.NoWhitespace = /* PatternStringDoesNotMatch(has space, to not match, \s) */ "has space" /**/;
 			#endregion
