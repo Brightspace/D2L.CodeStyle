@@ -36,7 +36,14 @@ namespace SpecTests {
 	}
 
 	public sealed class NonString {
-		public static void M( [/* PatternStringOnNonStringType(int) */ PatternString( "^[0-9]+$" ) /**/] int value ) { }
+		public static void M( [PatternString( "^[0-9]+$" )] int /* PatternStringOnNonStringType(int) */ value /**/ ) { }
+	}
+
+	public sealed class InvalidRegex {
+		public static void M1( [/* PatternStringInvalidPattern(^[0-9+$,parsing "^[0-9+$" - Unterminated [] set.) */ PatternString( "^[0-9+$" ) /**/] string s ) { }
+		public static void M2( [/* PatternStringInvalidPattern(,Pattern is empty) */ PatternString( null ) /**/] string s ) { }
+		public static void M3( [/* PatternStringInvalidPattern(,Pattern is empty) */ PatternString( "" ) /**/] string s ) { }
+		public static void M4( [/* PatternStringInvalidPattern(  ,Pattern is empty) */ PatternString( " " ) /**/] string s ) { }
 	}
 
 	public sealed class Tests {

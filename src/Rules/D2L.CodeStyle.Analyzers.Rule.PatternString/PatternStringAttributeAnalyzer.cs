@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -70,7 +69,8 @@ public sealed class PatternStringAttributeAnalyzer : DiagnosticAnalyzer {
 		context.RegisterSymbolAction(
 			ctx => AnalyzeParameter(
 				ctx, (IParameterSymbol)ctx.Symbol,
-				patternStringAttribute
+				patternStringAttribute,
+				regexCache
 			),
 			SymbolKind.Parameter
 		);
@@ -79,12 +79,10 @@ public sealed class PatternStringAttributeAnalyzer : DiagnosticAnalyzer {
 	private static void AnalyzeParameter(
 		SymbolAnalysisContext context,
 		IParameterSymbol parameter,
-		ISymbol patternStringAttribute
+		INamedTypeSymbol patternStringAttribute,
+		ConcurrentDictionary<string, Lazy<Regex>> regexCache
 	) {
-		// [PatternString] only makes sense on strings.
-		if( parameter.Type.SpecialType == SpecialType.System_String ) {
-			return;
-		}
+		bool reportedNonString = false;
 
 		foreach( AttributeData attribute in parameter.GetAttributes() ) {
 			if( !SymbolEqualityComparer.Default.Equals(
@@ -94,18 +92,40 @@ public sealed class PatternStringAttributeAnalyzer : DiagnosticAnalyzer {
 				continue;
 			}
 
-			SyntaxReference? reference = attribute.ApplicationSyntaxReference;
-			Location location = reference is null
-				? parameter.Locations.FirstOrDefault() ?? Location.None
-				: Location.Create( reference.SyntaxTree, reference.Span );
+			// [PatternString] only makes sense on strings.
+			if( parameter.Type.SpecialType != SpecialType.System_String
+				&& !reportedNonString
+			) {
+				Location location = parameter.Locations.FirstOrDefault() ?? Location.None;
 
-			context.ReportDiagnostic(
-				Diagnostic.Create(
-					descriptor: Diagnostics.PatternStringOnNonStringType,
-					location: location,
-					messageArgs: [ parameter.Type.ToDisplayString() ]
-				)
-			);
+				context.ReportDiagnostic(
+					Diagnostic.Create(
+						descriptor: Diagnostics.PatternStringOnNonStringType,
+						location: location,
+						messageArgs: [ parameter.Type.ToDisplayString() ]
+					)
+				);
+
+				reportedNonString = true;
+			}
+
+			if( GetRegexForAttribute( attribute, regexCache, out string? pattern, out string? message ) is null ) {
+				SyntaxReference? reference = attribute.ApplicationSyntaxReference;
+				Location location = reference is null
+					? parameter.Locations.FirstOrDefault() ?? Location.None
+					: Location.Create( reference.SyntaxTree, reference.Span );
+
+				context.ReportDiagnostic(
+					Diagnostic.Create(
+						descriptor: Diagnostics.PatternStringInvalidPattern,
+						location: location,
+						messageArgs: [
+							pattern,
+							message
+						]
+					)
+				);
+			}
 		}
 	}
 
@@ -233,8 +253,75 @@ public sealed class PatternStringAttributeAnalyzer : DiagnosticAnalyzer {
 		AttributeData patternStringData,
 		ConcurrentDictionary<string, Lazy<Regex>> regexCache
 	) {
-		if( !TryGetPatternStringArguments( patternStringData, out string? pattern, out bool? expectMatch ) ) {
+		if( GetRegexForAttribute( patternStringData, regexCache ) is not { } regex ) {
 			return;
+		}
+
+		bool expectMatch = true;
+		foreach( KeyValuePair<string, TypedConstant> argument in patternStringData.NamedArguments ) {
+			switch( argument.Key ) {
+				case "ExpectMatch":
+					expectMatch = (bool)argument.Value.Value!;
+					break;
+			}
+		}
+
+		bool matched;
+		try {
+			matched = regex.IsMatch( patternStringValue );
+		} catch( RegexMatchTimeoutException ) {
+			// The evaluation of the pattern against the value exceeded the
+			// allotted time budget.
+			context.ReportDiagnostic(
+				Diagnostic.Create(
+					descriptor: Diagnostics.PatternStringEvaluationTimeout,
+					location: location,
+					messageArgs: [
+						regex,
+						patternStringValue,
+						RegexTimeoutMS
+					]
+				)
+			);
+			return;
+		}
+
+		// Check against the expectMatch of the attribute to confirm
+		// the result is what the declaration expected.
+		if( matched != expectMatch ) {
+			context.ReportDiagnostic(
+				Diagnostic.Create(
+					descriptor: Diagnostics.PatternStringDoesNotMatch,
+					location: location,
+					messageArgs: [
+						patternStringValue,
+						expectMatch ? "to match" : "to not match",
+						regex
+					]
+				)
+			);
+		}
+	}
+
+	private static Regex? GetRegexForAttribute(
+		AttributeData attributeData,
+		ConcurrentDictionary<string, Lazy<Regex>> regexCache
+	) => GetRegexForAttribute( attributeData, regexCache, out _, out _ );
+
+	private static Regex? GetRegexForAttribute(
+		AttributeData attributeData,
+		ConcurrentDictionary<string, Lazy<Regex>> regexCache,
+		out string? pattern,
+		out string? message 
+	) {
+		ImmutableArray<TypedConstant> arguments = attributeData.ConstructorArguments;
+
+		pattern = arguments.Length > 0
+			? arguments[ 0 ].Value as string
+			: null;
+		if( pattern is null || string.IsNullOrWhiteSpace( pattern ) ) {
+			message = "Pattern is empty";
+			return null;
 		}
 
 		// Get (or lazily construct) the cached regex. Using a Lazy<Regex>
@@ -259,99 +346,11 @@ public sealed class PatternStringAttributeAnalyzer : DiagnosticAnalyzer {
 			// The declared pattern is not a valid regex. The exception is
 			// cached by the Lazy, so we don't repeatedly attempt to compile
 			// an invalid pattern.
-			context.ReportDiagnostic(
-				Diagnostic.Create(
-					descriptor: Diagnostics.PatternStringInvalidPattern,
-					location: GetPatternDiagnosticLocation( patternStringData, location ),
-					messageArgs: [
-						pattern,
-						ex.Message
-					]
-				)
-			);
-			return;
+			message = ex.Message;
+			return null;
 		}
 
-		bool matched;
-		try {
-			matched = regex.IsMatch( patternStringValue );
-		} catch( RegexMatchTimeoutException ) {
-			// The evaluation of the pattern against the value exceeded the
-			// allotted time budget.
-			context.ReportDiagnostic(
-				Diagnostic.Create(
-					descriptor: Diagnostics.PatternStringEvaluationTimeout,
-					location: location,
-					messageArgs: [
-						pattern,
-						patternStringValue,
-						RegexTimeoutMS
-					]
-				)
-			);
-			return;
-		}
-
-		// Check against the expectMatch of the attribute to confirm
-		// the result is what the declaration expected.
-		if( matched != expectMatch ) {
-			context.ReportDiagnostic(
-				Diagnostic.Create(
-					descriptor: Diagnostics.PatternStringDoesNotMatch,
-					location: location,
-					messageArgs: [
-						patternStringValue,
-						expectMatch.Value ? "to match" : "to not match",
-						pattern
-					]
-				)
-			);
-		}
-	}
-
-	private static bool TryGetPatternStringArguments(
-		AttributeData patternStringData,
-		[NotNullWhen( true )] out string? pattern,
-		[NotNullWhen( true )] out bool? expectMatch
-	) {
-		ImmutableArray<TypedConstant> arguments = patternStringData.ConstructorArguments;
-
-		pattern = arguments.Length > 0
-			? arguments[ 0 ].Value as string
-			: null;
-		if( pattern is null || string.IsNullOrWhiteSpace( pattern ) ) {
-			pattern = null;
-			expectMatch = false;
-			return false;
-		}
-
-		expectMatch = true;
-
-		foreach( KeyValuePair<string, TypedConstant> argument in patternStringData.NamedArguments ) {
-			switch( argument.Key ) {
-				case "ExpectMatch":
-					expectMatch = (bool)argument.Value.Value!;
-					break;
-			}
-		}
-
-		return true;
-	}
-
-	/// <summary>
-	/// Prefers the location of the [PatternString] attribute application (so the
-	/// invalid pattern is flagged on the declaration) and falls back to the value
-	/// location when the attribute originates from metadata.
-	/// </summary>
-	private static Location GetPatternDiagnosticLocation(
-		AttributeData patternStringData,
-		Location fallback
-	) {
-		SyntaxReference? reference = patternStringData.ApplicationSyntaxReference;
-		if( reference == null ) {
-			return fallback;
-		}
-
-		return Location.Create( reference.SyntaxTree, reference.Span );
+		message = null;
+		return regex;
 	}
 }
