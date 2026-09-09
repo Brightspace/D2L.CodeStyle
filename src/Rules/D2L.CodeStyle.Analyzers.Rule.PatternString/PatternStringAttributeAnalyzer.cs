@@ -68,36 +68,25 @@ public sealed class PatternStringAttributeAnalyzer : DiagnosticAnalyzer {
 		// action validates the declaration itself so that applying
 		// [PatternString] to a non-string member is flagged once at its source.
 		context.RegisterSymbolAction(
-			ctx => AnalyzeSymbolDeclaration( ctx, patternStringAttribute ),
-			SymbolKind.Method
+			ctx => AnalyzeParameter(
+				ctx, (IParameterSymbol)ctx.Symbol,
+				patternStringAttribute
+			),
+			SymbolKind.Parameter
 		);
 	}
 
-	private static void AnalyzeSymbolDeclaration(
+	private static void AnalyzeParameter(
 		SymbolAnalysisContext context,
-		ISymbol patternStringAttribute
-	) {
-		switch( context.Symbol ) {
-			case IMethodSymbol method:
-				foreach( IParameterSymbol parameter in method.Parameters ) {
-					ReportIfNonStringTarget( context, parameter, parameter.Type, patternStringAttribute );
-				}
-				break;
-		}
-	}
-
-	private static void ReportIfNonStringTarget(
-		SymbolAnalysisContext context,
-		ISymbol attributedSymbol,
-		ITypeSymbol targetType,
+		IParameterSymbol parameter,
 		ISymbol patternStringAttribute
 	) {
 		// [PatternString] only makes sense on strings.
-		if( targetType.SpecialType == SpecialType.System_String ) {
+		if( parameter.Type.SpecialType == SpecialType.System_String ) {
 			return;
 		}
 
-		foreach( AttributeData attribute in attributedSymbol.GetAttributes() ) {
+		foreach( AttributeData attribute in parameter.GetAttributes() ) {
 			if( !SymbolEqualityComparer.Default.Equals(
 				attribute.AttributeClass,
 				patternStringAttribute
@@ -107,14 +96,14 @@ public sealed class PatternStringAttributeAnalyzer : DiagnosticAnalyzer {
 
 			SyntaxReference? reference = attribute.ApplicationSyntaxReference;
 			Location location = reference is null
-				? attributedSymbol.Locations.FirstOrDefault() ?? Location.None
+				? parameter.Locations.FirstOrDefault() ?? Location.None
 				: Location.Create( reference.SyntaxTree, reference.Span );
 
 			context.ReportDiagnostic(
 				Diagnostic.Create(
 					descriptor: Diagnostics.PatternStringOnNonStringType,
 					location: location,
-					messageArgs: [ targetType.ToDisplayString() ]
+					messageArgs: [ parameter.Type.ToDisplayString() ]
 				)
 			);
 		}
