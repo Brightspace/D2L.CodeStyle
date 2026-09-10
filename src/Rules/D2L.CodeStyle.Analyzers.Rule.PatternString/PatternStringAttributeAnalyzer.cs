@@ -249,7 +249,7 @@ public sealed class PatternStringAttributeAnalyzer : DiagnosticAnalyzer {
 		// [PatternString] requires the assigned value to be a compile-time
 		// constant so that we can evaluate it here.
 		Optional<object?> constant = valueOperation.ConstantValue;
-		if( !constant.HasValue ) {
+		if( !constant.HasValue || constant.Value is null ) {
 			context.ReportDiagnostic(
 				Diagnostic.Create(
 					descriptor: Diagnostics.PatternStringMustBeConstant,

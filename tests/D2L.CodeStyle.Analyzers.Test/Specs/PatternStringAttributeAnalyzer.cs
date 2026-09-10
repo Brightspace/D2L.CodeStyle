@@ -98,13 +98,18 @@ namespace SpecTests {
 		}
 
 		void NonConstantValuesAreFlagged() {
-
+			#region Non-constant values are flagged as needing to be constant
 			string variable = "123";
 
-			#region Non-constant values are flagged as needing to be constant
 			Digits _ = new( /* PatternStringMustBeConstant() */ variable /**/ );
 			Digits _ = /* PatternStringMustBeConstant() */ variable /**/;
 			_ = (Digits)/* PatternStringMustBeConstant() */ variable /**/;
+			#endregion
+
+			#region null is treated as non-constant
+			Digits _ = new( /* PatternStringMustBeConstant() */ null /**/ );
+			Digits _ = /* PatternStringMustBeConstant() */ null /**/;
+			_ = (Digits)/* PatternStringMustBeConstant() */ null /**/;
 			#endregion
 		}
 
