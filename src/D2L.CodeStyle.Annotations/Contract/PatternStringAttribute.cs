@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace D2L.CodeStyle.Annotations.Contract;
 
@@ -9,7 +10,9 @@ namespace D2L.CodeStyle.Annotations.Contract;
 [AttributeUsage( AttributeTargets.Parameter, AllowMultiple = true )]
 public sealed class PatternStringAttribute : Attribute {
 
-	public PatternStringAttribute( string regexPattern ) {
+	public PatternStringAttribute(
+		[StringSyntax( StringSyntaxAttribute.Regex )] string regexPattern
+	) {
 		RegexPattern = regexPattern;
 	}
 
