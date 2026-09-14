@@ -634,6 +634,15 @@ int Hello() {
 	}
 
 	[Test]
+	public void ImplicitArrayCreationCreation() {
+		var actual = Transform( @"[GenerateSync] async Task<T> HelloAsync() { return new[] { await FooAsync(), Bar() }; }" );
+
+		Assert.IsTrue( actual.Success );
+		Assert.IsEmpty( actual.Diagnostics );
+		Assert.AreEqual( "[Blocking] T Hello() { return new[] { Foo(),Bar() }; }", actual.Value.ToFullString() );
+	}
+
+	[Test]
 	public void ImplicitObjectCreation() {
 		var actual = Transform( @"[GenerateSync] async Task<T> HelloAsync() { return new( await FooAsync() ); }" );
 
