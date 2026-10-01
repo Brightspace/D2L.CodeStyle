@@ -94,12 +94,8 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		internal static ImmutabilityContext Create(
 			Compilation compilation,
-			AnnotationsContext annotationsContext,
-			ImmutableHashSet<string> additionalImmutableTypes = default
+			AnnotationsContext annotationsContext
 		) {
-			if( additionalImmutableTypes == default ) {
-				additionalImmutableTypes = ImmutableHashSet<string>.Empty;
-			}
 
 			// Generate a dictionary of types that we have specifically determined
 			// should be considered Immutable by the Analyzer.
@@ -108,25 +104,6 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				INamedTypeSymbol type = GetTypeSymbol( compilation, qualifiedAssembly, typeName );
 
 				if( type == null ) {
-					continue;
-				}
-
-				ImmutableTypeInfo info = ImmutableTypeInfo.CreateWithAllConditionalTypeParameters(
-					ImmutableTypeKind.Total,
-					type
-				);
-
-				extraImmutableTypesBuilder.Add( type, info );
-			}
-
-			foreach( string typeName in additionalImmutableTypes ) {
-				INamedTypeSymbol type = GetTypeSymbol( compilation, qualifiedAssembly: default, typeName );
-
-				if( type == null ) {
-					continue;
-				}
-
-				if( extraImmutableTypesBuilder.ContainsKey( type ) ) {
 					continue;
 				}
 
