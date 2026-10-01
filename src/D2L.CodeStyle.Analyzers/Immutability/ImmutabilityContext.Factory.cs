@@ -7,6 +7,8 @@ using Microsoft.CodeAnalysis;
 namespace D2L.CodeStyle.Analyzers.Immutability {
 	internal partial class ImmutabilityContext {
 
+		private const string ALL_TYPE_INSTANCES_QUALIFIER = "*";
+
 		internal static readonly ImmutableArray<(string TypeName, string AssmeblyName)> DefaultExtraTypes = ImmutableArray.Create(
 			// Framework Container Types (not that the distinction matters)
 			("System.Collections.Frozen.FrozenDictionary`2", default),
@@ -38,10 +40,10 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			("System.Drawing.Imaging.ImageFormat", default),
 			("System.Drawing.Size", default), // only safe because it's a struct with primitive fields
 			("System.Guid", default),
-			("System.Index", default),
+			("System.Index", ALL_TYPE_INSTANCES_QUALIFIER),
 			("System.Net.IPNetwork", default),
 			("System.Net.Http.HttpMethod", default),
-			("System.Range", default),
+			("System.Range", ALL_TYPE_INSTANCES_QUALIFIER),
 			("System.Reflection.ConstructorInfo", default),
 			("System.Reflection.FieldInfo", default),
 			("System.Reflection.MemberInfo", default),
@@ -94,71 +96,54 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 
 		internal static ImmutabilityContext Create(
 			Compilation compilation,
-			AnnotationsContext annotationsContext,
-			ImmutableHashSet<string> additionalImmutableTypes = default
+			AnnotationsContext annotationsContext
 		) {
-			if( additionalImmutableTypes == default ) {
-				additionalImmutableTypes = ImmutableHashSet<string>.Empty;
-			}
 
 			// Generate a dictionary of types that we have specifically determined
 			// should be considered Immutable by the Analyzer.
 			var extraImmutableTypesBuilder = ImmutableDictionary.CreateBuilder<INamedTypeSymbol, ImmutableTypeInfo>( SymbolEqualityComparer.Default );
 			foreach( ( string typeName, string qualifiedAssembly ) in DefaultExtraTypes ) {
-				INamedTypeSymbol type = GetTypeSymbol( compilation, qualifiedAssembly, typeName );
+				ImmutableArray<INamedTypeSymbol> types = GetTypeSymbols( compilation, qualifiedAssembly, typeName );
 
-				if( type == null ) {
+				if( types.IsDefaultOrEmpty ) {
 					continue;
 				}
 
-				ImmutableTypeInfo info = ImmutableTypeInfo.CreateWithAllConditionalTypeParameters(
-					ImmutableTypeKind.Total,
-					type
-				);
+				foreach( INamedTypeSymbol type in types ) {
 
-				extraImmutableTypesBuilder.Add( type, info );
-			}
+					ImmutableTypeInfo info = ImmutableTypeInfo.CreateWithAllConditionalTypeParameters(
+						ImmutableTypeKind.Total,
+						type
+					);
 
-			foreach( string typeName in additionalImmutableTypes ) {
-				INamedTypeSymbol type = GetTypeSymbol( compilation, qualifiedAssembly: default, typeName );
-
-				if( type == null ) {
-					continue;
+					extraImmutableTypesBuilder.Add( type, info );
 				}
-
-				if( extraImmutableTypesBuilder.ContainsKey( type ) ) {
-					continue;
-				}
-
-				ImmutableTypeInfo info = ImmutableTypeInfo.CreateWithAllConditionalTypeParameters(
-					ImmutableTypeKind.Total,
-					type
-				);
-
-				extraImmutableTypesBuilder.Add( type, info );
 			}
 
 			// Generate a set of methods that we have specifically determined
 			// have a return value which should be considered Immutable by the Analyzer.
 			var knownImmutableReturnsBuilder = ImmutableHashSet.CreateBuilder<IMethodSymbol>( SymbolEqualityComparer.Default );
 			foreach( ( string typeName, string methodName, string qualifiedAssembly ) in KnownImmutableReturningMethods ) {
-				INamedTypeSymbol type = GetTypeSymbol( compilation, qualifiedAssembly, typeName );
+				ImmutableArray<INamedTypeSymbol> types = GetTypeSymbols( compilation, qualifiedAssembly, typeName );
 
-				if( type == null ) {
+				if( types.IsDefaultOrEmpty ) {
 					continue;
 				}
 
-				IMethodSymbol[] methodSymbols = type
-					.GetMembers( methodName )
-					.OfType<IMethodSymbol>()
-					.Where( m => m.Parameters.Length == 0 )
-					.ToArray();
+				foreach( INamedTypeSymbol type in types ) {
 
-				if( methodSymbols.Length != 1 ) {
-					continue;
+					IMethodSymbol[] methodSymbols = type
+						.GetMembers( methodName )
+						.OfType<IMethodSymbol>()
+						.Where( m => m.Parameters.Length == 0 )
+						.ToArray();
+
+					if( methodSymbols.Length != 1 ) {
+						continue;
+					}
+
+					knownImmutableReturnsBuilder.Add( methodSymbols[ 0 ] );
 				}
-
-				knownImmutableReturnsBuilder.Add( methodSymbols[0] );
 			}
 
 			return new ImmutabilityContext(
@@ -167,13 +152,13 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 				knownImmutableReturns: knownImmutableReturnsBuilder.ToImmutable(),
 				conditionalTypeParamemters: ImmutableHashSet<ITypeParameterSymbol>.Empty,
 				regexInfo: (
-					GetTypeSymbol( compilation, default, "System.Text.RegularExpressions.Regex" ),
-					GetTypeSymbol( compilation, default, "System.CodeDom.Compiler.GeneratedCodeAttribute" )
+					GetTypeSymbols( compilation, default, "System.Text.RegularExpressions.Regex" ).FirstOrDefault(),
+					GetTypeSymbols( compilation, default, "System.CodeDom.Compiler.GeneratedCodeAttribute" ).FirstOrDefault()
 				)
 			);
 		}
 
-		private static INamedTypeSymbol GetTypeSymbol(
+		private static ImmutableArray<INamedTypeSymbol> GetTypeSymbols(
 			Compilation compilation,
 			string qualifiedAssembly,
 			string typeName
@@ -182,7 +167,7 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 			ImmutableArray<INamedTypeSymbol> types = compilation.GetTypesByMetadataName( typeName );
 
 			if( types.IsEmpty ) {
-				return null;
+				return default;
 			}
 
 			if( qualifiedAssembly == default ) {
@@ -192,16 +177,20 @@ namespace D2L.CodeStyle.Analyzers.Immutability {
 					);
 				}
 
-				return types[ 0 ];
+				return types;
+			}
+
+			if( qualifiedAssembly == ALL_TYPE_INSTANCES_QUALIFIER ) {
+				return types;
 			}
 
 			foreach( INamedTypeSymbol type in types ) {
 				if( type.ContainingAssembly.Name.Equals( qualifiedAssembly, StringComparison.Ordinal ) ) {
-					return type;
+					return ImmutableArray.Create( type );
 				}
 			}
 
-			return null;
+			return default;
 		}
 
 	}
