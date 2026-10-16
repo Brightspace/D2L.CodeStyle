@@ -275,6 +275,7 @@ namespace SpecTests {
 			{ Types.ConstantStruct v = trusted; }
 			{ Types.ConstantStruct v = /* NonConstantPassedToConstantParameter(value) */ variable /**/; }
 			{ Types.ConstantStruct v = /* NonConstantPassedToConstantParameter(value) */ untrusted /**/; }
+			{ Types.ConstantStruct v = /* NonConstantPassedToConstantParameter(value) */ trusted ?? throw new ArgumentNullException( nameof( trusted ) ) /**/; }
 			{ (Types.ConstantStruct X, Types.ConstantStruct Y) v = (Constants.String, Constants.String); }
 			{ (Types.ConstantStruct X, Types.ConstantStruct Y) v = (Constants.String, trusted); }
 			{ (Types.ConstantStruct X, Types.ConstantStruct Y) v = (Constants.String, /* NonConstantPassedToConstantParameter(value) */ variable /**/); }

@@ -190,6 +190,10 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			ITypeSymbol targetType,
 			SyntaxNode diagnosticSyntax
 		) {
+			if( sourceType is null ) {
+				return;
+			}
+
 			Conversion conversion = context.Compilation.ClassifyConversion(
 				source: sourceType,
 				destination: targetType
