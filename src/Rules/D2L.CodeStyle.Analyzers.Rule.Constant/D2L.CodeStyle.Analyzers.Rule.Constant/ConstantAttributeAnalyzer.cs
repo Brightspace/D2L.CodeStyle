@@ -162,21 +162,6 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 			IConversionOperation conversion,
 			INamedTypeSymbol constantAttribute
 		) {
-
-			IMethodSymbol @operator = conversion.OperatorMethod;
-			if( @operator is null ) {
-				return;
-			}
-			if( @operator.Parameters.Length != 1 ) {
-				return;
-			}
-
-			// Operator parameter is not [Constant], so do nothing
-			IParameterSymbol parameter = @operator.Parameters[0];
-			if( !HasAttribute( parameter, constantAttribute ) ) {
-				return;
-			}
-
 			// Operand is a constant value or string.Empty, so trust it
 			IOperation operand = conversion.Operand;
 			if( operand.ConstantValue.HasValue || IsStringEmpty( operand ) ) {
@@ -189,12 +174,72 @@ namespace D2L.CodeStyle.Analyzers.ApiUsage {
 				return;
 			}
 
-			// Operand is not constant, so report it
-			context.ReportDiagnostic(
-				descriptor: Diagnostics.NonConstantPassedToConstantParameter,
-				location: operand.Syntax.GetLocation(),
-				messageArgs: new[] { parameter.Name }
+			AnalyzeConversion(
+				context,
+				constantAttribute,
+				sourceType: conversion.Operand.Type,
+				targetType: conversion.Type,
+				conversion.Operand.Syntax
 			);
+		}
+
+		private static void AnalyzeConversion(
+			OperationAnalysisContext context,
+			INamedTypeSymbol constantAttribute,
+			ITypeSymbol sourceType,
+			ITypeSymbol targetType,
+			SyntaxNode diagnosticSyntax
+		) {
+			Conversion conversion = context.Compilation.ClassifyConversion(
+				source: sourceType,
+				destination: targetType
+			);
+
+			if( !conversion.Exists ) {
+				return;
+			}
+
+			if( conversion.MethodSymbol is { } @operator ) {
+				// Operator parameter is not [Constant], so do nothing
+				IParameterSymbol parameter = @operator.Parameters[ 0 ];
+				if( !HasAttribute( parameter, constantAttribute ) ) {
+					return;
+				}
+
+				// Operand is not constant, so report it
+				context.ReportDiagnostic(
+					descriptor: Diagnostics.NonConstantPassedToConstantParameter,
+					location: diagnosticSyntax.GetLocation(),
+					messageArgs: [ parameter.Name ]
+				);
+				return;
+			}
+
+			if( !conversion.IsTupleConversion ) {
+				return;
+			}
+
+			if( sourceType is not INamedTypeSymbol namedSourceType ) {
+				return;
+			}
+
+			if( targetType is not INamedTypeSymbol namedTargetType ) {
+				return;
+			}
+
+			if( namedSourceType.TypeArguments.Length != namedTargetType.TypeArguments.Length ) {
+				return;
+			}
+
+			for( int i = 0; i < namedSourceType.TypeArguments.Length; i++ ) {
+				AnalyzeConversion(
+					context,
+					constantAttribute,
+					sourceType: namedSourceType.TypeArguments[ i ],
+					targetType: namedTargetType.TypeArguments[ i ],
+					diagnosticSyntax
+				);
+			}
 		}
 
 		private static void AnalyzeCompoundAssignment(
