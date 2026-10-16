@@ -275,6 +275,13 @@ namespace SpecTests {
 			{ Types.ConstantStruct v = trusted; }
 			{ Types.ConstantStruct v = /* NonConstantPassedToConstantParameter(value) */ variable /**/; }
 			{ Types.ConstantStruct v = /* NonConstantPassedToConstantParameter(value) */ untrusted /**/; }
+			{ (Types.ConstantStruct X, Types.ConstantStruct Y) v = (Constants.String, Constants.String); }
+			{ (Types.ConstantStruct X, Types.ConstantStruct Y) v = (Constants.String, trusted); }
+			{ (Types.ConstantStruct X, Types.ConstantStruct Y) v = (Constants.String, /* NonConstantPassedToConstantParameter(value) */ variable /**/); }
+			{ (Types.ConstantStruct X, Types.ConstantStruct Y) v = (Constants.String, /* NonConstantPassedToConstantParameter(value) */ untrusted /**/); }
+			{ (Types.ConstantStruct X, Types.ConstantStruct Y) v = /* NonConstantPassedToConstantParameter(value) */ true ? (Constants.String, Constants.String) : (Constants.String, Constants.String) /**/; }
+			{ (Types.ConstantStruct X, Types.ConstantStruct Y) v = /* NonConstantPassedToConstantParameter(value) */ true ? (Constants.String, Constants.String) : (Constants.String, Constants.String) /**/; }
+			{ (Types.ConstantStruct X, Types.ConstantStruct Y) v = /* NonConstantPassedToConstantParameter(value) */ true ? (Constants.String, variable) : (Constants.String, Constants.String) /**/; }
 			{
 				Types.ConstantStruct v = Constants.String;
 				v += /* NonConstantPassedToConstantParameter(value) */ "abc" /**/;
