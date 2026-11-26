@@ -73,20 +73,6 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
 			foreach( AttributeSyntax attribute in attributes ) {
 
-				ISymbol? symbol = context
-					.SemanticModel
-					.GetSymbolInfo( attribute, context.CancellationToken )
-					.Symbol;
-
-				if( symbol.IsNullOrErrorType() ) {
-					continue;
-				}
-
-				// Not a [ConfigTestSetup()]
-				if( !attributeType.Equals( symbol.ContainingType, SymbolEqualityComparer.Default ) ) {
-					continue;
-				}
-
 				SeparatedSyntaxList<AttributeArgumentSyntax> arguments =
 					attribute.ArgumentList?.Arguments ?? default;
 
@@ -98,6 +84,20 @@ namespace D2L.CodeStyle.TestAnalyzers.NUnit {
 
 				// [ConfigTestSetup( nameof(Foo) )]
 				if( IsNameOfSyntax( argExpression ) ) {
+					continue;
+				}
+
+				ISymbol? symbol = context
+					.SemanticModel
+					.GetSymbolInfo( attribute, context.CancellationToken )
+					.Symbol;
+
+				if( symbol.IsNullOrErrorType() ) {
+					continue;
+				}
+
+				// Not a [ConfigTestSetup()]
+				if( !attributeType.Equals( symbol.ContainingType, SymbolEqualityComparer.Default ) ) {
 					continue;
 				}
 
